@@ -211,12 +211,7 @@ export default class GameScene extends Phaser.Scene {
             if(this.layer.character) this.layer.character.add(gameObject);
         }
         
-        // インタラクティブ化とエディタ登録
-        gameObject.setInteractive();
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor) {
-            editor.makeEditable(gameObject, this);
-        }
+        
         
         // ★★★ これが物理情報を反映させるコードです ★★★
         if (layout.physics) {

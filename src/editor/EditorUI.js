@@ -81,21 +81,19 @@ this.populateAssetBrowser();
                 }
             }
             if (targetScene) {
-                const newImage = targetScene.add.image(pointer.worldX, pointer.worldY, assetKey);
-                // 1. まず、オブジェクトにユニークな名前を付ける
+                  const newImage = new Phaser.GameObjects.Image(targetScene, pointer.worldX, pointer.worldY, assetKey);
+                
+                // 2. オブジェクトにユニークな名前を付ける
                 newImage.name = `${assetKey}_${Date.now()}`;
                 
-                // 2. シーンが持つ「オブジェクト初期化メソッド」を呼び出す
-                //    これにより、オブジェクトはインタラクティブになり、エディタに登録される
-                if (targetScene.initializeObject) {
-                    targetScene.initializeObject(newImage);
-                }
+                // 3. シーンの初期化メソッドに、生成したオブジェクトを渡す
+                //    レイヤーへの「追加」は、このメソッドの中で一度だけ行われる
+                targetScene.initializeObject(newImage);
 
-                // 3. 最後に、選択状態にしてパネルを更新
+                // 4. 最後に、選択状態にしてパネルを更新
                 this.plugin.selectedObject = newImage;
                 this.plugin.updatePropertyPanel();
             }
         });
-             
     }
 }
