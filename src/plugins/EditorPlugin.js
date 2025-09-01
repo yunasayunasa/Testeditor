@@ -281,9 +281,29 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     const objData = { name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)), angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)) };
                     if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
                     sceneLayoutData.objects.push(objData);
+                    if (gameObject.body) {
+                        const body = gameObject.body;
+                        objData.physics = {
+                            isStatic: body.isStatic,
+                            width: body.width,
+                            height: body.height,
+                            offsetX: body.offset.x,
+                            offsetY: body.offset.y,
+                            allowGravity: body.allowGravity,
+                            bounceX: parseFloat(body.bounce.x.toFixed(2)),
+                            bounceY: parseFloat(body.bounce.y.toFixed(2)),
+                            collideWorldBounds: body.collideWorldBounds
+                        };
+                    }
+                    
+                    sceneLayoutData.objects.push(objData);
                 }
             }
         }
+                
+            
+        
+        
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
         console.log(jsonString);
