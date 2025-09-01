@@ -4,7 +4,7 @@ export default class EditorUI {
     constructor(game, editorPlugin) {
         this.game = game;
         this.plugin = editorPlugin;
-
+this.populateAssetBrowser();
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが、あなたが提案した完璧な解決策です ★★★
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★

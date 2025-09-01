@@ -77,7 +77,13 @@ export default class PreloadScene extends Phaser.Scene {
                     charaDefs[charaName].face[faceName] = key;
                 }
             }
-            
+            const assetList = [];
+            for (const key in assetDefine.images) {
+                assetList.push({ key: key, type: 'image', path: assetDefine.images[key] });
+            }
+            // ... (sounds, videosなども同様に追加)
+            this.registry.set('asset_list', assetList);
+            console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
             // SystemSceneを起動し、そのCREATEイベントを待ってから依存関係を解決する
               this.scene.launch('SystemScene', { initialGameData: {
                 charaDefs: charaDefs,

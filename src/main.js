@@ -39,6 +39,13 @@ const config = {
         global: [
             { key: 'EditorPlugin', plugin: EditorPlugin, start: false }
         ]
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 }, // 標準の重力
+            debug: true // 開発中はtrueにして当たり判定を可視化
+        }
     }
 };
 
