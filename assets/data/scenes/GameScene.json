@@ -1,27 +1,82 @@
-
 {
   "objects": [
     {
-      "name": "bg_school",
-      "texture": "bg_school",
-      "x": 640,
-      "y": 360,
+      "name": "message_window",
+      "x": 0,
+      "y": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1
     },
     {
-      "name": "yuna_normal",
+      "name": "message_window",
+      "x": 0,
+      "y": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "yuna",
+      "x": 280,
+      "y": 450,
+      "scaleX": 1,
+      "scaleY": 0.56,
+      "angle": 0,
+      "alpha": 1,
       "texture": "yuna_normal",
-      "x": 640,
+      "physics": {
+        "width": 500,
+        "height": 504.0000021457672,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      }
+    },
+    {
+      "name": "yuna",
+      "x": 280,
+      "y": 450,
+      "scaleX": 1,
+      "scaleY": 0.56,
+      "angle": 0,
+      "alpha": 1,
+      "texture": "yuna_normal",
+      "physics": {
+        "width": 500,
+        "height": 504.0000021457672,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      }
+    },
+    {
+      "name": "kaito",
+      "x": 1000,
       "y": 450,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "visible": false 
+      "texture": "kaito_normal"
+    },
+    {
+      "name": "kaito",
+      "x": 1000,
+      "y": 450,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "texture": "kaito_normal"
     }
-    
   ]
 }
