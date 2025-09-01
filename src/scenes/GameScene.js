@@ -107,7 +107,17 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager.loadScenario(this.startScenario, this.startLabel);
         this.isSceneFullyReady = true;
 
-        // ★★★ 修正の核心 (通常起動時) ★★★
+         // ★★★ 変更点: createの最後に、既存オブジェクトをエディタに登録 ★★★
+        this.time.delayedCall(10, () => {
+             const editor = this.plugins.get('EditorPlugin');
+             if (editor) {
+                 // メッセージウィンドウなど、最初から存在するオブジェクトを登録
+                 if (this.messageWindow) {
+                    this.messageWindow.name = 'message_window'; // 名前がないと登録されない
+                    editor.makeEditable(this.messageWindow, this);
+                 }
+             }
+        });
         // イベントの発行を、ごくわずかに（1フレーム後）遅らせる
         this.time.delayedCall(1, () => {
             this.events.emit('gameScene-load-complete');

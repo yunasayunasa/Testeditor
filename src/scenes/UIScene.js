@@ -98,6 +98,29 @@ export default class UIScene extends Phaser.Scene {
         systemScene.events.on('transition-complete', this.onSceneTransition, this);
         
        
+       // ★★★ 変更点: createの最後に、UIオブジェクトを命名・エディタに登録 ★★★
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor) {
+            // 各オブジェクトに名前を付ける
+            this.menuButton.name = 'menu_button';
+            this.panel.name = 'bottom_panel';
+            this.coinHud.name = 'coin_hud';
+            this.playerHpBar.name = 'player_hp_bar';
+            this.enemyHpBar.name = 'enemy_hp_bar';
+
+            // エディタに登録
+            editor.makeEditable(this.menuButton, this);
+            editor.makeEditable(this.panel, this);
+            // コンテナにはサイズ指定が必要
+            this.panel.setSize(1280, 120);
+            this.coinHud.setSize(150, 50); // 仮のサイズ
+            this.playerHpBar.setSize(200, 25);
+            this.enemyHpBar.setSize(250, 25);
+            editor.makeEditable(this.coinHud, this);
+            editor.makeEditable(this.playerHpBar, this);
+            editor.makeEditable(this.enemyHpBar, this);
+        }
+        
         console.log("UI作成");
     }
 

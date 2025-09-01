@@ -1,5 +1,5 @@
 import SoundManager from '../core/SoundManager.js';
-
+import EditorUI from '../editor/EditorUI.js'; // ★ インポート
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -29,7 +29,12 @@ export default class SystemScene extends Phaser.Scene {
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
         
-        // ★★★ PreloadSceneから渡されたデータで初期ゲームを起動 ★★★
+        const stateManager = this.registry.get('stateManager');
+        if (stateManager.sf.debug_mode) {
+            const editorPlugin = this.plugins.start('EditorPlugin');
+            new EditorUI(this.game, editorPlugin);
+        }
+
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
         }

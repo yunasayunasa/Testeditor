@@ -10,12 +10,13 @@ import BacklogScene from './scenes/BacklogScene.js';
 import ActionScene from './scenes/ActionScene.js';
 import BattleScene from './scenes/BattleScene.js';
 import NovelOverlayScene from './scenes/NovelOverlayScene.js';
-
+import EditorPlugin from './plugins/EditorPlugin.js';
 const config = {
     type: Phaser.AUTO,
     scale: {
         mode: Phaser.Scale.FIT,
-        parent: 'phaser-game',
+        // ★★★ 変更点1: 親要素のIDを変更 ★★★
+        parent: 'game-container', 
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: 1280,
         height: 720
@@ -32,7 +33,13 @@ const config = {
         ActionScene,
          BattleScene,
         NovelOverlayScene
-    ]
+   ],
+    // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
+    plugins: {
+        global: [
+            { key: 'EditorPlugin', plugin: EditorPlugin, start: false }
+        ]
+    }
 };
 
 const game = new Phaser.Game(config);

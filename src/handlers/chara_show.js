@@ -56,12 +56,15 @@ export function handleCharaShow(manager, params) {
 
         const chara = manager.scene.add.image(x, y, storage);
         chara.setAlpha(0);
-        manager.layers.character.add(chara);
-        
-        // ★★★ 管理リストに登録。セーブ時はこのオブジェクトが参照される ★★★
-        manager.scene.characters[name] = chara;
+       chara.name = name; // ★ 確実に名前を付ける
+    manager.layers.character.add(chara);
+    manager.scene.characters[name] = chara;
 
-        // ★★★ StateManagerに関する処理はすべて不要なので削除 ★★★
+    // ★★★ 変更点: 生成したキャラクターをエディタに登録 ★★★
+    const editor = manager.scene.plugins.get('EditorPlugin');
+    if (editor) {
+        editor.makeEditable(chara, manager.scene);
+    }
 
         // --- 4. アニメーション ---
         const time = Number(params.time) || 0;
