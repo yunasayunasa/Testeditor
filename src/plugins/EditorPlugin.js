@@ -129,6 +129,153 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(exportButton);
     }
 
+       /**
+     * Physicsタブの中身を生成する（最終確定・完成版）
+     */
+    populatePhysicsTab() {
+        this.physicsPropsContainer.innerHTML = '';
+        const gameObject = this.selectedObject;
+        if (!gameObject) return;
+
+        if (gameObject.body) {
+            // 物理ボディを持っている場合: プロパティ編集UIと「Disable」ボタンを表示
+            this.createPhysicsPropertiesUI(gameObject);
+
+            const removeButton = document.createElement('button');
+            removeButton.innerText = 'Disable Physics';
+            removeButton.style.backgroundColor = '#c44';
+            removeButton.style.marginTop = '10px';
+            removeButton.onclick = () => {
+                if (this.selectedObject && this.selectedObject.body) {
+                    this.selectedObject.body.destroy();
+                    this.selectedObject.body = null; 
+                    this.updatePropertyPanel();
+                }
+            };
+            this.physicsPropsContainer.appendChild(removeButton);
+
+        } else {
+            // 物理ボディを持っていない場合: 「Enable」ボタンを表示
+            const addButton = document.createElement('button');
+            addButton.innerText = 'Enable Arcade Physics';
+            addButton.onclick = () => {
+                if (this.selectedObject) {
+                    const targetScene = this.selectedObject.scene;
+                    targetScene.physics.add.existing(this.selectedObject, false); // 動的ボディとして生成
+                    if (this.selectedObject.body) {
+                        this.selectedObject.body.allowGravity = false;
+                        this.selectedObject.body.collideWorldBounds = true;
+                    }
+                    this.updatePropertyPanel();
+                }
+            };
+            this.physicsPropsContainer.appendChild(addButton);
+        }
+    }
+
+    /**
+     * 物理パラメータを編集するためのUIを生成する
+     */
+    createPhysicsPropertiesUI(gameObject) {
+        const body = gameObject.body;
+        
+        // --- ボディタイプ (Static / Dynamic) の切り替え ---
+        const isStatic = body.isStatic;
+        this.createCheckbox(this.physicsPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
+            if (this.selectedObject) {
+                const targetScene = this.selectedObject.scene;
+                targetScene.physics.world.remove(this.selectedObject.body);
+                targetScene.physics.add.existing(this.selectedObject, isChecked);
+                if (this.selectedObject.body) {
+                    this.selectedObject.body.collideWorldBounds = true;
+                }
+                this.updatePropertyPanel();
+            }
+        });
+
+        // --- 動的ボディの場合のみ、他のプロパティを表示 ---
+        const isDynamic = body.moves;
+        if (isDynamic) {
+            this.createVector2Input(this.physicsPropsContainer, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
+            this.createVector2Input(this.physicsPropsContainer, 'Offset', { x: body.offset.x, y: body.offset.y }, (x, y) => body.setOffset(x, y));
+            this.createCheckbox(this.physicsPropsContainer, 'Allow Gravity', body.allowGravity, (value) => { if(body) body.allowGravity = value; });
+            this.createRangeInput(this.physicsPropsContainer, 'Bounce X', body.bounce.x, 0, 1, 0.01, (value) => { if(body) body.bounce.x = value; });
+            this.createRangeInput(this.physicsPropsContainer, 'Bounce Y', body.bounce.y, 0, 1, 0.01, (value) => { if(body) body.bounce.y = value; });
+        }
+        
+        // --- 共通プロパティ ---
+        this.createCheckbox(this.physicsPropsContainer, 'Collide World Bounds', body.collideWorldBounds, (value) => { if(body) body.collideWorldBounds = value; });
+    }
+
+    // --- 以下、UI生成のためのヘルパーメソッド群 ---
+
+    createVector2Input(container, label, initialValue, callback) {
+        const row = document.createElement('div');
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}:`;
+        labelEl.style.width = '100px';
+        const inputX = document.createElement('input');
+        inputX.type = 'number';
+        inputX.value = initialValue.x.toFixed(0);
+        inputX.style.width = '60px';
+        const inputY = document.createElement('input');
+        inputY.type = 'number';
+        inputY.value = initialValue.y.toFixed(0);
+        inputY.style.width = '60px';
+        const updateValues = () => {
+            const x = parseFloat(inputX.value);
+            const y = parseFloat(inputY.value);
+            if (!isNaN(x) && !isNaN(y)) callback(x, y);
+        };
+        inputX.addEventListener('change', updateValues);
+        inputY.addEventListener('change', updateValues);
+        row.appendChild(labelEl);
+        row.appendChild(document.createTextNode(' X: '));
+        row.appendChild(inputX);
+        row.appendChild(document.createTextNode(' Y: '));
+        row.appendChild(inputY);
+        container.appendChild(row);
+    }
+
+    createCheckbox(container, label, initialValue, callback) {
+        const row = document.createElement('div');
+        const labelEl = document.createElement('label');
+        labelEl.innerText = label;
+        labelEl.style.width = '160px';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = initialValue;
+        checkbox.addEventListener('change', () => callback(checkbox.checked));
+        row.appendChild(labelEl);
+        row.appendChild(checkbox);
+        container.appendChild(row);
+    }
+
+    createRangeInput(container, label, initialValue, min, max, step, callback) {
+        const row = document.createElement('div');
+        const labelEl = document.createElement('label');
+        labelEl.innerText = label;
+        labelEl.style.width = '100px';
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = min;
+        slider.max = max;
+        slider.step = step;
+        slider.value = initialValue;
+        slider.style.width = '120px';
+        const valueEl = document.createElement('span');
+        valueEl.innerText = initialValue.toFixed(2);
+        slider.addEventListener('input', () => {
+            const value = parseFloat(slider.value);
+            valueEl.innerText = value.toFixed(2);
+            callback(value);
+        });
+        row.appendChild(labelEl);
+        row.appendChild(slider);
+        row.appendChild(valueEl);
+        container.appendChild(row);
+    }
+
     exportLayoutToJson() {
           if (!this.isEnabled) return; // ★ 無効なら、何もしない
         if (!this.selectedObject || !this.selectedObject.scene) {
