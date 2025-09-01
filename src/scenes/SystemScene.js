@@ -30,32 +30,13 @@ export default class SystemScene extends Phaser.Scene {
         this.events.on('end-overlay', this._handleEndOverlay, this);
         
         const stateManager = this.registry.get('stateManager');
-         // 1. まず、StateManagerから現在のdebug_modeの値を取得する（何かに汚染されているかもしれない）
-        let isDebug = stateManager.sf.debug_mode;
+         // ★★★ 変更点: 常にプラグインを起動しようと試みる ★★★
+        // 実際の起動判断はプラグイン自身が行う
+        this.plugins.start('EditorPlugin');
+
+        // ★★★ 変更点: EditorUIの起動もここでは行わない ★★★
         
-        // 2. 次に、URLを「原始的な文字列検索」で、もう一度、ここでチェックする
-        const currentURL = window.location.href;
-        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
-
-        // 3. URLにパラメータがある場合のみ、デバッグモードを強制的にONにする
-        //    URLにパラメータがなければ、isDebugが何であろうと、強制的にOFFにする
-        if (hasDebugParameter) {
-            isDebug = true;
-        } else {
-            isDebug = false;
-        }
-
-        // 4. この、絶対に信頼できる最終的な判定結果を使って、エディタを起動するかどうかを決める
-        if (isDebug) {
-            console.warn("[SystemScene] Final check: Debug mode is ON. Starting editor...");
-            const editorPlugin = this.plugins.start('EditorPlugin');
-            new EditorUI(this.game, editorPlugin);
-        } else {
-             console.log("[SystemScene] Final check: Debug mode is OFF.");
-        }
-
-
-        // ★★★ PreloadSceneから渡されたデータで初期ゲームを起動 ★★★
+        // --- PreloadSceneから渡されたデータで初期ゲームを起動 ---
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
         }

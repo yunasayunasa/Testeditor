@@ -1,3 +1,5 @@
+import EditorUI from '../editor/EditorUI.js'; // ★ EditorUIをインポート
+
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
@@ -6,13 +8,46 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
+         // ★★★ 変更点1: isEnabledフラグを追加 ★★★
+        this.isEnabled = false; 
+
+        // ★★★ 変更点2: HTML要素の取得はinitに移動 ★★★
+        this.editorPanel = null;
     }
 
+    /**
+     * プラグインが起動する時に、自身が有効になるべきかを最終判断する
+     */
     init() {
-        console.log('[EditorPlugin] Initialized.');
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、あなたが求めた最終的な制御ロジックです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. 最も確実な、原始的なURLチェックを行う
+        const currentURL = window.location.href;
+        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
+        
+        // 2. もしURLにパラメータがなければ、何もしないで終了
+        if (!hasDebugParameter) {
+            console.log("[EditorPlugin] Debug parameter not found. Editor remains inactive.");
+            return;
+        }
+
+        // --- ここから先は、デバッグモードが確定した場合のみ実行される ---
+        console.warn("[EditorPlugin] Debug mode activated. Initializing editor...");
+        this.isEnabled = true; // 3. 自身を有効化
+
+        // 4. HTML要素への参照を取得
+        this.editorPanel = document.getElementById('editor-panel');
+        this.editorTitle = document.getElementById('editor-title');
+        this.editorPropsContainer = document.getElementById('editor-props');
+
+        // 5. EditorUIを起動する
+        new EditorUI(this.pluginManager.game, this);
     }
 
     makeEditable(gameObject, scene) {
+          if (!this.isEnabled) return; // ★ 無効なら、何もしない
         if (!gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
         
         gameObject.setInteractive();
@@ -41,6 +76,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     updatePropertyPanel() {
+          if (!this.isEnabled) return; // ★ 無効なら、何もしない
         if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
         this.editorPropsContainer.innerHTML = '';
         if (!this.selectedObject) {
@@ -94,6 +130,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     exportLayoutToJson() {
+          if (!this.isEnabled) return; // ★ 無効なら、何もしない
         if (!this.selectedObject || !this.selectedObject.scene) {
             alert("Please select an object in the scene you want to export.");
             return;
