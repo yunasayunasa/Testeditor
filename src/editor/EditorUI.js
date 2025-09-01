@@ -1,18 +1,18 @@
 // src/editor/EditorUI.js (真の最終・完成版)
 
-export default class EditorUI {
-    
 
-          constructor(game, editorPlugin) {
+     export default class EditorUI {
+    constructor(game, editorPlugin) {
         this.game = game;
         this.plugin = editorPlugin;
+        this.assetListContainer = document.getElementById('asset-list');
+        
+        // ★★★ 新しいプロパティ: 選択されたアセットのキーを記憶する ★★★
+        this.selectedAssetKey = null;
 
-        // ★★★ 修正点: 二重呼び出しをなくす ★★★
-        const currentURL = window.location.href;
-        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) {
-            return;
-        }
-this.populateAssetBrowser();
+        this.populateAssetBrowser();
+        // this.initDragAndDrop(); // ← これはもう使わない
+    
         // --- ここから先は、デバッグモードが確定した場合のみ実行される ---
         console.warn("[EditorUI] Debug mode activated. Initializing UI...");
 
@@ -37,7 +37,16 @@ this.populateAssetBrowser();
             const itemDiv = document.createElement('div');
             itemDiv.className = 'asset-item';
             itemDiv.dataset.assetKey = asset.key;
-            itemDiv.draggable = true;
+               // ★★★ 変更点1: draggable=trueを削除し、クリックイベントを追加 ★★★
+            itemDiv.addEventListener('click', () => {
+                // 他のアイテムの選択状態を解除
+                this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
+                // このアイテムを選択状態にする
+                itemDiv.classList.add('selected');
+                // 選択されたアセットのキーを記憶
+                this.selectedAssetKey = asset.key;
+                console.log(`[EditorUI] Asset selected: ${this.selectedAssetKey}`);
+            });
             const previewImg = document.createElement('img');
             previewImg.className = 'asset-preview';
             previewImg.src = asset.path;
@@ -48,6 +57,33 @@ this.populateAssetBrowser();
             itemDiv.appendChild(keySpan);
             this.assetListContainer.appendChild(itemDiv);
         }
+    }
+   // ★★★ initDragAndDropの代わりに、このメソッドを呼び出す ★★★
+    // (これはEditorPluginから呼び出す)
+    onAddButtonClicked() {
+        if (!this.selectedAssetKey) {
+            alert('Please select an asset from the browser first.');
+            return;
+        }
+
+        const pointer = this.game.input.activePointer;
+        // ターゲットシーンを決定（今回はGameSceneに固定する、より安全な方法）
+        const targetScene = this.game.scene.getScene('GameScene'); 
+        if (!targetScene) return;
+
+        // シーンの中央など、分かりやすい位置に生成
+        const centerX = targetScene.cameras.main.centerX;
+        const centerY = targetScene.cameras.main.centerY;
+        
+        const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, this.selectedAssetKey);
+        newImage.name = `${this.selectedAssetKey}_${Date.now()}`;
+        
+        if (targetScene.initializeObject) {
+            targetScene.initializeObject(newImage);
+        }
+
+        this.plugin.selectedObject = newImage;
+        this.plugin.updatePropertyPanel();
     }
 
     initDragAndDrop() {

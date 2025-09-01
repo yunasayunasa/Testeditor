@@ -44,8 +44,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
 
-        
-    }
+        const addButton = document.getElementById('add-asset-button');
+        if (addButton) {
+            addButton.addEventListener('click', () => {
+                // EditorUIのメソッドを呼び出す
+                // (SystemSceneから渡されたEditorUIのインスタンスを保持しておく必要がある)
+                if (this.editorUI) {
+                    this.editorUI.onAddButtonClicked();
+                }
+            });
+        }
+    } 
+    
 
     makeEditable(gameObject, scene) {
           if (!this.isEnabled) return; // ★ 無効なら、何もしない
