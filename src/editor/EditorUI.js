@@ -1,31 +1,34 @@
-// src/editor/EditorUI.js
+// src/editor/EditorUI.js (真の最終・完成版)
 
 export default class EditorUI {
     constructor(game, editorPlugin) {
         this.game = game;
         this.plugin = editorPlugin;
 
-        // --- HTML要素の取得 ---
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、あなたが提案した完璧な解決策です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. EditorUI自身が、URLを直接チェックする
+        const currentURL = window.location.href;
+        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
+
+        // 2. もしURLにパラメータがなければ、何もしないで終了
+        if (!hasDebugParameter) {
+            console.log("[EditorUI] Debug parameter not found. UI remains hidden.");
+            return;
+        }
+
+        // --- ここから先は、デバッグモードが確定した場合のみ実行される ---
+        console.warn("[EditorUI] Debug mode activated. Initializing UI...");
+
+        // 3. HTML要素を取得し、表示する
         this.editorPanel = document.getElementById('editor-panel');
         this.assetBrowserPanel = document.getElementById('asset-browser');
-        // (トグルボタンはもうないので削除)
-
-        // ★★★ 変更点1: 初期状態では、パネルを非表示にしておく ★★★
-        if (this.editorPanel) this.editorPanel.style.display = 'none';
-        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'none';
-    }
-
-    /**
-     * ★★★ 新規メソッド: エディタUIを起動し、表示する ★★★
-     */
-    run() {
-        console.log("[EditorUI] Running...");
-
-        // --- パネルを表示状態にする ---
-        if (this.editorPanel) this.editorPanel.style.display = 'flex'; // 'block'から'flex'に変更
+        if (this.editorPanel) this.editorPanel.style.display = 'flex';
         if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
 
-        // --- 各機能の初期化 ---
+        // 4. 各機能の初期化を、安全なタイミングで実行
         this.assetListContainer = document.getElementById('asset-list');
         this.populateAssetBrowser();
         this.initDragAndDrop();

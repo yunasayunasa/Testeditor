@@ -1,4 +1,4 @@
-import EditorUI from '../editor/EditorUI.js'; // ★ EditorUIをインポート
+
 
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
@@ -36,11 +36,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         // --- ここから先は、デバッグモードが確定した場合のみ実行される ---
         console.warn("[EditorPlugin] Debug mode activated. Initializing editor...");
         this.isEnabled = true; // 3. 自身を有効化
- // 1. EditorUIのインスタンスを生成
-        const editorUI = new EditorUI(this.pluginManager.game, this);
 
-        // 2. EditorUIの「起動メソッド」を呼び出す
-        editorUI.run();
     
         // 4. HTML要素への参照を取得
         this.editorPanel = document.getElementById('editor-panel');
