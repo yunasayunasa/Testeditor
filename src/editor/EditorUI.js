@@ -60,70 +60,47 @@
     }
    // ★★★ initDragAndDropの代わりに、このメソッドを呼び出す ★★★
     // (これはEditorPluginから呼び出す)
-    onAddButtonClicked() {
+     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
             alert('Please select an asset from the browser first.');
             return;
         }
 
-        const pointer = this.game.input.activePointer;
-        // ターゲットシーンを決定（今回はGameSceneに固定する、より安全な方法）
         const targetScene = this.game.scene.getScene('GameScene'); 
-        if (!targetScene) return;
+        if (!targetScene || !targetScene.initializeObject) {
+             console.error("[EditorUI] Target scene 'GameScene' or its 'initializeObject' method not found.");
+             return;
+        }
 
-        // シーンの中央など、分かりやすい位置に生成
         const centerX = targetScene.cameras.main.centerX;
         const centerY = targetScene.cameras.main.centerY;
         
-        const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, this.selectedAssetKey);
-        newImage.name = `${this.selectedAssetKey}_${Date.now()}`;
-        
-        if (targetScene.initializeObject) {
-            targetScene.initializeObject(newImage);
-        }
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、あなたのエンジンに敬意を払った、最後のコードです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
+        // 1. まず、「空っぽの画像オブジェクト」を、メモリ上に生成するだけ
+        //    '__DEFAULT' は、Phaserに組み込まれた真っ白な仮テクスチャです
+        const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, '__DEFAULT');
+
+        // 2. この「生の」オブジェクトと、これから適用してほしい「設計図(layout)」を、
+        //    GameSceneのinitializeObjectメソッドに、そのまま渡す
+        targetScene.initializeObject(newImage, {
+            name: `${this.selectedAssetKey}_${Date.now()}`,
+            texture: this.selectedAssetKey, // ★ どのテクスチャを使ってほしいかを伝える
+            x: centerX,
+            y: centerY,
+            scaleX: 1,
+            scaleY: 1,
+            angle: 0,
+            alpha: 1,
+            visible: true
+        });
+
+        // 3. 最後に、選択状態にしてパネルを更新
         this.plugin.selectedObject = newImage;
         this.plugin.updatePropertyPanel();
     }
 
-    initDragAndDrop() {
-        document.addEventListener('dragstart', (event) => {
-            const assetItem = event.target.closest('.asset-item');
-            if (assetItem) {
-                event.dataTransfer.setData('text/plain', assetItem.dataset.assetKey);
-                event.dataTransfer.effectAllowed = 'copy';
-            }
-        });
-        const gameCanvas = this.game.canvas;
-        gameCanvas.addEventListener('dragover', (event) => event.preventDefault());
-        gameCanvas.addEventListener('drop', (event) => {
-            event.preventDefault();
-            const assetKey = event.dataTransfer.getData('text/plain');
-            if (!assetKey) return;
-            const pointer = this.game.input.activePointer;
-            const scenes = this.game.scene.getScenes(true);
-            let targetScene = null;
-            for (let i = scenes.length - 1; i >= 0; i--) {
-                const scene = scenes[i];
-                if (scene.cameras.main.worldView.contains(pointer.x, pointer.y)) {
-                    targetScene = scene;
-                    break;
-                }
-            }
-            if (targetScene) {
-                  const newImage = new Phaser.GameObjects.Image(targetScene, pointer.worldX, pointer.worldY, assetKey);
-                
-                // 2. オブジェクトにユニークな名前を付ける
-                newImage.name = `${assetKey}_${Date.now()}`;
-                
-                // 3. シーンの初期化メソッドに、生成したオブジェクトを渡す
-                //    レイヤーへの「追加」は、このメソッドの中で一度だけ行われる
-                targetScene.initializeObject(newImage);
-
-                // 4. 最後に、選択状態にしてパネルを更新
-                this.plugin.selectedObject = newImage;
-                this.plugin.updatePropertyPanel();
-            }
-        });
-    }
+  
 }

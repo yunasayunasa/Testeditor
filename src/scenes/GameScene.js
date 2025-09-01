@@ -186,6 +186,10 @@ export default class GameScene extends Phaser.Scene {
         // --- ステップ1: レイアウトデータがあれば、それでプロパティを上書き ---
         if (layout) {
             gameObject.name = layout.name;
+             if (layout.texture) {
+                gameObject.setTexture(layout.texture);
+            }
+            gameObject.setPosition(layout.x, layout.y);
             gameObject.setPosition(layout.x, layout.y);
             gameObject.setScale(layout.scaleX, layout.scaleY);
             gameObject.setAngle(layout.angle);
