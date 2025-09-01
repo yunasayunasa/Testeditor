@@ -174,15 +174,16 @@ export default class GameScene extends Phaser.Scene {
     super.shutdown(); // Phaser.Sceneの親シャットダウン処理を呼ぶ
 }
 
-     /**
-     * ★★★ 新規メソッド (applyPropertiesの進化形) ★★★
-     * D&DとJSONロード、両方から呼び出される、唯一のオブジェクト初期化メソッド
+   // src/scenes/GameScene.js
+
+    /**
+     * D&DとJSONロード、両方から呼び出される、唯一のオブジェクト初期化メソッド (最終確定版)
      * @param {Phaser.GameObjects.GameObject} gameObject - 対象のオブジェクト
      * @param {object} layout - (オプション) JSONから読み込んだレイアウトデータ
      */
     initializeObject(gameObject, layout = null) {
         
-        // レイアウトデータがあれば、それでプロパティを上書き
+        // --- ステップ1: レイアウトデータがあれば、それでプロパティを上書き ---
         if (layout) {
             gameObject.name = layout.name;
             gameObject.setPosition(layout.x, layout.y);
@@ -192,19 +193,27 @@ export default class GameScene extends Phaser.Scene {
             if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
         }
 
-        // 適切なレイヤーに振り分ける
+        // --- ステップ2: 適切なレイヤーに振り分ける ---
         if (gameObject.name && gameObject.name.startsWith('bg_')) {
             if(this.layer.background) this.layer.background.add(gameObject);
         } else {
+            // message_window も characterレイヤー以外が適切かもしれないが、一旦ここに
             if(this.layer.character) this.layer.character.add(gameObject);
         }
         
-      
+        // --- ステップ3: インタラクティブ化とエディタ登録 ---
+        gameObject.setInteractive();
         const editor = this.plugins.get('EditorPlugin');
-        
-        
-        // ★★★ これが物理情報を反映させるコードです ★★★
-        if (layout.physics) {
+        if (editor) {
+            editor.makeEditable(gameObject, this);
+        }
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、エラーを解決する最後の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- ステップ4: 物理ボディの適用 (レイアウトデータが存在する場合のみ) ---
+        if (layout && layout.physics) {
             const phys = layout.physics;
             this.physics.add.existing(gameObject, phys.isStatic || false);
             if(gameObject.body) {
@@ -216,13 +225,6 @@ export default class GameScene extends Phaser.Scene {
                 }
                 gameObject.body.collideWorldBounds = phys.collideWorldBounds;
             }
-        }
-        gameObject.setInteractive();
-
-        // 2. エディタプラグインに、このオブジェクトを編集可能として登録する
-        
-        if (editor) {
-            editor.makeEditable(gameObject, this);
         }
     }
     
