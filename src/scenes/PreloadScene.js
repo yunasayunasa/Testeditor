@@ -59,7 +59,10 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.text('test.ks', 'assets/test.ks');
         this.load.text('test_main.ks', 'assets/test_main.ks');
         this.load.text('test_sub.ks', 'assets/test_sub.ks');
-
+ // シーン定義JSONをロード
+    this.load.json('GameScene', 'assets/data/scenes/GameScene.json');
+    this.load.json('UIScene', 'assets/data/scenes/UIScene.json');
+    this.load.json('JumpScene', 'assets/data/scenes/JumpScene.json');
         // --- 全てのアセットのロード完了後の処理を定義 ---
         this.load.once('complete', () => {
             console.log("PreloadScene: 全アセットロード完了。");

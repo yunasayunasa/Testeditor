@@ -81,7 +81,36 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager = new ScenarioManager(this, this.layer, this.charaDefs, this.messageWindow, this.soundManager, this.stateManager, this.configManager);
   // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
      
+ // --- 1. シーン専用のレイアウトJSONを読み込む ---
+        const sceneKey = this.scene.key;
+        // PreloadSceneで全シーンのJSONをロードしておくのが理想だが、
+        // このシーンで直接ロードする形でも動作する
+        await new Promise(resolve => {
+            this.load.json(sceneKey, `assets/data/scenes/${sceneKey}.json`);
+            this.load.once(`filecomplete-json-${sceneKey}`, resolve);
+            this.load.start();
+        });
 
+        const layoutData = this.cache.json.get(sceneKey);
+
+        if (layoutData && layoutData.objects) {
+            console.log(`[${sceneKey}] Building scene from layout data...`);
+            for (const layout of layoutData.objects) {
+                // 1-1. オブジェクトを生成し、正しいレイヤーに追加
+                const textureKey = layout.texture || layout.name.split('_')[0];
+                const gameObject = this.add.image(layout.x, layout.y, textureKey);
+                
+                if (layout.name.startsWith('bg_')) {
+                    this.layer.background.add(gameObject);
+                } else {
+                    this.layer.character.add(gameObject);
+                }
+
+                // 1-2. プロパティを適用する
+                this.applyProperties(gameObject, layout); // ★ applyPropertiesヘルパーが必要
+            }
+        }
+        
         // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
         this.input.once('pointerdown', () => {
             if (this.soundManager) {
@@ -169,6 +198,36 @@ export default class GameScene extends Phaser.Scene {
     
     super.shutdown(); // Phaser.Sceneの親シャットダウン処理を呼ぶ
 }
+
+ /**
+     * ★★★ 新規メソッド ★★★
+     * オブジェクトに、JSONから読み込んだプロパティを適用する
+     */
+    applyProperties(gameObject, layout) {
+        gameObject.name = layout.name;
+        
+        // Transformプロパティを適用
+        gameObject.setPosition(layout.x, layout.y);
+        gameObject.setScale(layout.scaleX, layout.scaleY);
+        gameObject.setAngle(layout.angle);
+        gameObject.setAlpha(layout.alpha);
+        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
+        
+        // ★★★ これが物理情報を反映させるコードです ★★★
+        if (layout.physics) {
+            const phys = layout.physics;
+            this.physics.add.existing(gameObject, phys.isStatic || false);
+            if(gameObject.body) {
+                if (!gameObject.body.isStatic) {
+                    gameObject.body.setSize(phys.width, phys.height);
+                    gameObject.body.setOffset(phys.offsetX, phys.offsetY);
+                    gameObject.body.allowGravity = phys.allowGravity;
+                    gameObject.body.bounce.setTo(phys.bounceX, phys.bounceY);
+                }
+                gameObject.body.collideWorldBounds = phys.collideWorldBounds;
+            }
+        }
+    }
 
       // ★★★ 修正箇所: onFVariableChanged, updatePlayerHpBar, updateCoinHudを削除し、onFVariableChangedに一本化 ★★★
     onFVariableChanged(key, value) {

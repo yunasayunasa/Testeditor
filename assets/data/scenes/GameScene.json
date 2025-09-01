@@ -1,0 +1,26 @@
+
+{
+  "objects": [
+    {
+      "name": "bg_school",
+      "texture": "bg_school",
+      "x": 640,
+      "y": 360,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "yuna_normal",
+      "texture": "yuna_normal",
+      "x": 640,
+      "y": 450,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "visible": false 
+    }
+  ]
+}
