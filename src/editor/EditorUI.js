@@ -25,7 +25,7 @@
         // 4. 各機能の初期化を、安全なタイミングで実行
         this.assetListContainer = document.getElementById('asset-list');
         this.populateAssetBrowser();
-        this.initDragAndDrop();
+        
     }
 
     populateAssetBrowser() {
