@@ -77,7 +77,7 @@ export default class GameScene extends Phaser.Scene {
            // ★★★ 修正箇所: SoundManagerをnewするのではなく、Registryから取得 ★★★
         this.soundManager = this.sys.registry.get('soundManager');
         this.messageWindow = new MessageWindow(this, this.soundManager, this.configManager);
-       // this.layer.message.add(this.messageWindow); 
+        this.layer.message.add(this.messageWindow); 
         this.scenarioManager = new ScenarioManager(this, this.layer, this.charaDefs, this.messageWindow, this.soundManager, this.stateManager, this.configManager);
   // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
      
