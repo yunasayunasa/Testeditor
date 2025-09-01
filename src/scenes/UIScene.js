@@ -92,7 +92,32 @@ export default class UIScene extends Phaser.Scene {
         this.playerHpBar = new HpBar(this, { x: 100, y: 100, width: 200, height: 25, type: 'player', stateManager: stateManager });
         // BattleSceneにしか出てこない敵HPバーもここで作ってしまう
         this.enemyHpBar = new HpBar(this, { x: this.scale.width - 100 - 250, y: 100, width: 250, height: 25, type: 'enemy', stateManager: stateManager });
+ // 1. GameSceneのインスタンスを取得する
+        const gameScene = this.scene.get('GameScene');
 
+        // 2. GameSceneがメッセージウィンドウを持っているか確認
+        if (gameScene && gameScene.messageWindow) {
+            
+            // 3. GameSceneの表示リストから、メッセージウィンドウを「取り除く」
+            //    (messageWindowはContainerなので、GameSceneのルートにいるはず)
+            gameScene.children.remove(gameScene.messageWindow);
+
+            // 4. UISceneの表示リストに、そのメッセージウィンドウを「追加」する
+            this.add.existing(gameScene.messageWindow);
+            
+            // 5. 念のため、最前面に表示されるようにDepthを設定
+            gameScene.messageWindow.setDepth(100);
+
+            // 6. エディタに登録
+            const editor = this.plugins.get('EditorPlugin');
+            if (editor) {
+                gameScene.messageWindow.name = 'message_window';
+                gameScene.messageWindow.setSize(1280, 180);
+                editor.makeEditable(gameScene.messageWindow, this); // ★ シーンはUISceneとして登録
+            }
+            
+            console.log("[UIScene] MessageWindow has been moved to the top layer.");
+        }
         // --- SystemSceneからの通知を受け取るリスナー ---
         const systemScene = this.scene.get('SystemScene');
         systemScene.events.on('transition-complete', this.onSceneTransition, this);
@@ -143,6 +168,8 @@ export default class UIScene extends Phaser.Scene {
             editor.makeEditable(this.playerHpBar, this);
             editor.makeEditable(this.enemyHpBar, this);
         }
+
+
         
         console.log("UI作成完了");
     } // createメソッドの終わり
