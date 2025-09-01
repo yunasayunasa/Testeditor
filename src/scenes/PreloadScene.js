@@ -1,22 +1,18 @@
-// src/scenes/PreloadScene.js (フリーズ問題を解決するための修正)
+// src/scenes/PreloadScene.js (真の最終確定・完成版)
 
 import ConfigManager from '../core/ConfigManager.js';
 import StateManager from '../core/StateManager.js';
-import SoundManager from '../core/SoundManager.js';
 
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
-        // ★★★ 修正箇所: active: true を追加し、このシーンを自動起動させる ★★★
         super({ key: 'PreloadScene', active: true });
-        
-        // UI要素への参照を初期化 (stop()で破棄するため)
         this.progressBar = null;
         this.progressBox = null;
         this.percentText = null;
         this.loadingText = null;
     }
 
-    preload() {
+    async preload() {
         console.log("PreloadScene: 起動。全アセットのロードを開始します。");
         
         // --- 1. ロード画面UIの表示 ---
@@ -26,89 +22,107 @@ export default class PreloadScene extends Phaser.Scene {
         this.percentText = this.add.text(640, 345, '0%', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
         this.loadingText = this.add.text(640, 280, 'Now Loading...', { fontSize: '36px', fill: '#ffffff' }).setOrigin(0.5);
         
+        // ★★★ 変更点1: ロード全体の進捗を監視するリスナー ★★★
         this.load.on('progress', (value) => {
             if (this.percentText) this.percentText.setText(parseInt(value * 100) + '%');
             if (this.progressBar) this.progressBar.clear().fillStyle(0xffffff, 1).fillRect(350, 330, 580 * value, 30);
         });
         
-        // --- 2. 最初に必要なアセットのみをロード ---
+        // --- 2. 最初に asset_define.json だけをロードし、完了を待つ ---
         this.load.json('asset_define', 'assets/asset_define.json');
+        
+        // ★★★ 変更点2: ここで一度、小規模なロードを開始・待機する ★★★
+        await new Promise(resolve => {
+            this.load.once('complete', resolve);
+            this.load.start();
+        });
+        
+        console.log("[PreloadScene] asset_define.json loaded.");
+        const assetDefine = this.cache.json.get('asset_define');
+
+        // --- 3. フォルダ内のファイルリストを非同期で取得 ---
+        const scenarioFiles = await this.fetchFileList(assetDefine.scenarios ? assetDefine.scenarios.path : null);
+        const sceneDataFiles = await this.fetchFileList(assetDefine.scene_data ? assetDefine.scene_data.path : null);
+
+        // --- 4. 取得したリストと定義を元に、残りの全てのアセットをロードキューに追加 ---
+        if (assetDefine.images) { for (const key in assetDefine.images) { this.load.image(key, assetDefine.images[key]); } }
+        if (assetDefine.sounds) { for (const key in assetDefine.sounds) { this.load.audio(key, assetDefine.sounds[key]); } }
+        
+        if (scenarioFiles.length > 0) {
+            for (const file of scenarioFiles) {
+                if(!file.endsWith('.ks')) continue;
+                const key = file.replace('.ks', '');
+                this.load.text(key, `${assetDefine.scenarios.path}${file}`);
+            }
+        }
+        if (sceneDataFiles.length > 0) {
+            for (const file of sceneDataFiles) {
+                if(!file.endsWith('.json')) continue;
+                const key = file.replace('.json', '');
+                this.load.json(key, `${assetDefine.scene_data.path}${file}`);
+            }
+        }
+
+        // Webフォントなどの、リストに含まれない他のアセット
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     }
 
     create() {
-           console.log("PreloadScene: create開始。コアマネージャーを初期化します。");
+        console.log("PreloadScene: create開始。全アセットロード完了。");
         
-        // --- ConfigManagerとStateManagerを生成し、Registryに登録 ---
+        // --- 1. コアマネージャーの初期化 ---
         const configManager = new ConfigManager();
         this.sys.registry.set('configManager', configManager);
-        
         const stateManager = new StateManager();
         this.sys.registry.set('stateManager', stateManager);
-        // --- asset_define.jsonに基づいて残りのアセットをロードキューに追加 ---
-        const assetDefine = this.cache.json.get('asset_define');
-        // --- フォルダ内のファイルリストを非同期で取得 ---
-        const scenarioFiles = await this.fetchFileList(assetDefine.scenarios.path);
-        const sceneDataFiles = await this.fetchFileList(assetDefine.scene_data.path);
 
-        // --- 取得したリストと定義を元に、全てのアセットをロードキューに追加 ---
-        for (const key in assetDefine.images) { this.load.image(key, assetDefine.images[key]); }
-        for (const key in assetDefine.sounds) { this.load.audio(key, assetDefine.sounds[key]); }
+        // --- 2. 派生データの生成 ---
+        const assetDefine = this.cache.json.get('asset_define');
         
-        for (const file of scenarioFiles) {
-            const key = file.replace('.ks', '');
-            this.load.text(key, `${assetDefine.scenarios.path}${file}`);
-        }
-        for (const file of sceneDataFiles) {
-            const key = file.replace('.json', '');
-            this.load.json(key, `${assetDefine.scene_data.path}${file}`);
-        }
-        // --- 全てのアセットのロード完了後の処理を定義 ---
-        this.load.once('complete', () => {
-            console.log("PreloadScene: 全アセットロード完了。");
-            
-            // キャラクター定義の生成
-            const charaDefs = {};
+        // キャラクター定義の生成
+        const charaDefs = {};
+        if (assetDefine.images) {
             for (const key in assetDefine.images) {
                 const parts = key.split('_');
-                if (parts.length === 2) {
+                if (parts.length >= 2) {
                     const [charaName, faceName] = parts;
                     if (!charaDefs[charaName]) charaDefs[charaName] = { jname: charaName, face: {} };
                     charaDefs[charaName].face[faceName] = key;
                 }
             }
-            const assetList = [];
+        }
+        
+        // グローバルなアセットリストの生成
+        const assetList = [];
+        if (assetDefine.images) {
             for (const key in assetDefine.images) {
                 assetList.push({ key: key, type: 'image', path: assetDefine.images[key] });
             }
-            // ... (sounds, videosなども同様に追加)
-            this.registry.set('asset_list', assetList);
-            console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
-            // SystemSceneを起動し、そのCREATEイベントを待ってから依存関係を解決する
-              this.scene.launch('SystemScene', { initialGameData: {
-                charaDefs: charaDefs,
-                startScenario: 'test.ks'
-            }});
-            
-            // 自身の役目は終わったので停止する
-            this.scene.stop(this.scene.key);
-        });
+        }
+        if (assetDefine.sounds) {
+             for (const key in assetDefine.sounds) {
+                assetList.push({ key: key, type: 'sound', path: assetDefine.sounds[key] });
+            }
+        }
+        this.registry.set('asset_list', assetList);
+        console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
         
-        this.load.start();
+        // --- 3. SystemSceneの起動 ---
+        this.scene.launch('SystemScene', { initialGameData: {
+            charaDefs: charaDefs,
+            startScenario: 'test' // .ksは不要
+        }});
+        
+        // 自身の役目は終わったので停止する
+        this.scene.stop(this.scene.key);
     }
-      /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * サーバーに問い合わせて、指定されたディレクトリのファイル一覧を取得する
-     * @param {string} dirPath - 調査するディレクトリのパス
-     * @returns {Promise<string[]>} ファイル名の配列
-     */
+
     async fetchFileList(dirPath) {
+        if (!dirPath) return [];
         try {
             const response = await fetch(`filelist.php?dir=${dirPath}`);
             if (!response.ok) return [];
-            const fileList = await response.json();
-            console.log(`[PreloadScene] Fetched ${fileList.length} files from ${dirPath}`);
-            return fileList;
+            return await response.json();
         } catch (error) {
             console.error(`[PreloadScene] Failed to fetch file list for ${dirPath}`, error);
             return [];
