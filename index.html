@@ -110,6 +110,10 @@
             font-size: 14px;
         }
         #editor-props button:hover { background-color: #1177bb; }
+        /* デフォルトでは、エディタUIを「非表示」にする */
+body:not(.debug-mode) #editor-ui-container {
+    display: none;
+}
     </style>
 </head>
 <body>

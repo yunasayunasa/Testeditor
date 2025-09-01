@@ -22,6 +22,15 @@ export default class SystemScene extends Phaser.Scene {
         this.sys.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
         console.log("SystemScene: SoundManagerを生成・登録しました。");
+ const currentURL = window.location.href;
+        if (currentURL.includes('?debug=true') || currentURL.includes('&debug=true')) {
+            // もしデバッグモードなら、<body>タグに 'debug-mode' というクラスを追加する
+            document.body.classList.add('debug-mode');
+            
+            // EditorPluginとEditorUIは、これまで通り起動する
+            const editorPlugin = this.plugins.start('EditorPlugin');
+            new EditorUI(this.game, editorPlugin);
+        }
 
         // --- イベントリスナーを登録 ---
         this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
