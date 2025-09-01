@@ -82,19 +82,20 @@ this.populateAssetBrowser();
             }
             if (targetScene) {
                 const newImage = targetScene.add.image(pointer.worldX, pointer.worldY, assetKey);
+                // 1. まず、オブジェクトにユニークな名前を付ける
                 newImage.name = `${assetKey}_${Date.now()}`;
-                targetScene.applyProperties(newImage, {
-        name: newImage.name,
-        texture: newImage.texture.key,
-        x: newImage.x,
-y: newImage.y,
-        scaleX: 1, scaleY: 1, angle: 0, alpha: 1
-    });
+                
+                // 2. シーンが持つ「オブジェクト初期化メソッド」を呼び出す
+                //    これにより、オブジェクトはインタラクティブになり、エディタに登録される
+                if (targetScene.initializeObject) {
+                    targetScene.initializeObject(newImage);
+                }
 
-                this.plugin.makeEditable(newImage, targetScene);
+                // 3. 最後に、選択状態にしてパネルを更新
                 this.plugin.selectedObject = newImage;
                 this.plugin.updatePropertyPanel();
             }
         });
+             
     }
 }

@@ -92,7 +92,9 @@ export default class GameScene extends Phaser.Scene {
                 // 1-1. オブジェクトを生成し、正しいレイヤーに追加
                 const textureKey = layout.texture || layout.name.split('_')[0];
                 const gameObject = this.add.image(layout.x, layout.y, textureKey);
-                
+                 this.initializeObject(gameObject, layout);
+            
+        
                 if (layout.name.startsWith('bg_')) {
                     this.layer.background.add(gameObject);
                 } else {
@@ -191,20 +193,37 @@ export default class GameScene extends Phaser.Scene {
     super.shutdown(); // Phaser.Sceneの親シャットダウン処理を呼ぶ
 }
 
- /**
-     * ★★★ 新規メソッド ★★★
-     * オブジェクトに、JSONから読み込んだプロパティを適用する
-     * このコードをコピーして各種レイアウトや物理エンジンをに使用する。
+     /**
+     * ★★★ 新規メソッド (applyPropertiesの進化形) ★★★
+     * D&DとJSONロード、両方から呼び出される、唯一のオブジェクト初期化メソッド
+     * @param {Phaser.GameObjects.GameObject} gameObject - 対象のオブジェクト
+     * @param {object} layout - (オプション) JSONから読み込んだレイアウトデータ
      */
-    applyProperties(gameObject, layout) {
-        gameObject.name = layout.name;
+    initializeObject(gameObject, layout = null) {
         
-        // Transformプロパティを適用
-        gameObject.setPosition(layout.x, layout.y);
-        gameObject.setScale(layout.scaleX, layout.scaleY);
-        gameObject.setAngle(layout.angle);
-        gameObject.setAlpha(layout.alpha);
-        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
+        // レイアウトデータがあれば、それでプロパティを上書き
+        if (layout) {
+            gameObject.name = layout.name;
+            gameObject.setPosition(layout.x, layout.y);
+            gameObject.setScale(layout.scaleX, layout.scaleY);
+            gameObject.setAngle(layout.angle);
+            gameObject.setAlpha(layout.alpha);
+            if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
+        }
+
+        // 適切なレイヤーに振り分ける
+        if (gameObject.name && gameObject.name.startsWith('bg_')) {
+            if(this.layer.background) this.layer.background.add(gameObject);
+        } else {
+            if(this.layer.character) this.layer.character.add(gameObject);
+        }
+        
+        // インタラクティブ化とエディタ登録
+        gameObject.setInteractive();
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor) {
+            editor.makeEditable(gameObject, this);
+        }
         
         // ★★★ これが物理情報を反映させるコードです ★★★
         if (layout.physics) {
@@ -223,7 +242,7 @@ export default class GameScene extends Phaser.Scene {
         gameObject.setInteractive();
 
         // 2. エディタプラグインに、このオブジェクトを編集可能として登録する
-        const editor = this.plugins.get('EditorPlugin');
+        
         if (editor) {
             editor.makeEditable(gameObject, this);
         }
