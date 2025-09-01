@@ -43,8 +43,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
 
-        // 5. EditorUIを起動する
-        new EditorUI(this.pluginManager.game, this);
+        
     }
 
     makeEditable(gameObject, scene) {
