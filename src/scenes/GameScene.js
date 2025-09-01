@@ -52,7 +52,7 @@ export default class GameScene extends Phaser.Scene {
 
    // src/scenes/GameScene.js の create() メソッドの正しい形
 
-         create() { 
+        async create() { 
             
             console.log("GameScene: クリエイト処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
@@ -61,7 +61,7 @@ export default class GameScene extends Phaser.Scene {
         this.layer.background = this.add.container(0, 0).setDepth(0);
         this.layer.cg = this.add.container(0, 0).setDepth(5);
         this.layer.character = this.add.container(0, 0).setDepth(10);
-        this.layer.message = this.add.container(0, 0).setDepth(100);
+        this.layer.message = this.add.container(0, 0).setDepth(20);
 
         // --- 入力ブロッカー ---
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000000, 0.001)
@@ -81,32 +81,7 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager = new ScenarioManager(this, this.layer, this.charaDefs, this.messageWindow, this.soundManager, this.stateManager, this.configManager);
   // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
      
-   // --- 2. データ駆動のレイアウト適用 ---
-        const sceneKey = this.scene.key;
-        const layoutData = this.cache.json.get(sceneKey); 
-        if (layoutData && layoutData.objects) {
-            console.log(`[${sceneKey}] Building scene from layout data...`);
-            for (const layout of layoutData.objects) {
-             // 2-1. 「new」を使って、オブジェクトをメモリ上に「生成」するだけ
-                const textureKey = layout.texture || layout.name.split('_')[0];
-                const gameObject = new Phaser.GameObjects.Image(this, 0, 0, textureKey);
-                
-                // 2-2. 生成した「生」のオブジェクトを、初期化メソッドに渡す
-                this.initializeObject(gameObject, layout);
-            }
-        }
-        
-        // ★★★ 初期化プロセスの統一 ★★★
-        if (this.messageWindow) {
-            this.messageWindow.name = 'message_window';
-            this.messageWindow.setSize(1280, 180);
-            this.initializeObject(this.messageWindow, {
-                name: 'message_window', x: this.messageWindow.x, y: this.messageWindow.y,
-                scaleX: 1, scaleY: 1, angle: 0, alpha: 1
-            });
-        }
 
-        
         // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
         this.input.once('pointerdown', () => {
             if (this.soundManager) {
@@ -124,14 +99,15 @@ export default class GameScene extends Phaser.Scene {
     if (this.isResuming) {
         console.log("GameScene: 復帰処理を開始します。");
         console.log("[LOG-BOMB] GameScene.create: AWAITING performLoad..."); // ★
-        this.performLoad(0, this.returnParams);
-        } else {
-            this.performSave(0);
-            this.scenarioManager.loadScenario(this.startScenario, this.startLabel);
-            this.isSceneFullyReady = true;
+        await this.performLoad(0, this.returnParams);
+        console.log("[LOG-BOMB] GameScene.create: ...performLoad COMPLETED."); // ★
+     } else {
+        console.log("GameScene: 通常起動します。");
+        this.performSave(0);
+        this.scenarioManager.loadScenario(this.startScenario, this.startLabel);
+        this.isSceneFullyReady = true;
 
-
-         
+        // ★★★ 修正の核心 (通常起動時) ★★★
         // イベントの発行を、ごくわずかに（1フレーム後）遅らせる
         this.time.delayedCall(1, () => {
             this.events.emit('gameScene-load-complete');
@@ -177,65 +153,6 @@ export default class GameScene extends Phaser.Scene {
     
     super.shutdown(); // Phaser.Sceneの親シャットダウン処理を呼ぶ
 }
-
-   // src/scenes/GameScene.js
-
-    /**
-     * D&DとJSONロード、両方から呼び出される、唯一のオブジェクト初期化メソッド (最終確定版)
-     * @param {Phaser.GameObjects.GameObject} gameObject - 対象のオブジェクト
-     * @param {object} layout - (オプション) JSONから読み込んだレイアウトデータ
-     */
-    initializeObject(gameObject, layout = null) {
-        
-        // --- ステップ1: レイアウトデータがあれば、それでプロパティを上書き ---
-        if (layout) {
-            gameObject.name = layout.name;
-             if (layout.texture) {
-                gameObject.setTexture(layout.texture);
-            }
-            gameObject.setPosition(layout.x, layout.y);
-            gameObject.setPosition(layout.x, layout.y);
-            gameObject.setScale(layout.scaleX, layout.scaleY);
-            gameObject.setAngle(layout.angle);
-            gameObject.setAlpha(layout.alpha);
-            if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
-        }
-
-        // --- ステップ2: 適切なレイヤーに振り分ける ---
-        if (gameObject.name && gameObject.name.startsWith('bg_')) {
-            if(this.layer.background) this.layer.background.add(gameObject);
-        } else {
-            // message_window も characterレイヤー以外が適切かもしれないが、一旦ここに
-            if(this.layer.character) this.layer.character.add(gameObject);
-        }
-        
-        // --- ステップ3: インタラクティブ化とエディタ登録 ---
-        gameObject.setInteractive();
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor) {
-            editor.makeEditable(gameObject, this);
-        }
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、エラーを解決する最後の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- ステップ4: 物理ボディの適用 (レイアウトデータが存在する場合のみ) ---
-        if (layout && layout.physics) {
-            const phys = layout.physics;
-            this.physics.add.existing(gameObject, phys.isStatic || false);
-            if(gameObject.body) {
-                if (!gameObject.body.isStatic) {
-                    gameObject.body.setSize(phys.width, phys.height);
-                    gameObject.body.setOffset(phys.offsetX, phys.offsetY);
-                    gameObject.body.allowGravity = phys.allowGravity;
-                    gameObject.body.bounce.setTo(phys.bounceX, phys.bounceY);
-                }
-                gameObject.body.collideWorldBounds = phys.collideWorldBounds;
-            }
-        }
-    }
-    
 
       // ★★★ 修正箇所: onFVariableChanged, updatePlayerHpBar, updateCoinHudを削除し、onFVariableChangedに一本化 ★★★
     onFVariableChanged(key, value) {
