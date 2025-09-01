@@ -1,19 +1,19 @@
 {
   "images": {
-    "message_window": "assets/message_window.png",
-     "yuna_normal": "assets/yuna_smile.png",
-      "kaito_normal": "assets/kaito_normal.png" ,
-     "bg_school": "assets/bg_school.jpg" ,
-    "cg01": "assets/event_cg_01.jpg" ,
-     "yuna_angry": "assets/title_button.png",
-     "next_arrow": "assets/next_arrow.png",
-    "roger_normal": "assets/roger_normal.png",
-    "umi": "assets/umi.jpg" ,
+    "message_window": "assets/images/message_window.png",
+     "yuna_normal": "assets/images/yuna_smile.png",
+      "kaito_normal": "assets/images/kaito_normal.png" ,
+     "bg_school": "assets/images/bg_school.jpg" ,
+    "cg01": "assets/images/event_cg_01.jpg" ,
+     "yuna_angry": "assets/images/title_button.png",
+     "next_arrow": "assets/images/next_arrow.png",
+    "roger_normal": "assets/images/roger_normal.png",
+    "umi": "assets/images/umi.jpg" ,
  "item_sword": "assets/item/sword.png" ,
 "item_shield": "assets/item/shield.png" ,
 "item_potion": "assets/item/potion.png" ,
-     "enzan": "assets/enzan.jpg" ,
-     "enzan2": "assets/enzan2.png"
+     "enzan": "assets/images/enzan.jpg" ,
+     "enzan2": "assets/images/enzan2.png"
   },
   "sounds": {
 "popopo": "assets/gyakuten_popopo.mp3",
