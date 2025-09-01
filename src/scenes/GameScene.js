@@ -211,6 +211,8 @@ export default class GameScene extends Phaser.Scene {
             if(this.layer.character) this.layer.character.add(gameObject);
         }
         
+      
+        const editor = this.plugins.get('EditorPlugin');
         
         
         // ★★★ これが物理情報を反映させるコードです ★★★
