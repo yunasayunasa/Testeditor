@@ -205,7 +205,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     // --- 以下、UI生成ヘルパーメソッド群 ---
 
     createVector2Input(container, label, initialValue, callback) {
-        container.appendChild(row);
+      
         const row = document.createElement('div');
         const labelEl = document.createElement('label');
         labelEl.innerText = `${label}:`;
@@ -231,7 +231,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     createCheckbox(container, label, initialValue, callback) {
-        container.appendChild(row);
+  
         const row = document.createElement('div');
         const labelEl = document.createElement('label');
         labelEl.innerText = label;
@@ -245,7 +245,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     createRangeInput(container, label, initialValue, min, max, step, callback) {
-        container.appendChild(row);
+
         const row = document.createElement('div');
         const labelEl = document.createElement('label');
         labelEl.innerText = label;
