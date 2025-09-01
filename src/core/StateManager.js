@@ -6,7 +6,26 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         this.f = {};
         this.sf = this.loadSystemVariables(); 
         if (!this.sf.history) this.sf.history = [];
+          // 1. 現在のページの完全なURLを取得する
+        const currentURL = window.location.href;
+
+        // 2. URLの中に '?debug=true' または '&debug=true' という文字列が含まれているか、
+        //    単純な文字列検索でチェックする
+        if (currentURL.includes('?debug=true') || currentURL.includes('&debug=true')) {
+            this.sf.debug_mode = true;
+        } else {
+            this.sf.debug_mode = false;
+        }
+        
+        // ★★★ これで、解釈の余地は一切ありません ★★★
+
+        if (this.sf.debug_mode) {
+            console.warn("[StateManager] Debug mode is ON (activated by URL parameter).");
+        } else {
+            console.log("[StateManager] Debug mode is OFF.");
+        }
     }
+    
       // --- f (ゲーム変数) の管理 ---
 
     /**
