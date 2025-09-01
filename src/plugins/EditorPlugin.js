@@ -121,24 +121,17 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             row.appendChild(input);
             this.editorPropsContainer.appendChild(row);
         }
-        // Exportボタン
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        const exportButton = document.createElement('button');
-        exportButton.innerText = 'Export Layout (to Console)';
-        exportButton.addEventListener('click', () => this.exportLayoutToJson());
-        this.editorPropsContainer.appendChild(exportButton);
-    }
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const physicsTitle = document.createElement('div');
+        physicsTitle.innerText = 'Physics';
+        physicsTitle.style.fontWeight = 'bold';
+        physicsTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(physicsTitle);
 
-       /**
-     * Physicsタブの中身を生成する（最終確定・完成版）
-     */
-    populatePhysicsTab() {
-        this.physicsPropsContainer.innerHTML = '';
         const gameObject = this.selectedObject;
-        if (!gameObject) return;
 
         if (gameObject.body) {
-            // 物理ボディを持っている場合: プロパティ編集UIと「Disable」ボタンを表示
+            // --- ケースA: 物理ボディを持っている場合 ---
             this.createPhysicsPropertiesUI(gameObject);
 
             const removeButton = document.createElement('button');
@@ -148,14 +141,14 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             removeButton.onclick = () => {
                 if (this.selectedObject && this.selectedObject.body) {
                     this.selectedObject.body.destroy();
-                    this.selectedObject.body = null; 
+                    this.selectedObject.body = null;
                     this.updatePropertyPanel();
                 }
             };
-            this.physicsPropsContainer.appendChild(removeButton);
+            this.editorPropsContainer.appendChild(removeButton);
 
         } else {
-            // 物理ボディを持っていない場合: 「Enable」ボタンを表示
+            // --- ケースB: 物理ボディを持っていない場合 ---
             const addButton = document.createElement('button');
             addButton.innerText = 'Enable Arcade Physics';
             addButton.onclick = () => {
@@ -169,18 +162,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     this.updatePropertyPanel();
                 }
             };
-            this.physicsPropsContainer.appendChild(addButton);
+            this.editorPropsContainer.appendChild(addButton);
         }
+        // Exportボタン
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const exportButton = document.createElement('button');
+        exportButton.innerText = 'Export Layout (to Console)';
+        exportButton.addEventListener('click', () => this.exportLayoutToJson());
+        this.editorPropsContainer.appendChild(exportButton);
     }
 
-    /**
+     /**
      * 物理パラメータを編集するためのUIを生成する
      */
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
-        
-        // --- ボディタイプ (Static / Dynamic) の切り替え ---
         const isStatic = body.isStatic;
+        
         this.createCheckbox(this.physicsPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
             if (this.selectedObject) {
                 const targetScene = this.selectedObject.scene;
@@ -193,7 +191,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             }
         });
 
-        // --- 動的ボディの場合のみ、他のプロパティを表示 ---
         const isDynamic = body.moves;
         if (isDynamic) {
             this.createVector2Input(this.physicsPropsContainer, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
@@ -203,25 +200,21 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             this.createRangeInput(this.physicsPropsContainer, 'Bounce Y', body.bounce.y, 0, 1, 0.01, (value) => { if(body) body.bounce.y = value; });
         }
         
-        // --- 共通プロパティ ---
         this.createCheckbox(this.physicsPropsContainer, 'Collide World Bounds', body.collideWorldBounds, (value) => { if(body) body.collideWorldBounds = value; });
     }
 
-    // --- 以下、UI生成のためのヘルパーメソッド群 ---
+    // --- 以下、UI生成ヘルパーメソッド群 ---
 
     createVector2Input(container, label, initialValue, callback) {
         const row = document.createElement('div');
         const labelEl = document.createElement('label');
         labelEl.innerText = `${label}:`;
-        labelEl.style.width = '100px';
         const inputX = document.createElement('input');
         inputX.type = 'number';
         inputX.value = initialValue.x.toFixed(0);
-        inputX.style.width = '60px';
         const inputY = document.createElement('input');
         inputY.type = 'number';
         inputY.value = initialValue.y.toFixed(0);
-        inputY.style.width = '60px';
         const updateValues = () => {
             const x = parseFloat(inputX.value);
             const y = parseFloat(inputY.value);
@@ -241,7 +234,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const row = document.createElement('div');
         const labelEl = document.createElement('label');
         labelEl.innerText = label;
-        labelEl.style.width = '160px';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = initialValue;
@@ -255,14 +247,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const row = document.createElement('div');
         const labelEl = document.createElement('label');
         labelEl.innerText = label;
-        labelEl.style.width = '100px';
         const slider = document.createElement('input');
         slider.type = 'range';
         slider.min = min;
         slider.max = max;
         slider.step = step;
         slider.value = initialValue;
-        slider.style.width = '120px';
         const valueEl = document.createElement('span');
         valueEl.innerText = initialValue.toFixed(2);
         slider.addEventListener('input', () => {
@@ -275,7 +265,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         row.appendChild(valueEl);
         container.appendChild(row);
     }
-
     exportLayoutToJson() {
           if (!this.isEnabled) return; // ★ 無効なら、何もしない
         if (!this.selectedObject || !this.selectedObject.scene) {
