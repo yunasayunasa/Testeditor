@@ -1,7 +1,31 @@
+// src/editor/EditorUI.js
+
 export default class EditorUI {
     constructor(game, editorPlugin) {
         this.game = game;
         this.plugin = editorPlugin;
+
+        // --- HTML要素の取得 ---
+        this.editorPanel = document.getElementById('editor-panel');
+        this.assetBrowserPanel = document.getElementById('asset-browser');
+        // (トグルボタンはもうないので削除)
+
+        // ★★★ 変更点1: 初期状態では、パネルを非表示にしておく ★★★
+        if (this.editorPanel) this.editorPanel.style.display = 'none';
+        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'none';
+    }
+
+    /**
+     * ★★★ 新規メソッド: エディタUIを起動し、表示する ★★★
+     */
+    run() {
+        console.log("[EditorUI] Running...");
+
+        // --- パネルを表示状態にする ---
+        if (this.editorPanel) this.editorPanel.style.display = 'flex'; // 'block'から'flex'に変更
+        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
+
+        // --- 各機能の初期化 ---
         this.assetListContainer = document.getElementById('asset-list');
         this.populateAssetBrowser();
         this.initDragAndDrop();
