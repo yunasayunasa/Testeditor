@@ -280,7 +280,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (gameObject.name) {
                     const objData = { name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)), angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)) };
                     if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
-                    sceneLayoutData.objects.push(objData);
+                    
                     if (gameObject.body) {
                         const body = gameObject.body;
                         objData.physics = {

@@ -81,23 +81,27 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager = new ScenarioManager(this, this.layer, this.charaDefs, this.messageWindow, this.soundManager, this.stateManager, this.configManager);
   // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
      
-   // --- 2. データ駆動のレイアウト適用 (同期版) ---
+   // --- 2. データ駆動のレイアウト適用 ---
         const sceneKey = this.scene.key;
-        // PreloadSceneでロード済みなので、キャッシュから直接取得
         const layoutData = this.cache.json.get(sceneKey); 
-
         if (layoutData && layoutData.objects) {
             console.log(`[${sceneKey}] Building scene from layout data...`);
             for (const layout of layoutData.objects) {
-                // 1-1. オブジェクトを生成し、正しいレイヤーに追加
                 const textureKey = layout.texture || layout.name.split('_')[0];
                 const gameObject = this.add.image(layout.x, layout.y, textureKey);
-                 this.initializeObject(gameObject, layout);
-            
-        
-              
+                // ★ 生成したオブジェクトを、すぐに初期化メソッドに渡す
+                this.initializeObject(gameObject, layout);
             }
         }
+        
+        // ★★★ これが重要な変更点 ★★★
+        // --- JSONで管理されていないオブジェクトも、同じ初期化メソッドを通過させる ---
+        if (this.messageWindow) {
+            this.messageWindow.name = 'message_window';
+            this.messageWindow.setSize(1280, 180); // サイズ指定を忘れずに
+            this.initializeObject(this.messageWindow);
+        }
+
         
         // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
         this.input.once('pointerdown', () => {
@@ -123,23 +127,7 @@ export default class GameScene extends Phaser.Scene {
             this.isSceneFullyReady = true;
 
 
-         // ★★★ 変更点: createの最後に、既存オブジェクトをエディタに登録 ★★★
-          this.time.delayedCall(10, () => {
-             const editor = this.plugins.get('EditorPlugin');
-             if (editor) {
-                 if (this.messageWindow) {
-                    this.messageWindow.name = 'message_window';
-                    
-                    // 1. まず、メッセージウィンドウに当たり判定のサイズを設定
-                    //    (message_window.pngの実際のサイズに合わせてください)
-                    this.messageWindow.setSize(1280, 180); // 仮のサイズ
-                    
-                    // 2. その後で、エディタに登録する
-                    editor.makeEditable(this.messageWindow, this);
-                 }
-             }
-        });
-
+         
         // イベントの発行を、ごくわずかに（1フレーム後）遅らせる
         this.time.delayedCall(1, () => {
             this.events.emit('gameScene-load-complete');

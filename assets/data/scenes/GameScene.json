@@ -18,26 +18,8 @@
       "angle": 0,
       "alpha": 1
     },
-    {
-      "name": "yuna",
-      "x": 280,
-      "y": 450,
-      "scaleX": 1,
-      "scaleY": 0.56,
-      "angle": 0,
-      "alpha": 1,
-      "texture": "yuna_normal",
-      "physics": {
-        "width": 500,
-        "height": 504.0000021457672,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      }
-    },
+   
+    
     {
       "name": "yuna",
       "x": 280,

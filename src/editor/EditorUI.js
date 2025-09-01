@@ -1,24 +1,18 @@
 // src/editor/EditorUI.js (真の最終・完成版)
 
 export default class EditorUI {
-    constructor(game, editorPlugin) {
+    
+
+          constructor(game, editorPlugin) {
         this.game = game;
         this.plugin = editorPlugin;
-this.populateAssetBrowser();
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、あなたが提案した完璧な解決策です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // 1. EditorUI自身が、URLを直接チェックする
+        // ★★★ 修正点: 二重呼び出しをなくす ★★★
         const currentURL = window.location.href;
-        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
-
-        // 2. もしURLにパラメータがなければ、何もしないで終了
-        if (!hasDebugParameter) {
-            console.log("[EditorUI] Debug parameter not found. UI remains hidden.");
+        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) {
             return;
         }
-
+this.populateAssetBrowser();
         // --- ここから先は、デバッグモードが確定した場合のみ実行される ---
         console.warn("[EditorUI] Debug mode activated. Initializing UI...");
 
