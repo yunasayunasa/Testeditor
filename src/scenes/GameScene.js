@@ -52,7 +52,7 @@ export default class GameScene extends Phaser.Scene {
 
    // src/scenes/GameScene.js の create() メソッドの正しい形
 
-        async create() { 
+         create() { 
             
             console.log("GameScene: クリエイト処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
@@ -81,17 +81,10 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager = new ScenarioManager(this, this.layer, this.charaDefs, this.messageWindow, this.soundManager, this.stateManager, this.configManager);
   // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
      
- // --- 1. シーン専用のレイアウトJSONを読み込む ---
+   // --- 2. データ駆動のレイアウト適用 (同期版) ---
         const sceneKey = this.scene.key;
-        // PreloadSceneで全シーンのJSONをロードしておくのが理想だが、
-        // このシーンで直接ロードする形でも動作する
-        await new Promise(resolve => {
-            this.load.json(sceneKey, `assets/data/scenes/${sceneKey}.json`);
-            this.load.once(`filecomplete-json-${sceneKey}`, resolve);
-            this.load.start();
-        });
-
-        const layoutData = this.cache.json.get(sceneKey);
+        // PreloadSceneでロード済みなので、キャッシュから直接取得
+        const layoutData = this.cache.json.get(sceneKey); 
 
         if (layoutData && layoutData.objects) {
             console.log(`[${sceneKey}] Building scene from layout data...`);
@@ -128,13 +121,12 @@ export default class GameScene extends Phaser.Scene {
     if (this.isResuming) {
         console.log("GameScene: 復帰処理を開始します。");
         console.log("[LOG-BOMB] GameScene.create: AWAITING performLoad..."); // ★
-        await this.performLoad(0, this.returnParams);
-        console.log("[LOG-BOMB] GameScene.create: ...performLoad COMPLETED."); // ★
-     } else {
-        console.log("GameScene: 通常起動します。");
-        this.performSave(0);
-        this.scenarioManager.loadScenario(this.startScenario, this.startLabel);
-        this.isSceneFullyReady = true;
+        this.performLoad(0, this.returnParams);
+        } else {
+            this.performSave(0);
+            this.scenarioManager.loadScenario(this.startScenario, this.startLabel);
+            this.isSceneFullyReady = true;
+
 
          // ★★★ 変更点: createの最後に、既存オブジェクトをエディタに登録 ★★★
           this.time.delayedCall(10, () => {
