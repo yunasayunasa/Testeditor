@@ -5,6 +5,7 @@ export default class EditorUI {
         this.game = game;
         this.plugin = editorPlugin;
         this.selectedAssetKey = null;
+     this.objectCounters = {};
 
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
@@ -86,19 +87,32 @@ export default class EditorUI {
         const centerY = targetScene.cameras.main.centerY;
         
         // --- 以下のオブジェクト生成ロジックは、前回の提案で完璧です ---
-        const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, '__DEFAULT');
+      // 1. このアセットキーのカウンターが存在しなければ、1で初期化
+            if (!this.objectCounters[this.selectedAssetKey]) {
+                this.objectCounters[this.selectedAssetKey] = 1;
+            } else {
+                // 2. 存在すれば、カウンターを1増やす
+                this.objectCounters[this.selectedAssetKey]++;
+            }
 
-        targetScene.initializeObject(newImage, {
-            name: `${this.selectedAssetKey}_${Date.now()}`,
-            texture: this.selectedAssetKey,
-            x: centerX,
-            y: centerY,
-            scaleX: 1,
-            scaleY: 1,
-            angle: 0,
-            alpha: 1,
-            visible: true
-        });
+            // 3. 新しい名前を生成 (例: yuko_normal_1, yuko_normal_2)
+            const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
+            
+            // --- 以下の処理は、nameの部分だけが変更 ---
+            
+            const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, '__DEFAULT');
+
+            targetScene.initializeObject(newImage, {
+                name: newName, // ★ 生成した連番の名前を使う
+                texture: this.selectedAssetKey,
+                x: centerX,
+                y: centerY,
+                scaleX: 1,
+                scaleY: 1,
+                angle: 0,
+                alpha: 1,
+                visible: true
+            });
 
         this.plugin.selectedObject = newImage;
         this.plugin.updatePropertyPanel();
