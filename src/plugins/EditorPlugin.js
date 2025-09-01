@@ -41,7 +41,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         // 2. EditorUIの「起動メソッド」を呼び出す
         editorUI.run();
-    }
+    
         // 4. HTML要素への参照を取得
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
