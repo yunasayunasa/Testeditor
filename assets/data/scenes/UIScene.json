@@ -1,14 +1,6 @@
 {
   "objects": [
-    {
-      "name": "message_window",
-      "x": 0,
-      "y": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1
-    },
+
     {
       "name": "menu_button",
       "x": 83,
