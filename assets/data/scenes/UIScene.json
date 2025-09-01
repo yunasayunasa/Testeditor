@@ -1,18 +1,50 @@
-
 {
   "objects": [
     {
-      "name": "coin_hud",
-      "type": "CoinHud",
-      "width": 150, "height": 50,
-      "params": {},
-      "x": 100, "y": 50, "scaleX": 1, "scaleY": 1, "angle": 0, "alpha": 1
+      "name": "menu_button",
+      "x": 83,
+      "y": 494,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "texture": null
     },
     {
-      "name": "menu_button",
-      "type": "Text",
-      "params": { "text": "MENU", "style": { "fontSize": "36px", "fill": "#fff" } },
-      "x": 100, "y": 670, "scaleX": 1, "scaleY": 1, "angle": 0, "alpha": 1
+      "name": "bottom_panel",
+      "x": 0,
+      "y": 660,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "coin_hud",
+      "x": 82,
+      "y": 138,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "player_hp_bar",
+      "x": 100,
+      "y": 100,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "enemy_hp_bar",
+      "x": 930,
+      "y": 100,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
     }
   ]
 }
