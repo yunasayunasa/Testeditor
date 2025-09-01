@@ -194,6 +194,7 @@ export default class GameScene extends Phaser.Scene {
  /**
      * ★★★ 新規メソッド ★★★
      * オブジェクトに、JSONから読み込んだプロパティを適用する
+     * このコードをコピーして各種レイアウトや物理エンジンをに使用する。
      */
     applyProperties(gameObject, layout) {
         gameObject.name = layout.name;
@@ -219,7 +220,15 @@ export default class GameScene extends Phaser.Scene {
                 gameObject.body.collideWorldBounds = phys.collideWorldBounds;
             }
         }
+        gameObject.setInteractive();
+
+        // 2. エディタプラグインに、このオブジェクトを編集可能として登録する
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor) {
+            editor.makeEditable(gameObject, this);
+        }
     }
+    
 
       // ★★★ 修正箇所: onFVariableChanged, updatePlayerHpBar, updateCoinHudを削除し、onFVariableChangedに一本化 ★★★
     onFVariableChanged(key, value) {

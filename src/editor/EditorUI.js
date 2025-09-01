@@ -83,6 +83,14 @@ this.populateAssetBrowser();
             if (targetScene) {
                 const newImage = targetScene.add.image(pointer.worldX, pointer.worldY, assetKey);
                 newImage.name = `${assetKey}_${Date.now()}`;
+                targetScene.applyProperties(newImage, {
+        name: newImage.name,
+        texture: newImage.texture.key,
+        x: newImage.x,
+y: newImage.y,
+        scaleX: 1, scaleY: 1, angle: 0, alpha: 1
+    });
+
                 this.plugin.makeEditable(newImage, targetScene);
                 this.plugin.selectedObject = newImage;
                 this.plugin.updatePropertyPanel();
