@@ -45,36 +45,59 @@ export default class EditorUI {
         }
     }
 
+  // src/editor/EditorUI.js
+
     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
             alert('Please select an asset from the browser first.');
             return;
         }
 
-        // ★★★ ターゲットシーンを動的に見つける ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、ターゲットシーンを見つける、最後の、そして最も確実な方法です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
         let targetScene = null;
-        const scenes = this.game.scene.getScenes(true);
-        // GameSceneか、'ActionScene'のような名前のシーンを探す
-        targetScene = scenes.find(s => s.scene.key === 'GameScene' || s.scene.key.toLowerCase().includes('scene'));
-        // 見つからなければ、アクティブな最後のシーンを対象にする
-        if (!targetScene && scenes.length > 0) {
-            targetScene = scenes[scenes.length - 1];
+        const scenes = this.game.scene.getScenes(true); // アクティブなシーンを全て取得
+
+        // シーンリストの「後ろ」から探す（後ろにあるほど、手前に描画されている）
+        for (let i = scenes.length - 1; i >= 0; i--) {
+            const scene = scenes[i];
+            // それが UIScene で「なければ」、それがターゲットだ
+            if (scene.scene.key !== 'UIScene') {
+                targetScene = scene;
+                break; // ターゲットを見つけたら、ループを抜ける
+            }
         }
         
-        if (!targetScene || !targetScene.initializeObject) {
-             console.error(`[EditorUI] Could not find a suitable target scene with 'initializeObject' method.`);
+        // ★★★ これで、ターゲットシーンが確実に見つかります ★★★
+
+
+        if (!targetScene) {
+             console.error("[EditorUI] Could not find a suitable target scene. Is a game scene running?");
+             return;
+        }
+        if (!targetScene.initializeObject) {
+             console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'initializeObject' method.`);
              return;
         }
 
         const centerX = targetScene.cameras.main.centerX;
         const centerY = targetScene.cameras.main.centerY;
         
+        // --- 以下のオブジェクト生成ロジックは、前回の提案で完璧です ---
         const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, '__DEFAULT');
 
         targetScene.initializeObject(newImage, {
             name: `${this.selectedAssetKey}_${Date.now()}`,
             texture: this.selectedAssetKey,
-            x: centerX, y: centerY, scaleX: 1, scaleY: 1, angle: 0, alpha: 1, visible: true
+            x: centerX,
+            y: centerY,
+            scaleX: 1,
+            scaleY: 1,
+            angle: 0,
+            alpha: 1,
+            visible: true
         });
 
         this.plugin.selectedObject = newImage;
