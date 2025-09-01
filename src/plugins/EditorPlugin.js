@@ -11,7 +11,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.physicsPropsContainer = document.getElementById('editor-props'); 
          // ★★★ 変更点1: isEnabledフラグを追加 ★★★
         this.isEnabled = false; 
-
+this.editorUI = null; // ★ editorUIを保持するプロパティを追加
         // ★★★ 変更点2: HTML要素の取得はinitに移動 ★★★
         this.editorPanel = null;
     }
@@ -55,7 +55,22 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             });
         }
     } 
-    
+    /**
+     * EditorUIのインスタンスを、このプラグインに登録する
+     * @param {EditorUI} editorUI - 初期化済みのEditorUIインスタンス
+     */
+    setUI(editorUI) {
+        this.editorUI = editorUI;
+
+        // --- 「追加ボタン」のイベントリスナーを、ここで設定する ---
+        const addButton = document.getElementById('add-asset-button');
+        if (addButton && this.editorUI) {
+            addButton.addEventListener('click', () => {
+                // EditorUIが持つメソッドを呼び出す
+                this.editorUI.onAddButtonClicked();
+            });
+        }
+    }
 
     makeEditable(gameObject, scene) {
           if (!this.isEnabled) return; // ★ 無効なら、何もしない

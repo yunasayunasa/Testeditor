@@ -39,10 +39,16 @@ export default class SystemScene extends Phaser.Scene {
         this.events.on('end-overlay', this._handleEndOverlay, this);
         
         const stateManager = this.registry.get('stateManager');
-         // ★★★ 変更点: 常にプラグインを起動しようと試みる ★★★
-        // 実際の起動判断はプラグイン自身が行う
-        this.plugins.start('EditorPlugin');
-
+            const editorPlugin = this.plugins.start('EditorPlugin');
+            
+            // 2. 次に、EditorUIをnewする (この時点では、まだ連携していない)
+            const editorUI = new EditorUI(this.game, editorPlugin);
+            
+            // 3. 最後に、EditorPluginに、EditorUIのインスタンスを「渡す」
+            if (editorPlugin && editorUI) {
+                editorPlugin.setUI(editorUI);
+            }
+        
         // ★★★ 変更点: EditorUIの起動もここでは行わない ★★★
         
         // --- PreloadSceneから渡されたデータで初期ゲームを起動 ---
