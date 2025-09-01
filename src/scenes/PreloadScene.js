@@ -47,22 +47,22 @@ export default class PreloadScene extends Phaser.Scene {
         this.sys.registry.set('stateManager', stateManager);
         // --- asset_define.jsonに基づいて残りのアセットをロードキューに追加 ---
         const assetDefine = this.cache.json.get('asset_define');
+        // --- フォルダ内のファイルリストを非同期で取得 ---
+        const scenarioFiles = await this.fetchFileList(assetDefine.scenarios.path);
+        const sceneDataFiles = await this.fetchFileList(assetDefine.scene_data.path);
+
+        // --- 取得したリストと定義を元に、全てのアセットをロードキューに追加 ---
         for (const key in assetDefine.images) { this.load.image(key, assetDefine.images[key]); }
         for (const key in assetDefine.sounds) { this.load.audio(key, assetDefine.sounds[key]); }
-        for (const key in assetDefine.videos) { this.load.video(key, assetDefine.videos[key]); }
-        for (const key in assetDefine.scenarios) { this.load.text(key, assetDefine.scenarios[key]); }
         
-        // ゲームで使う可能性のあるシナリオファイルをすべてロード
-        this.load.text('scene1.ks', 'assets/scene1.ks');
-        this.load.text('scene2.ks', 'assets/scene2.ks');
-        this.load.text('overlay_test.ks', 'assets/overlay_test.ks');
-        this.load.text('test.ks', 'assets/test.ks');
-        this.load.text('test_main.ks', 'assets/test_main.ks');
-        this.load.text('test_sub.ks', 'assets/test_sub.ks');
- // シーン定義JSONをロード
-    this.load.json('GameScene', 'assets/data/scenes/GameScene.json');
-    this.load.json('UIScene', 'assets/data/scenes/UIScene.json');
-    this.load.json('JumpScene', 'assets/data/scenes/JumpScene.json');
+        for (const file of scenarioFiles) {
+            const key = file.replace('.ks', '');
+            this.load.text(key, `${assetDefine.scenarios.path}${file}`);
+        }
+        for (const file of sceneDataFiles) {
+            const key = file.replace('.json', '');
+            this.load.json(key, `${assetDefine.scene_data.path}${file}`);
+        }
         // --- 全てのアセットのロード完了後の処理を定義 ---
         this.load.once('complete', () => {
             console.log("PreloadScene: 全アセットロード完了。");
@@ -95,6 +95,24 @@ export default class PreloadScene extends Phaser.Scene {
         });
         
         this.load.start();
+    }
+      /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * サーバーに問い合わせて、指定されたディレクトリのファイル一覧を取得する
+     * @param {string} dirPath - 調査するディレクトリのパス
+     * @returns {Promise<string[]>} ファイル名の配列
+     */
+    async fetchFileList(dirPath) {
+        try {
+            const response = await fetch(`filelist.php?dir=${dirPath}`);
+            if (!response.ok) return [];
+            const fileList = await response.json();
+            console.log(`[PreloadScene] Fetched ${fileList.length} files from ${dirPath}`);
+            return fileList;
+        } catch (error) {
+            console.error(`[PreloadScene] Failed to fetch file list for ${dirPath}`, error);
+            return [];
+        }
     }
 
     stop() {

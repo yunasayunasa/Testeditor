@@ -22,7 +22,16 @@
 "ronpa_bgm": "assets/ronpa_bgm.mp3"
 
   },
-  "videos": {
-    "opening": "assets/opening.mp4"
+ "//": "--- ここからが新しい定義 ---",
+
+  "scene_data": {
+    "path": "assets/data/scenes/",
+    "extension": ".json"
+  },
+  
+  "scenarios": {
+    "path": "assets/scenario/",
+    "extension": ".ks"
   }
-  }
+}
+  
