@@ -8,6 +8,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
+        this.physicsPropsContainer = document.getElementById('editor-props'); 
          // ★★★ 変更点1: isEnabledフラグを追加 ★★★
         this.isEnabled = false; 
 
