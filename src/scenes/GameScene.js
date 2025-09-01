@@ -96,12 +96,14 @@ export default class GameScene extends Phaser.Scene {
             }
         }
         
-        // ★★★ これが重要な変更点 ★★★
-        // --- JSONで管理されていないオブジェクトも、同じ初期化メソッドを通過させる ---
+        // ★★★ 初期化プロセスの統一 ★★★
         if (this.messageWindow) {
             this.messageWindow.name = 'message_window';
-            this.messageWindow.setSize(1280, 180); // サイズ指定を忘れずに
-            this.initializeObject(this.messageWindow);
+            this.messageWindow.setSize(1280, 180);
+            this.initializeObject(this.messageWindow, {
+                name: 'message_window', x: this.messageWindow.x, y: this.messageWindow.y,
+                scaleX: 1, scaleY: 1, angle: 0, alpha: 1
+            });
         }
 
         

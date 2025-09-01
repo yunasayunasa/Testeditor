@@ -1,80 +1,40 @@
-
-
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
         this.selectedObject = null;
         this.editableObjects = new Map();
-        this.editorPanel = document.getElementById('editor-panel');
-        this.editorTitle = document.getElementById('editor-title');
-        this.editorPropsContainer = document.getElementById('editor-props');
-        this.physicsPropsContainer = document.getElementById('editor-props'); 
-         // ★★★ 変更点1: isEnabledフラグを追加 ★★★
-        this.isEnabled = false; 
-this.editorUI = null; // ★ editorUIを保持するプロパティを追加
-        // ★★★ 変更点2: HTML要素の取得はinitに移動 ★★★
+        this.isEnabled = false;
+        this.editorUI = null;
         this.editorPanel = null;
+        this.editorTitle = null;
+        this.editorPropsContainer = null;
     }
 
-    /**
-     * プラグインが起動する時に、自身が有効になるべきかを最終判断する
-     */
     init() {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、あなたが求めた最終的な制御ロジックです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // 1. 最も確実な、原始的なURLチェックを行う
         const currentURL = window.location.href;
         const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
-        
-        // 2. もしURLにパラメータがなければ、何もしないで終了
-        if (!hasDebugParameter) {
-            console.log("[EditorPlugin] Debug parameter not found. Editor remains inactive.");
-            return;
-        }
+        if (!hasDebugParameter) return;
 
-        // --- ここから先は、デバッグモードが確定した場合のみ実行される ---
-        console.warn("[EditorPlugin] Debug mode activated. Initializing editor...");
-        this.isEnabled = true; // 3. 自身を有効化
-
-    
-        // 4. HTML要素への参照を取得
+        this.isEnabled = true;
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
+        console.warn("[EditorPlugin] Debug mode activated.");
+    }
 
-        const addButton = document.getElementById('add-asset-button');
-        if (addButton) {
-            addButton.addEventListener('click', () => {
-                // EditorUIのメソッドを呼び出す
-                // (SystemSceneから渡されたEditorUIのインスタンスを保持しておく必要がある)
-                if (this.editorUI) {
-                    this.editorUI.onAddButtonClicked();
-                }
-            });
-        }
-    } 
-    /**
-     * EditorUIのインスタンスを、このプラグインに登録する
-     * @param {EditorUI} editorUI - 初期化済みのEditorUIインスタンス
-     */
     setUI(editorUI) {
         this.editorUI = editorUI;
-
-        // --- 「追加ボタン」のイベントリスナーを、ここで設定する ---
         const addButton = document.getElementById('add-asset-button');
         if (addButton && this.editorUI) {
+            // ★★★ イベントリスナーは、ここに集約 ★★★
             addButton.addEventListener('click', () => {
-                // EditorUIが持つメソッドを呼び出す
                 this.editorUI.onAddButtonClicked();
             });
         }
     }
 
     makeEditable(gameObject, scene) {
-          if (!this.isEnabled) return; // ★ 無効なら、何もしない
-        if (!gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
+        if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
         
         gameObject.setInteractive();
         scene.input.setDraggable(gameObject);
@@ -85,9 +45,10 @@ this.editorUI = null; // ★ editorUIを保持するプロパティを追加
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
-        gameObject.on('pointerdown', () => {
+        gameObject.on('pointerdown', (pointer) => {
             this.selectedObject = gameObject;
             this.updatePropertyPanel();
+            pointer.stopPropagation();
         });
         
         gameObject.on('drag', (pointer, dragX, dragY) => {
@@ -100,7 +61,6 @@ this.editorUI = null; // ★ editorUIを保持するプロパティを追加
         gameObject.on('pointerout', () => gameObject.clearTint());
         gameObject.setData('isEditable', true);
     }
-
     updatePropertyPanel() {
           if (!this.isEnabled) return; // ★ 無効なら、何もしない
         if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
@@ -291,44 +251,29 @@ this.editorUI = null; // ★ editorUIを保持するプロパティを追加
         row.appendChild(valueEl);
         container.appendChild(row);
     }
-    exportLayoutToJson() {
-          if (!this.isEnabled) return; // ★ 無効なら、何もしない
-        if (!this.selectedObject || !this.selectedObject.scene) {
+   exportLayoutToJson() {
+        if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
             alert("Please select an object in the scene you want to export.");
             return;
         }
         const targetScene = this.selectedObject.scene;
         const sceneKey = targetScene.scene.key;
         const sceneLayoutData = { objects: [] };
+
         if (this.editableObjects.has(sceneKey)) {
             for (const gameObject of this.editableObjects.get(sceneKey)) {
                 if (gameObject.name) {
                     const objData = { name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)), angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)) };
                     if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
-                    
                     if (gameObject.body) {
                         const body = gameObject.body;
-                        objData.physics = {
-                            isStatic: body.isStatic,
-                            width: body.width,
-                            height: body.height,
-                            offsetX: body.offset.x,
-                            offsetY: body.offset.y,
-                            allowGravity: body.allowGravity,
-                            bounceX: parseFloat(body.bounce.x.toFixed(2)),
-                            bounceY: parseFloat(body.bounce.y.toFixed(2)),
-                            collideWorldBounds: body.collideWorldBounds
-                        };
+                        objData.physics = { isStatic: body.isStatic, width: body.width, height: body.height, offsetX: body.offset.x, offsetY: body.offset.y, allowGravity: body.allowGravity, bounceX: parseFloat(body.bounce.x.toFixed(2)), bounceY: parseFloat(body.bounce.y.toFixed(2)), collideWorldBounds: body.collideWorldBounds };
                     }
-                    
+                    // ★★★ pushは一度だけに修正 ★★★
                     sceneLayoutData.objects.push(objData);
                 }
             }
         }
-                
-            
-        
-        
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
         console.log(jsonString);
