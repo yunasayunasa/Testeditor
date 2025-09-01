@@ -61,7 +61,7 @@ export default class GameScene extends Phaser.Scene {
         this.layer.background = this.add.container(0, 0).setDepth(0);
         this.layer.cg = this.add.container(0, 0).setDepth(5);
         this.layer.character = this.add.container(0, 0).setDepth(10);
-        this.layer.message = this.add.container(0, 0).setDepth(20);
+        this.layer.message = this.add.container(0, 0).setDepth(100);
 
         // --- 入力ブロッカー ---
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000000, 0.001)
