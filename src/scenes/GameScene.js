@@ -108,16 +108,22 @@ export default class GameScene extends Phaser.Scene {
         this.isSceneFullyReady = true;
 
          // ★★★ 変更点: createの最後に、既存オブジェクトをエディタに登録 ★★★
-        this.time.delayedCall(10, () => {
+          this.time.delayedCall(10, () => {
              const editor = this.plugins.get('EditorPlugin');
              if (editor) {
-                 // メッセージウィンドウなど、最初から存在するオブジェクトを登録
                  if (this.messageWindow) {
-                    this.messageWindow.name = 'message_window'; // 名前がないと登録されない
+                    this.messageWindow.name = 'message_window';
+                    
+                    // 1. まず、メッセージウィンドウに当たり判定のサイズを設定
+                    //    (message_window.pngの実際のサイズに合わせてください)
+                    this.messageWindow.setSize(1280, 180); // 仮のサイズ
+                    
+                    // 2. その後で、エディタに登録する
                     editor.makeEditable(this.messageWindow, this);
                  }
              }
         });
+
         // イベントの発行を、ごくわずかに（1フレーム後）遅らせる
         this.time.delayedCall(1, () => {
             this.events.emit('gameScene-load-complete');
