@@ -95,14 +95,7 @@ export default class GameScene extends Phaser.Scene {
                  this.initializeObject(gameObject, layout);
             
         
-                if (layout.name.startsWith('bg_')) {
-                    this.layer.background.add(gameObject);
-                } else {
-                    this.layer.character.add(gameObject);
-                }
-
-                // 1-2. プロパティを適用する
-                this.applyProperties(gameObject, layout); // ★ applyPropertiesヘルパーが必要
+              
             }
         }
         
