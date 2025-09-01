@@ -99,21 +99,44 @@ export default class UIScene extends Phaser.Scene {
         
        
       const editor = this.plugins.get('EditorPlugin');
-        if (editor) {
-            // --- 各オブジェクトに名前を付ける ---
-            this.menuButton.name = 'menu_button';
-            this.panel.name = 'bottom_panel';
-            this.coinHud.name = 'coin_hud';
-            this.playerHpBar.name = 'player_hp_bar';
-            this.enemyHpBar.name = 'enemy_hp_bar';
+         // --- 4. 各UIオブジェクトに、エディタ用の名前を付ける ---
+        this.menuButton.name = 'menu_button';
+        this.panel.name = 'bottom_panel';
+        this.coinHud.name = 'coin_hud';
+        this.playerHpBar.name = 'player_hp_bar';
+        this.enemyHpBar.name = 'enemy_hp_bar';
+        
+        // --- 5. レイアウトJSONを読み込み、位置を上書きする ---
+        const sceneKey = this.scene.key;
+        const layoutData = this.cache.json.get(sceneKey); // PreloadSceneでロード済み
 
-            // --- コンテナに「先に」サイズを設定する ---
+        if (layoutData && layoutData.objects) {
+            console.log(`[${sceneKey}] Applying layout data to UI elements...`);
+            // シーンが持つ全ての子オブジェクトをチェック
+            this.children.list.forEach(gameObject => {
+                if (gameObject.name) {
+                    const layout = layoutData.objects.find(obj => obj.name === gameObject.name);
+                    if (layout) {
+                        // JSONにデータがあれば、その位置やスケールで上書き
+                        gameObject.setPosition(layout.x, layout.y);
+                        gameObject.setScale(layout.scaleX, layout.scaleY);
+                        gameObject.setAngle(layout.angle);
+                        gameObject.setAlpha(layout.alpha);
+                    }
+                }
+            });
+        }
+        
+        // --- 6. 最後に、全てをエディタに登録する ---
+       
+        if (editor) {
+            // コンテナに「先に」サイズを設定
             this.panel.setSize(1280, 120);
-            this.coinHud.setSize(150, 50); // 仮のサイズ
+            this.coinHud.setSize(150, 50);
             this.playerHpBar.setSize(200, 25);
             this.enemyHpBar.setSize(250, 25);
             
-            // --- 「後から」エディタに登録する ---
+            // 「後から」エディタに登録
             editor.makeEditable(this.menuButton, this);
             editor.makeEditable(this.panel, this);
             editor.makeEditable(this.coinHud, this);
@@ -121,35 +144,55 @@ export default class UIScene extends Phaser.Scene {
             editor.makeEditable(this.enemyHpBar, this);
         }
         
-        console.log("UI作成");
+        console.log("UI作成完了");
     } // createメソッドの終わり
- /**
+    /**
      * ★★★ 新規メソッド ★★★
-     * オブジェクトに、JSONから読み込んだプロパティを適用する
+     * レイアウト定義から、正しい種類のUIオブジェクトを生成する
+     */
+    createObjectFromLayout(layout) {
+        let uiElement = null;
+        const stateManager = this.registry.get('stateManager');
+        const CustomUIClass = CUSTOM_UI_MAP[layout.type];
+
+        if (CustomUIClass) {
+            uiElement = new CustomUIClass(this, { ...layout.params, stateManager });
+        } else {
+            switch (layout.type) {
+                case 'Text':
+                    uiElement = this.add.text(0, 0, layout.params.text, layout.params.style).setOrigin(0.5);
+                    break;
+                case 'Panel':
+                    uiElement = this.createBottomPanel();
+                    break;
+            }
+        }
+        return uiElement;
+    }
+
+    /**
+     * ★★★ GameSceneからコピー ★★★
+     * オブジェクトにプロパティを適用する
      */
     applyProperties(gameObject, layout) {
         gameObject.name = layout.name;
-        
-        // Transformプロパティを適用
         gameObject.setPosition(layout.x, layout.y);
         gameObject.setScale(layout.scaleX, layout.scaleY);
         gameObject.setAngle(layout.angle);
         gameObject.setAlpha(layout.alpha);
-        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
         
-        // ★★★ これが物理情報を反映させるコードです ★★★
-        if (layout.physics) {
-            const phys = layout.physics;
-            this.physics.add.existing(gameObject, phys.isStatic || false);
-            if(gameObject.body) {
-                if (!gameObject.body.isStatic) {
-                    gameObject.body.setSize(phys.width, phys.height);
-                    gameObject.body.setOffset(phys.offsetX, phys.offsetY);
-                    gameObject.body.allowGravity = phys.allowGravity;
-                    gameObject.body.bounce.setTo(phys.bounceX, phys.bounceY);
-                }
-                gameObject.body.collideWorldBounds = phys.collideWorldBounds;
+        // コンテナの場合、当たり判定のサイズもJSONから設定
+        if (gameObject instanceof Phaser.GameObjects.Container) {
+            if (layout.width && layout.height) {
+                gameObject.setSize(layout.width, layout.height);
             }
+        }
+
+        gameObject.setInteractive(); // ★ ここでインタラクティブにする
+        
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor) {
+            editor.makeEditable(gameObject, this);
         }
     }
     // --- 以下、このクラスが持つメソッド群 ---
