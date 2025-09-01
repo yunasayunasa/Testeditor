@@ -87,9 +87,11 @@ export default class GameScene extends Phaser.Scene {
         if (layoutData && layoutData.objects) {
             console.log(`[${sceneKey}] Building scene from layout data...`);
             for (const layout of layoutData.objects) {
+             // 2-1. 「new」を使って、オブジェクトをメモリ上に「生成」するだけ
                 const textureKey = layout.texture || layout.name.split('_')[0];
-                const gameObject = this.add.image(layout.x, layout.y, textureKey);
-                // ★ 生成したオブジェクトを、すぐに初期化メソッドに渡す
+                const gameObject = new Phaser.GameObjects.Image(this, 0, 0, textureKey);
+                
+                // 2-2. 生成した「生」のオブジェクトを、初期化メソッドに渡す
                 this.initializeObject(gameObject, layout);
             }
         }
