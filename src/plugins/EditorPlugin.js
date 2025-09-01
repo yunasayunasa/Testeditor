@@ -5,6 +5,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する、最後の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. 存在しないプロパティを削除し、混乱の元を断つ
+        // this.this.editorPropsContainer, = document.getElementById('editor-props'); // ← この行を削除
+
+        // 2. 必要な参照だけを残す
         this.editorPanel = null;
         this.editorTitle = null;
         this.editorPropsContainer = null;
@@ -161,11 +170,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      /**
      * 物理パラメータを編集するためのUIを生成する
      */
+      /**
+     * 物理パラメータを編集するためのUIを生成する (最終確定版)
+     */
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
-        const isStatic = body.isStatic;
         
-        this.createCheckbox(this.physicsPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
+        // ★★★ 4. ヘルパーメソッドに、存在する 'this.editorPropsContainer' を渡す ★★★
+        const isStatic = body.isStatic;
+        this.createCheckbox(this.editorPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
             if (this.selectedObject) {
                 const targetScene = this.selectedObject.scene;
                 targetScene.physics.world.remove(this.selectedObject.body);
@@ -179,14 +192,14 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         const isDynamic = body.moves;
         if (isDynamic) {
-            this.createVector2Input(this.physicsPropsContainer, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
-            this.createVector2Input(this.physicsPropsContainer, 'Offset', { x: body.offset.x, y: body.offset.y }, (x, y) => body.setOffset(x, y));
-            this.createCheckbox(this.physicsPropsContainer, 'Allow Gravity', body.allowGravity, (value) => { if(body) body.allowGravity = value; });
-            this.createRangeInput(this.physicsPropsContainer, 'Bounce X', body.bounce.x, 0, 1, 0.01, (value) => { if(body) body.bounce.x = value; });
-            this.createRangeInput(this.physicsPropsContainer, 'Bounce Y', body.bounce.y, 0, 1, 0.01, (value) => { if(body) body.bounce.y = value; });
+            this.createVector2Input(this.editorPropsContainer, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
+            this.createVector2Input(this.editorPropsContainer, 'Offset', { x: body.offset.x, y: body.offset.y }, (x, y) => body.setOffset(x, y));
+            this.createCheckbox(this.editorPropsContainer, 'Allow Gravity', body.allowGravity, (value) => { if(body) body.allowGravity = value; });
+            this.createRangeInput(this.editorPropsContainer, 'Bounce X', body.bounce.x, 0, 1, 0.01, (value) => { if(body) body.bounce.x = value; });
+            this.createRangeInput(this.editorPropsContainer, 'Bounce Y', body.bounce.y, 0, 1, 0.01, (value) => { if(body) body.bounce.y = value; });
         }
         
-        this.createCheckbox(this.physicsPropsContainer, 'Collide World Bounds', body.collideWorldBounds, (value) => { if(body) body.collideWorldBounds = value; });
+        this.createCheckbox(this.editorPropsContainer, 'Collide World Bounds', body.collideWorldBounds, (value) => { if(body) body.collideWorldBounds = value; });
     }
 
     // --- 以下、UI生成ヘルパーメソッド群 ---
