@@ -123,7 +123,35 @@ export default class UIScene extends Phaser.Scene {
         
         console.log("UI作成");
     } // createメソッドの終わり
-
+ /**
+     * ★★★ 新規メソッド ★★★
+     * オブジェクトに、JSONから読み込んだプロパティを適用する
+     */
+    applyProperties(gameObject, layout) {
+        gameObject.name = layout.name;
+        
+        // Transformプロパティを適用
+        gameObject.setPosition(layout.x, layout.y);
+        gameObject.setScale(layout.scaleX, layout.scaleY);
+        gameObject.setAngle(layout.angle);
+        gameObject.setAlpha(layout.alpha);
+        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
+        
+        // ★★★ これが物理情報を反映させるコードです ★★★
+        if (layout.physics) {
+            const phys = layout.physics;
+            this.physics.add.existing(gameObject, phys.isStatic || false);
+            if(gameObject.body) {
+                if (!gameObject.body.isStatic) {
+                    gameObject.body.setSize(phys.width, phys.height);
+                    gameObject.body.setOffset(phys.offsetX, phys.offsetY);
+                    gameObject.body.allowGravity = phys.allowGravity;
+                    gameObject.body.bounce.setTo(phys.bounceX, phys.bounceY);
+                }
+                gameObject.body.collideWorldBounds = phys.collideWorldBounds;
+            }
+        }
+    }
     // --- 以下、このクラスが持つメソッド群 ---
    onSceneTransition(newSceneKey) {
         console.log(`[UIScene] シーン遷移を検知。HUD表示を更新します。新しいシーン: ${newSceneKey}`);
