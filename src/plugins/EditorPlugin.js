@@ -358,6 +358,116 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Phaser input re-enabled.");
     }
 
+ 
+    /**
+     * 【完成版】
+     * Eventsセクションの中身を生成する
+     * @param {HTMLElement} container - UIを追加する親要素
+     */
+    populateEventsUI(container) {
+        if (!this.selectedObject) return;
+
+        // --- 1. オブジェクトに保存されているイベント情報を取得 ---
+        // getDataで、'events'というキーのデータを取得。なければ空の配列で初期化。
+        const events = this.selectedObject.getData('events') || [];
+
+        // --- 2. 既存のイベントを一覧表示 ---
+        const eventList = document.createElement('div');
+        events.forEach((eventData, index) => {
+            const eventDiv = this.createEventDisplay(eventData, index);
+            eventList.appendChild(eventDiv);
+        });
+        container.appendChild(eventList);
+
+
+        // --- 3. 「新しいイベントを追加」ボタン ---
+        const addButton = document.createElement('button');
+        addButton.innerText = '新しいイベントを追加';
+        addButton.onclick = () => {
+            // 新しい、空のイベントデータを追加
+            const newEvent = { trigger: 'onClick', actions: '[]' };
+            events.push(newEvent);
+            this.selectedObject.setData('events', events);
+            
+            // パネルを再描画して、新しいイベントの編集UIを表示
+            this.updatePropertyPanel();
+        };
+        container.appendChild(addButton);
+    }
+
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 一つのイベントを表示・編集するためのHTML要素を生成する
+     * @param {object} eventData - { trigger: string, actions: string }
+     * @param {number} index - イベント配列の中でのインデックス
+     */
+    createEventDisplay(eventData, index) {
+        const div = document.createElement('div');
+        div.style.border = '1px solid #444';
+        div.style.padding = '8px';
+        div.style.marginBottom = '8px';
+
+        // --- トリガー選択 ---
+        const triggerLabel = document.createElement('label');
+        triggerLabel.innerText = 'トリガー: ';
+        const triggerSelect = document.createElement('select');
+        const triggers = ['onClick', 'onHover', 'onKeyPress']; // 将来的に拡張
+        triggers.forEach(t => {
+            const option = document.createElement('option');
+            option.value = t;
+            option.innerText = t;
+            if (t === eventData.trigger) option.selected = true;
+            triggerSelect.appendChild(option);
+        });
+        triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
+        
+        // --- アクション記述エリア ---
+        const actionsLabel = document.createElement('label');
+        actionsLabel.innerText = 'アクション (タグ形式):';
+        actionsLabel.style.display = 'block';
+        actionsLabel.style.marginTop = '5px';
+        const actionsTextarea = document.createElement('textarea');
+        actionsTextarea.style.width = '95%';
+        actionsTextarea.style.height = '60px';
+        actionsTextarea.style.backgroundColor = '#1e1e1e';
+        actionsTextarea.style.color = '#d4d4d4';
+        actionsTextarea.value = eventData.actions;
+        actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
+
+        // --- 削除ボタン ---
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerText = '削除';
+        deleteBtn.style.backgroundColor = '#c44';
+        deleteBtn.style.marginLeft = '10px';
+        deleteBtn.onclick = () => {
+            if (confirm('このイベントを削除しますか？')) {
+                const events = this.selectedObject.getData('events');
+                events.splice(index, 1); // 配列からこのイベントを削除
+                this.selectedObject.setData('events', events);
+                this.updatePropertyPanel(); // パネルを再描画
+            }
+        };
+        
+        const header = document.createElement('div');
+        header.append(triggerLabel, triggerSelect, deleteBtn);
+        div.append(header, actionsLabel, actionsTextarea);
+        
+        return div;
+    }
+
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * オブジェクトに保存されているイベントデータを更新する
+     */
+    updateEventData(index, key, value) {
+        if (!this.selectedObject) return;
+        const events = this.selectedObject.getData('events') || [];
+        if (events[index]) {
+            events[index][key] = value;
+            this.selectedObject.setData('events', events);
+        }
+    }
+
     makeEditable(gameObject, scene) {
         if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
         
@@ -518,7 +628,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const addNewEventBtn = document.createElement('button');
         addNewEventBtn.innerText = '新しいイベントを追加';
         addNewEventBtn.onclick = () => {
-            alert('今後、ここからオブジェクトに「魂（ロジック）」を吹き込めるようになります！');
+            this.populateEventsUI(container)
         };
         this.editorPropsContainer.appendChild(addNewEventBtn);
         
