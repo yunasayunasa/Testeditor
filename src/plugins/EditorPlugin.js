@@ -58,8 +58,20 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
       /**
      * アニメーション・エディタのウィンドウを開く
      */
-   openAnimationEditor() {
-        if (!this.animEditorOverlay || !this.selectedObject) return;
+      openAnimationEditor() {
+        if (!this.animEditorOverlay) return;
+        if (!this.selectedObject) {
+            alert('先にオブジェクトを選択してください。');
+            return;
+        }
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、入力の貫通を解決する、最後のロジックです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. まず、Phaserのゲーム全体の入力を「無効化」する
+        this.pluginManager.game.input.enabled = false;
+        console.log("[EditorPlugin] Phaser input disabled for modal window.");
 
         const contentArea = document.getElementById('animation-editor-content');
         contentArea.innerHTML = ''; // 中身を一度クリア
@@ -339,6 +351,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     closeAnimationEditor() {
         if (!this.animEditorOverlay) return;
         this.animEditorOverlay.style.display = 'none';
+     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ 2. 最後に、Phaserのゲーム全体の入力を「再有効化」する ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        this.pluginManager.game.input.enabled = true;
+        console.log("[EditorPlugin] Phaser input re-enabled.");
     }
 
     makeEditable(gameObject, scene) {
