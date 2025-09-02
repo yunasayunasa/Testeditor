@@ -20,12 +20,18 @@ export default class EditorUI {
         this.populateAssetBrowser();
     }
 
-    populateAssetBrowser() {
+     populateAssetBrowser() {
         const assetList = this.game.registry.get('asset_list');
         if (!assetList || !this.assetListContainer) return;
+        
         this.assetListContainer.innerHTML = '';
-        const imageAssets = assetList.filter(asset => asset.type === 'image');
-        for (const asset of imageAssets) {
+        
+   
+        
+        // 'image' または 'spritesheet' タイプのアセットを、全て表示対象とする
+        const displayableAssets = assetList.filter(asset => asset.type === 'image' || asset.type === 'spritesheet');
+
+        for (const asset of displayableAssets) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'asset-item';
             itemDiv.dataset.assetKey = asset.key;
@@ -34,21 +40,34 @@ export default class EditorUI {
                 itemDiv.classList.add('selected');
                 this.selectedAssetKey = asset.key;
             });
+            
             const previewImg = document.createElement('img');
             previewImg.className = 'asset-preview';
             previewImg.src = asset.path;
+            
             const keySpan = document.createElement('span');
             keySpan.className = 'asset-key';
             keySpan.innerText = asset.key;
-            itemDiv.appendChild(previewImg);
-            itemDiv.appendChild(keySpan);
-            this.assetListContainer.appendChild(itemDiv);
+            
+            // ★ おまけ: タイプが分かるように、小さなバッジを追加 ★
+            if (asset.type === 'spritesheet') {
+                const badge = document.createElement('span');
+                badge.innerText = 'Sheet';
+                badge.style.backgroundColor = '#3a86ff';
+                badge.style.color = 'white';
+                badge.style.fontSize = '10px';
+                badge.style.padding = '2px 4px';
+                badge.style.borderRadius = '3px';
+                badge.style.marginLeft = 'auto'; // 右端に寄せる
+                itemDiv.appendChild(badge);
+            }
+
+            itemDiv.insertBefore(keySpan, itemDiv.firstChild); // テキストを先に
+            itemDiv.insertBefore(previewImg, itemDiv.firstChild); // 画像を一番先に
         }
+        
+        console.log(`[EditorUI] Asset Browser populated with ${displayableAssets.length} displayable assets.`);
     }
-
-  // src/editor/EditorUI.js
-
-    // src/editor/EditorUI.js
 
     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
