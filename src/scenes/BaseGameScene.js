@@ -48,6 +48,19 @@ export default class BaseGameScene extends Phaser.Scene {
         // 3. 最後に、最終セットアップを呼び出す
         this.finalizeSetup();
     }
+
+       /**
+     * 【データ駆動シーン専用】
+     * オブジェクトをシーンに正式に登録し、初期化するための唯一の門。
+     */
+    initializeObject(gameObject, layout = null) {
+        if (layout) {
+            gameObject.name = layout.name;
+            if (layout.texture) gameObject.setTexture(layout.texture);
+        }
+        this.add.existing(gameObject);
+        this.applyProperties(gameObject, layout);
+    }
     
     /**
      * 単一のレイアウト定義から、ゲームオブジェクトを「生成」する。
