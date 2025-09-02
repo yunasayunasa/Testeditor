@@ -1,17 +1,7 @@
 // src/scenes/BaseGameScene.js (データ駆動シーン専用の親クラス)
-import ActionInterpreter from '../core/ActionInterpreter.js';
-export default class BaseGameScene extends Phaser.Scene {
-   constructor() {
-        super();
-        this.actionInterpreter = null;
-    }
 
-    create() {
-        // ★★★ createの最初に、インタープリタを生成 ★★★
-        this.actionInterpreter = new ActionInterpreter(this);
-        
-        // (JumpSceneなどの子クラスのcreateが、この後に実行される)
-    }
+export default class BaseGameScene extends Phaser.Scene {
+   
     /**
      * 【データ駆動シーン専用】
      * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
