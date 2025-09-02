@@ -1,109 +1,64 @@
+// src/scenes/BaseGameScene.js (データ駆動シーン専用の親クラス)
+
 export default class BaseGameScene extends Phaser.Scene {
 
     /**
-     * 汎用初期化ルーチン：シーンキーと同じ名前のJSONデータを読み込み、
-     * シーンのレイアウトと物理を構築する。
-     * このメソッドは、データ駆動シーン（JumpSceneなど）のcreateから呼び出される。
+     * 【データ駆動シーン専用】
+     * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
      */
-    initSceneFromData() {
+    initSceneWithData() {
         const sceneKey = this.scene.key;
-        console.log(`[${sceneKey}] Initializing from data...`);
+        console.log(`[${sceneKey}] Initializing with data-driven routine...`);
 
-        // データはPreloadSceneでロード済みなので、キャッシュから直接取得
         const layoutData = this.cache.json.get(sceneKey);
         
-        // データの構築処理を呼び出す
         this.buildSceneFromLayout(layoutData);
     }
 
-    /**
-     * 読み込み済みのレイアウトデータを使って、シーンを構築する
-     * @param {object} layoutData - シーンのレイアウトデータ
-     */
     buildSceneFromLayout(layoutData) {
         const sceneKey = this.scene.key;
         if (!layoutData || !layoutData.objects) {
-            console.warn(`[${sceneKey}] No layout data found for this scene. Finalizing setup.`);
+            console.warn(`[${sceneKey}] No layout data found. Finalizing setup.`);
             this.finalizeSetup();
             return;
         }
-
-        console.log(`[${sceneKey}] Building scene from ${layoutData.objects.length} layout objects...`);
         
-        // 1. まず、JSONに基づいて全てのオブジェクトを「生成」だけして、配列に溜め込む
         const createdObjects = [];
         for (const layout of layoutData.objects) {
-            // 子クラスでオーバーライドされることを想定した、オブジェクト生成メソッドを呼び出す
             const gameObject = this.createObjectFromLayout(layout);
             if (gameObject) {
                 createdObjects.push({ gameObject, layout });
             }
         }
         
-        // 2. 全てのオブジェクトが生成された後で、プロパティを「適用」する
         for (const item of createdObjects) {
             this.applyProperties(item.gameObject, item.layout);
         }
         
-        // 3. 最後に、最終セットアップを呼び出す
         this.finalizeSetup();
     }
-
-       /**
-     * 【データ駆動シーン専用】
-     * オブジェクトをシーンに正式に登録し、初期化するための唯一の門。
-     */
-    initializeObject(gameObject, layout = null) {
-        if (layout) {
-            gameObject.name = layout.name;
-            if (layout.texture) gameObject.setTexture(layout.texture);
-        }
-        this.add.existing(gameObject);
-        this.applyProperties(gameObject, layout);
-    }
     
-    /**
-     * 単一のレイアウト定義から、ゲームオブジェクトを「生成」する。
-     * このメソッドは、子シーンでオーバーライドされることを想定している。
-     * @param {object} layout - 単一オブジェクトのレイアウト定義
-     * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト
-     */
     createObjectFromLayout(layout) {
-        // デフォルトでは、Imageオブジェクトを生成する
         const textureKey = layout.texture || (layout.name ? layout.name.split('_')[0] : '__DEFAULT');
         const gameObject = new Phaser.GameObjects.Image(this, 0, 0, textureKey);
-        
-        // ★★★重要★★★
-        // ここではまだシーンに追加しない！ `new` でメモリ上に作るだけ。
-        // 追加は `applyProperties` の中で、 `add.existing` を使って行う。
-        
         return gameObject;
     }
 
-    /**
-     * 単体のオブジェクトに、JSONから読み込んだプロパティを「適用」し、シーンに追加する
-     * @param {Phaser.GameObjects.GameObject} gameObject - 対象のオブジェクト
-     * @param {object} layout - 単一オブジェクトのレイアウト定義
-     */
     applyProperties(gameObject, layout) {
-        gameObject.name = layout.name;
-        
-        // Transformプロパティを適用
-        gameObject.setPosition(layout.x, layout.y);
-        gameObject.setScale(layout.scaleX, layout.scaleY);
-        gameObject.setAngle(layout.angle);
-        gameObject.setAlpha(layout.alpha);
-        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
-        
-        // ★★★ オブジェクトをシーンの表示リストに正式に追加 ★★★
-        this.add.existing(gameObject);
+        const data = layout || { name: gameObject.name, x: gameObject.x, y: gameObject.y, scaleX: 1, scaleY: 1, angle: 0, alpha: 1, visible: true };
 
-        // インタラクティブ化
+        gameObject.name = data.name;
+        gameObject.setPosition(data.x, data.y);
+        gameObject.setScale(data.scaleX, data.scaleY);
+        gameObject.setAngle(data.angle);
+        gameObject.setAlpha(data.alpha);
+        if (data.visible !== undefined) gameObject.setVisible(data.visible);
+        
+        this.add.existing(gameObject);
         gameObject.setInteractive();
 
-        // 物理プロパティを適用
-        if (layout.physics) {
-            const phys = layout.physics;
+        if (data.physics) {
+            const phys = data.physics;
             this.physics.add.existing(gameObject, phys.isStatic || false);
             if(gameObject.body) {
                 if (!gameObject.body.isStatic) {
@@ -116,25 +71,26 @@ export default class BaseGameScene extends Phaser.Scene {
             }
         }
 
-        // エディタに登録
         const editor = this.plugins.get('EditorPlugin');
         if (editor) {
             editor.makeEditable(gameObject, this);
         }
     }
-
+    
     /**
-     * レイアウト適用後に行う、シーンの最終セットアップ。
+     * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
+     * 子クラスで、このメソッドをオーバーライドすることを想定。
      */
+    addObjectFromEditor(assetKey) {
+        console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
+        return null;
+    }
+
     finalizeSetup() {
-        // シーン固有の最終処理を呼び出す (もしあれば)
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
-    
-        // 全てのセットアップが完了したことを、SystemSceneに通知する
         this.events.emit('scene-ready');
-        
         console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
 }
