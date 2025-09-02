@@ -20,18 +20,22 @@ export default class EditorUI {
         this.populateAssetBrowser();
     }
 
-     populateAssetBrowser() {
+   // src/editor/EditorUI.js
+
+    populateAssetBrowser() {
         const assetList = this.game.registry.get('asset_list');
         if (!assetList || !this.assetListContainer) return;
         
         this.assetListContainer.innerHTML = '';
         
-   
-        
-        // 'image' または 'spritesheet' タイプのアセットを、全て表示対象とする
         const displayableAssets = assetList.filter(asset => asset.type === 'image' || asset.type === 'spritesheet');
 
         for (const asset of displayableAssets) {
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが、全てを解決する、最後の修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
             const itemDiv = document.createElement('div');
             itemDiv.className = 'asset-item';
             itemDiv.dataset.assetKey = asset.key;
@@ -48,8 +52,12 @@ export default class EditorUI {
             const keySpan = document.createElement('span');
             keySpan.className = 'asset-key';
             keySpan.innerText = asset.key;
-            
-            // ★ おまけ: タイプが分かるように、小さなバッジを追加 ★
+
+            // 1. まず、プレビュー画像をitemDivに追加
+            itemDiv.appendChild(previewImg);
+            // 2. 次に、キー名を追加
+            itemDiv.appendChild(keySpan);
+
             if (asset.type === 'spritesheet') {
                 const badge = document.createElement('span');
                 badge.innerText = 'Sheet';
@@ -58,12 +66,13 @@ export default class EditorUI {
                 badge.style.fontSize = '10px';
                 badge.style.padding = '2px 4px';
                 badge.style.borderRadius = '3px';
-                badge.style.marginLeft = 'auto'; // 右端に寄せる
+                badge.style.marginLeft = 'auto';
+                // 3. 最後に、バッジを追加
                 itemDiv.appendChild(badge);
             }
 
-            itemDiv.insertBefore(keySpan, itemDiv.firstChild); // テキストを先に
-            itemDiv.insertBefore(previewImg, itemDiv.firstChild); // 画像を一番先に
+            // 4. 全ての部品が揃ったitemDivを、リストのコンテナに「追加」する
+            this.assetListContainer.appendChild(itemDiv);
         }
         
         console.log(`[EditorUI] Asset Browser populated with ${displayableAssets.length} displayable assets.`);
