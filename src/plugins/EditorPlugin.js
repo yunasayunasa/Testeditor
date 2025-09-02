@@ -649,8 +649,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         row.appendChild(valueEl);
         container.appendChild(row);
     }
-   /**
-     * 現在のシーンのレイアウトをJSON形式でエクスポートする (完成版)
+// src/plugins/EditorPlugin.js
+
+    /**
+     * 現在のシーンのレイアウトをJSON形式でエクスポートする (最終確定・完成版)
      */
     exportLayoutToJson() {
         if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
@@ -659,18 +661,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         const targetScene = this.selectedObject.scene;
         const sceneKey = targetScene.scene.key;
-        const sceneLayoutData = { objects: [] };
+        
+        const sceneLayoutData = {
+            objects: [],
+            animations: [] // animations配列も初期化
+        };
 
         if (this.editableObjects.has(sceneKey)) {
             for (const gameObject of this.editableObjects.get(sceneKey)) {
-                // オブジェクトに名前がなければスキップ
+                // オブジェクトに名前がなければ、エクスポート対象外
                 if (!gameObject.name) continue;
 
-                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                // ★★★ ここからが修正の核心です ★★★
-                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-                // --- 手順1: 全てのオブジェクトに共通の基本データをまず作成 ---
+                // --- 1. 基本データを準備 ---
                 const objData = {
                     name: gameObject.name,
                     x: Math.round(gameObject.x),
@@ -680,41 +682,71 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     angle: Math.round(gameObject.angle),
                     alpha: parseFloat(gameObject.alpha.toFixed(2))
                 };
+                
+                // --- 2. 種類とテクスチャを追加 ---
+                if (gameObject instanceof Phaser.GameObjects.Sprite) {
+                    objData.type = 'Sprite';
+                }
                 if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') {
                     objData.texture = gameObject.texture.key;
                 }
 
-                // --- 手順2: もし物理ボディがあれば、「追加」で物理データを書き込む ---
+                // --- 3. 物理データを追加 ---
                 if (gameObject.body) {
                     const body = gameObject.body;
-                    const isStaticForExport = (body instanceof Phaser.Physics.Arcade.StaticBody);
-                    
-                    objData.physics = { isStatic: isStaticForExport };
-                    
-                    if (!isStaticForExport) {
-                        Object.assign(objData.physics, {
-                            width: body.width,
-                            height: body.height,
-                            offsetX: body.offset.x,
-                            offsetY: body.offset.y,
-                            allowGravity: body.allowGravity,
-                            bounceX: parseFloat(body.bounce.x.toFixed(2)),
-                            bounceY: parseFloat(body.bounce.y.toFixed(2))
-                        });
-                    }
-                    objData.physics.collideWorldBounds = body.collideWorldBounds;
+                    objData.physics = {
+                        isStatic: body.isStatic,
+                        width: body.width,
+                        height: body.height,
+                        offsetX: body.offset.x,
+                        offsetY: body.offset.y,
+                        allowGravity: body.allowGravity,
+                        bounceX: parseFloat(body.bounce.x.toFixed(2)),
+                        bounceY: parseFloat(body.bounce.y.toFixed(2)),
+                        collideWorldBounds: body.collideWorldBounds
+                    };
                 }
- if (gameObject.getData('animation_data')) {
-            objData.animation = gameObject.getData('animation_data');
-        }
-                // --- 手順3: 完成したobjDataを、条件なしで必ず配列に追加 ---
+
+                // --- 4. アニメーションデータを追加 ---
+                if (gameObject.getData('animation_data')) {
+                    objData.animation = gameObject.getData('animation_data');
+                }
+                
+                // --- 5. 完成したオブジェクトデータをリストに追加 ---
                 sceneLayoutData.objects.push(objData);
-            }
+
+            } // ★★★ for ループの正しい閉じ括弧 ★★★
+        } // ★★★ if (this.editableObjects...) の正しい閉じ括弧 ★★★
+        
+        // --- 6. シーン全体のアニメーション定義を書き出す ---
+        const scene = this.game.scene.getScene(sceneKey);
+        if (scene && scene.anims) {
+            sceneLayoutData.animations = scene.anims.anims.getArray()
+                // このシーンで使われているテクスチャのアニメーションのみを対象とする
+                .filter(anim => anim.frames[0] && this.editableObjects.get(sceneKey) && Array.from(this.editableObjects.get(sceneKey)).some(go => go.texture.key === anim.frames[0].textureKey))
+                .map(anim => {
+                    // フレーム番号を正しく抽出する
+                    let frames = null;
+                    // generateFrameNumbersで作られたアニメか、フレーム配列で作られたアニメか
+                    if (anim.generateFrameNumbers) {
+                        frames = { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame };
+                    } else {
+                        frames = anim.frames.map(f => f.index);
+                    }
+                    return {
+                        key: anim.key,
+                        texture: anim.frames[0].textureKey,
+                        frames: frames,
+                        frameRate: anim.frameRate,
+                        repeat: anim.repeat
+                    };
+                });
         }
+
+        // --- 7. 最終的なJSONを文字列化して出力 ---
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
         console.log(jsonString);
         navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
     }
-
 }
