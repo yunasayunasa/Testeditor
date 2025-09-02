@@ -25,7 +25,7 @@ export default class JumpScene extends BaseGameScene {
      */
     // src/scenes/JumpScene.js
 
-    addObjectFromEditor(assetKey) {
+    addObjectFromEditor(assetKey, newName) {
         const centerX = this.cameras.main.centerX;
         const centerY = this.cameras.main.centerY;
         
