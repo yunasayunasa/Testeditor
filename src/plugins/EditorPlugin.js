@@ -239,6 +239,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 // --- 修正点 3: 新しいボディの追加 (これは前回と同じ) ---
                 // チェックボックスの最新の状態 'isChecked' を使って、新しいボディを生成する。
                 targetScene.physics.add.existing(this.selectedObject, isChecked);
+                if (this.selectedObject.body) {
+                    console.log(`%c[BODY CHANGED] Object: '${this.selectedObject.name}', New isStatic: ${this.selectedObject.body.isStatic}`, 'color: cyan; font-weight: bold;');
+                }
 
                 // 新しく作られたボディに対して、共通の設定を再適用
                 if (this.selectedObject.body) {
@@ -342,6 +345,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
                     if (gameObject.body) {
                         const body = gameObject.body;
+                         if (gameObject.name === this.selectedObject.name) {
+                            console.log(`%c[EXPORTING] Object: '${gameObject.name}', isStatic value found: ${body.isStatic}`, 'color: orange;');
+                        }
                         objData.physics = { isStatic: body.isStatic, width: body.width, height: body.height, offsetX: body.offset.x, offsetY: body.offset.y, allowGravity: body.allowGravity, bounceX: parseFloat(body.bounce.x.toFixed(2)), bounceY: parseFloat(body.bounce.y.toFixed(2)), collideWorldBounds: body.collideWorldBounds };
                     }
                     // ★★★ pushは一度だけに修正 ★★★
