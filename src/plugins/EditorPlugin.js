@@ -61,8 +61,17 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
         
         gameObject.on('drag', (pointer, dragX, dragY) => {
+            // 1. GameObjectの位置を更新 (これは今まで通り)
             gameObject.x = Math.round(dragX);
             gameObject.y = Math.round(dragY);
+
+            // 2. もし物理ボディが存在し、それが静的ボディなら、手動で位置を更新する
+            if (gameObject.body && (gameObject.body instanceof Phaser.Physics.Arcade.StaticBody)) {
+                // 静的ボディの位置をGameObjectに同期させる
+                gameObject.body.reset(gameObject.x, gameObject.y);
+            }
+
+            // 3. プロパティパネルを更新 (これも今まで通り)
             if(this.selectedObject === gameObject) this.updatePropertyPanel();
         });
 
@@ -364,7 +373,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                         objData.physics.collideWorldBounds = body.collideWorldBounds;
                         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                     }
-                    sceneLayoutToJson.objects.push(objData);
+                    sceneLayoutData.objects.push(objData);
                 }
             }
         }
