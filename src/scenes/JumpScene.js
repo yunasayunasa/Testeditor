@@ -19,13 +19,11 @@ export default class JumpScene extends BaseGameScene {
         this.initSceneWithData();
     }
 
-    /**
+      /**
      * 【JumpScene専用】
-     * エディタからオブジェクト追加の依頼を受けた時の処理
+     * エディタからオブジェクト追加の依頼を受けた時の処理 (修正版)
      */
-    // src/scenes/JumpScene.js
-
-    addObjectFromEditor(assetKey, newName) {
+    addObjectFromEditor(assetKey, newName) { // newName を受け取る
         const centerX = this.cameras.main.centerX;
         const centerY = this.cameras.main.centerY;
         
@@ -36,7 +34,11 @@ export default class JumpScene extends BaseGameScene {
         
         // 2. 「初期化＆登録」を親に任せる
         this.applyProperties(newImage, {
-            name: `${assetKey}_${Date.now()}`,
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ ここが修正点です！ ★★★
+            // タイムスタンプではなく、引数で受け取った 'newName' を使う
+            name: newName,
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             x: centerX, y: centerY, scaleX: 1, scaleY: 1, angle: 0, alpha: 1, visible: true
         });
         

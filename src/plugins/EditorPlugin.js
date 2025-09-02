@@ -213,23 +213,28 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
       /**
      * 物理パラメータを編集するためのUIを生成する (最終確定版)
      */
-    createPhysicsPropertiesUI(gameObject) {
+   createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         
-        // ★★★ 4. ヘルパーメソッドに、存在する 'this.editorPropsContainer' を渡す ★★★
         const isStatic = body.isStatic;
         this.createCheckbox(this.editorPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
-            if (this.selectedObject) {
+            if (this.selectedObject && this.selectedObject.body) {
                 const targetScene = this.selectedObject.scene;
-                targetScene.physics.world.remove(this.selectedObject.body);
+                
+                // 既存のボディを確実に破棄
+                this.selectedObject.body.destroy();
+
+               
                 targetScene.physics.add.existing(this.selectedObject, isChecked);
+               
+
                 if (this.selectedObject.body) {
                     this.selectedObject.body.collideWorldBounds = true;
                 }
+                // UIを再描画して変更を反映
                 this.updatePropertyPanel();
             }
         });
-
         const isDynamic = body.moves;
         if (isDynamic) {
             this.createVector2Input(this.editorPropsContainer, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
