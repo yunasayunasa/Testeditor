@@ -5,6 +5,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
+         this.animEditorOverlay = null;
+        this.animEditorCloseBtn = null;
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが、全てを解決する、最後の修正です ★★★
@@ -29,7 +31,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
         console.warn("[EditorPlugin] Debug mode activated.");
+
+          this.animEditorOverlay = document.getElementById('anim-editor-overlay');
+        this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
+
+        // ★★★ 変更点3: 閉じるボタンにイベントリスナーを設定 ★★★
+        if (this.animEditorCloseBtn) {
+            this.animEditorCloseBtn.addEventListener('click', () => {
+                this.closeAnimationEditor();
+            });
+        }
     }
+    
 
     setUI(editorUI) {
         this.editorUI = editorUI;
@@ -40,6 +53,30 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 this.editorUI.onAddButtonClicked();
             });
         }
+    }
+
+      /**
+     * アニメーション・エディタのウィンドウを開く
+     */
+    openAnimationEditor() {
+        if (!this.animEditorOverlay) return;
+
+        // タイトルを選択中のオブジェクト名に更新
+        const titleElement = document.getElementById('animation-editor-title');
+        if (titleElement) {
+            titleElement.innerText = `Editing Animations for: ${this.selectedObject.name}`;
+        }
+        
+        // オーバーレイを表示する
+        this.animEditorOverlay.style.display = 'flex';
+    }
+
+    /**
+     * アニメーション・エディタのウィンドウを閉じる
+     */
+    closeAnimationEditor() {
+        if (!this.animEditorOverlay) return;
+        this.animEditorOverlay.style.display = 'none';
     }
 
     makeEditable(gameObject, scene) {
@@ -168,6 +205,27 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             };
             this.editorPropsContainer.appendChild(addButton);
         }
+          // --- 区切り線 ---
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        
+        // --- Animationセクションのタイトル ---
+        const animTitle = document.createElement('div');
+        animTitle.innerText = 'Animation';
+        animTitle.style.fontWeight = 'bold';
+        animTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(animTitle);
+
+        // --- アニメーション・エディタを開くボタン ---
+        const openAnimEditorBtn = document.createElement('button');
+        openAnimEditorBtn.innerText = 'Open Animation Editor';
+        openAnimEditorBtn.onclick = () => {
+            if (this.selectedObject) {
+                this.openAnimationEditor();
+            } else {
+                alert('Please select an object first.');
+            }
+        };
+        this.editorPropsContainer.appendChild(openAnimEditorBtn);
         // Exportボタン
         this.editorPropsContainer.appendChild(document.createElement('hr'));
         const exportButton = document.createElement('button');
