@@ -175,8 +175,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return form;
     }
 
-    /**
-     * 登録済みのアニメーションを一覧表示するHTML要素を生成する
+  /**
+     * 登録済みのアニメーションを一覧表示するHTML要素を生成する (最終修正版)
      * @returns {HTMLElement} 生成されたリスト要素
      */
     createAnimationList() {
@@ -185,14 +185,37 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         title.innerText = '登録済みアニメーション';
         container.appendChild(title);
 
-        const anims = this.selectedObject.scene.anims.anims.getArray();
-        
-        anims.forEach(anim => {
-            // このスプライトのテクスチャを使っているアニメーションのみ表示
-            if (anim.frames[0].textureKey !== this.selectedObject.texture.key) return;
+        if (!this.selectedObject || !this.selectedObject.scene) return container;
 
+        const scene = this.selectedObject.scene;
+        const currentTextureKey = this.selectedObject.texture.key;
+        
+        // シーンに登録されている全てのアニメーションを取得
+        const allAnims = scene.anims.anims.getArray();
+        
+        allAnims.forEach(anim => {
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが、全てを解決する、最後の修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            
+            // 1. まず、アニメーションデータがフレームを持っているか、安全にチェック
+            if (!anim.frames || anim.frames.length === 0) return;
+
+            // 2. 最初のフレームから、安全にテクスチャキーを取得
+            const animTextureKey = anim.frames[0].textureKey;
+
+            // 3. このスプライトのテクスチャと、アニメーションのテクスチャが一致するか比較
+            if (animTextureKey !== currentTextureKey) return;
+
+            // --- ここから先は、表示処理 (変更なし) ---
             const div = document.createElement('div');
-            div.innerText = `キー: ${anim.key}, フレームレート: ${anim.frameRate}`;
+            div.style.marginBottom = '5px';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+
+            const infoSpan = document.createElement('span');
+            infoSpan.innerText = `キー: ${anim.key}, フレームレート: ${anim.frameRate}`;
+            infoSpan.style.marginRight = '10px';
             
             const playBtn = document.createElement('button');
             playBtn.innerText = '再生';
@@ -206,7 +229,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (this.selectedObject) this.selectedObject.stop();
             };
             
-            div.append(playBtn, stopBtn);
+            div.append(infoSpan, playBtn, stopBtn);
             container.appendChild(div);
         });
 
