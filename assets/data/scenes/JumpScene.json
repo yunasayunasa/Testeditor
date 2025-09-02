@@ -1,34 +1,17 @@
-
 {
   "objects": [
     {
-      "name": "yuna_angry_1756793179237",
-      "x": 989,
-      "y": 394,
+      "name": "walk_2",
+      "x": 390,
+      "y": 195,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "texture": "yuna_angry"
-    },
-    {
-      "name": "cg01_1756793213436",
-      "x": 481,
-      "y": 563,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "texture": "cg01",
-      "physics": {
-        "width": 600,
-        "height": 315,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": true,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
+      "texture": "walk",
+      "animation": {
+        "default": "歩く",
+        "definitions": []
       }
     }
   ]
