@@ -118,26 +118,44 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     /**
-     * エディタ用のグローバルアセットリストを生成してRegistryに登録する
+     * エディタ用のグローバルアセットリストを生成してRegistryに登録する (最終確定版)
      */
     createGlobalAssetList() {
         const assetList = [];
-        // Phaserのキャッシュマネージャーを直接参照して、ロード済みの全アセット情報を取得
-        const textureKeys = this.textures.getTextureKeys();
-        for (const key of textureKeys) {
-            if (key === '__DEFAULT' || key === '__MISSING') continue;
-            // imageかspritesheetかを判別するのは難しいので、ここではシンプルに 'image' として扱う
-            // Spritesheetの場合、元のパス情報が失われるため、プレビューは最初のフレームが表示される
-            const source = this.textures.get(key).source[0];
-            if (source && source.image && source.image.src) {
-                 assetList.push({ key: key, type: 'image', path: source.image.src.replace(window.location.origin, '') });
+        const assetDefine = this.cache.json.get('asset_define');
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する、最も確実なロジックです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 1. 'images' セクションから情報を取得 ---
+        if (assetDefine.images) {
+            for (const key in assetDefine.images) {
+                assetList.push({ 
+                    key: key, 
+                    type: 'image', 
+                    path: assetDefine.images[key] 
+                });
             }
         }
+        
+        // --- 2. 'spritesheets' セクションから情報を取得 ---
+        if (assetDefine.spritesheets) {
+            for (const key in assetDefine.spritesheets) {
+                assetList.push({ 
+                    key: key, 
+                    type: 'spritesheet', 
+                    path: assetDefine.spritesheets[key].path 
+                });
+            }
+        }
+
+        // --- 3. 他のタイプのアセットも、必要であればここに追加 ---
+        // (例: 音声ファイルなども、将来的にアセットブラウザで扱いたくなった場合)
         
         this.registry.set('asset_list', assetList);
         console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
     }
-
     /**
      * キャラクター定義オブジェクトを生成する
      */
