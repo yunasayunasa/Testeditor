@@ -1,9 +1,55 @@
-// src/handlers/events/tween.js
+// src/handlers/events/tween.js (最終確定・完成版)
 
-// [tween property=x to=500 time=1000 ease=Power2 yoyo=true]
+/**
+ * [tween] タグの処理
+ * 対象オブジェクトのプロパティを、滑らかに変化させる
+ * @param {ActionInterpreter} interpreter - 呼び出し元のインタープリタ
+ * @param {Phaser.GameObjects.GameObject} target - アクションの対象となるオブジェクト
+ * @param {object} params - タグからパースされたパラメータ
+ * @returns {Promise<void>} アニメーション完了時に解決されるPromise
+ */
 export function handleTween(interpreter, target, params) {
-    // このアクションは時間がかかるので、Promiseを返す
+    // このアクションは時間がかかるので、必ずPromiseを返す
     return new Promise(resolve => {
+        
+        // --- 1. 必須パラメータのチェック ---
+        if (!params.property || params.to === undefined) {
+            console.warn('[tween] "property" and "to" parameters are required.');
+            resolve(); // エラーでも、処理を止めずに次に進む
+            return;
+        }
+
+        const property = params.property;
+        let targetValue = params.to;
+
+        // --- 2. 目標値 (to) の解析 ---
+        // 相対値 ("+=100" や "-=50") に対応
+        if (typeof targetValue === 'string') {
+            if (targetValue.startsWith('+=')) {
+                targetValue = target[property] + parseFloat(targetValue.substring(2));
+            } else if (targetValue.startsWith('-=')) {
+                targetValue = target[property] - parseFloat(targetValue.substring(2));
+            } else {
+                targetValue = parseFloat(targetValue);
+            }
+        }
+        
+        // --- 3. 便利なショートカット "scale" に対応 ---
+        if (property === 'scale') {
+            // scaleX と scaleY を同じ値に設定する
+            target.scene.tweens.add({
+                targets: target,
+                scaleX: targetValue,
+                scaleY: targetValue,
+                duration: parseInt(params.time) || 1000,
+                ease: params.ease || 'Linear',
+                yoyo: params.yoyo === 'true',
+                onComplete: () => resolve()
+            });
+            return; // scaleの場合は、ここで処理を終了
+        }
+
+        // --- 4. PhaserのTween設定オブジェクトを構築 ---
         const tweenConfig = {
             targets: target,
             duration: parseInt(params.time) || 1000,
@@ -14,13 +60,14 @@ export function handleTween(interpreter, target, params) {
                 resolve();
             }
         };
-        // propertyで指定されたプロパティを、toの値に変化させる
-        tweenConfig[params.property] = parseFloat(params.to);
         
+        // 変化させたいプロパティと、その目標値を設定
+        tweenConfig[property] = targetValue;
+        
+        // --- 5. Tweenを実行 ---
         interpreter.scene.tweens.add(tweenConfig);
     });
 }
-
 /*[tween] タグ・リファレンス (設計仕様書)
 目的:
 [tween]タグは、オブジェクトの単一のプロパティを、指定された時間で、指定された値へと滑らかに変化させるための、基本的なトゥイーンアニメーション命令である。
