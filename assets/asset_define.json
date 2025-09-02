@@ -13,8 +13,15 @@
 "item_shield": "assets/item/shield.png" ,
 "item_potion": "assets/item/potion.png" ,
      "enzan": "assets/images/enzan.jpg" ,
-     "enzan2": "assets/images/enzan2.png",
-     "walk": "assets/images/walk.png"
+     "enzan2": "assets/images/enzan2.png"
+      
+  },
+   "spritesheets": {
+    "walk": {
+      "path": "assets/images/walk.png",
+      "frameWidth": 102,
+      "frameHeight": 115
+    }
   },
   "sounds": {
 "popopo": "assets/gyakuten_popopo.mp3",
