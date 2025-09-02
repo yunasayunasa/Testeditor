@@ -48,6 +48,8 @@ export default class EditorUI {
 
   // src/editor/EditorUI.js
 
+    // src/editor/EditorUI.js
+
     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
             alert('Please select an asset from the browser first.');
@@ -59,7 +61,6 @@ export default class EditorUI {
         const scenes = this.game.scene.getScenes(true);
         for (let i = scenes.length - 1; i >= 0; i--) {
             const scene = scenes[i];
-            // ★★★ GameSceneは聖域なので、ターゲットから除外する ★★★
             if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
                 targetScene = scene;
                 break;
@@ -71,31 +72,22 @@ export default class EditorUI {
              alert("Could not find a suitable target scene. Make sure you are not in GameScene.");
              return;
         }
-         // 1. このアセットキーのカウンターが存在しなければ、1で初期化
+
+        // --- 2. シーンに「オブジェクト追加」を依頼する ---
+        if (targetScene.addObjectFromEditor) {
+            
+            // --- 2-1. 連番の名前を生成 ---
             if (!this.objectCounters[this.selectedAssetKey]) {
                 this.objectCounters[this.selectedAssetKey] = 1;
             } else {
-                // 2. 存在すれば、カウンターを1増やす
                 this.objectCounters[this.selectedAssetKey]++;
             }
-
-            // 3. 新しい名前を生成 (例: yuko_normal_1, yuko_normal_2)
             const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
 
-            // --- JumpSceneのaddObjectFromEditorを呼び出す ---
-            // (このメソッドはBaseGameSceneを継承しているので、applyPropertiesを内部で呼び出す)
+            // --- 2-2. シーンに、アセットキーと新しい名前を渡して、追加を依頼 ---
             const newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName);
 
-            if (newObject) {
-                this.plugin.selectedObject = newObject;
-                this.plugin.updatePropertyPanel();
-            }
-        }
-    }
-
-        // --- 2. シーンに「オブジェクト追加」を依頼するだけ ---
-        if (targetScene.addObjectFromEditor) {
-            const newObject = targetScene.addObjectFromEditor(this.selectedAssetKey);
+            // --- 2-3. 成功すれば、選択状態にしてパネルを更新 ---
             if (newObject) {
                 this.plugin.selectedObject = newObject;
                 this.plugin.updatePropertyPanel();
