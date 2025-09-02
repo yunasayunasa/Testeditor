@@ -165,7 +165,47 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         exportButton.innerText = 'Export Layout (to Console)';
         exportButton.addEventListener('click', () => this.exportLayoutToJson());
         this.editorPropsContainer.appendChild(exportButton);
+        
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+        // --- オブジェクト削除ボタン ---
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'Delete Object';
+        deleteButton.style.backgroundColor = '#e65151'; // 危険な操作なので赤色に
+        deleteButton.style.marginTop = '10px';
+        
+        deleteButton.addEventListener('click', () => {
+            // 削除対象のオブジェクトが、まだ存在するかを最終確認
+            if (this.selectedObject && this.selectedObject.scene) {
+
+                // ユーザーに最終確認を求める
+                if (confirm(`本当に '${this.selectedObject.name}' を削除しますか？`)) {
+                    
+                    const targetObject = this.selectedObject;
+                    const sceneKey = targetObject.scene.scene.key;
+
+                    // 1. まず、プラグインの管理リストからオブジェクトを削除
+                    if (this.editableObjects.has(sceneKey)) {
+                        this.editableObjects.get(sceneKey).delete(targetObject);
+                    }
+                    
+                    // 2. 次に、Phaserのシーンからオブジェクトを完全に破棄
+                    targetObject.destroy();
+                    
+                    // 3. 最後に、選択を解除し、プロパティパネルを更新
+                    this.selectedObject = null;
+                    this.updatePropertyPanel();
+
+                    console.log(`[EditorPlugin] Object '${targetObject.name}' has been deleted.`);
+                }
+            }
+        });
+        
+        this.editorPropsContainer.appendChild(deleteButton);
     }
+    
+    
+    
 
      /**
      * 物理パラメータを編集するためのUIを生成する
