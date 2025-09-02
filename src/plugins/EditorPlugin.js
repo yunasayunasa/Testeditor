@@ -443,7 +443,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
             this.editorPropsContainer.appendChild(document.createElement('hr'));
         const physicsTitle = document.createElement('div');
-        physicsTitle.innerText = 'Physics';
+        physicsTitle.innerText = '物理ボディ';
         physicsTitle.style.fontWeight = 'bold';
         physicsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(physicsTitle);
@@ -455,7 +455,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             this.createPhysicsPropertiesUI(gameObject);
 
             const removeButton = document.createElement('button');
-            removeButton.innerText = 'Disable Physics';
+            removeButton.innerText = '物理ボディ 削除';
             removeButton.style.backgroundColor = '#c44';
             removeButton.style.marginTop = '10px';
             removeButton.onclick = () => {
@@ -470,7 +470,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         } else {
             // --- ケースB: 物理ボディを持っていない場合 ---
             const addButton = document.createElement('button');
-            addButton.innerText = 'Enable Arcade Physics';
+            addButton.innerText = '物理ボディ 付与 ';
             addButton.onclick = () => {
                 if (this.selectedObject) {
                     const targetScene = this.selectedObject.scene;
@@ -489,7 +489,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         
         // --- Animationセクションのタイトル ---
         const animTitle = document.createElement('div');
-        animTitle.innerText = 'Animation';
+        animTitle.innerText = 'スプライトシート';
         animTitle.style.fontWeight = 'bold';
         animTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(animTitle);
@@ -505,10 +505,28 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             }
         };
         this.editorPropsContainer.appendChild(openAnimEditorBtn);
+
+  // --- 3. Eventsプロパティの生成 ---
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        
+        const eventsTitle = document.createElement('div');
+        eventsTitle.innerText = 'ロジック';
+        eventsTitle.style.fontWeight = 'bold';
+        eventsTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(eventsTitle);
+
+        const addNewEventBtn = document.createElement('button');
+        addNewEventBtn.innerText = '新しいイベントを追加';
+        addNewEventBtn.onclick = () => {
+            alert('今後、ここからオブジェクトに「魂（ロジック）」を吹き込めるようになります！');
+        };
+        this.editorPropsContainer.appendChild(addNewEventBtn);
+        
+
         // Exportボタン
         this.editorPropsContainer.appendChild(document.createElement('hr'));
         const exportButton = document.createElement('button');
-        exportButton.innerText = 'Export Layout (to Console)';
+        exportButton.innerText = 'エクスポート レイアウト (to Console)';
         exportButton.addEventListener('click', () => this.exportLayoutToJson());
         this.editorPropsContainer.appendChild(exportButton);
         
@@ -516,7 +534,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         // --- オブジェクト削除ボタン ---
         const deleteButton = document.createElement('button');
-        deleteButton.innerText = 'Delete Object';
+        deleteButton.innerText = 'オブジェクト 削除';
         deleteButton.style.backgroundColor = '#e65151'; // 危険な操作なので赤色に
         deleteButton.style.marginTop = '10px';
         
