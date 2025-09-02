@@ -44,18 +44,25 @@ export default class BaseGameScene extends Phaser.Scene {
         return gameObject;
     }
 
-    applyProperties(gameObject, layout) {
+      applyProperties(gameObject, layout) {
         const data = layout || { name: gameObject.name, x: gameObject.x, y: gameObject.y, scaleX: 1, scaleY: 1, angle: 0, alpha: 1, visible: true };
 
+        // ★★★ 1. まず、名前とテクスチャを確定させる ★★★
         gameObject.name = data.name;
+        if (data.texture) {
+            gameObject.setTexture(data.texture);
+        }
+        
+        // ★★★ 2. オブジェクトをシーンに「追加」する ★★★
+        // これにより、オブジェクトのwidthとheightが確実に決まる
+        this.add.existing(gameObject);
+
+        // ★★★ 3. Transformプロパティを適用する ★★★
         gameObject.setPosition(data.x, data.y);
         gameObject.setScale(data.scaleX, data.scaleY);
         gameObject.setAngle(data.angle);
         gameObject.setAlpha(data.alpha);
         if (data.visible !== undefined) gameObject.setVisible(data.visible);
-        
-        this.add.existing(gameObject);
-        gameObject.setInteractive();
 
         if (data.physics) {
             const phys = data.physics;
@@ -71,9 +78,19 @@ export default class BaseGameScene extends Phaser.Scene {
             }
         }
 
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor) {
-            editor.makeEditable(gameObject, this);
+               // 5. 最後に、当たり判定の形状を「保証」して、インタラクティブ化とエディタ登録を行う
+        //    'setSize' を呼ぶことで、テクスチャのサイズに合わせた当たり判定が強制的に作られる
+        //    これにより、setInteractive() の自動推測の失敗を完全に防ぐ
+        try {
+            gameObject.setSize(gameObject.width, gameObject.height);
+            gameObject.setInteractive();
+
+            const editor = this.plugins.get('EditorPlugin');
+            if (editor) {
+                editor.makeEditable(gameObject, this);
+            }
+        } catch (e) {
+            console.error(`[BaseGameScene] Failed to make object interactive: '${gameObject.name}'`, e);
         }
     }
     
