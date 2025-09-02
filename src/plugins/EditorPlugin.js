@@ -58,30 +58,33 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
       /**
      * アニメーション・エディタのウィンドウを開く
      */
-    openAnimationEditor() {
+   openAnimationEditor() {
         if (!this.animEditorOverlay || !this.selectedObject) return;
 
         const contentArea = document.getElementById('animation-editor-content');
         contentArea.innerHTML = ''; // 中身を一度クリア
 
-        // --- 選択中のオブジェクトがSpriteかどうかを判定 ---
         const isSprite = (this.selectedObject instanceof Phaser.GameObjects.Sprite);
 
         if (isSprite) {
             // ★ ケースA: すでにSpriteの場合
-            // (次のステップで、ここにアニメーション定義UIを生成していく)
-            contentArea.innerHTML = `<p>Animation settings for '${this.selectedObject.name}' will appear here.</p>`;
-
+            
+            // --- 1. 新しいアニメーションを作成するためのフォームを生成 ---
+            const createForm = this.createAnimationCreationForm();
+            contentArea.appendChild(createForm);
+            
+            // --- 2. 登録済みのアニメーションを一覧表示 ---
+            const animList = this.createAnimationList();
+            contentArea.appendChild(animList);
+            
         } else {
-            // ★ ケースB: Spriteではない場合 (Imageなど)
+            // ★ ケースB: Spriteではない場合
             const message = document.createElement('p');
-            message.innerText = `Object '${this.selectedObject.name}' is not a Sprite and cannot be animated.`;
+            message.innerText = `オブジェクト「${this.selectedObject.name}」はスプライトではないため、アニメーションできません。`;
             
             const convertButton = document.createElement('button');
-            convertButton.innerText = 'Convert to Sprite';
-            convertButton.onclick = () => {
-                this.convertImageToSprite();
-            };
+            convertButton.innerText = 'スプライトに変換する';
+            convertButton.onclick = () => { this.convertImageToSprite(); };
 
             contentArea.appendChild(message);
             contentArea.appendChild(convertButton);
@@ -90,11 +93,146 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         // --- ウィンドウを開く処理 (変更なし) ---
         const titleElement = document.getElementById('animation-editor-title');
         if (titleElement) {
-            titleElement.innerText = `Editing Animations for: ${this.selectedObject.name}`;
+            titleElement.innerText = `アニメーション編集: ${this.selectedObject.name}`;
         }
         this.animEditorOverlay.style.display = 'flex';
     }
 
+    /**
+     * 新しいアニメーションを作成するためのHTMLフォームを生成する
+     * @returns {HTMLElement} 生成されたフォーム要素
+     */
+    createAnimationCreationForm() {
+        const form = document.createElement('div');
+        form.style.border = '1px solid #444';
+        form.style.padding = '10px';
+        form.style.marginBottom = '15px';
+
+        const title = document.createElement('h4');
+        title.innerText = '新しいアニメーションを作成';
+        title.style.marginTop = '0';
+        form.appendChild(title);
+        
+        // --- 入力欄の生成 ---
+        const animKeyInput = document.createElement('input');
+        animKeyInput.type = 'text';
+        animKeyInput.placeholder = 'アニメーション名 (例: walk)';
+        
+        const framesInput = document.createElement('input');
+        framesInput.type = 'text';
+        framesInput.placeholder = 'フレーム番号 (例: 0-7 or 0,2,4)';
+
+        const frameRateInput = document.createElement('input');
+        frameRateInput.type = 'number';
+        frameRateInput.value = 10;
+        frameRateInput.placeholder = 'フレームレート';
+
+        const repeatCheckbox = document.createElement('input');
+        repeatCheckbox.type = 'checkbox';
+        repeatCheckbox.checked = true;
+        const repeatLabel = document.createElement('label');
+        repeatLabel.innerText = ' ループ再生';
+        repeatLabel.appendChild(repeatCheckbox);
+        
+        // --- 作成ボタン ---
+        const createBtn = document.createElement('button');
+        createBtn.innerText = '作成';
+        createBtn.onclick = () => {
+            const scene = this.selectedObject.scene;
+            const textureKey = this.selectedObject.texture.key;
+            
+            // フォームから値を取得
+            const animKey = animKeyInput.value;
+            const framesStr = framesInput.value;
+            const frameRate = parseInt(frameRateInput.value);
+            const repeat = repeatCheckbox.checked ? -1 : 0;
+            
+            if (!animKey || !framesStr || !frameRate) {
+                alert('全ての項目を入力してください。');
+                return;
+            }
+
+            // フレーム番号の文字列を解析
+            const frames = scene.anims.generateFrameNumbers(textureKey, {
+                frames: this.parseFrameString(framesStr)
+            });
+
+            // Phaserのアニメーションマネージャーに、新しいアニメーションを登録
+            scene.anims.create({
+                key: animKey,
+                frames: frames,
+                frameRate: frameRate,
+                repeat: repeat
+            });
+            
+            console.log(`[EditorPlugin] Animation created: '${animKey}'`);
+            
+            // アニメーションリストを更新して、新しいアニメを表示
+            this.openAnimationEditor();
+        };
+
+        form.append(animKeyInput, framesInput, frameRateInput, repeatLabel, createBtn);
+        return form;
+    }
+
+    /**
+     * 登録済みのアニメーションを一覧表示するHTML要素を生成する
+     * @returns {HTMLElement} 生成されたリスト要素
+     */
+    createAnimationList() {
+        const container = document.createElement('div');
+        const title = document.createElement('h4');
+        title.innerText = '登録済みアニメーション';
+        container.appendChild(title);
+
+        const anims = this.selectedObject.scene.anims.anims.getArray();
+        
+        anims.forEach(anim => {
+            // このスプライトのテクスチャを使っているアニメーションのみ表示
+            if (anim.frames[0].textureKey !== this.selectedObject.texture.key) return;
+
+            const div = document.createElement('div');
+            div.innerText = `キー: ${anim.key}, フレームレート: ${anim.frameRate}`;
+            
+            const playBtn = document.createElement('button');
+            playBtn.innerText = '再生';
+            playBtn.onclick = () => {
+                if (this.selectedObject) this.selectedObject.play(anim.key);
+            };
+            
+            const stopBtn = document.createElement('button');
+            stopBtn.innerText = '停止';
+            stopBtn.onclick = () => {
+                if (this.selectedObject) this.selectedObject.stop();
+            };
+            
+            div.append(playBtn, stopBtn);
+            container.appendChild(div);
+        });
+
+        return container;
+    }
+
+    /**
+     * "0-7" や "0,2,4" のような文字列を、フレーム番号の配列に変換する
+     * @param {string} str - フレーム番号の文字列
+     * @returns {number[]} フレーム番号の配列
+     */
+    parseFrameString(str) {
+        const parts = str.split(',');
+        let frames = [];
+        for (const part of parts) {
+            if (part.includes('-')) {
+                const [start, end] = part.split('-').map(Number);
+                for (let i = start; i <= end; i++) {
+                    frames.push(i);
+                }
+            } else {
+                frames.push(Number(part));
+            }
+        }
+        return frames;
+    }
       /**
      * ★★★ 新規メソッド ★★★
      * 選択中のImageオブジェクトを、同じプロパティを持つSpriteオブジェクトに変換する
