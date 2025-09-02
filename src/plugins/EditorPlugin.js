@@ -1,5 +1,3 @@
-
-
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
@@ -7,23 +5,42 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
+         this.animEditorOverlay = null;
+        this.animEditorCloseBtn = null;
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する、最後の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. 存在しないプロパティを削除し、混乱の元を断つ
+        // this.this.editorPropsContainer, = document.getElementById('editor-props'); // ← この行を削除
+
+        // 2. 必要な参照だけを残す
         this.editorPanel = null;
         this.editorTitle = null;
-        this.editorPropsContainer = null; // ★ constructorではnullで初期化
+        this.editorPropsContainer = null;
     }
 
     init() {
         const currentURL = window.location.href;
-        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
+        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
+        if (!hasDebugParameter) return;
+
         this.isEnabled = true;
-        
-        // ★★★ 全てのDOM参照は、initで一度だけ行う ★★★
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
-        // ★★★ 正しいプロパティ名に統一 ★★★
-        this.editorPropsContainer = document.getElementById('editor-props-container'); 
-        
+        this.editorPropsContainer = document.getElementById('editor-props');
         console.warn("[EditorPlugin] Debug mode activated.");
+
+          this.animEditorOverlay = document.getElementById('anim-editor-overlay');
+        this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
+
+        // ★★★ 変更点3: 閉じるボタンにイベントリスナーを設定 ★★★
+        if (this.animEditorCloseBtn) {
+            this.animEditorCloseBtn.addEventListener('click', () => {
+                this.closeAnimationEditor();
+            });
+        }
     }
     
 
@@ -362,186 +379,79 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         gameObject.setData('isEditable', true);
     }
     updatePropertyPanel() {
-        if (!this.isEnabled || !this.editorPropsContainer) return; // ★ 正しいプロパティをチェック
-        
+          if (!this.isEnabled) return; // ★ 無効なら、何もしない
+        if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
         this.editorPropsContainer.innerHTML = '';
-        
         if (!this.selectedObject) {
-            this.editorTitle.innerText = 'オブジェクトが選択されていません';
+            this.editorTitle.innerText = 'No Object Selected';
             return;
         }
-        this.editorTitle.innerText = `編集中: ${this.selectedObject.name}`;
-        
-        // ★★★ 責務を分離した、クリーンな呼び出し ★★★
-        this.createAccordionSection('Transform', this.populateTransformUI.bind(this));
-        this.createAccordionSection('Physics', this.populatePhysicsUI.bind(this));
-        this.createAccordionSection('Animation', this.populateAnimationUI.bind(this));
-        this.createAccordionSection('Actions', this.populateActionButtons.bind(this));
-    }
-    
-    createAccordionSection(title, populateFn, isOpen = false) {
-        const sectionDiv = document.createElement('div');
-        sectionDiv.className = 'accordion-section';
-
-        const header = document.createElement('div');
-        header.className = 'accordion-header';
-        header.innerText = title;
-
-        const content = document.createElement('div');
-        content.className = 'accordion-content';
-        if (isOpen) {
-            content.classList.add('open');
-        }
-
-        header.onclick = () => {
-            content.classList.toggle('open');
-        };
-        
-        populateFn(content);
-
-        sectionDiv.appendChild(header);
-        sectionDiv.appendChild(content);
-        this.propsContainer.appendChild(sectionDiv);
-    }
-    
-    /**
-     * 【完成版】
-     * Transformアコーディオンの中身（Name, x, y, scaleなど）を生成する
-     * @param {HTMLElement} container - UIを追加する親要素 (accordion-content)
-     */
-    populateTransformUI(container) {
-        if (!this.selectedObject) return;
-
-        // --- Nameプロパティの編集UI ---
+        this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+        // Nameプロパティ
         const nameRow = document.createElement('div');
         const nameLabel = document.createElement('label');
         nameLabel.innerText = 'Name:';
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.value = this.selectedObject.name || '';
-        
         nameInput.addEventListener('input', (e) => {
-            const newName = e.target.value;
-            if (this.selectedObject) {
-                this.selectedObject.name = newName;
-                this.editorTitle.innerText = `編集中: ${newName}`;
-            }
+            if (this.selectedObject) this.selectedObject.name = e.target.value;
+            this.editorTitle.innerText = `Editing: ${e.target.value}`;
         });
-        
         nameRow.appendChild(nameLabel);
         nameRow.appendChild(nameInput);
-        container.appendChild(nameRow);
-
-        // --- Transformプロパティの生成ループ ---
-        const properties = {
-            x: { type: 'number', step: 1 },
-            y: { type: 'number', step: 1 },
-            scaleX: { type: 'range', min: 0.1, max: 5, step: 0.01 },
-            scaleY: { type: 'range', min: 0.1, max: 5, step: 0.01 },
-            angle: { type: 'range', min: -180, max: 180, step: 1 },
-            alpha: { type: 'range', min: 0, max: 1, step: 0.01 }
-        };
-
+        this.editorPropsContainer.appendChild(nameRow);
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        // Transformプロパティ
+        const properties = { x: {}, y: {}, scaleX: {min:0.1, max:5, step:0.01}, scaleY: {min:0.1, max:5, step:0.01}, angle: {min:-180, max:180}, alpha: {min:0, max:1, step:0.01} };
         for (const key in properties) {
             if (this.selectedObject[key] === undefined) continue;
-
             const prop = properties[key];
-            
-            // ★ createRangeInputやcreateVector2Inputのようなヘルパーを直接使う
-            if (prop.type === 'range') {
-                this.createRangeInput(container, key, this.selectedObject[key], prop.min, prop.max, prop.step, (value) => {
-                    if (this.selectedObject) this.selectedObject[key] = value;
-                });
-            } else if (key === 'x' || key === 'y') {
-                // xとyはペアで表示したいので、ここでは何もしない（後でまとめて処理）
-            }
+            const row = document.createElement('div');
+            const label = document.createElement('label');
+            label.innerText = `${key}:`;
+            const input = document.createElement('input');
+            input.type = (key==='x' || key==='y') ? 'number' : 'range';
+            if (prop.min !== undefined) input.min = prop.min;
+            if (prop.max !== undefined) input.max = prop.max;
+            if (prop.step !== undefined) input.step = prop.step;
+            input.value = this.selectedObject[key];
+            input.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && this.selectedObject) this.selectedObject[key] = val;
+            });
+            row.appendChild(label);
+            row.appendChild(input);
+            this.editorPropsContainer.appendChild(row);
         }
-        
-        // xとyをペアで表示するためのVector2入力
-        this.createVector2Input(container, 'Position', { x: this.selectedObject.x, y: this.selectedObject.y }, (x, y) => {
-            if (this.selectedObject) this.selectedObject.setPosition(x, y);
-        });
-    }
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const physicsTitle = document.createElement('div');
+        physicsTitle.innerText = 'Physics';
+        physicsTitle.style.fontWeight = 'bold';
+        physicsTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(physicsTitle);
 
-    /**
-     * 【完成版】
-     * Actionsアコーディオンの中身（ExportボタンとDeleteボタン）を生成する
-     * @param {HTMLElement} container - UIを追加する親要素 (accordion-content)
-     */
-    populateActionButtons(container) {
-        // --- エクスポートボタン ---
-        const exportButton = document.createElement('button');
-        exportButton.innerText = 'Export Layout (to Console)';
-        exportButton.addEventListener('click', () => this.exportLayoutToJson());
-        container.appendChild(exportButton);
-
-        // --- オブジェクト削除ボタン ---
-        const deleteButton = document.createElement('button');
-        deleteButton.innerText = 'Delete Object';
-        deleteButton.style.backgroundColor = '#e65151';
-        deleteButton.style.marginTop = '10px';
-        
-        deleteButton.addEventListener('click', () => {
-            if (this.selectedObject) {
-                if (confirm(`本当に '${this.selectedObject.name}' を削除しますか？`)) {
-                    const targetObject = this.selectedObject;
-                    const sceneKey = targetObject.scene.scene.key;
-
-                    if (this.editableObjects.has(sceneKey)) {
-                        this.editableObjects.get(sceneKey).delete(targetObject);
-                    }
-                    
-                    targetObject.destroy();
-                    
-                    this.selectedObject = null;
-                    this.updatePropertyPanel();
-                }
-            }
-        });
-        container.appendChild(deleteButton);
-    }
-    /**
-     * 【完成版】
-     * Physicsアコーディオンの中身（物理ボディの有効化/無効化、各種パラメータ）を生成する
-     * @param {HTMLElement} container - UIを追加する親要素 (accordion-content)
-     */
-    populatePhysicsUI(container) {
         const gameObject = this.selectedObject;
-        if (!gameObject) return;
 
         if (gameObject.body) {
-            // --- 物理ボディを持っている場合 ---
-            const body = gameObject.body;
-            const isStatic = body.isStatic;
-            
-            // Is Static Body チェックボックス
-            this.createCheckbox(container, 'Is Static Body', isStatic, (isChecked) => {
-                if (this.selectedObject) {
-                    const targetScene = this.selectedObject.scene;
-                    targetScene.physics.world.remove(this.selectedObject.body);
-                    targetScene.physics.add.existing(this.selectedObject, isChecked);
-                    if (this.selectedObject.body) {
-                        this.selectedObject.body.collideWorldBounds = true;
-                    }
+            // --- ケースA: 物理ボディを持っている場合 ---
+            this.createPhysicsPropertiesUI(gameObject);
+
+            const removeButton = document.createElement('button');
+            removeButton.innerText = 'Disable Physics';
+            removeButton.style.backgroundColor = '#c44';
+            removeButton.style.marginTop = '10px';
+            removeButton.onclick = () => {
+                if (this.selectedObject && this.selectedObject.body) {
+                    this.selectedObject.body.destroy();
+                    this.selectedObject.body = null;
                     this.updatePropertyPanel();
                 }
-            });
-
-            // 動的ボディの場合のみ、他のプロパティを表示
-            const isDynamic = body.moves;
-            if (isDynamic) {
-                this.createVector2Input(container, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
-                this.createVector2Input(container, 'Offset', { x: body.offset.x, y: body.offset.y }, (x, y) => body.setOffset(x, y));
-                this.createCheckbox(container, 'Allow Gravity', body.allowGravity, (value) => { if(body) body.allowGravity = value; });
-                this.createRangeInput(container, 'Bounce X', body.bounce.x, 0, 1, 0.01, (value) => { if(body) body.bounce.x = value; });
-                this.createRangeInput(container, 'Bounce Y', body.bounce.y, 0, 1, 0.01, (value) => { if(body) body.bounce.y = value; });
-            }
-            
-            // 共通プロパティ
-            this.createCheckbox(container, 'Collide World Bounds', body.collideWorldBounds, (value) => { if(body) body.collideWorldBounds = value; });
+            };
+            this.editorPropsContainer.appendChild(removeButton);
 
         } else {
-            // --- 物理ボディを持っていない場合 ---
+            // --- ケースB: 物理ボディを持っていない場合 ---
             const addButton = document.createElement('button');
             addButton.innerText = 'Enable Arcade Physics';
             addButton.onclick = () => {
@@ -555,31 +465,77 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     this.updatePropertyPanel();
                 }
             };
-            container.appendChild(addButton);
+            this.editorPropsContainer.appendChild(addButton);
         }
-    }
-
-    /**
-     * 【完成版】
-     * Animationアコーディオンの中身（アニメーション・エディタを開くボタン）を生成する
-     * @param {HTMLElement} container - UIを追加する親要素 (accordion-content)
-     */
-    populateAnimationUI(container) {
-        if (!this.selectedObject) return;
-
-        const openAnimEditorBtn = document.createElement('button');
-        openAnimEditorBtn.innerText = 'アニメーション・エディタを開く';
+          // --- 区切り線 ---
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
         
+        // --- Animationセクションのタイトル ---
+        const animTitle = document.createElement('div');
+        animTitle.innerText = 'Animation';
+        animTitle.style.fontWeight = 'bold';
+        animTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(animTitle);
+
+        // --- アニメーション・エディタを開くボタン ---
+        const openAnimEditorBtn = document.createElement('button');
+        openAnimEditorBtn.innerText = 'Open Animation Editor';
         openAnimEditorBtn.onclick = () => {
             if (this.selectedObject) {
                 this.openAnimationEditor();
             } else {
-                alert('先にオブジェクトを選択してください。');
+                alert('Please select an object first.');
             }
         };
+        this.editorPropsContainer.appendChild(openAnimEditorBtn);
+        // Exportボタン
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const exportButton = document.createElement('button');
+        exportButton.innerText = 'Export Layout (to Console)';
+        exportButton.addEventListener('click', () => this.exportLayoutToJson());
+        this.editorPropsContainer.appendChild(exportButton);
         
-        container.appendChild(openAnimEditorBtn);
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+        // --- オブジェクト削除ボタン ---
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'Delete Object';
+        deleteButton.style.backgroundColor = '#e65151'; // 危険な操作なので赤色に
+        deleteButton.style.marginTop = '10px';
+        
+        deleteButton.addEventListener('click', () => {
+            // 削除対象のオブジェクトが、まだ存在するかを最終確認
+            if (this.selectedObject && this.selectedObject.scene) {
+
+                // ユーザーに最終確認を求める
+                if (confirm(`本当に '${this.selectedObject.name}' を削除しますか？`)) {
+                    
+                    const targetObject = this.selectedObject;
+                    const sceneKey = targetObject.scene.scene.key;
+
+                    // 1. まず、プラグインの管理リストからオブジェクトを削除
+                    if (this.editableObjects.has(sceneKey)) {
+                        this.editableObjects.get(sceneKey).delete(targetObject);
+                    }
+                    
+                    // 2. 次に、Phaserのシーンからオブジェクトを完全に破棄
+                    targetObject.destroy();
+                    
+                    // 3. 最後に、選択を解除し、プロパティパネルを更新
+                    this.selectedObject = null;
+                    this.updatePropertyPanel();
+
+                    console.log(`[EditorPlugin] Object '${targetObject.name}' has been deleted.`);
+                }
+            }
+        });
+        
+        this.editorPropsContainer.appendChild(deleteButton);
     }
+    
+    
+    
+
     /**
      * 物理パラメータを編集するためのUIを生成する (isStatic問題を完全解決)
      */
