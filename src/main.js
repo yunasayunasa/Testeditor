@@ -11,6 +11,7 @@ import ActionScene from './scenes/ActionScene.js';
 import BattleScene from './scenes/BattleScene.js';
 import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
+import JumpScene from './scenes/JumpScene.js';
 const config = {
     type: Phaser.AUTO,
     scale: {
@@ -32,6 +33,7 @@ const config = {
         BacklogScene, 
         ActionScene,
          BattleScene,
+        JumpScene,
         NovelOverlayScene
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
