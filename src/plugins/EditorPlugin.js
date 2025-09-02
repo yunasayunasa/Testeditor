@@ -496,7 +496,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         // --- アニメーション・エディタを開くボタン ---
         const openAnimEditorBtn = document.createElement('button');
-        openAnimEditorBtn.innerText = 'Open Animation Editor';
+        openAnimEditorBtn.innerText = 'アニメーション設定';
         openAnimEditorBtn.onclick = () => {
             if (this.selectedObject) {
                 this.openAnimationEditor();
