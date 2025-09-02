@@ -12,8 +12,8 @@ export default class JumpScene extends BaseGameScene {
         this.cameras.main.setBackgroundColor('#4488cc');
         this.cursors = this.input.keyboard.createCursorKeys();
         
-        const soundManager = this.registry.get('soundManager');
-        if (soundManager) soundManager.playBgm('bgm_action');
+        //const soundManager = this.registry.get('soundManager');
+        //if (soundManager) soundManager.playBgm('bgm_action');
         
         // 親の標準初期化ルーチンを呼び出す
         this.initSceneWithData();
