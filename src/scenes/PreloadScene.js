@@ -84,13 +84,37 @@ export default class PreloadScene extends Phaser.Scene {
                     charaDefs[charaName].face[faceName] = key;
                 }
             }
-            const assetList = [];
+           // --- グローバルなアセットリストの生成 (最終版) ---
+        const assetList = [];
+        
+        // Imageアセットを追加
+        if (assetDefine.images) {
             for (const key in assetDefine.images) {
                 assetList.push({ key: key, type: 'image', path: assetDefine.images[key] });
             }
-            // ... (sounds, videosなども同様に追加)
-            this.registry.set('asset_list', assetList);
-            console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
+        }
+        
+        // Spritesheetアセットを追加
+        if (assetDefine.spritesheets) {
+            for (const key in assetDefine.spritesheets) {
+                assetList.push({ 
+                    key: key, 
+                    type: 'spritesheet', 
+                    path: assetDefine.spritesheets[key].path 
+                });
+            }
+        }
+
+        // Soundアセットを追加
+        if (assetDefine.sounds) {
+             for (const key in assetDefine.sounds) {
+                assetList.push({ key: key, type: 'sound', path: assetDefine.sounds[key] });
+            }
+        }
+        
+        this.registry.set('asset_list', assetList);
+        console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
+        
             // SystemSceneを起動し、そのCREATEイベントを待ってから依存関係を解決する
               this.scene.launch('SystemScene', { initialGameData: {
                 charaDefs: charaDefs,
