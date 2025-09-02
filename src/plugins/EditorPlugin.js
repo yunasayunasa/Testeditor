@@ -770,12 +770,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 // src/plugins/EditorPlugin.js
 
+    
     /**
-     * 現在のシーンのレイアウトをJSON形式でエクスポートする (最終確定・完成版)
+     * 現在のシーンのレイアウトをJSON形式でエクスポートする (真の最終確定・完成版)
      */
     exportLayoutToJson() {
         if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
-            alert("Please select an object in the scene you want to export.");
+            alert("オブジェクトを選択してからエクスポートしてください。");
             return;
         }
         const targetScene = this.selectedObject.scene;
@@ -783,15 +784,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         
         const sceneLayoutData = {
             objects: [],
-            animations: [] // animations配列も初期化
+            animations: []
         };
 
+        // --- ステップ1: シーン内の全ての編集可能オブジェクトのデータを構築 ---
         if (this.editableObjects.has(sceneKey)) {
             for (const gameObject of this.editableObjects.get(sceneKey)) {
-                // オブジェクトに名前がなければ、エクスポート対象外
                 if (!gameObject.name) continue;
 
-                // --- 1. 基本データを準備 ---
+                // 1-1. 基本データ
                 const objData = {
                     name: gameObject.name,
                     x: Math.round(gameObject.x),
@@ -802,7 +803,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     alpha: parseFloat(gameObject.alpha.toFixed(2))
                 };
                 
-                // --- 2. 種類とテクスチャを追加 ---
+                // 1-2. 種類とテクスチャ
                 if (gameObject instanceof Phaser.GameObjects.Sprite) {
                     objData.type = 'Sprite';
                 }
@@ -810,7 +811,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     objData.texture = gameObject.texture.key;
                 }
 
-                // --- 3. 物理データを追加 ---
+                // 1-3. 物理データ
                 if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
@@ -826,27 +827,34 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     };
                 }
 
-                // --- 4. アニメーションデータを追加 ---
+                // 1-4. アニメーションデータ
                 if (gameObject.getData('animation_data')) {
                     objData.animation = gameObject.getData('animation_data');
                 }
                 
-                // --- 5. 完成したオブジェクトデータをリストに追加 ---
+                // 1-5. イベントデータ
+                if (gameObject.getData('events')) {
+                    objData.events = gameObject.getData('events');
+                }
+                
+                // 1-6. 完成したオブジェクトデータをリストに追加
                 sceneLayoutData.objects.push(objData);
-
-            } // ★★★ for ループの正しい閉じ括弧 ★★★
-        } // ★★★ if (this.editableObjects...) の正しい閉じ括弧 ★★★
+            }
+        }
         
-        // --- 6. シーン全体のアニメーション定義を書き出す ---
+        // --- ステップ2: シーン全体のアニメーション定義を書き出す ---
         const scene = this.game.scene.getScene(sceneKey);
         if (scene && scene.anims) {
             sceneLayoutData.animations = scene.anims.anims.getArray()
-                // このシーンで使われているテクスチャのアニメーションのみを対象とする
-                .filter(anim => anim.frames[0] && this.editableObjects.get(sceneKey) && Array.from(this.editableObjects.get(sceneKey)).some(go => go.texture.key === anim.frames[0].textureKey))
+                .filter(anim => {
+                    // どのオブジェクトがこのアニメーションを使っているかをチェック
+                    if (!anim.frames[0]) return false;
+                    const sceneObjects = this.editableObjects.get(sceneKey);
+                    if (!sceneObjects) return false;
+                    return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
+                })
                 .map(anim => {
-                    // フレーム番号を正しく抽出する
                     let frames = null;
-                    // generateFrameNumbersで作られたアニメか、フレーム配列で作られたアニメか
                     if (anim.generateFrameNumbers) {
                         frames = { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame };
                     } else {
@@ -861,12 +869,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     };
                 });
         }
-if (gameObject.getData('events')) {
-        objData.events = gameObject.getData('events');
-    }
-     sceneLayoutData.objects.push(objData);
 
-        // --- 7. 最終的なJSONを文字列化して出力 ---
+        // --- ステップ3: 最終的なJSONを文字列化して出力 ---
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
         console.log(jsonString);
