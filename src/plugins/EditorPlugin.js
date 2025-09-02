@@ -207,53 +207,43 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     
     
 
-     /**
-     * 物理パラメータを編集するためのUIを生成する
+    /**
+     * 物理パラメータを編集するためのUIを生成する (isStatic問題を完全解決)
      */
-      /**
-     * 物理パラメータを編集するためのUIを生成する (最終確定版)
-     */
-   
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         
-        const isStatic = body.isStatic;
-        this.createCheckbox(this.editorPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これがゴーストボディ問題を解決する、最終修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ 修正点 1: 正しい静的ボディの判別方法 ★★★
+        // body.isStatic ではなく、ボディの「種類」で判別する
+        const isCurrentlyStatic = (body.constructor.name === 'StaticBody');
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
+        this.createCheckbox(this.editorPropsContainer, 'Is Static Body', isCurrentlyStatic, (isChecked) => {
             if (this.selectedObject && this.selectedObject.body) {
                 const targetScene = this.selectedObject.scene;
                 const world = targetScene.physics.world;
 
-                // --- 修正点 1: 安全なボディの削除 ---
-                // body.destroy() の代わりに、Worldに削除を依頼する。
-                // これにより、物理エンジンの更新リストから完全に除去される。
+                // 安全なボディの削除 (これは前回と同じ)
                 world.remove(this.selectedObject.body);
-
-                // --- 修正点 2: 参照の完全なクリア ---
-                // GameObject側の参照も手動でnullにして、古いボディへのアクセスを断つ。
                 this.selectedObject.body = null;
 
-                // --- 修正点 3: 新しいボディの追加 (これは前回と同じ) ---
-                // チェックボックスの最新の状態 'isChecked' を使って、新しいボディを生成する。
+                // 新しいボディの追加 (これも前回と同じ)
                 targetScene.physics.add.existing(this.selectedObject, isChecked);
-                if (this.selectedObject.body) {
-                    console.log(`%c[BODY CHANGED] Object: '${this.selectedObject.name}', New isStatic: ${this.selectedObject.body.isStatic}`, 'color: cyan; font-weight: bold;');
-                }
 
-                // 新しく作られたボディに対して、共通の設定を再適用
+                // ログを更新して、新しいボディの種類を確認
                 if (this.selectedObject.body) {
+                    console.log(`%c[BODY CHANGED] Object: '${this.selectedObject.name}', New Body Type: ${this.selectedObject.body.constructor.name}`, 'color: cyan; font-weight: bold;');
                     this.selectedObject.body.collideWorldBounds = true;
                 }
 
-                // 最後にUIを再描画して、変更を完全に反映させる
+                // UIを再描画
                 this.updatePropertyPanel();
             }
         });
-        const isDynamic = body.moves;
-        if (isDynamic) {
+
+        // 動的ボディの場合のみ表示するUI
+        if (!isCurrentlyStatic) {
             this.createVector2Input(this.editorPropsContainer, 'Size', { x: body.width, y: body.height }, (x, y) => body.setSize(x, y));
             this.createVector2Input(this.editorPropsContainer, 'Offset', { x: body.offset.x, y: body.offset.y }, (x, y) => body.setOffset(x, y));
             this.createCheckbox(this.editorPropsContainer, 'Allow Gravity', body.allowGravity, (value) => { if(body) body.allowGravity = value; });
@@ -329,7 +319,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         row.appendChild(valueEl);
         container.appendChild(row);
     }
-   exportLayoutToJson() {
+    exportLayoutToJson() {
         if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
             alert("Please select an object in the scene you want to export.");
             return;
@@ -343,14 +333,39 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (gameObject.name) {
                     const objData = { name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)), angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)) };
                     if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
+                    
                     if (gameObject.body) {
                         const body = gameObject.body;
-                         if (gameObject.name === this.selectedObject.name) {
-                            console.log(`%c[EXPORTING] Object: '${gameObject.name}', isStatic value found: ${body.isStatic}`, 'color: orange;');
+
+                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                        // ★★★ 修正点 2: エクスポート時もボディの種類で判別 ★★★
+                        const isStaticForExport = (body.constructor.name === 'StaticBody');
+                        
+                        // ログも更新
+                        if (gameObject.name === this.selectedObject.name) {
+                            console.log(`%c[EXPORTING] Object: '${gameObject.name}', isStatic value for JSON: ${isStaticForExport}`, 'color: orange;');
                         }
-                        objData.physics = { isStatic: body.isStatic, width: body.width, height: body.height, offsetX: body.offset.x, offsetY: body.offset.y, allowGravity: body.allowGravity, bounceX: parseFloat(body.bounce.x.toFixed(2)), bounceY: parseFloat(body.bounce.y.toFixed(2)), collideWorldBounds: body.collideWorldBounds };
+                        
+                        // isStaticプロパティを正しく設定
+                        objData.physics = { isStatic: isStaticForExport };
+                        
+                        // 動的ボディの場合のみ、追加のプロパティを書き出す
+                        if (!isStaticForExport) {
+                            Object.assign(objData.physics, {
+                                width: body.width,
+                                height: body.height,
+                                offsetX: body.offset.x,
+                                offsetY: body.offset.y,
+                                allowGravity: body.allowGravity,
+                                bounceX: parseFloat(body.bounce.x.toFixed(2)),
+                                bounceY: parseFloat(body.bounce.y.toFixed(2))
+                            });
+                        }
+                        
+                        // 共通プロパティ
+                        objData.physics.collideWorldBounds = body.collideWorldBounds;
+                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                     }
-                    // ★★★ pushは一度だけに修正 ★★★
                     sceneLayoutData.objects.push(objData);
                 }
             }
@@ -360,4 +375,5 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log(jsonString);
         navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
     }
+
 }
