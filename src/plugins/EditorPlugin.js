@@ -217,19 +217,32 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             infoSpan.innerText = `キー: ${anim.key}, フレームレート: ${anim.frameRate}`;
             infoSpan.style.marginRight = '10px';
             
-            const playBtn = document.createElement('button');
+             const playBtn = document.createElement('button');
             playBtn.innerText = '再生';
             playBtn.onclick = () => {
-                if (this.selectedObject) this.selectedObject.play(anim.key);
+        
+                if (this.selectedObject && typeof this.selectedObject.play === 'function') {
+                    this.selectedObject.play(anim.key);
+                }
             };
             
             const stopBtn = document.createElement('button');
             stopBtn.innerText = '停止';
             stopBtn.onclick = () => {
-                if (this.selectedObject) this.selectedObject.stop();
+                if (this.selectedObject && typeof this.selectedObject.stop === 'function') {
+                    this.selectedObject.stop();
+                }
             };
-            
-            div.append(infoSpan, playBtn, stopBtn);
+             const setDefaultBtn = document.createElement('button');
+    setDefaultBtn.innerText = 'デフォルトに設定';
+    setDefaultBtn.onclick = () => {
+        if (this.selectedObject) {
+            this.selectedObject.data.values.animation_data.default = anim.key;
+            console.log(`[EditorPlugin] '${anim.key}' set as default animation.`);
+        }
+    };
+   
+            div.append(infoSpan, playBtn, stopBtn , setDefaultBtn);
             container.appendChild(div);
         });
 
@@ -291,7 +304,14 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         oldImage.destroy();
         
         // --- 3. 記憶したプロパティを使って、新しいSpriteを生成 ---
+        // ★★★ 1. 新しいSpriteを生成 ★★★
         const newSprite = scene.add.sprite(properties.x, properties.y, properties.texture);
+        
+        // ★★★ 2. 自身に、アニメーション情報を保持するデータ領域を作る ★★★
+        newSprite.setData('animation_data', {
+            default: null, // デフォルトアニメーションのキー
+            definitions: [] // このオブジェクトで作ったアニメの定義
+        });
 
         // --- 4. 新しいSpriteに、記憶したプロパティを適用 ---
         newSprite.name = properties.name;
@@ -684,7 +704,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     }
                     objData.physics.collideWorldBounds = body.collideWorldBounds;
                 }
-
+ if (gameObject.getData('animation_data')) {
+            objData.animation = gameObject.getData('animation_data');
+        }
                 // --- 手順3: 完成したobjDataを、条件なしで必ず配列に追加 ---
                 sceneLayoutData.objects.push(objData);
             }

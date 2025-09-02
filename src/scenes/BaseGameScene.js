@@ -92,7 +92,16 @@ export default class BaseGameScene extends Phaser.Scene {
         } catch (e) {
             console.error(`[BaseGameScene] Failed to make object interactive: '${gameObject.name}'`, e);
         }
+
+          if (layout.animation && gameObject.play) {
+            gameObject.setData('animation_data', layout.animation);
+            
+            if (layout.animation.default) {
+                gameObject.play(layout.animation.default);
+            }
+        }
     }
+    
     
     /**
      * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
