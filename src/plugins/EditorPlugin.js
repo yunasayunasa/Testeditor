@@ -210,13 +210,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     /**
      * 物理パラメータを編集するためのUIを生成する (isStatic問題を完全解決)
      */
+      /**
+     * 物理パラメータを編集するためのUIを生成する (instanceofを使った最終確定版)
+     */
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ 修正点 1: 正しい静的ボディの判別方法 ★★★
-        // body.isStatic ではなく、ボディの「種類」で判別する
-        const isCurrentlyStatic = (body.constructor.name === 'StaticBody');
+        // ★★★ 修正点 1: instanceof を使った確実な判別方法 ★★★
+        // クラス名(文字列)ではなく、Phaserのクラスそのもので判定する
+        const isCurrentlyStatic = (body instanceof Phaser.Physics.Arcade.StaticBody);
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         this.createCheckbox(this.editorPropsContainer, 'Is Static Body', isCurrentlyStatic, (isChecked) => {
@@ -224,20 +227,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 const targetScene = this.selectedObject.scene;
                 const world = targetScene.physics.world;
 
-                // 安全なボディの削除 (これは前回と同じ)
                 world.remove(this.selectedObject.body);
                 this.selectedObject.body = null;
 
-                // 新しいボディの追加 (これも前回と同じ)
                 targetScene.physics.add.existing(this.selectedObject, isChecked);
 
-                // ログを更新して、新しいボディの種類を確認
                 if (this.selectedObject.body) {
-                    console.log(`%c[BODY CHANGED] Object: '${this.selectedObject.name}', New Body Type: ${this.selectedObject.body.constructor.name}`, 'color: cyan; font-weight: bold;');
+                    // ログを更新
+                    const newBodyIsStatic = (this.selectedObject.body instanceof Phaser.Physics.Arcade.StaticBody);
+                    console.log(`%c[BODY CHANGED] Object: '${this.selectedObject.name}', New Body is Static? -> ${newBodyIsStatic}`, 'color: cyan; font-weight: bold;');
+                    
                     this.selectedObject.body.collideWorldBounds = true;
                 }
-
-                // UIを再描画
                 this.updatePropertyPanel();
             }
         });
@@ -328,29 +329,27 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const sceneKey = targetScene.scene.key;
         const sceneLayoutData = { objects: [] };
 
-        if (this.editableObjects.has(sceneKey)) {
+            if (this.editableObjects.has(sceneKey)) {
             for (const gameObject of this.editableObjects.get(sceneKey)) {
                 if (gameObject.name) {
-                    const objData = { name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)), angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)) };
+                    const objData = { /* ... */ };
                     if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
                     
                     if (gameObject.body) {
                         const body = gameObject.body;
 
                         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                        // ★★★ 修正点 2: エクスポート時もボディの種類で判別 ★★★
-                        const isStaticForExport = (body.constructor.name === 'StaticBody');
+                        // ★★★ 修正点 2: エクスポート時も instanceof で判別 ★★★
+                        const isStaticForExport = (body instanceof Phaser.Physics.Arcade.StaticBody);
                         
                         // ログも更新
                         if (gameObject.name === this.selectedObject.name) {
                             console.log(`%c[EXPORTING] Object: '${gameObject.name}', isStatic value for JSON: ${isStaticForExport}`, 'color: orange;');
                         }
                         
-                        // isStaticプロパティを正しく設定
                         objData.physics = { isStatic: isStaticForExport };
                         
-                        // 動的ボディの場合のみ、追加のプロパティを書き出す
-                        if (!isStaticForExport) {
+                        if (!(body instanceof Phaser.Physics.Arcade.StaticBody)) {
                             Object.assign(objData.physics, {
                                 width: body.width,
                                 height: body.height,
@@ -362,11 +361,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                             });
                         }
                         
-                        // 共通プロパティ
                         objData.physics.collideWorldBounds = body.collideWorldBounds;
                         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                     }
-                    sceneLayoutData.objects.push(objData);
+                    sceneLayoutToJson.objects.push(objData);
                 }
             }
         }
