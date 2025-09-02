@@ -23,19 +23,20 @@ export default class JumpScene extends BaseGameScene {
      * 【JumpScene専用】
      * エディタからオブジェクト追加の依頼を受けた時の処理
      */
+    // src/scenes/JumpScene.js
+
     addObjectFromEditor(assetKey) {
         const centerX = this.cameras.main.centerX;
         const centerY = this.cameras.main.centerY;
         
-        // 1. 親のcreateObjectFromLayoutを再利用して、オブジェクトを「生成」
+        // 1. オブジェクトを「生成」するだけ
         const newImage = this.createObjectFromLayout({
-            name: `${assetKey}_${Date.now()}`,
             texture: assetKey
         });
         
-        // 2. 親のapplyPropertiesを再利用して、オブジェクトを「初期化＆登録」
+        // 2. 「初期化＆登録」を親に任せる
         this.applyProperties(newImage, {
-            name: newImage.name,
+            name: `${assetKey}_${Date.now()}`,
             x: centerX, y: centerY, scaleX: 1, scaleY: 1, angle: 0, alpha: 1, visible: true
         });
         
