@@ -1,3 +1,5 @@
+
+
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
@@ -5,42 +7,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
-         this.animEditorOverlay = null;
-        this.animEditorCloseBtn = null;
-        
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、全てを解決する、最後の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // 1. 存在しないプロパティを削除し、混乱の元を断つ
-        // this.this.editorPropsContainer, = document.getElementById('editor-props'); // ← この行を削除
-
-        // 2. 必要な参照だけを残す
         this.editorPanel = null;
         this.editorTitle = null;
-        this.editorPropsContainer = null;
+        this.editorPropsContainer = null; // ★ constructorではnullで初期化
     }
 
     init() {
         const currentURL = window.location.href;
-        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
-        if (!hasDebugParameter) return;
-
+        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
         this.isEnabled = true;
+        
+        // ★★★ 全てのDOM参照は、initで一度だけ行う ★★★
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
-        this.editorPropsContainer = document.getElementById('editor-props');
+        // ★★★ 正しいプロパティ名に統一 ★★★
+        this.editorPropsContainer = document.getElementById('editor-props-container'); 
+        
         console.warn("[EditorPlugin] Debug mode activated.");
-
-          this.animEditorOverlay = document.getElementById('anim-editor-overlay');
-        this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
-
-        // ★★★ 変更点3: 閉じるボタンにイベントリスナーを設定 ★★★
-        if (this.animEditorCloseBtn) {
-            this.animEditorCloseBtn.addEventListener('click', () => {
-                this.closeAnimationEditor();
-            });
-        }
     }
     
 
@@ -378,39 +361,22 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         gameObject.on('pointerout', () => gameObject.clearTint());
         gameObject.setData('isEditable', true);
     }
-  updatePropertyPanel() {
-        if (!this.isEnabled || !this.propsContainer) return;
+    updatePropertyPanel() {
+        if (!this.isEnabled || !this.editorPropsContainer) return; // ★ 正しいプロパティをチェック
         
-        this.propsContainer.innerHTML = '';
+        this.editorPropsContainer.innerHTML = '';
         
         if (!this.selectedObject) {
             this.editorTitle.innerText = 'オブジェクトが選択されていません';
             return;
         }
-        
         this.editorTitle.innerText = `編集中: ${this.selectedObject.name}`;
         
-        // --- 1. Transformセクションを生成 ---
-        this.createAccordionSection('Transform', (content) => {
-            this.populateTransformUI(content);
-        }, true);
-
-        // --- 2. Physicsセクションを生成 ---
-        this.createAccordionSection('Physics', (content) => {
-            this.populatePhysicsUI(content);
-        });
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、失われたアニメーション・セクションです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        this.createAccordionSection('Animation', (content) => {
-            this.populateAnimationUI(content);
-        });
-
-        // --- 4. Actionsセクションを生成 ---
-        this.createAccordionSection('Actions', (content) => {
-            this.populateActionButtons(content);
-        });
+        // ★★★ 責務を分離した、クリーンな呼び出し ★★★
+        this.createAccordionSection('Transform', this.populateTransformUI.bind(this));
+        this.createAccordionSection('Physics', this.populatePhysicsUI.bind(this));
+        this.createAccordionSection('Animation', this.populateAnimationUI.bind(this));
+        this.createAccordionSection('Actions', this.populateActionButtons.bind(this));
     }
     
     createAccordionSection(title, populateFn, isOpen = false) {

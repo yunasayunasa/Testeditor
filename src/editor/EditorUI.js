@@ -53,9 +53,8 @@ export default class EditorUI {
             keySpan.className = 'asset-key';
             keySpan.innerText = asset.key;
 
-            // 1. まず、プレビュー画像をitemDivに追加
             itemDiv.appendChild(previewImg);
-            // 2. 次に、キー名を追加
+
             itemDiv.appendChild(keySpan);
 
             if (asset.type === 'spritesheet') {
