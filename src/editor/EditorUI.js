@@ -54,84 +54,33 @@ export default class EditorUI {
             return;
         }
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、ターゲットシーンを見つける、最後の、そして最も確実な方法です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+        // --- 1. 現在アクティブな「ゲーム」シーンを特定 ---
         let targetScene = null;
-        const scenes = this.game.scene.getScenes(true); // アクティブなシーンを全て取得
-
-        // シーンリストの「後ろ」から探す（後ろにあるほど、手前に描画されている）
+        const scenes = this.game.scene.getScenes(true);
         for (let i = scenes.length - 1; i >= 0; i--) {
             const scene = scenes[i];
-            // それが UIScene で「なければ」、それがターゲットだ
-            if (scene.scene.key !== 'UIScene') {
+            // ★★★ GameSceneは聖域なので、ターゲットから除外する ★★★
+            if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
                 targetScene = scene;
-                break; // ターゲットを見つけたら、ループを抜ける
+                break;
             }
         }
         
-        // ★★★ これで、ターゲットシーンが確実に見つかります ★★★
-
-
         if (!targetScene) {
-             console.error("[EditorUI] Could not find a suitable target scene. Is a game scene running?");
-             return;
-        }
-        if (!targetScene.initializeObject) {
-             console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'initializeObject' method.`);
+             console.error("[EditorUI] Could not find a suitable target scene (e.g., JumpScene).");
+             alert("Could not find a suitable target scene. Make sure you are not in GameScene.");
              return;
         }
 
-        const centerX = targetScene.cameras.main.centerX;
-        const centerY = targetScene.cameras.main.centerY;
-        
-        // --- 以下のオブジェクト生成ロジックは、前回の提案で完璧です ---
-      // 1. このアセットキーのカウンターが存在しなければ、1で初期化
-            if (!this.objectCounters[this.selectedAssetKey]) {
-                this.objectCounters[this.selectedAssetKey] = 1;
-            } else {
-                // 2. 存在すれば、カウンターを1増やす
-                this.objectCounters[this.selectedAssetKey]++;
+        // --- 2. シーンに「オブジェクト追加」を依頼するだけ ---
+        if (targetScene.addObjectFromEditor) {
+            const newObject = targetScene.addObjectFromEditor(this.selectedAssetKey);
+            if (newObject) {
+                this.plugin.selectedObject = newObject;
+                this.plugin.updatePropertyPanel();
             }
-
-            // 3. 新しい名前を生成 (例: yuko_normal_1, yuko_normal_2)
-            const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
-                // 1. ターゲットシーンが GameScene かどうかで、処理を分岐
-        if (targetScene.scene.key === 'GameScene') {
-            
-            // --- GameSceneの場合：古い作法に従う ---
-            const newImage = targetScene.add.image(centerX, centerY, this.selectedAssetKey);
-            newImage.name = newName;
-            // GameSceneのレイヤーに直接追加
-            if (newName.startsWith('bg_')) {
-                targetScene.layer.background.add(newImage);
-            } else {
-                targetScene.layer.character.add(newImage);
-            }
-            // 最後にエディタに登録
-            this.plugin.makeEditable(newImage, targetScene);
-            this.plugin.selectedObject = newImage;
-            this.plugin.updatePropertyPanel();
-
         } else {
-
-            // --- JumpSceneなど、新しいデータ駆動シーンの場合 ---
-            // initializeObjectのようなメソッドは、もう存在しない
-            const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, this.selectedAssetKey);
-            
-            // applyPropertiesを使って、プロパティとエディタ登録を一度に行う
-            if (targetScene.applyProperties) {
-                targetScene.applyProperties(newImage, {
-                    name: newName,
-                    x: centerX, y: centerY, scaleX: 1, scaleY: 1, angle: 0, alpha: 1
-                });
-            }
-            // シーンにオブジェクトを追加する
-            targetScene.add.existing(newImage);
-
-         
+            console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'addObjectFromEditor' method.`);
         }
-           
     }
 }
