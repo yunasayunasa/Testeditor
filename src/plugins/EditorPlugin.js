@@ -581,21 +581,27 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         eventsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(eventsTitle);
 
-        // 3-1. まず、既存のイベントを一覧表示する
-        const events = this.selectedObject.getData('events') || [];
-        events.forEach((eventData, index) => {
-            const eventDiv = this.createEventDisplay(eventData, index);
-            this.editorPropsContainer.appendChild(eventDiv);
-        });
+       // 3-1. まず、既存のイベントを一覧表示する
+        if (this.selectedObject) {
+            const events = this.selectedObject.getData('events') || [];
+            events.forEach((eventData, index) => {
+                const eventDiv = this.createEventDisplay(eventData, index);
+                this.editorPropsContainer.appendChild(eventDiv);
+            });
+        }
 
         // 3-2. 次に、「新しいイベントを追加」ボタンを生成する
         const addNewEventBtn = document.createElement('button');
         addNewEventBtn.innerText = '新しいイベントを追加';
         addNewEventBtn.onclick = () => {
-            const currentEvents = this.selectedObject.getData('events') || [];
-            currentEvents.push({ trigger: 'onClick', actions: '' }); // actionsは空文字列で初期化
-            this.selectedObject.setData('events', currentEvents);
-            this.updatePropertyPanel(); // パネルを再描画して、新しい編集欄を表示
+            if (this.selectedObject) {
+                const currentEvents = this.selectedObject.getData('events') || [];
+                // actionsは空の文字列で初期化
+                currentEvents.push({ trigger: 'onClick', actions: '' });
+                this.selectedObject.setData('events', currentEvents);
+                // パネルを再描画して、新しい編集欄を表示
+                this.updatePropertyPanel();
+            }
         };
         this.editorPropsContainer.appendChild(addNewEventBtn);
         
@@ -855,9 +861,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     };
                 });
         }
- if (gameObject.getData('events')) {
+if (gameObject.getData('events')) {
         objData.events = gameObject.getData('events');
     }
+     sceneLayoutData.objects.push(objData);
+
         // --- 7. 最終的なJSONを文字列化して出力 ---
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
