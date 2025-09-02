@@ -59,16 +59,97 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * アニメーション・エディタのウィンドウを開く
      */
     openAnimationEditor() {
-        if (!this.animEditorOverlay) return;
+        if (!this.animEditorOverlay || !this.selectedObject) return;
 
-        // タイトルを選択中のオブジェクト名に更新
+        const contentArea = document.getElementById('animation-editor-content');
+        contentArea.innerHTML = ''; // 中身を一度クリア
+
+        // --- 選択中のオブジェクトがSpriteかどうかを判定 ---
+        const isSprite = (this.selectedObject instanceof Phaser.GameObjects.Sprite);
+
+        if (isSprite) {
+            // ★ ケースA: すでにSpriteの場合
+            // (次のステップで、ここにアニメーション定義UIを生成していく)
+            contentArea.innerHTML = `<p>Animation settings for '${this.selectedObject.name}' will appear here.</p>`;
+
+        } else {
+            // ★ ケースB: Spriteではない場合 (Imageなど)
+            const message = document.createElement('p');
+            message.innerText = `Object '${this.selectedObject.name}' is not a Sprite and cannot be animated.`;
+            
+            const convertButton = document.createElement('button');
+            convertButton.innerText = 'Convert to Sprite';
+            convertButton.onclick = () => {
+                this.convertImageToSprite();
+            };
+
+            contentArea.appendChild(message);
+            contentArea.appendChild(convertButton);
+        }
+
+        // --- ウィンドウを開く処理 (変更なし) ---
         const titleElement = document.getElementById('animation-editor-title');
         if (titleElement) {
             titleElement.innerText = `Editing Animations for: ${this.selectedObject.name}`;
         }
-        
-        // オーバーレイを表示する
         this.animEditorOverlay.style.display = 'flex';
+    }
+
+      /**
+     * ★★★ 新規メソッド ★★★
+     * 選択中のImageオブジェクトを、同じプロパティを持つSpriteオブジェクトに変換する
+     */
+    convertImageToSprite() {
+        if (!this.selectedObject || !(this.selectedObject instanceof Phaser.GameObjects.Image)) {
+            console.warn("[EditorPlugin] Convert failed: No valid Image selected.");
+            return;
+        }
+
+        const oldImage = this.selectedObject;
+        const scene = oldImage.scene;
+        
+        // --- 1. 古いImageのプロパティを全て記憶する ---
+        const properties = {
+            name: oldImage.name,
+            x: oldImage.x,
+            y: oldImage.y,
+            scaleX: oldImage.scaleX,
+            scaleY: oldImage.scaleY,
+            angle: oldImage.angle,
+            alpha: oldImage.alpha,
+            visible: oldImage.visible,
+            depth: oldImage.depth,
+            texture: oldImage.texture.key
+        };
+
+        // --- 2. 古いImageを、プラグインとシーンから完全に削除 ---
+        const sceneKey = scene.scene.key;
+        if (this.editableObjects.has(sceneKey)) {
+            this.editableObjects.get(sceneKey).delete(oldImage);
+        }
+        oldImage.destroy();
+        
+        // --- 3. 記憶したプロパティを使って、新しいSpriteを生成 ---
+        const newSprite = scene.add.sprite(properties.x, properties.y, properties.texture);
+
+        // --- 4. 新しいSpriteに、記憶したプロパティを適用 ---
+        newSprite.name = properties.name;
+        newSprite.setScale(properties.scaleX, properties.scaleY);
+        newSprite.setAngle(properties.angle);
+        newSprite.setAlpha(properties.alpha);
+        newSprite.setVisible(properties.visible);
+        newSprite.setDepth(properties.depth);
+        // (物理ボディがあれば、それも引き継ぐ必要があるが、それは次のステップで)
+
+        // --- 5. 新しいSpriteをエディタに登録し、選択状態にする ---
+        this.makeEditable(newSprite, scene);
+        this.selectedObject = newSprite;
+        
+        console.log(`[EditorPlugin] Object '${properties.name}' has been converted to a Sprite.`);
+
+        // --- 6. 最後に、アニメーション・エディタの表示を更新する ---
+        //    (これにより、「Convert」ボタンが消え、アニメーション設定UIが表示されるようになる)
+        this.openAnimationEditor();
     }
 
     /**
