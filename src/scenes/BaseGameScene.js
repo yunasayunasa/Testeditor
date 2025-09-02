@@ -118,9 +118,10 @@ export default class BaseGameScene extends Phaser.Scene {
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
-
-        // 最後に準備完了を通知
+    
+        // 全てのセットアップが完了したことを、SystemSceneに通知する
         this.events.emit('scene-ready');
+        
         console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
 }
