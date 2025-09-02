@@ -97,24 +97,41 @@ export default class EditorUI {
 
             // 3. 新しい名前を生成 (例: yuko_normal_1, yuko_normal_2)
             const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
+                // 1. ターゲットシーンが GameScene かどうかで、処理を分岐
+        if (targetScene.scene.key === 'GameScene') {
             
-            // --- 以下の処理は、nameの部分だけが変更 ---
+            // --- GameSceneの場合：古い作法に従う ---
+            const newImage = targetScene.add.image(centerX, centerY, this.selectedAssetKey);
+            newImage.name = newName;
+            // GameSceneのレイヤーに直接追加
+            if (newName.startsWith('bg_')) {
+                targetScene.layer.background.add(newImage);
+            } else {
+                targetScene.layer.character.add(newImage);
+            }
+            // 最後にエディタに登録
+            this.plugin.makeEditable(newImage, targetScene);
+            this.plugin.selectedObject = newImage;
+            this.plugin.updatePropertyPanel();
+
+        } else {
+
+            // --- JumpSceneなど、新しいデータ駆動シーンの場合 ---
+            // initializeObjectのようなメソッドは、もう存在しない
+            const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, this.selectedAssetKey);
             
-            const newImage = new Phaser.GameObjects.Image(targetScene, centerX, centerY, '__DEFAULT');
+            // applyPropertiesを使って、プロパティとエディタ登録を一度に行う
+            if (targetScene.applyProperties) {
+                targetScene.applyProperties(newImage, {
+                    name: newName,
+                    x: centerX, y: centerY, scaleX: 1, scaleY: 1, angle: 0, alpha: 1
+                });
+            }
+            // シーンにオブジェクトを追加する
+            targetScene.add.existing(newImage);
 
-            targetScene.initializeObject(newImage, {
-                name: newName, // ★ 生成した連番の名前を使う
-                texture: this.selectedAssetKey,
-                x: centerX,
-                y: centerY,
-                scaleX: 1,
-                scaleY: 1,
-                angle: 0,
-                alpha: 1,
-                visible: true
-            });
-
-        this.plugin.selectedObject = newImage;
-        this.plugin.updatePropertyPanel();
+         
+        }
+           
     }
 }
