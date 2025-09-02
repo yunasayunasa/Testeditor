@@ -71,6 +71,27 @@ export default class EditorUI {
              alert("Could not find a suitable target scene. Make sure you are not in GameScene.");
              return;
         }
+         // 1. このアセットキーのカウンターが存在しなければ、1で初期化
+            if (!this.objectCounters[this.selectedAssetKey]) {
+                this.objectCounters[this.selectedAssetKey] = 1;
+            } else {
+                // 2. 存在すれば、カウンターを1増やす
+                this.objectCounters[this.selectedAssetKey]++;
+            }
+
+            // 3. 新しい名前を生成 (例: yuko_normal_1, yuko_normal_2)
+            const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
+
+            // --- JumpSceneのaddObjectFromEditorを呼び出す ---
+            // (このメソッドはBaseGameSceneを継承しているので、applyPropertiesを内部で呼び出す)
+            const newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName);
+
+            if (newObject) {
+                this.plugin.selectedObject = newObject;
+                this.plugin.updatePropertyPanel();
+            }
+        }
+    }
 
         // --- 2. シーンに「オブジェクト追加」を依頼するだけ ---
         if (targetScene.addObjectFromEditor) {
