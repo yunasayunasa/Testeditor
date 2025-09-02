@@ -507,6 +507,29 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             row.appendChild(input);
             this.editorPropsContainer.appendChild(row);
         }
+            // --- Depthプロパティの追加 ---
+        const depthRow = document.createElement('div');
+        const depthLabel = document.createElement('label');
+        depthLabel.innerText = 'depth:';
+        
+        const depthInput = document.createElement('input');
+        depthInput.type = 'number';
+        depthInput.step = 1;
+        depthInput.value = this.selectedObject.depth;
+        
+        depthInput.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (!isNaN(val) && this.selectedObject) {
+                this.selectedObject.setDepth(val);
+            }
+        });
+        
+        depthRow.appendChild(depthLabel);
+        depthRow.appendChild(depthInput);
+        this.editorPropsContainer.appendChild(depthRow);
+
+
+        //物理プロパティ
             this.editorPropsContainer.appendChild(document.createElement('hr'));
         const physicsTitle = document.createElement('div');
         physicsTitle.innerText = '物理ボディ';
