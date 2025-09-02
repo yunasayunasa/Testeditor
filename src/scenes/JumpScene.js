@@ -1,14 +1,16 @@
 import BaseGameScene from './BaseGameScene.js';
-
+import ActionInterpreter from '../core/ActionInterpreter.js';
 export default class JumpScene extends BaseGameScene {
-    constructor() {
-        super({ key: 'JumpScene' });
+   constructor() {
+        super({ key: 'JumpScene' }); // ★ 自身のキーを正しく渡す
         this.player = null;
         this.cursors = null;
+        this.actionInterpreter = null; // ★ 自身のプロパティとして持つ
     }
 
     create() {
         console.log("[JumpScene] Create started.");
+         this.actionInterpreter = new ActionInterpreter(this)
         this.cameras.main.setBackgroundColor('#4488cc');
         this.cursors = this.input.keyboard.createCursorKeys();
         
