@@ -213,25 +213,39 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
       /**
      * 物理パラメータを編集するためのUIを生成する (最終確定版)
      */
-   createPhysicsPropertiesUI(gameObject) {
+   
+    createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         
         const isStatic = body.isStatic;
         this.createCheckbox(this.editorPropsContainer, 'Is Static Body', isStatic, (isChecked) => {
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これがゴーストボディ問題を解決する、最終修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
             if (this.selectedObject && this.selectedObject.body) {
                 const targetScene = this.selectedObject.scene;
-                
-                // 既存のボディを確実に破棄
-                this.selectedObject.body.destroy();
+                const world = targetScene.physics.world;
 
-               
+                // --- 修正点 1: 安全なボディの削除 ---
+                // body.destroy() の代わりに、Worldに削除を依頼する。
+                // これにより、物理エンジンの更新リストから完全に除去される。
+                world.remove(this.selectedObject.body);
+
+                // --- 修正点 2: 参照の完全なクリア ---
+                // GameObject側の参照も手動でnullにして、古いボディへのアクセスを断つ。
+                this.selectedObject.body = null;
+
+                // --- 修正点 3: 新しいボディの追加 (これは前回と同じ) ---
+                // チェックボックスの最新の状態 'isChecked' を使って、新しいボディを生成する。
                 targetScene.physics.add.existing(this.selectedObject, isChecked);
-               
 
+                // 新しく作られたボディに対して、共通の設定を再適用
                 if (this.selectedObject.body) {
                     this.selectedObject.body.collideWorldBounds = true;
                 }
-                // UIを再描画して変更を反映
+
+                // 最後にUIを再描画して、変更を完全に反映させる
                 this.updatePropertyPanel();
             }
         });
