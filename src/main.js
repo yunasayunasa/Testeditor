@@ -4,6 +4,7 @@ import PreloadScene from './scenes/PreloadScene.js';
 import SystemScene from './scenes/SystemScene.js'; 
 import UIScene from './scenes/UIScene.js';       
 import GameScene from './scenes/GameScene.js';
+import BaseGameScene from './scenes/BaseGameScene.js';
 import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
@@ -28,6 +29,7 @@ const config = {
         SystemScene, 
         UIScene,       
         GameScene,   
+        BaseGameScene,
         SaveLoadScene, 
         ConfigScene, 
         BacklogScene, 
