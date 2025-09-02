@@ -43,7 +43,14 @@
       "animation": {
         "default": null,
         "definitions": []
-      }
+      },
+      "events": [
+        {
+          "trigger": "onClick",
+          "actions": "[tween property=angle to=360 time=500 yoyo=true][destroy]"
+        }
+      
+      ]
     }
   ],
   "animations": [

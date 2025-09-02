@@ -1,7 +1,17 @@
 // src/scenes/BaseGameScene.js (データ駆動シーン専用の親クラス)
-
+import ActionInterpreter from '../core/ActionInterpreter.js';
 export default class BaseGameScene extends Phaser.Scene {
+   constructor() {
+        super();
+        this.actionInterpreter = null;
+    }
 
+    create() {
+        // ★★★ createの最初に、インタープリタを生成 ★★★
+        this.actionInterpreter = new ActionInterpreter(this);
+        
+        // (JumpSceneなどの子クラスのcreateが、この後に実行される)
+    }
     /**
      * 【データ駆動シーン専用】
      * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
@@ -124,11 +134,22 @@ export default class BaseGameScene extends Phaser.Scene {
                 gameObject.body.collideWorldBounds = phys.collideWorldBounds;
             }
         }
+// --- イベントデータを読み込み、トリガーを設定 ---
+        if (data.events) {
+            gameObject.setData('events', data.events);
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、全てを解決する、正しい順序のロジックです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+            data.events.forEach(eventData => {
+                // 今は onClick トリガーだけを実装
+                if (eventData.trigger === 'onClick') {
+                    // オブジェクトがクリックされたら...
+                    gameObject.on('pointerdown', () => {
+                        // ...インタープリタに実行を依頼する
+                        this.actionInterpreter.run(gameObject, eventData.actions);
+                    });
+                }
+            });
+        }
+      
         // --- 4. インタラクティブ化とエディタ登録 ---
         // (この処理は、アニメーションを再生する「前」に行う)
         try {
