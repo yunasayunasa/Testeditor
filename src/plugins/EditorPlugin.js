@@ -329,6 +329,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         row.appendChild(valueEl);
         container.appendChild(row);
     }
+   /**
+     * 現在のシーンのレイアウトをJSON形式でエクスポートする (完成版)
+     */
     exportLayoutToJson() {
         if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
             alert("Please select an object in the scene you want to export.");
@@ -338,43 +341,52 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const sceneKey = targetScene.scene.key;
         const sceneLayoutData = { objects: [] };
 
-            if (this.editableObjects.has(sceneKey)) {
+        if (this.editableObjects.has(sceneKey)) {
             for (const gameObject of this.editableObjects.get(sceneKey)) {
-                if (gameObject.name) {
-                    const objData = { /* ... */ };
-                    if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
-                    
-                    if (gameObject.body) {
-                        const body = gameObject.body;
+                // オブジェクトに名前がなければスキップ
+                if (!gameObject.name) continue;
 
-                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                        // ★★★ 修正点 2: エクスポート時も instanceof で判別 ★★★
-                        const isStaticForExport = (body instanceof Phaser.Physics.Arcade.StaticBody);
-                        
-                        // ログも更新
-                        if (gameObject.name === this.selectedObject.name) {
-                            console.log(`%c[EXPORTING] Object: '${gameObject.name}', isStatic value for JSON: ${isStaticForExport}`, 'color: orange;');
-                        }
-                        
-                        objData.physics = { isStatic: isStaticForExport };
-                        
-                        if (!(body instanceof Phaser.Physics.Arcade.StaticBody)) {
-                            Object.assign(objData.physics, {
-                                width: body.width,
-                                height: body.height,
-                                offsetX: body.offset.x,
-                                offsetY: body.offset.y,
-                                allowGravity: body.allowGravity,
-                                bounceX: parseFloat(body.bounce.x.toFixed(2)),
-                                bounceY: parseFloat(body.bounce.y.toFixed(2))
-                            });
-                        }
-                        
-                        objData.physics.collideWorldBounds = body.collideWorldBounds;
-                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                    }
-                    sceneLayoutData.objects.push(objData);
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                // ★★★ ここからが修正の核心です ★★★
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+                // --- 手順1: 全てのオブジェクトに共通の基本データをまず作成 ---
+                const objData = {
+                    name: gameObject.name,
+                    x: Math.round(gameObject.x),
+                    y: Math.round(gameObject.y),
+                    scaleX: parseFloat(gameObject.scaleX.toFixed(2)),
+                    scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
+                    angle: Math.round(gameObject.angle),
+                    alpha: parseFloat(gameObject.alpha.toFixed(2))
+                };
+                if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') {
+                    objData.texture = gameObject.texture.key;
                 }
+
+                // --- 手順2: もし物理ボディがあれば、「追加」で物理データを書き込む ---
+                if (gameObject.body) {
+                    const body = gameObject.body;
+                    const isStaticForExport = (body instanceof Phaser.Physics.Arcade.StaticBody);
+                    
+                    objData.physics = { isStatic: isStaticForExport };
+                    
+                    if (!isStaticForExport) {
+                        Object.assign(objData.physics, {
+                            width: body.width,
+                            height: body.height,
+                            offsetX: body.offset.x,
+                            offsetY: body.offset.y,
+                            allowGravity: body.allowGravity,
+                            bounceX: parseFloat(body.bounce.x.toFixed(2)),
+                            bounceY: parseFloat(body.bounce.y.toFixed(2))
+                        });
+                    }
+                    objData.physics.collideWorldBounds = body.collideWorldBounds;
+                }
+
+                // --- 手順3: 完成したobjDataを、条件なしで必ず配列に追加 ---
+                sceneLayoutData.objects.push(objData);
             }
         }
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
