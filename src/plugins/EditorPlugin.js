@@ -359,47 +359,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
  
-    /**
-     * 【完成版】
-     * Eventsセクションの中身を生成する
-     * @param {HTMLElement} container - UIを追加する親要素
-     */
-    populateEventsUI(container) {
-        if (!this.selectedObject) return;
-
-        // --- 1. オブジェクトに保存されているイベント情報を取得 ---
-        // getDataで、'events'というキーのデータを取得。なければ空の配列で初期化。
-        const events = this.selectedObject.getData('events') || [];
-
-        // --- 2. 既存のイベントを一覧表示 ---
-        const eventList = document.createElement('div');
-        events.forEach((eventData, index) => {
-            const eventDiv = this.createEventDisplay(eventData, index);
-            eventList.appendChild(eventDiv);
-        });
-        container.appendChild(eventList);
-
-
-        // --- 3. 「新しいイベントを追加」ボタン ---
-        const addButton = document.createElement('button');
-        addButton.innerText = '新しいイベントを追加';
-        addButton.onclick = () => {
-            // 新しい、空のイベントデータを追加
-            const newEvent = { trigger: 'onClick', actions: '[]' };
-            events.push(newEvent);
-            this.selectedObject.setData('events', events);
-            
-            // パネルを再描画して、新しいイベントの編集UIを表示
-            this.updatePropertyPanel();
-        };
-        container.appendChild(addButton);
-    }
-
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
+   /**
+     * ★★★ 新規ヘルパーメソッド (1/2) ★★★
      * 一つのイベントを表示・編集するためのHTML要素を生成する
-     * @param {object} eventData - { trigger: string, actions: string }
-     * @param {number} index - イベント配列の中でのインデックス
      */
     createEventDisplay(eventData, index) {
         const div = document.createElement('div');
@@ -407,11 +369,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         div.style.padding = '8px';
         div.style.marginBottom = '8px';
 
-        // --- トリガー選択 ---
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
-        const triggers = ['onClick', 'onHover', 'onKeyPress']; // 将来的に拡張
+        const triggers = ['onClick', 'onHover', 'onKeyPress'];
         triggers.forEach(t => {
             const option = document.createElement('option');
             option.value = t;
@@ -421,7 +382,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
         
-        // --- アクション記述エリア ---
         const actionsLabel = document.createElement('label');
         actionsLabel.innerText = 'アクション (タグ形式):';
         actionsLabel.style.display = 'block';
@@ -429,12 +389,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const actionsTextarea = document.createElement('textarea');
         actionsTextarea.style.width = '95%';
         actionsTextarea.style.height = '60px';
-        actionsTextarea.style.backgroundColor = '#1e1e1e';
-        actionsTextarea.style.color = '#d4d4d4';
         actionsTextarea.value = eventData.actions;
         actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
 
-        // --- 削除ボタン ---
         const deleteBtn = document.createElement('button');
         deleteBtn.innerText = '削除';
         deleteBtn.style.backgroundColor = '#c44';
@@ -442,9 +399,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         deleteBtn.onclick = () => {
             if (confirm('このイベントを削除しますか？')) {
                 const events = this.selectedObject.getData('events');
-                events.splice(index, 1); // 配列からこのイベントを削除
+                events.splice(index, 1);
                 this.selectedObject.setData('events', events);
-                this.updatePropertyPanel(); // パネルを再描画
+                this.updatePropertyPanel();
             }
         };
         
@@ -456,7 +413,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     /**
-     * ★★★ 新規ヘルパーメソッド ★★★
+     * ★★★ 新規ヘルパーメソッド (2/2) ★★★
      * オブジェクトに保存されているイベントデータを更新する
      */
     updateEventData(index, key, value) {
@@ -467,7 +424,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             this.selectedObject.setData('events', events);
         }
     }
-
     makeEditable(gameObject, scene) {
         if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
         
@@ -625,12 +581,24 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         eventsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(eventsTitle);
 
+        // 3-1. まず、既存のイベントを一覧表示する
+        const events = this.selectedObject.getData('events') || [];
+        events.forEach((eventData, index) => {
+            const eventDiv = this.createEventDisplay(eventData, index);
+            this.editorPropsContainer.appendChild(eventDiv);
+        });
+
+        // 3-2. 次に、「新しいイベントを追加」ボタンを生成する
         const addNewEventBtn = document.createElement('button');
         addNewEventBtn.innerText = '新しいイベントを追加';
         addNewEventBtn.onclick = () => {
-            this.populateEventsUI(container)
+            const currentEvents = this.selectedObject.getData('events') || [];
+            currentEvents.push({ trigger: 'onClick', actions: '' }); // actionsは空文字列で初期化
+            this.selectedObject.setData('events', currentEvents);
+            this.updatePropertyPanel(); // パネルを再描画して、新しい編集欄を表示
         };
         this.editorPropsContainer.appendChild(addNewEventBtn);
+        
         
 
         // Exportボタン
@@ -887,7 +855,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     };
                 });
         }
-
+ if (gameObject.getData('events')) {
+        objData.events = gameObject.getData('events');
+    }
         // --- 7. 最終的なJSONを文字列化して出力 ---
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");

@@ -161,7 +161,10 @@ export default class BaseGameScene extends Phaser.Scene {
                 }
             }
         }
+        if (data.events) {
+        gameObject.setData('events', data.events);
     }
+}
     
     /**
      * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
