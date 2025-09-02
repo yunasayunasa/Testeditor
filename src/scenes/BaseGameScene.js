@@ -98,7 +98,7 @@ export default class BaseGameScene extends Phaser.Scene {
      * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
      * 子クラスで、このメソッドをオーバーライドすることを想定。
      */
-    addObjectFromEditor(assetKey) {
+    addObjectFromEditor(assetKey, newName) {
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
         return null;
     }
