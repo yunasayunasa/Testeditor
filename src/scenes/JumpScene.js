@@ -41,10 +41,10 @@ export default class JumpScene extends BaseGameScene {
         this.cursors = this.input.keyboard.createCursorKeys();
 
         // ★★★ 開発の5ヶ条: 第2条 - BGMはcreateで再生 ★★★
-        const soundManager = this.registry.get('soundManager');
+       /* const soundManager = this.registry.get('soundManager');
         if (soundManager) {
             soundManager.playBgm('bgm_action'); // あなたのbgmキーに合わせてください
-        }
+        }*/
         
         // --- 2. 親の汎用ルーチンを呼び出して、JSONからシーンを構築 ---
         this.initSceneFromData();
