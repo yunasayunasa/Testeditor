@@ -15,5 +15,20 @@
         "definitions": []
       }
     }
+  ],
+  "animations": [
+    {
+      "key": "歩き",
+      "texture": "walk",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "frameRate": 10,
+      "repeat": -1
+    }
   ]
 }
