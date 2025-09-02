@@ -16,6 +16,8 @@ export default class BaseGameScene extends Phaser.Scene {
     }
 
     
+    // src/scenes/BaseGameScene.js
+
     buildSceneFromLayout(layoutData) {
         const sceneKey = this.scene.key;
         if (!layoutData) {
@@ -26,33 +28,37 @@ export default class BaseGameScene extends Phaser.Scene {
         // --- 1. まず、シーン全体のアニメーション定義を「先に」登録する ---
         if (layoutData.animations) {
             for (const animData of layoutData.animations) {
-                if (!this.anims.exists(animData.key)) {
-                    // フレーム情報の形式を判定
-                    let frames;
-                    if (animData.frames && animData.frames.start !== undefined) {
-                        frames = this.anims.generateFrameNumbers(animData.texture, animData.frames);
-                    } else {
-                        frames = animData.frames;
-                    }
+                // 同じキーのアニメーションが既に登録されていたら、スキップする
+                if (this.anims.exists(animData.key)) continue;
+                
+  
 
-                    this.anims.create({
-                        key: animData.key,
-                        frames: frames,
-                        frameRate: animData.frameRate,
-                        repeat: animData.repeat
-                    });
+                let frameConfig;
+                // --- 'frames'プロパティが配列かオブジェクトかを見分ける ---
+                if (Array.isArray(animData.frames)) {
+                    // [1, 2, 3] のような配列の場合
+                    frameConfig = { frames: animData.frames };
+                } else {
+                    // { start: 0, end: 7 } のようなオブジェクトの場合
+                    frameConfig = animData.frames;
                 }
+                
+                this.anims.create({
+                    key: animData.key,
+                    frames: this.anims.generateFrameNumbers(animData.texture, frameConfig),
+                    frameRate: animData.frameRate,
+                    repeat: animData.repeat
+                });
             }
         }
         
         // --- 2. 次に、オブジェクトを生成し、プロパティを適用する ---
+        // (この部分は、前回のコードで完璧です)
         if (layoutData.objects) {
             const createdObjects = [];
             for (const layout of layoutData.objects) {
                 const gameObject = this.createObjectFromLayout(layout);
-                if (gameObject) {
-                    createdObjects.push({ gameObject, layout });
-                }
+                if (gameObject) createdObjects.push({ gameObject, layout });
             }
             for (const item of createdObjects) {
                 this.applyProperties(item.gameObject, item.layout);
