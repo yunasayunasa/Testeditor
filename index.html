@@ -147,6 +147,56 @@
 body:not(.debug-mode) #editor-ui-container {
     display: none;
 }
+ /* ウィンドウ全体を覆う、半透明のオーバーレイ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            display: none; /* デフォルトは非表示 */
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* アニメーション・エディタのウィンドウ本体 */
+        #animation-editor {
+            width: 600px; /* 幅を広めに設定 */
+            background-color: #2b2b2b;
+            color: #d4d4d4;
+            border: 1px solid #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ウィンドウのヘッダー */
+        #animation-editor-header {
+            padding: 10px 15px;
+            background-color: #3c3c3c;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between; /* タイトルと閉じるボタンを両端に配置 */
+            align-items: center;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        
+        #animation-editor-close-btn {
+            cursor: pointer;
+            font-size: 20px;
+            border: none;
+            background: none;
+            color: #d4d4d4;
+        }
+
+        /* ウィンドウのコンテンツエリア */
+        #animation-editor-content {
+            padding: 15px;
+            /* 将来的にプレビューと設定で分割するかも */
+        }
     </style>
 </head>
 <body>
@@ -166,6 +216,18 @@ body:not(.debug-mode) #editor-ui-container {
             <div id="editor-title" class="panel-header">Properties</div>
             <div class="panel-content">
                 <div id="editor-props"></div>
+            </div>
+        </div>
+    </div>
+       <div id="anim-editor-overlay" class="modal-overlay">
+        <div id="animation-editor">
+            <div id="animation-editor-header">
+                <span id="animation-editor-title">Animation Editor</span>
+                <button id="animation-editor-close-btn">&times;</button>
+            </div>
+            <div id="animation-editor-content">
+                <!-- アニメーション編集UIは、ここにJSで動的に生成されます -->
+                <p>Animation settings will appear here.</p>
             </div>
         </div>
     </div>
