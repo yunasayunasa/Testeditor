@@ -14,6 +14,36 @@
         "default": "歩き",
         "definitions": []
       }
+    },
+    {
+      "name": "walk_1",
+      "x": 970,
+      "y": 115,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "type": "Sprite",
+      "texture": "walk",
+      "animation": {
+        "default": "歩き",
+        "definitions": []
+      }
+    },
+    {
+      "name": "walk_2",
+      "x": 813,
+      "y": 305,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "type": "Sprite",
+      "texture": "walk",
+      "animation": {
+        "default": null,
+        "definitions": []
+      }
     }
   ],
   "animations": [
@@ -24,8 +54,7 @@
         1,
         2,
         3,
-        4,
-        5
+        4
       ],
       "frameRate": 10,
       "repeat": -1
