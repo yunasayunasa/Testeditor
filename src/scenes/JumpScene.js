@@ -11,6 +11,7 @@ export default class JumpScene extends BaseGameScene {
         this.player = null;
         this.cursors = null;
         this.actionInterpreter = null;
+        this.keyPressEvents = new Map();
     }
 
     create() {
@@ -24,7 +25,8 @@ export default class JumpScene extends BaseGameScene {
         
         const soundManager = this.registry.get('soundManager');
         if (soundManager) soundManager.playBgm('bgm_action');
-        
+         // ★★★ 2. 毎フレーム、キー入力イベントをチェックするリスナーを追加 ★★★
+        this.events.on('update', this.handleKeyPressEvents, this);
         // --- 2. 世界の境界と、デバッグ用グリッドの描画 ---
         const worldWidth = 3840;
         const worldHeight = 1440;
@@ -109,12 +111,33 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
+       /**
+     * ★★★ 新規メソッド ★★★
+     * 毎フレーム実行され、キーが押されているかをチェックし、イベントを発火させる
+     */
+    handleKeyPressEvents() {
+        if (!this.input.keyboard.enabled) return;
+        
+        for (const [key, events] of this.keyPressEvents.entries()) {
+            const keyObject = this.input.keyboard.addKey(key);
+            
+            if (Phaser.Input.Keyboard.JustDown(keyObject)) {
+                events.forEach(event => {
+                    // ★★★ 変更点: シーンが持つインタープリタを直接使う ★★★
+                    this.actionInterpreter.run(event.target, event.actions);
+                });
+            }
+        }
+    }
+
     /**
      * シーンが破棄される時の後片付け
      */
     shutdown() {
         // ★★★ 開発の5ヶ条: 第4条 - shutdownで後片付け ★★★
         console.log("[JumpScene] Shutdown.");
+        // ★★★ 3. シーン終了時に、イベントリスナーを必ず解除 ★★★
+        this.events.off('update', this.handleKeyPressEvents, this);
         super.shutdown();
     }
 }

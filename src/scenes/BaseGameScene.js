@@ -127,22 +127,20 @@
             }
         }
 // --- イベントデータを読み込み、トリガーを設定 ---
-        if (data.events) {
+           if (data.events) {
             gameObject.setData('events', data.events);
-
             data.events.forEach(eventData => {
-                // 今は onClick トリガーだけを実装
                 if (eventData.trigger === 'onClick') {
-                    // オブジェクトがクリックされたら...
                     gameObject.on('pointerdown', () => {
-                        // ...インタープリタに実行を依頼する
+                        // ★ シーンが持つインタープリタを直接使う
                         this.actionInterpreter.run(gameObject, eventData.actions);
                     });
                 }
-                 else if (eventData.trigger.startsWith('onKeyPress')) {
-                    const key = eventData.trigger.split('_')[1]; // 'UP', 'SPACE'など
-                    
-                    // どのキーが、どのアクションを実行するかを、Mapに記録
+                else if (eventData.trigger.startsWith('onKeyPress')) {
+                    const key = eventData.trigger.split('_')[1];
+                  
+
+                    // どのキーが、どのアクションを実行するかを、シーンのMapに記録
                     if (!this.keyPressEvents.has(key)) {
                         this.keyPressEvents.set(key, []);
                     }
@@ -150,11 +148,6 @@
                         target: gameObject,
                         actions: eventData.actions
                     });
-                    
-                    // シーンに、そのキーを監視対象として登録
-                    this.input.keyboard.addKey(key);
-
-                    console.log(`[BaseGameScene] KeyPress event registered: Key=${key} for Object='${gameObject.name}'`);
                 }
             });
         }
@@ -241,7 +234,7 @@
     }
  shutdown() {
         // ★★★ シーン終了時に、イベントリスナーを解除 ★★★
-        this.events.off('update', this.handleKeyPressEvents, this);
+       
         super.shutdown();
     }
 }
