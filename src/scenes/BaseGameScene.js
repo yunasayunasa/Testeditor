@@ -7,8 +7,7 @@ export default class BaseGameScene extends Phaser.Scene {
      * createの最初に必ず super.create() として呼び出されるべきメソッド
      */
     create() {
-        // --- 1. このシーンで使うサービスを生成 ---
-        this.actionInterpreter = new ActionInterpreter(this);
+       
 
         // --- 2. エディタ用の、共通カメラコントロールを初期化 ---
         const editor = this.plugins.get('EditorPlugin');
