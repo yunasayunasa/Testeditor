@@ -231,6 +231,19 @@ body:not(.debug-mode) #editor-ui-container {
             </div>
         </div>
     </div>
+    <div id="event-editor-overlay" class="modal-overlay">
+        <div id="event-editor" style="width: 600px; background-color: #2b2b2b; /* 他のスタイルはanim-editorと同じ */">
+            <div id="event-editor-header" style="background-color: #3c3c3c; /* ... */">
+                <span id="event-editor-title">Event Editor</span>
+                <button id="event-editor-close-btn">&times;</button>
+            </div>
+            <div id="event-editor-content" style="padding: 15px; height: 400px; overflow-y: auto;">
+                <!-- イベント編集UIは、ここにJSで動的に生成されます -->
+            </div>
+        </div>
+    </div>
+
+
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
