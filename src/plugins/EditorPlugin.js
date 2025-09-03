@@ -7,7 +7,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorUI = null;
          this.animEditorOverlay = null;
         this.animEditorCloseBtn = null;
-        
+        this.eventEditorOverlay = null;
+        this.eventEditorCloseBtn = null;
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが、全てを解決する、最後の修正です ★★★
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
@@ -41,8 +42,17 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 this.closeAnimationEditor();
             });
         }
-    }
     
+    this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        this.eventEditorCloseBtn = document.getElementById('event-editor-close-btn');
+
+        if (this.eventEditorCloseBtn) {
+            this.eventEditorCloseBtn.addEventListener('click', () => {
+                this.closeEventEditor();
+            });
+        }
+    }
+
 
     setUI(editorUI) {
         this.editorUI = editorUI;
