@@ -361,89 +361,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
  
     // src/plugins/EditorPlugin.js
 
-    /**
-     * 一つのイベントを表示・編集するためのHTML要素を生成する (真の最終確定・完成版)
-     */
-    createEventDisplay(eventData, index) {
-        const div = document.createElement('div');
-        div.style.border = '1px solid #444';
-        div.style.padding = '8px';
-        div.style.marginBottom = '8px';
-        div.style.backgroundColor = '#333';
-
-        // --- 1. ヘッダー：トリガー選択と削除ボタン ---
-        const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.alignItems = 'center';
-        header.style.marginBottom = '8px';
-
-        // --- トリガー選択 (左側) ---
-        const triggerContainer = document.createElement('div');
-        const triggerLabel = document.createElement('label');
-        triggerLabel.innerText = 'トリガー: ';
-        const triggerSelect = document.createElement('select');
-        const triggers = ['onClick', 'onHover', 'onKeyPress'];
-        triggers.forEach(t => {
-            const option = document.createElement('option');
-            option.value = t;
-            option.innerText = t;
-            if (t === eventData.trigger) option.selected = true;
-            triggerSelect.appendChild(option);
-        });
-        triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
-        triggerContainer.append(triggerLabel, triggerSelect);
-
-        // --- 削除ボタン (右側) ---
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerText = 'このイベントを削除';
-        deleteBtn.style.backgroundColor = '#c44';
-        deleteBtn.onclick = () => {
-            if (confirm('このイベントを削除しますか？')) {
-                const events = this.selectedObject.getData('events');
-                events.splice(index, 1);
-                this.selectedObject.setData('events', events);
-                this.updatePropertyPanel();
-            }
-        };
-        
-        header.append(triggerContainer, deleteBtn);
-
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、私が省略してしまった、最も重要な部分です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 2. アクション記述エリア ---
-        const actionsContainer = document.createElement('div');
-        
-        const actionsLabel = document.createElement('label');
-        actionsLabel.innerText = 'アクション (タグ形式):';
-        actionsLabel.style.display = 'block';
-        actionsLabel.style.marginBottom = '4px';
-        
-        const actionsTextarea = document.createElement('textarea');
-        actionsTextarea.style.width = '98%';
-        actionsTextarea.style.minHeight = '80px';
-        actionsTextarea.style.resize = 'vertical';
-        actionsTextarea.style.backgroundColor = '#1e1e1e';
-        actionsTextarea.style.color = '#d4d4d4';
-        actionsTextarea.style.border = '1px solid #555';
-        actionsTextarea.style.borderRadius = '3px';
-        actionsTextarea.style.padding = '5px';
-        actionsTextarea.style.fontFamily = 'monospace';
-        
-        actionsTextarea.value = eventData.actions;
-        actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
-
-        actionsContainer.append(actionsLabel, actionsTextarea);
-
-        
-        // --- 全ての部品を、最終的なコンテナに追加 ---
-        div.append(header, actionsContainer);
-        
-        return div;
-    }
+ 
     /**
      * ★★★ 新規ヘルパーメソッド (2/2) ★★★
      * オブジェクトに保存されているイベントデータを更新する
@@ -985,4 +903,5 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
 }
+
 
