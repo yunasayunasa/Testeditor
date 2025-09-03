@@ -8,6 +8,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "group": "Item",
       "type": "Sprite",
       "texture": "walk",
       "physics": {
@@ -73,6 +74,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "group": "Player",
       "type": "Sprite",
       "texture": "walk"
     }
