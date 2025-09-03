@@ -50,7 +50,7 @@ export default class SystemScene extends Phaser.Scene {
             }
         
         // ★★★ 変更点: EditorUIの起動もここでは行わない ★★★
-        
+          const editorUI = new EditorUI(this.game, editorPlugin);
         // --- PreloadSceneから渡されたデータで初期ゲームを起動 ---
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);

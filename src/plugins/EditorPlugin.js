@@ -36,14 +36,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
-  const cameraControls = document.getElementById('camera-controls');
-        if (cameraControls) {
-            cameraControls.style.display = 'flex'; // ボタンを表示状態にする
 
-            document.getElementById('camera-zoom-in').addEventListener('click', () => this.zoomCamera(0.2));
-            document.getElementById('camera-zoom-out').addEventListener('click', () => this.zoomCamera(-0.2));
-            document.getElementById('camera-reset').addEventListener('click', () => this.resetCamera());
-        }
 
         console.warn("[EditorPlugin] Debug mode activated.");
     }
@@ -615,38 +608,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         container.appendChild(row);
     }
 
-      /**
-     * 指定されたポインター座標にあるカメラをズームさせる
-     */
-    zoomCamera(pointer, deltaY) {
-        if (!this.isEnabled) return;
-        const camera = this.findCameraAt(pointer);
-        if (camera) {
-            const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.2, 5);
-            camera.setZoom(newZoom);
-        }
-    }
-
-    /**
-     * 指定されたポインターの移動量でカメラをパンさせる
-     */
-    panCamera(pointer) {
-        if (!this.isEnabled) return;
-        const camera = this.findCameraAt(pointer);
-        if (camera) {
-            camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
-            camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
-        }
-    }
     
-    /**
-     * 指定されたポインター座標にあるシーンのカメラを見つける
-     */
-    findCameraAt(pointer) {
-        return this.pluginManager.game.scene.getScenes(true)
-            .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
-            ?.cameras.main;
-    }
 
     exportLayoutToJson() {
         if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {

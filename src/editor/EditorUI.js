@@ -16,10 +16,41 @@ export default class EditorUI {
         if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
 
         this.assetListContainer = document.getElementById('asset-list');
-        // ★★★ populateAssetBrowserは一度だけ呼び出す ★★★
+        this.cameraControls = document.getElementById('camera-controls');
+        this.zoomInBtn = document.getElementById('camera-zoom-in');
+        this.zoomOutBtn = document.getElementById('camera-zoom-out');
+        this.resetBtn = document.getElementById('camera-reset');
+        
+        // ★★★ 3. 新しいメソッドを呼び出して、イベントリスナーをまとめて設定 ★★★
+        this.initializeEventListeners();
         this.populateAssetBrowser();
     }
-
+ /**
+     * ★★★ 新規メソッド ★★★
+     * このクラスが管理する全てのUI要素にイベントリスナーを設定する
+     */
+    initializeEventListeners() {
+        // --- カメラコントロール ---
+        if (this.cameraControls) {
+            this.cameraControls.style.display = 'flex'; // 表示する
+        }
+        if (this.zoomInBtn) {
+            console.log("[EditorUI] Adding listener to Zoom In button.");
+            this.zoomInBtn.addEventListener('click', () => {
+                this.plugin.zoomCamera(0.2); // Pluginに命令
+            });
+        }
+        if (this.zoomOutBtn) {
+            this.zoomOutBtn.addEventListener('click', () => {
+                this.plugin.zoomCamera(-0.2); // Pluginに命令
+            });
+        }
+        if (this.resetBtn) {
+            this.resetBtn.addEventListener('click', () => {
+                this.plugin.resetCamera(); // Pluginに命令
+            });
+        }
+    }
    // src/editor/EditorUI.js
 
     populateAssetBrowser() {
