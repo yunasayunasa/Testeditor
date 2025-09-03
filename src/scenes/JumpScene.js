@@ -42,7 +42,7 @@ export default class JumpScene extends BaseGameScene {
         
         // ★★★ 開発の5ヶ条: 第2条 - BGMはcreateで再生 ★★★
         const soundManager = this.registry.get('soundManager');
-        if (soundManager) soundManager.playBgm('bgm_action');
+     //   if (soundManager) soundManager.playBgm('bgm_action');
         
         // --- 2. 世界の境界と、デバッグ用グリッドの描画 ---
         const worldWidth = 3840;
