@@ -24,62 +24,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
         console.warn("[EditorPlugin] Debug mode activated.");
-   const gameInput = this.pluginManager.game.input;
-        
-        // ★★★ 'SystemScene'から、キーボードマネージャーを確実に取得 ★★★
-        // プラグ-インのinitが呼ばれる時、SystemSceneは必ずアクティブ
-        const systemScene = this.pluginManager.game.scene.getScene('SystemScene');
-        const keyboard = systemScene.input.keyboard;
 
-        // --- カメラ操作の有効/無効を切り替えるキー (スペースキー) ---
-        const spaceKey = keyboard.addKey('SPACE');
-        
-        // --- マウスホイールによるズーム ---
-        gameInput.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-            if (this.isEnabled) {
-                const camera = this.pluginManager.game.scene.getScenes(true)
-                    .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
-                    ?.cameras.main;
-                if (camera) {
-                    const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.2, 5);
-                    camera.setZoom(newZoom);
-                }
-            }
-        });
-
-        // --- マウスドラッグによるパン（カメラ移動） ---
-        gameInput.on('pointermove', (pointer) => {
-            if (this.isEnabled && spaceKey.isDown && pointer.leftButtonDown()) {
-                const camera = this.pluginManager.game.scene.getScenes(true)
-                    .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
-                    ?.cameras.main;
-                if (camera) {
-                    camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
-                    camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
-                }
-            }
-        });
-
-        // --- 2本指ピンチによるズーム（タッチデバイス用） ---
-        let pinchStartDistance = 0;
-        gameInput.on('pointerdown', (pointer) => {
-            if (gameInput.pointer2.isDown) {
-                pinchStartDistance = Phaser.Math.Distance.Between(gameInput.pointer1.x, gameInput.pointer1.y, gameInput.pointer2.x, gameInput.pointer2.y);
-            }
-        });
-        gameInput.on('pointermove', (pointer) => {
-            if (this.isEnabled && gameInput.pointer1.isDown && gameInput.pointer2.isDown) {
-                const camera = this.pluginManager.game.scene.getScenes(true)
-                    .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
-                    ?.cameras.main;
-                if (camera) {
-                    const newDistance = Phaser.Math.Distance.Between(gameInput.pointer1.x, gameInput.pointer1.y, gameInput.pointer2.x, gameInput.pointer2.y);
-                    const newZoom = Phaser.Math.Clamp(camera.zoom * (newDistance / pinchStartDistance), 0.2, 5);
-                    camera.setZoom(newZoom);
-                    pinchStartDistance = newDistance;
-                }
-            }
-        });
     
         this.animEditorOverlay = document.getElementById('anim-editor-overlay');
         this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
