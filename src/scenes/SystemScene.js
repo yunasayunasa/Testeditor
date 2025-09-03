@@ -40,12 +40,7 @@ export default class SystemScene extends Phaser.Scene {
         
         const stateManager = this.registry.get('stateManager');
             const editorPlugin = this.plugins.start('EditorPlugin');
-              if (editorPlugin && editorPlugin.isEnabled) {
-            // DOMの準備が整ったこのタイミングで、EditorPluginにUIの初期化を命令する
-            editorPlugin.initializeDOM();
             
-           
-        }
             // 2. 次に、EditorUIをnewする (この時点では、まだ連携していない)
             const editorUI = new EditorUI(this.game, editorPlugin);
             

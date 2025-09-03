@@ -15,27 +15,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.eventEditorCloseBtn = null;
     }
 
-      /**
-     * プラグイン起動時の処理。デバッグモードが有効かどうかの判定のみを行う。
-     */
     init() {
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
         this.isEnabled = true;
-        console.warn("[EditorPlugin] Debug mode activated.");
-    }
 
-     /**
-     * ★★★ 新規メソッド ★★★
-     * SystemSceneから呼び出され、DOMの準備完了後にUI要素の初期化を行う。
-     */
-    initializeDOM() {
-        if (!this.isEnabled) return;
-
-        // --- HTML要素への参照を取得 ---
+        // ★★★ editor-props-container への参照を修正 ★★★
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
-        this.editorPropsContainer = document.getElementById('editor-props');
+        this.editorPropsContainer = document.getElementById('editor-props'); // ← IDを修正
         
         this.animEditorOverlay = document.getElementById('anim-editor-overlay');
         this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
@@ -48,28 +36,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
-        
-        // --- カメラコントロールボタンの初期化 ---
-        const cameraControls = document.getElementById('camera-controls');
+  const cameraControls = document.getElementById('camera-controls');
         if (cameraControls) {
-            cameraControls.style.display = 'flex';
+            cameraControls.style.display = 'flex'; // ボタンを表示状態にする
 
-            // ★★★ ログを追加して、ボタンが見つかったか確認 ★★★
-            const zoomInBtn = document.getElementById('camera-zoom-in');
-            if (zoomInBtn) {
-                console.log("[EditorPlugin] Zoom In button found. Adding listener.");
-                zoomInBtn.addEventListener('click', () => this.zoomCamera(0.2));
-            } else {
-                console.error("[EditorPlugin] Zoom In button NOT found!");
-            }
-
+            document.getElementById('camera-zoom-in').addEventListener('click', () => this.zoomCamera(0.2));
             document.getElementById('camera-zoom-out').addEventListener('click', () => this.zoomCamera(-0.2));
             document.getElementById('camera-reset').addEventListener('click', () => this.resetCamera());
-        } else {
-            console.error("[EditorPlugin] Camera controls container NOT found!");
         }
+
+        console.warn("[EditorPlugin] Debug mode activated.");
     }
-    
+     
 
     // ★★★ 重複していた setUI メソッドは削除し、こちらに統一 ★★★
     setUI(editorUI) {
