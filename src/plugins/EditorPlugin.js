@@ -100,6 +100,164 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
 
     }
+
+     updatePropertyPanel() {
+        if (!this.isEnabled) return;
+        if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
+        this.editorPropsContainer.innerHTML = '';
+        if (!this.selectedObject) {
+            this.editorTitle.innerText = 'No Object Selected';
+            return;
+        }
+        this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+
+        // Name
+        const nameRow = document.createElement('div');
+        const nameLabel = document.createElement('label');
+        nameLabel.innerText = 'Name:';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = this.selectedObject.name || '';
+        nameInput.addEventListener('input', (e) => {
+            if (this.selectedObject) this.selectedObject.name = e.target.value;
+            this.editorTitle.innerText = `Editing: ${e.target.value}`;
+        });
+        nameRow.append(nameLabel, nameInput);
+        this.editorPropsContainer.appendChild(nameRow);
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+        // Transform
+        const properties = { x: {}, y: {}, scaleX: {min:0.1, max:5, step:0.01}, scaleY: {min:0.1, max:5, step:0.01}, angle: {min:-180, max:180}, alpha: {min:0, max:1, step:0.01} };
+        for (const key in properties) {
+            if (this.selectedObject[key] === undefined) continue;
+            const prop = properties[key];
+            const row = document.createElement('div');
+            const label = document.createElement('label');
+            label.innerText = `${key}:`;
+            const input = document.createElement('input');
+            input.type = (key==='x' || key==='y') ? 'number' : 'range';
+            if (prop.min !== undefined) input.min = prop.min;
+            if (prop.max !== undefined) input.max = prop.max;
+            if (prop.step !== undefined) input.step = prop.step;
+            input.value = this.selectedObject[key];
+            input.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && this.selectedObject) this.selectedObject[key] = val;
+            });
+            row.append(label, input);
+            this.editorPropsContainer.appendChild(row);
+        }
+
+        // Depth
+        const depthRow = document.createElement('div');
+        const depthLabel = document.createElement('label');
+        depthLabel.innerText = 'depth:';
+        const depthInput = document.createElement('input');
+        depthInput.type = 'number';
+        depthInput.step = 1;
+        depthInput.value = this.selectedObject.depth;
+        depthInput.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            if (!isNaN(val) && this.selectedObject) {
+                this.selectedObject.setDepth(val);
+            }
+        });
+        depthRow.append(depthLabel, depthInput);
+        this.editorPropsContainer.appendChild(depthRow);
+
+        // Physics
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const physicsTitle = document.createElement('div');
+        physicsTitle.innerText = '物理ボディ';
+        physicsTitle.style.fontWeight = 'bold';
+        physicsTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(physicsTitle);
+
+        if (this.selectedObject.body) {
+            this.createPhysicsPropertiesUI(this.selectedObject);
+            const removeButton = document.createElement('button');
+            removeButton.innerText = '物理ボディ 削除';
+            removeButton.style.backgroundColor = '#c44';
+            removeButton.style.marginTop = '10px';
+            removeButton.onclick = () => {
+                if (this.selectedObject && this.selectedObject.body) {
+                    this.selectedObject.body.destroy();
+                    this.selectedObject.body = null;
+                    this.updatePropertyPanel();
+                }
+            };
+            this.editorPropsContainer.appendChild(removeButton);
+        } else {
+            const addButton = document.createElement('button');
+            addButton.innerText = '物理ボディ 付与';
+            addButton.onclick = () => {
+                if (this.selectedObject) {
+                    const targetScene = this.selectedObject.scene;
+                    targetScene.physics.add.existing(this.selectedObject, false);
+                    if (this.selectedObject.body) {
+                        this.selectedObject.body.allowGravity = false;
+                        this.selectedObject.body.collideWorldBounds = true;
+                    }
+                    this.updatePropertyPanel();
+                }
+            };
+            this.editorPropsContainer.appendChild(addButton);
+        }
+
+        // Animation
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const animTitle = document.createElement('div');
+        animTitle.innerText = 'スプライトシート';
+        animTitle.style.fontWeight = 'bold';
+        animTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(animTitle);
+
+        const openAnimEditorBtn = document.createElement('button');
+        openAnimEditorBtn.innerText = 'アニメーション設定';
+        openAnimEditorBtn.onclick = () => this.openAnimationEditor();
+        this.editorPropsContainer.appendChild(openAnimEditorBtn);
+
+        // Events
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const eventsTitle = document.createElement('div');
+        eventsTitle.innerText = 'ロジック';
+        eventsTitle.style.fontWeight = 'bold';
+        eventsTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(eventsTitle);
+
+        const openEventEditorBtn = document.createElement('button');
+        openEventEditorBtn.innerText = 'イベント・エディタを開く';
+        openEventEditorBtn.onclick = () => this.openEventEditor();
+        this.editorPropsContainer.appendChild(openEventEditorBtn);
+        
+        // Export
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const exportButton = document.createElement('button');
+        exportButton.innerText = 'エクスポート レイアウト (to Console)';
+        exportButton.addEventListener('click', () => this.exportLayoutToJson());
+        this.editorPropsContainer.appendChild(exportButton);
+        
+        // Delete
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'オブジェクト 削除';
+        deleteButton.style.backgroundColor = '#e65151';
+        deleteButton.style.marginTop = '10px';
+        deleteButton.addEventListener('click', () => {
+            if (this.selectedObject && this.selectedObject.scene && confirm(`本当に '${this.selectedObject.name}' を削除しますか？`)) {
+                const targetObject = this.selectedObject;
+                const sceneKey = targetObject.scene.scene.key;
+                if (this.editableObjects.has(sceneKey)) {
+                    this.editableObjects.get(sceneKey).delete(targetObject);
+                }
+                targetObject.destroy();
+                this.selectedObject = null;
+                this.updatePropertyPanel();
+                console.log(`[EditorPlugin] Object '${targetObject.name}' has been deleted.`);
+            }
+        });
+        this.editorPropsContainer.appendChild(deleteButton);
+    }
     
 
     setUI(editorUI) {
@@ -364,163 +522,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         gameObject.setData('isEditable', true);
     }
 
-    updatePropertyPanel() {
-        if (!this.isEnabled) return;
-        if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
-        this.editorPropsContainer.innerHTML = '';
-        if (!this.selectedObject) {
-            this.editorTitle.innerText = 'No Object Selected';
-            return;
-        }
-        this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
-
-        // Name
-        const nameRow = document.createElement('div');
-        const nameLabel = document.createElement('label');
-        nameLabel.innerText = 'Name:';
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.value = this.selectedObject.name || '';
-        nameInput.addEventListener('input', (e) => {
-            if (this.selectedObject) this.selectedObject.name = e.target.value;
-            this.editorTitle.innerText = `Editing: ${e.target.value}`;
-        });
-        nameRow.append(nameLabel, nameInput);
-        this.editorPropsContainer.appendChild(nameRow);
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-
-        // Transform
-        const properties = { x: {}, y: {}, scaleX: {min:0.1, max:5, step:0.01}, scaleY: {min:0.1, max:5, step:0.01}, angle: {min:-180, max:180}, alpha: {min:0, max:1, step:0.01} };
-        for (const key in properties) {
-            if (this.selectedObject[key] === undefined) continue;
-            const prop = properties[key];
-            const row = document.createElement('div');
-            const label = document.createElement('label');
-            label.innerText = `${key}:`;
-            const input = document.createElement('input');
-            input.type = (key==='x' || key==='y') ? 'number' : 'range';
-            if (prop.min !== undefined) input.min = prop.min;
-            if (prop.max !== undefined) input.max = prop.max;
-            if (prop.step !== undefined) input.step = prop.step;
-            input.value = this.selectedObject[key];
-            input.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                if (!isNaN(val) && this.selectedObject) this.selectedObject[key] = val;
-            });
-            row.append(label, input);
-            this.editorPropsContainer.appendChild(row);
-        }
-
-        // Depth
-        const depthRow = document.createElement('div');
-        const depthLabel = document.createElement('label');
-        depthLabel.innerText = 'depth:';
-        const depthInput = document.createElement('input');
-        depthInput.type = 'number';
-        depthInput.step = 1;
-        depthInput.value = this.selectedObject.depth;
-        depthInput.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            if (!isNaN(val) && this.selectedObject) {
-                this.selectedObject.setDepth(val);
-            }
-        });
-        depthRow.append(depthLabel, depthInput);
-        this.editorPropsContainer.appendChild(depthRow);
-
-        // Physics
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        const physicsTitle = document.createElement('div');
-        physicsTitle.innerText = '物理ボディ';
-        physicsTitle.style.fontWeight = 'bold';
-        physicsTitle.style.marginBottom = '10px';
-        this.editorPropsContainer.appendChild(physicsTitle);
-
-        if (this.selectedObject.body) {
-            this.createPhysicsPropertiesUI(this.selectedObject);
-            const removeButton = document.createElement('button');
-            removeButton.innerText = '物理ボディ 削除';
-            removeButton.style.backgroundColor = '#c44';
-            removeButton.style.marginTop = '10px';
-            removeButton.onclick = () => {
-                if (this.selectedObject && this.selectedObject.body) {
-                    this.selectedObject.body.destroy();
-                    this.selectedObject.body = null;
-                    this.updatePropertyPanel();
-                }
-            };
-            this.editorPropsContainer.appendChild(removeButton);
-        } else {
-            const addButton = document.createElement('button');
-            addButton.innerText = '物理ボディ 付与';
-            addButton.onclick = () => {
-                if (this.selectedObject) {
-                    const targetScene = this.selectedObject.scene;
-                    targetScene.physics.add.existing(this.selectedObject, false);
-                    if (this.selectedObject.body) {
-                        this.selectedObject.body.allowGravity = false;
-                        this.selectedObject.body.collideWorldBounds = true;
-                    }
-                    this.updatePropertyPanel();
-                }
-            };
-            this.editorPropsContainer.appendChild(addButton);
-        }
-
-        // Animation
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        const animTitle = document.createElement('div');
-        animTitle.innerText = 'スプライトシート';
-        animTitle.style.fontWeight = 'bold';
-        animTitle.style.marginBottom = '10px';
-        this.editorPropsContainer.appendChild(animTitle);
-
-        const openAnimEditorBtn = document.createElement('button');
-        openAnimEditorBtn.innerText = 'アニメーション設定';
-        openAnimEditorBtn.onclick = () => this.openAnimationEditor();
-        this.editorPropsContainer.appendChild(openAnimEditorBtn);
-
-        // Events
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        const eventsTitle = document.createElement('div');
-        eventsTitle.innerText = 'ロジック';
-        eventsTitle.style.fontWeight = 'bold';
-        eventsTitle.style.marginBottom = '10px';
-        this.editorPropsContainer.appendChild(eventsTitle);
-
-        const openEventEditorBtn = document.createElement('button');
-        openEventEditorBtn.innerText = 'イベント・エディタを開く';
-        openEventEditorBtn.onclick = () => this.openEventEditor();
-        this.editorPropsContainer.appendChild(openEventEditorBtn);
-        
-        // Export
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        const exportButton = document.createElement('button');
-        exportButton.innerText = 'エクスポート レイアウト (to Console)';
-        exportButton.addEventListener('click', () => this.exportLayoutToJson());
-        this.editorPropsContainer.appendChild(exportButton);
-        
-        // Delete
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        const deleteButton = document.createElement('button');
-        deleteButton.innerText = 'オブジェクト 削除';
-        deleteButton.style.backgroundColor = '#e65151';
-        deleteButton.style.marginTop = '10px';
-        deleteButton.addEventListener('click', () => {
-            if (this.selectedObject && this.selectedObject.scene && confirm(`本当に '${this.selectedObject.name}' を削除しますか？`)) {
-                const targetObject = this.selectedObject;
-                const sceneKey = targetObject.scene.scene.key;
-                if (this.editableObjects.has(sceneKey)) {
-                    this.editableObjects.get(sceneKey).delete(targetObject);
-                }
-                targetObject.destroy();
-                this.selectedObject = null;
-                this.updatePropertyPanel();
-                console.log(`[EditorPlugin] Object '${targetObject.name}' has been deleted.`);
-            }
-        });
-        this.editorPropsContainer.appendChild(deleteButton);
-    }
+   
     
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
@@ -605,6 +607,39 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
         row.append(labelEl, slider, valueEl);
         container.appendChild(row);
+    }
+
+      /**
+     * 指定されたポインター座標にあるカメラをズームさせる
+     */
+    zoomCamera(pointer, deltaY) {
+        if (!this.isEnabled) return;
+        const camera = this.findCameraAt(pointer);
+        if (camera) {
+            const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.2, 5);
+            camera.setZoom(newZoom);
+        }
+    }
+
+    /**
+     * 指定されたポインターの移動量でカメラをパンさせる
+     */
+    panCamera(pointer) {
+        if (!this.isEnabled) return;
+        const camera = this.findCameraAt(pointer);
+        if (camera) {
+            camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
+            camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
+        }
+    }
+    
+    /**
+     * 指定されたポインター座標にあるシーンのカメラを見つける
+     */
+    findCameraAt(pointer) {
+        return this.pluginManager.game.scene.getScenes(true)
+            .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
+            ?.cameras.main;
     }
 
     exportLayoutToJson() {
