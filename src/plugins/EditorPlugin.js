@@ -42,51 +42,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 this.closeEventEditor();
             });
         }
-          // --- 1. カメラ操作の有効/無効を切り替えるキー (例: スペースキー) ---
-        const spaceKey = this.pluginManager.game.input.keyboard.addKey('SPACE');
-        let isCameraControlActive = false;
-        
-        // --- 2. マウスホイールによるズーム ---
-        this.pluginManager.game.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-            if (this.isEnabled) {
-                const camera = this.pluginManager.game.scene.getScenes(true).find(s => s.cameras.main.worldView.contains(pointer.x, pointer.y))?.cameras.main;
-                if (camera) {
-                    const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.25, 4);
-                    camera.setZoom(newZoom);
-                }
-            }
-        });
 
-        // --- 3. マウスドラッグとピンチ操作によるパン＆ズーム ---
-        this.pluginManager.game.input.on('pointermove', (pointer) => {
-            // スペースキーが押されている時だけ、カメラをパン（移動）
-            if (this.isEnabled && spaceKey.isDown && pointer.isDown) {
-                const camera = this.pluginManager.game.scene.getScenes(true).find(s => s.cameras.main.worldView.contains(pointer.x, pointer.y))?.cameras.main;
-                if (camera) {
-                    camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
-                    camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
-                }
-            }
-        });
-
-        // ピンチイン・ピンチアウトの検出（簡易版）
-        let pinchStartDistance = 0;
-        this.pluginManager.game.input.on('pointerdown', (pointer) => {
-            if (this.game.input.pointer2.isDown) { // 2本目の指がタッチされたら
-                pinchStartDistance = Phaser.Math.Distance.Between(this.game.input.pointer1.x, this.game.input.pointer1.y, this.game.input.pointer2.x, this.game.input.pointer2.y);
-            }
-        });
-        this.pluginManager.game.input.on('pointermove', (pointer) => {
-            if (this.isEnabled && this.game.input.pointer1.isDown && this.game.input.pointer2.isDown) {
-                 const camera = this.pluginManager.game.scene.getScenes(true).find(s => s.cameras.main.worldView.contains(pointer.x, pointer.y))?.cameras.main;
-                if (camera) {
-                    const newDistance = Phaser.Math.Distance.Between(this.game.input.pointer1.x, this.game.input.pointer1.y, this.game.input.pointer2.x, this.game.input.pointer2.y);
-                    const newZoom = Phaser.Math.Clamp(camera.zoom * (newDistance / pinchStartDistance), 0.25, 4);
-                    camera.setZoom(newZoom);
-                    pinchStartDistance = newDistance;
-                }
-            }
-        });
     }
     
 
