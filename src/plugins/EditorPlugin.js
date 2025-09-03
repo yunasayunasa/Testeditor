@@ -519,46 +519,40 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Phaser input re-enabled.");
     }
  
-   makeEditable(gameObject, scene) {
-        if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
+     makeEditable(gameObject, scene) {
+        if (!this.isEnabled || !gameObject.name || gameObject.getData('isEditable')) return;
         
+        // setInteractiveとsetDraggableは、一度だけ
         gameObject.setInteractive();
         scene.input.setDraggable(gameObject);
+        gameObject.setData('isEditable', true);
+        
+        // イベントリスナーの設定は、新しいヘルパーメソッドに任せる
+        this.reapplyEditorEvents(gameObject);
+    }
 
-        const sceneKey = scene.scene.key;
-        if (!this.editableObjects.has(sceneKey)) {
-            this.editableObjects.set(sceneKey, new Set());
-        }
-        this.editableObjects.get(sceneKey).add(gameObject);
+     /**
+     * ★★★ 新規メソッド ★★★
+     * オブジェクトに、エディタ用のイベントリスナーを（再）設定する
+     */
+    reapplyEditorEvents(gameObject) {
+        if (!this.isEnabled) return;
 
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
             this.selectedObject = gameObject;
             this.updatePropertyPanel();
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これがタッチ操作を解決する、核心的な修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // マルチタッチジェスチャーの邪魔をしないよう、シングルタッチの時だけイベントを止める
-            if (scene.input.pointerTotal === 1) {
-                event.stopPropagation();
-            }
+            event.stopPropagation();
         });
         
         gameObject.on('drag', (pointer, dragX, dragY) => {
             gameObject.x = Math.round(dragX);
             gameObject.y = Math.round(dragY);
-            if (gameObject.body && (gameObject.body instanceof Phaser.Physics.Arcade.StaticBody)) {
-                gameObject.body.reset(gameObject.x, gameObject.y);
-            }
             if(this.selectedObject === gameObject) this.updatePropertyPanel();
         });
 
         gameObject.on('pointerover', () => gameObject.setTint(0x00ff00));
         gameObject.on('pointerout', () => gameObject.clearTint());
-        gameObject.setData('isEditable', true);
     }
-
-   
     
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;

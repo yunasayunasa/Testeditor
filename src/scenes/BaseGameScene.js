@@ -239,16 +239,14 @@
 
   // src/scenes/BaseGameScene.js
 
-    finalizeSetup() {
+ finalizeSetup() {
         console.log(`[${this.scene.key}] Finalizing setup...`);
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、onCollisionを実現する、最後の心臓部です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 1. シーン内の全オブジェクトから、衝突/接触イベントを収集 ---
-        const allGameObjects = this.children.getAll();
-        const collisionEvents = [];
+        // 1. まず、シーン固有の最終処理（衝突判定など）を先に呼び出す
+        if (this.onSetupComplete) {
+            this.onSetupComplete();
+        }
+        
 
         allGameObjects.forEach(gameObject => {
             const events = gameObject.getData('events');
@@ -283,12 +281,27 @@
             }
         });
 
-        // --- 3. シーン固有の最終処理 (onSetupComplete) を呼び出す ---
-        if (this.onSetupComplete) {
-            this.onSetupComplete();
+        // 3. 全ての物理設定が終わった、この最後のタイミングで、
+        //    シーンに存在する全てのオブジェクトの「エディタ・イベント」を、
+        //    もう一度、強制的に「再設定」する
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor) {
+            allGameObjects.forEach(gameObject => {
+                if (gameObject.name && gameObject.input) { // inputがあれば、インタラクティブである
+                    
+                    // 古いリスナーが残っている可能性があるので、一度全て削除
+                    gameObject.off('pointerdown');
+                    gameObject.off('drag');
+                    gameObject.off('pointerover');
+                    gameObject.off('pointerout');
+
+                    // EditorPluginのロジックを、ここでもう一度実行する
+                    editor.reapplyEditorEvents(gameObject);
+                }
+            });
         }
         
-        // --- 4. 最後に準備完了を通知 ---
+        // 4. 最後に準備完了を通知
         this.events.emit('scene-ready');
         console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
