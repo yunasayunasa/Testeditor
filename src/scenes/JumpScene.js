@@ -75,27 +75,32 @@ export default class JumpScene extends BaseGameScene {
         return newImage;
     }
 
-    /**
-     * BaseGameSceneのfinalizeSetupから呼び出される、このシーン固有の最終処理
-     */
-    onSetupComplete() {
+  onSetupComplete() {
         console.log("[JumpScene] onSetupComplete called.");
 
-        // --- 参照の取得 ---
-        this.player = this.children.list.find(obj => obj.name === 'player');
-        
-        // --- 衝突判定の定義 ---
-        const floors = this.children.list.filter(obj => obj.name.startsWith('ground'));
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、グループ機能とカメラを連携させる、最後のコードです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
+        // --- 1. 'player'グループに所属する、最初のオブジェクトを探す ---
+        this.player = this.children.list.find(obj => obj.getData('group') === 'player');
+        
+        // --- 2. 'floor'グループに所属する、全てのオブジェクトを探す ---
+        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
+
+        // --- 3. 衝突判定とカメラ追跡を設定 ---
         if (this.player) {
-            console.log("[JumpScene] Player object found. Setting up camera and physics.");
+            console.log("[JumpScene] Player object found by group. Setting up camera and physics.");
+            
             if (floors.length > 0) {
                 this.physics.add.collider(this.player, floors);
             }
+            
+            // カメラは、'player'グループの最初のオブジェクトを追いかける
             this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-            this.cameras.main.setBounds(0, 0, 3840, 720);
+            
         } else {
-            console.warn("[JumpScene] Player object named 'player' not found. Player controls are disabled.");
+            console.warn("[JumpScene] No object with group 'player' found. Player controls are disabled.");
         }
     }
     
