@@ -526,7 +526,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Phaser input re-enabled.");
     }
  
-    makeEditable(gameObject, scene) {
+   makeEditable(gameObject, scene) {
         if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
         
         gameObject.setInteractive();
@@ -541,7 +541,14 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
             this.selectedObject = gameObject;
             this.updatePropertyPanel();
-            event.stopPropagation();
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これがタッチ操作を解決する、核心的な修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // マルチタッチジェスチャーの邪魔をしないよう、シングルタッチの時だけイベントを止める
+            if (scene.input.pointerTotal === 1) {
+                event.stopPropagation();
+            }
         });
         
         gameObject.on('drag', (pointer, dragX, dragY) => {

@@ -17,20 +17,14 @@
         let pinchPrevDistance = 0;
         let pinchPrevCenter = null;
 
-        // --- マウスホイールでのズーム ---
         this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
             if (gameObjects.length === 0) {
                 editor.zoomCamera(pointer, deltaY);
             }
         });
 
-        // --- 2本目の指がタッチされた瞬間の初期化 ---
         this.input.on('pointerdown', (pointer) => {
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これが正しい修正です ★★★
-            // getPointerTotal() -> pointerTotal プロパティに変更
             if (this.input.pointerTotal >= 2) {
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                 const p1 = this.input.pointer1;
                 const p2 = this.input.pointer2;
                 pinchPrevDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
@@ -38,14 +32,18 @@
             }
         });
 
-        // --- ポインター移動時の処理 ---
         this.input.on('pointermove', (pointer) => {
-            // 1. スペース + 左ドラッグでのパン
-            if (spaceKey.isDown && pointer.isDown && pointer.button === 0) {
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ ここの条件を、より安全なものに改良します ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // オブジェクトをドラッグしていないことを確認
+            const isDraggingObject = this.input.getDragState(pointer) !== 0;
+
+            // 1. スペース + 左ドラッグでのパン (オブジェクトドラッグ中は無効)
+            if (!isDraggingObject && spaceKey.isDown && pointer.isDown && pointer.button === 0) {
                 editor.panCamera(pointer);
             }
             // 2. 2本指でのピンチ＆パン
-            // ★★★ こちらも同様に、pointerTotal プロパティに変更 ★★★
             else if (this.input.pointerTotal >= 2) {
                 const p1 = this.input.pointer1;
                 const p2 = this.input.pointer2;
@@ -58,9 +56,7 @@
             }
         });
 
-        // --- 指が離れたときのリセット処理 ---
         this.input.on('pointerup', (pointer) => {
-            // ★★★ こちらも同様に、pointerTotal プロパティに変更 ★★★
             if (this.input.pointerTotal < 2) {
                 pinchPrevDistance = 0;
                 pinchPrevCenter = null;
