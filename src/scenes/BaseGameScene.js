@@ -246,7 +246,8 @@
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
-        
+         // 2. 次に、物理イベントを設定する
+        const allGameObjects = this.children.getAll()
 
         allGameObjects.forEach(gameObject => {
             const events = gameObject.getData('events');
