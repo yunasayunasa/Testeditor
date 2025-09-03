@@ -3,21 +3,18 @@
     {
       "name": "walk_2",
       "x": 390,
-      "y": 195,
+      "y": 194,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
       "type": "Sprite",
       "texture": "walk",
-      "animation": {
-        "default": "歩き",
-        "definitions": []
-      },
+      
       "events": [
         {
-          "trigger": "onKeyPress_UP",
-          "actions": "[body_velocity y=-350]\n[anim_play 歩き"
+          "trigger": "onClick",
+          "actions": "[velocity y=-350]\n[anim 歩き]"
         }
       ]
     },
@@ -51,17 +48,7 @@
       "angle": 0,
       "alpha": 1,
       "type": "Sprite",
-      "texture": "walk",
-      "animation": {
-        "default": null,
-        "definitions": []
-      },
-      "events": [
-        {
-          "trigger": "onClick",
-          "actions": "[tween property=angle to=360 time=500 yoyo=true][destroy]"
-        }
-      ]
+      "texture": "walk"
     }
   ],
   "animations": [
