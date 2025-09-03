@@ -412,6 +412,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
 
         // --- アクション記述エリア ---
+           const actionsContainer = document.createElement('div');
+        
         const actionsLabel = document.createElement('label');
         actionsLabel.innerText = 'アクション (タグ形式):';
         actionsLabel.style.display = 'block';
