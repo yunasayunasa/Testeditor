@@ -630,15 +630,17 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
 
         // 4-2. 「新しいイベントを追加」ボタン
-        const addNewEventBtn = document.createElement('button');
-        addNewEventBtn.innerText = '新しいイベントを追加';
-        addNewEventBtn.onclick = () => {
-            const currentEvents = this.selectedObject.getData('events') || [];
-            currentEvents.push({ trigger: 'onClick', actions: '' });
-            this.selectedObject.setData('events', currentEvents);
-            this.updatePropertyPanel();
+        // ★★★ 変更点3: 「新しいイベントを追加」ボタンを、「エディタを開く」ボタンに変更 ★★★
+        const openEventEditorBtn = document.createElement('button');
+        openEventEditorBtn.innerText = 'イベント・エディタを開く';
+        openEventEditorBtn.onclick = () => {
+            if (this.selectedObject) {
+                this.openEventEditor();
+            } else {
+                alert('先にオブジェクトを選択してください。');
+            }
         };
-        this.editorPropsContainer.appendChild(addNewEventBtn);
+        this.editorPropsContainer.appendChild(openEventEditorBtn);
         
         
 
