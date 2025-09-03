@@ -68,15 +68,162 @@
     },
     {
       "name": "walk_2",
-      "x": 813,
-      "y": 480,
+      "x": 995,
+      "y": 244,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "Player",
+      "group": "player",
       "type": "Sprite",
-      "texture": "walk"
+      "texture": "walk",
+      "physics": {
+        "isStatic": false,
+        "width": 102,
+        "height": 115,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      },
+      "events": [
+        {
+          "trigger": "onOverlap_Start",
+          "actions": ""
+        }
+      ]
+    },
+    {
+      "name": "next_arrow_1",
+      "x": 462,
+      "y": 519,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "floor",
+      "texture": "next_arrow",
+      "physics": {
+        "isStatic": false,
+        "width": 90,
+        "height": 62,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      },
+      "events": [
+        {
+          "trigger": "onCollide_Start",
+          "actions": "[destroy]",
+          "targetGroup": "player"
+        }
+      ]
+    },
+    {
+      "name": "yuna_angry_1",
+      "x": 735,
+      "y": 259,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "player",
+      "texture": "yuna_angry",
+      "physics": {
+        "isStatic": false,
+        "width": 317,
+        "height": 316,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      },
+      "events": [
+        {
+          "trigger": "onKeyPress_SPACE",
+          "actions": ""
+        }
+      ]
+    },
+    {
+      "name": "next_arrow_2",
+      "x": 466,
+      "y": 297,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "floor",
+      "texture": "next_arrow",
+      "physics": {
+        "isStatic": true,
+        "width": 90,
+        "height": 62,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      },
+      "events": [
+        {
+          "trigger": "onCollide_Start",
+          "actions": "[destroy]",
+          "targetGroup": "player"
+        }
+      ]
+    },
+    {
+      "name": "item_potion_1",
+      "x": 426,
+      "y": 1410,
+      "scaleX": 0.81,
+      "scaleY": 0.44,
+      "angle": 0,
+      "alpha": 1,
+      "group": "player",
+      "texture": "item_potion",
+      "physics": {
+        "isStatic": false,
+        "width": 110.97000000000001,
+        "height": 60.28,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      }
+    },
+    {
+      "name": "item_shield_1",
+      "x": 467,
+      "y": 130,
+      "scaleX": 0.17,
+      "scaleY": 0.44,
+      "angle": 0,
+      "alpha": 1,
+      "group": "player",
+      "texture": "item_shield",
+      "physics": {
+        "isStatic": false,
+        "width": 44.2,
+        "height": 114.4,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      }
     }
   ],
   "animations": [
