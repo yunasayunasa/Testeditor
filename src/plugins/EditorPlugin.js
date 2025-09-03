@@ -1,7 +1,7 @@
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
-         this.selectedObject = null;
+        this.selectedObject = null;
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
@@ -15,20 +15,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.eventEditorCloseBtn = null;
     }
 
-     /**
-     * プラグインが起動する時に、自身が有効になるべきかを判断し、
-     * 自身のHTML要素への参照を取得するだけ。
-     */
     init() {
-        // --- デバッグモードの最終判定 ---
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
         this.isEnabled = true;
 
-        // --- DOMが完全に準備されたこの場所で、全てのHTML要素への参照を取得 ---
+        // ★★★ editor-props-container への参照を修正 ★★★
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
-        this.editorPropsContainer = document.getElementById('editor-props-container');
+        this.editorPropsContainer = document.getElementById('editor-props'); // ← IDを修正
         
         this.animEditorOverlay = document.getElementById('anim-editor-overlay');
         this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
@@ -43,6 +38,112 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
 
         console.warn("[EditorPlugin] Debug mode activated.");
+    }
+
+    // ★★★ 重複していた setUI メソッドは削除し、こちらに統一 ★★★
+    setUI(editorUI) {
+        this.editorUI = editorUI;
+        const addButton = document.getElementById('add-asset-button');
+        if (addButton && this.editorUI) {
+            addButton.addEventListener('click', () => {
+                this.editorUI.onAddButtonClicked();
+            });
+        }
+    }
+
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ ここからが新しいカメラコントロールの「実行」部分 ★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+    /**
+     * 指定されたポインター座標にあるカメラをズームさせる
+     * @param {Phaser.Input.Pointer} pointer - マウス/タッチのポインター
+     * @param {number} scrollY - マウスホイールの移動量
+     */
+    zoomCamera(pointer, scrollY) {
+        if (!this.isEnabled) return;
+        
+        // ポインターの位置にあるシーンのメインカメラを探す
+        const camera = this.findCameraAt(pointer);
+        if (camera) {
+            const zoomAmount = scrollY > 0 ? -0.1 : 0.1;
+            const newZoom = Phaser.Math.Clamp(camera.zoom + zoomAmount, 0.2, 5);
+            camera.setZoom(newZoom);
+        }
+    }
+
+    /**
+     * 指定されたポインターの移動量でカメラをパンさせる
+     * @param {Phaser.Input.Pointer} pointer - マウス/タッチのポインター
+     */
+    panCamera(pointer) {
+        if (!this.isEnabled || !pointer.prevPosition) return;
+
+        const camera = this.findCameraAt(pointer);
+        if (camera) {
+            const dx = (pointer.x - pointer.prevPosition.x) / camera.zoom;
+            const dy = (pointer.y - pointer.prevPosition.y) / camera.zoom;
+            camera.scrollX -= dx;
+            camera.scrollY -= dy;
+        }
+    }
+
+    /**
+     * 2本の指によるピンチ操作でカメラをズームさせる
+     * @param {Phaser.Input.Pointer} p1 - 1本目の指
+     * @param {Phaser.Input.Pointer} p2 - 2本目の指
+     * @param {number} prevDistance - 前のフレームでの2本指の距離
+     */
+    pinchZoomCamera(p1, p2, prevDistance) {
+        if (!this.isEnabled) return 0;
+        
+        const camera = this.findCameraAt(p1); // どちらか一方で良い
+        if (camera) {
+            const currentDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+            const newZoom = camera.zoom * (currentDistance / prevDistance);
+            camera.setZoom(Phaser.Math.Clamp(newZoom, 0.2, 5));
+            return currentDistance;
+        }
+        return prevDistance;
+    }
+
+    /**
+     * 2本の指によるドラッグでカメラをパンさせる
+     * @param {Phaser.Input.Pointer} p1 - 1本目の指
+     * @param {Phaser.Input.Pointer} p2 - 2本目の指
+     * @param {Phaser.Math.Vector2} prevCenter - 前のフレームでの2本指の中心点
+     */
+    pinchPanCamera(p1, p2, prevCenter) {
+        if (!this.isEnabled) return null;
+
+        const camera = this.findCameraAt(p1);
+        if (camera) {
+            const currentCenter = new Phaser.Math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+            const dx = (currentCenter.x - prevCenter.x) / camera.zoom;
+            const dy = (currentCenter.y - prevCenter.y) / camera.zoom;
+            camera.scrollX -= dx;
+            camera.scrollY -= dy;
+            return currentCenter;
+        }
+        return prevCenter;
+    }
+
+    /**
+     * 指定されたポインター座標にあるシーンのカメラを見つける
+     */
+    findCameraAt(pointer) {
+        // 現在アクティブな全シーンをループして、ポインターがカメラの表示範囲内にあるかチェック
+        const scenes = this.pluginManager.game.scene.getScenes(true);
+        for (const scene of scenes) {
+            if (scene.cameras && scene.cameras.main && scene.cameras.main.worldView.contains(pointer.x, pointer.y)) {
+                // UISceneやSystemSceneはカメラ操作の対象外
+                const key = scene.scene.key;
+                if (key !== 'UIScene' && key !== 'SystemScene') {
+                    return scene.cameras.main;
+                }
+            }
+        }
+        return null;
     }
      updatePropertyPanel() {
         if (!this.isEnabled) return;
@@ -203,15 +304,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
     
 
-    setUI(editorUI) {
-        this.editorUI = editorUI;
-        const addButton = document.getElementById('add-asset-button');
-        if (addButton && this.editorUI) {
-            addButton.addEventListener('click', () => {
-                this.editorUI.onAddButtonClicked();
-            });
-        }
-    }
+   
 
     openAnimationEditor() {
         if (!this.animEditorOverlay) return;
