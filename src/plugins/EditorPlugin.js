@@ -760,7 +760,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
-        ['onClick', 'onHover', 'onKeyPress'].forEach(t => {
+        ['onClick', 'onHover', 'onKeyPress','onKeyPress_UP',
+            'onKeyPress_DOWN',
+            'onKeyPress_LEFT',
+            'onKeyPress_RIGHT',
+            'onKeyPress_SPACE','onCollision' ].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;

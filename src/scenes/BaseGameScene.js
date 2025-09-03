@@ -2,7 +2,20 @@
 
 
        export default class BaseGameScene extends Phaser.Scene {
+ constructor() {
+        super();
+        this.actionInterpreter = null;
+        // ★★★ 1. キー入力イベントを管理するMapを追加 ★★★
+        this.keyPressEvents = new Map();
+    }
 
+    create() {
+        this.actionInterpreter = new ActionInterpreter(this);
+        
+        // ★★★ 2. 毎フレーム、キー入力イベントをチェックするリスナーを追加 ★★★
+        this.events.on('update', this.handleKeyPressEvents, this);
+    }
+    
    
     /**
      * 【データ駆動シーン専用】
@@ -139,9 +152,27 @@
                         this.actionInterpreter.run(gameObject, eventData.actions);
                     });
                 }
+                 else if (eventData.trigger.startsWith('onKeyPress')) {
+                    const key = eventData.trigger.split('_')[1]; // 'UP', 'SPACE'など
+                    
+                    // どのキーが、どのアクションを実行するかを、Mapに記録
+                    if (!this.keyPressEvents.has(key)) {
+                        this.keyPressEvents.set(key, []);
+                    }
+                    this.keyPressEvents.get(key).push({
+                        target: gameObject,
+                        actions: eventData.actions
+                    });
+                    
+                    // シーンに、そのキーを監視対象として登録
+                    this.input.keyboard.addKey(key);
+
+                    console.log(`[BaseGameScene] KeyPress event registered: Key=${key} for Object='${gameObject.name}'`);
+                }
             });
         }
-      
+        
+           
         // --- 4. インタラクティブ化とエディタ登録 ---
         // (この処理は、アニメーションを再生する「前」に行う)
         try {
@@ -193,6 +224,8 @@
         return null;
     }
 
+
+
     finalizeSetup() {
         if (this.onSetupComplete) {
             this.onSetupComplete();
@@ -200,4 +233,30 @@
         this.events.emit('scene-ready');
         console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
+
+       /**
+     * ★★★ 新規メソッド ★★★
+     * 毎フレーム実行され、キーが押されているかをチェックし、イベントを発火させる
+     */
+    handleKeyPressEvents() {
+        if (!this.input.keyboard.enabled) return;
+        
+        for (const [key, events] of this.keyPressEvents.entries()) {
+            const keyObject = this.input.keyboard.addKey(key); // キーオブジェクトを取得
+            
+            // isDown: キーが「押されている間」、ずっとtrue
+            if (Phaser.Input.Keyboard.JustDown(keyObject)) { // JustDown: 押された「瞬間」だけtrue
+                events.forEach(event => {
+                    this.actionInterpreter.run(event.target, event.actions);
+                });
+            }
+        }
+    }
+ shutdown() {
+        // ★★★ シーン終了時に、イベントリスナーを解除 ★★★
+        this.events.off('update', this.handleKeyPressEvents, this);
+        super.shutdown();
+    }
 }
+
+
