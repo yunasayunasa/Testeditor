@@ -975,6 +975,109 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         };
         contentArea.appendChild(addButton);
     }
+    openEventEditor() {
+        if (!this.eventEditorOverlay || !this.selectedObject) return;
+        this.pluginManager.game.input.enabled = false;
+        const titleElement = document.getElementById('event-editor-title');
+        if (titleElement) titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
+        this.populateEventEditor();
+        this.eventEditorOverlay.style.display = 'flex';
+    }
+
+    closeEventEditor() {
+        if (!this.eventEditorOverlay) return;
+        this.eventEditorOverlay.style.display = 'none';
+        this.pluginManager.game.input.enabled = true;
+    }
+    
+    populateEventEditor() {
+        const contentArea = document.getElementById('event-editor-content');
+        if (!contentArea || !this.selectedObject) return;
+        contentArea.innerHTML = '';
+        
+        const events = this.selectedObject.getData('events') || [];
+        events.forEach((eventData, index) => {
+            const eventDiv = this.createEventDisplay(eventData, index);
+            contentArea.appendChild(eventDiv);
+        });
+
+        const addButton = document.createElement('button');
+        addButton.innerText = '新しいイベントを追加';
+        addButton.style.marginTop = '10px';
+        addButton.onclick = () => {
+            const currentEvents = this.selectedObject.getData('events') || [];
+            currentEvents.push({ trigger: 'onClick', actions: '' });
+            this.selectedObject.setData('events', currentEvents);
+            this.populateEventEditor();
+        };
+        contentArea.appendChild(addButton);
+    }
+    
+    createEventDisplay(eventData, index) {
+        const div = document.createElement('div');
+        div.style.border = '1px solid #444';
+        div.style.padding = '8px';
+        div.style.marginBottom = '8px';
+        div.style.backgroundColor = '#333';
+
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '8px';
+        
+        const triggerContainer = document.createElement('div');
+        const triggerLabel = document.createElement('label');
+        triggerLabel.innerText = 'トリガー: ';
+        const triggerSelect = document.createElement('select');
+        ['onClick', 'onHover', 'onKeyPress'].forEach(t => {
+            const option = document.createElement('option');
+            option.value = t; option.innerText = t;
+            if (t === eventData.trigger) option.selected = true;
+            triggerSelect.appendChild(option);
+        });
+        triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
+        triggerContainer.append(triggerLabel, triggerSelect);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerText = '削除';
+        deleteBtn.style.backgroundColor = '#c44';
+        deleteBtn.onclick = () => {
+            if (confirm('このイベントを削除しますか？')) {
+                const events = this.selectedObject.getData('events');
+                events.splice(index, 1);
+                this.selectedObject.setData('events', events);
+                this.populateEventEditor();
+            }
+        };
+        header.append(triggerContainer, deleteBtn);
+        
+        const actionsContainer = document.createElement('div');
+        const actionsLabel = document.createElement('label');
+        actionsLabel.innerText = 'アクション (タグ形式):';
+        actionsLabel.style.display = 'block';
+        actionsLabel.style.marginBottom = '4px';
+        const actionsTextarea = document.createElement('textarea');
+        actionsTextarea.style.width = '98%';
+        actionsTextarea.style.minHeight = '80px';
+        actionsTextarea.style.resize = 'vertical';
+        actionsTextarea.value = eventData.actions;
+        actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
+        actionsContainer.append(actionsLabel, actionsTextarea);
+        
+        div.append(header, actionsContainer);
+        return div;
+    }
+
+    updateEventData(index, key, value) {
+        if (!this.selectedObject) return;
+        const events = this.selectedObject.getData('events') || [];
+        if (events[index]) {
+            events[index][key] = value;
+            this.selectedObject.setData('events', events);
+        }
+    }
+    
 }
 
 
