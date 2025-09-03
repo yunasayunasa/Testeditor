@@ -28,7 +28,7 @@
         },
         {
           "trigger": "onKeyPress_UP",
-          "actions": "[velocity y=-350]\n[anim 歩き]"
+          "actions": "[velocity y=-350]\n[anim name=歩き]"
         }
       ]
     },

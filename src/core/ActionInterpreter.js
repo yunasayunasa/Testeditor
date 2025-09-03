@@ -36,21 +36,40 @@ export default class ActionInterpreter {
     }
 
     /**
+     
      * タグ文字列をパースして、タグ名とパラメータのオブジェクトを返す
-     * (これはScenarioManagerのロジックを簡略化したもの)
+     * @param {string} tagString - '[tagName key1=value1 key2="value with space"]' のようなタグ文字列
+     * @returns {{tagName: string, params: object}}
      */
     parseTag(tagString) {
-        const content = tagString.slice(1, -1);
-        const parts = content.split(/\s+/);
+        // 1. タグの最初と最後の角括弧 '[' ']' を取り除く
+        const content = tagString.slice(1, -1).trim();
+
+        // 2. 正規表現を使って、タグ名とパラメータ部分を安全に分割する
+        //    正規表現: /\s+(?=(?:[^'"]*['"][^'"]*['"])*[^'"]*$)/
+        //    意味: クォーテーションの外側にあるスペースで分割する
+        const parts = content.split(/\s+(?=(?:[^'"]*['"][^'"]*['"])*[^'"]*$)/);
+        
+        // 3. 最初の部分がタグ名
         const tagName = parts.shift();
         const params = {};
+        
+        // 4. 残りの部分をループして、パラメータを解析
         parts.forEach(part => {
-            const [key, value] = part.split('=');
-            if (value !== undefined) {
-                // " " で囲まれた値をクリーンにする
-                params[key] = value.replace(/"/g, '');
+            const eqIndex = part.indexOf('=');
+            if (eqIndex > -1) {
+                const key = part.substring(0, eqIndex);
+                let value = part.substring(eqIndex + 1);
+
+                // 5. 値が '"' または "'" で囲まれていれば、それを取り除く
+                if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    value = value.slice(1, -1);
+                }
+                
+                params[key] = value;
             }
         });
+        
         return { tagName, params };
     }
 }
