@@ -3,11 +3,7 @@
 
        export default class BaseGameScene extends Phaser.Scene {
 
-    /**
-     * シーンのcreateライフサイクルの最初に呼び出される
-     * エディタ用のカメラコントロールの入力イベントをセットアップする
-     */
-      /**
+     /**
      * シーンのcreateライフサイクルの最初に呼び出される
      * エディタ用のカメラコントロールの入力イベントをセットアップする
      */
@@ -31,9 +27,9 @@
         // --- 2本目の指がタッチされた瞬間の初期化 ---
         this.input.on('pointerdown', (pointer) => {
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ ここが修正点です ★★★
-            // this.input.pointer2.isDown の代わりに、アクティブなポインターの総数をチェックする
-            if (this.input.getPointerTotal() >= 2) {
+            // ★★★ これが正しい修正です ★★★
+            // getPointerTotal() -> pointerTotal プロパティに変更
+            if (this.input.pointerTotal >= 2) {
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                 const p1 = this.input.pointer1;
                 const p2 = this.input.pointer2;
@@ -49,8 +45,8 @@
                 editor.panCamera(pointer);
             }
             // 2. 2本指でのピンチ＆パン
-            // ★★★ こちらも同様に、ポインターの総数でチェック ★★★
-            else if (this.input.getPointerTotal() >= 2) {
+            // ★★★ こちらも同様に、pointerTotal プロパティに変更 ★★★
+            else if (this.input.pointerTotal >= 2) {
                 const p1 = this.input.pointer1;
                 const p2 = this.input.pointer2;
                 if (pinchPrevDistance > 0) {
@@ -64,8 +60,8 @@
 
         // --- 指が離れたときのリセット処理 ---
         this.input.on('pointerup', (pointer) => {
-            // ★★★ こちらも同様に、ポインターの総数でチェック ★★★
-            if (this.input.getPointerTotal() < 2) {
+            // ★★★ こちらも同様に、pointerTotal プロパティに変更 ★★★
+            if (this.input.pointerTotal < 2) {
                 pinchPrevDistance = 0;
                 pinchPrevCenter = null;
             }
