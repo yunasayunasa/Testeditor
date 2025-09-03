@@ -53,6 +53,25 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
     }
 
+      /**
+     * ★★★ 新規メソッド ★★★
+     * カメラを指定された方向と量だけ移動（パン）させる
+     * @param {number} dx - X方向の移動量
+     * @param {number} dy - Y方向の移動量
+     */
+    panCamera(dx, dy) {
+        if (!this.isEnabled) return;
+        const camera = this.getActiveGameCamera();
+        if (camera) {
+            // 現在のズームレベルを考慮して移動量を調整
+            camera.scrollX += dx / camera.zoom;
+            camera.scrollY += dy / camera.zoom;
+            console.log(`[EditorPlugin] Panning camera by (${dx}, ${dy})`);
+        } else {
+            console.warn("[EditorPlugin] No active game camera found for pan.");
+        }
+    }
+
     /**
      * 現在アクティブなゲームシーンのカメラを取得する
      * @returns {Phaser.Cameras.Scene2D.Camera | null}

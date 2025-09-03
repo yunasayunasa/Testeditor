@@ -19,6 +19,10 @@ export default class EditorUI {
         this.cameraControls = document.getElementById('camera-controls');
         this.zoomInBtn = document.getElementById('camera-zoom-in');
         this.zoomOutBtn = document.getElementById('camera-zoom-out');
+         this.panUpBtn = document.getElementById('camera-pan-up');
+        this.panDownBtn = document.getElementById('camera-pan-down');
+        this.panLeftBtn = document.getElementById('camera-pan-left');
+        this.panRightBtn = document.getElementById('camera-pan-right');
         this.resetBtn = document.getElementById('camera-reset');
         
         // ★★★ 3. 新しいメソッドを呼び出して、イベントリスナーをまとめて設定 ★★★
@@ -50,6 +54,12 @@ export default class EditorUI {
                 this.plugin.resetCamera(); // Pluginに命令
             });
         }
+         const panSpeed = 10; // カメラの移動速度
+        this.setupPanButton(this.panUpBtn, 0, -panSpeed);
+        this.setupPanButton(this.panDownBtn, 0, panSpeed);
+        this.setupPanButton(this.panLeftBtn, -panSpeed, 0);
+        this.setupPanButton(this.panRightBtn, panSpeed, 0);
+
     }
    // src/editor/EditorUI.js
 
@@ -153,5 +163,48 @@ export default class EditorUI {
         } else {
             console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'addObjectFromEditor' method.`);
         }
+    }
+
+     /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * パンボタンを押し続けている間、カメラを移動させるための設定を行う
+     * @param {HTMLElement} button - 対象のボタン要素
+     * @param {number} dx - X方向の移動量
+     * @param {number} dy - Y方向の移動量
+     */
+    setupPanButton(button, dx, dy) {
+        if (!button) return;
+
+        let intervalId = null;
+
+        const startPanning = () => {
+            // 既に動いていたら何もしない
+            if (intervalId) return;
+            // まず一度動かす
+            this.plugin.panCamera(dx, dy);
+            // その後、定期的に動かす
+            intervalId = setInterval(() => {
+                this.plugin.panCamera(dx, dy);
+            }, 50); // 50ミリ秒ごと (秒間20回)
+        };
+
+        const stopPanning = () => {
+            clearInterval(intervalId);
+            intervalId = null;
+        };
+        
+        // PC向け: マウスが押されたら開始、離れたら停止
+        button.addEventListener('mousedown', startPanning);
+        button.addEventListener('mouseup', stopPanning);
+        // ボタンエリアからマウスが外れた場合も停止
+        button.addEventListener('mouseleave', stopPanning);
+
+        // モバイル向け: タッチされたら開始、離れたら停止
+        button.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // 画面全体のスクロールを防ぐ
+            startPanning();
+        });
+        button.addEventListener('touchend', stopPanning);
+        button.addEventListener('touchcancel', stopPanning);
     }
 }
