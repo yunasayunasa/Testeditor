@@ -80,12 +80,20 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * カメラを指定された量だけズームさせる
      * @param {number} amount - ズーム量 (正で拡大, 負で縮小)
      */
+      /**
+     * カメラを指定された量だけズームさせる (ログ追加版)
+     */
     zoomCamera(amount) {
         if (!this.isEnabled) return;
         const camera = this.getActiveGameCamera();
         if (camera) {
+            // ★★★ ログを追加して、命令が実行されたか確認 ★★★
+            console.log(`[EditorPlugin] Zooming camera by ${amount}. Current zoom: ${camera.zoom}`);
             const newZoom = Phaser.Math.Clamp(camera.zoom + amount, 0.2, 5);
             camera.setZoom(newZoom);
+        } else {
+            // ★★★ ログを追加して、カメラが見つからなかったことを警告 ★★★
+            console.warn("[EditorPlugin] Zoom command received, but no active game camera found.");
         }
     }
 
