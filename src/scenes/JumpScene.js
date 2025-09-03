@@ -14,7 +14,7 @@ export default class JumpScene extends BaseGameScene {
     }
 
     create() {
-        
+        super.create();
         console.log("[JumpScene] Create started.");
         
         // --- 1. シーン固有の初期化 ---
