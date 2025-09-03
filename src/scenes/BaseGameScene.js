@@ -24,9 +24,65 @@ export default class BaseGameScene extends Phaser.Scene {
                     editor.panCamera(pointer);
                 }
             });
-            // (ピンチ操作も同様にここに記述)
+            let pinchStartDistance = 0; // ピンチ開始時の2本指の距離
+            let panStartPoint = null;   // 2本指パン開始時の中心点
+
+            // --- 1. マウスホイールと、キーボード＋ドラッグによる操作 (既存のコード) ---
+            this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+                const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.2, 5);
+                camera.setZoom(newZoom);
+            });
+            this.input.on('pointermove', (pointer) => {
+                if (spaceKey.isDown && pointer.leftButtonDown()) {
+                    camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
+                    camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
+                }
+            });
+            
+            // --- 2. タッチイベントによる、ピンチ＆パン操作 ---
+            this.input.on('pointerdown', (pointer) => {
+                // 2本目の指がタッチされた瞬間 (ピンチまたは2本指パンの開始)
+                if (this.input.pointer2.isDown) {
+                    const p1 = this.input.pointer1;
+                    const p2 = this.input.pointer2;
+                    pinchStartDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+                    panStartPoint = new Phaser.Math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+                }
+            });
+
+            this.input.on('pointermove', (pointer) => {
+                // 2本の指が同時にタッチされ、移動している時
+                if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
+                    const p1 = this.input.pointer1;
+                    const p2 = this.input.pointer2;
+                    const newDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+                    
+                    // --- 2-1. ピンチ操作によるズーム ---
+                    if (pinchStartDistance > 0) {
+                        const newZoom = Phaser.Math.Clamp(camera.zoom * (newDistance / pinchStartDistance), 0.2, 5);
+                        camera.setZoom(newZoom);
+                    }
+                    pinchStartDistance = newDistance;
+
+                    // --- 2-2. 2本指ドラッグによるパン ---
+                    if (panStartPoint) {
+                        const newPanPoint = new Phaser.Math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+                        camera.scrollX -= (newPanPoint.x - panStartPoint.x) / camera.zoom;
+                        camera.scrollY -= (newPanPoint.y - panStartPoint.y) / camera.zoom;
+                        panStartPoint = newPanPoint;
+                    }
+                }
+            });
+            
+            // 2本指が離されたら、パン操作をリセット
+            this.input.on('pointerup', (pointer) => {
+                if (!this.input.pointer1.isDown || !this.input.pointer2.isDown) {
+                    panStartPoint = null;
+                }
+            });
         }
     }
+       
     /**
      * 【データ駆動シーン専用】
      * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
