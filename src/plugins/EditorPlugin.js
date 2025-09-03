@@ -145,6 +145,29 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(nameRow);
         this.editorPropsContainer.appendChild(document.createElement('hr'));
 
+         // --- Groupプロパティの編集UI ---
+        const groupRow = document.createElement('div');
+        const groupLabel = document.createElement('label');
+        groupLabel.innerText = 'Group:';
+        
+        const groupInput = document.createElement('input');
+        groupInput.type = 'text';
+        groupInput.placeholder = '例: player, floor, enemy';
+        // オブジェクトに保存されている 'group' データを表示
+        groupInput.value = this.selectedObject.getData('group') || '';
+        
+        // 入力が変更されたら、オブジェクトの 'group' データをリアルタイムに更新
+        groupInput.addEventListener('input', (e) => {
+            if (this.selectedObject) {
+                this.selectedObject.setData('group', e.target.value);
+            }
+        });
+        
+        groupRow.appendChild(groupLabel);
+        groupRow.appendChild(groupInput);
+        container.appendChild(groupRow);
+        
+
         // Transform
         const properties = { x: {}, y: {}, scaleX: {min:0.1, max:5, step:0.01}, scaleY: {min:0.1, max:5, step:0.01}, angle: {min:-180, max:180}, alpha: {min:0, max:1, step:0.01} };
         for (const key in properties) {
@@ -651,6 +674,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
                     angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2))
                 };
+
+                if (gameObject.getData('group')) {
+        objData.group = gameObject.getData('group');
+    }
                 
                 if (gameObject instanceof Phaser.GameObjects.Sprite) objData.type = 'Sprite';
                 if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;

@@ -100,6 +100,10 @@
 
         // --- 1. 基本プロパティの設定 ---
         gameObject.name = data.name;
+         if (data.group) {
+            gameObject.setData('group', data.group);
+        }
+
         if (data.texture) gameObject.setTexture(data.texture);
         
         // ★ オブジェクトをシーンの表示リストに「追加」
