@@ -245,7 +245,7 @@
         }
         
         // 2. 次に、物理イベントを設定する
-        const allGameObjects = this.children.getAll();
+    
 
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが、onCollisionを実現する、最後の心臓部です ★★★
