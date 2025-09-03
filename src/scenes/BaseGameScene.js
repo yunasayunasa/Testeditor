@@ -1,7 +1,33 @@
 // src/scenes/BaseGameScene.js (データ駆動シーン専用の親クラス)
 
 export default class BaseGameScene extends Phaser.Scene {
-   
+       /**
+     * ★★★ 新規メソッド ★★★
+     * BaseGameSceneを継承する、全ての子シーンで、
+     * createの最初に必ず super.create() として呼び出されるべきメソッド
+     */
+    create() {
+        // --- 1. このシーンで使うサービスを生成 ---
+        this.actionInterpreter = new ActionInterpreter(this);
+
+        // --- 2. エディタ用の、共通カメラコントロールを初期化 ---
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            console.log(`[${this.scene.key}] Initializing editor camera controls...`);
+            const spaceKey = this.input.keyboard.addKey('SPACE');
+
+            this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+                editor.zoomCamera(pointer, deltaY);
+            });
+
+            this.input.on('pointermove', (pointer) => {
+                if (spaceKey.isDown && pointer.leftButtonDown()) {
+                    editor.panCamera(pointer);
+                }
+            });
+            // (ピンチ操作も同様にここに記述)
+        }
+    }
     /**
      * 【データ駆動シーン専用】
      * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
