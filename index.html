@@ -197,11 +197,61 @@ body:not(.debug-mode) #editor-ui-container {
             padding: 15px;
             /* 将来的にプレビューと設定で分割するかも */
         }
+        /* --- カメラコントロールUIのスタイル --- */
+#camera-controls {
+    /* デフォルトでは非表示 */
+    display: none; 
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9990; /* 他のUIより手前、モーダルよりは奥 */
+    background-color: rgba(40, 40, 40, 0.8);
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+    flex-direction: row; /* 横並びにする */
+    gap: 5px; /* ボタン間の隙間 */
+}
+
+/* デバッグモードの時だけ表示する */
+body.debug-mode #camera-controls {
+    display: flex;
+}
+
+#camera-controls button {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #555;
+    color: #eee;
+    border: 1px solid #777;
+    border-radius: 5px;
+    padding: 0;
+    line-height: 35px; /* アイコンを中央揃え */
+    text-align: center;
+}
+
+#camera-controls button:hover {
+    background-color: #6a6a6a;
+}
+#camera-controls button:active {
+    background-color: #4a4a4a;
+}
+
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="phaser-game"></div>
+    </div>
+
+       <!-- カメラコントロールUI -->
+    <div id="camera-controls">
+        <button id="camera-zoom-in" title="Zoom In">+</button>
+        <button id="camera-zoom-out" title="Zoom Out">-</button>
+        <button id="camera-reset" title="Reset Camera">Reset</button>
     </div>
     <div id="editor-ui-container">
         <div id="asset-browser" class="editor-panel">

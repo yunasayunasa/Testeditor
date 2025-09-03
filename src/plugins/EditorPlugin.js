@@ -36,9 +36,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
+  const cameraControls = document.getElementById('camera-controls');
+        if (cameraControls) {
+            cameraControls.style.display = 'flex'; // ボタンを表示状態にする
+
+            document.getElementById('camera-zoom-in').addEventListener('click', () => this.zoomCamera(0.2));
+            document.getElementById('camera-zoom-out').addEventListener('click', () => this.zoomCamera(-0.2));
+            document.getElementById('camera-reset').addEventListener('click', () => this.resetCamera());
+        }
 
         console.warn("[EditorPlugin] Debug mode activated.");
     }
+     
 
     // ★★★ 重複していた setUI メソッドは削除し、こちらに統一 ★★★
     setUI(editorUI) {
@@ -51,99 +60,45 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
     }
 
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // ★★★ ここからが新しいカメラコントロールの「実行」部分 ★★★
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    /**
+     * 現在アクティブなゲームシーンのカメラを取得する
+     * @returns {Phaser.Cameras.Scene2D.Camera | null}
+     */
+    getActiveGameCamera() {
+        const scenes = this.pluginManager.game.scene.getScenes(true);
+        for (const scene of scenes) {
+            const key = scene.scene.key;
+            // GameScene, UIScene, SystemScene 以外を対象とする
+            if (key !== 'GameScene' && key !== 'UIScene' && key !== 'SystemScene') {
+                return scene.cameras.main;
+            }
+        }
+        return null;
+    }
 
     /**
-     * 指定されたポインター座標にあるカメラをズームさせる
-     * @param {Phaser.Input.Pointer} pointer - マウス/タッチのポインター
-     * @param {number} scrollY - マウスホイールの移動量
+     * カメラを指定された量だけズームさせる
+     * @param {number} amount - ズーム量 (正で拡大, 負で縮小)
      */
-    zoomCamera(pointer, scrollY) {
+    zoomCamera(amount) {
         if (!this.isEnabled) return;
-        
-        // ポインターの位置にあるシーンのメインカメラを探す
-        const camera = this.findCameraAt(pointer);
+        const camera = this.getActiveGameCamera();
         if (camera) {
-            const zoomAmount = scrollY > 0 ? -0.1 : 0.1;
-            const newZoom = Phaser.Math.Clamp(camera.zoom + zoomAmount, 0.2, 5);
+            const newZoom = Phaser.Math.Clamp(camera.zoom + amount, 0.2, 5);
             camera.setZoom(newZoom);
         }
     }
 
     /**
-     * 指定されたポインターの移動量でカメラをパンさせる
-     * @param {Phaser.Input.Pointer} pointer - マウス/タッチのポインター
+     * カメラの位置とズームを初期状態に戻す
      */
-    panCamera(pointer) {
-        if (!this.isEnabled || !pointer.prevPosition) return;
-
-        const camera = this.findCameraAt(pointer);
+    resetCamera() {
+        if (!this.isEnabled) return;
+        const camera = this.getActiveGameCamera();
         if (camera) {
-            const dx = (pointer.x - pointer.prevPosition.x) / camera.zoom;
-            const dy = (pointer.y - pointer.prevPosition.y) / camera.zoom;
-            camera.scrollX -= dx;
-            camera.scrollY -= dy;
+            camera.setZoom(1);
+            camera.centerOn(camera.width / 2, camera.height / 2);
         }
-    }
-
-    /**
-     * 2本の指によるピンチ操作でカメラをズームさせる
-     * @param {Phaser.Input.Pointer} p1 - 1本目の指
-     * @param {Phaser.Input.Pointer} p2 - 2本目の指
-     * @param {number} prevDistance - 前のフレームでの2本指の距離
-     */
-    pinchZoomCamera(p1, p2, prevDistance) {
-        if (!this.isEnabled) return 0;
-        
-        const camera = this.findCameraAt(p1); // どちらか一方で良い
-        if (camera) {
-            const currentDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
-            const newZoom = camera.zoom * (currentDistance / prevDistance);
-            camera.setZoom(Phaser.Math.Clamp(newZoom, 0.2, 5));
-            return currentDistance;
-        }
-        return prevDistance;
-    }
-
-    /**
-     * 2本の指によるドラッグでカメラをパンさせる
-     * @param {Phaser.Input.Pointer} p1 - 1本目の指
-     * @param {Phaser.Input.Pointer} p2 - 2本目の指
-     * @param {Phaser.Math.Vector2} prevCenter - 前のフレームでの2本指の中心点
-     */
-    pinchPanCamera(p1, p2, prevCenter) {
-        if (!this.isEnabled) return null;
-
-        const camera = this.findCameraAt(p1);
-        if (camera) {
-            const currentCenter = new Phaser.Math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-            const dx = (currentCenter.x - prevCenter.x) / camera.zoom;
-            const dy = (currentCenter.y - prevCenter.y) / camera.zoom;
-            camera.scrollX -= dx;
-            camera.scrollY -= dy;
-            return currentCenter;
-        }
-        return prevCenter;
-    }
-
-    /**
-     * 指定されたポインター座標にあるシーンのカメラを見つける
-     */
-    findCameraAt(pointer) {
-        // 現在アクティブな全シーンをループして、ポインターがカメラの表示範囲内にあるかチェック
-        const scenes = this.pluginManager.game.scene.getScenes(true);
-        for (const scene of scenes) {
-            if (scene.cameras && scene.cameras.main && scene.cameras.main.worldView.contains(pointer.x, pointer.y)) {
-                // UISceneやSystemSceneはカメラ操作の対象外
-                const key = scene.scene.key;
-                if (key !== 'UIScene' && key !== 'SystemScene') {
-                    return scene.cameras.main;
-                }
-            }
-        }
-        return null;
     }
      updatePropertyPanel() {
         if (!this.isEnabled) return;

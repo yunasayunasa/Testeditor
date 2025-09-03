@@ -3,67 +3,7 @@
 
        export default class BaseGameScene extends Phaser.Scene {
 
-     /**
-     * シーンのcreateライフサイクルの最初に呼び出される
-     * エディタ用のカメラコントロールの入力イベントをセットアップする
-     */
-    create() {
-        const editor = this.plugins.get('EditorPlugin');
-        if (!editor || !editor.isEnabled) return;
-
-        console.log(`[${this.scene.key}] Initializing editor camera controls...`);
-
-        const spaceKey = this.input.keyboard.addKey('SPACE');
-        let pinchPrevDistance = 0;
-        let pinchPrevCenter = null;
-
-        this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-            if (gameObjects.length === 0) {
-                editor.zoomCamera(pointer, deltaY);
-            }
-        });
-
-        this.input.on('pointerdown', (pointer) => {
-            if (this.input.pointerTotal >= 2) {
-                const p1 = this.input.pointer1;
-                const p2 = this.input.pointer2;
-                pinchPrevDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
-                pinchPrevCenter = new Phaser.Math.Vector2((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-            }
-        });
-
-        this.input.on('pointermove', (pointer) => {
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ ここの条件を、より安全なものに改良します ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // オブジェクトをドラッグしていないことを確認
-            const isDraggingObject = this.input.getDragState(pointer) !== 0;
-
-            // 1. スペース + 左ドラッグでのパン (オブジェクトドラッグ中は無効)
-            if (!isDraggingObject && spaceKey.isDown && pointer.isDown && pointer.button === 0) {
-                editor.panCamera(pointer);
-            }
-            // 2. 2本指でのピンチ＆パン
-            else if (this.input.pointerTotal >= 2) {
-                const p1 = this.input.pointer1;
-                const p2 = this.input.pointer2;
-                if (pinchPrevDistance > 0) {
-                    pinchPrevDistance = editor.pinchZoomCamera(p1, p2, pinchPrevDistance);
-                }
-                if (pinchPrevCenter) {
-                    pinchPrevCenter = editor.pinchPanCamera(p1, p2, pinchPrevCenter);
-                }
-            }
-        });
-
-        this.input.on('pointerup', (pointer) => {
-            if (this.input.pointerTotal < 2) {
-                pinchPrevDistance = 0;
-                pinchPrevCenter = null;
-            }
-        });
-    }
-
+   
     /**
      * 【データ駆動シーン専用】
      * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
