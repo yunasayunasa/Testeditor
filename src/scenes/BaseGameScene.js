@@ -180,7 +180,7 @@ export default class BaseGameScene extends Phaser.Scene {
             editor.makeEditable(gameObject, this);
         }
     }
-}
+
     
     /**
      * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
