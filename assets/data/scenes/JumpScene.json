@@ -13,7 +13,13 @@
       "animation": {
         "default": "歩き",
         "definitions": []
-      }
+      },
+      "events": [
+        {
+          "trigger": "onKeyPress_UP",
+          "actions": "[body_velocity y=-350]\n[anim_play 歩き"
+        }
+      ]
     },
     {
       "name": "walk_1",
