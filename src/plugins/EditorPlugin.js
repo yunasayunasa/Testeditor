@@ -628,35 +628,87 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(openAnimEditorBtn);
 
   // --- 3. Eventsプロパティの生成 ---
+     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、あなたのコードに「アドオン」する、最後の機能です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 4. Events プロパティ ---
         this.editorPropsContainer.appendChild(document.createElement('hr'));
-        
         const eventsTitle = document.createElement('div');
         eventsTitle.innerText = 'ロジック';
         eventsTitle.style.fontWeight = 'bold';
         eventsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(eventsTitle);
 
-       // 3-1. まず、既存のイベントを一覧表示する
-        if (this.selectedObject) {
-            const events = this.selectedObject.getData('events') || [];
-            events.forEach((eventData, index) => {
-                const eventDiv = this.createEventDisplay(eventData, index);
-                this.editorPropsContainer.appendChild(eventDiv);
-            });
-        }
+        // 4-1. 既存のイベントを、一つずつ、整然としたUIとして描画
+        const events = this.selectedObject.getData('events') || [];
+        events.forEach((eventData, index) => {
+            const eventWrapper = document.createElement('div');
+            eventWrapper.style.border = '1px solid #444';
+            eventWrapper.style.padding = '8px';
+            eventWrapper.style.marginBottom = '10px';
 
-        // 3-2. 次に、「新しいイベントを追加」ボタンを生成する
+            // --- 1行目: トリガー選択 ---
+            const triggerRow = document.createElement('div');
+            const triggerLabel = document.createElement('label');
+            triggerLabel.innerText = 'トリガー:';
+            const triggerSelect = document.createElement('select');
+            ['onClick', 'onHover'].forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t; opt.innerText = t;
+                if (t === eventData.trigger) opt.selected = true;
+                triggerSelect.appendChild(opt);
+            });
+            triggerSelect.onchange = (e) => {
+                const currentEvents = this.selectedObject.getData('events');
+                currentEvents[index].trigger = e.target.value;
+                this.selectedObject.setData('events', currentEvents);
+            };
+            triggerRow.append(triggerLabel, triggerSelect);
+            
+            // --- 2行目: アクション記述エリア ---
+            const actionRow = document.createElement('div');
+            const actionLabel = document.createElement('label');
+            actionLabel.innerText = 'アクション:';
+            actionLabel.style.display = 'block';
+            const actionTextarea = document.createElement('textarea');
+            actionTextarea.style.width = '95%';
+            actionTextarea.style.minHeight = '80px';
+            actionTextarea.value = eventData.actions;
+            actionTextarea.onchange = (e) => {
+                const currentEvents = this.selectedObject.getData('events');
+                currentEvents[index].actions = e.target.value;
+                this.selectedObject.setData('events', currentEvents);
+            };
+            actionRow.append(actionLabel, actionTextarea);
+
+            // --- 3行目: 削除ボタン ---
+            const deleteRow = document.createElement('div');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerText = 'このイベントを削除';
+            deleteBtn.style.backgroundColor = '#c44';
+            deleteBtn.onclick = () => {
+                if (confirm('このイベントを削除しますか？')) {
+                    const currentEvents = this.selectedObject.getData('events');
+                    currentEvents.splice(index, 1);
+                    this.selectedObject.setData('events', currentEvents);
+                    this.updatePropertyPanel();
+                }
+            };
+            deleteRow.appendChild(deleteBtn);
+            
+            eventWrapper.append(triggerRow, actionRow, deleteRow);
+            this.editorPropsContainer.appendChild(eventWrapper);
+        });
+
+        // 4-2. 「新しいイベントを追加」ボタン
         const addNewEventBtn = document.createElement('button');
         addNewEventBtn.innerText = '新しいイベントを追加';
         addNewEventBtn.onclick = () => {
-            if (this.selectedObject) {
-                const currentEvents = this.selectedObject.getData('events') || [];
-                // actionsは空の文字列で初期化
-                currentEvents.push({ trigger: 'onClick', actions: '' });
-                this.selectedObject.setData('events', currentEvents);
-                // パネルを再描画して、新しい編集欄を表示
-                this.updatePropertyPanel();
-            }
+            const currentEvents = this.selectedObject.getData('events') || [];
+            currentEvents.push({ trigger: 'onClick', actions: '' });
+            this.selectedObject.setData('events', currentEvents);
+            this.updatePropertyPanel();
         };
         this.editorPropsContainer.appendChild(addNewEventBtn);
         
@@ -933,3 +985,4 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
 }
+
