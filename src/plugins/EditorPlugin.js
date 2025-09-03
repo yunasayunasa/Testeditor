@@ -437,7 +437,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         actionsTextarea.value = eventData.actions;
         actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
 
-        div.append(header, actionsLabel, actionsTextarea);
+         div.append(header, actionsContainer);
         
         return div;
     }
