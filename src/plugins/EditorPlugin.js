@@ -368,6 +368,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         div.style.border = '1px solid #444';
         div.style.padding = '8px';
         div.style.marginBottom = '8px';
+         div.style.backgroundColor = '#333'; // 背景色を少し変えて区別しやすく
+
 
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
@@ -382,36 +384,46 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
         
+          // ヘッダー部分
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        
+        const triggerContainer = document.createElement('div');
+        triggerContainer.append(triggerLabel, triggerSelect);
+        header.append(triggerContainer, deleteBtn);
+
+        // --- アクション記述エリア ---
         const actionsLabel = document.createElement('label');
         actionsLabel.innerText = 'アクション (タグ形式):';
         actionsLabel.style.display = 'block';
-        actionsLabel.style.marginTop = '5px';
+        actionsLabel.style.marginTop = '8px';
+        
         const actionsTextarea = document.createElement('textarea');
-        actionsTextarea.style.width = '95%';
-        actionsTextarea.style.height = '60px';
+        actionsTextarea.style.width = '98%'; // 少し幅を調整
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、テキストエリアを改善するコードです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
+        actionsTextarea.style.minHeight = '80px'; // 1. デフォルトの高さを大きく
+        actionsTextarea.style.resize = 'vertical'; // 2. 垂直方向のリサイズを許可
+
+        actionsTextarea.style.backgroundColor = '#1e1e1e';
+        actionsTextarea.style.color = '#d4d4d4';
+        actionsTextarea.style.border = '1px solid #555';
+        actionsTextarea.style.borderRadius = '3px';
+        actionsTextarea.style.padding = '5px';
+        actionsTextarea.style.fontFamily = 'monospace'; // 等幅フォントで見やすく
+        
         actionsTextarea.value = eventData.actions;
         actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerText = '削除';
-        deleteBtn.style.backgroundColor = '#c44';
-        deleteBtn.style.marginLeft = '10px';
-        deleteBtn.onclick = () => {
-            if (confirm('このイベントを削除しますか？')) {
-                const events = this.selectedObject.getData('events');
-                events.splice(index, 1);
-                this.selectedObject.setData('events', events);
-                this.updatePropertyPanel();
-            }
-        };
-        
-        const header = document.createElement('div');
-        header.append(triggerLabel, triggerSelect, deleteBtn);
         div.append(header, actionsLabel, actionsTextarea);
         
         return div;
     }
-
     /**
      * ★★★ 新規ヘルパーメソッド (2/2) ★★★
      * オブジェクトに保存されているイベントデータを更新する
