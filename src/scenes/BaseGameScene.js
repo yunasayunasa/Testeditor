@@ -206,12 +206,49 @@
 
 
 
-    finalizeSetup() {
+   finalizeSetup() {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、onCollisionを実現する核心部です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 1. まず、シーン内の全てのオブジェクトから、イベント定義を収集 ---
+        const allGameObjects = this.children.getAll();
+        
+        allGameObjects.forEach(gameObject => {
+            const events = gameObject.getData('events');
+            if (events) {
+                events.forEach(eventData => {
+                    // --- 2. onOverlapトリガーを見つけたら、物理エンジンに監視を依頼 ---
+                    if (eventData.trigger === 'onOverlap_Start' && eventData.targetName) {
+                        
+                        // 衝突相手となるオブジェクトを、名前で探す
+                        const targetObject = allGameObjects.find(obj => obj.name === eventData.targetName);
+
+                        if (targetObject) {
+                            console.log(`[BaseGameScene] Setting up overlap between '${gameObject.name}' and '${targetObject.name}'`);
+                            
+                            // ★★★ 3. 重なりを監視し、検知したらインタープリタを実行 ★★★
+                            this.physics.add.overlap(gameObject, targetObject, (obj1, obj2) => {
+                                // 衝突した瞬間に、一度だけ実行されるように工夫が必要 (後述)
+                                this.actionInterpreter.run(obj1, eventData.actions);
+                            });
+                        } else {
+                            console.warn(`[BaseGameScene] Overlap target '${eventData.targetName}' not found for '${gameObject.name}'.`);
+                        }
+                    }
+                });
+            }
+        });
+
+
+        // --- 2. シーン固有の最終処理 (onSetupComplete) を呼び出す ---
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
+        
+        // --- 3. 最後に準備完了を通知 ---
         this.events.emit('scene-ready');
-        console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
+        console.log(`[${this.scene.key}] Setup complete.`);
     }
 
        /**

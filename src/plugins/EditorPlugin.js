@@ -764,14 +764,31 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             'onKeyPress_DOWN',
             'onKeyPress_LEFT',
             'onKeyPress_RIGHT',
-            'onKeyPress_SPACE','onCollision' ].forEach(t => {
+            'onKeyPress_SPACE',
+            //物理判定
+            'onCollision','onOverlap_Start' ].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;
             triggerSelect.appendChild(option);
         });
+
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
+        this.updatePropertyPanel(); 
         triggerContainer.append(triggerLabel, triggerSelect);
+
+        //物理判定の相手入力欄
+         // ★★★ 2. 衝突相手を入力するための、新しいUIを追加 ★★★
+        if (eventData.trigger.startsWith('onOverlap')) {
+            const targetLabel = document.createElement('label');
+            targetLabel.innerText = ' 相手の名前: ';
+            const targetInput = document.createElement('input');
+            targetInput.type = 'text';
+            targetInput.placeholder = '例: player';
+            targetInput.value = eventData.targetName || '';
+            targetInput.onchange = (e) => this.updateEventData(index, 'targetName', e.target.value);
+            triggerContainer.append(targetLabel, targetInput);
+        }
 
         const deleteBtn = document.createElement('button');
         deleteBtn.innerText = '削除';
