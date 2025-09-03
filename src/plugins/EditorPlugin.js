@@ -1,51 +1,49 @@
 export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     constructor(pluginManager) {
         super(pluginManager);
-        this.selectedObject = null;
+         this.selectedObject = null;
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
+        
+        this.editorPanel = null;
+        this.editorTitle = null;
+        this.editorPropsContainer = null;
         this.animEditorOverlay = null;
         this.animEditorCloseBtn = null;
         this.eventEditorOverlay = null;
         this.eventEditorCloseBtn = null;
-        this.editorPanel = null;
-        this.editorTitle = null;
-        this.editorPropsContainer = null;
     }
 
+     /**
+     * プラグインが起動する時に、自身が有効になるべきかを判断し、
+     * 自身のHTML要素への参照を取得するだけ。
+     */
     init() {
+        // --- デバッグモードの最終判定 ---
         const currentURL = window.location.href;
-        const hasDebugParameter = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
-        if (!hasDebugParameter) return;
-
+        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
         this.isEnabled = true;
+
+        // --- DOMが完全に準備されたこの場所で、全てのHTML要素への参照を取得 ---
         this.editorPanel = document.getElementById('editor-panel');
         this.editorTitle = document.getElementById('editor-title');
-        this.editorPropsContainer = document.getElementById('editor-props');
-        console.warn("[EditorPlugin] Debug mode activated.");
-
-    
+        this.editorPropsContainer = document.getElementById('editor-props-container');
+        
         this.animEditorOverlay = document.getElementById('anim-editor-overlay');
         this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
-
         if (this.animEditorCloseBtn) {
-            this.animEditorCloseBtn.addEventListener('click', () => {
-                this.closeAnimationEditor();
-            });
+            this.animEditorCloseBtn.addEventListener('click', () => this.closeAnimationEditor());
         }
-
+        
         this.eventEditorOverlay = document.getElementById('event-editor-overlay');
         this.eventEditorCloseBtn = document.getElementById('event-editor-close-btn');
-
         if (this.eventEditorCloseBtn) {
-            this.eventEditorCloseBtn.addEventListener('click', () => {
-                this.closeEventEditor();
-            });
+            this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
 
+        console.warn("[EditorPlugin] Debug mode activated.");
     }
-
      updatePropertyPanel() {
         if (!this.isEnabled) return;
         if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
@@ -554,38 +552,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         container.appendChild(row);
     }
 
-      /**
-     * 指定されたポインター座標にあるカメラをズームさせる
-     */
-    zoomCamera(pointer, deltaY) {
-        if (!this.isEnabled) return;
-        const camera = this.findCameraAt(pointer);
-        if (camera) {
-            const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.2, 5);
-            camera.setZoom(newZoom);
-        }
-    }
-
-    /**
-     * 指定されたポインターの移動量でカメラをパンさせる
-     */
-    panCamera(pointer) {
-        if (!this.isEnabled) return;
-        const camera = this.findCameraAt(pointer);
-        if (camera) {
-            camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
-            camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
-        }
-    }
-    
-    /**
-     * 指定されたポインター座標にあるシーンのカメラを見つける
-     */
-    findCameraAt(pointer) {
-        return this.pluginManager.game.scene.getScenes(true)
-            .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
-            ?.cameras.main;
-    }
+   
 
     exportLayoutToJson() {
         if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
