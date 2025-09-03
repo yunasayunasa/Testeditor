@@ -27,7 +27,7 @@ export default class JumpScene extends BaseGameScene {
         
         // --- 2. 世界の境界と、デバッグ用グリッドの描画 ---
         const worldWidth = 3840;
-        const worldHeight = 720;
+        const worldHeight = 1440;
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
         const gridGraphics = this.add.graphics();
         gridGraphics.lineStyle(1, 0x000000, 0.2);
@@ -38,9 +38,7 @@ export default class JumpScene extends BaseGameScene {
         gridGraphics.stroke();
         gridGraphics.setDepth(-10);
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ 私が忘れていた、最も重要な一行です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+      this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         // --- 3. 親の汎用ルーチンを呼び出して、JSONからシーンを構築 ---
         this.initSceneWithData();
     }
