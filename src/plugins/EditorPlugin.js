@@ -24,7 +24,69 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorTitle = document.getElementById('editor-title');
         this.editorPropsContainer = document.getElementById('editor-props');
         console.warn("[EditorPlugin] Debug mode activated.");
+  const input = this.pluginManager.game.input;
 
+        // --- カメラ操作の有効/無効を切り替えるキー (スペースキー) ---
+        // (注: キー入力がシナリオ進行と競合しないよう、注意が必要)
+        const spaceKey = input.keyboard.addKey('SPACE');
+        
+        // --- マウスホイールによるズーム ---
+        input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+            if (this.isEnabled) {
+                // マウスカーソルが乗っているシーンのカメラを取得
+                const camera = this.pluginManager.game.scene.getScenes(true)
+                    .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
+                    ?.cameras.main;
+
+                if (camera) {
+                    const newZoom = Phaser.Math.Clamp(camera.zoom - deltaY * 0.001, 0.2, 5);
+                    camera.setZoom(newZoom);
+                }
+            }
+        });
+
+        // --- マウスドラッグによるパン（カメラ移動） ---
+        input.on('pointermove', (pointer) => {
+            // スペースキーが押されていて、かつマウスの左ボタンが押されている時だけ
+            if (this.isEnabled && spaceKey.isDown && pointer.leftButtonDown()) {
+                const camera = this.pluginManager.game.scene.getScenes(true)
+                    .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
+                    ?.cameras.main;
+
+                if (camera) {
+                    // 前のフレームからのマウスの移動量に応じて、カメラをスクロールさせる
+                    camera.scrollX -= (pointer.x - pointer.prevPosition.x) / camera.zoom;
+                    camera.scrollY -= (pointer.y - pointer.prevPosition.y) / camera.zoom;
+                }
+            }
+        });
+
+        // --- 2本指ピンチによるズーム（タッチデバイス用） ---
+        let pinchStartDistance = 0;
+        input.on('pointerdown', (pointer) => {
+            // 2本目の指がタッチされた瞬間を検知
+            if (input.pointer2.isDown) {
+                pinchStartDistance = Phaser.Math.Distance.Between(input.pointer1.x, input.pointer1.y, input.pointer2.x, input.pointer2.y);
+            }
+        });
+
+        input.on('pointermove', (pointer) => {
+            // 2本の指が同時にタッチされ、移動している時
+            if (this.isEnabled && input.pointer1.isDown && input.pointer2.isDown) {
+                const camera = this.pluginManager.game.scene.getScenes(true)
+                    .find(scene => scene.cameras.main.worldView.contains(pointer.x, pointer.y))
+                    ?.cameras.main;
+                    
+                if (camera) {
+                    const newDistance = Phaser.Math.Distance.Between(input.pointer1.x, input.pointer1.y, input.pointer2.x, input.pointer2.y);
+                    // 距離の変化率に応じて、現在のズーム値を変更
+                    const newZoom = Phaser.Math.Clamp(camera.zoom * (newDistance / pinchStartDistance), 0.2, 5);
+                    camera.setZoom(newZoom);
+                    // 次のフレームのために、現在の指の距離を更新
+                    pinchStartDistance = newDistance;
+                }
+            }
+        });
         this.animEditorOverlay = document.getElementById('anim-editor-overlay');
         this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
 
