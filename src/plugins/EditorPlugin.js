@@ -359,18 +359,17 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
  
-   /**
-     * ★★★ 新規ヘルパーメソッド (1/2) ★★★
-     * 一つのイベントを表示・編集するためのHTML要素を生成する
+    /**
+     * 一つのイベントを表示・編集するためのHTML要素を生成する (最終確定・完成版)
      */
     createEventDisplay(eventData, index) {
         const div = document.createElement('div');
         div.style.border = '1px solid #444';
         div.style.padding = '8px';
         div.style.marginBottom = '8px';
-         div.style.backgroundColor = '#333'; // 背景色を少し変えて区別しやすく
+        div.style.backgroundColor = '#333';
 
-
+        // --- ヘッダー部分のUI要素を生成 ---
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
@@ -384,7 +383,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
         
-          // ヘッダー部分
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、復活させる削除ボタンです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerText = '削除';
+        deleteBtn.style.backgroundColor = '#c44';
+        deleteBtn.style.marginLeft = '10px';
+        deleteBtn.onclick = () => {
+            if (confirm('このイベントを削除しますか？')) {
+                const events = this.selectedObject.getData('events');
+                events.splice(index, 1);
+                this.selectedObject.setData('events', events);
+                this.updatePropertyPanel();
+            }
+        };
+        
+        // --- ヘッダーコンテナを組み立て ---
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
@@ -392,7 +407,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         
         const triggerContainer = document.createElement('div');
         triggerContainer.append(triggerLabel, triggerSelect);
+        // ★★★ ヘッダーに、削除ボタンを追加するのを忘れない ★★★
         header.append(triggerContainer, deleteBtn);
+
 
         // --- アクション記述エリア ---
         const actionsLabel = document.createElement('label');
