@@ -237,51 +237,61 @@
 
 
 
-   finalizeSetup() {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、onCollisionを実現する核心部です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+  // src/scenes/BaseGameScene.js
 
-        // --- 1. まず、シーン内の全てのオブジェクトから、イベント定義を収集 ---
+    finalizeSetup() {
+        console.log(`[${this.scene.key}] Finalizing setup...`);
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、onCollisionを実現する、最後の心臓部です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 1. シーン内の全オブジェクトから、衝突/接触イベントを収集 ---
         const allGameObjects = this.children.getAll();
-        
+        const collisionEvents = [];
+
         allGameObjects.forEach(gameObject => {
             const events = gameObject.getData('events');
             if (events) {
                 events.forEach(eventData => {
-                    // --- 2. onOverlapトリガーを見つけたら、物理エンジンに監視を依頼 ---
-                    if (eventData.trigger === 'onOverlap_Start' && eventData.targetName) {
-                        
-                        // 衝突相手となるオブジェクトを、名前で探す
-                        const targetObject = allGameObjects.find(obj => obj.name === eventData.targetName);
-
-                        if (targetObject) {
-                            console.log(`[BaseGameScene] Setting up overlap between '${gameObject.name}' and '${targetObject.name}'`);
-                            
-                            // ★★★ 3. 重なりを監視し、検知したらインタープリタを実行 ★★★
-                            this.physics.add.overlap(gameObject, targetObject, (obj1, obj2) => {
-                                // 衝突した瞬間に、一度だけ実行されるように工夫が必要 (後述)
-                                this.actionInterpreter.run(obj1, eventData.actions);
-                            });
-                        } else {
-                            console.warn(`[BaseGameScene] Overlap target '${eventData.targetName}' not found for '${gameObject.name}'.`);
-                        }
+                    if ((eventData.trigger === 'onCollide_Start' || eventData.trigger === 'onOverlap_Start') && eventData.targetGroup) {
+                        collisionEvents.push({
+                            source: gameObject,
+                            sourceGroup: gameObject.getData('group'),
+                            targetGroup: eventData.targetGroup,
+                            eventType: eventData.trigger === 'onCollide_Start' ? 'collider' : 'overlap',
+                            actions: eventData.actions
+                        });
                     }
                 });
             }
         });
+        
+        // --- 2. 収集したイベントに基づいて、物理エンジンに関係性を設定 ---
+        collisionEvents.forEach(eventInfo => {
+            // 相手となるグループに所属するオブジェクトを全て見つけ出す
+            const targetObjects = allGameObjects.filter(obj => obj.getData('group') === eventInfo.targetGroup);
 
+            if (targetObjects.length > 0) {
+                console.log(`[${this.scene.key}] Setting up ${eventInfo.eventType} between '${eventInfo.source.name}' and group '${eventInfo.targetGroup}'`);
+                
+                // this.physics.add.collider または .overlap を呼び出す
+                this.physics.add[eventInfo.eventType](eventInfo.source, targetObjects, (sourceObject, targetObject) => {
+                    // 衝突/接触した瞬間に、インタープリタにアクションの実行を依頼
+                    this.actionInterpreter.run(sourceObject, eventInfo.actions);
+                });
+            }
+        });
 
-        // --- 2. シーン固有の最終処理 (onSetupComplete) を呼び出す ---
+        // --- 3. シーン固有の最終処理 (onSetupComplete) を呼び出す ---
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
         
-        // --- 3. 最後に準備完了を通知 ---
+        // --- 4. 最後に準備完了を通知 ---
         this.events.emit('scene-ready');
-        console.log(`[${this.scene.key}] Setup complete.`);
+        console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
-
        /**
      * ★★★ 新規メソッド ★★★
      * 毎フレーム実行され、キーが押されているかをチェックし、イベントを発火させる

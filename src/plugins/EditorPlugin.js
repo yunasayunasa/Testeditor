@@ -788,7 +788,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             'onKeyPress_RIGHT',
             'onKeyPress_SPACE',
             //物理判定
-            'onCollision','onOverlap_Start' ].forEach(t => {
+         'onCollide_Start', // 衝突した瞬間
+            'onOverlap_Start'  // 重なった瞬間
+             ].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;
@@ -799,16 +801,19 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.updatePropertyPanel(); 
         triggerContainer.append(triggerLabel, triggerSelect);
 
-        //物理判定の相手入力欄
-         // ★★★ 2. 衝突相手を入力するための、新しいUIを追加 ★★★
-        if (eventData.trigger.startsWith('onOverlap')) {
+      // もし、衝突/接触トリガーが選択されていたら、追加の入力欄を表示
+        if (eventData.trigger.startsWith('onCollide') || eventData.trigger.startsWith('onOverlap')) {
             const targetLabel = document.createElement('label');
-            targetLabel.innerText = ' 相手の名前: ';
+            targetLabel.innerText = ' 相手のグループ: ';
+            targetLabel.style.marginLeft = '10px';
+            
             const targetInput = document.createElement('input');
             targetInput.type = 'text';
-            targetInput.placeholder = '例: player';
-            targetInput.value = eventData.targetName || '';
-            targetInput.onchange = (e) => this.updateEventData(index, 'targetName', e.target.value);
+            targetInput.placeholder = '例: player, floor';
+            targetInput.style.width = '80px';
+            targetInput.value = eventData.targetGroup || '';
+            targetInput.onchange = (e) => this.updateEventData(index, 'targetGroup', e.target.value);
+            
             triggerContainer.append(targetLabel, targetInput);
         }
 
