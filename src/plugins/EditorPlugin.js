@@ -913,7 +913,68 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log(jsonString);
         navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
     }
+ /**
+     * イベント・エディタのウィンドウを開く（入力制御付き）
+     */
+    openEventEditor() {
+        if (!this.eventEditorOverlay || !this.selectedObject) return;
 
+        // 1. Phaserの入力を「無効化」する（イベント貫通防止）
+        this.pluginManager.game.input.enabled = false;
+
+        // 2. ウィンドウのタイトルを更新
+        const titleElement = document.getElementById('event-editor-title');
+        if (titleElement) {
+            titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
+        }
+        
+        // 3. ウィンドウの中身を、最新のイベントデータで再構築
+        this.populateEventEditor();
+
+        // 4. オーバーレイを表示する
+        this.eventEditorOverlay.style.display = 'flex';
+    }
+
+    /**
+     * イベント・エディタのウィンドウを閉じる（入力制御付き）
+     */
+    closeEventEditor() {
+        if (!this.eventEditorOverlay) return;
+        this.eventEditorOverlay.style.display = 'none';
+
+        // 2. Phaserの入力を「再有効化」する
+        this.pluginManager.game.input.enabled = true;
+    }
+    
+    /**
+     * イベント・エディタのコンテンツエリアの中身を生成する
+     */
+    populateEventEditor() {
+        const contentArea = document.getElementById('event-editor-content');
+        if (!contentArea || !this.selectedObject) return;
+
+        contentArea.innerHTML = '';
+        
+        // --- 既存のイベントを一覧表示 ---
+        const events = this.selectedObject.getData('events') || [];
+        events.forEach((eventData, index) => {
+            const eventDiv = this.createEventDisplay(eventData, index);
+            contentArea.appendChild(eventDiv);
+        });
+
+        // --- 「新しいイベントを追加」ボタン ---
+        const addButton = document.createElement('button');
+        addButton.innerText = '新しいイベントを追加';
+        addButton.style.marginTop = '10px';
+        addButton.onclick = () => {
+            const currentEvents = this.selectedObject.getData('events') || [];
+            currentEvents.push({ trigger: 'onClick', actions: '' });
+            this.selectedObject.setData('events', currentEvents);
+            // ウィンドウの中身だけを再描画
+            this.populateEventEditor();
+        };
+        contentArea.appendChild(addButton);
+    }
 }
 
 
