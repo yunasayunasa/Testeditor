@@ -13,25 +13,6 @@ export default class JumpScene extends BaseGameScene {
         this.actionInterpreter = null;
     }
 
-    /**
-     * シーンが起動する時に、SystemSceneから渡されたデータを受け取る
-     */
-    init(data) {
-        console.log(`[JumpScene] Initialized with data:`, data);
-    }
-    
-    /**
-     * シーン固有のアセットをロードする
-     */
-    preload() {
-        // (注: ファイル自体はPreloadSceneでロード済み)
-        this.load.image('player_char', 'assets/images/player_placeholder.png');
-        this.load.image('ground_tile', 'assets/images/ground_placeholder.png');
-    }
-
-    /**
-     * シーンが作成される時のメイン処理
-     */
     create() {
         console.log("[JumpScene] Create started.");
         
@@ -40,28 +21,25 @@ export default class JumpScene extends BaseGameScene {
         this.cameras.main.setBackgroundColor('#4488cc');
         this.cursors = this.input.keyboard.createCursorKeys();
         
-        // ★★★ 開発の5ヶ条: 第2条 - BGMはcreateで再生 ★★★
         const soundManager = this.registry.get('soundManager');
-     //   if (soundManager) soundManager.playBgm('bgm_action');
+        if (soundManager) soundManager.playBgm('bgm_action');
         
         // --- 2. 世界の境界と、デバッグ用グリッドの描画 ---
         const worldWidth = 3840;
         const worldHeight = 720;
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
-
         const gridGraphics = this.add.graphics();
         gridGraphics.lineStyle(1, 0x000000, 0.2);
-        for (let x = 0; x < worldWidth; x += 100) {
-            gridGraphics.moveTo(x, 0); gridGraphics.lineTo(x, worldHeight);
-        }
-        for (let y = 0; y < worldHeight; y += 100) {
-            gridGraphics.moveTo(0, y); gridGraphics.lineTo(worldWidth, y);
-        }
+        for (let x = 0; x < worldWidth; x += 100) { gridGraphics.moveTo(x, 0); gridGraphics.lineTo(x, worldHeight); }
+        for (let y = 0; y < worldHeight; y += 100) { gridGraphics.moveTo(0, y); gridGraphics.lineTo(worldWidth, y); }
         gridGraphics.lineStyle(3, 0xff0000, 0.5);
         gridGraphics.strokeRect(0, 0, 1280, 720);
         gridGraphics.stroke();
         gridGraphics.setDepth(-10);
 
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ 私が忘れていた、最も重要な一行です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // --- 3. 親の汎用ルーチンを呼び出して、JSONからシーンを構築 ---
         this.initSceneWithData();
     }
