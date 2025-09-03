@@ -233,21 +233,27 @@
     addObjectFromEditor(assetKey, newName) {
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
         return null;
-    }
+        }
 
 
-
-  // src/scenes/BaseGameScene.js
-
- finalizeSetup() {
+  finalizeSetup() {
         console.log(`[${this.scene.key}] Finalizing setup...`);
 
         // 1. まず、シーン固有の最終処理（衝突判定など）を先に呼び出す
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
-         // 2. 次に、物理イベントを設定する
-        const allGameObjects = this.children.getAll()
+        
+        // 2. 次に、物理イベントを設定する
+        const allGameObjects = this.children.getAll();
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、onCollisionを実現する、最後の心臓部です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 1. シーン内の全オブジェクトから、衝突/接触イベントを収集 ---
+        const allGameObjects = this.children.getAll();
+        const collisionEvents = [];
 
         allGameObjects.forEach(gameObject => {
             const events = gameObject.getData('events');
@@ -281,6 +287,15 @@
                 });
             }
         });
+
+        // --- 3. シーン固有の最終処理 (onSetupComplete) を呼び出す ---
+        if (this.onSetupComplete) {
+            this.onSetupComplete();
+        }
+        
+       // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する、最後の、そして最も確実な方法です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         // 3. 全ての物理設定が終わった、この最後のタイミングで、
         //    シーンに存在する全てのオブジェクトの「エディタ・イベント」を、
