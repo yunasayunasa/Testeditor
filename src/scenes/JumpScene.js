@@ -38,7 +38,7 @@ export default class JumpScene extends BaseGameScene {
         gridGraphics.stroke();
         gridGraphics.setDepth(-10);
 
-      this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+      this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
         // --- 3. 親の汎用ルーチンを呼び出して、JSONからシーンを構築 ---
         this.initSceneWithData();
     }
