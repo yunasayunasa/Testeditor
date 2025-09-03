@@ -2,7 +2,40 @@
   "objects": [
     {
       "name": "walk_2",
-      "x": 389,
+      "x": 534,
+      "y": 982,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "type": "Sprite",
+      "texture": "walk",
+      "physics": {
+        "isStatic": false,
+        "width": 102,
+        "height": 115,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      },
+      "events": [
+        {
+          "trigger": "onOverlap_Start",
+          "actions": "[velocity y=-350]\n[anim 歩き]",
+          "targetName": "walk_3"
+        },
+        {
+          "trigger": "onKeyPress_UP",
+          "actions": "[velocity y=-350]\n[anim name=歩き]"
+        }
+      ]
+    },
+    {
+      "name": "walk_3",
+      "x": 530,
       "y": 1383,
       "scaleX": 1,
       "scaleY": 1,
@@ -21,27 +54,6 @@
         "bounceY": 0,
         "collideWorldBounds": true
       },
-      "events": [
-        {
-          "trigger": "onClick",
-          "actions": "[velocity y=-350]\n[anim 歩き]"
-        },
-        {
-          "trigger": "onKeyPress_UP",
-          "actions": "[velocity y=-350]\n[anim name=歩き]"
-        }
-      ]
-    },
-    {
-      "name": "walk_1",
-      "x": 970,
-      "y": 115,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "type": "Sprite",
-      "texture": "walk",
       "animation": {
         "default": "歩き",
         "definitions": []

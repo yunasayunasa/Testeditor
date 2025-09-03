@@ -826,6 +826,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (events[index]) {
             events[index][key] = value;
             this.selectedObject.setData('events', events);
+             this.populateEventEditor();
+             this.pluginManager.game.events.emit('editor_event_changed', {
+            target: this.selectedObject
+        });
         }
     }
 }

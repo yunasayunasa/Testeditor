@@ -41,6 +41,16 @@ export default class JumpScene extends BaseGameScene {
         gridGraphics.setDepth(-10);
 
       this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+       // --- 1. このシーン自身が、エディタからの「イベント変更」信号を監視する ---
+        this.game.events.on('editor_event_changed', (data) => {
+            // このシーンのオブジェクトが対象の場合のみ、イベントを再設定
+            if (data.target && data.target.scene === this) {
+                console.log(`[${this.scene.key}] Re-applying events for '${data.target.name}'...`);
+                // ★ 親が持つ、安全なヘルパーメソッドを呼び出す
+                this.applyEvents(data.target);
+            }
+        }, this); // ★ thisを渡して、コンテキストを束縛する
+
         // --- 3. 親の汎用ルーチンを呼び出して、JSONからシーンを構築 ---
         this.initSceneWithData();
     }
@@ -136,6 +146,7 @@ export default class JumpScene extends BaseGameScene {
     shutdown() {
         // ★★★ 開発の5ヶ条: 第4条 - shutdownで後片付け ★★★
         console.log("[JumpScene] Shutdown.");
+           this.game.events.off('editor_event_changed', null, this);
         // ★★★ 3. シーン終了時に、イベントリスナーを必ず解除 ★★★
         this.events.off('update', this.handleKeyPressEvents, this);
         super.shutdown();

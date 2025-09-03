@@ -194,6 +194,32 @@
         }
     }
 
+     /**
+     * ★★★ 新規メソッド ★★★
+     * 単一オブジェクトのイベントリスナーを、クリア＆再設定する
+     */
+    applyEvents(gameObject, eventsData = null) {
+        // --- 1. まず、古いイベントリスナーを全てクリア ---
+        gameObject.off('pointerdown');
+        // (将来的に、onHoverなどもここでoffにする)
+        
+        const events = eventsData || gameObject.getData('events');
+        if (!events) return;
+        
+        gameObject.setData('events', events);
+
+        // --- 2. 新しいイベントデータに基づいて、リスナーを再設定 ---
+        events.forEach(eventData => {
+            if (eventData.trigger === 'onClick') {
+                gameObject.on('pointerdown', () => {
+                    if (this.actionInterpreter) {
+                        this.actionInterpreter.run(gameObject, eventData.actions);
+                    }
+                });
+            }
+            // ... (onKeyPress, onOverlap などのロジックも、ここに追加していく)
+        });
+    }
     
     /**
      * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
