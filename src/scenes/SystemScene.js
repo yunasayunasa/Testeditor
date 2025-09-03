@@ -31,15 +31,7 @@ export default class SystemScene extends Phaser.Scene {
             const editorPlugin = this.plugins.start('EditorPlugin');
             new EditorUI(this.game, editorPlugin);
         }
-  
-        if (editorPlugin && editorPlugin.isEnabled) {
-            // DOMの準備が整ったこのタイミングで、EditorPluginにUIの初期化を命令する
-            editorPlugin.initializeDOM();
-            
-            // EditorUIのインスタンス化なども、ここに集約するとより安全
-            const editorUI = new EditorUI(this.game, editorPlugin);
-            editorPlugin.setUI(editorUI);
-        }
+
         // --- イベントリスナーを登録 ---
         this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
@@ -48,7 +40,12 @@ export default class SystemScene extends Phaser.Scene {
         
         const stateManager = this.registry.get('stateManager');
             const editorPlugin = this.plugins.start('EditorPlugin');
+              if (editorPlugin && editorPlugin.isEnabled) {
+            // DOMの準備が整ったこのタイミングで、EditorPluginにUIの初期化を命令する
+            editorPlugin.initializeDOM();
             
+           
+        }
             // 2. 次に、EditorUIをnewする (この時点では、まだ連携していない)
             const editorUI = new EditorUI(this.game, editorPlugin);
             
