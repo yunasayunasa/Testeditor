@@ -2,20 +2,7 @@
 
 
        export default class BaseGameScene extends Phaser.Scene {
- constructor() {
-        super();
-        this.actionInterpreter = null;
-        // ★★★ 1. キー入力イベントを管理するMapを追加 ★★★
-        this.keyPressEvents = new Map();
-    }
-
-    create() {
-        this.actionInterpreter = new ActionInterpreter(this);
-        
-        // ★★★ 2. 毎フレーム、キー入力イベントをチェックするリスナーを追加 ★★★
-        this.events.on('update', this.handleKeyPressEvents, this);
-    }
-    
+ 
    
     /**
      * 【データ駆動シーン専用】
