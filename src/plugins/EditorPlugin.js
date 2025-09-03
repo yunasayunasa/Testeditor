@@ -359,8 +359,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
  
+    // src/plugins/EditorPlugin.js
+
     /**
-     * 一つのイベントを表示・編集するためのHTML要素を生成する (最終確定・完成版)
+     * 一つのイベントを表示・編集するためのHTML要素を生成する (真の最終確定・完成版)
      */
     createEventDisplay(eventData, index) {
         const div = document.createElement('div');
@@ -369,7 +371,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         div.style.marginBottom = '8px';
         div.style.backgroundColor = '#333';
 
-        // --- ヘッダー部分のUI要素を生成 ---
+        // --- 1. ヘッダー：トリガー選択と削除ボタン ---
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '8px';
+
+        // --- トリガー選択 (左側) ---
+        const triggerContainer = document.createElement('div');
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
@@ -382,14 +392,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             triggerSelect.appendChild(option);
         });
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
-        
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、復活させる削除ボタンです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        triggerContainer.append(triggerLabel, triggerSelect);
+
+        // --- 削除ボタン (右側) ---
         const deleteBtn = document.createElement('button');
-        deleteBtn.innerText = '削除';
+        deleteBtn.innerText = 'このイベントを削除';
         deleteBtn.style.backgroundColor = '#c44';
-        deleteBtn.style.marginLeft = '10px';
         deleteBtn.onclick = () => {
             if (confirm('このイベントを削除しますか？')) {
                 const events = this.selectedObject.getData('events');
@@ -399,47 +407,40 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             }
         };
         
-        // --- ヘッダーコンテナを組み立て ---
-        const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.alignItems = 'center';
-        
-        const triggerContainer = document.createElement('div');
-        triggerContainer.append(triggerLabel, triggerSelect);
-        // ★★★ ヘッダーに、削除ボタンを追加するのを忘れない ★★★
         header.append(triggerContainer, deleteBtn);
 
 
-        // --- アクション記述エリア ---
-           const actionsContainer = document.createElement('div');
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、私が省略してしまった、最も重要な部分です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 2. アクション記述エリア ---
+        const actionsContainer = document.createElement('div');
         
         const actionsLabel = document.createElement('label');
         actionsLabel.innerText = 'アクション (タグ形式):';
         actionsLabel.style.display = 'block';
-        actionsLabel.style.marginTop = '8px';
+        actionsLabel.style.marginBottom = '4px';
         
         const actionsTextarea = document.createElement('textarea');
-        actionsTextarea.style.width = '98%'; // 少し幅を調整
-        
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、テキストエリアを改善するコードです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        
-        actionsTextarea.style.minHeight = '80px'; // 1. デフォルトの高さを大きく
-        actionsTextarea.style.resize = 'vertical'; // 2. 垂直方向のリサイズを許可
-
+        actionsTextarea.style.width = '98%';
+        actionsTextarea.style.minHeight = '80px';
+        actionsTextarea.style.resize = 'vertical';
         actionsTextarea.style.backgroundColor = '#1e1e1e';
         actionsTextarea.style.color = '#d4d4d4';
         actionsTextarea.style.border = '1px solid #555';
         actionsTextarea.style.borderRadius = '3px';
         actionsTextarea.style.padding = '5px';
-        actionsTextarea.style.fontFamily = 'monospace'; // 等幅フォントで見やすく
+        actionsTextarea.style.fontFamily = 'monospace';
         
         actionsTextarea.value = eventData.actions;
         actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
 
-         div.append(header, actionsContainer);
+        actionsContainer.append(actionsLabel, actionsTextarea);
+
+        
+        // --- 全ての部品を、最終的なコンテナに追加 ---
+        div.append(header, actionsContainer);
         
         return div;
     }
@@ -930,4 +931,5 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log(jsonString);
         navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
     }
+
 }
