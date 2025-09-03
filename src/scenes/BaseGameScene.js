@@ -7,6 +7,10 @@
      * シーンのcreateライフサイクルの最初に呼び出される
      * エディタ用のカメラコントロールの入力イベントをセットアップする
      */
+      /**
+     * シーンのcreateライフサイクルの最初に呼び出される
+     * エディタ用のカメラコントロールの入力イベントをセットアップする
+     */
     create() {
         const editor = this.plugins.get('EditorPlugin');
         if (!editor || !editor.isEnabled) return;
@@ -19,7 +23,6 @@
 
         // --- マウスホイールでのズーム ---
         this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-            // オブジェクト上でのホイールは無視し、背景でのみ反応
             if (gameObjects.length === 0) {
                 editor.zoomCamera(pointer, deltaY);
             }
@@ -27,7 +30,11 @@
 
         // --- 2本目の指がタッチされた瞬間の初期化 ---
         this.input.on('pointerdown', (pointer) => {
-            if (this.input.pointer2.isDown) {
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ ここが修正点です ★★★
+            // this.input.pointer2.isDown の代わりに、アクティブなポインターの総数をチェックする
+            if (this.input.getPointerTotal() >= 2) {
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                 const p1 = this.input.pointer1;
                 const p2 = this.input.pointer2;
                 pinchPrevDistance = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
@@ -42,14 +49,13 @@
                 editor.panCamera(pointer);
             }
             // 2. 2本指でのピンチ＆パン
-            else if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
+            // ★★★ こちらも同様に、ポインターの総数でチェック ★★★
+            else if (this.input.getPointerTotal() >= 2) {
                 const p1 = this.input.pointer1;
                 const p2 = this.input.pointer2;
-                // ピンチズーム
                 if (pinchPrevDistance > 0) {
                     pinchPrevDistance = editor.pinchZoomCamera(p1, p2, pinchPrevDistance);
                 }
-                // ピンチパン
                 if (pinchPrevCenter) {
                     pinchPrevCenter = editor.pinchPanCamera(p1, p2, pinchPrevCenter);
                 }
@@ -58,7 +64,8 @@
 
         // --- 指が離れたときのリセット処理 ---
         this.input.on('pointerup', (pointer) => {
-            if (!this.input.pointer1.isDown || !this.input.pointer2.isDown) {
+            // ★★★ こちらも同様に、ポインターの総数でチェック ★★★
+            if (this.input.getPointerTotal() < 2) {
                 pinchPrevDistance = 0;
                 pinchPrevCenter = null;
             }
