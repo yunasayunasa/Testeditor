@@ -39,9 +39,13 @@ const config = {
         NovelOverlayScene
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
-    plugins: {
+     plugins: {
         global: [
-            { key: 'EditorPlugin', plugin: EditorPlugin, start: false }
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが循環参照を解決する、最も重要な修正です ★★★
+            // 'start: false' を 'start: true, mapping: 'editorPlugin'' に変更
+            { key: 'EditorPlugin', plugin: EditorPlugin, start: true, mapping: 'editorPlugin' }
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         ]
     },
     physics: {
