@@ -1,5 +1,5 @@
-import VirtualStick from '../ui/VirtualStick.js';
-import JumpButton from '../ui/JumpButton.js'; // ★ 1. インポート
+import VirtualStick from './ui/VirtualStick.js';
+import JumpButton from './ui/JumpButton.js'; // ★ 1. インポート
 
 const UI_CLASS_MAP = {
     
