@@ -1,122 +1,68 @@
-// ★★★ ui/index.js から定義を直接インポート ★★★
 import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
 
 export default class UIScene extends Phaser.Scene {
-      constructor() {
+    
+    constructor() {
         super({ key: 'UIScene', active: false });
-        
-        /** @type {Map<string, Phaser.GameObjects.GameObject>} */
         this.uiElements = new Map();
-
-        this.menuButton = null;
-        this.panel = null;
         this.isPanelOpen = false;
+        // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
+
     async create() {
-        console.log("UIScene: UIの器として初期化");
+        console.log("UIScene: 100% Data-Driven Initialization");
         this.scene.bringToTop();
         
-        // ★★★ createメソッドを async に変更 ★★★
+        // ★★★ レイアウトからのビルドが唯一のUI生成処理になる ★★★
         const layoutData = this.cache.json.get(this.scene.key);
-        await this.buildUiFromLayout(layoutData); // ★ awaitで待機
-
-        this.createHardcodedUI();
+        await this.buildUiFromLayout(layoutData);
         
+        // ★ createHardcodedUI() の呼び出しは完全に削除
+
         const systemScene = this.scene.get('SystemScene');
         systemScene.events.on('transition-complete', this.onSceneTransition, this);
         
         this.events.emit('scene-ready');
     }
 
-  
-      /**
-     * レイアウトJSONからUI要素を非同期で生成する (相対パスを正しく解決)
-     */
     async buildUiFromLayout(layoutData) {
         if (!layoutData || !layoutData.objects) return;
 
-        const creationPromises = layoutData.objects.map(layout => {
+        const creationPromises = layoutData.objects.map(async (layout) => {
             const definition = uiRegistry[layout.name];
-            if (definition && definition.path) {
-                
-                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                // ★★★ これが相対パスを解決する、最も確実な方法です ★★★
-                // '../ui/' という接頭辞と、'./' を取り除いたファイル名を結合する
-                const finalPath = `../ui/${definition.path.replace('./', '')}`;
-                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            if (!definition) return;
 
-                return import(finalPath)
-                    .then(module => {
-                        const UiClass = module.default;
-                        const stateManager = this.registry.get('stateManager');
-                        const finalParams = { ...definition.params, ...layout.params, stateManager };
-                        const uiElement = new UiClass(this, { x: layout.x, y: layout.y, ...finalParams });
-                        this.registerUiElement(layout.name, uiElement, layout);
-                    })
-                    .catch(err => {
-                        console.error(`Failed to load UI component '${layout.name}' from path '${finalPath}'.`, err);
-                    });
+            let uiElement = null;
+            if (definition.path) { // 動的インポートで生成
+                try {
+                    const module = await import(`../ui/${definition.path.replace('./', '')}`);
+                    const UiClass = module.default;
+                    const stateManager = this.registry.get('stateManager');
+                    const params = { ...definition.params, ...layout.params, stateManager };
+                    uiElement = new UiClass(this, { ...layout, ...params });
+                } catch (err) {
+                    console.error(`Failed to load UI component '${layout.name}'`, err);
+                }
+            } else if (typeof definition.creator === 'function') { // ヘルパーメソッドで生成
+                uiElement = definition.creator(this, layout);
             }
-            return Promise.resolve();
+            
+            if (uiElement) {
+                this.registerUiElement(layout.name, uiElement, layout);
+            }
         });
-
         await Promise.all(creationPromises);
     }
-
-    onSceneTransition(newSceneKey) {
-        console.log(`[UIScene] シーン遷移検知: ${newSceneKey}`);
-        const visibleGroups = this.sceneUiVisibility[newSceneKey] || [];
-        for (const name in this.uiRegistry) {
-            const definition = this.uiRegistry[name];
-            const uiElement = this.uiElements.get(name);
-            if (uiElement) {
-                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-                uiElement.setVisible(shouldBeVisible);
-            }
-        }
-    }
     
-    
-    /**
-     * ハードコードで管理するUI要素（メニューなど）を生成する
-     */
-        // createHardcodedUI メソッドを以下のように修正
-
-    createHardcodedUI() {
-        // メニューボタン
-        this.menuButton = this.add.text(100, 670, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5); // .setInteractive() を一旦削除
-        // ★★★ サイズ情報がないので、レイアウトオブジェクトを自作する ★★★
-        this.registerUiElement('menu_button', this.menuButton, { width: 150, height: 50 }); // おおよそのサイズを指定
-        this.menuButton.on('pointerdown', () => this.togglePanel());
-
-        // パネル
-        this.panel = this.createBottomPanel();
-        this.panel.setPosition(0, 840);
-        // ★★★ パネルにはサイズがあるので、レイアウトオブジェクトで渡す ★★★
-        this.registerUiElement('bottom_panel', this.panel, { width: 1280, height: 120 });
-    }
-
-    // registerUiElement メソッドを以下のように修正
-
-    registerUiElement(name, element, layout = {}) {
+    registerUiElement(name, element, layout) {
         element.name = name;
         this.add.existing(element);
         this.uiElements.set(name, element);
-
-        if (layout.x !== undefined) element.setPosition(layout.x, layout.y);
-        // ... (scale, alphaなども同様に適用)
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが警告を解決する修正です ★★★
-        // ★★★ setSize() を setInteractive() の「前」に呼ぶ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        element.setPosition(layout.x, layout.y);
         
-        // コンテナや当たり判定が必要なものにサイズを設定
-        if ((element instanceof Phaser.GameObjects.Container || element instanceof Phaser.GameObjects.Text) && layout.width) {
+        if (layout.width && layout.height) {
             element.setSize(layout.width, layout.height);
         }
-
-        // サイズ設定後にインタラクティブ化
         element.setInteractive();
         
         const editor = this.plugins.get('EditorPlugin');
@@ -124,6 +70,40 @@ export default class UIScene extends Phaser.Scene {
             editor.makeEditable(element, this);
         }
     }
+
+    onSceneTransition(newSceneKey) {
+        const visibleGroups = sceneUiVisibility[newSceneKey] || [];
+        for (const [name, uiElement] of this.uiElements.entries()) {
+            const definition = uiRegistry[name];
+            if (definition) {
+                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                uiElement.setVisible(shouldBeVisible);
+            }
+        }
+    }
+    
+    // --- UI生成ヘルパーメソッド群 (creatorから呼ばれる) ---
+    createMenuButton(layout) {
+        const button = this.add.text(0, 0, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5);
+        button.on('pointerdown', () => this.togglePanel());
+        return button;
+    }
+
+    createBottomPanel(layout) {
+        const panel = this.add.container(0, 0);
+        // ... (createBottomPanelのロジックは前回と同じ)
+        return panel;
+    }
+    
+    togglePanel() {
+        const panel = this.uiElements.get('bottom_panel');
+        if (!panel) return;
+        this.isPanelOpen = !this.isPanelOpen;
+        // ... (tweenのロジック)
+    }
+
+    // ... (shutdownなどの他のメソッド)
+}
         /**
      * ハードコードで管理するボトムパネルとその中のボタンを生成するヘルパーメソッド
      * @returns {Phaser.GameObjects.Container} 生成されたパネルコンテナ

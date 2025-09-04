@@ -1,30 +1,11 @@
 {
   "objects": [
-   
-    {
-      "name": "menu_button",
-      "type": "Text",
-      "visible_in": ["GameScene"],
-      "params": { "text": "MENU", "style": { "fontSize": "36px", "fill": "#fff" } },
-      "x": 100, "y": 670
-    },
-    {
-      "name": "bottom_panel",
-      "type": "Panel",
-      "visible_in": ["GameScene"],
-      "params": {},
-      "x": 640, "y": 780, "width": 1280, "height": 120
-    },
-      
-       {
-      "name": "jump_button",
-      "type": "JumpButton",
-      "x": 1100,
-      "y": 540,
-      "width": 130,
-      "height": 130 
-    }
+    { "name": "menu_button", "x": 100, "y": 670, "width": 150, "height": 50 },
+    { "name": "bottom_panel", "x": 0, "y": 840, "width": 1280, "height": 120 },
+    { "name": "coin_hud", "x": 100, "y": 50, "width": 150, "height": 50 },
+    { "name": "player_hp_bar", "x": 100, "y": 100, "width": 200, "height": 25 },
+    { "name": "enemy_hp_bar", "x": 930, "y": 100, "width": 250, "height": 25 },
+    { "name": "virtual_stick", "x": 180, "y": 540, "width": 200, "height": 200 },
+    { "name": "jump_button", "x": 1100, "y": 540, "width": 130, "height": 130 }
   ]
-    
-  
 }
