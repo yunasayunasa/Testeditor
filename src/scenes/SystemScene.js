@@ -78,32 +78,28 @@ export default class SystemScene extends Phaser.Scene {
 /**
      * 初期ゲームを起動する内部メソッド (シーンマネージャーのイベントを利用)
      */
+/**
+     * 初期ゲームを起動する内部メソッド (最も堅牢なイベント監視)
+     */
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これがタイミング問題を完全に解決する、最も確実な方法です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 1. シーンマネージャーの 'wake' イベントを一度だけ監視 ---
-        // 'wake' イベントは、新しいシーンが起動・準備完了したときに発行される
-        this.scene.manager.events.once('wake', (scene) => {
+        // ★★★ これがタイミング問題を完全に解決する、真の最終修正です ★★★
+        // this.scene.manager.events ではなく、 this.game.events を使う
+        this.game.events.once('scene-wake-UIScene', () => {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
-            // 準備ができたのが、目的のUISceneかどうかを確認
-            if (scene.scene.key === 'UIScene') {
-                console.log("[SystemScene] UIScene has woken up. Now starting GameScene.");
-                
-                // ここで GameScene を起動すれば、UISceneは確実に存在する
-                this._startAndMonitorScene('GameScene', {
-                    charaDefs: this.globalCharaDefs,
-                    startScenario: initialData.startScenario,
-                });
-            }
+            console.log("[SystemScene] UIScene has woken up. Now starting GameScene.");
+            
+            this._startAndMonitorScene('GameScene', {
+                charaDefs: this.globalCharaDefs,
+                startScenario: initialData.startScenario,
+            });
 
-        }, this); // 'this' を渡してコンテキストを束縛するのを忘れずに
+        });
 
-        // --- 2. 監視を設定した「後」に、UISceneの起動を命令する ---
         this.scene.launch('UIScene');
     }
 
