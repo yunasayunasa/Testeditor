@@ -1,32 +1,32 @@
-// ★★★ import文はすべて削除 ★★★
-
 export const uiRegistry = {
     'coin_hud': {
-        path: './CoinHud.js', // ★ creatorの代わりにファイルパスを文字列で指定
+        path: 'src/ui/CoinHud.js', // ★ プロジェクトルートからのフルパス
         groups: ['hud', 'game', 'battle']
     },
     'player_hp_bar': {
-        path: './HpBar.js',
+        path: 'src/ui/HpBar.js',
         groups: ['hud', 'battle'],
-        params: { type: 'player' } // ★ パラメータはここに集約
+        params: { type: 'player' }
     },
     'enemy_hp_bar': {
-        path: './HpBar.js',
+        path: 'src/ui/HpBar.js',
         groups: ['hud', 'battle'],
         params: { type: 'enemy' }
     },
-  'virtual_stick': {
-        path: './VirtualStick.js',
+    'virtual_stick': {
+        path: 'src/ui/VirtualStick.js', // ★ プロジェクトルートからのフルパス
         groups: ['controls', 'action'],
-        params: {} // ★ パラメータは不要なので空にする
+        params: {}
     },
     'jump_button': {
-        path: './JumpButton.js',
-        groups: ['controls', 'action']
+        path: 'src/ui/JumpButton.js', // ★ プロジェクトルートからのフルパス
+        groups: ['controls', 'action'],
+        params: {}
     },
-    'menu_button': { path: null, groups: ['menu', 'game'] }, // ハードコードするものはnull
+    'menu_button': { path: null, groups: ['menu', 'game'] },
     'bottom_panel': { path: null, groups: ['menu', 'game'] }
 };
+
 
 export const sceneUiVisibility = {
     'GameScene': ['hud', 'menu', 'game'],

@@ -28,30 +28,36 @@ export default class UIScene extends Phaser.Scene {
         this.events.emit('scene-ready');
     }
 
-   async buildUiFromLayout(layoutData) {
+  
+    /**
+     * レイアウトJSONからUI要素を非同期で生成する (絶対パス対応版)
+     */
+    async buildUiFromLayout(layoutData) {
         if (!layoutData || !layoutData.objects) return;
 
         const creationPromises = layoutData.objects.map(layout => {
             const definition = uiRegistry[layout.name];
             if (definition && definition.path) {
-                return import(`../ui/${definition.path.substring(2)}`) // "./" を取り除く
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                // ★★★ これがパス問題を解決する最終的な修正です ★★★
+                // プロジェクトルートからの絶対パスとして import する
+                return import(`/${definition.path}`)
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
                     .then(module => {
                         const UiClass = module.default;
                         const stateManager = this.registry.get('stateManager');
-                        
-                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                        // ★★★ これがparamsを正しく渡すための修正です ★★★
-                        // definitionのparamsとlayoutのparamsを結合する
                         const finalParams = { ...definition.params, ...layout.params, stateManager };
-                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
                         const uiElement = new UiClass(this, { x: layout.x, y: layout.y, ...finalParams });
                         this.registerUiElement(layout.name, uiElement, layout);
                     })
-                    .catch(err => console.error(`Failed to load UI component: ${layout.name}`, err));
+                    .catch(err => {
+                        // ★ エラーログをより詳細に
+                        console.error(`Failed to load UI component '${layout.name}' from path '/${definition.path}'.`, err);
+                    });
             }
             return Promise.resolve();
         });
+
         await Promise.all(creationPromises);
     }
 
