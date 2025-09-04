@@ -519,11 +519,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Phaser input re-enabled.");
     }
  
-   makeEditable(gameObject, scene) {
-        if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
-        
-        gameObject.setInteractive();
-        scene.input.setDraggable(gameObject);
+     /**
+     * オブジェクトを編集可能にする（モード切替対応版）
+     */
+    makeEditable(gameObject, scene) {
+        if (!this.isEnabled || !gameObject.name) return;
 
         const sceneKey = scene.scene.key;
         if (!this.editableObjects.has(sceneKey)) {
@@ -531,32 +531,44 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
+        if (!gameObject.getData('isEditable')) {
+            gameObject.setInteractive();
+            scene.input.setDraggable(gameObject);
+            gameObject.setData('isEditable', true);
+        }
+
+        // ★★★ 既存のリスナーを一度クリア ★★★
+        gameObject.off('pointerdown');
+        gameObject.off('drag');
+        gameObject.off('pointerover');
+        gameObject.off('pointerout');
+
+        // ★★★ 新しいリスナーを設定 ★★★
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            this.selectedObject = gameObject;
-            this.updatePropertyPanel();
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これがタッチ操作を解決する、核心的な修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // マルチタッチジェスチャーの邪魔をしないよう、シングルタッチの時だけイベントを止める
-            if (scene.input.pointerTotal === 1) {
-                event.stopPropagation();
+            // EditorUIから現在のモードを取得
+            if (this.editorUI && this.editorUI.currentMode === 'select') {
+                this.selectedObject = gameObject;
+                this.updatePropertyPanel();
+                event.stopPropagation(); // Playモードのイベントを発火させない
             }
-        });
-        
-        gameObject.on('drag', (pointer, dragX, dragY) => {
-            gameObject.x = Math.round(dragX);
-            gameObject.y = Math.round(dragY);
-            if (gameObject.body && (gameObject.body instanceof Phaser.Physics.Arcade.StaticBody)) {
-                gameObject.body.reset(gameObject.x, gameObject.y);
-            }
-            if(this.selectedObject === gameObject) this.updatePropertyPanel();
         });
 
-        gameObject.on('pointerover', () => gameObject.setTint(0x00ff00));
+        gameObject.on('drag', (pointer, dragX, dragY) => {
+            if (this.editorUI && this.editorUI.currentMode === 'select') {
+                gameObject.x = Math.round(dragX);
+                gameObject.y = Math.round(dragY);
+                if (this.selectedObject === gameObject) this.updatePropertyPanel();
+            }
+        });
+
+        gameObject.on('pointerover', () => {
+             if (this.editorUI && this.editorUI.currentMode === 'select') {
+                gameObject.setTint(0x00ff00);
+             }
+        });
         gameObject.on('pointerout', () => gameObject.clearTint());
-        gameObject.setData('isEditable', true);
     }
+
 
    
     
@@ -847,7 +859,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return div;
     }
 
-    updateEventData(index, key, value) {
+    /*updateEventData(index, key, value) {
         if (!this.selectedObject) return;
         const events = this.selectedObject.getData('events') || [];
         if (events[index]) {
@@ -858,5 +870,25 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             target: this.selectedObject
         });
         }
+    }*/
+    
+       /**
+     * イベントデータを更新し、シーンに通知する
+     */
+    updateEventData(index, key, value) {
+        if (!this.selectedObject) return;
+        const events = this.selectedObject.getData('events') || [];
+        if (events[index]) {
+            events[index][key] = value;
+            this.selectedObject.setData('events', events);
+            this.populateEventEditor();
+            
+            const targetScene = this.selectedObject.scene;
+            if (targetScene && typeof targetScene.onEditorEventChanged === 'function') {
+                targetScene.onEditorEventChanged(this.selectedObject);
+            }
+        }
     }
+    
+    
 }
