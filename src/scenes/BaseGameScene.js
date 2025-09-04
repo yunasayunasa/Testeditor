@@ -171,6 +171,9 @@
             }
 
             const editor = this.plugins.get('EditorPlugin');
+         // ★★★ イベントの適用を、新しい applyEvents メソッドに一任 ★★★
+        this.applyEvents(gameObject, layout.events);
+        
             if (editor) {
                 editor.makeEditable(gameObject, this);
             }
@@ -199,32 +202,44 @@
         }
     }
 
-     /**
-     * ★★★ 新規メソッド ★★★
+    /**
      * 単一オブジェクトのイベントリスナーを、クリア＆再設定する
      */
-    applyEvents(gameObject, eventsData = null) {
-        // --- 1. まず、古いイベントリスナーを全てクリア ---
-        gameObject.off('pointerdown');
-        // (将来的に、onHoverなどもここでoffにする)
-        
-        const events = eventsData || gameObject.getData('events');
-        if (!events) return;
-        
+    applyEvents(gameObject, eventsData) {
+        const events = eventsData || gameObject.getData('events') || [];
         gameObject.setData('events', events);
+        
+        // --- ゲームプレイ用の 'pointerdown' リスナーを全て削除 ---
+        // 'onClick' イベントを持つリスナーだけを狙って削除
+        gameObject.off('pointerdown');
 
-        // --- 2. 新しいイベントデータに基づいて、リスナーを再設定 ---
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
+                // ★★★ EditorPluginのリスナーと競合しないように設定 ★★★
+                gameObject.setInteractive(); // 念のため
                 gameObject.on('pointerdown', () => {
                     if (this.actionInterpreter) {
                         this.actionInterpreter.run(gameObject, eventData.actions);
                     }
                 });
             }
-            // ... (onKeyPress, onOverlap などのロジックも、ここに追加していく)
         });
     }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * EditorPluginから呼び出され、イベントの再構築をトリガーする
+     */
+    onEditorEventChanged(targetObject) {
+        console.log(`[${this.scene.key}] Event changed for '${targetObject.name}'. Rebuilding listeners and colliders.`);
+        
+        // 1. ターゲットオブジェクトのイベントリスナーを再適用
+        this.applyEvents(targetObject);
+
+        // 2. シーン全体の物理判定を再構築
+        this.rebuildPhysicsInteractions();
+    }
+
     
     /**
      * エディタからオブジェクト追加の依頼を受けた時の、デフォルトの処理。
@@ -234,28 +249,19 @@
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
         return null;
         }
-
-
-  finalizeSetup() {
-        console.log(`[${this.scene.key}] Finalizing setup...`);
-
-        // 1. まず、シーン固有の最終処理（衝突判定など）を先に呼び出す
-        if (this.onSetupComplete) {
-            this.onSetupComplete();
-        }
+    /**
+     * ★★★ 新規メソッド (finalizeSetupからロジックを分離) ★★★
+     * シーン全体の物理的な相互作用（衝突・接触）を再構築する
+     */
+    rebuildPhysicsInteractions() {
+        // --- 1. 以前に作成した動的なコライダーを全て破棄 ---
+        this.dynamicColliders.forEach(collider => collider.destroy());
+        this.dynamicColliders = [];
         
-        // 2. 次に、物理イベントを設定する
-    
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、onCollisionを実現する、最後の心臓部です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 1. シーン内の全オブジェクトから、衝突/接触イベントを収集 ---
+        // --- 2. finalizeSetupから持ってきたロジックで、コライダーを再設定 ---
         const allGameObjects = this.children.getAll();
         const collisionEvents = [];
-
-        allGameObjects.forEach(gameObject => {
+         allGameObjects.forEach(gameObject => {
             const events = gameObject.getData('events');
             if (events) {
                 events.forEach(eventData => {
@@ -272,55 +278,45 @@
             }
         });
         
-        // --- 2. 収集したイベントに基づいて、物理エンジンに関係性を設定 ---
         collisionEvents.forEach(eventInfo => {
-            // 相手となるグループに所属するオブジェクトを全て見つけ出す
             const targetObjects = allGameObjects.filter(obj => obj.getData('group') === eventInfo.targetGroup);
-
             if (targetObjects.length > 0) {
-                console.log(`[${this.scene.key}] Setting up ${eventInfo.eventType} between '${eventInfo.source.name}' and group '${eventInfo.targetGroup}'`);
-                
-                // this.physics.add.collider または .overlap を呼び出す
-                this.physics.add[eventInfo.eventType](eventInfo.source, targetObjects, (sourceObject, targetObject) => {
-                    // 衝突/接触した瞬間に、インタープリタにアクションの実行を依頼
-                    this.actionInterpreter.run(sourceObject, eventInfo.actions);
+                const newCollider = this.physics.add[eventInfo.eventType](eventInfo.source, targetObjects, (sourceObject, targetObject) => {
+                    if (this.actionInterpreter) {
+                        this.actionInterpreter.run(sourceObject, eventInfo.actions);
+                    }
                 });
+                // ★★★ 作成したコライダーを管理リストに追加 ★★★
+                this.dynamicColliders.push(newCollider);
             }
         });
+    }
 
-        // --- 3. シーン固有の最終処理 (onSetupComplete) を呼び出す ---
+    finalizeSetup() {
+        console.log(`[${this.scene.key}] Finalizing setup...`);
+
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
         
-       // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、全てを解決する、最後の、そして最も確実な方法です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ シーン全体の物理判定を初回構築 ★★★
+        this.rebuildPhysicsInteractions();
 
-        // 3. 全ての物理設定が終わった、この最後のタイミングで、
-        //    シーンに存在する全てのオブジェクトの「エディタ・イベント」を、
-        //    もう一度、強制的に「再設定」する
+        // ★★★ EditorPluginのイベントリスナーをゲームプレイ用リスナーの「後」に再適用する ★★★
         const editor = this.plugins.get('EditorPlugin');
         if (editor) {
-            allGameObjects.forEach(gameObject => {
-                if (gameObject.name && gameObject.input) { // inputがあれば、インタラクティブである
-                    
-                    // 古いリスナーが残っている可能性があるので、一度全て削除
-                    gameObject.off('pointerdown');
-                    gameObject.off('drag');
-                    gameObject.off('pointerover');
-                    gameObject.off('pointerout');
-
-                    // EditorPluginのロジックを、ここでもう一度実行する
+            this.children.getAll().forEach(gameObject => {
+                if (gameObject.getData('isEditable')) {
                     editor.reapplyEditorEvents(gameObject);
                 }
             });
         }
         
-        // 4. 最後に準備完了を通知
         this.events.emit('scene-ready');
         console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
+
+
        /**
      * ★★★ 新規メソッド ★★★
      * 毎フレーム実行され、キーが押されているかをチェックし、イベントを発火させる

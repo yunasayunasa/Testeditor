@@ -519,30 +519,45 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Phaser input re-enabled.");
     }
  
-     makeEditable(gameObject, scene) {
-        if (!this.isEnabled || !gameObject.name || gameObject.getData('isEditable')) return;
+         /**
+     * オブジェクトを編集可能にする (リスナー競合を解決)
+     */
+    makeEditable(gameObject, scene) {
+        if (!this.isEnabled || !gameObject.name) return;
         
-        // setInteractiveとsetDraggableは、一度だけ
-        gameObject.setInteractive();
-        scene.input.setDraggable(gameObject);
-        gameObject.setData('isEditable', true);
+        // --- 登録処理 ---
+        const sceneKey = scene.scene.key;
+        if (!this.editableObjects.has(sceneKey)) {
+            this.editableObjects.set(sceneKey, new Set());
+        }
+        this.editableObjects.get(sceneKey).add(gameObject);
+
+        // --- 初回のみインタラクティブ化 ---
+        if (!gameObject.getData('isEditable')) {
+            gameObject.setInteractive();
+            scene.input.setDraggable(gameObject);
+            gameObject.setData('isEditable', true);
+        }
         
-        // イベントリスナーの設定は、新しいヘルパーメソッドに任せる
+        // --- エディタ用のイベントリスナーを（再）適用 ---
         this.reapplyEditorEvents(gameObject);
     }
 
-     /**
-     * ★★★ 新規メソッド ★★★
+
+  /**
      * オブジェクトに、エディタ用のイベントリスナーを（再）設定する
      */
     reapplyEditorEvents(gameObject) {
         if (!this.isEnabled) return;
 
-        gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            this.selectedObject = gameObject;
-            this.updatePropertyPanel();
-            event.stopPropagation();
-        });
+        // ★★★ 既存のエディタ用リスナーを確実に削除 ★★★
+        gameObject.off('pointerdown', this.onObjectSelected, this);
+        gameObject.off('drag');
+        gameObject.off('pointerover');
+        gameObject.off('pointerout');
+
+        // ★★★ コールバックをメソッドとして定義し、'this'を束縛 ★★★
+        gameObject.on('pointerdown', this.onObjectSelected, this);
         
         gameObject.on('drag', (pointer, dragX, dragY) => {
             gameObject.x = Math.round(dragX);
@@ -553,7 +568,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         gameObject.on('pointerover', () => gameObject.setTint(0x00ff00));
         gameObject.on('pointerout', () => gameObject.clearTint());
     }
-    
+/**
+     * ★★★ 新規メソッド ★★★
+     * オブジェクト選択時のコールバック
+     */
+    onObjectSelected(pointer, localX, localY, event) {
+        this.selectedObject = pointer.gameObject;
+        this.updatePropertyPanel();
+        // ★★★ ゲームプレイ用のイベントが発火するのを止める ★★★
+        event.stopPropagation();
+    }
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         const isCurrentlyStatic = (body instanceof Phaser.Physics.Arcade.StaticBody);
@@ -841,16 +865,24 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return div;
     }
 
+     /**
+     * イベントデータを更新し、シーンに通知する (最終版)
+     */
     updateEventData(index, key, value) {
         if (!this.selectedObject) return;
         const events = this.selectedObject.getData('events') || [];
         if (events[index]) {
             events[index][key] = value;
             this.selectedObject.setData('events', events);
-             this.populateEventEditor();
-             this.pluginManager.game.events.emit('editor_event_changed', {
-            target: this.selectedObject
-        });
+            
+            // ★★★ 1. イベントエディタのUIを即時更新 ★★★
+            this.populateEventEditor(); 
+            
+            // ★★★ 2. BaseGameSceneに「イベントが変更された」ことを通知 ★★★
+            const targetScene = this.selectedObject.scene;
+            if (targetScene && targetScene.onEditorEventChanged) {
+                targetScene.onEditorEventChanged(this.selectedObject);
+            }
         }
     }
 }
