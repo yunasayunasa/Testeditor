@@ -1,5 +1,5 @@
-import CoinHud from './CoinHud.js';
-import HpBar from './HpBar.js';
+//import CoinHud from './CoinHud.js';
+//import HpBar from './HpBar.js';
 // import VirtualStick from './VirtualStick.js'; // 必要ならインポート
 
 /**
@@ -12,7 +12,7 @@ import HpBar from './HpBar.js';
  */
 export const uiRegistry = {
     // --- HUDグループ ---
-    'coin_hud': {
+  /*  'coin_hud': {
         creator: (scene, params) => new CoinHud(scene, { ...params, stateManager: scene.registry.get('stateManager') }),
         groups: ['hud', 'game', 'battle']
     },
@@ -29,7 +29,7 @@ export const uiRegistry = {
     'virtual_stick': {
         // creator: (scene, params) => new VirtualStick(scene, params),
         groups: ['controls', 'action']
-    },
+    },*/
 
     // --- メニュー関連 (ハードコードでもOKだが、一応ここに定義) ---
     // これらはレイアウトJSONには記載せず、UISceneが直接生成する

@@ -1,26 +1,6 @@
 {
   "objects": [
-    {
-      "name": "coin_hud",
-      "type": "CoinHud",
-      "visible_in": ["GameScene", "BattleScene"],
-      "params": {},
-      "x": 100, "y": 50, "width": 150, "height": 50
-    },
-    {
-      "name": "player_hp_bar",
-      "type": "HpBar",
-      "visible_in": ["BattleScene"],
-      "params": { "type": "player" },
-      "x": 100, "y": 100, "width": 200, "height": 25
-    },
-    {
-      "name": "enemy_hp_bar",
-      "type": "HpBar",
-      "visible_in": ["BattleScene"],
-      "params": { "type": "enemy" },
-      "x": 930, "y": 100, "width": 250, "height": 25
-    },
+   
     {
       "name": "menu_button",
       "type": "Text",
@@ -34,20 +14,8 @@
       "visible_in": ["GameScene"],
       "params": {},
       "x": 640, "y": 780, "width": 1280, "height": 120
-    },
-    {
-      "name": "virtual_stick",
-      "type": "VirtualStick",
-      "visible_in": [ "ActionScene", "YomawariScene"],
-      "params": { "texture_base": "stick_base", "texture_stick": "stick_knob" },
-      "x": 150, "y": 550
-    },
-    {
-      "name": "jump_button",
-      "type": "Image",
-      "texture": "jump_button_texture",
-      "visible_in": [ "ActionScene"],
-      "x": 1150, "y": 550
     }
+   
+    
   ]
 }
