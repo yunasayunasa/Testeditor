@@ -15,15 +15,7 @@
       "params": {},
       "x": 640, "y": 780, "width": 1280, "height": 120
     },
-      {
-      "name": "virtual_stick",
-      "type": "VirtualStick",
-      "x": 180, 
-      "y": 540,
-      "width": 200, 
-      "height": 200
-     
-    },
+      
        {
       "name": "jump_button",
       "type": "JumpButton",
