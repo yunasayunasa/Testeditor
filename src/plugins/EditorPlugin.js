@@ -521,7 +521,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
  
          /**
      * オブジェクトを編集可能にする (リスナー競合を解決)
-     */
+     *
     makeEditable(gameObject, scene) {
         if (!this.isEnabled || !gameObject.name) return;
         
@@ -541,7 +541,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         
         // --- エディタ用のイベントリスナーを（再）適用 ---
         this.reapplyEditorEvents(gameObject);
-    }
+    }*/
 
 
   /**
@@ -865,33 +865,34 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return div;
     }
 
-    //シフトキーでテスト再生するリスナ）ー
+   /**
+     * SystemSceneから一度だけ呼ばれ、グローバルな入力リスナーを設定する
+     */
     initializeGlobalInput() {
         if (!this.isEnabled) return;
 
+        // ゲーム全体の入力イベントを監視
         this.pluginManager.game.input.on('pointerdown', (pointer, gameObjects) => {
             
-            // ★★★ Shiftキーが押されているか、グローバルなキーボードマネージャーでチェック ★★★
             const shiftKey = this.pluginManager.game.input.keyboard.addKey('SHIFT');
 
-            // --- Shift + クリック: イベントのテスト再生 ---
+            // --- Shift + クリック: イベントのテスト再生モード ---
             if (shiftKey.isDown) {
                 console.log("[EditorPlugin] Shift-click detected. Passing event to game.");
-                // Editorは何もしない。イベントはそのままゲームオブジェクトのリスナーに流れる
+                // Editorは何もしない。イベントはゲームオブジェクト自身のリスナーに委ねる
                 return; 
             }
 
-            // --- 通常クリック: オブジェクトの選択 ---
+            // --- 通常クリック: オブジェクトの選択モード ---
             if (gameObjects.length > 0) {
-                const topObject = gameObjects[0];
+                const topObject = gameObjects[0]; // 最も手前のオブジェクト
                 
                 if (this.isObjectEditable(topObject)) {
                     this.selectedObject = topObject;
                     this.updatePropertyPanel();
-                    // ★★★ ここでイベントの伝播を止める必要は「ない」。
-                    // BaseGameScene側で制御する。
                 }
             } else {
+                // 背景がクリックされたら、選択を解除
                 this.selectedObject = null;
                 this.updatePropertyPanel();
             }
@@ -899,8 +900,45 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Global input listener initialized for cooperative mode.");
     }
 
-     /**
-     * イベントデータを更新し、シーンに通知する (最終版)
+    /**
+     * 指定されたオブジェクトが編集可能として登録されているかチェック
+     */
+    isObjectEditable(gameObject) {
+        for (const sceneObjects of this.editableObjects.values()) {
+            if (sceneObjects.has(gameObject)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * オブジェクトを編集可能として「登録」し、ドラッグイベントだけを設定する
+     */
+    makeEditable(gameObject, scene) {
+        if (!this.isEnabled || !gameObject.name) return;
+        
+        const sceneKey = scene.scene.key;
+        if (!this.editableObjects.has(sceneKey)) {
+            this.editableObjects.set(sceneKey, new Set());
+        }
+        this.editableObjects.get(sceneKey).add(gameObject);
+
+        if (!gameObject.getData('isEditable')) {
+            gameObject.setInteractive();
+            scene.input.setDraggable(gameObject);
+            gameObject.setData('isEditable', true);
+
+            gameObject.on('drag', (pointer, dragX, dragY) => {
+                gameObject.x = Math.round(dragX);
+                gameObject.y = Math.round(dragY);
+                if (this.selectedObject === gameObject) this.updatePropertyPanel();
+            });
+        }
+    }
+
+    /**
+     * イベントデータを更新し、シーンに通知する
      */
     updateEventData(index, key, value) {
         if (!this.selectedObject) return;
@@ -909,10 +947,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             events[index][key] = value;
             this.selectedObject.setData('events', events);
             
-            // ★★★ 1. イベントエディタのUIを即時更新 ★★★
-            this.populateEventEditor(); 
+            this.populateEventEditor();
             
-            // ★★★ 2. BaseGameSceneに「イベントが変更された」ことを通知 ★★★
             const targetScene = this.selectedObject.scene;
             if (targetScene && targetScene.onEditorEventChanged) {
                 targetScene.onEditorEventChanged(this.selectedObject);
