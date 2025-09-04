@@ -865,34 +865,33 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return div;
     }
 
-   /**
+   
+    /**
      * SystemSceneから一度だけ呼ばれ、グローバルな入力リスナーを設定する
      */
     initializeGlobalInput() {
         if (!this.isEnabled) return;
 
-        // ゲーム全体の入力イベントを監視
-        this.pluginManager.game.input.on('pointerdown', (pointer, gameObjects) => {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが正しいAPI呼び出しです ★★★
+        // this.pluginManager.game.input.on ではなく、 this.game.input.on を使う
+        this.game.input.on('pointerdown', (pointer, gameObjects) => {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
-            const shiftKey = this.pluginManager.game.input.keyboard.addKey('SHIFT');
+            const shiftKey = this.game.input.keyboard.addKey('SHIFT');
 
-            // --- Shift + クリック: イベントのテスト再生モード ---
             if (shiftKey.isDown) {
                 console.log("[EditorPlugin] Shift-click detected. Passing event to game.");
-                // Editorは何もしない。イベントはゲームオブジェクト自身のリスナーに委ねる
                 return; 
             }
 
-            // --- 通常クリック: オブジェクトの選択モード ---
             if (gameObjects.length > 0) {
-                const topObject = gameObjects[0]; // 最も手前のオブジェクト
-                
+                const topObject = gameObjects[0];
                 if (this.isObjectEditable(topObject)) {
                     this.selectedObject = topObject;
                     this.updatePropertyPanel();
                 }
             } else {
-                // 背景がクリックされたら、選択を解除
                 this.selectedObject = null;
                 this.updatePropertyPanel();
             }
