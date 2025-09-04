@@ -14,11 +14,11 @@ export const uiRegistry = {
         groups: ['hud', 'battle'],
         params: { type: 'enemy' }
     },
-    'virtual_stick': {
+/*    'virtual_stick': {
         path: './VirtualStick.js', // ★ ui/index.js から見た相対パス
         groups: ['controls', 'action'],
         params: {}
-    },
+    },*/
     'jump_button': {
         path: './JumpButton.js', // ★ ui/index.js から見た相対パス
         groups: ['controls', 'action'],
