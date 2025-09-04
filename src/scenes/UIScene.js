@@ -1,56 +1,92 @@
-import CoinHud from '../ui/CoinHud.js';
-import HpBar from '../ui/HpBar.js';
-import VirtualStick from '../ui/VirtualStick.js'; // ★ インポート
-
+import { uiRegistry, sceneUiVisibility } from './index.js'; // ★ UI定義を外部からインポート
 
 export default class UIScene extends Phaser.Scene {
     
     constructor() {
         super({ key: 'UIScene', active: false });
+        
+        /** @type {Map<string, Phaser.GameObjects.GameObject>} */
+        this.uiElements = new Map(); // すべてのUI要素を名前で管理するマップ
+
+        // ハードコードする要素への参照
         this.menuButton = null;
         this.panel = null;
         this.isPanelOpen = false;
-        this.virtualStick = null;
-        this.jumpButton = null;
-        // 管理するHUDをプロパティとして初期化
-        this.coinHud = null;
-        this.playerHpBar = null;
-        this.enemyHpBar = null; // バトルシーン用に敵HPバーも管理
     }
 
     create() {
-        console.log("UIScene: 作成・初期化");
+        console.log("UIScene: UIの器として初期化");
         this.scene.bringToTop();
         
-        const stateManager = this.sys.registry.get('stateManager');
-        const gameWidth = 1280;
-        const gameHeight = 720;
-// --- 仮想スティックの生成 ---
-        this.virtualStick = new VirtualStick(this, {
-            x: 150,
-            y: 550,
-            texture_base: 'stick_base',   // 仮のアセットキー
-            texture_stick: 'stick_knob' // 仮のアセットキー
+        // --- 1. データ駆動でUI要素を生成・登録 ---
+        const layoutData = this.cache.json.get(this.scene.key);
+        this.buildUiFromLayout(layoutData);
+
+        // --- 2. ハードコードするUI要素を生成・登録 ---
+        this.createHardcodedUI();
+        
+        // --- 3. SystemSceneからの通知を受け取るリスナー ---
+        const systemScene = this.scene.get('SystemScene');
+        systemScene.events.on('transition-complete', this.onSceneTransition, this);
+        
+        this.events.emit('scene-ready');
+    }
+
+    /**
+     * レイアウトJSONからUI要素を生成し、シーンと管理マップに追加する
+     */
+    buildUiFromLayout(layoutData) {
+        if (!layoutData || !layoutData.objects) return;
+
+        layoutData.objects.forEach(layout => {
+            const definition = uiRegistry[layout.name];
+            if (definition && typeof definition.creator === 'function') {
+                const uiElement = definition.creator(this, layout.params);
+                this.registerUiElement(layout.name, uiElement, layout);
+            }
         });
-         // --- ジャンプボタンの生成 ---
-   /*     this.jumpButton = this.add.image(1150, 550, 'jump_button_texture') // 仮のアセットキー
-            .setInteractive()
-            .setScrollFactor(0);*/
+    }
+    
+    /**
+     * ハードコードで管理するUI要素（メニューなど）を生成する
+     */
+    createHardcodedUI() {
+        // メニューボタン
+        this.menuButton = this.add.text(100, 670, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5).setInteractive();
+        this.registerUiElement('menu_button', this.menuButton);
+        this.menuButton.on('pointerdown', () => this.togglePanel());
 
-        // --- 1. パネルと、その中のボタンを生成 ---
-        this.panel = this.add.container(0, gameHeight + 120); // 初期位置は画面下
-        
-        const panelBg = this.add.rectangle(gameWidth / 2, 0, gameWidth, 120, 0x000000, 0.8).setInteractive();
-        const saveButton = this.add.text(0, 0, 'セーブ', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        const loadButton = this.add.text(0, 0, 'ロード', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        const backlogButton = this.add.text(0, 0, '履歴', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        const configButton = this.add.text(0, 0, '設定', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        const autoButton = this.add.text(0, 0, 'オート', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        const skipButton = this.add.text(0, 0, 'スキップ', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        
-        this.panel.add([panelBg, saveButton, loadButton, backlogButton, configButton, autoButton, skipButton]);
+        // パネル (ここではContainerだけ作り、中身はヘルパーメソッドで)
+        this.panel = this.createBottomPanel();
+        this.panel.setPosition(0, 840); // 初期位置は画面外
+        this.registerUiElement('bottom_panel', this.panel);
+    }
+        /**
+     * ハードコードで管理するボトムパネルとその中のボタンを生成するヘルパーメソッド
+     * @returns {Phaser.GameObjects.Container} 生成されたパネルコンテナ
+     */
+    createBottomPanel() {
+        const gameWidth = 1280; // or this.scale.width
+        const panel = this.add.container(0, 0);
 
-        // --- 2. パネル内のボタンのレイアウトを確定 ---
+        // パネルの背景 (クリックイベントを止める役割も持つ)
+        const panelBg = this.add.rectangle(gameWidth / 2, 0, gameWidth, 120, 0x000000, 0.8)
+            .setInteractive();
+        panelBg.on('pointerdown', (pointer, localX, localY, event) => {
+            event.stopPropagation();
+        });
+
+        // パネル内の各ボタンを生成
+        const saveButton = this.add.text(0, 0, 'セーブ', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive().setName('save_button');
+        const loadButton = this.add.text(0, 0, 'ロード', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive().setName('load_button');
+        const backlogButton = this.add.text(0, 0, '履歴', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive().setName('backlog_button');
+        const configButton = this.add.text(0, 0, '設定', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive().setName('config_button');
+        const autoButton = this.add.text(0, 0, 'オート', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive().setName('auto_button');
+        const skipButton = this.add.text(0, 0, 'スキップ', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5).setInteractive().setName('skip_button');
+        
+        panel.add([panelBg, saveButton, loadButton, backlogButton, configButton, autoButton, skipButton]);
+
+        // ボタンのレイアウトを計算して配置
         const buttons = [saveButton, loadButton, backlogButton, configButton, autoButton, skipButton];
         const areaStartX = 250;
         const areaWidth = gameWidth - areaStartX - 100;
@@ -59,167 +95,64 @@ export default class UIScene extends Phaser.Scene {
             button.setX(areaStartX + (buttonMargin * index) + (buttonMargin / 2));
         });
 
-        // --- 3. メインの「メニュー」ボタンを生成・配置 ---
-        this.menuButton = this.add.text(100, gameHeight - 50, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-
-        // --- 4. すべてのイベントリスナーを、ここで一括設定 ---
+        // 各ボタンにイベントリスナーを設定
+        saveButton.on('pointerdown', (e) => { this.openScene('SaveLoadScene', { mode: 'save' }); e.stopPropagation(); });
+        loadButton.on('pointerdown', (e) => { this.openScene('SaveLoadScene', { mode: 'load' }); e.stopPropagation(); });
+        backlogButton.on('pointerdown', (e) => { this.openScene('BacklogScene'); e.stopPropagation(); });
+        configButton.on('pointerdown', (e) => { this.openScene('ConfigScene'); e.stopPropagation(); });
+        autoButton.on('pointerdown', (e) => { this.toggleGameMode('auto'); e.stopPropagation(); });
+        skipButton.on('pointerdown', (e) => { this.toggleGameMode('skip'); e.stopPropagation(); });
         
-        // パネル背景は、クリックイベントを止めるだけ
-        panelBg.on('pointerdown', (pointer, localX, localY, event) => {
-            event.stopPropagation();
-        });
-
-        // メニューボタンは、パネルの開閉をトリガー
-        this.menuButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.togglePanel();
-            event.stopPropagation();
-        });
-
-        // 各機能ボタン
-        saveButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.openScene('SaveLoadScene', { mode: 'save' });
-            event.stopPropagation();
-        });
-        loadButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.openScene('SaveLoadScene', { mode: 'load' });
-            event.stopPropagation();
-        });
-        backlogButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.openScene('BacklogScene');
-            event.stopPropagation();
-        });
-        configButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.openScene('ConfigScene');
-            event.stopPropagation();
-        });
-        autoButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.toggleGameMode('auto');
-            event.stopPropagation();
-        });
-        skipButton.on('pointerdown', (pointer, localX, localY, event) => {
-            this.toggleGameMode('skip');
-            event.stopPropagation();
-        });
-        
-        // --- HUDのインスタンスを生成 ---
-        this.coinHud = new CoinHud(this, { x: 100, y: 50, stateManager: stateManager });
-        this.playerHpBar = new HpBar(this, { x: 100, y: 100, width: 200, height: 25, type: 'player', stateManager: stateManager });
-        // BattleSceneにしか出てこない敵HPバーもここで作ってしまう
-        this.enemyHpBar = new HpBar(this, { x: this.scale.width - 100 - 250, y: 100, width: 250, height: 25, type: 'enemy', stateManager: stateManager });
- // 1. GameSceneのインスタンスを取得する
-        const gameScene = this.scene.get('GameScene');
-
-        // 2. GameSceneがメッセージウィンドウを持っているか確認
-        if (gameScene && gameScene.messageWindow) {
-            
-            // 3. GameSceneの表示リストから、メッセージウィンドウを「取り除く」
-            //    (messageWindowはContainerなので、GameSceneのルートにいるはず)
-            gameScene.children.remove(gameScene.messageWindow);
-
-            // 4. UISceneの表示リストに、そのメッセージウィンドウを「追加」する
-            this.add.existing(gameScene.messageWindow);
-            
-            // 5. 念のため、最前面に表示されるようにDepthを設定
-            gameScene.messageWindow.setDepth(100);
-
-            // 6. エディタに登録
-            const editor = this.plugins.get('EditorPlugin');
-            if (editor) {
-                gameScene.messageWindow.name = 'message_window';
-                gameScene.messageWindow.setSize(1280, 180);
-                editor.makeEditable(gameScene.messageWindow, this); // ★ シーンはUISceneとして登録
-            }
-            
-            console.log("[UIScene] MessageWindow has been moved to the top layer.");
-        }
-        // --- SystemSceneからの通知を受け取るリスナー ---
-        const systemScene = this.scene.get('SystemScene');
-        systemScene.events.on('transition-complete', this.onSceneTransition, this);
-        
-       
-      const editor = this.plugins.get('EditorPlugin');
-         // --- 4. 各UIオブジェクトに、エディタ用の名前を付ける ---
-        this.menuButton.name = 'menu_button';
-        this.panel.name = 'bottom_panel';
-        this.coinHud.name = 'coin_hud';
-        this.playerHpBar.name = 'player_hp_bar';
-        this.enemyHpBar.name = 'enemy_hp_bar';
-         // 新しいUIも、エディタで編集可能にする
-            this.virtualStick.name = 'virtual_stick';
-            this.jumpButton.name = 'jump_button';
-            // VirtualStickはContainerなので、setSizeが必要
-            this.virtualStick.setSize(this.virtualStick.base.width, this.virtualStick.base.height);
-            
-          
-
-        // --- 5. レイアウトJSONを読み込み、位置を上書きする ---
-        const sceneKey = this.scene.key;
-        const layoutData = this.cache.json.get(sceneKey); // PreloadSceneでロード済み
-
-        if (layoutData && layoutData.objects) {
-            console.log(`[${sceneKey}] Applying layout data to UI elements...`);
-            // シーンが持つ全ての子オブジェクトをチェック
-            this.children.list.forEach(gameObject => {
-                if (gameObject.name) {
-                    const layout = layoutData.objects.find(obj => obj.name === gameObject.name);
-                    if (layout) {
-                        // JSONにデータがあれば、その位置やスケールで上書き
-                        gameObject.setPosition(layout.x, layout.y);
-                        gameObject.setScale(layout.scaleX, layout.scaleY);
-                        gameObject.setAngle(layout.angle);
-                        gameObject.setAlpha(layout.alpha);
-                    }
-                }
-            });
-        }
-        
-        // --- 6. 最後に、全てをエディタに登録する ---
-       
-        if (editor) {
-            // コンテナに「先に」サイズを設定
-            this.panel.setSize(1280, 120);
-            this.coinHud.setSize(150, 50);
-            this.playerHpBar.setSize(200, 25);
-            this.enemyHpBar.setSize(250, 25);
-            
-            // 「後から」エディタに登録
-            editor.makeEditable(this.menuButton, this);
-            editor.makeEditable(this.panel, this);
-            editor.makeEditable(this.coinHud, this);
-            editor.makeEditable(this.playerHpBar, this);
-            editor.makeEditable(this.enemyHpBar, this);
-            editor.makeEditable(this.virtualStick, this);
-            editor.makeEditable(this.jumpButton, this);
-
-        }
-
-
-        
-        console.log("UI作成完了");
-    } // createメソッドの終わり
-    /**
-     * ★★★ 新規メソッド ★★★
-     * レイアウト定義から、正しい種類のUIオブジェクトを生成する
-     */
-    createObjectFromLayout(layout) {
-        let uiElement = null;
-        const stateManager = this.registry.get('stateManager');
-        const CustomUIClass = CUSTOM_UI_MAP[layout.type];
-
-        if (CustomUIClass) {
-            uiElement = new CustomUIClass(this, { ...layout.params, stateManager });
-        } else {
-            switch (layout.type) {
-                case 'Text':
-                    uiElement = this.add.text(0, 0, layout.params.text, layout.params.style).setOrigin(0.5);
-                    break;
-                case 'Panel':
-                    uiElement = this.createBottomPanel();
-                    break;
-            }
-        }
-        return uiElement;
+        return panel;
     }
+    /**
+     * UI要素をシーンと管理マップに登録し、プロパティとエディタ機能を適用する
+     */
+    registerUiElement(name, element, layout = {}) {
+        element.name = name;
+        this.add.existing(element);
+        this.uiElements.set(name, element);
+
+        // レイアウトデータがあれば適用
+        if (layout.x !== undefined) element.setPosition(layout.x, layout.y);
+        // ... (scale, alphaなども同様に適用)
+
+        // エディタ登録
+        element.setInteractive();
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            if (element instanceof Phaser.GameObjects.Container && layout.width) {
+                element.setSize(layout.width, layout.height);
+            }
+            editor.makeEditable(element, this);
+        }
+    }
+
+    /**
+     * シーン遷移時に、UIの表示/非表示をグループ単位で制御する
+     */
+    onSceneTransition(newSceneKey) {
+        console.log(`[UIScene] シーン遷移検知: ${newSceneKey}。UI表示を更新します。`);
+
+        // 表示すべきUIグループを取得 (設定がなければ空配列)
+        const visibleGroups = sceneUiVisibility[newSceneKey] || [];
+
+        // 全てのUI定義をチェック
+        for (const name in uiRegistry) {
+            const definition = uiRegistry[name];
+            const uiElement = this.uiElements.get(name);
+
+            if (uiElement) {
+                // UIのグループのいずれかが、表示すべきグループに含まれているか
+                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                uiElement.setVisible(shouldBeVisible);
+            }
+        }
+    }
+
+        
+     
+   
 
     /**
      * ★★★ GameSceneからコピー ★★★
@@ -246,27 +179,7 @@ export default class UIScene extends Phaser.Scene {
             editor.makeEditable(gameObject, this);
         }
     }
-    // --- 以下、このクラスが持つメソッド群 ---
-   onSceneTransition(newSceneKey) {
-        console.log(`[UIScene] シーン遷移を検知。HUD表示を更新します。新しいシーン: ${newSceneKey}`);
-
-        const isGameScene = (newSceneKey === 'GameScene');
-        const isBattleScene = (newSceneKey === 'BattleScene');
-
-        // シーンに応じてHUDの表示/非表示を切り替える
-        if (this.coinHud) this.coinHud.setVisible(isGameScene || isBattleScene);
-           const showVirtualControls = ['JumpScene', 'ActionScene'].includes(newSceneKey);
-        
-        if (this.virtualStick) this.virtualStick.setVisible(showVirtualControls);
-        if (this.jumpButton) this.jumpButton.setVisible(showVirtualControls);
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ ここを修正 ★★★
-        // ★★★ playerHpBarはBattleSceneの時だけ表示 ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        if (this.playerHpBar) this.playerHpBar.setVisible(isBattleScene); 
-        
-        if (this.enemyHpBar) this.enemyHpBar.setVisible(isBattleScene);
-    }
+  
     togglePanel() {
         this.isPanelOpen = !this.isPanelOpen;
         const targetY = this.isPanelOpen ? 720 - 60 : 720 + 120;

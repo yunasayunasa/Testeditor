@@ -1,13 +1,14 @@
 import SoundManager from '../core/SoundManager.js';
-import EditorUI from '../editor/EditorUI.js'; // ★ インポート
+import EditorUI from '../editor/EditorUI.js';
+
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
         this.globalCharaDefs = null;
         this.isProcessingTransition = false;
         this.initialGameData = null;
-         // ★★★ ノベルシーンのBGM情報を一時的に保持する場所 ★★★
-        this.novelBgmKey = null;
+        this.novelBgmKey = null; // BGMキーの保持
+        this.editorUI = null; // EditorUIへの参照を保持
     }
 
     init(data) {
@@ -18,59 +19,72 @@ export default class SystemScene extends Phaser.Scene {
 
     create() {
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
+        
+        // --- 1. コアサービスの初期化 ---
         const soundManager = new SoundManager(this.game);
-        this.sys.registry.set('soundManager', soundManager);
+        this.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
-        console.log("SystemScene: SoundManagerを生成・登録しました。");
- const currentURL = window.location.href;
-        if (currentURL.includes('?debug=true') || currentURL.includes('&debug=true')) {
-            // もしデバッグモードなら、<body>タグに 'debug-mode' というクラスを追加する
-            document.body.classList.add('debug-mode');
-            
-            // EditorPluginとEditorUIは、これまで通り起動する
-            const editorPlugin = this.plugins.start('EditorPlugin');
-            new EditorUI(this.game, editorPlugin);
-        }
+        console.log("SystemScene: SoundManagerを登録しました。");
 
-        // --- イベントリスナーを登録 ---
+        // --- 2. イベントリスナーの設定 ---
         this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
         
-        const stateManager = this.registry.get('stateManager');
-            const editorPlugin = this.plugins.start('EditorPlugin');
-            
-            // 2. 次に、EditorUIをnewする (この時点では、まだ連携していない)
-            const editorUI = new EditorUI(this.game, editorPlugin);
-            
-            // 3. 最後に、EditorPluginに、EditorUIのインスタンスを「渡す」
-            if (editorPlugin && editorUI) {
-                editorPlugin.setUI(editorUI);
-            }
-        
-        // ★★★ 変更点: EditorUIの起動もここでは行わない ★★★
+        // --- 3. エディタ関連の初期化 ---
+        this.initializeEditor();
          
-        // --- PreloadSceneから渡されたデータで初期ゲームを起動 ---
+        // --- 4. 初期ゲームの起動 ---
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
         }
     }
 
     /**
-     * 初期ゲームを起動する内部メソッド
-     * @param {object} initialData - PreloadSceneから渡されたデータ
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * デバッグモードの場合のみ、エディタ関連の機能を初期化する
+     */
+    initializeEditor() {
+        const currentURL = window.location.href;
+        const isDebugMode = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
+
+        if (isDebugMode) {
+            console.log("[SystemScene] Debug mode detected. Initializing Editor...");
+            
+            // a. bodyタグにクラスを付与 (CSS制御用)
+            document.body.classList.add('debug-mode');
+            
+            // b. EditorPluginを起動 (PhaserのGlobal Pluginとして登録されている想定)
+            const editorPlugin = this.plugins.get('EditorPlugin'); // startではなくgetで取得
+            
+            if (editorPlugin && editorPlugin.isEnabled) {
+                 // c. EditorUIをインスタンス化し、Pluginと連携させる
+                this.editorUI = new EditorUI(this.game, editorPlugin);
+                editorPlugin.setUI(this.editorUI);
+            }
+        }
+    }
+
+    /**
+     * 初期ゲームを起動する内部メソッド (UISceneの準備完了を待つ)
      */
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
-        this.scene.launch('UIScene');
-        this._startAndMonitorScene('GameScene', {
-            charaDefs: this.globalCharaDefs,
-            startScenario: initialData.startScenario,
-            startLabel: null,
+        
+        const uiScene = this.scene.get('UIScene');
+        uiScene.events.once('scene-ready', () => {
+            console.log("[SystemScene] UIScene is ready. Starting GameScene.");
+            this._startAndMonitorScene('GameScene', {
+                charaDefs: this.globalCharaDefs,
+                startScenario: initialData.startScenario,
+            });
         });
+        
+        this.scene.launch('UIScene');
     }
+    
     
      /**
      * [jump]などによるシーン遷移リクエストを処理 (修正版)
