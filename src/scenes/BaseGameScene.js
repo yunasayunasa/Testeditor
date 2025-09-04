@@ -196,12 +196,12 @@ export default class BaseGameScene extends Phaser.Scene {
          // ★★★ イベントの適用を、新しい applyEvents メソッドに一任 ★★★
         this.applyEvents(gameObject, layout.events);
         
+        try {
+            const editor = this.plugins.get('EditorPlugin');
             if (editor) {
                 editor.makeEditable(gameObject, this);
             }
-        } catch (e) {
-            console.error(`[BaseGameScene] Failed to make object interactive: '${gameObject.name}'`, e);
-        }
+        } catch (e) { console.error(`[BaseGameScene] Failed to make object interactive: '${gameObject.name}'`, e); }
         
         // --- 5. アニメーションプロパティの適用 ---
         // (オブジェクトがインタラクティブになった「後」で、再生を開始する)
@@ -227,7 +227,7 @@ export default class BaseGameScene extends Phaser.Scene {
     /**
      * 単一オブジェクトのイベントリスナーを、クリア＆再設定する
      */
-    applyEvents(gameObject, eventsData) {
+    /*applyEvents(gameObject, eventsData) {
         const events = eventsData || gameObject.getData('events') || [];
         gameObject.setData('events', events);
         
@@ -246,13 +246,13 @@ export default class BaseGameScene extends Phaser.Scene {
                 });
             }
         });
-    }
+    }*/
     
     /**
      * ★★★ 新規メソッド ★★★
      * EditorPluginから呼び出され、イベントの再構築をトリガーする
      */
-    onEditorEventChanged(targetObject) {
+    /*onEditorEventChanged(targetObject) {
         console.log(`[${this.scene.key}] Event changed for '${targetObject.name}'. Rebuilding listeners and colliders.`);
         
         // 1. ターゲットオブジェクトのイベントリスナーを再適用
@@ -260,7 +260,7 @@ export default class BaseGameScene extends Phaser.Scene {
 
         // 2. シーン全体の物理判定を再構築
         this.rebuildPhysicsInteractions();
-    }
+    }*/
 
     
     /**
@@ -274,7 +274,7 @@ export default class BaseGameScene extends Phaser.Scene {
        /**
      * シーン全体の物理的な相互作用を再構築する (遅延初期化対応版)
      */
-    rebuildPhysicsInteractions() {
+    /*rebuildPhysicsInteractions() {
         // --- 1. 以前に作成した動的なコライダーを全て破棄 ---
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが遅延初期化と防御的コードです ★★★
@@ -318,7 +318,88 @@ export default class BaseGameScene extends Phaser.Scene {
                 this.dynamicColliders.push(newCollider);
             }
         });
+    }*/
+      /**
+     * 単一オブジェクトのゲームプレイ用イベントリスナーをクリア＆再設定する
+     */
+    applyEvents(gameObject, eventsData) {
+        const events = eventsData || gameObject.getData('events') || [];
+        gameObject.setData('events', events);
+        
+        // 既存のゲームプレイ用 'pointerdown' リスナーをクリア
+        gameObject.off('pointerdown');
+
+        events.forEach(eventData => {
+            if (eventData.trigger === 'onClick') {
+                gameObject.setInteractive();
+                gameObject.on('pointerdown', () => {
+                    const editor = this.plugins.get('EditorPlugin');
+                    const shiftKey = this.input.keyboard.addKey('SHIFT');
+                    
+                    // エディタが無効、または、Shiftキーが押されている場合のみ、イベントを実行
+                    if (!editor || !editor.isEnabled || shiftKey.isDown) {
+                        if (this.actionInterpreter) {
+                            this.actionInterpreter.run(gameObject, eventData.actions);
+                        }
+                    } else {
+                        console.log(`[GameScene] '${gameObject.name}' clicked. Hold SHIFT to test onClick event.`);
+                    }
+                });
+            }
+        });
     }
+    
+    /**
+     * EditorPluginから呼び出され、イベントの再構築をトリガーする
+     */
+    onEditorEventChanged(targetObject) {
+        console.log(`[${this.scene.key}] Rebuilding for '${targetObject.name}'.`);
+        this.applyEvents(targetObject); // onClickなどを再設定
+        this.rebuildPhysicsInteractions(); // onCollisionなどを再設定
+    }
+
+    /**
+     * シーン全体の物理的な相互作用（衝突・接触）を再構築する
+     */
+    rebuildPhysicsInteractions() {
+        if (!this.dynamicColliders) {
+            this.dynamicColliders = [];
+        }
+        this.dynamicColliders.forEach(collider => collider.destroy());
+        this.dynamicColliders = [];
+        
+        const allGameObjects = this.children.getAll();
+        const collisionEvents = [];
+
+        allGameObjects.forEach(gameObject => {
+            const events = gameObject.getData('events');
+            if (events) {
+                events.forEach(eventData => {
+                    if ((eventData.trigger === 'onCollide_Start' || eventData.trigger === 'onOverlap_Start') && eventData.targetGroup) {
+                        collisionEvents.push({
+                            source: gameObject,
+                            eventType: eventData.trigger === 'onCollide_Start' ? 'collider' : 'overlap',
+                            targetGroup: eventData.targetGroup,
+                            actions: eventData.actions
+                        });
+                    }
+                });
+            }
+        });
+        
+        collisionEvents.forEach(eventInfo => {
+            const targetObjects = allGameObjects.filter(obj => obj.getData('group') === eventInfo.targetGroup);
+            if (targetObjects.length > 0) {
+                const newCollider = this.physics.add[eventInfo.eventType](eventInfo.source, targetObjects, (sourceObject, targetObject) => {
+                    if (this.actionInterpreter) {
+                        this.actionInterpreter.run(sourceObject, eventInfo.actions);
+                    }
+                });
+                this.dynamicColliders.push(newCollider);
+            }
+        });
+    }
+
     finalizeSetup() {
         console.log(`[${this.scene.key}] Finalizing setup...`);
 
@@ -326,23 +407,11 @@ export default class BaseGameScene extends Phaser.Scene {
             this.onSetupComplete();
         }
         
-        // ★★★ シーン全体の物理判定を初回構築 ★★★
         this.rebuildPhysicsInteractions();
-
-        // ★★★ EditorPluginのイベントリスナーをゲームプレイ用リスナーの「後」に再適用する ★★★
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor) {
-            this.children.getAll().forEach(gameObject => {
-                if (gameObject.getData('isEditable')) {
-                    editor.reapplyEditorEvents(gameObject);
-                }
-            });
-        }
         
         this.events.emit('scene-ready');
         console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
-
 
        /**
      * ★★★ 新規メソッド ★★★
