@@ -28,33 +28,32 @@ export default class UIScene extends Phaser.Scene {
         this.events.emit('scene-ready');
     }
 
-    /**
-     * レイアウトJSONからUI要素を非同期で生成する
-     */
-    async buildUiFromLayout(layoutData) {
+   async buildUiFromLayout(layoutData) {
         if (!layoutData || !layoutData.objects) return;
 
         const creationPromises = layoutData.objects.map(layout => {
             const definition = uiRegistry[layout.name];
             if (definition && definition.path) {
-                // ★★★ ここが動的インポートの核心 ★★★
-                return import(`../ui/${definition.path}`) // 相対パスで指定
+                return import(`../ui/${definition.path.substring(2)}`) // "./" を取り除く
                     .then(module => {
                         const UiClass = module.default;
                         const stateManager = this.registry.get('stateManager');
-                        const params = { ...definition.params, ...layout.params, stateManager };
-                        const uiElement = new UiClass(this, { ...layout, params });
+                        
+                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                        // ★★★ これがparamsを正しく渡すための修正です ★★★
+                        // definitionのparamsとlayoutのparamsを結合する
+                        const finalParams = { ...definition.params, ...layout.params, stateManager };
+                        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+                        const uiElement = new UiClass(this, { x: layout.x, y: layout.y, ...finalParams });
                         this.registerUiElement(layout.name, uiElement, layout);
                     })
                     .catch(err => console.error(`Failed to load UI component: ${layout.name}`, err));
             }
             return Promise.resolve();
         });
-
-        // すべてのUIの読み込みと生成が終わるまで待つ
         await Promise.all(creationPromises);
     }
-
 
     onSceneTransition(newSceneKey) {
         console.log(`[UIScene] シーン遷移検知: ${newSceneKey}`);

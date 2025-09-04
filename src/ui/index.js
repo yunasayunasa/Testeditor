@@ -15,9 +15,15 @@ export const uiRegistry = {
         groups: ['hud', 'battle'],
         params: { type: 'enemy' }
     },
-    'virtual_stick': {
+   'virtual_stick': {
         path: './VirtualStick.js',
-        groups: ['controls', 'action']
+        groups: ['controls', 'action'],
+        // ★★★ デフォルトのパラメータを定義 ★★★
+        params: {
+            texture_base: 'stick_base', // 仮のアセットキー
+            texture_stick: 'stick_knob' , // 
+               params: {} // JumpButtonはパラメータ不要なので空オブジェクト
+        }
     },
     'jump_button': {
         path: './JumpButton.js',
