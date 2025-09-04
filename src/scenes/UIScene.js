@@ -3,12 +3,15 @@
 import CoinHud from '../ui/CoinHud.js';
 import HpBar from '../ui/HpBar.js';
 import VirtualStick from '../ui/VirtualStick.js';
+import JumpButton from '../ui/JumpButton.js'; // ★ 1. インポート
+
 const UI_CLASS_MAP = {
     'CoinHud': CoinHud,
     'HpBar': HpBar,
-      'VirtualStick': VirtualStick
+    'VirtualStick': VirtualStick,
+    'JumpButton': JumpButton // ★ 2. マッピングに追加
 };
-export default class UIScene extends Phaser.Scene {
+ne extends Phaser.Scene {
     
     constructor() {
         super({ key: 'UIScene', active: false });

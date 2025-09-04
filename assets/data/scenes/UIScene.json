@@ -25,6 +25,14 @@
         "texture_base": "stick_base",
         "texture_stick": "stick_knob"
       }
+    },
+       {
+      "name": "jump_button",
+      "type": "JumpButton",
+      "x": 1100,
+      "y": 540,
+      "width": 130,
+      "height": 130 
     }
   ]
     
