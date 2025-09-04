@@ -77,6 +77,17 @@
       "group": "player",
       "type": "Sprite",
       "texture": "walk",
+       "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 250,
+            "jumpVelocity": -400
+          }
+        }
+      ]
+    },
+    {
       "physics": {
         "isStatic": false,
         "width": 102,
@@ -88,17 +99,16 @@
         "bounceY": 0,
         "collideWorldBounds": true
       },
-        "components": [
-        {
-          "type": "PlayerController",
-          "params": {
-            "moveSpeed": 250,
-            "jumpVelocity": -400
-          }
-        }
-      ]
+      "events": []
     },
     {
+      "name": "untitled",
+      "x": 0,
+      "y": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onOverlap_Start",
@@ -137,16 +147,16 @@
     },
     {
       "name": "yuna_angry_1",
-      "x": 735,
-      "y": 259,
+      "x": 937,
+      "y": 536,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "player",
+      "group": "floor",
       "texture": "yuna_angry",
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "width": 317,
         "height": 316,
         "offsetX": 0,
@@ -204,15 +214,16 @@
       "texture": "item_potion",
       "physics": {
         "isStatic": false,
-        "width": 110.97000000000001,
-        "height": 60.28,
+        "width": 89.88570000000001,
+        "height": 26.5232,
         "offsetX": 0,
         "offsetY": 0,
         "allowGravity": false,
         "bounceX": 0,
         "bounceY": 0,
         "collideWorldBounds": true
-      }
+      },
+      "events": []
     },
     {
       "name": "item_shield_1",
@@ -226,15 +237,16 @@
       "texture": "item_shield",
       "physics": {
         "isStatic": false,
-        "width": 44.2,
-        "height": 114.4,
+        "width": 7.514000000000001,
+        "height": 50.336000000000006,
         "offsetX": 0,
         "offsetY": 0,
         "allowGravity": false,
         "bounceX": 0,
         "bounceY": 0,
         "collideWorldBounds": true
-      }
+      },
+      "events": []
     }
   ],
   "animations": [
