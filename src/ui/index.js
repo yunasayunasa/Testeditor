@@ -1,36 +1,35 @@
-// import CoinHud from './CoinHud.js'; // ← ここでのインポートはやめる
-// import HpBar from './HpBar.js';
-import VirtualStick from './VirtualStick.js'; 
-import JumpButton from './JumpButton.js'; 
+// ★★★ import文はすべて削除 ★★★
 
-
-
-// グローバルスコープに関数を定義
-window.registerUiDefinitions = () => {
-    // ★ new CoinHud() のようにクラスを直接使うのではなく、
-    //   「どのクラスを使うか」を示す文字列のキーを持たせる
-    const uiRegistry = {
-        'coin_hud': { type: 'CoinHud', groups: ['hud', 'game', 'battle'] },
-        'player_hp_bar': { type: 'HpBar', groups: ['hud', 'battle'] },
-        'enemy_hp_bar': { type: 'HpBar', groups: ['hud', 'battle'] },
-        'menu_button': { type: null, groups: ['menu', 'game'] },
-           'virtual_stick': {
-        creator: (scene, params) => new VirtualStick(scene, params),
-        groups: ['controls', 'action'] // アクションシーンで表示したいコントロールUI
+export const uiRegistry = {
+    'coin_hud': {
+        path: './CoinHud.js', // ★ creatorの代わりにファイルパスを文字列で指定
+        groups: ['hud', 'game', 'battle']
     },
-       'jump_button': {
-        creator: (scene, params) => new JumpButton(scene, params),
-        groups: ['controls', 'action'] // VirtualStickと同じグループに所属させる
+    'player_hp_bar': {
+        path: './HpBar.js',
+        groups: ['hud', 'battle'],
+        params: { type: 'player' } // ★ パラメータはここに集約
     },
-        'bottom_panel': { type: null, groups: ['menu', 'game'] }
-    };
+    'enemy_hp_bar': {
+        path: './HpBar.js',
+        groups: ['hud', 'battle'],
+        params: { type: 'enemy' }
+    },
+    'virtual_stick': {
+        path: './VirtualStick.js',
+        groups: ['controls', 'action']
+    },
+    'jump_button': {
+        path: './JumpButton.js',
+        groups: ['controls', 'action']
+    },
+    'menu_button': { path: null, groups: ['menu', 'game'] }, // ハードコードするものはnull
+    'bottom_panel': { path: null, groups: ['menu', 'game'] }
+};
 
-    const sceneUiVisibility = {
-        'GameScene': ['hud', 'menu', 'game'],
-        'JumpScene': ['controls', 'action'],
-        'BattleScene': ['hud', 'battle'],
-        'TitleScene': []
-    };
-    
-    return { uiRegistry, sceneUiVisibility };
+export const sceneUiVisibility = {
+    'GameScene': ['hud', 'menu', 'game'],
+    'JumpScene': ['controls', 'action'],
+    'BattleScene': ['hud', 'battle'],
+    'TitleScene': []
 };

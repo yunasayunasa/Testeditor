@@ -1,44 +1,17 @@
-import VirtualStick from './ui/VirtualStick.js';
-import JumpButton from './ui/JumpButton.js'; // ★ 1. インポート
+// ★★★ ui/index.js から定義を直接インポート ★★★
+import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
 
-const UI_CLASS_MAP = {
-    
-  
-    'VirtualStick': VirtualStick,
-    'JumpButton': JumpButton // ★ 2. マッピングに追加
-};
 export default class UIScene extends Phaser.Scene {
-    
-    constructor() {
-        super({ key: 'UIScene', active: false });
-        
-        /** @type {Map<string, Phaser.GameObjects.GameObject>} */
-        this.uiElements = new Map(); // すべてのUI要素を名前で管理するマップ
+    // ... (constructorは前回と同じ)
 
-        // ハードコードする要素への参照
-        this.menuButton = null;
-        this.panel = null;
-        this.isPanelOpen = false;
-
-         // ★ RegistryからUI定義を取得
-        this.uiRegistry = null;
-        this.sceneUiVisibility = null;
-    }
-create() {
+    async create() {
         console.log("UIScene: UIの器として初期化");
         this.scene.bringToTop();
         
-        // ★ RegistryからUI定義を取得
-        this.uiRegistry = this.registry.get('ui_registry');
-        this.sceneUiVisibility = this.registry.get('scene_ui_visibility');
-
-        if (!this.uiRegistry || !this.sceneUiVisibility) {
-            console.error("UIScene could not find UI definitions in Registry!");
-            return;
-        }
-        
+        // ★★★ createメソッドを async に変更 ★★★
         const layoutData = this.cache.json.get(this.scene.key);
-        this.buildUiFromLayout(layoutData);
+        await this.buildUiFromLayout(layoutData); // ★ awaitで待機
+
         this.createHardcodedUI();
         
         const systemScene = this.scene.get('SystemScene');
@@ -46,23 +19,34 @@ create() {
         
         this.events.emit('scene-ready');
     }
-    
-    buildUiFromLayout(layoutData) {
+
+    /**
+     * レイアウトJSONからUI要素を非同期で生成する
+     */
+    async buildUiFromLayout(layoutData) {
         if (!layoutData || !layoutData.objects) return;
 
-        layoutData.objects.forEach(layout => {
-            const definition = this.uiRegistry[layout.name];
-            // ★ creatorの代わりに、typeを使ってクラスを動的に選択する
-            if (definition && definition.type) {
-                const UiClass = UI_CLASS_MAP[definition.type];
-                if (UiClass) {
-                    const stateManager = this.registry.get('stateManager');
-                    const uiElement = new UiClass(this, { ...layout.params, stateManager });
-                    this.registerUiElement(layout.name, uiElement, layout);
-                }
+        const creationPromises = layoutData.objects.map(layout => {
+            const definition = uiRegistry[layout.name];
+            if (definition && definition.path) {
+                // ★★★ ここが動的インポートの核心 ★★★
+                return import(`../ui/${definition.path}`) // 相対パスで指定
+                    .then(module => {
+                        const UiClass = module.default;
+                        const stateManager = this.registry.get('stateManager');
+                        const params = { ...definition.params, ...layout.params, stateManager };
+                        const uiElement = new UiClass(this, { ...layout, params });
+                        this.registerUiElement(layout.name, uiElement, layout);
+                    })
+                    .catch(err => console.error(`Failed to load UI component: ${layout.name}`, err));
             }
+            return Promise.resolve();
         });
+
+        // すべてのUIの読み込みと生成が終わるまで待つ
+        await Promise.all(creationPromises);
     }
+
 
     onSceneTransition(newSceneKey) {
         console.log(`[UIScene] シーン遷移検知: ${newSceneKey}`);

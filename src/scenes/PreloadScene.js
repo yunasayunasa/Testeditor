@@ -21,7 +21,7 @@ export default class PreloadScene extends Phaser.Scene {
         
         // --- 2. 最初に asset_define.json のみロード ---
         this.load.json('asset_define', 'assets/asset_define.json');
-        this.load.script('ui_definitions', 'src/ui/index.js');
+        //this.load.script('ui_definitions', 'src/ui/index.js');
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     }
 
@@ -107,12 +107,7 @@ export default class PreloadScene extends Phaser.Scene {
         
         this.createGlobalAssetList();
         const charaDefs = this.createCharaDefs(assetDefine);
- if (window.registerUiDefinitions) {
-            const uiDefs = window.registerUiDefinitions();
-            this.registry.set('ui_registry', uiDefs.uiRegistry);
-            this.registry.set('scene_ui_visibility', uiDefs.sceneUiVisibility);
-            console.log("[PreloadScene] UI definitions loaded and registered.");
-        }
+
         this.scene.launch('SystemScene', { 
             // initialGameData は渡すが、中身はシンプルにする
         /*    initialGameData: {
