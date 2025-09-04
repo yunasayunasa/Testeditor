@@ -1,7 +1,7 @@
 // import CoinHud from './CoinHud.js'; // ← ここでのインポートはやめる
 // import HpBar from './HpBar.js';
 import VirtualStick from './VirtualStick.js'; 
-import JumpButton from './JumpButton.js'; /
+import JumpButton from './JumpButton.js'; 
 
 
 
