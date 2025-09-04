@@ -49,7 +49,7 @@ export default class SystemScene extends Phaser.Scene {
                 editorPlugin.setUI(editorUI);
             }
         editorPlugin.initializeGlobalInput();
-        }
+        
         
         // ★★★ 変更点: EditorUIの起動もここでは行わない ★★★
          
