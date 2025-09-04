@@ -77,32 +77,30 @@ export default class JumpScene extends BaseGameScene {
         return newImage;
     }
 
-  onSetupComplete() {
+onSetupComplete() {
         console.log("[JumpScene] onSetupComplete called.");
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、グループ機能とカメラを連携させる、最後のコードです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 1. 'player'グループに所属する、最初のオブジェクトを探す ---
+        // --- プレイヤーと床オブジェクトの取得 ---
         this.player = this.children.list.find(obj => obj.getData('group') === 'player');
-        
-        // --- 2. 'floor'グループに所属する、全てのオブジェクトを探す ---
         const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
 
-        // --- 3. 衝突判定とカメラ追跡を設定 ---
         if (this.player) {
-            console.log("[JumpScene] Player object found by group. Setting up camera and physics.");
+            console.log("[JumpScene] Player object found. Setting up components, camera, and physics.");
             
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ 2. ここで PlayerController を生成し、登録する ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            const playerController = new PlayerController(this, this.player);
+            this.components.push(playerController);
+            
+            // --- 物理とカメラの設定 (これは元のコードのまま) ---
             if (floors.length > 0) {
                 this.physics.add.collider(this.player, floors);
             }
-            
-            // カメラは、'player'グループの最初のオブジェクトを追いかける
             this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
             
         } else {
-            console.warn("[JumpScene] No object with group 'player' found. Player controls are disabled.");
+            console.warn("[JumpScene] No object with group 'player' found.");
         }
     }
     
