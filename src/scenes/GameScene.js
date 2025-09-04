@@ -70,7 +70,7 @@ export default class GameScene extends Phaser.Scene {
             .setDepth(0);
         this.choiceInputBlocker.on('pointerdown', () => console.log("選択肢を選んでください"));
         // this.choiceInputBlocker.input.enabled = false; // setVisible(false)で十分なので、この行は不要
-
+this.uiScene = this.scene.get('UIScene');
         // --- マネージャー/UIクラスの生成 ---
         this.configManager = this.sys.registry.get('configManager');
         this.stateManager = this.sys.registry.get('stateManager'); 
