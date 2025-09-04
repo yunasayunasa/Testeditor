@@ -89,21 +89,7 @@ export default class UIScene extends Phaser.Scene {
         return button;
     }
 
-    createBottomPanel(layout) {
-        const panel = this.add.container(0, 0);
-        // ... (createBottomPanelのロジックは前回と同じ)
-        return panel;
-    }
-    
-    togglePanel() {
-        const panel = this.uiElements.get('bottom_panel');
-        if (!panel) return;
-        this.isPanelOpen = !this.isPanelOpen;
-        // ... (tweenのロジック)
-    }
 
-    // ... (shutdownなどの他のメソッド)
-}
         /**
      * ハードコードで管理するボトムパネルとその中のボタンを生成するヘルパーメソッド
      * @returns {Phaser.GameObjects.Container} 生成されたパネルコンテナ
@@ -166,31 +152,7 @@ export default class UIScene extends Phaser.Scene {
         
         return panel;
     }
-    /**
-     * UI要素をシーンと管理マップに登録し、プロパティとエディタ機能を適用する
-     */
-    registerUiElement(name, element, layout = {}) {
-        element.name = name;
-        this.add.existing(element);
-        this.uiElements.set(name, element);
-
-        // レイアウトデータがあれば適用
-        if (layout.x !== undefined) element.setPosition(layout.x, layout.y);
-        // ... (scale, alphaなども同様に適用)
-
-        // エディタ登録
-        element.setInteractive();
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            if (element instanceof Phaser.GameObjects.Container && layout.width) {
-                element.setSize(layout.width, layout.height);
-            }
-            editor.makeEditable(element, this);
-        }
-    }
-
-
-
+    
         
      
    
