@@ -16,45 +16,42 @@ export default class PlayerController {
         this.jumpVelocity = -500;
         
         // --- 内部的な状態 ---
-        this.cursors = scene.input.keyboard.createCursorKeys();
+           this.cursors = scene.input.keyboard.createCursorKeys();
+        
+        // ★★★ UISceneから、UIへの参照を直接取得 ★★★
+        const uiScene = scene.scene.get('UIScene');
+        this.virtualStick = uiScene ? uiScene.virtualStick : null;
+        this.jumpButton = uiScene ? uiScene.jumpButton : null;
+        
+        if (this.jumpButton) {
+            this.jumpButton.on('pointerdown', this.jump, this);
+        }
     }
 
-    /**
-     * シーンのupdateループから、毎フレーム呼び出されるメソッド
-     */
-       update() {
-        if (!this.target || !this.target.body) {
-            return;
-        }
-
+    update() {
+        if (!this.target || !this.target.body) return;
         const body = this.target.body;
 
-        // --- 左右の移動 (変更なし) ---
-        if (this.cursors.left.isDown) {
-            body.setVelocityX(-this.moveSpeed);
-        } else if (this.cursors.right.isDown) {
-            body.setVelocityX(this.moveSpeed);
-        } else {
-            body.setVelocityX(0);
-        }
-        
-        
+        // --- 入力ソースから「意図」を読み取る ---
+        const left = this.cursors.left.isDown || (this.virtualStick && this.virtualStick.isLeft);
+        const right = this.cursors.right.isDown || (this.virtualStick && this.virtualStick.isRight);
+        const up = this.cursors.up.isDown; // ジャンプはキーボードのUPキー専用
 
-        // --- 1. ジャンプのコメントアウトを解除 ---
-        if (this.cursors.up.isDown && body.touching.down) {
-            body.setVelocityY(this.jumpVelocity);
-        }
+        // --- 「意図」に基づいて、物理ボディを操作 ---
+        if (left) body.setVelocityX(-this.moveSpeed);
+        else if (right) body.setVelocityX(this.moveSpeed);
+        else body.setVelocityX(0);
         
-      
+        if (up) this.jump();
     }
 
-    /**
-     * このコンポーネントが破棄される時に呼ばれるメソッド
-     * (イベントリスナーなどを解除するために使う)
-     */
+    jump() {
+        if (this.target && this.target.body && this.target.body.touching.down) {
+            this.target.body.setVelocityY(this.jumpVelocity);
+        }
+    }
+
     destroy() {
-        // (今回はキーボードカーソルをシーンから拝借しているだけなので、
-        //  特別な破棄処理は不要)
-        console.log(`[PlayerController] for '${this.target.name}' destroyed.`);
+        if (this.jumpButton) this.jumpButton.off('pointerdown', this.jump, this);
     }
 }

@@ -1,5 +1,7 @@
 import CoinHud from '../ui/CoinHud.js';
 import HpBar from '../ui/HpBar.js';
+import VirtualStick from '../ui/VirtualStick.js'; // ★ インポート
+
 
 export default class UIScene extends Phaser.Scene {
     
@@ -8,7 +10,8 @@ export default class UIScene extends Phaser.Scene {
         this.menuButton = null;
         this.panel = null;
         this.isPanelOpen = false;
-        
+        this.virtualStick = null;
+        this.jumpButton = null;
         // 管理するHUDをプロパティとして初期化
         this.coinHud = null;
         this.playerHpBar = null;
@@ -22,6 +25,17 @@ export default class UIScene extends Phaser.Scene {
         const stateManager = this.sys.registry.get('stateManager');
         const gameWidth = 1280;
         const gameHeight = 720;
+// --- 仮想スティックの生成 ---
+        this.virtualStick = new VirtualStick(this, {
+            x: 150,
+            y: 550,
+            texture_base: 'stick_base',   // 仮のアセットキー
+            texture_stick: 'stick_knob' // 仮のアセットキー
+        });
+         // --- ジャンプボタンの生成 ---
+   /*     this.jumpButton = this.add.image(1150, 550, 'jump_button_texture') // 仮のアセットキー
+            .setInteractive()
+            .setScrollFactor(0);*/
 
         // --- 1. パネルと、その中のボタンを生成 ---
         this.panel = this.add.container(0, gameHeight + 120); // 初期位置は画面下
@@ -130,7 +144,14 @@ export default class UIScene extends Phaser.Scene {
         this.coinHud.name = 'coin_hud';
         this.playerHpBar.name = 'player_hp_bar';
         this.enemyHpBar.name = 'enemy_hp_bar';
-        
+         // 新しいUIも、エディタで編集可能にする
+            this.virtualStick.name = 'virtual_stick';
+            this.jumpButton.name = 'jump_button';
+            // VirtualStickはContainerなので、setSizeが必要
+            this.virtualStick.setSize(this.virtualStick.base.width, this.virtualStick.base.height);
+            
+          
+
         // --- 5. レイアウトJSONを読み込み、位置を上書きする ---
         const sceneKey = this.scene.key;
         const layoutData = this.cache.json.get(sceneKey); // PreloadSceneでロード済み
@@ -167,6 +188,9 @@ export default class UIScene extends Phaser.Scene {
             editor.makeEditable(this.coinHud, this);
             editor.makeEditable(this.playerHpBar, this);
             editor.makeEditable(this.enemyHpBar, this);
+            editor.makeEditable(this.virtualStick, this);
+            editor.makeEditable(this.jumpButton, this);
+
         }
 
 
@@ -231,7 +255,10 @@ export default class UIScene extends Phaser.Scene {
 
         // シーンに応じてHUDの表示/非表示を切り替える
         if (this.coinHud) this.coinHud.setVisible(isGameScene || isBattleScene);
+           const showVirtualControls = ['JumpScene', 'ActionScene'].includes(newSceneKey);
         
+        if (this.virtualStick) this.virtualStick.setVisible(showVirtualControls);
+        if (this.jumpButton) this.jumpButton.setVisible(showVirtualControls);
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ ここを修正 ★★★
         // ★★★ playerHpBarはBattleSceneの時だけ表示 ★★★
