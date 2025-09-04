@@ -1,25 +1,34 @@
 const Container = Phaser.GameObjects.Container;
 
 export default class MessageWindow extends Container {
-    constructor(scene, soundManager, configManager) {
+    /**
+     * @param {Phaser.Scene} scene 
+     * @param {object} config - レイアウトJSONから渡される設定オブジェクト (x, y, width, heightなど)
+     */
+    constructor(scene, config) {
+        // コンテナ自身の位置はUISceneが設定するので、ここでは(0,0)で初期化
         super(scene, 0, 0);
 
-        this.scene = scene; // ★ シーンへの参照を保持
-        this.soundManager = soundManager;
-        this.configManager = configManager;
+        this.scene = scene;
+
+        // --- 依存サービスの取得 ---
+        // データ駆動のルールに従い、コンストラクタ引数ではなくレジストリから取得
+        this.soundManager = scene.registry.get('soundManager');
+        this.configManager = scene.registry.get('configManager');
+
+        // --- 状態管理プロパティ ---
         this.charByCharTimer = null;
         this.isTyping = false;
+        this.typingResolve = null; // Promiseの解決関数を保持
+        this.currentText = '';     // セーブ/ロード用
+        this.currentSpeaker = null;  // セーブ/ロード用
+        this.fullText = '';        // スキップ処理用
 
-        // ★★★ セーブ＆ロード用の状態保持プロパティ ★★★
-        this.currentText = '';
-        this.currentSpeaker = null;
+        // --- ウィンドウ背景 ---
+        // コンテナの原点(0,0)に配置
+        this.windowImage = scene.add.image(0, 0, 'message_window');
 
-        // --- ウィンドウとテキストのセットアップ ---
-        const gameWidth = scene.scale.width;
-        const gameHeight = scene.scale.height;
-        const windowY = gameHeight - 180;
-        this.windowImage = scene.add.image(gameWidth / 2, windowY, 'message_window');
-
+        // --- テキストオブジェクト ---
         const padding = 35;
         const textWidth = this.windowImage.width - (padding * 2);
         const textHeight = this.windowImage.height - (padding * 2);
@@ -32,24 +41,20 @@ export default class MessageWindow extends Container {
                 fontFamily: '"Noto Sans JP", sans-serif',
                 fontSize: '36px',
                 fill: '#ffffff',
+                wordWrap: { width: textWidth, useAdvancedWrap: true },
                 fixedWidth: textWidth,
                 fixedHeight: textHeight
             }
         );
 
-        // --- コンフィグと連携するテキスト速度 ---
-        this.textDelay = 50; // デフォルト値
-        this.updateTextSpeed(); // コンフィグから初期値を取得
-        this.configManager.on('change:textSpeed', this.updateTextSpeed, this);
-
         // --- クリック待ちアイコン ---
-        const iconX = (gameWidth / 2) + (this.windowImage.width / 2) - 60;
-        const iconY = windowY + (this.windowImage.height / 2) - 50;
+        const iconX = (this.windowImage.width / 2) - 60;
+        const iconY = (this.windowImage.height / 2) - 50;
         this.nextArrow = scene.add.image(iconX, iconY, 'next_arrow');
         this.nextArrow.setScale(0.5).setVisible(false);
         this.arrowTween = scene.tweens.add({
             targets: this.nextArrow,
-            y: this.nextArrow.y - (10 * this.nextArrow.scaleY),
+            y: this.nextArrow.y - 10,
             duration: 400,
             ease: 'Sine.easeInOut',
             yoyo: true,
@@ -57,111 +62,52 @@ export default class MessageWindow extends Container {
             paused: true
         });
 
-        // --- コンテナに追加 & シーンに登録 ---
-        this.add([this.windowImage, this.textObject, this.nextArrow]);
-        scene.add.existing(this);
-    }
+        // --- コンフィグと連携 ---
+        this.textDelay = 50;
+        this.updateTextSpeed();
+        this.configManager.on('change:textSpeed', this.updateTextSpeed, this);
 
-    // ★★★ コンフィグ値から速度を更新するヘルパーメソッド ★★★
+        // --- 全ての要素をコンテナに追加 ---
+        this.add([this.windowImage, this.textObject, this.nextArrow]);
+        // ★★★ UISceneのadd.existing(this)が呼ばれるので、ここでは不要 ★★★
+        // scene.add.existing(this);
+    }
+    
     updateTextSpeed() {
         const textSpeedValue = this.configManager.getValue('textSpeed');
         this.textDelay = 100 - textSpeedValue;
-        console.log(`テキスト表示速度を ${this.textDelay}ms に更新`);
     }
 
-    // ★★★ セッターをリネーム（より明確に） ★★★
     setTypingSpeed(newSpeed) {
         this.textDelay = newSpeed;
     }
 
-   // MessageWindow.js にこのコードを貼り付けてください
-
-    /**
-     * テキストを設定し、表示完了をPromiseで通知するメソッド (新バージョン)
-     * @param {string} text - 表示する全文
-     * @param {boolean} useTyping - テロップ表示を使うかどうか
-     * @param {string|null} speaker - 話者名（任意）
-     * @returns {Promise<void>} 表示完了時に解決されるPromise
-     */
     setText(text, useTyping = true, speaker = null) {
-        return new Promise(resolve => {
-            // ★ 現在の状態をプロパティとして保存
-            this.currentText = text;
-            this.currentSpeaker = speaker;
-    
-            // ★ 既存のタイマーがあれば完全に停止・破棄
-            if (this.charByCharTimer) {
-                this.charByCharTimer.remove();
-                this.charByCharTimer = null;
-            }
-            // ★ テキストをクリア
-            this.textObject.setText('');
-    
-            const typeSoundMode = this.configManager.getValue('typeSound');
-    
-            // タイピングなし、または即時表示の場合
-            if (!useTyping || text.length === 0 || this.textDelay <= 0) {
-                this.textObject.setText(text);
-                this.isTyping = false;
-                resolve(); // 即座にPromiseを解決して完了を通知
-                return;
-            }
-            
-            // タイピングありの場合
-            this.isTyping = true;
-            let index = 0;
-            
-            this.charByCharCharTimer = this.scene.time.addEvent({
-                delay: this.textDelay,
-                callback: () => {
-                    if (typeSoundMode === 'se') {
-                        this.soundManager.playSe('popopo');
-                    }
-                    // ここで直接 text を参照するように変更
-                    this.textObject.text += text[index];
-                    index++;
-                    if (index === text.length) {
-                        if(this.charByCharCharTimer) this.charByCharCharTimer.remove();
-                        this.isTyping = false;
-                        resolve(); // ★ すべて表示し終わったらPromiseを解決！
-                    }
-                },
-                callbackScope: this,
-                loop: true
-            });
-        });
-    }
-    
-    // MessageWindow.js
-
-    setText(text, useTyping = true, speaker = null) {
-        // ★ Promiseのresolve関数をクラスのプロパティに保持する
-        this.typingResolve = null; 
+        this.typingResolve = null;
 
         return new Promise(resolve => {
-            // ★ resolve関数を保持
-            this.typingResolve = resolve; 
-
+            this.typingResolve = resolve;
             this.currentText = text;
             this.currentSpeaker = speaker;
-    
+            this.fullText = text;
+
             if (this.charByCharTimer) {
                 this.charByCharTimer.remove();
                 this.charByCharTimer = null;
             }
             this.textObject.setText('');
-    
+            this.hideNextArrow();
+
             const typeSoundMode = this.configManager.getValue('typeSound');
-    
+
             if (!useTyping || text.length === 0 || this.textDelay <= 0) {
                 this.textObject.setText(text);
                 this.isTyping = false;
-                if (this.typingResolve) this.typingResolve(); // 即座に解決
+                if (this.typingResolve) this.typingResolve();
                 return;
             }
             
             this.isTyping = true;
-            this.fullText = text; // fullTextプロパティを確実に設定
             let index = 0;
             
             this.charByCharTimer = this.scene.time.addEvent({
@@ -176,7 +122,7 @@ export default class MessageWindow extends Container {
                         if(this.charByCharTimer) this.charByCharTimer.remove();
                         this.charByCharTimer = null;
                         this.isTyping = false;
-                        if (this.typingResolve) this.typingResolve(); // 完了時に解決
+                        if (this.typingResolve) this.typingResolve();
                     }
                 },
                 callbackScope: this,
@@ -188,20 +134,18 @@ export default class MessageWindow extends Container {
     skipTyping() {
         if (!this.isTyping || !this.charByCharTimer) return;
 
-        this.textObject.setText(this.fullText);
-
         this.charByCharTimer.remove();
         this.charByCharTimer = null;
         this.isTyping = false;
         
-        // ★ 保持していたresolve関数を呼び出して、Promiseを解決させる
+        this.textObject.setText(this.fullText);
+        
         if (this.typingResolve) {
             this.typingResolve();
-            this.typingResolve = null; // 一度使ったらクリア
+            this.typingResolve = null;
         }
     }
 
-    // ★★★ ロード時にウィンドウの状態をリセットするためのメソッド ★★★
     reset() {
         this.textObject.setText('');
         this.currentText = '';
@@ -209,25 +153,22 @@ export default class MessageWindow extends Container {
         this.isTyping = false;
         if (this.charByCharTimer) {
             this.charByCharTimer.remove();
+            this.charByCharTimer = null;
         }
         this.hideNextArrow();
     }
 
     showNextArrow() {
         this.nextArrow.setVisible(true);
-        if (this.arrowTween.isPaused()) {
+        if (this.arrowTween && this.arrowTween.isPaused()) {
             this.arrowTween.resume();
         }
     }
     
     hideNextArrow() {
         this.nextArrow.setVisible(false);
-        if (this.arrowTween.isPlaying()) {
+        if (this.arrowTween && this.arrowTween.isPlaying()) {
             this.arrowTween.pause();
         }
-    }
-
-    get textBoxWidth() {
-        return this.textObject.width;
     }
 }
