@@ -1,15 +1,13 @@
 // src/scenes/JumpScene.js
-//マリオやソニックのような横から見る２Dゲームシーン用のテンプレートシーンです。これをベースに作ってください。
 
 import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
 
-import PlayerController from '../components/PlayerController.js'; // ★ 直接インポート
 export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-         this.components = [];
+        
         this.player = null;
         this.cursors = null;
         this.actionInterpreter = null;
@@ -113,12 +111,7 @@ export default class JumpScene extends BaseGameScene {
         if (!this.player || !this.player.body) {
             return;
         }
- // 2. このシーンに登録された、全てのコンポーネントのupdateを呼び出す
-        for (const component of this.components) {
-            if (component.update) {
-                component.update(time, delta);
-            }
-        }
+
         // --- プレイヤーの操作 ---
         if (this.cursors.left.isDown) this.player.body.setVelocityX(-200);
         else if (this.cursors.right.isDown) this.player.body.setVelocityX(200);
@@ -152,28 +145,6 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-      /**
-     * ★★★ 新規メソッド ★★★
-     * このシーンに、コンポーネントを追加する
-     */
-    addComponent(target, componentType, params = {}) {
-        let component = null;
-
-        if (componentType === 'PlayerController') {
-            component = new PlayerController(this, target);
-        }
-
-        if (component) {
-            for (const key in params) {
-                if (component[key] !== undefined) component[key] = params[key];
-            }
-            this.components.push(component);
-            if (!target.components) target.components = {};
-            target.components[componentType] = component;
-        }
-    }
-
-
     /**
      * シーンが破棄される時の後片付け
      */
@@ -183,10 +154,6 @@ export default class JumpScene extends BaseGameScene {
            this.game.events.off('editor_event_changed', null, this);
         // ★★★ 3. シーン終了時に、イベントリスナーを必ず解除 ★★★
         this.events.off('update', this.handleKeyPressEvents, this);
-          for (const component of this.components) {
-            if (component.destroy) component.destroy();
-        }
-        this.components = [];
         super.shutdown();
     }
 }
