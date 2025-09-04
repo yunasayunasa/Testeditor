@@ -24,7 +24,10 @@ export default class EditorUI {
         this.panLeftBtn = document.getElementById('camera-pan-left');
         this.panRightBtn = document.getElementById('camera-pan-right');
         this.resetBtn = document.getElementById('camera-reset');
-        
+        this.currentMode = 'select'; // 'select' or 'play'
+        this.modeToggle = document.getElementById('mode-toggle-checkbox');
+        this.modeLabel = document.getElementById('mode-label');
+
         // ★★★ 3. 新しいメソッドを呼び出して、イベントリスナーをまとめて設定 ★★★
         this.initializeEventListeners();
         this.populateAssetBrowser();
@@ -59,8 +62,20 @@ export default class EditorUI {
         this.setupPanButton(this.panDownBtn, 0, panSpeed);
         this.setupPanButton(this.panLeftBtn, -panSpeed, 0);
         this.setupPanButton(this.panRightBtn, panSpeed, 0);
-
+if (this.modeToggle && this.modeLabel) {
+            this.modeToggle.addEventListener('change', (event) => {
+                if (event.target.checked) {
+                    this.currentMode = 'play';
+                    this.modeLabel.textContent = 'Play Mode';
+                } else {
+                    this.currentMode = 'select';
+                    this.modeLabel.textContent = 'Select Mode';
+                }
+                console.log(`[EditorUI] Mode changed to: ${this.currentMode}`);
+            });
+        }
     }
+    
    // src/editor/EditorUI.js
 
     populateAssetBrowser() {
