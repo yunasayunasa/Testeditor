@@ -108,11 +108,18 @@ export default class PreloadScene extends Phaser.Scene {
         const charaDefs = this.createCharaDefs(assetDefine);
 
         this.scene.launch('SystemScene', { 
+            // initialGameData は渡すが、中身はシンプルにする
             initialGameData: {
+                charaDefs: {}, // 空のオブジェクト
+                startScenario: 'test'
+            }
+        });
+           
+           /* initialGameData: {
                 charaDefs: charaDefs,
                 startScenario: 'test' // .ksは不要
             }
-        });
+        });*/
         
         this.scene.stop(this.scene.key);
     }

@@ -1,5 +1,5 @@
-import SoundManager from '../core/SoundManager.js';
-import EditorUI from '../editor/EditorUI.js';
+/*import SoundManager from '../core/SoundManager.js';
+import EditorUI from '../editor/EditorUI.js';*/
 
 export default class SystemScene extends Phaser.Scene {
     constructor() {
@@ -20,7 +20,7 @@ export default class SystemScene extends Phaser.Scene {
     create() {
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
-        // --- 1. コアサービスの初期化 ---
+      /*  // --- 1. コアサービスの初期化 ---
         const soundManager = new SoundManager(this.game);
         this.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
@@ -38,7 +38,7 @@ export default class SystemScene extends Phaser.Scene {
         // --- 4. 初期ゲームの起動 ---
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
-        }
+        }*/
     }
 
     /**
