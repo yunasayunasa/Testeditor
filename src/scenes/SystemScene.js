@@ -41,28 +41,27 @@ export default class SystemScene extends Phaser.Scene {
         }
     }
 
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * デバッグモードの場合のみ、エディタ関連の機能を初期化する
-     */
     initializeEditor() {
+        // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
         const isDebugMode = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
 
         if (isDebugMode) {
-            console.log("[SystemScene] Debug mode detected. Initializing Editor...");
+            console.log("[SystemScene] Debug mode detected. Initializing Editor UI...");
             
-            // a. bodyタグにクラスを付与 (CSS制御用)
             document.body.classList.add('debug-mode');
             
-            // b. EditorPluginを起動 (PhaserのGlobal Pluginとして登録されている想定)
-            const editorPlugin = this.plugins.start('EditorPlugin'); // startではなくgetで取得
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが最もシンプルで確実な方法です ★★★
+            // すでにPhaserによって起動済みのプラグインを「取得」するだけ
+            const editorPlugin = this.plugins.get('EditorPlugin');
             
+            // pluginが有効なら、UIを初期化する
             if (editorPlugin && editorPlugin.isEnabled) {
-                 // c. EditorUIをインスタンス化し、Pluginと連携させる
-                this.editorUI = new EditorUI(this.game, editorPlugin);
-                editorPlugin.setUI(this.editorUI);
+                 this.editorUI = new EditorUI(this.game, editorPlugin);
+                 editorPlugin.setUI(this.editorUI);
             }
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
     }
 /**
