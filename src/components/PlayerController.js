@@ -28,22 +28,53 @@ export default class PlayerController {
         }
     }
 
-    update() {
+      update() {
         if (!this.target || !this.target.body) return;
+
+        // --- 1. まず、全ての入力ソースから「意図」を読み取る ---
+        const input = {
+            left: this.cursors.left.isDown || (this.virtualStick && this.virtualStick.isLeft),
+            right: this.cursors.right.isDown || (this.virtualStick && this.virtualStick.isRight),
+            up: this.cursors.up.isDown, // キーボードのUPキー
+            // (仮想スティックの上方向は、将来的に別のジャンプアクションなどに使える)
+        };
+
+        // --- 2. 読み取った「意図」に基づいて、物理ボディを操作する ---
         const body = this.target.body;
-
-        // --- 入力ソースから「意図」を読み取る ---
-        const left = this.cursors.left.isDown || (this.virtualStick && this.virtualStick.isLeft);
-        const right = this.cursors.right.isDown || (this.virtualStick && this.virtualStick.isRight);
-        const up = this.cursors.up.isDown; // ジャンプはキーボードのUPキー専用
-
-        // --- 「意図」に基づいて、物理ボディを操作 ---
-        if (left) body.setVelocityX(-this.moveSpeed);
-        else if (right) body.setVelocityX(this.moveSpeed);
-        else body.setVelocityX(0);
         
-        if (up) this.jump();
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、エラーを解決する、正しい書き方です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // Arcade Physicsの場合 (横スクロール)
+        if (input.left) {
+            body.setVelocityX(-this.moveSpeed);
+        } else if (input.right) {
+            body.setVelocityX(this.moveSpeed);
+        } else {
+            body.setVelocityX(0);
+        }
+        
+        // ジャンプはキーボードのUPキーからのみ
+        if (input.up) {
+            this.jump();
+        }
+
+        // (Matter.js用の8方向移動ロジックは、将来のためにコメントアウトしておくのが安全)
+        /*
+        if (this.scene.physics.config.default === 'matter') {
+            const velocity = new Phaser.Math.Vector2(0, 0);
+            if (input.left) velocity.x = -1;
+            else if (input.right) velocity.x = 1;
+            if (input.up) velocity.y = -1;
+            else if (input.down) velocity.y = 1;
+            
+            velocity.normalize().scale(this.moveSpeed);
+            body.setVelocity(velocity.x, velocity.y);
+        }
+        */
     }
+
 
     jump() {
         if (this.target && this.target.body && this.target.body.touching.down) {
