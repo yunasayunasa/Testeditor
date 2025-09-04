@@ -5,16 +5,16 @@
     <title>Odyssey Engine - Editor</title>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <style>
-         /* --- 基本設定 --- */
+        /* --- 基本設定 --- */
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            overflow: hidden; /* デフォルトではスクロールさせない */
+            overflow: hidden;
         }
 
-        /* --- 通常プレイ時のレイアウト (変更なし) --- */
+        /* --- 通常プレイ時のレイアウト --- */
         #game-container {
             width: 100vw;
             height: 100vh;
@@ -22,21 +22,25 @@
             justify-content: center;
             align-items: center;
         }
-        #editor-ui-container {
-            display: none;
+
+        /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
+        /* ★★★ これがCSSだけで表示を制御する、最も確実な方法です ★★★ */
+        /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
+        
+        /* --- デフォルト状態（通常プレイ時）のスタイル --- */
+        body:not(.debug-mode) #editor-ui-container,
+        body:not(.debug-mode) #camera-controls,
+        body:not(.debug-mode) #editor-mode-controls {
+            display: none !important; /* !importantで最優先で非表示にする */
         }
 
-        /* --- デバッグモード時のレイアウト --- */
+        /* --- デバッグモード時のレイアウト変更 --- */
         body.debug-mode {
             display: flex;
             background-color: #3d3d3d;
-            
-            /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-            /* ★★★ これが全てを解決する、魔法の一行です ★★★ */
-            /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-            overflow-x: auto; /* 横幅が足りなければ、水平スクロールバーを出す */
+            overflow-x: auto;
         }
-        
+
         body.debug-mode #game-container {
             width: 1280px;
             height: 720px;
@@ -44,260 +48,69 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             flex-shrink: 0;
         }
-
-        body.debug-mode #editor-ui-container {
+        
+        /* --- デバッグモード時に「表示」するスタイルを定義 --- */
+        body.debug-mode #editor-ui-container,
+        body.debug-mode #camera-controls,
+        body.debug-mode #editor-mode-controls {
             display: flex;
+        }
+        
+        body.debug-mode #editor-ui-container {
             flex-grow: 1;
             flex-direction: column;
             padding: 10px;
             gap: 10px;
             height: calc(100vh - 20px);
-            
-            /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-            /* ★★★ エディタUIの「最低限の幅」を保証します ★★★ */
-            /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-            min-width: 300px; /* これより狭くならない */
+            min-width: 300px;
         }
         
-        /* --- 以下、エディタUIの見た目のスタイル (変更なし) --- */
+        /* --- 以下、各UIパーツの「見た目」に関するスタイル (変更なし) --- */
+        /* (元のコードからコピー＆ペーストでOKです) */
         .editor-panel {
-            background-color: #2b2b2b;
-            color: #d4d4d4;
-            border: 1px solid #1e1e1e;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            background-color: #2b2b2b; color: #d4d4d4; border: 1px solid #1e1e1e;
+            border-radius: 5px; display: flex; flex-direction: column; overflow: hidden;
         }
         .panel-header {
-            padding: 8px 12px;
-            background-color: #3c3c3c;
-            color: #d4d4d4;
-            border-bottom: 1px solid #1e1e1e;
-            font-weight: bold;
-            font-size: 14px;
-            user-select: none;
+            padding: 8px 12px; background-color: #3c3c3c; color: #d4d4d4;
+            border-bottom: 1px solid #1e1e1e; font-weight: bold; font-size: 14px; user-select: none;
         }
-        .panel-content {
-            padding: 10px;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
-        #asset-browser {
-            flex-grow: 1;
-            min-height: 250px;
-        }
-        .asset-item {
-            display: flex;
-            align-items: center;
-            padding: 5px;
-            border-bottom: 1px solid #3c3c3c;
-            cursor: grab;
-            user-select: none;
-        }
+        .panel-content { padding: 10px; flex-grow: 1; overflow-y: auto; }
+        #asset-browser { flex-grow: 1; min-height: 250px; }
+        .asset-item { display: flex; align-items: center; padding: 5px; border-bottom: 1px solid #3c3c3c; cursor: grab; user-select: none; }
         .asset-item:hover { background-color: #3c3c3c; }
-        .asset-preview {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-            margin-right: 10px;
-            background-color: #1e1e1e;
-            border: 1px solid #3c3c3c;
-        }
-        .asset-key {
-            font-size: 13px;
-            word-break: break-all;
-        }
+        .asset-preview { width: 48px; height: 48px; object-fit: contain; margin-right: 10px; background-color: #1e1e1e; border: 1px solid #3c3c3c; }
+        .asset-key { font-size: 13px; word-break: break-all; }
         #editor-panel { min-height: 250px; }
-        #editor-props input {
-            width: calc(100% - 80px);
-            background-color: #3c3c3c;
-            border: 1px solid #1e1e1e;
-            color: #d4d4d4;
-            padding: 4px;
-            border-radius: 3px;
-        }
-        #editor-props label {
-            display: inline-block;
-            width: 70px;
-            font-size: 13px;
-            margin-right: 5px;
-        }
-        #editor-props div {
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-        }
-        #editor-props hr {
-            border-color: #3c3c3c;
-            margin: 15px 0;
-        }
-        #editor-props button {
-            width: 100%;
-            padding: 8px;
-            background-color: #0e639c;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+        #editor-props input, #editor-props textarea, #editor-props select { width: calc(100% - 80px); background-color: #3c3c3c; border: 1px solid #1e1e1e; color: #d4d4d4; padding: 4px; border-radius: 3px; }
+        #editor-props label { display: inline-block; width: 70px; font-size: 13px; margin-right: 5px; }
+        #editor-props div { margin-bottom: 8px; display: flex; align-items: center; }
+        #editor-props hr { border-color: #3c3c3c; margin: 15px 0; }
+        #editor-props button { width: 100%; padding: 8px; background-color: #0e639c; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 14px; }
         #editor-props button:hover { background-color: #1177bb; }
-        /* デフォルトでは、エディタUIを「非表示」にする */
-body:not(.debug-mode) #editor-ui-container {
-    display: none;
-}
- /* ウィンドウ全体を覆う、半透明のオーバーレイ */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            z-index: 10000;
-            display: none; /* デフォルトは非表示 */
-            justify-content: center;
-            align-items: center;
-        }
+
+        /* --- カメラコントロールUIの見た目 --- */
+        #camera-controls { position: absolute; bottom: 20px; left: 20px; z-index: 9990; background-color: rgba(40, 40, 40, 0.8); border: 1px solid #555; border-radius: 5px; padding: 5px; flex-direction: row; gap: 5px; }
+        #camera-controls button { width: 35px; height: 35px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #555; color: #eee; border: 1px solid #777; border-radius: 5px; padding: 0; line-height: 35px; text-align: center; }
+        #camera-controls button:hover { background-color: #6a6a6a; }
+        #camera-controls button:active { background-color: #4a4a4a; }
+
+        /* --- エディタモード切替スイッチの見た目 --- */
+        #editor-mode-controls { position: absolute; bottom: 20px; left: 300px; z-index: 9990; align-items: center; gap: 10px; background-color: rgba(40, 40, 40, 0.8); padding: 8px 12px; border-radius: 20px; color: white; font-size: 14px; user-select: none; }
+        .mode-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .mode-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #888; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(26px); }
         
-        /* アニメーション・エディタのウィンドウ本体 */
-        #animation-editor {
-            width: 600px; /* 幅を広めに設定 */
-            background-color: #2b2b2b;
-            color: #d4d4d4;
-            border: 1px solid #1e1e1e;
-            border-radius: 8px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ウィンドウのヘッダー */
-        #animation-editor-header {
-            padding: 10px 15px;
-            background-color: #3c3c3c;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between; /* タイトルと閉じるボタンを両端に配置 */
-            align-items: center;
-            border-bottom: 1px solid #1e1e1e;
-        }
-        
-        #animation-editor-close-btn {
-            cursor: pointer;
-            font-size: 20px;
-            border: none;
-            background: none;
-            color: #d4d4d4;
-        }
-
-        /* ウィンドウのコンテンツエリア */
-        #animation-editor-content {
-            padding: 15px;
-            /* 将来的にプレビューと設定で分割するかも */
-        }
-        /* --- カメラコントロールUIのスタイル --- */
-#camera-controls {
-    /* デフォルトでは非表示 */
-    display: none; 
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    z-index: 9990; /* 他のUIより手前、モーダルよりは奥 */
-    background-color: rgba(40, 40, 40, 0.8);
-    border: 1px solid #555;
-    border-radius: 5px;
-    padding: 5px;
-    flex-direction: row; /* 横並びにする */
-    gap: 5px; /* ボタン間の隙間 */
-}
-
-/* デバッグモードの時だけ表示する */
-body.debug-mode #camera-controls {
-    display: flex;
-}
-
-#camera-controls button {
-    width: 35px;
-    height: 35px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    background-color: #555;
-    color: #eee;
-    border: 1px solid #777;
-    border-radius: 5px;
-    padding: 0;
-    line-height: 35px; /* アイコンを中央揃え */
-    text-align: center;
-}
-
-#camera-controls button:hover {
-    background-color: #6a6a6a;
-}
-#camera-controls button:active {
-    background-color: #4a4a4a;
-}
-/* --- エディタモード切替スイッチ --- */
-#editor-mode-controls {
-    display: none; /* デバッグモードでのみ表示 */
-    position: absolute;
-    bottom: 20px;
-    left: 300px; /* カメラコントロールの右隣あたり */
-    z-index: 9990;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background-color: rgba(40, 40, 40, 0.8);
-    padding: 8px 12px;
-    border-radius: 20px;
-    color: white;
-    font-size: 14px;
-    user-select: none;
-}
-body.debug-mode #editor-mode-controls {
-    display: flex;
-}
-.mode-switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-}
-.mode-switch input { 
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #888;
-    transition: .4s;
-    border-radius: 24px;
-}
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-input:checked + .slider {
-    background-color: #2196F3; /* Playモードの色 */
-}
-input:checked + .slider:before {
-    transform: translateX(26px);
-}
+        /* --- モーダルウィンドウのスタイル --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; justify-content: center; align-items: center; }
+        .modal-window { width: 600px; background-color: #2b2b2b; color: #d4d4d4; border: 1px solid #1e1e1e; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; }
+        .modal-header { padding: 10px 15px; background-color: #3c3c3c; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1e1e; }
+        .modal-close-btn { cursor: pointer; font-size: 20px; border: none; background: none; color: #d4d4d4; }
+        .modal-content { padding: 15px; max-height: 70vh; overflow-y: auto; }
+```
     </style>
 </head>
 <body>
