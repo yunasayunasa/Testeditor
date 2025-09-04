@@ -33,12 +33,12 @@ export default class SystemScene extends Phaser.Scene {
         this.events.on('end-overlay', this._handleEndOverlay, this);
         
         // --- 3. エディタ関連の初期化 ---
-        this.initializeEditor();
+        this.initializeEditor();*/
          
         // --- 4. 初期ゲームの起動 ---
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
-        }*/
+        }
     }
 
     /**
