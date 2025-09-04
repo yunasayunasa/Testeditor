@@ -1,25 +1,26 @@
+
 export const uiRegistry = {
     'coin_hud': {
-        path: 'src/ui/CoinHud.js', // ★ プロジェクトルートからのフルパス
+        path: './CoinHud.js', // ★ ui/index.js から見た相対パス
         groups: ['hud', 'game', 'battle']
     },
     'player_hp_bar': {
-        path: 'src/ui/HpBar.js',
+        path: './HpBar.js',
         groups: ['hud', 'battle'],
         params: { type: 'player' }
     },
     'enemy_hp_bar': {
-        path: 'src/ui/HpBar.js',
+        path: './HpBar.js',
         groups: ['hud', 'battle'],
         params: { type: 'enemy' }
     },
     'virtual_stick': {
-        path: 'src/ui/VirtualStick.js', // ★ プロジェクトルートからのフルパス
+        path: './VirtualStick.js', // ★ ui/index.js から見た相対パス
         groups: ['controls', 'action'],
         params: {}
     },
     'jump_button': {
-        path: 'src/ui/JumpButton.js', // ★ プロジェクトルートからのフルパス
+        path: './JumpButton.js', // ★ ui/index.js から見た相対パス
         groups: ['controls', 'action'],
         params: {}
     },

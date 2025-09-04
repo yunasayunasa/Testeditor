@@ -29,8 +29,8 @@ export default class UIScene extends Phaser.Scene {
     }
 
   
-    /**
-     * レイアウトJSONからUI要素を非同期で生成する (絶対パス対応版)
+      /**
+     * レイアウトJSONからUI要素を非同期で生成する (相対パスを正しく解決)
      */
     async buildUiFromLayout(layoutData) {
         if (!layoutData || !layoutData.objects) return;
@@ -38,11 +38,14 @@ export default class UIScene extends Phaser.Scene {
         const creationPromises = layoutData.objects.map(layout => {
             const definition = uiRegistry[layout.name];
             if (definition && definition.path) {
+                
                 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                // ★★★ これがパス問題を解決する最終的な修正です ★★★
-                // プロジェクトルートからの絶対パスとして import する
-                return import(`/${definition.path}`)
-                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                // ★★★ これが相対パスを解決する、最も確実な方法です ★★★
+                // '../ui/' という接頭辞と、'./' を取り除いたファイル名を結合する
+                const finalPath = `../ui/${definition.path.replace('./', '')}`;
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+                return import(finalPath)
                     .then(module => {
                         const UiClass = module.default;
                         const stateManager = this.registry.get('stateManager');
@@ -51,8 +54,7 @@ export default class UIScene extends Phaser.Scene {
                         this.registerUiElement(layout.name, uiElement, layout);
                     })
                     .catch(err => {
-                        // ★ エラーログをより詳細に
-                        console.error(`Failed to load UI component '${layout.name}' from path '/${definition.path}'.`, err);
+                        console.error(`Failed to load UI component '${layout.name}' from path '${finalPath}'.`, err);
                     });
             }
             return Promise.resolve();
