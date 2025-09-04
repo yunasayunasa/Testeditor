@@ -66,25 +66,33 @@ export default class SystemScene extends Phaser.Scene {
         }
     }
 
-    /**
+/**
      * 初期ゲームを起動する内部メソッド (UISceneの準備完了を待つ)
      */
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
         
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これがエラーを解決する修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 1. まず、UISceneを起動する ---
+        this.scene.launch('UIScene');
+
+        // --- 2. 起動した「後」に、インスタンスを取得する ---
         const uiScene = this.scene.get('UIScene');
+        
+        // --- 3. 取得したインスタンスのイベントを監視する ---
         uiScene.events.once('scene-ready', () => {
             console.log("[SystemScene] UIScene is ready. Starting GameScene.");
+            // UISceneが準備できてからGameSceneを起動する
             this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
         });
-        
-        this.scene.launch('UIScene');
     }
-    
     
      /**
      * [jump]などによるシーン遷移リクエストを処理 (修正版)
