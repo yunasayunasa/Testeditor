@@ -1,5 +1,12 @@
 //import { uiRegistry, sceneUiVisibility } from './index.js'; // ★ UI定義を外部からインポート
+// ★★★ 代わりに、UIクラスのカタログをここで作る ★★★
+import CoinHud from '../ui/CoinHud.js';
+import HpBar from '../ui/HpBar.js';
 
+const UI_CLASS_MAP = {
+    'CoinHud': CoinHud,
+    'HpBar': HpBar
+};
 export default class UIScene extends Phaser.Scene {
     
     constructor() {
@@ -12,40 +19,64 @@ export default class UIScene extends Phaser.Scene {
         this.menuButton = null;
         this.panel = null;
         this.isPanelOpen = false;
-    }
 
-    create() {
+         // ★ RegistryからUI定義を取得
+        this.uiRegistry = null;
+        this.sceneUiVisibility = null;
+    }
+create() {
         console.log("UIScene: UIの器として初期化");
         this.scene.bringToTop();
         
-        // --- 1. データ駆動でUI要素を生成・登録 ---
+        // ★ RegistryからUI定義を取得
+        this.uiRegistry = this.registry.get('ui_registry');
+        this.sceneUiVisibility = this.registry.get('scene_ui_visibility');
+
+        if (!this.uiRegistry || !this.sceneUiVisibility) {
+            console.error("UIScene could not find UI definitions in Registry!");
+            return;
+        }
+        
         const layoutData = this.cache.json.get(this.scene.key);
         this.buildUiFromLayout(layoutData);
-
-        // --- 2. ハードコードするUI要素を生成・登録 ---
         this.createHardcodedUI();
         
-        // --- 3. SystemSceneからの通知を受け取るリスナー ---
         const systemScene = this.scene.get('SystemScene');
         systemScene.events.on('transition-complete', this.onSceneTransition, this);
         
         this.events.emit('scene-ready');
     }
-
-    /**
-     * レイアウトJSONからUI要素を生成し、シーンと管理マップに追加する
-     */
+    
     buildUiFromLayout(layoutData) {
         if (!layoutData || !layoutData.objects) return;
 
         layoutData.objects.forEach(layout => {
-            const definition = uiRegistry[layout.name];
-            if (definition && typeof definition.creator === 'function') {
-                const uiElement = definition.creator(this, layout.params);
-                this.registerUiElement(layout.name, uiElement, layout);
+            const definition = this.uiRegistry[layout.name];
+            // ★ creatorの代わりに、typeを使ってクラスを動的に選択する
+            if (definition && definition.type) {
+                const UiClass = UI_CLASS_MAP[definition.type];
+                if (UiClass) {
+                    const stateManager = this.registry.get('stateManager');
+                    const uiElement = new UiClass(this, { ...layout.params, stateManager });
+                    this.registerUiElement(layout.name, uiElement, layout);
+                }
             }
         });
     }
+
+    onSceneTransition(newSceneKey) {
+        console.log(`[UIScene] シーン遷移検知: ${newSceneKey}`);
+        const visibleGroups = this.sceneUiVisibility[newSceneKey] || [];
+        for (const name in this.uiRegistry) {
+            const definition = this.uiRegistry[name];
+            const uiElement = this.uiElements.get(name);
+            if (uiElement) {
+                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                uiElement.setVisible(shouldBeVisible);
+            }
+        }
+    }
+    
     
     /**
      * ハードコードで管理するUI要素（メニューなど）を生成する
@@ -128,27 +159,7 @@ export default class UIScene extends Phaser.Scene {
         }
     }
 
-    /**
-     * シーン遷移時に、UIの表示/非表示をグループ単位で制御する
-     */
-    onSceneTransition(newSceneKey) {
-        console.log(`[UIScene] シーン遷移検知: ${newSceneKey}。UI表示を更新します。`);
 
-        // 表示すべきUIグループを取得 (設定がなければ空配列)
-        const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-
-        // 全てのUI定義をチェック
-        for (const name in uiRegistry) {
-            const definition = uiRegistry[name];
-            const uiElement = this.uiElements.get(name);
-
-            if (uiElement) {
-                // UIのグループのいずれかが、表示すべきグループに含まれているか
-                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-                uiElement.setVisible(shouldBeVisible);
-            }
-        }
-    }
 
         
      
