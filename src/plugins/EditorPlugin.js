@@ -875,7 +875,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが正しいAPI呼び出しです ★★★
         // this.pluginManager.game.input.on ではなく、 this.game.input.on を使う
-        this.game.input.on('pointerdown', (pointer, gameObjects) => {
+        this.game.input.events.on('POINTER_DOWN', (pointer, gameObjects) => {
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
             const shiftKey = this.game.input.keyboard.addKey('SHIFT');
