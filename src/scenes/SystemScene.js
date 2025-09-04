@@ -75,33 +75,33 @@ export default class SystemScene extends Phaser.Scene {
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
     }
-/**
-     * 初期ゲームを起動する内部メソッド (シーンマネージャーのイベントを利用)
-     */
-/**
-     * 初期ゲームを起動する内部メソッド (最も堅牢なイベント監視)
+ /**
+     * 初期ゲームを起動する内部メソッド (改訂版)
      */
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これがタイミング問題を完全に解決する、真の最終修正です ★★★
-        // this.scene.manager.events ではなく、 this.game.events を使う
-        this.game.events.once('scene-wake-UIScene', () => {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // --- ステップ1: まずUISceneを起動し、その完了を待つ ---
+        // _startAndMonitorSceneは非同期ではないので、完了を待つためにonceを使う
+        this.scene.get('UIScene').events.once('scene-ready', () => {
             
-            console.log("[SystemScene] UIScene has woken up. Now starting GameScene.");
+            // UISceneの準備が完了した！という報告が来た後で、
+            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
             
+            // --- ステップ2: GameSceneを起動し、その完了を監視する ---
             this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
-
         });
 
-        this.scene.launch('UIScene');
+        // --- トリガー: UISceneを起動する ---
+        // _startAndMonitorScene を直接使わず、単純にrunで起動する
+        // なぜなら、完了後の処理がGameSceneの起動という特殊なものだから
+        this.scene.run('UIScene');
     }
+
 
      /**
      * [jump]などによるシーン遷移リクエストを処理 (修正版)
@@ -210,19 +210,13 @@ export default class SystemScene extends Phaser.Scene {
         }
     }
 
-// ... SystemScene.js の他のメソッド ...
-      /**
-     * ★★★ 新しいシーンを起動し、完了まで監視するコアメソッド (最終確定版) ★★★
-     * @param {string} sceneKey - 起動するシーンのキー
-     * @param {object} params - シーンに渡すデータ
-     */
-     /**
+  /**
      * ★★★ 新しいシーンを起動し、完了まで監視するコアメソッド (真・最終確定版) ★★★
      * @param {string} sceneKey - 起動するシーンのキー
      * @param {object} params - シーンに渡すデータ
      */
     _startAndMonitorScene(sceneKey, params) {
-        if (this.isProcessingTransition) {
+        if (this.isProcessingTransition && sceneKey !== 'GameScene') { // GameSceneの初回起動は例外
             console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${sceneKey})が、無視されました。`);
             return;
         }
@@ -230,26 +224,24 @@ export default class SystemScene extends Phaser.Scene {
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
         console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。ゲーム全体の入力を無効化。`);
-this.tweens.killAll();
+
+        this.tweens.killAll();
         console.log("[SystemScene] すべての既存Tweenを強制終了しました。");
 
-        // ★★★ 修正の核心 ★★★
-        // 起動するシーンの「準備完了」を知らせるカスタムイベントを待つ
         const targetScene = this.scene.get(sceneKey);
         
-        // GameSceneは 'gameScene-load-complete' を待つ
-        if (sceneKey === 'GameScene') {
-            targetScene.events.once('gameScene-load-complete', () => {
-                this._onTransitionComplete(sceneKey);
-            });
-        } else {
-            // GameScene以外は、'scene-ready' という共通イベントを待つ
-            targetScene.events.once('scene-ready', () => {
-                this._onTransitionComplete(sceneKey);
-            });
-        }
+        // 完了イベントを決定
+        const completionEvent = (sceneKey === 'GameScene')
+            ? 'gameScene-load-complete'
+            : 'scene-ready';
 
-        // リスナーを登録した後に、シーンの起動をスケジュールする
+        // ★★★ 核心: 完了イベントを一度だけリッスンする ★★★
+        targetScene.events.once(completionEvent, () => {
+            this._onTransitionComplete(sceneKey);
+        });
+
+        // リスナーを登録した後に、シーンの起動/再開を行う
+        // launchではなくrunを使うことで、すでに存在するシーンでも確実に実行される
         this.scene.run(sceneKey, params);
     }
     /**
