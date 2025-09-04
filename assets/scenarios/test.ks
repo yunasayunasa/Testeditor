@@ -21,8 +21,8 @@
 ; ★★★ 追加: 最終ステータス用変数 ★★★
 
 ; --- １．基本的な表示と演出 ---
-[playbgm storage="cafe" time=1000]
-;[bg storage="bg_school" time=1500]
+;[playbgm storage="cafe" time=1000]
+[bg storage="bg_school" time=1500]
 [wait time=1500]
 [chara_show name="yuna" pos="left" y=800 visible=false] 
 ; y=800 は画面外のはず
