@@ -2,8 +2,16 @@
 import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
 
 export default class UIScene extends Phaser.Scene {
-    // ... (constructorは前回と同じ)
+      constructor() {
+        super({ key: 'UIScene', active: false });
+        
+        /** @type {Map<string, Phaser.GameObjects.GameObject>} */
+        this.uiElements = new Map();
 
+        this.menuButton = null;
+        this.panel = null;
+        this.isPanelOpen = false;
+    }
     async create() {
         console.log("UIScene: UIの器として初期化");
         this.scene.bringToTop();
