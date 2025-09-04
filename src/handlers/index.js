@@ -35,7 +35,7 @@ import { handleStopBgm } from './stopbgm.js';
 import { handleVoice } from './voice.js';
 
 // --- ゲームロジック・変数操作系 ---
-import { handleEval } from './eval.js';
+import  handleEval  from './eval.js';
 import { handleIf } from './if.js';
 import { handleElsif } from './elsif.js';
 import { handleElse } from './else.js';
