@@ -76,11 +76,17 @@ export default class GameScene extends Phaser.Scene {
         this.stateManager = this.sys.registry.get('stateManager'); 
            // ★★★ 修正箇所: SoundManagerをnewするのではなく、Registryから取得 ★★★
         this.soundManager = this.sys.registry.get('soundManager');
-        this.messageWindow = new MessageWindow(this, this.soundManager, this.configManager);
-        this.layer.message.add(this.messageWindow); 
-        this.scenarioManager = new ScenarioManager(this, this.layer, this.charaDefs, this.messageWindow, this.soundManager, this.stateManager, this.configManager);
-  // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
-     
+         // 1. データ駆動化されたUISceneから、'message_window'という名前のUI要素を探す
+        const messageWindow = this.uiScene.uiElements.get('message_window');
+
+        // 2. もし見つからなければ、致命的なエラーなので警告を出す
+        if (!messageWindow) {
+            console.error("GameScene CRITICAL ERROR: 'message_window' not found in UIScene.uiElements. Scenario cannot proceed.");
+            return; // シナリオ進行は不可能なので、ここで処理を中断
+        }
+
+        // 3. ScenarioManagerを初期化する際に、取得したmessageWindowを渡す
+        this.scenarioManager = new ScenarioManager(this, messageWindow, stateManager, soundManager);
 
         // ★★★ 追加: 最初のクリックで一度だけAudioContextを有効化する ★★★
         this.input.once('pointerdown', () => {
