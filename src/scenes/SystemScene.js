@@ -65,35 +65,38 @@ export default class SystemScene extends Phaser.Scene {
             }
         }
     }
-
 /**
-     * 初期ゲームを起動する内部メソッド (UISceneの準備完了を待つ)
+     * 初期ゲームを起動する内部メソッド (シーンマネージャーのイベントを利用)
      */
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これがエラーを解決する修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これがタイミング問題を完全に解決する、最も確実な方法です ★★★
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // --- 1. まず、UISceneを起動する ---
+        // --- 1. シーンマネージャーの 'wake' イベントを一度だけ監視 ---
+        // 'wake' イベントは、新しいシーンが起動・準備完了したときに発行される
+        this.scene.manager.events.once('wake', (scene) => {
+            
+            // 準備ができたのが、目的のUISceneかどうかを確認
+            if (scene.scene.key === 'UIScene') {
+                console.log("[SystemScene] UIScene has woken up. Now starting GameScene.");
+                
+                // ここで GameScene を起動すれば、UISceneは確実に存在する
+                this._startAndMonitorScene('GameScene', {
+                    charaDefs: this.globalCharaDefs,
+                    startScenario: initialData.startScenario,
+                });
+            }
+
+        }, this); // 'this' を渡してコンテキストを束縛するのを忘れずに
+
+        // --- 2. 監視を設定した「後」に、UISceneの起動を命令する ---
         this.scene.launch('UIScene');
-
-        // --- 2. 起動した「後」に、インスタンスを取得する ---
-        const uiScene = this.scene.get('UIScene');
-        
-        // --- 3. 取得したインスタンスのイベントを監視する ---
-        uiScene.events.once('scene-ready', () => {
-            console.log("[SystemScene] UIScene is ready. Starting GameScene.");
-            // UISceneが準備できてからGameSceneを起動する
-            this._startAndMonitorScene('GameScene', {
-                charaDefs: this.globalCharaDefs,
-                startScenario: initialData.startScenario,
-            });
-        });
     }
-    
+
      /**
      * [jump]などによるシーン遷移リクエストを処理 (修正版)
      */
