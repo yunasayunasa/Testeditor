@@ -13,7 +13,7 @@ export default class PlayerController {
 
         // --- 調整可能なパラメータ ---
         this.moveSpeed = 200;
-        this.jumpVelocity = -350;
+        this.jumpVelocity = -500;
         
         // --- 内部的な状態 ---
         this.cursors = scene.input.keyboard.createCursorKeys();
