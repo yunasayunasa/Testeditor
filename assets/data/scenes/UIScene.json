@@ -38,7 +38,7 @@
     {
       "name": "virtual_stick",
       "type": "VirtualStick",
-      "visible_in": ["JumpScene", "ActionScene", "YomawariScene"],
+      "visible_in": [ "ActionScene", "YomawariScene"],
       "params": { "texture_base": "stick_base", "texture_stick": "stick_knob" },
       "x": 150, "y": 550
     },
@@ -46,7 +46,7 @@
       "name": "jump_button",
       "type": "Image",
       "texture": "jump_button_texture",
-      "visible_in": ["JumpScene", "ActionScene"],
+      "visible_in": [ "ActionScene"],
       "x": 1150, "y": 550
     }
   ]
