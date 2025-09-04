@@ -11,19 +11,40 @@ export default class VirtualStick extends Container {
         this.add([this.base, this.stick]);
         scene.add.existing(this);
         
-        this.isDown = false;
+      this.isDown = false;
         this.direction = { x: 0, y: 0 };
         this.angle = 0;
         
         this.setInteractive(new Phaser.Geom.Circle(0, 0, this.base.width / 2), Phaser.Geom.Circle.Contains);
         this.setScrollFactor(0);
         
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する、最後の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 1. 'pointerdown' は、自分自身で検知する ---
         this.on('pointerdown', this.onPointerDown, this);
-        this.scene.input.on('pointermove', this.onPointerMove, this);
-        this.scene.input.on('pointerup', this.onPointerUp, this);
+
+        // --- 2. 'pointermove' と 'pointerup' は、シーン全体ではなく、
+        //        ゲームの入力マネージャー全体で監視する ---
+        this.scene.input.on('pointermove', (pointer) => {
+            // ★ ただし、自分が「押されている」時だけ、反応する
+            if (this.isDown) {
+                this.onPointerMove(pointer);
+            }
+        }, this);
+
+        this.scene.input.on('pointerup', (pointer) => {
+            // ★ 自分が「押されている」時だけ、反応する
+            if (this.isDown) {
+                this.onPointerUp(pointer);
+            }
+        }, this);
         
+        // --- 3. シーン終了時のクリーンアップ (変更なし) ---
         this.scene.events.on('shutdown', this.destroy, this);
     }
+    
     onPointerDown(pointer) { this.isDown = true; this.updateStickPosition(pointer); }
     onPointerMove(pointer) { if (this.isDown) this.updateStickPosition(pointer); }
     onPointerUp(pointer) {
