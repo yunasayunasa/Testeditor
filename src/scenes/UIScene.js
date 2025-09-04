@@ -1,7 +1,3 @@
-//import { uiRegistry, sceneUiVisibility } from './index.js'; // ★ UI定義を外部からインポート
-// ★★★ 代わりに、UIクラスのカタログをここで作る ★★★
-import CoinHud from '../ui/CoinHud.js';
-import HpBar from '../ui/HpBar.js';
 import VirtualStick from '../ui/VirtualStick.js';
 import JumpButton from '../ui/JumpButton.js'; // ★ 1. インポート
 
@@ -11,7 +7,7 @@ const UI_CLASS_MAP = {
     'VirtualStick': VirtualStick,
     'JumpButton': JumpButton // ★ 2. マッピングに追加
 };
-ne extends Phaser.Scene {
+export default class UIScene extends Phaser.Scene {
     
     constructor() {
         super({ key: 'UIScene', active: false });
