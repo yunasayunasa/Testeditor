@@ -70,8 +70,7 @@ export default class VirtualStick extends Container {
     updateStickPosition(pointer) {
         const localPoint = this.getLocalPoint(pointer.x, pointer.y);
         const distance = Phaser.Math.Distance.Between(0, 0, localPoint.x, localPoint.y);
-        // ★ スティックの最大移動距離を、土台とスティックの半径から計算
-        const maxDistance = this.width / 2 - this.stick.width / 2;
+        const maxDistance = this.baseRadius - this.stickRadius;
 
         if (distance > maxDistance) {
             const scale = maxDistance / distance;

@@ -9,31 +9,52 @@ export default class UIScene extends Phaser.Scene {
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
 
-    async create() {
-        console.log("UIScene: 100% Data-Driven Initialization");
-        this.scene.bringToTop();
-        
-        // ★★★ レイアウトからのビルドが唯一のUI生成処理になる ★★★
-        const layoutData = this.cache.json.get(this.scene.key);
-        await this.buildUiFromLayout(layoutData);
-        
-        // ★ createHardcodedUI() の呼び出しは完全に削除
+  // src/scenes/UIScene.js (修正後のコード)
 
-        const systemScene = this.scene.get('SystemScene');
-        systemScene.events.on('transition-complete', this.onSceneTransition, this);
+    create() { // ★ async を削除
+        console.log("UIScene: Data-Driven Initialization Started");
+        this.scene.bringToTop();
+
+        const layoutData = this.cache.json.get(this.scene.key);
         
-        this.events.emit('scene-ready');
+        // buildUiFromLayout は Promise を返すので、.then() で完了を待つ
+        this.buildUiFromLayout(layoutData).then(() => {
+            // ▼▼▼ 非同期処理がすべて完了した後に実行したい処理を、すべてこの中に入れる ▼▼▼
+
+            console.log("UIScene: UI build complete. Finalizing setup.");
+
+            // SystemSceneとの連携設定
+            const systemScene = this.scene.get('SystemScene');
+            systemScene.events.on('transition-complete', this.onSceneTransition, this);
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ ここが最も重要な変更点です ★★★
+            // ★★★ UIの構築が100%完了したこのタイミングで ready を発行する
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            this.events.emit('scene-ready');
+
+        }).catch(err => {
+            // もしUI構築中にエラーが起きたらコンソールに出す
+            console.error("UIScene: Failed to build UI from layout.", err);
+        });
+        
+        // ▲▲▲ createメソッド自体は、Promiseを開始したらすぐに終了する ▲▲▲
     }
 
+    // buildUiFromLayout メソッド自体は async のままでOK
     async buildUiFromLayout(layoutData) {
-        if (!layoutData || !layoutData.objects) return;
+        // (この中身は変更なし)
+        if (!layoutData || !layoutData.objects) {
+            console.warn("UIScene: No layout data found. Skipping UI build.");
+            return; // ★ データがない場合は即座に解決(resolve)する Promise を返す
+        }
 
         const creationPromises = layoutData.objects.map(async (layout) => {
             const definition = uiRegistry[layout.name];
             if (!definition) return;
 
             let uiElement = null;
-            if (definition.path) { // 動的インポートで生成
+            if (definition.path) {
                 try {
                     const module = await import(`../ui/${definition.path.replace('./', '')}`);
                     const UiClass = module.default;
@@ -43,7 +64,7 @@ export default class UIScene extends Phaser.Scene {
                 } catch (err) {
                     console.error(`Failed to load UI component '${layout.name}'`, err);
                 }
-            } else if (typeof definition.creator === 'function') { // ヘルパーメソッドで生成
+            } else if (typeof definition.creator === 'function') {
                 uiElement = definition.creator(this, layout);
             }
             
