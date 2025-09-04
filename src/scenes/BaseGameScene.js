@@ -218,7 +218,7 @@ export default class BaseGameScene extends Phaser.Scene {
         if (data.events) {
         gameObject.setData('events', data.events);
     }
-       const editor = this.plugins.get('EditorPlugin');
+       //const editor = this.plugins.get('EditorPlugin');
         if (editor) {
             editor.makeEditable(gameObject, this);
         }
