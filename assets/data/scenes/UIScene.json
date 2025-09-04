@@ -6,6 +6,13 @@
     { "name": "player_hp_bar", "x": 100, "y": 100, "width": 200, "height": 25 },
     { "name": "enemy_hp_bar", "x": 930, "y": 100, "width": 250, "height": 25 },
     { "name": "virtual_stick", "x": 180, "y": 540, "width": 200, "height": 200 },
+      {
+      "name": "message_window",
+      "x": 640,  
+      "y": 600,  
+      "width": 1000,
+      "height": 200
+    },
     { "name": "jump_button", "x": 1100, "y": 540, "width": 130, "height": 130 }
   ]
 }
