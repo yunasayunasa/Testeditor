@@ -2,8 +2,8 @@
 
 import PreloadScene from './scenes/PreloadScene.js';
 import SystemScene from './scenes/SystemScene.js'; 
-/*import UIScene from './scenes/UIScene.js';       
-import GameScene from './scenes/GameScene.js';
+import UIScene from './scenes/UIScene.js';       
+/*import GameScene from './scenes/GameScene.js';
 
 import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
@@ -27,8 +27,8 @@ const config = {
     scene: [
         PreloadScene, 
         SystemScene, 
-    /*    UIScene,       
-        GameScene,   
+      UIScene,       
+     /*   GameScene,   
         
         SaveLoadScene, 
         ConfigScene, 
