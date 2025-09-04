@@ -2,8 +2,8 @@ import VirtualStick from '../ui/VirtualStick.js';
 import JumpButton from '../ui/JumpButton.js'; // ★ 1. インポート
 
 const UI_CLASS_MAP = {
-    'CoinHud': CoinHud,
-    'HpBar': HpBar,
+    
+  
     'VirtualStick': VirtualStick,
     'JumpButton': JumpButton // ★ 2. マッピングに追加
 };
