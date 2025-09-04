@@ -41,9 +41,9 @@ export default class PlayerController {
 
         // --- ジャンプ ---
         // 地面に接している時だけ、ジャンプを許可
-        if (this.cursors.up.isDown && body.touching.down) {
-            body.setVelocityY(this.jumpVelocity);
-        }
+      //  if (this.cursors.up.isDown && body.touching.down) {
+       //     body.setVelocityY(this.jumpVelocity);
+       // }
     }
 
     /**
