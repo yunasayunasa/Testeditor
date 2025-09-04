@@ -1,8 +1,30 @@
-// src/scenes/BaseGameScene.js (データ駆動シーン専用の親クラス)
 
+export default class BaseGameScene extends Phaser.Scene {
 
-       export default class BaseGameScene extends Phaser.Scene {
- 
+    // ★★★ create() の代わりに constructor で初期化 ★★★
+    constructor(config) {
+        super(config); // 親クラスのコンストラクタを呼び出す
+
+        /**
+         * このシーンで動的に生成された物理コライダーを管理する配列。
+         * @type {Phaser.Physics.Arcade.Collider[]}
+         */
+        this.dynamicColliders = [];
+
+        /**
+         * このシーンのアクションインタープリタ。
+         * 継承先でインスタンス化されることを想定。
+         * @type {ActionInterpreter | null}
+         */
+        this.actionInterpreter = null;
+        
+        /**
+         * キープレスイベントを管理するマップ。
+         * @type {Map<string, Array<object>>}
+         */
+        this.keyPressEvents = new Map();
+    }
+
    
     /**
      * 【データ駆動シーン専用】
@@ -249,28 +271,35 @@
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
         return null;
         }
-    /**
-     * ★★★ 新規メソッド (finalizeSetupからロジックを分離) ★★★
-     * シーン全体の物理的な相互作用（衝突・接触）を再構築する
+       /**
+     * シーン全体の物理的な相互作用を再構築する (遅延初期化対応版)
      */
     rebuildPhysicsInteractions() {
         // --- 1. 以前に作成した動的なコライダーを全て破棄 ---
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが遅延初期化と防御的コードです ★★★
+        // もし何らかの理由で this.dynamicColliders が存在しなくても、
+        // 空の配列としてその場で初期化するため、絶対にエラーにならない。
+        if (!this.dynamicColliders) {
+            this.dynamicColliders = [];
+        }
         this.dynamicColliders.forEach(collider => collider.destroy());
-        this.dynamicColliders = [];
+        this.dynamicColliders = []; // 配列を空にする
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         
-        // --- 2. finalizeSetupから持ってきたロジックで、コライダーを再設定 ---
+        // --- 2. 収集したイベントに基づいて、物理エンジンに関係性を設定 ---
         const allGameObjects = this.children.getAll();
         const collisionEvents = [];
-         allGameObjects.forEach(gameObject => {
+        
+        allGameObjects.forEach(gameObject => {
             const events = gameObject.getData('events');
             if (events) {
                 events.forEach(eventData => {
                     if ((eventData.trigger === 'onCollide_Start' || eventData.trigger === 'onOverlap_Start') && eventData.targetGroup) {
                         collisionEvents.push({
                             source: gameObject,
-                            sourceGroup: gameObject.getData('group'),
-                            targetGroup: eventData.targetGroup,
                             eventType: eventData.trigger === 'onCollide_Start' ? 'collider' : 'overlap',
+                            targetGroup: eventData.targetGroup,
                             actions: eventData.actions
                         });
                     }
@@ -286,12 +315,10 @@
                         this.actionInterpreter.run(sourceObject, eventInfo.actions);
                     }
                 });
-                // ★★★ 作成したコライダーを管理リストに追加 ★★★
                 this.dynamicColliders.push(newCollider);
             }
         });
     }
-
     finalizeSetup() {
         console.log(`[${this.scene.key}] Finalizing setup...`);
 
