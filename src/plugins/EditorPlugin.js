@@ -519,65 +519,47 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.log("[EditorPlugin] Phaser input re-enabled.");
     }
  
-         /**
-     * オブジェクトを編集可能にする (リスナー競合を解決)
-     *
-    makeEditable(gameObject, scene) {
-        if (!this.isEnabled || !gameObject.name) return;
+   makeEditable(gameObject, scene) {
+        if (!this.isEnabled || !gameObject || !scene || gameObject.getData('isEditable') || !gameObject.name) return;
         
-        // --- 登録処理 ---
+        gameObject.setInteractive();
+        scene.input.setDraggable(gameObject);
+
         const sceneKey = scene.scene.key;
         if (!this.editableObjects.has(sceneKey)) {
             this.editableObjects.set(sceneKey, new Set());
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
-        // --- 初回のみインタラクティブ化 ---
-        if (!gameObject.getData('isEditable')) {
-            gameObject.setInteractive();
-            scene.input.setDraggable(gameObject);
-            gameObject.setData('isEditable', true);
-        }
-        
-        // --- エディタ用のイベントリスナーを（再）適用 ---
-        this.reapplyEditorEvents(gameObject);
-    }*/
-
-
-  /**
-     * オブジェクトに、エディタ用のイベントリスナーを（再）設定する
-     */
-    reapplyEditorEvents(gameObject) {
-        if (!this.isEnabled) return;
-
-        // ★★★ 既存のエディタ用リスナーを確実に削除 ★★★
-        gameObject.off('pointerdown', this.onObjectSelected, this);
-        gameObject.off('drag');
-        gameObject.off('pointerover');
-        gameObject.off('pointerout');
-
-        // ★★★ コールバックをメソッドとして定義し、'this'を束縛 ★★★
-        gameObject.on('pointerdown', this.onObjectSelected, this);
+        gameObject.on('pointerdown', (pointer, localX, localY, event) => {
+            this.selectedObject = gameObject;
+            this.updatePropertyPanel();
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これがタッチ操作を解決する、核心的な修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // マルチタッチジェスチャーの邪魔をしないよう、シングルタッチの時だけイベントを止める
+            if (scene.input.pointerTotal === 1) {
+                event.stopPropagation();
+            }
+        });
         
         gameObject.on('drag', (pointer, dragX, dragY) => {
             gameObject.x = Math.round(dragX);
             gameObject.y = Math.round(dragY);
+            if (gameObject.body && (gameObject.body instanceof Phaser.Physics.Arcade.StaticBody)) {
+                gameObject.body.reset(gameObject.x, gameObject.y);
+            }
             if(this.selectedObject === gameObject) this.updatePropertyPanel();
         });
 
         gameObject.on('pointerover', () => gameObject.setTint(0x00ff00));
         gameObject.on('pointerout', () => gameObject.clearTint());
+        gameObject.setData('isEditable', true);
     }
-/**
-     * ★★★ 新規メソッド ★★★
-     * オブジェクト選択時のコールバック
-     */
-    onObjectSelected(pointer, localX, localY, event) {
-        this.selectedObject = pointer.gameObject;
-        this.updatePropertyPanel();
-        // ★★★ ゲームプレイ用のイベントが発火するのを止める ★★★
-        event.stopPropagation();
-    }
+
+   
+    
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         const isCurrentlyStatic = (body instanceof Phaser.Physics.Arcade.StaticBody);
@@ -865,93 +847,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return div;
     }
 
-   
-    /**
-     * SystemSceneから一度だけ呼ばれ、グローバルな入力リスナーを設定する
-     */
-    initializeGlobalInput() {
-        if (!this.isEnabled) return;
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが正しいAPI呼び出しです ★★★
-        // this.pluginManager.game.input.on ではなく、 this.game.input.on を使う
-        this.game.input.events.on('POINTER_DOWN', (pointer, gameObjects) => {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            
-            const shiftKey = this.game.input.keyboard.addKey('SHIFT');
-
-            if (shiftKey.isDown) {
-                console.log("[EditorPlugin] Shift-click detected. Passing event to game.");
-                return; 
-            }
-
-            if (gameObjects.length > 0) {
-                const topObject = gameObjects[0];
-                if (this.isObjectEditable(topObject)) {
-                    this.selectedObject = topObject;
-                    this.updatePropertyPanel();
-                }
-            } else {
-                this.selectedObject = null;
-                this.updatePropertyPanel();
-            }
-        });
-        console.log("[EditorPlugin] Global input listener initialized for cooperative mode.");
-    }
-
-    /**
-     * 指定されたオブジェクトが編集可能として登録されているかチェック
-     */
-    isObjectEditable(gameObject) {
-        for (const sceneObjects of this.editableObjects.values()) {
-            if (sceneObjects.has(gameObject)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * オブジェクトを編集可能として「登録」し、ドラッグイベントだけを設定する
-     */
-    makeEditable(gameObject, scene) {
-        if (!this.isEnabled || !gameObject.name) return;
-        
-        const sceneKey = scene.scene.key;
-        if (!this.editableObjects.has(sceneKey)) {
-            this.editableObjects.set(sceneKey, new Set());
-        }
-        this.editableObjects.get(sceneKey).add(gameObject);
-
-        if (!gameObject.getData('isEditable')) {
-            gameObject.setInteractive();
-            scene.input.setDraggable(gameObject);
-            gameObject.setData('isEditable', true);
-
-            gameObject.on('drag', (pointer, dragX, dragY) => {
-                gameObject.x = Math.round(dragX);
-                gameObject.y = Math.round(dragY);
-                if (this.selectedObject === gameObject) this.updatePropertyPanel();
-            });
-        }
-    }
-
-    /**
-     * イベントデータを更新し、シーンに通知する
-     */
     updateEventData(index, key, value) {
         if (!this.selectedObject) return;
         const events = this.selectedObject.getData('events') || [];
         if (events[index]) {
             events[index][key] = value;
             this.selectedObject.setData('events', events);
-            
-            this.populateEventEditor();
-            
-            const targetScene = this.selectedObject.scene;
-            if (targetScene && targetScene.onEditorEventChanged) {
-                targetScene.onEditorEventChanged(this.selectedObject);
-            }
+             this.populateEventEditor();
+             this.pluginManager.game.events.emit('editor_event_changed', {
+            target: this.selectedObject
+        });
         }
     }
 }
