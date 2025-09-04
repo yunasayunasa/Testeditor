@@ -4,7 +4,7 @@ export const uiRegistry = {
     'coin_hud': { path: './CoinHud.js', groups: ['hud', 'game', 'battle'] },
     'player_hp_bar': { path: './HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } },
     'enemy_hp_bar': { path: './HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
-    'virtual_stick': { path: './VirtualStick.js', groups: ['controls', 'action'] },
+ //   'virtual_stick': { path: './VirtualStick.js', groups: ['controls', 'action'] },
     'jump_button': { path: './JumpButton.js', groups: ['controls', 'action'] },
     
     // ★★★ メニューとパネルもデータ駆動の対象にする ★★★
