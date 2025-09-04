@@ -22,15 +22,14 @@ export default class PlayerController {
     /**
      * シーンのupdateループから、毎フレーム呼び出されるメソッド
      */
-    update() {
-        // ターゲットオブジェクトや、その物理ボディが存在しなければ、何もしない
+       update() {
         if (!this.target || !this.target.body) {
             return;
         }
 
         const body = this.target.body;
 
-        // --- 左右の移動 ---
+        // --- 左右の移動 (変更なし) ---
         if (this.cursors.left.isDown) {
             body.setVelocityX(-this.moveSpeed);
         } else if (this.cursors.right.isDown) {
@@ -38,12 +37,19 @@ export default class PlayerController {
         } else {
             body.setVelocityX(0);
         }
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、最後の謎を解く、ログ爆弾です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // --- ジャンプ ---
-        // 地面に接している時だけ、ジャンプを許可
-      //  if (this.cursors.up.isDown && body.touching.down) {
-       //     body.setVelocityY(this.jumpVelocity);
-       // }
+        // --- 1. ジャンプのコメントアウトを解除 ---
+        if (this.cursors.up.isDown && body.touching.down) {
+            body.setVelocityY(this.jumpVelocity);
+        }
+        
+        // --- 2. 毎フレーム、接地判定の「真実」をコンソールに出力 ---
+        // (注: ログが大量に出るので、確認が終わったらこの行は削除してください)
+        console.log(`[PlayerController] Ground Check: touching.down=${body.touching.down}, touching.none=${body.touching.none}, blocked.down=${body.blocked.down}`);
     }
 
     /**
