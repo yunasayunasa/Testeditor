@@ -131,6 +131,22 @@
                 gameObject.body.collideWorldBounds = phys.collideWorldBounds;
             }
         }
+              // ★ ゲームプレイ用イベントの適用
+        this.applyEvents(gameObject, layout.events);
+        
+        try {
+            // インタラクティブ化とエディタへの「登録」
+            if (gameObject.width === 0 || gameObject.height === 0) {
+                gameObject.once('textureupdate', () => gameObject.setSize(gameObject.width, gameObject.height).setInteractive());
+            } else {
+                 gameObject.setSize(gameObject.width, gameObject.height).setInteractive();
+            }
+            const editor = this.plugins.get('EditorPlugin');
+            if (editor) {
+                editor.makeEditable(gameObject, this);
+            }
+        } catch (e) { console.error(`[BaseGameScene] Failed to make object interactive: '${gameObject.name}'`, e); }
+      
 // --- イベントデータを読み込み、トリガーを設定 ---
            if (data.events) {
             gameObject.setData('events', data.events);
