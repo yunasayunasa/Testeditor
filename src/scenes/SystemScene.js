@@ -56,7 +56,7 @@ export default class SystemScene extends Phaser.Scene {
             document.body.classList.add('debug-mode');
             
             // b. EditorPluginを起動 (PhaserのGlobal Pluginとして登録されている想定)
-            const editorPlugin = this.plugins.get('EditorPlugin'); // startではなくgetで取得
+            const editorPlugin = this.plugins.start('EditorPlugin'); // startではなくgetで取得
             
             if (editorPlugin && editorPlugin.isEnabled) {
                  // c. EditorUIをインスタンス化し、Pluginと連携させる
