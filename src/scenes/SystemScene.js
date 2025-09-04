@@ -18,6 +18,17 @@ export default class SystemScene extends Phaser.Scene {
     }
 
     create() {
+          console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
+        try {
+            console.log('this:', this);
+            console.log('this.scene:', this.scene);
+            console.log('this.scene.manager:', this.scene.manager);
+            console.log('this.scene.manager.events:', this.scene.manager.events);
+        } catch (e) {
+            console.error('!!! LOG BOMB FAILED !!!', e);
+        }
+        console.log('--- END OF LOG BOMB ---');
+        
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
        // --- 1. コアサービスの初期化 ---
