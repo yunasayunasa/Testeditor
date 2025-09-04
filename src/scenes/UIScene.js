@@ -2,10 +2,11 @@
 // ★★★ 代わりに、UIクラスのカタログをここで作る ★★★
 import CoinHud from '../ui/CoinHud.js';
 import HpBar from '../ui/HpBar.js';
-
+import VirtualStick from '../ui/VirtualStick.js';
 const UI_CLASS_MAP = {
     'CoinHud': CoinHud,
-    'HpBar': HpBar
+    'HpBar': HpBar,
+      'VirtualStick': VirtualStick
 };
 export default class UIScene extends Phaser.Scene {
     
@@ -160,12 +161,30 @@ create() {
         });
 
         // 各ボタンにイベントリスナーを設定
-        saveButton.on('pointerdown', (e) => { this.openScene('SaveLoadScene', { mode: 'save' }); e.stopPropagation(); });
-        loadButton.on('pointerdown', (e) => { this.openScene('SaveLoadScene', { mode: 'load' }); e.stopPropagation(); });
-        backlogButton.on('pointerdown', (e) => { this.openScene('BacklogScene'); e.stopPropagation(); });
-        configButton.on('pointerdown', (e) => { this.openScene('ConfigScene'); e.stopPropagation(); });
-        autoButton.on('pointerdown', (e) => { this.toggleGameMode('auto'); e.stopPropagation(); });
-        skipButton.on('pointerdown', (e) => { this.toggleGameMode('skip'); e.stopPropagation(); });
+        saveButton.on('pointerdown', (pointer, localX, localY, event) => { 
+            this.openScene('SaveLoadScene', { mode: 'save' }); 
+            event.stopPropagation(); // ★ 4番目の引数 event を使う
+        });
+        loadButton.on('pointerdown', (pointer, localX, localY, event) => { 
+            this.openScene('SaveLoadScene', { mode: 'load' }); 
+            event.stopPropagation(); 
+        });
+        backlogButton.on('pointerdown', (pointer, localX, localY, event) => { 
+            this.openScene('BacklogScene'); 
+            event.stopPropagation(); 
+        });
+        configButton.on('pointerdown', (pointer, localX, localY, event) => { 
+            this.openScene('ConfigScene'); 
+            event.stopPropagation(); 
+        });
+        autoButton.on('pointerdown', (pointer, localX, localY, event) => { 
+            this.toggleGameMode('auto'); 
+            event.stopPropagation(); 
+        });
+        skipButton.on('pointerdown', (pointer, localX, localY, event) => { 
+            this.toggleGameMode('skip'); 
+            event.stopPropagation(); 
+        });
         
         return panel;
     }

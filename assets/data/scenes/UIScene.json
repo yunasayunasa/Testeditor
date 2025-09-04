@@ -14,8 +14,19 @@
       "visible_in": ["GameScene"],
       "params": {},
       "x": 640, "y": 780, "width": 1280, "height": 120
+    },
+    {
+      "name": "virtual_stick",
+      "type": "VirtualStick",
+      "x": 180, 
+      "y": 540,
+      "width": 256, "height": 256,
+      "params": {
+        "texture_base": "stick_base",
+        "texture_stick": "stick_knob"
+      }
     }
-   
-    
   ]
+    
+  
 }

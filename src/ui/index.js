@@ -1,6 +1,6 @@
 // import CoinHud from './CoinHud.js'; // ← ここでのインポートはやめる
 // import HpBar from './HpBar.js';
-
+import VirtualStick from './VirtualStick.js'; 
 // グローバルスコープに関数を定義
 window.registerUiDefinitions = () => {
     // ★ new CoinHud() のようにクラスを直接使うのではなく、
@@ -10,6 +10,10 @@ window.registerUiDefinitions = () => {
         'player_hp_bar': { type: 'HpBar', groups: ['hud', 'battle'] },
         'enemy_hp_bar': { type: 'HpBar', groups: ['hud', 'battle'] },
         'menu_button': { type: null, groups: ['menu', 'game'] },
+           'virtual_stick': {
+        creator: (scene, params) => new VirtualStick(scene, params),
+        groups: ['controls', 'action'] // アクションシーンで表示したいコントロールUI
+    },
         'bottom_panel': { type: null, groups: ['menu', 'game'] }
     };
 
