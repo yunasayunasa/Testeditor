@@ -3,9 +3,9 @@
 import PreloadScene from './scenes/PreloadScene.js';
 import SystemScene from './scenes/SystemScene.js'; 
 import UIScene from './scenes/UIScene.js';       
-/*import GameScene from './scenes/GameScene.js';
+import GameScene from './scenes/GameScene.js';
 
-import SaveLoadScene from './scenes/SaveLoadScene.js';
+/*import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
 import ActionScene from './scenes/ActionScene.js';
@@ -28,9 +28,9 @@ const config = {
         PreloadScene, 
         SystemScene, 
       UIScene,       
-     /*   GameScene,   
+       GameScene,   
         
-        SaveLoadScene, 
+       /* SaveLoadScene, 
         ConfigScene, 
         BacklogScene, 
         ActionScene,
@@ -39,12 +39,12 @@ const config = {
         NovelOverlayScene*/
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
-   /* plugins: {
+    plugins: {
         global: [
             // ★★★ start: false に戻し、手動起動でタイミングを制御する ★★★
             { key: 'EditorPlugin', plugin: EditorPlugin, start: false }
         ]
-    },*/
+    },
     physics: {
         default: 'arcade',
         arcade: {

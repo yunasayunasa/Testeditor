@@ -81,16 +81,49 @@ create() {
     /**
      * ハードコードで管理するUI要素（メニューなど）を生成する
      */
+        // createHardcodedUI メソッドを以下のように修正
+
     createHardcodedUI() {
         // メニューボタン
-        this.menuButton = this.add.text(100, 670, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5).setInteractive();
-        this.registerUiElement('menu_button', this.menuButton);
+        this.menuButton = this.add.text(100, 670, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5); // .setInteractive() を一旦削除
+        // ★★★ サイズ情報がないので、レイアウトオブジェクトを自作する ★★★
+        this.registerUiElement('menu_button', this.menuButton, { width: 150, height: 50 }); // おおよそのサイズを指定
         this.menuButton.on('pointerdown', () => this.togglePanel());
 
-        // パネル (ここではContainerだけ作り、中身はヘルパーメソッドで)
+        // パネル
         this.panel = this.createBottomPanel();
-        this.panel.setPosition(0, 840); // 初期位置は画面外
-        this.registerUiElement('bottom_panel', this.panel);
+        this.panel.setPosition(0, 840);
+        // ★★★ パネルにはサイズがあるので、レイアウトオブジェクトで渡す ★★★
+        this.registerUiElement('bottom_panel', this.panel, { width: 1280, height: 120 });
+    }
+
+    // registerUiElement メソッドを以下のように修正
+
+    registerUiElement(name, element, layout = {}) {
+        element.name = name;
+        this.add.existing(element);
+        this.uiElements.set(name, element);
+
+        if (layout.x !== undefined) element.setPosition(layout.x, layout.y);
+        // ... (scale, alphaなども同様に適用)
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが警告を解決する修正です ★★★
+        // ★★★ setSize() を setInteractive() の「前」に呼ぶ ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
+        // コンテナや当たり判定が必要なものにサイズを設定
+        if ((element instanceof Phaser.GameObjects.Container || element instanceof Phaser.GameObjects.Text) && layout.width) {
+            element.setSize(layout.width, layout.height);
+        }
+
+        // サイズ設定後にインタラクティブ化
+        element.setInteractive();
+        
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            editor.makeEditable(element, this);
+        }
     }
         /**
      * ハードコードで管理するボトムパネルとその中のボタンを生成するヘルパーメソッド
