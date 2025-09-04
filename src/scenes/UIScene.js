@@ -1,4 +1,4 @@
-import { uiRegistry, sceneUiVisibility } from './index.js'; // ★ UI定義を外部からインポート
+//import { uiRegistry, sceneUiVisibility } from './index.js'; // ★ UI定義を外部からインポート
 
 export default class UIScene extends Phaser.Scene {
     
