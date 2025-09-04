@@ -5,158 +5,90 @@ import MessageWindow from '../ui/MessageWindow.js';
 import ConfigManager from '../core/ConfigManager.js';
 import { tagHandlers } from '../handlers/index.js';
 
-
 export default class GameScene extends Phaser.Scene {
     constructor() {
-        super({key:'GameScene', active :false});
-        // プロパティの初期化
+        super({ key: 'GameScene' });
+        // プロパティをnullで初期化
         this.scenarioManager = null;
+        this.uiScene = null;
         this.soundManager = null;
         this.stateManager = null;
-        this.messageWindow = null;
-        this.layer = { background: null, character: null, cg: null, message: null };
-        this.charaDefs = null;
-        this.characters = {};
-        this.configManager = null;
-        this.choiceButtons = [];
-        this.pendingChoices = [];
-        this.uiButtons = [];
-    
-        this.restoredBgmKey = null;
-        
-          this.isPerformingLoad = false; // ★★★ 追加: ロード処理中フラグ ★★★
-        this.isSceneFullyReady = false; // シーンが完全に準備完了したかのフラグ
+        this.layer = {}; // レイヤーオブジェクト
+        this.isSceneFullyReady = false;
     }
 
     init(data) {
+        // シーン起動時に渡されるデータをプロパティに保存
         this.charaDefs = data.charaDefs;
-        this.startScenario = data.startScenario || 'test.ks';
-        this.startLabel = data.startLabel || null;
-  this.isPerformingLoad = false; // ★★★ init時にリセット ★★★
-        this.isResuming = data.resumedFrom ? true : false;
-        this.returnParams = data.returnParams || null;
-               // ★★★ 修正箇所 ★★★
-        // SystemSceneから渡されたBGMキーを受け取り、プロパティに保存する
-        this.restoredBgmKey = data.restoredBgmKey || null;
-        if (this.restoredBgmKey) {
-            console.log(`[GameScene.init] 復帰BGMキーを受け取りました: ${this.restoredBgmKey}`);
-        this.isSceneFullyReady = false; // init時にリセット
-    }
+        this.startScenario = data.startScenario || 'test.ks'; // デフォルトのシナリオ
     }
 
     preload() {
+        // ゲーム開始に必要な最低限のシナリオを読み込む
         this.load.text('test.ks', 'assets/test.ks'); 
-        this.load.text('scene2.ks', 'assets/scene2.ks'); 
-        this.load.text('overlay_test.ks', 'assets/overlay_test.ks');
     }
 
-    create() {
-        console.log("GameScene: クリエイト処理を開始します。");
+    create(data) {
+        console.log("GameScene: create処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
         
-        // --- 1. 同期的なセットアップを全て行う ---
-        this.layer.background = this.add.container(0, 0).setDepth(0);
-        this.layer.cg = this.add.container(0, 0).setDepth(5);
-        this.layer.character = this.add.container(0, 0).setDepth(10);
-        this.layer.message = this.add.container(0, 0).setDepth(20);
-
-        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0x000000, 0.001)
-            .setInteractive().setVisible(false).setDepth(0);
-        this.choiceInputBlocker.on('pointerdown', () => console.log("選択肢を選んでください"));
-
+        // --- 1. 必須オブジェクトとサービスの取得（最優先） ---
         this.uiScene = this.scene.get('UIScene');
-        this.configManager = this.registry.get('configManager');
-        this.stateManager = this.registry.get('stateManager');
         this.soundManager = this.registry.get('soundManager');
+        this.stateManager = this.registry.get('stateManager');
+
+        // --- 2. レイヤーの生成 ---
+        this.layer.background = this.add.container(0, 0).setDepth(0);
+        this.layer.character = this.add.container(0, 0).setDepth(10);
         
+        // --- 3. MessageWindowの取得 ---
         const messageWindow = this.uiScene.uiElements.get('message_window');
         if (!messageWindow) {
-            console.error("GameScene CRITICAL ERROR: 'message_window' not found. Aborting.");
+            console.error("GameScene 致命的エラー: 'message_window'がUISceneに見つかりません。");
             return;
         }
 
+        // --- 4. ScenarioManagerの生成（全ての材料が揃ってから）---
+        // コンストラクタの引数をシンプルに修正済みのものを呼び出す
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
 
-        this.input.once('pointerdown', () => this.soundManager.resumeContext(), this);
+        // --- 5. シナリオの読み込みと実行開始 ---
+        this.scenarioManager.load(this.startScenario);
         
-        for (const tagName in tagHandlers) {
-            this.scenarioManager.registerTag(tagName, tagHandlers[tagName]);
-        }
-        
-        // --- 2. 起動モードに応じて非同期処理を開始する ---
-        // どちらのパスでも、最終的に _finalizeSetup を呼び出す
-        if (this.isResuming) {
-            console.log("GameScene: 復帰処理を開始します。");
-            // performLoadはPromiseを返すので、.then()で後続処理を繋ぐ
-            this.performLoad(0, this.returnParams).then(() => {
-                this._finalizeSetup();
-            });
-        } else {
-            console.log("GameScene: 通常起動します。");
-            this.performSave(0);
-            this.scenarioManager.loadScenario(this.startScenario, this.startLabel);
-            // 通常起動は同期的だが、復帰処理とコードフローを合わせるため
-            // 次のフレームでファイナライズ処理を呼ぶ
-            this.time.delayedCall(1, () => {
-                this._finalizeSetup();
-                this.scenarioManager.next(); // 通常起動時のみ、自動で最初の行へ進む
-            });
-        }
+        // --- 6. 最終準備と入力受付開始 ---
+        this._finalizeSetup();
     }
 
     /**
-     * シーンのセットアップ最終処理（privateメソッド）
-     * このメソッドが呼ばれた時点で、シーンは操作可能になっている
+     * シーンのセットアップ最終処理
      */
     _finalizeSetup() {
-        console.log("GameScene: Finalizing setup.");
+        console.log("GameScene: 最終準備を開始します。");
         this.isSceneFullyReady = true;
 
-        // ★★★ 全ての準備が整ったこのタイミングでのみ、入力リスナーを設定 ★★★
+        // クリック（タップ）でシナリオを進めるためのリスナーを設定
         this.input.on('pointerdown', () => {
-            if (this.scenarioManager) {
+            if (this.isSceneFullyReady && this.scenarioManager) {
                 this.scenarioManager.onClick();
             }
         });
-
-        // ★★★ 全ての準備が整ったこのタイミングでのみ、完了イベントを発行 ★★★
-        this.events.emit('gameScene-load-complete');
-        console.log("GameScene: 準備完了。ロード完了イベントを発行しました。");
-    }
-
-    // ★★★ 修正箇所: stop()メソッドを一つに統一し、全てのクリーンアップを行う ★★★
-    shutdown() {
-    console.log("GameScene: shutdown されました。全てのマネージャーとリソースを停止・破棄します。");
-
-    // 1. ScenarioManagerのループを完全に停止させる
-    if (this.scenarioManager) {
-        this.scenarioManager.stop();
-    }
-
-    // 2. StateManagerのイベントリスナーを解除
-    if (this.stateManager) {
-        // ★★★ 修正: GameSceneが独自に購読しているリスナーを全て解除 ★★★
         
-        this.events.off('force-hud-update'); // もし使っていれば
-    }
-    
-    // 3. 全てのPhaserオブジェクト（HUD、MessageWindowなど）を破棄
-    // この部分は既存のままでOK
-   
-    if (this.messageWindow) { this.messageWindow.destroy(); this.messageWindow = null; }
-    // ... 他のUI要素も同様にdestroy ...
-    this.clearChoiceButtons();
-    this.uiButtons.forEach(b => b.destroy());
-    this.uiButtons = [];
+        // 準備完了をSystemSceneに通知
+        this.events.emit('gameScene-load-complete');
+        console.log("GameScene: 準備完了。SystemSceneに通知しました。");
 
-    // 4. ★★★★★ このシーンが管理するBGMを停止しない ★★★★★
-    // BGMの管理はSystemSceneと各シーンのcreateに任せるため、この行をコメントアウトまたは削除
-    // if (this.soundManager) {
-    //     this.soundManager.stopBgm(0); 
-    // }
-    
-    super.shutdown(); // Phaser.Sceneの親シャットダウン処理を呼ぶ
-}
+        // 最初の行へ進むように指示
+        this.time.delayedCall(10, () => {
+             this.scenarioManager.next();
+        });
+    }
+
+    shutdown() {
+        console.log("GameScene: shutdown処理");
+        if (this.input) {
+            this.input.off('pointerdown');
+        }
+    }
 
       // ★★★ 修正箇所: onFVariableChanged, updatePlayerHpBar, updateCoinHudを削除し、onFVariableChangedに一本化 ★★★
     onFVariableChanged(key, value) {

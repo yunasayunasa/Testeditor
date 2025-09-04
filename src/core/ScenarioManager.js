@@ -1,26 +1,26 @@
 export default class ScenarioManager {
-    constructor(scene, layers, charaDefs, messageWindow, soundManager, stateManager, configManager) {
+    constructor(scene, messageWindow, stateManager, soundManager) {
+        // --- 必須サービスの登録 ---
         this.scene = scene;
-        this.layers = layers;
-        this.characterDefs = charaDefs || {};
         this.messageWindow = messageWindow;
-        this.soundManager = soundManager;
         this.stateManager = stateManager;
-        this.configManager = configManager;
+        this.soundManager = soundManager;
 
+        // --- sceneから取得可能なプロパティ ---
+        this.layers = scene.layer; // GameSceneの'layer'プロパティを参照
+        this.characterDefs = scene.charaDefs || {};
+
+        // --- 内部状態の初期化 ---
+        this.configManager = scene.registry.get('configManager'); // configManagerはregistryから取得
         this.scenario = [];
         this.currentFile = null;
         this.currentLine = 0;
         this.isWaitingClick = false;
         this.isWaitingTag = false;
         this.isEnd = false;
-        this.isStopped = false; // ★★★ 停止フラグ ★★★
-
-           // ★★★ 進行モードを管理するプロパティを追加 ★★★
-        this.mode = 'normal'; // 'normal', 'skip', 'auto'
-        this.autoTimer = null; // オートモード用のタイマー
-        
-
+        this.isStopped = false;
+        this.mode = 'normal';
+        this.autoTimer = null;
         this.tagHandlers = new Map();
         this.ifStack = [];
         this.callStack = [];
