@@ -119,12 +119,9 @@ export default class JumpScene extends BaseGameScene {
                 component.update(time, delta);
             }
         }
-        // --- プレイヤーの操作 ---
-        if (this.cursors.left.isDown) this.player.body.setVelocityX(-200);
-        else if (this.cursors.right.isDown) this.player.body.setVelocityX(200);
-        else this.player.body.setVelocityX(0);
+      
 
-        if (this.cursors.up.isDown && this.player.body.touching.down) this.player.body.setVelocityY(-350);
+      
         
         // --- ゲーム終了条件のチェック ---
         if (this.player.y > this.cameras.main.height + 100) {

@@ -88,6 +88,17 @@
         "bounceY": 0,
         "collideWorldBounds": true
       },
+        "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 250,
+            "jumpVelocity": -400
+          }
+        }
+      ]
+    },
+    {
       "events": [
         {
           "trigger": "onOverlap_Start",
