@@ -865,6 +865,40 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return div;
     }
 
+    //シフトキーでテスト再生するリスナ）ー
+    initializeGlobalInput() {
+        if (!this.isEnabled) return;
+
+        this.pluginManager.game.input.on('pointerdown', (pointer, gameObjects) => {
+            
+            // ★★★ Shiftキーが押されているか、グローバルなキーボードマネージャーでチェック ★★★
+            const shiftKey = this.pluginManager.game.input.keyboard.addKey('SHIFT');
+
+            // --- Shift + クリック: イベントのテスト再生 ---
+            if (shiftKey.isDown) {
+                console.log("[EditorPlugin] Shift-click detected. Passing event to game.");
+                // Editorは何もしない。イベントはそのままゲームオブジェクトのリスナーに流れる
+                return; 
+            }
+
+            // --- 通常クリック: オブジェクトの選択 ---
+            if (gameObjects.length > 0) {
+                const topObject = gameObjects[0];
+                
+                if (this.isObjectEditable(topObject)) {
+                    this.selectedObject = topObject;
+                    this.updatePropertyPanel();
+                    // ★★★ ここでイベントの伝播を止める必要は「ない」。
+                    // BaseGameScene側で制御する。
+                }
+            } else {
+                this.selectedObject = null;
+                this.updatePropertyPanel();
+            }
+        });
+        console.log("[EditorPlugin] Global input listener initialized for cooperative mode.");
+    }
+
      /**
      * イベントデータを更新し、シーンに通知する (最終版)
      */
