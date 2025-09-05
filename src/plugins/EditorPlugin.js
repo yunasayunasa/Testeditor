@@ -679,7 +679,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 const objData = {
                     name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y),
                     scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
-                    angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2))
+                    angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)), width: Math.round(gameObject.width),
+                    height: Math.round(gameObject.height)
                 };
 
                 if (gameObject.getData('group')) {
