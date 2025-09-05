@@ -109,44 +109,38 @@ export default class ScenarioManager {
     
 
 async parse(line) {
- const trimedLine = line.trim();
+    const trimedLine = line.trim();
 
-
-
-const ifState = this.ifStack.length > 0 ? this.ifStack[this.ifStack.length - 1] : null;
-
-    // --- 1. スキップ処理 ---
+    // if文のスキップ処理 (変更なし)
+    const ifState = this.ifStack.length > 0 ? this.ifStack[this.ifStack.length - 1] : null;
     if (ifState && ifState.skipping) {
-        const { tagName, params } = this.parseTag(trimedLine);
+        const { tagName } = this.parseTag(trimedLine);
         if (['if', 'elsif', 'else', 'endif'].includes(tagName)) {
             const handler = this.tagHandlers.get(tagName);
-            // 同期ハンドラなのでawaitは不要だが、念のため付けても害はない
-            if (handler) await handler(this, params);
+            if (handler) await handler(this, this.parseTag(trimedLine).params);
         }
-        // スキップ中は、他のどの処理も行わずに関数を抜ける
         return;
     }
 
-    // --- 2. 通常実行 (if - else if 構造で、二重処理を完全に防ぐ) ---
+    // --- 通常実行 ---
     if (trimedLine.startsWith(';') || trimedLine.startsWith('*') || trimedLine.startsWith('@')) {
-        // コメント行、ラベル行、アセット行は何もしない
-    
-    } else if (trimedLine.startsWith('[')) {
+        // コメント、ラベル、アセットは無視
+    } 
+    else if (trimedLine.startsWith('[')) {
         // --- タグ行 ---
-          const { tagName, params } = this.parseTag(trimedLine);
+        const { tagName, params } = this.parseTag(trimedLine);
         const handler = this.tagHandlers.get(tagName);
 
         if (handler) {
-            // ★★★ ステップ2: [if]と[eval]だけ特別扱い ★★★
-            // expパラメータを持つタグの場合、その中身だけを変数展開する
-            if (params.exp && (tagName === 'if' || tagName === 'elsif' || tagName === 'eval')) {
-                params.exp = this.embedVariables(params.exp);
-            }
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが全てを解決する、唯一の修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
-            // ★★★ ステップ3: 他のパラメータも必要ならここで展開 ★★★
-            // 例: [chara_show name="&f.main_char_name"] のような場合
+            // 全てのパラメータの「値」に対して、変数展開を試みる
             for (const key in params) {
                 if (typeof params[key] === 'string') {
+                    // [eval]タグのexp属性の場合は、中身を展開しないようにするなどの配慮は不要。
+                    // embedVariablesが`&`記号を探すので、"f.hoge=0"のような文字列は変更されない。
                     params[key] = this.embedVariables(params[key]);
                 }
             }
@@ -157,47 +151,27 @@ const ifState = this.ifStack.length > 0 ? this.ifStack[this.ifStack.length - 1] 
         } else {
             console.warn(`未定義のタグです: [${tagName}]`);
         }
-    
-
-} else if (trimedLine.length > 0) {
+    } 
+    else if (trimedLine.length > 0) {
     // --- セリフまたは地の文 ---
          const expandedLine = this.embedVariables(trimedLine);
-    let speakerName = null;
-    let dialogue = trimedLine;
-    const speakerMatch = trimedLine.match(/^([a-zA-Z0-9_]+):/);
-    
-    if (speakerMatch) {
-        speakerName = speakerMatch[1];
-        dialogue = trimedLine.substring(speakerName.length + 1).trim();
-    }
-    
-    this.stateManager.addHistory(speakerName, dialogue);
-    this.highlightSpeaker(speakerName);
-    const wrappedLine = this.manualWrap(dialogue);
-    
-    // スキップモードかどうかで、タイピングの有無を決定
-    const useTyping = (this.mode !== 'skip');
-    
-    // setTextの呼び出しは、この1回だけにする
-    await this.messageWindow.setText(wrappedLine, useTyping, speakerName);
-    
-} 
-
-// ★★★ ここまで ★★★
-
-else{
-}}
-
- 
-
-     // ScenarioManager.js の parse メソッド
-
-  
-    finishTagExecution() {
-        this.isWaitingTag = false;
-        this.next();
-    }
-    
+       let speakerName = null;
+        let dialogue = expandedLine; // ★ 変数展開後のテキストを使う
+        const speakerMatch = expandedLine.match(/^([a-zA-Z0-9_]+):/);
+        
+        if (speakerMatch) {
+            speakerName = speakerMatch[1];
+            dialogue = expandedLine.substring(speakerName.length + 1).trim();
+        }
+        
+        this.stateManager.addHistory(speakerName, dialogue);
+        this.highlightSpeaker(speakerName);
+        const wrappedLine = this.manualWrap(dialogue);
+        const useTyping = (this.mode !== 'skip');
+        
+        await this.messageWindow.setText(wrappedLine, useTyping, speakerName);
+    } 
+}
      // (constructor, next, parseなどの他の部分は、あなたの正常に動作しているコードのままでOKです)
 // ★★★ loadScenarioメソッドだけを、以下のコードで完全に置き換えてください ★★★
 
