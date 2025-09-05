@@ -68,31 +68,32 @@ export default class ScenarioManager {
         }
     }
     // --- 新しいメインループ ---
-    async gameLoop() {
+       async gameLoop() {
         this.isLoopRunning = true;
+        console.log(`[gameLoop] >> ループ開始 (Line: ${this.currentLine})`);
 
-        // isEndになるか、待機状態になるまでループし続ける
-       while (!this.isEnd && !this.isWaitingClick && !this.isWaitingChoice && !this.isStopped) {
+        while (!this.isEnd && !this.isWaitingClick && !this.isWaitingChoice && !this.isStopped) {
             
             if (this.currentLine >= this.scenario.length) {
                 this.isEnd = true;
                 this.messageWindow.setText('（シナリオ終了）', false);
-                break; // ループを抜ける
+                break;
             }
 
             const line = this.scenario[this.currentLine];
+            const processingLine = this.currentLine; // ログ用に現在行を保持
             this.currentLine++;
 
-            console.log(`[Loop] Processing line ${this.currentLine - 1}: "${line}"`);
+            console.log(`[gameLoop] -> Line ${processingLine} のパースを開始: "${line}"`);
             
-            // parseは非同期の可能性がある
             await this.parse(line);
+
+            console.log(`[gameLoop] <- Line ${processingLine} のパースが完了。`);
         }
         
         this.isLoopRunning = false;
-        console.log(`[Loop] << ループ停止。isEnd=${this.isEnd}, isWaitingClick=${this.isWaitingClick}, isWaitingChoice=${this.isWaitingChoice}`);
+        console.log(`[gameLoop] << ループ停止。isEnd=${this.isEnd}, isWaitingClick=${this.isWaitingClick}, isWaitingChoice=${this.isWaitingChoice}, Line: ${this.currentLine}`);
     }
-
      // --- クリック処理 ---
     onClick() {
        
@@ -200,23 +201,38 @@ else{
      // (constructor, next, parseなどの他の部分は、あなたの正常に動作しているコードのままでOKです)
 // ★★★ loadScenarioメソッドだけを、以下のコードで完全に置き換えてください ★★★
 
-    async loadScenario(scenarioKey, targetLabel = null) {
-        console.log(`[loadScenario] 開始: ${scenarioKey}`);
+   async loadScenario(scenarioKey, targetLabel = null) {
+        console.log(`%c[loadScenario] START: ${scenarioKey}`, "color: yellow; font-weight: bold;");
         let rawText;
 
         // --- 1. シナリオテキストの取得 ---
         if (this.scene.cache.text.has(scenarioKey)) {
             rawText = this.scene.cache.text.get(scenarioKey);
+            console.log(`[loadScenario] テキストはキャッシュに存在しました。`);
         } else {
-            console.log(`動的ロード: ${scenarioKey} のテキストを読み込みます。`);
+            console.log(`[loadScenario] 動的ロード開始: ${scenarioKey}`);
             await new Promise(resolve => {
                 this.scene.load.text(scenarioKey, `assets/${scenarioKey}`);
-                this.scene.load.once('complete', resolve);
+                
+                // ★★★ ローダーの全イベントを監視して、何が起きているか確認 ★★★
+                this.scene.load.once(`filecomplete-text-${scenarioKey}`, () => {
+                    console.log(`[loadScenario] >> filecomplete-text-${scenarioKey} イベント受信！`);
+                });
+                this.scene.load.once('complete', () => {
+                    console.log(`[loadScenario] >> complete イベント受信！`);
+                    resolve();
+                });
+
                 this.scene.load.start();
+                console.log(`[loadScenario] this.scene.load.start() を呼び出しました。`);
             });
+
+            console.log(`[loadScenario] 動的ロードのPromiseが解決されました。`);
             rawText = this.scene.cache.text.get(scenarioKey);
         }
-        if (!rawText) { throw new Error(`シナリオテキスト[${scenarioKey}]のロードに失敗しました。`); }
+
+        if (!rawText) { throw new Error(`[loadScenario] シナリオテキスト[${scenarioKey}]のロードに失敗しました。`); }
+
 
         // --- 2. @asset宣言の解析 ---
         const assetsToLoad = [];
@@ -255,11 +271,12 @@ else{
             console.log("追加アセットのロードが完了しました。");
         }
 
-        // --- 4. シナリオコンテキストの入れ替え ---
-        this.load(scenarioKey);
+       // --- 3. シナリオコンテキストの入れ替え ---
+        this.load(scenarioKey); // this.loadは内部メソッド
         if (targetLabel) {
             this.jumpTo(targetLabel);
         }
+        console.log(`%c[loadScenario] END: ${scenarioKey}`, "color: yellow; font-weight: bold;");
     }
 
     jumpTo(target) {
