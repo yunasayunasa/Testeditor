@@ -60,12 +60,12 @@ import handleCm from './scenario/cm.js';
 import handleEr from './scenario/er.js';*/
 import handleLink from './scenario/link.js';
 import handleR from './scenario/r.js';
-/*import handleButton from './scenario/button.js';
+///import handleButton from './scenario/button.js';
 
 // --- シーン・サブルーチン遷移系 ---
 import handleJump from './scenario/jump.js';
 import handleCall from './scenario/call.js';
-import handleReturn from './scenario/return.js';*/
+//import handleReturn from './scenario/return.js';
 
 // ============================================================================
 // ★★★ 唯一のエクスポートポイント ★★★
@@ -123,10 +123,10 @@ export const tagHandlers = {
     'er': handleEr,*/
     'link': handleLink,
     'r': handleR,
-   /* 'button': handleButton,
+   // 'button': handleButton,
     
     // シーン・サブルーチン遷移系
     'jump': handleJump,
     'call': handleCall,
-    'return': handleReturn,*/
+  //  'return': handleReturn,
 };
