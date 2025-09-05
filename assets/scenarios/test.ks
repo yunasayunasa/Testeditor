@@ -6,7 +6,7 @@
 ;[playbgm storage="cafe" time=1000]
 [bg storage="bg_school" time=1500]
 [wait time=1500]
-[chara_show name="yuna" pos="left" y=800 visible=false] 
+[chara_show name="yuna" pos="left" y=800 ] 
 ; y=800 は画面外のはず
 [move name="yuna" y=450 alpha=1 time=1000] 
 ; ★★★ y=450は画面内のy座標に修正（中心付近）★★★
