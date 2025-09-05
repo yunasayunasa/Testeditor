@@ -86,6 +86,34 @@ const config = {
         }
     }
 };
+async function processUiRegistry(registry) {
+    const processed = JSON.parse(JSON.stringify(registry));
+    
+    for (const key in processed) {
+        const definition = processed[key];
+        
+        if (definition.path) {
+            try {
+                const module = await import(definition.path);
+                const UiClass = module.default;
+                
+                // ★★★ ここからが修正の核心 ★★★
+                // 読み込んだクラスを`component`プロパティとして格納する
+                definition.component = UiClass;
+                // 不要になったpathは削除しても良い（任意）
+                // delete definition.path; 
+
+                if (UiClass && UiClass.dependencies) {
+                    definition.watch = UiClass.dependencies;
+                    console.log(`[UI Registry] Processed '${key}'. Auto-configured 'watch'.`);
+                }
+            } catch (e) {
+                console.error(`Failed to process UI definition for '${key}'`, e);
+            }
+        }
+    }
+    return processed;
+}
 window.onload = async () => {
     
     // ★ステップ1: 必要なデータを先に非同期で準備する

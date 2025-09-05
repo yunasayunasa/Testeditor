@@ -42,48 +42,43 @@ export default class UIScene extends Phaser.Scene {
     }
 
     // buildUiFromLayout メソッド自体は async のままでOK
-    async buildUiFromLayout(layoutData) {
-        if (!layoutData || !layoutData.objects) {
-            console.warn("UIScene: No layout data found. Skipping UI build.");
+   async buildUiFromLayout() { // メソッド名は変えなくてもOK
+        // ★ registryを取得するのはこのメソッドの責務ではないので、createで行う
+        const processedUiRegistry = this.registry.get('uiRegistry');
+        if (!processedUiRegistry) {
+            console.error("UIScene: uiRegistry not found in registry!");
             return;
         }
 
-        const creationPromises = layoutData.objects.map(async (layout) => {
-            const definition = uiRegistry[layout.name];
-            if (!definition) return;
+        // layoutDataの取得は必要に応じて残す
+        const layoutData = this.cache.json.get(this.scene.key); 
 
+        // ★★★ processedUiRegistryを直接ループする ★★★
+        for (const name in processedUiRegistry) {
+            const definition = processedUiRegistry[name];
             let uiElement = null;
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これが原因2を解決する修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            
-            // StateManagerを先に取得しておく
+
+            // ... stateManagerなどのparams準備は同じ ...
             const stateManager = this.registry.get('stateManager');
-            // JSONのレイアウト情報に、動的なパラメータ（stateManagerなど）を結合する
+            const layout = layoutData ? layoutData.objects.find(obj => obj.name === name) : {};
             const params = { ...definition.params, ...layout, stateManager };
 
-            if (definition.path) {
-                try {
-                    const module = await import(`../ui/${definition.path.replace('./', '')}`);
-                    const UiClass = module.default;
-                    // ★ 結合したparamsをコンストラクタの第2引数として渡す
-                    uiElement = new UiClass(this, params);
-                } catch (err) {
-                    console.error(`Failed to load UI component '${layout.name}'`, err);
-                }
-            } else if (typeof definition.creator === 'function') {
-                // creatorにも結合したparamsを渡す
+            // ★★★ ここからが修正の核心 ★★★
+            // pathではなく、事前に読み込まれた`component`プロパティを確認
+            if (definition.component) {
+                const UiClass = definition.component;
+                uiElement = new UiClass(this, params);
+            } 
+            else if (definition.creator) {
                 uiElement = definition.creator(this, params);
             }
             
             if (uiElement) {
-                this.registerUiElement(layout.name, uiElement, layout);
-                if (layout.name === 'bottom_panel') {
-                    this.panel = uiElement;
-                }
+                this.registerUiElement(name, uiElement, params); // layoutではなくparamsを渡す
             }
-        });
+        
+    
+        }
         await Promise.all(creationPromises);
     }
     
