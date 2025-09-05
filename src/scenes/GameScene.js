@@ -8,6 +8,10 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager = null; this.uiScene = null; this.soundManager = null;
         this.stateManager = null; this.layer = {}; this.charaDefs = {};
         this.characters = {}; this.isSceneFullyReady = false; this.loadSlot = null;
+        this.choiceButtons = [];     // 表示されるボタンオブジェクトを保持する配列
+        this.pendingChoices = [];    // [link]タグで定義された選択肢情報を保持する配列
+        this.choiceInputBlocker = null; // クリックブロッカーへの参照
+ 
     }
 
     init(data) {
@@ -28,6 +32,10 @@ export default class GameScene extends Phaser.Scene {
 
         this.layer.background = this.add.container(0, 0).setDepth(0);
         this.layer.character = this.add.container(0, 0).setDepth(10);
+        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
+            .setInteractive()
+            .setVisible(false)
+            .setDepth(25); // メッセージウィンドウ(depth:?)より手前、選択肢ボタン(depth:30)より奥
         
         const messageWindow = this.uiScene.uiElements.get('message_window');
         if (!messageWindow) { return; }
@@ -51,6 +59,50 @@ export default class GameScene extends Phaser.Scene {
         this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
         this.events.emit('gameScene-load-complete');
         console.log("GameScene: 準備完了。SystemSceneに通知しました。");
+    }
+
+    displayChoiceButtons() {
+        // ブロッカーを表示。depthはcreateで設定済み
+        this.choiceInputBlocker.setVisible(true);
+        
+        const totalButtons = this.pendingChoices.length;
+        // Y座標の計算ロジックもあなたのものをそのまま使用
+        const startY = (this.scale.height / 2) - ((totalButtons - 1) * 60); 
+
+        this.pendingChoices.forEach((choice, index) => {
+            const y = startY + (index * 120);
+            
+            // ボタンのスタイルもあなたのものをそのまま使用
+            const button = this.add.text(this.scale.width / 2, y, choice.text, { fontSize: '40px', fill: '#fff', backgroundColor: '#555', padding: { x: 20, y: 10 }})
+                .setOrigin(0.5)
+                .setInteractive()
+                .setDepth(30); // ★ ボタンを最前面に持ってくる (ブロッカーより手前)
+    
+            button.on('pointerdown', (pointer, localX, localY, event) => {
+                // イベントの伝播を止めて、下のGameSceneのクリックリスナーが反応しないようにする
+                event.stopPropagation();
+                
+                this.scenarioManager.jumpTo(choice.target);
+                this.clearChoiceButtons();
+                this.scenarioManager.next(); 
+            });
+    
+            this.choiceButtons.push(button);
+        });
+    
+        // 選択肢を表示したら、保留リストはクリアするのが一般的
+        this.pendingChoices = [];
+    }
+
+    clearChoiceButtons() {
+        this.choiceInputBlocker.setVisible(false);
+        this.choiceButtons.forEach(button => button.destroy());
+        this.choiceButtons = [];
+        this.pendingChoices = [];
+        
+        if (this.scenarioManager) {
+            this.scenarioManager.isWaitingChoice = false;
+        }
     }
 
     performSave(slot) {
