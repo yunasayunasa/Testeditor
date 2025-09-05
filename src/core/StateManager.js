@@ -1,5 +1,4 @@
-// src/core/StateManager.js (最終版)
-import _ from 'lodash'; 
+
 export default class StateManager extends Phaser.Events.EventEmitter {
     constructor() {
         super(); // ★★★ 追加: 親クラスのコンストラクタを呼び出す ★★★
