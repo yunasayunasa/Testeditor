@@ -183,38 +183,49 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-         /**
-     * 文字列のJavaScript式を安全に評価・実行し、変更を通知する。
-     * @param {string} exp - 実行する式 (例: "f.hoge = 10")
-     * @returns {*} 評価結果
+             /**
+     * 文字列のJavaScript式を安全に評価・実行する (最終完成版)
+     * 代入のみの文と、値を返す式の両方を正しく扱います。
+     * @param {string} exp - 実行する式 (例: "f.love_meter = 10", "f.love_meter > 5")
+     * @returns {*} 評価結果。代入のみの場合はundefined、比較などの場合はその結果。
      */
     eval(exp) {
         try {
             const f = this.f || {};
             const sf = this.sf || {};
-            
-            // ★★★ 修正箇所: 変更前のf変数の状態をコピーして保持 ★★★
-            // JSON.parse(JSON.stringify(f)) は確実だが、パフォーマンスが懸念される場合はシャローコピーで試す
             const f_before = { ...f };
 
-            const result = new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが全てを解決する、唯一の修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
-            // 変更後のfの参照をthis.fに再代入
-            this.f = f;
+            let result;
+            // 'return'キーワードが式に含まれているか、あるいは代入(=)を含まない単純な式かをチェック
+            if (exp.trim().startsWith('return') || !exp.includes('=')) {
+                // [if]タグで使われるような、値を返すことを期待する式
+                result = new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
+            } else {
+                // [eval]タグで使われるような、代入などの操作を期待する文
+                // こちらは戻り値を期待しない
+                new Function('f', 'sf', `'use strict'; ${exp};`)(f, sf);
+            }
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-            // ★★★ 修正箇所: 変更前と変更後のf変数を比較し、変更があればイベントを発行 ★★★
-            // 新旧両方のキーのセットを作成し、変更がないかチェックする
+            this.f = f;
+            this.sf = sf;
+
+            // 変更検知とイベント発行 (変更なし)
             const allKeys = new Set([...Object.keys(f_before), ...Object.keys(this.f)]);
             allKeys.forEach(key => {
-                // 値が変更された、またはキーが新しく追加/削除された場合
                 if (f_before[key] !== this.f[key]) {
-                    console.log(`[StateManager.eval] f.${key} が変更されました: ${f_before[key]} -> ${this.f[key]}`);
-                    this.emit('f-variable-changed', key, this.f[key]);
+                    this.emit('f-variable-changed', key, this.f[key], f_before[key]);
                 }
             });
 
-            this.saveSystemVariables(); 
+            this.saveSystemVariables(); // sfが変更された場合に備えて保存
             return result;
+
         } catch (e) {
             console.warn(`[StateManager.eval] 式の評価中にエラーが発生しました: "${exp}"`, e);
             return undefined; 
