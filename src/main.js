@@ -59,7 +59,7 @@ const config = {
         PreloadScene, 
         SystemScene, 
      UIScene,       
-      GameScene,   
+    //  GameScene,   
         
       SaveLoadScene, 
         ConfigScene, 

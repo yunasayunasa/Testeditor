@@ -88,7 +88,9 @@ export default class SystemScene extends Phaser.Scene {
             
             // UISceneの準備が完了した！という報告が来た後で、
             console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-            
+            if (!this.scene.keys.GameScene) {
+                this.scene.add('GameScene', GameScene, false); // autoStartをfalseに
+            }
             // --- ステップ2: GameSceneを起動し、その完了を監視する ---
             this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
