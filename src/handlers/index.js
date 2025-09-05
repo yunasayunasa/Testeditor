@@ -39,7 +39,7 @@ import handleStopVideo from './scenario/stopvideo.js';
 import handlePlaySe from './scenario/playse.js';
 import handlePlayBgm from './scenario/playbgm.js';
 import handleStopBgm from './scenario/stopbgm.js';
-import handleVoice from './scenario/voice.js';
+import handleVoice from './scenario/voice.js';*/
 
 // --- 変数・ロジック・デバッグ系 ---
 import handleEval from './scenario/eval.js';
@@ -47,7 +47,7 @@ import handleIf from './scenario/if.js';
 import handleElsif from './scenario/elsif.js';
 import handleElse from './scenario/else.js';
 import handleEndif from './scenario/endif.js';
-import handleLog from './scenario/log.js';*/
+import handleLog from './scenario/log.js';//
 
 // --- フロー制御・待機系 ---
 import handleP from './scenario/p.js';
