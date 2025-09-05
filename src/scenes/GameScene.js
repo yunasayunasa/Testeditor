@@ -51,7 +51,12 @@ export default class GameScene extends Phaser.Scene {
         // --- 4. ScenarioManagerの生成（全ての材料が揃ってから）---
         // コンストラクタの引数をシンプルに修正済みのものを呼び出す
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
-
+console.log("[GameScene] タグハンドラの登録を開始します...");
+        for (const tagName in tagHandlers) {
+            this.scenarioManager.registerTag(tagName, tagHandlers[tagName]);
+        }
+        console.log(`[GameScene] ${Object.keys(tagHandlers).length}個のタグハンドラを登録しました。`);
+        // 
         // --- 5. シナリオの読み込みと実行開始 ---
         this.scenarioManager.load(this.startScenario);
         
