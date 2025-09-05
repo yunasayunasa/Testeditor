@@ -10,16 +10,15 @@ export const uiRegistry = {
        'message_window': {
         path: './ui/MessageWindow.js',
         groups: ['game'] // GameSceneで表示されるべきなので 'game' グループに所属させる
-    }
-    // ★★★ メニューとパネルもデータ駆動の対象にする ★★★
-    /* 'menu_button': {
-        creator: (scene, params) => scene.createMenuButton(params), // ★ UISceneのヘルパーを呼ぶ
+    },
+    'menu_button': {
+        path: './ui/MenuButton.js',
         groups: ['menu', 'game']
     },
     'bottom_panel': {
-        creator: (scene, params) => scene.createBottomPanel(params), // ★ UISceneのヘルパーを呼ぶ
+        path: './ui/BottomPanel.js',
         groups: ['menu', 'game']
-    }*/
+    }
 };
 
 export const sceneUiVisibility = {
