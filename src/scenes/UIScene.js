@@ -12,25 +12,35 @@ export default class UIScene extends Phaser.Scene {
   // src/scenes/UIScene.js (修正後のコード)
 
       // createメソッドは非同期である必要はない
-    create() {
+      async create() {
         console.log("UIScene: Data-Driven Initialization Started");
         this.scene.bringToTop();
 
-        // ★ 1. layoutDataをここで取得する
-        const layoutData = this.cache.json.get(this.scene.key);
-        
-        // ★ 2. buildUiFromLayoutに、取得したlayoutDataを渡す
-        this.buildUiFromLayout(layoutData).then(() => {
-            console.log("UIScene: UI build complete. Finalizing setup.");
+        try {
+            // ステップ1: UIの構築を待つ
+            const layoutData = this.cache.json.get(this.scene.key);
+            await this.buildUiFromLayout(layoutData);
+            console.log("UIScene: UI build complete.");
 
+            // ステップ2: 連携設定を行う
             const systemScene = this.scene.get('SystemScene');
-            systemScene.events.on('transition-complete', this.onSceneTransition, this);
-            
+            if (systemScene) {
+                systemScene.events.on('transition-complete', this.onSceneTransition, this);
+                console.log("UIScene: SystemSceneとの連携を設定しました。");
+            } else {
+                console.warn("UIScene: SystemSceneが見つかりませんでした。");
+            }
+
+            // ステップ3: すべての準備が完了してから、成功を通知する
+            console.log("UIScene: Finalizing setup and emitting scene-ready.");
             this.events.emit('scene-ready');
 
-        }).catch(err => {
-            console.error("UIScene: Failed to build UI from layout.", err);
-        });
+        } catch (err) {
+            // どこかでエラーが起きれば、必ずここに来る
+            console.error("UIScene: create処理中にエラーが発生しました。", err);
+            // (オプション) エラーが発生したことを明確に示すために、エラーメッセージを画面に表示するなど
+            this.add.text(this.scale.width / 2, this.scale.height / 2, 'UIScene FAILED TO INITIALIZE', { color: 'red', fontSize: '32px' }).setOrigin(0.5);
+        }
     }
 
     // layoutDataを引数として受け取る、正しい非同期ビルドメソッド
