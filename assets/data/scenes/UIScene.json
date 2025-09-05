@@ -7,8 +7,8 @@
     },
     {
       "name": "bottom_panel",
-      "x": 640,
-      "y": 800, 
+      "x": 0,
+      "y": 700, 
       "width": 1280,
       "height": 120
     },
