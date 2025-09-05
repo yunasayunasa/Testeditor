@@ -51,7 +51,17 @@ export default class GameScene extends Phaser.Scene {
         // --- 4. ScenarioManagerの生成（全ての材料が揃ってから）---
         // コンストラクタの引数をシンプルに修正済みのものを呼び出す
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
-console.log("[GameScene] タグハンドラの登録を開始します...");
+
+            console.log("レイヤー表示状態の強制チェック:");
+    console.log("  - 背景レイヤー.visible:", this.layer.background.visible);
+    console.log("  - キャラクターレイヤー.visible:", this.layer.character.visible);
+
+    // 強制的に表示状態にする
+    this.layer.background.setVisible(true);
+    this.layer.character.setVisible(true);
+    console.log("キャラクターレイヤーを強制的に表示状態にしました。");
+        
+        console.log("[GameScene] タグハンドラの登録を開始します...");
         for (const tagName in tagHandlers) {
             this.scenarioManager.registerTag(tagName, tagHandlers[tagName]);
         }
