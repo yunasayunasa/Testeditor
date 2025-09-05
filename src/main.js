@@ -5,14 +5,14 @@ import SystemScene from './scenes/SystemScene.js';
 import UIScene from './scenes/UIScene.js';       
 import GameScene from './scenes/GameScene.js';
 
-/*import SaveLoadScene from './scenes/SaveLoadScene.js';
+import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
 import ActionScene from './scenes/ActionScene.js';
 import BattleScene from './scenes/BattleScene.js';
-//import NovelOverlayScene from './scenes/NovelOverlayScene.js';
+import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
-import JumpScene from './scenes/JumpScene.js';*/
+import JumpScene from './scenes/JumpScene.js';
 const config = {
     type: Phaser.AUTO,
     scale: {
@@ -30,23 +30,23 @@ const config = {
      UIScene,       
       GameScene,   
         
-      /* SaveLoadScene, 
+      SaveLoadScene, 
         ConfigScene, 
         BacklogScene, 
         ActionScene,
          BattleScene,
-        JumpScene*/
-       // NovelOverlayScene
+        JumpScene,
+        NovelOverlayScene
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
- /*plugins: {
+ plugins: {
         global: [
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ★★★ start: true に戻し、Phaserに起動を完全に任せる ★★★
             { key: 'EditorPlugin', plugin: EditorPlugin, start: true }
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         ]
-    },*/
+    },
     physics: {
         default: 'arcade',
         arcade: {
