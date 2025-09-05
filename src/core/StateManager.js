@@ -164,19 +164,25 @@ export default class StateManager extends Phaser.Events.EventEmitter {
      * ロードした状態から変数を復元する
      * @param {Object} loadedState - localStorageから読み込んだ状態オブジェクト
      */
+    /**
+     * ロードした状態から変数を復元する (改訂版)
+     * @param {Object} loadedState - localStorageから読み込んだ状態オブジェクト
+     */
     setState(loadedState) {
-        // ★★★ 修正点①: あなたの元のロジックを尊重する ★★★
+        // f変数を復元 (存在しない場合は空オブジェクト)
         this.f = loadedState.variables.f || {};
-        // sf変数の復元もここで行うのが安全
-        this.sf = loadedState.variables.sf || this.loadSystemVariables();
+        
+        // sf変数はシステムデータなので、ここでは復元しないのが一般的
+        // 必要であれば、`this.sf = { ...this.sf, ...loadedState.variables.sf };` のようにマージする
 
-        // ★★★ 修正点②: ロード完了後、すべてのf変数について「変更通知」を発行する ★★★
-        // これにより、すべてのHUDが自分自身の表示を更新する
+        console.log("[StateManager] Game variables restored from save data.", this.f);
+        
+        // ロード完了後、すべてのf変数について「変更通知」を発行する
+        // これにより、HUDなどが自分自身の表示を更新する
         for (const key in this.f) {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-
          /**
      * 文字列のJavaScript式を安全に評価・実行し、変更を通知する。
      * @param {string} exp - 実行する式 (例: "f.hoge = 10")
