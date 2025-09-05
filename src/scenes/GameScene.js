@@ -43,7 +43,7 @@ export default class GameScene extends Phaser.Scene {
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
-
+  this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
         if (this.loadSlot !== undefined) {
             this.performLoad(this.loadSlot).then(() => this._finalizeSetup());
         } else {
@@ -59,6 +59,21 @@ export default class GameScene extends Phaser.Scene {
         this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
         this.events.emit('gameScene-load-complete');
         console.log("GameScene: 準備完了。SystemSceneに通知しました。");
+    }
+
+     /**
+     * StateManagerのf変数が変更されたときに呼び出されるリスナー
+     * @param {string} key - 変更された変数のキー
+     * @param {*} value - 新しい値
+     */
+    onFVariableChanged(key, value) {
+        // シーンの準備が完全に終わっていない場合は、何もしない
+        if (!this.isSceneFullyReady) return;
+
+        // 処理をUISceneに丸投げする
+        if (this.uiScene) {
+            this.uiScene.updateHud(key, value);
+        }
     }
 
     displayChoiceButtons() {
