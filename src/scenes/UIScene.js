@@ -94,17 +94,21 @@ export default class UIScene extends Phaser.Scene {
         element.setPosition(layout.x, layout.y);
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが原因1を解決する修正です ★★★
+        // ★★★ これが全てを解決する、唯一の修正です ★★★
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // 1. JSONにwidthとheightが定義されているかチェック
+        // 1. JSONレイアウトにwidthとheightが定義されているかチェックする
         if (layout.width && layout.height) {
             // 2. もし定義されていれば、それをコンテナのサイズとして設定する
+            //    これにより、Phaserはクリック範囲を認識できるようになる
             element.setSize(layout.width, layout.height);
         }
         
-        // 3. サイズが確定した後で、setInteractiveを呼び出す
+        // 3. サイズが確定した後で、setInteractiveを呼び出す！
+        //    (creator関数で作られたテキストボタンなどは、元からサイズがあるので問題なく動作する)
         element.setInteractive();
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
