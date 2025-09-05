@@ -134,46 +134,55 @@ export default class GameScene extends Phaser.Scene {
     }
 
     async performLoad(slot, returnParams = null) {
-        console.log(`%c[performLoad] スロット[${slot}]からのロード処理を開始します。`, "color: orange;");
+        console.log(`スロット[${slot}]からのロード処理を開始します。`);
         try {
             const jsonString = localStorage.getItem(`save_data_${slot}`);
             if (!jsonString) {
-                // ★ 早期リターン
-                return console.error(`[performLoad] エラー: スロット[${slot}]のセーブデータが見つかりません。`);
+                console.error(`スロット[${slot}]のセーブデータが見つかりません。`);
+                return;
             }
-            
-            console.log("[performLoad] セーブデータをJSONとしてパースします...");
             const loadedState = JSON.parse(jsonString);
-            console.log("[performLoad] パース成功。");
-
-            console.log("[performLoad] StateManagerに状態を復元させます...");
             this.stateManager.setState(loadedState);
-            console.log("[performLoad] StateManagerの状態復元完了。");
 
             if (returnParams) {
-                console.log("[performLoad] 復帰パラメータを反映します:", returnParams);
+                console.log("復帰パラメータを反映します:", returnParams);
                 for (const key in returnParams) {
                     const value = returnParams[key];
-                    this.stateManager.eval(`${key} = ${JSON.stringify(value)}`);
+                    let evalExp;
+
+                    if (typeof value === 'string') {
+                        evalExp = `${key} = \`${value.replace(/`/g, '\\`')}\``; 
+                    } else if (typeof value === 'number' || typeof value === 'boolean') {
+                        evalExp = `${key} = ${value}`;
+                    } else if (typeof value === 'object' && value !== null) {
+                        try {
+                            const stringifiedValue = JSON.stringify(value).replace(/`/g, '\\`'); 
+                            evalExp = `${key} = JSON.parse(\`${stringifiedValue}\`)`;
+                        } catch (e) {
+                            console.warn(`[GameScene] returnParamsでJSONシリアライズできないオブジェクトが検出されました。スキップします： ${key} =`, value, e);
+                            continue; 
+                        }
+                    } else {
+                        console.warn(`[GameScene] 未知の型のreturnParams値が検出されました。スキップします： ${key} =`, value);
+                        continue; 
+                    }
+
+                    this.stateManager.eval(evalExp);
                 }
-                console.log("[performLoad] 復帰パラメータの反映完了。");
             }
 
-            console.log("[performLoad] 世界の再構築(rebuildScene)を開始します...");
             await rebuildScene(this, loadedState, this.restoredBgmKey);
-            console.log("[performLoad] 世界の再構築(rebuildScene)が正常に完了しました。");
             
             this.events.emit('force-hud-update');
 
             if (loadedState.scenario.isWaitingClick || loadedState.scenario.isWaitingChoice) {
-                console.log("[performLoad] ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
+                console.log("ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
             } else {
-                console.log("[performLoad] ロード完了: 次の行からシナリオを再開します。");
+                console.log("ロード完了: 次の行からシナリオを再開します。");
                 this.time.delayedCall(10, () => this.scenarioManager.next());
             }
         } catch (e) {
-            // ★★★ エラーオブジェクト全体をログに出力する ★★★
-            console.error("ロード処理でエラーが発生しました。", e);
+            console.error(`ロード処理でエラーが発生しました。`, e);
         }
     }
 
