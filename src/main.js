@@ -2,7 +2,7 @@
 
 import PreloadScene from './scenes/PreloadScene.js';
 import SystemScene from './scenes/SystemScene.js'; 
-import UIScene from './scenes/UIScene.js';       
+/*import UIScene from './scenes/UIScene.js';       
 import GameScene from './scenes/GameScene.js';
 
 import SaveLoadScene from './scenes/SaveLoadScene.js';
@@ -12,7 +12,7 @@ import ActionScene from './scenes/ActionScene.js';
 import BattleScene from './scenes/BattleScene.js';
 //import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
-import JumpScene from './scenes/JumpScene.js';
+import JumpScene from './scenes/JumpScene.js';*/
 const config = {
     type: Phaser.AUTO,
     scale: {
@@ -27,7 +27,7 @@ const config = {
     scene: [
         PreloadScene, 
         SystemScene, 
-      UIScene,       
+    /*  UIScene,       
        GameScene,   
         
        SaveLoadScene, 
@@ -35,7 +35,7 @@ const config = {
         BacklogScene, 
         ActionScene,
          BattleScene,
-        JumpScene
+        JumpScene*/
        // NovelOverlayScene
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
