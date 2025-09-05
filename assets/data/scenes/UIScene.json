@@ -2,14 +2,14 @@
   "objects": [
     {
       "name": "menu_button",
-      "x": 75,
-      "y": 650,
+      "x": 50,
+      "y": 700,
       "depth": 10
     },
     {
       "name": "bottom_panel",
       "x": 0,
-      "y": 700, 
+      "y": 800, 
       "width": 1280,
       "height": 120
     },
