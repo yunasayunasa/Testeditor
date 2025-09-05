@@ -201,34 +201,37 @@ else{
      // (constructor, next, parseなどの他の部分は、あなたの正常に動作しているコードのままでOKです)
 // ★★★ loadScenarioメソッドだけを、以下のコードで完全に置き換えてください ★★★
 
-   async loadScenario(scenarioKey, targetLabel = null) {
+async loadScenario(scenarioKey, targetLabel = null) {
         console.log(`%c[loadScenario] START: ${scenarioKey}`, "color: yellow; font-weight: bold;");
         let rawText;
 
-        // --- 1. シナリオテキストの取得 ---
-        if (this.scene.cache.text.has(scenarioKey)) {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが全てを解決する、唯一の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
+        // --- 1. シナリオテキストの取得（キャッシュ優先） ---
+        const keyWithoutExt = scenarioKey.replace('.ks', ''); // 'scene2.ks' -> 'scene2'
+
+        // まず、拡張子なしのキーでキャッシュを探す (PreloadSceneが登録したキー)
+        if (this.scene.cache.text.has(keyWithoutExt)) {
+            rawText = this.scene.cache.text.get(keyWithoutExt);
+            console.log(`[loadScenario] テキストをキャッシュから取得しました (キー: '${keyWithoutExt}')`);
+        } 
+        // 次に、完全なキーで探す（下位互換性のため）
+        else if (this.scene.cache.text.has(scenarioKey)) {
             rawText = this.scene.cache.text.get(scenarioKey);
-            console.log(`[loadScenario] テキストはキャッシュに存在しました。`);
-        } else {
-            console.log(`[loadScenario] 動的ロード開始: ${scenarioKey}`);
+            console.log(`[loadScenario] テキストをキャッシュから取得しました (キー: '${scenarioKey}')`);
+        } 
+        // キャッシュにない場合のみ、動的ロードを実行する
+        else {
+            console.log(`[loadScenario] 動的ロードを実行します: ${scenarioKey}`);
             await new Promise(resolve => {
-                this.scene.load.text(scenarioKey, `assets/${scenarioKey}`);
-                
-                // ★★★ ローダーの全イベントを監視して、何が起きているか確認 ★★★
-                this.scene.load.once(`filecomplete-text-${scenarioKey}`, () => {
-                    console.log(`[loadScenario] >> filecomplete-text-${scenarioKey} イベント受信！`);
-                });
-                this.scene.load.once('complete', () => {
-                    console.log(`[loadScenario] >> complete イベント受信！`);
-                    resolve();
-                });
-
+                // ロードする際のキーも、拡張子なしのキーに統一する
+                this.scene.load.text(keyWithoutExt, `assets/${scenarioKey}`);
+                this.scene.load.once('complete', resolve);
                 this.scene.load.start();
-                console.log(`[loadScenario] this.scene.load.start() を呼び出しました。`);
             });
-
-            console.log(`[loadScenario] 動的ロードのPromiseが解決されました。`);
-            rawText = this.scene.cache.text.get(scenarioKey);
+            rawText = this.scene.cache.text.get(keyWithoutExt);
         }
 
         if (!rawText) { throw new Error(`[loadScenario] シナリオテキスト[${scenarioKey}]のロードに失敗しました。`); }
@@ -271,14 +274,14 @@ else{
             console.log("追加アセットのロードが完了しました。");
         }
 
-       // --- 3. シナリオコンテキストの入れ替え ---
-        this.load(scenarioKey); // this.loadは内部メソッド
+          // --- 3. シナリオコンテキストの入れ替え ---
+        // 内部で使うファイル名も、拡張子ありの元のキーを保持
+        this.load(scenarioKey); 
         if (targetLabel) {
             this.jumpTo(targetLabel);
         }
         console.log(`%c[loadScenario] END: ${scenarioKey}`, "color: yellow; font-weight: bold;");
     }
-
     jumpTo(target) {
         const labelName = target.substring(1);
         const targetLineIndex = this.scenario.findIndex(line => line.trim().startsWith('*') && line.trim().substring(1) === labelName);

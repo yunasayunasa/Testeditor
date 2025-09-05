@@ -1,8 +1,7 @@
 {
   "images": {
     "message_window": "assets/images/message_window.png",
-    "stick_base": "assets/images/ui/stick_base.png",
-        "stick_knob": "assets/images/ui/stick_knob.png",
+   
      "yuna_normal": "assets/images/yuna_smile.png",
 "stick_base": "assets/images/stick_base.png",
 "stick_knob": "assets/images/stick_knob.png",
