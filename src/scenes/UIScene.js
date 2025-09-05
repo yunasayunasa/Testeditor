@@ -70,6 +70,11 @@ export default class UIScene extends Phaser.Scene {
             
             if (uiElement) {
                 this.registerUiElement(layout.name, uiElement, layout);
+                if (layout.name === 'bottom_panel') {
+                    // ...その参照を this.panel プロパティにも保存する！
+                    this.panel = uiElement;
+                    console.log("Bottom panel reference captured and set to this.panel.");
+                }
             }
         });
         await Promise.all(creationPromises);
