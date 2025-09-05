@@ -93,9 +93,11 @@ export default class UIScene extends Phaser.Scene {
         this.uiElements.set(name, element);
         element.setPosition(layout.x, layout.y);
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが全てを解決する、唯一の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+         // layoutオブジェクトにdepthプロパティが存在すれば、それを適用する
+        if (layout.depth !== undefined) {
+            element.setDepth(layout.depth);
+        }
+
 
         // 1. JSONレイアウトにwidthとheightが定義されているかチェックする
         if (layout.width && layout.height) {
