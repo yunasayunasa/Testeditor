@@ -51,16 +51,16 @@ import handleLog from './scenario/log.js';*/
 
 // --- フロー制御・待機系 ---
 import handleP from './scenario/p.js';
-/*import handleS from './scenario/s.js';
-import handleWait from './scenario/wait.js';
+import handleS from './scenario/s.js';
+/*import handleWait from './scenario/wait.js';
 import handleDelay from './scenario/delay.js';
 
 // --- UI・インタラクション系 ---
 import handleCm from './scenario/cm.js';
-import handleEr from './scenario/er.js';
+import handleEr from './scenario/er.js';*/
 import handleLink from './scenario/link.js';
 import handleR from './scenario/r.js';
-import handleButton from './scenario/button.js';
+/*import handleButton from './scenario/button.js';
 
 // --- シーン・サブルーチン遷移系 ---
 import handleJump from './scenario/jump.js';
@@ -114,16 +114,16 @@ export const tagHandlers = {
 
     // フロー制御・待機系
     'p': handleP,
-  /*  's': handleS,
-    'wait': handleWait,
+    's': handleS,
+   /* 'wait': handleWait,
     'delay': handleDelay,
     
     // UI・インタラクション系
     'cm': handleCm,
-    'er': handleEr,
+    'er': handleEr,*/
     'link': handleLink,
     'r': handleR,
-    'button': handleButton,
+   /* 'button': handleButton,
     
     // シーン・サブルーチン遷移系
     'jump': handleJump,
