@@ -39,14 +39,14 @@ const config = {
        // NovelOverlayScene
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
- plugins: {
+ /*plugins: {
         global: [
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ★★★ start: true に戻し、Phaserに起動を完全に任せる ★★★
             { key: 'EditorPlugin', plugin: EditorPlugin, start: true }
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         ]
-    },
+    },*/
     physics: {
         default: 'arcade',
         arcade: {
