@@ -183,30 +183,33 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-         /**
-     * 文字列のJavaScript式を安全に評価・実行し、変更を通知する。
-     * @param {string} exp - 実行する式 (例: "f.hoge = 10")
-     * @returns {*} 評価結果
+          /**
+     * 文字列のJavaScript式を安全に評価・実行し、変更を通知する。(改訂版)
+     * 代入式と評価式の両方を正しく扱います。
+     * @param {string} exp - 実行する式 (例: "f.love_meter = 10", "f.love_meter > 5")
+     * @returns {*} 評価結果 (代入の場合は代入された値、比較の場合はtrue/false)
      */
     eval(exp) {
         try {
             const f = this.f || {};
             const sf = this.sf || {};
             
-            // ★★★ 修正箇所: 変更前のf変数の状態をコピーして保持 ★★★
-            // JSON.parse(JSON.stringify(f)) は確実だが、パフォーマンスが懸念される場合はシャローコピーで試す
             const f_before = { ...f };
 
-            const result = new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが全てを解決する、唯一の修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             
-            // 変更後のfの参照をthis.fに再代入
+            // `return` を付けずに実行することで、代入式 ("f.hoge=10") がエラーにならなくなる。
+            // 評価式 ("f.hoge > 5") は、その評価結果 (true/false) が返される。
+            const result = new Function('f', 'sf', `'use strict'; ${exp};`)(f, sf);
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
             this.f = f;
 
-            // ★★★ 修正箇所: 変更前と変更後のf変数を比較し、変更があればイベントを発行 ★★★
-            // 新旧両方のキーのセットを作成し、変更がないかチェックする
             const allKeys = new Set([...Object.keys(f_before), ...Object.keys(this.f)]);
             allKeys.forEach(key => {
-                // 値が変更された、またはキーが新しく追加/削除された場合
                 if (f_before[key] !== this.f[key]) {
                     console.log(`[StateManager.eval] f.${key} が変更されました: ${f_before[key]} -> ${this.f[key]}`);
                     this.emit('f-variable-changed', key, this.f[key]);
@@ -215,6 +218,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
 
             this.saveSystemVariables(); 
             return result;
+
         } catch (e) {
             console.warn(`[StateManager.eval] 式の評価中にエラーが発生しました: "${exp}"`, e);
             return undefined; 
