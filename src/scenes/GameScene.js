@@ -191,73 +191,58 @@ export default class GameScene extends Phaser.Scene {
     }
 }
 
-// ============================================================================
-// rebuildScene ヘルパー関数 (デバッグ強化版)
-// ============================================================================
 async function rebuildScene(scene, loadedState, restoredBgmKey) {
-    console.log("%c[rebuildScene] START", "color: cyan;", loadedState);
+    console.log("--- 世界の再構築を開始 ---", loadedState);
     const manager = scene.scenarioManager;
 
-    try {
-        console.log("[rebuildScene] 1. 表示クリア...");
-        // scene.clearChoiceButtons();
-        scene.layer.background.removeAll(true);
-        scene.layer.character.removeAll(true);
-        scene.characters = {};
-        manager.messageWindow.reset();
-        scene.cameras.main.resetFX();
+    // 1. 現在の表示と状態をクリア
+    // scene.clearChoiceButtons(); // clearChoiceButtonsはGameSceneのメソッド
+    scene.layer.background.removeAll(true);
+    scene.layer.character.removeAll(true);
+    scene.characters = {};
+    manager.messageWindow.reset();
+    scene.cameras.main.resetFX();
 
-        console.log("[rebuildScene] 2. シナリオ状態復元...");
-        // ★ awaitをloadScenarioの呼び出しに移動
-        const scenarioFileName = loadedState.scenario.fileName;
-        console.log(`[rebuildScene]   - シナリオ[${scenarioFileName}]をロードします...`);
-        await manager.loadScenario(scenarioFileName);
-        console.log(`[rebuildScene]   - シナリオ[${scenarioFileName}]のロード完了。`);
-        
-        manager.currentLine = loadedState.scenario.line;
-        manager.ifStack = loadedState.scenario.ifStack || [];
-        manager.callStack = loadedState.scenario.callStack || [];
-        manager.isWaitingClick = loadedState.scenario.isWaitingClick;
-        manager.isWaitingChoice = loadedState.scenario.isWaitingChoice;
-        console.log(`[rebuildScene]   - 復帰行: ${manager.currentLine}`);
+    // 2. シナリオの論理的な状態を復元
+    await manager.loadScenario(loadedState.scenario.fileName);
+    manager.currentLine = loadedState.scenario.line;
+    manager.ifStack = loadedState.scenario.ifStack || [];
+    manager.callStack = loadedState.scenario.callStack || [];
+    manager.isWaitingClick = loadedState.scenario.isWaitingClick;
+    manager.isWaitingChoice = loadedState.scenario.isWaitingChoice;
 
-        console.log("[rebuildScene] 3. 背景復元...");
-        if (loadedState.layers.background) {
-            const bg = scene.add.image(scene.scale.width / 2, scene.scale.height / 2, loadedState.layers.background);
-            bg.setDisplaySize(scene.scale.width, scene.scale.height);
-            scene.layer.background.add(bg);
-        }
-        
-        console.log("[rebuildScene] 4. キャラクター復元...");
-        if (loadedState.layers.characters) {
-            for (const name in loadedState.layers.characters) {
-                const charaData = loadedState.layers.characters[name];
-                const chara = scene.add.image(charaData.x, charaData.y, charaData.storage);
-                chara.setScale(charaData.scaleX, charaData.scaleY).setAlpha(charaData.alpha).setFlipX(charaData.flipX).setTint(charaData.tint);
-                scene.layer.character.add(chara);
-                scene.characters[name] = chara;
-            }
-        }
-
-        console.log("[rebuildScene] 5. BGM復元...");
-        const targetBgmKey = restoredBgmKey || loadedState.sound.bgm;
-        if (targetBgmKey) {
-            manager.soundManager.playBgm(targetBgmKey);
-        } else {
-            manager.soundManager.stopBgm();
-        }
-
-        console.log("[rebuildScene] 6. メッセージウィンドウ復元...");
-        if (loadedState.scenario.isWaitingClick) {
-            await manager.messageWindow.setText(loadedState.scenario.currentText, false, loadedState.scenario.speakerName);
-            manager.messageWindow.showNextArrow();
-        }
-        
-        console.log("%c[rebuildScene] END - 正常終了", "color: cyan;");
-
-    } catch (e) {
-        console.error("[rebuildScene] 世界の再構築中に致命的なエラーが発生しました。", e);
-        // ★★★ エラーを再スローして、performLoadのcatchに捕獲させる ★★★
-        throw e;
+    // 3. 背景を復元
+    if (loadedState.layers.background) {
+        const bg = scene.add.image(scene.scale.width / 2, scene.scale.height / 2, loadedState.layers.background);
+        bg.setDisplaySize(scene.scale.width, scene.scale.height);
+        scene.layer.background.add(bg);
     }
+    
+    // 4. キャラクターを復元
+    if (loadedState.layers.characters) {
+        for (const name in loadedState.layers.characters) {
+            const charaData = loadedState.layers.characters[name];
+            const chara = scene.add.image(charaData.x, charaData.y, charaData.storage);
+            chara.setScale(charaData.scaleX, charaData.scaleY).setAlpha(charaData.alpha).setFlipX(charaData.flipX).setTint(charaData.tint);
+            scene.layer.character.add(chara);
+            scene.characters[name] = chara;
+        }
+    }
+
+    // 5. BGMを復元
+    const targetBgmKey = restoredBgmKey || loadedState.sound.bgm;
+    if (targetBgmKey) {
+        manager.soundManager.playBgm(targetBgmKey);
+    } else {
+        manager.soundManager.stopBgm();
+    }
+
+    // 6. メッセージウィンドウと選択肢を復元
+    if (loadedState.scenario.isWaitingClick) {
+        await manager.messageWindow.setText(loadedState.scenario.currentText, false, loadedState.scenario.speakerName);
+        manager.messageWindow.showNextArrow();
+    }
+    // if (loadedState.scenario.isWaitingChoice) { ...選択肢の復元処理... }
+    
+    console.log("--- 世界の再構築完了 ---");
 }
