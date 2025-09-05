@@ -86,17 +86,15 @@ const config = {
         }
     }
 };
-
-// --- ゲームの起動処理 (非同期に変更) ---
-// 非同期処理(dynamic import)を待つために、window.onloadをasyncにする
 window.onload = async () => {
     
-    // ★★★ ここで自動処理を実行し、完了を待つ ★★★
-    const uiRegistry = await processUiRegistry(rawUiRegistry);
+    // ★ステップ1: 必要なデータを先に非同期で準備する
+    const processedUiRegistry = await processUiRegistry(rawUiRegistry);
 
     // Phaser Gameインスタンスを生成
     const game = new Phaser.Game(config);
     
-    // ★★★ 処理済みのregistryをグローバルに登録する ★★★
-    game.registry.set('uiRegistry', uiRegistry);
+    // ★ステップ2: ゲームインスタンスができた直後に、準備したデータを登録する
+    // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
+    game.registry.set('uiRegistry', processedUiRegistry);
 };
