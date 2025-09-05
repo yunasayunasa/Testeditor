@@ -204,13 +204,18 @@ async function rebuildScene(scene, loadedState, restoredBgmKey) {
     scene.cameras.main.resetFX();
 
     // 2. シナリオの論理的な状態を復元
-    await manager.loadScenario(loadedState.scenario.fileName);
-    manager.currentLine = loadedState.scenario.line;
-    manager.ifStack = loadedState.scenario.ifStack || [];
-    manager.callStack = loadedState.scenario.callStack || [];
-    manager.isWaitingClick = loadedState.scenario.isWaitingClick;
-    manager.isWaitingChoice = loadedState.scenario.isWaitingChoice;
+    // 2. シナリオの論理的な状態を復元
+    const scenarioState = loadedState.scenario;
+    // loadScenarioに、ファイル名と「復元したい行番号」を同時に渡す
+    await manager.loadScenario(scenarioState.fileName, null, scenarioState.line);
 
+    // loadScenarioがcurrentLineを設定してくれるので、ここでの再設定は不要
+    // manager.currentLine = scenarioState.line; // ← この行は削除
+
+    manager.ifStack = scenarioState.ifStack || [];
+    manager.callStack = scenarioState.callStack || [];
+    manager.isWaitingClick = scenarioState.isWaitingClick;
+    manager.isWaitingChoice = scenarioState.isWaitingChoice;
     // 3. 背景を復元
     if (loadedState.layers.background) {
         const bg = scene.add.image(scene.scale.width / 2, scene.scale.height / 2, loadedState.layers.background);
