@@ -4,20 +4,14 @@
  * 
  * このファイルは、ゲーム内で使用される全てのシナリオタグと、
  * それを処理するハンドラ関数を結びつける中央登録所です。
- * 
- * 新しいタグを追加する場合：
- * 1. src/handlers/scenario/ フォルダに新しいハンドラファイルを作成します。
- *    (例: my_tag.js)
- * 2. 作成したファイルをここでインポートします。
- *    (例: import handleMyTag from './scenario/my_tag.js';)
- * 3. 下の tagHandlers オブジェクトに、タグ名と関数を追加します。
- *    (例: 'my_tag': handleMyTag,)
+ * ワイルドカード(*)によるエクスポートは`export default`と競合するため、
+ * 全てのハンドラを個別にインポートし、単一のオブジェクトとしてエクスポートします。
  * ============================================================================
  */
 
 // --- 表示・画像・キャラクター系 ---
 import handleCharaShow from './scenario/chara_show.js';
-import handleCharaHide from './scenario/chara_hide.js';
+/*import handleCharaHide from './scenario/chara_hide.js';
 import handleCharaMod from './scenario/chara_mod.js';
 import handleBg from './scenario/bg.js';
 import handleImage from './scenario/image.js';
@@ -71,15 +65,16 @@ import handleButton from './scenario/button.js';
 // --- シーン・サブルーチン遷移系 ---
 import handleJump from './scenario/jump.js';
 import handleCall from './scenario/call.js';
-import handleReturn from './scenario/return.js';
+import handleReturn from './scenario/return.js';*/
 
 // ============================================================================
-// タグ名とハンドラ関数のマッピング
+// ★★★ 唯一のエクスポートポイント ★★★
+// 全てのハンドラをこの tagHandlers オブジェクトにまとめてエクスポートする
 // ============================================================================
 export const tagHandlers = {
     // 表示・画像・キャラクター系
     'chara_show': handleCharaShow,
-    'chara_hide': handleCharaHide,
+  /*  'chara_hide': handleCharaHide,
     'chara_mod': handleCharaMod,
     'bg': handleBg,
     'image': handleImage,
@@ -133,5 +128,5 @@ export const tagHandlers = {
     // シーン・サブルーチン遷移系
     'jump': handleJump,
     'call': handleCall,
-    'return': handleReturn,
+    'return': handleReturn,*/
 };
