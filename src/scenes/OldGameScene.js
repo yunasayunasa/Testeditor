@@ -1,4 +1,4 @@
-import ScenarioManager from '../core/ScenarioManager.js';
+/*import ScenarioManager from '../core/ScenarioManager.js';
 import SoundManager from '../core/SoundManager.js';
 import StateManager from '../core/StateManager.js';
 import MessageWindow from '../ui/MessageWindow.js';
@@ -76,7 +76,7 @@ export default class GameScene extends Phaser.Scene {
 
     /**
      * シーンのセットアップ最終処理
-     */
+     
     _finalizeSetup() {
         console.log("GameScene: 最終準備を開始します。");
         this.isSceneFullyReady = true;
@@ -147,7 +147,7 @@ export default class GameScene extends Phaser.Scene {
 
 /**
  * 溜まっている選択肢情報を元に、ボタンを一括で画面に表示する
- */
+ *
 displayChoiceButtons() {
      // ★ 選択肢表示時に、ブロッカーを最前面に表示
     this.choiceInputBlocker.setVisible(true);
@@ -389,3 +389,4 @@ async function rebuildScene(manager, state, restoredBgmKey) {
     
     console.log("--- rebuildScene 正常終了 ---");
 }
+*/
