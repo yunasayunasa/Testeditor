@@ -17,23 +17,25 @@ import JumpScene from './scenes/JumpScene.js';
 // ★★★ 新設：uiRegistryを自動処理する非同期関数 ★★★
 // pathから動的にモジュールをimportするため、asyncにする
 async function processUiRegistry(registry) {
-    const processed = JSON.parse(JSON.stringify(registry)); // 深いコピーで安全に作業
+    const processed = JSON.parse(JSON.stringify(registry));
     
     for (const key in processed) {
         const definition = processed[key];
         
-        // pathプロパティを持つUI定義のみが対象
         if (definition.path) {
             try {
-                // 動的インポートでコンポーネントのモジュールを読み込む
                 const module = await import(definition.path);
                 const UiClass = module.default;
                 
-                // クラスに `dependencies` が自己申告されていれば...
+                // ★★★ ここからが修正の核心 ★★★
+                // 読み込んだクラスを`component`プロパティとして格納する
+                definition.component = UiClass;
+                // 不要になったpathは削除しても良い（任意）
+                // delete definition.path; 
+
                 if (UiClass && UiClass.dependencies) {
-                    // watchプロパティを自動生成！
                     definition.watch = UiClass.dependencies;
-                    console.log(`[UI Registry] Auto-configured 'watch' for '${key}':`, UiClass.dependencies);
+                    console.log(`[UI Registry] Processed '${key}'. Auto-configured 'watch'.`);
                 }
             } catch (e) {
                 console.error(`Failed to process UI definition for '${key}'`, e);
@@ -86,34 +88,7 @@ const config = {
         }
     }
 };
-async function processUiRegistry(registry) {
-    const processed = JSON.parse(JSON.stringify(registry));
-    
-    for (const key in processed) {
-        const definition = processed[key];
-        
-        if (definition.path) {
-            try {
-                const module = await import(definition.path);
-                const UiClass = module.default;
-                
-                // ★★★ ここからが修正の核心 ★★★
-                // 読み込んだクラスを`component`プロパティとして格納する
-                definition.component = UiClass;
-                // 不要になったpathは削除しても良い（任意）
-                // delete definition.path; 
 
-                if (UiClass && UiClass.dependencies) {
-                    definition.watch = UiClass.dependencies;
-                    console.log(`[UI Registry] Processed '${key}'. Auto-configured 'watch'.`);
-                }
-            } catch (e) {
-                console.error(`Failed to process UI definition for '${key}'`, e);
-            }
-        }
-    }
-    return processed;
-}
 window.onload = async () => {
     
     // ★ステップ1: 必要なデータを先に非同期で準備する
