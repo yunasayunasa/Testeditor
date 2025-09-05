@@ -2,8 +2,8 @@
   "objects": [
     {
       "name": "menu_button",
-      "x": 350,
-      "y": 350
+      "x": 75,
+      "y": 650
     },
     {
       "name": "bottom_panel",
