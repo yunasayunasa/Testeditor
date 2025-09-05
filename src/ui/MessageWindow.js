@@ -1,38 +1,39 @@
+// Containerをインポート（または直接Phaser.GameObjects.Containerを使用）
 const Container = Phaser.GameObjects.Container;
 
 export default class MessageWindow extends Container {
+    // ★★★ 1. 依存関係を静的に宣言 ★★★
+    // MessageWindowはゲーム変数(f)に依存しないため、空配列か、プロパティ自体を定義しない
+    static dependencies = [];
+
     /**
      * @param {Phaser.Scene} scene 
-     * @param {object} config - レイアウトJSONから渡される設定オブジェクト (x, y, width, heightなど)
+     * @param {object} config - UISceneから渡される設定オブジェクト (x, y, stateManagerなど)
      */
     constructor(scene, config) {
-        // コンテナ自身の位置はUISceneが設定するので、ここでは(0,0)で初期化
+        // コンテナ自身の位置はUISceneが設定するので、(0,0)で初期化
         super(scene, 0, 0);
 
-        this.scene = scene;
+        // --- 依存サービスの取得 (configから渡されたものを優先) ---
+        // ★★★ 2. 依存サービスをconfigから受け取るように変更 ★★★
+        this.soundManager = config.soundManager || scene.registry.get('soundManager');
+        this.configManager = config.configManager || scene.registry.get('configManager');
 
-        // --- 依存サービスの取得 ---
-        // データ駆動のルールに従い、コンストラクタ引数ではなくレジストリから取得
-        this.soundManager = scene.registry.get('soundManager');
-        this.configManager = scene.registry.get('configManager');
-
-        // --- 状態管理プロパティ ---
+        // --- 状態管理プロパティ (変更なし) ---
         this.charByCharTimer = null;
         this.isTyping = false;
-        this.typingResolve = null; // Promiseの解決関数を保持
-        this.currentText = '';     // セーブ/ロード用
-        this.currentSpeaker = null;  // セーブ/ロード用
-        this.fullText = '';        // スキップ処理用
+        this.typingResolve = null;
+        this.currentText = '';
+        this.currentSpeaker = null;
+        this.fullText = '';
 
-        // --- ウィンドウ背景 ---
-        // コンテナの原点(0,0)に配置
+        // --- ウィンドウ背景 (変更なし) ---
         this.windowImage = scene.add.image(0, 0, 'message_window');
 
-        // --- テキストオブジェクト ---
+        // --- テキストオブジェクト (変更なし) ---
         const padding = 35;
         const textWidth = this.windowImage.width - (padding * 2);
         const textHeight = this.windowImage.height - (padding * 2);
-
         this.textObject = scene.add.text(
             this.windowImage.x - (this.windowImage.width / 2) + padding,
             this.windowImage.y - (this.windowImage.height / 2) + padding,
@@ -47,7 +48,7 @@ export default class MessageWindow extends Container {
             }
         );
 
-        // --- クリック待ちアイコン ---
+        // --- クリック待ちアイコン (変更なし) ---
         const iconX = (this.windowImage.width / 2) - 60;
         const iconY = (this.windowImage.height / 2) - 50;
         this.nextArrow = scene.add.image(iconX, iconY, 'next_arrow');
@@ -62,15 +63,36 @@ export default class MessageWindow extends Container {
             paused: true
         });
 
-        // --- コンフィグと連携 ---
+        // --- コンフィグとの連携 (変更なし) ---
         this.textDelay = 50;
-        this.updateTextSpeed();
-        this.configManager.on('change:textSpeed', this.updateTextSpeed, this);
+        if (this.configManager) {
+            this.updateTextSpeed();
+            this.configManager.on('change:textSpeed', this.updateTextSpeed, this);
+        }
 
-        // --- 全ての要素をコンテナに追加 ---
+        // --- 全ての要素をコンテナに追加 (変更なし) ---
         this.add([this.windowImage, this.textObject, this.nextArrow]);
-        // ★★★ UISceneのadd.existing(this)が呼ばれるので、ここでは不要 ★★★
-        // scene.add.existing(this);
+        
+        // ★★★ 3. UISceneがadd.existing(this)を呼ぶので、シーンへの追加は不要 ★★★
+    }
+
+    // ★★★ 4. (推奨) 状態変数に依存しないため、updateValueメソッドを空で定義 ★★★
+    // これにより、将来的に何らかのキーをwatchした場合でもエラーを防げる
+    updateValue(state) {
+        // このコンポーネントは状態変数に応じて表示を更新する必要はない
+    }
+
+    // ★★★ 5. (推奨) コンポーネント破棄時にリスナーをクリーンアップする ★★★
+    destroy(fromScene) {
+        console.log("MessageWindow: destroyされました。イベントリスナーを解除します。");
+        if (this.configManager) {
+            this.configManager.off('change:textSpeed', this.updateTextSpeed, this);
+        }
+        if (this.arrowTween) {
+            this.arrowTween.destroy();
+        }
+        // 親のdestroyを呼び出す（Container内の全要素が破棄される）
+        super.destroy(fromScene);
     }
     
     updateTextSpeed() {
