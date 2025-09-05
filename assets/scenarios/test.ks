@@ -1,15 +1,27 @@
+; === Odyssey Engine 総合チュートリアル (最終統合テスト版) ===
 
-; 文字列を代入する場合は、ダブルクォートで囲み、
-; exp属性全体はシングルクォートで囲むと、より安全
-[eval exp='f.player_name = "マスター"']
-[eval exp='f.test_flag = "none"']
-[eval exp='f.sub_result = "none"']
-[eval exp='f.battle_result = "none"']
-[eval exp='f.final_status = "none"']
-表示テストです
-[p]
+; --- 0. 変数の初期化と事前テスト ---
+[eval exp="f.love_meter = 0"]       
+  ; 既存
+[eval exp="sf.boot_count = (sf.boot_count || 0) + 1"] 
+; 既存（起動回数を永続化）
+[eval exp="f.player_name = 'マスター'"] 
+; 既存
+[eval exp="f.coin = 0"]            
+ ; ★★★ 追加: コイン変数の初期化 (HUD連携テスト用) ★★★
+[eval exp="f.test_item = 0"]      
+  ; ★★★ 追加: アイテム取得テスト用変数 ★★★
+[eval exp="f.test_flag = 'none'"]  
+ ; ★★★ 追加: IF分岐テスト用変数 ★★★
+[eval exp="f.sub_result = 'none'"] 
+ ; ★★★ 追加: サブルーチン戻り値用変数 ★★★
+[eval exp="f.battle_result = 'none'"]
+ ; ★★★ 追加: 戦闘結果用変数 ★★★
+[eval exp="f.final_status = 'none'"] 
+; ★★★ 追加: 最終ステータス用変数 ★★★
+
 ; --- １．基本的な表示と演出 ---
-;[playbgm storage="cafe" time=1000]
+[playbgm storage="cafe" time=1000]
 [bg storage="bg_school" time=1500]
 [wait time=1500]
 [chara_show name="yuna" pos="center"] 
