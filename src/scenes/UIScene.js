@@ -41,77 +41,85 @@ export default class UIScene extends Phaser.Scene {
         // ▲▲▲ createメソッド自体は、Promiseを開始したらすぐに終了する ▲▲▲
     }
 
-    // buildUiFromLayout メソッド自体は async のままでOK
-   async buildUiFromLayout() { // メソッド名は変えなくてもOK
-        // ★ registryを取得するのはこのメソッドの責務ではないので、createで行う
+   // ... constructor, createメソッドは変更なし ...
+
+    // buildUiFromLayout を Promise.all を正しく使う形に修正
+    async buildUiFromLayout() {
         const processedUiRegistry = this.registry.get('uiRegistry');
         if (!processedUiRegistry) {
             console.error("UIScene: uiRegistry not found in registry!");
-            return;
+            // Promiseをrejectして、エラーをcreateに伝える
+            return Promise.reject('uiRegistry not found'); 
         }
 
-        // layoutDataの取得は必要に応じて残す
-        const layoutData = this.cache.json.get(this.scene.key); 
+        const layoutData = this.cache.json.get(this.scene.key);
+        const stateManager = this.registry.get('stateManager');
 
-        // ★★★ processedUiRegistryを直接ループする ★★★
-        for (const name in processedUiRegistry) {
+        // ★★★ ここからが修正の核心 ★★★
+        // 1. 各UI定義から、UI要素を生成するためのPromiseの配列を作成する
+        const creationPromises = Object.keys(processedUiRegistry).map(name => {
             const definition = processedUiRegistry[name];
+            
+            // paramsの準備
+            const layout = layoutData ? layoutData.objects.find(obj => obj.name === name) : {};
+            const params = { ...definition.params, ...layout, name, stateManager }; // ★ nameもparamsに含める
+
             let uiElement = null;
 
-            // ... stateManagerなどのparams準備は同じ ...
-            const stateManager = this.registry.get('stateManager');
-            const layout = layoutData ? layoutData.objects.find(obj => obj.name === name) : {};
-            const params = { ...definition.params, ...layout, stateManager };
-
-            // ★★★ ここからが修正の核心 ★★★
-            // pathではなく、事前に読み込まれた`component`プロパティを確認
+            // componentまたはcreatorを使ってUI要素を生成
             if (definition.component) {
                 const UiClass = definition.component;
                 uiElement = new UiClass(this, params);
-            } 
-            else if (definition.creator) {
+            } else if (typeof definition.creator === 'function') {
                 uiElement = definition.creator(this, params);
             }
-            
+
             if (uiElement) {
-                this.registerUiElement(name, uiElement, params); // layoutではなくparamsを渡す
+                // registerUiElementは同期的（Promiseを返さない）なので、ここで呼んでOK
+                this.registerUiElement(name, uiElement, params);
             }
-        
-    
-        }
+            
+            // このmap処理は最終的にundefinedを返す配列を作るが、処理自体は行われる
+            // 本来は生成したuiElementを返すのが綺麗だが、なくても動作はする
+            return Promise.resolve(); // ダミーの成功Promiseを返す
+        });
+
+        // 2. すべてのUI要素の生成（と同期的登録）が終わるのを待つ
         await Promise.all(creationPromises);
     }
     
-    registerUiElement(name, element, layout) {
+    registerUiElement(name, element, params) { // ★引数をlayoutからparamsに変更
         element.name = name;
         this.add.existing(element);
         this.uiElements.set(name, element);
-        element.setPosition(layout.x, layout.y);
         
-         // layoutオブジェクトにdepthプロパティが存在すれば、それを適用する
-        if (layout.depth !== undefined) {
-            element.setDepth(layout.depth);
-        }
-
-
-        // 1. JSONレイアウトにwidthとheightが定義されているかチェックする
-        if (layout.width && layout.height) {
-            // 2. もし定義されていれば、それをコンテナのサイズとして設定する
-            //    これにより、Phaserはクリック範囲を認識できるようになる
-            element.setSize(layout.width, layout.height);
+        // ★★★ 位置設定をparamsから行うように修正 ★★★
+        if (params.x !== undefined && params.y !== undefined) {
+            element.setPosition(params.x, params.y);
         }
         
-        // 3. サイズが確定した後で、setInteractiveを呼び出す！
-        //    (creator関数で作られたテキストボタンなどは、元からサイズがあるので問題なく動作する)
-        element.setInteractive();
+        if (params.depth !== undefined) {
+            element.setDepth(params.depth);
+        }
+
+        if (params.width && params.height) {
+            element.setSize(params.width, params.height);
+        }
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ setInteractiveの呼び出しを安全にする ★★★
+        // setSizeが呼ばれていないと当たり判定が作れない場合があるため、
+        // widthとheightがある、または入力判定用の図形が定義されている場合に呼ぶのがより安全
+        if ((params.width && params.height) || element.input) {
+             element.setInteractive();
+        }
         
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(element, this);
         }
     }
+
+// ... 以降のメソッドは変更なし ...
 
     onSceneTransition(newSceneKey) {
         const visibleGroups = sceneUiVisibility[newSceneKey] || [];
