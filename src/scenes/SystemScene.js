@@ -129,30 +129,44 @@ export default class SystemScene extends Phaser.Scene {
     
 
    /**
-     * サブシーンからノベルパートへの復帰リクエストを処理 (最終修正版)
+     * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
      * @param {object} data - { from: string, params: object }
      */
     _handleReturnToNovel(data) {
-        console.log(`[SystemScene] ノベル復帰リクエスト: from ${data.from}`);
+        const fromSceneKey = data.from;
+        console.log(`[SystemScene] ノベル復帰リクエストを受信 (from: ${fromSceneKey})`);
 
-        if (this.scene.isActive(data.from)) {
-            this.scene.stop(data.from);
+        // 現在のGameSceneとサブシーンを停止させる
+        if (this.scene.isActive('GameScene')) {
+            this.scene.stop('GameScene');
         }
-        if (this.scene.isActive('UIScene')) {
-            this.scene.get('UIScene').setVisible(true);
+        if (this.scene.isActive(fromSceneKey)) {
+            this.scene.stop(fromSceneKey);
+        }
+        
+        // UISceneの表示を戻す
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            uiScene.onSceneTransition('GameScene'); // UIの表示グループをGameScene用に切り替え
         }
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが今回の修正の核心 ★★★
-        // ★★★ GameSceneが必要とするデータを全て渡す ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        this._startAndMonitorScene('GameScene', {
-            charaDefs: this.globalCharaDefs, // ★★★ 最重要: キャラ定義を渡す！ ★★★
-            resumedFrom: data.from,          // どこから来たかを伝える
-            returnParams: data.params,       // サブシーンからの戻り値を渡す
-            // startScenarioやstartLabelは、復帰処理(performLoad)で
-            // セーブデータから復元されるので、ここでは不要
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが全てを解決する、唯一の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        console.log("[SystemScene] GameSceneを「ロードモード」で再起動します。");
+        // GameSceneを起動する際に、どのスロットからロードするかを`init`データで渡す
+        this.scene.launch('GameScene', {
+            loadSlot: 0, // ★ オートセーブスロット(0)からロードするように指示
+            charaDefs: this.globalCharaDefs,
+            resumedFrom: fromSceneKey,
+            returnParams: data.params
         });
+
+        // ★★★ _startAndMonitorSceneは使わない ★★★
+        // なぜなら、新しいGameSceneの起動と完了監視は、launchによって
+        // Phaserのシーンマネージャーが自動的に行ってくれるため。
+        // そして、GameSceneのcreateがloadSlotを元に正しくperformLoadを呼び出す。
     }
 
    // src/scenes/SystemScene.js
