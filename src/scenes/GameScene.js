@@ -87,6 +87,40 @@ export default class GameScene extends Phaser.Scene {
              this.scenarioManager.next();
         });
     }
+    
+        /**
+     * 現在のゲーム状態をlocalStorageのスロットに保存する。
+     * 状態の収集はStateManagerに一任する。
+     * @param {number} slot - 保存するスロット番号 (0はオートセーブ)
+     */
+    performSave(slot) {
+        // オートセーブの場合、システム変数に現在のBGMキーを記録
+        if (slot === 0) {
+            const currentBgmKey = this.soundManager.getCurrentBgmKey();
+            if (currentBgmKey) {
+                this.stateManager.setSF('tmp_current_bgm', currentBgmKey);
+            } else {
+                // キーがない場合は、sfからプロパティを削除する
+                delete this.stateManager.sf.tmp_current_bgm;
+                // setSFを使わない場合は、手動で保存をトリガーする
+                this.stateManager.saveSystemData();
+            }
+        }
+
+        try {
+            // ★★★ あなたの元のロジックをそのまま活用 ★★★
+            // StateManagerにScenarioManagerを渡して、状態オブジェクトを生成してもらう
+            const gameState = this.stateManager.getState(this.scenarioManager);
+            
+            // JSONに変換してlocalStorageに保存
+            const jsonString = JSON.stringify(gameState, null, 2);
+            localStorage.setItem(`save_data_${slot}`, jsonString);
+            console.log(`%cスロット[${slot}]にセーブしました。`, "color: limegreen;");
+
+        } catch (e) {
+            console.error(`セーブに失敗しました: スロット[${slot}]`, e);
+        }
+    }
 
     shutdown() {
         console.log("GameScene: shutdown処理");
