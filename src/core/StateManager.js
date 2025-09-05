@@ -183,53 +183,28 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-      /**
-     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (最終修正版)
-     * @param {string} path - "f.love_meter" や "sf.boot_count" のような変数パス
+    /**
+     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (Lodash版)
+     * @param {string} path - "f.love_meter" や "sf.party.member1.hp" のような変数パス
      * @param {*} value - 設定する値
      */
     setValueByPath(path, value) {
         try {
-            const keys = path.split('.');
-            const targetObjKey = keys.shift(); // 'f' または 'sf'
-            
-            if (targetObjKey !== 'f' && targetObjKey !== 'sf') {
-                throw new Error("パスは 'f.' または 'sf.' で始まる必要があります。");
-            }
-
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これが全てを解決する、唯一の修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            
-            // 1. もしthis.fやthis.sfが存在しなかったら、空のオブジェクトとして初期化する
-            if (this[targetObjKey] === undefined || this[targetObjKey] === null) {
-                console.warn(`[StateManager] ${targetObjKey} が初期化されていなかったため、{} を作成しました。`);
-                this[targetObjKey] = {};
-            }
-
-            // 2. 安全な参照を確保する
-            const targetObj = this[targetObjKey];
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-            // ネストされたプロパティに対応
-            let current = targetObj;
-            for (let i = 0; i < keys.length - 1; i++) {
-                const key = keys[i];
-                if (current[key] === undefined || typeof current[key] !== 'object') {
-                    current[key] = {}; // 途中のオブジェクトがなければ作成
-                }
-                current = current[key];
-            }
-            const finalKey = keys[keys.length - 1];
-            const oldValue = current[finalKey];
+            // Lodashの`_.get`を使って、変更前の値を取得する
+            const oldValue = _.get(this, path);
 
             if (oldValue !== value) {
-                current[finalKey] = value;
-                if (targetObjKey === 'f') {
-                    this.emit('f-variable-changed', keys.join('.'), value, oldValue);
+                // ★★★ これが全てを解決する、唯一の修正です ★★★
+                // Lodashの`_.set`が、安全なネストオブジェクトの生成と代入を全て行ってくれる
+                _.set(this, path, value);
+
+                // f変数の場合のみ、変更イベントを発行
+                if (path.startsWith('f.')) {
+                    // pathから 'f.' を取り除いたキーをイベントで渡す
+                    const key = path.substring(2);
+                    this.emit('f-variable-changed', key, value, oldValue);
                 }
-                if (targetObjKey === 'sf') {
+                if (path.startsWith('sf.')) {
                     this.saveSystemVariables();
                 }
             }
