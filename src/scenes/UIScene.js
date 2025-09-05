@@ -237,42 +237,49 @@ const button = this.add.text(0, 0, 'MENU', { fontSize: '36px', fill: '#fff' })
         }
     }
   
-    /**
-     * 指定された名前のパネルUI要素の表示/非表示を切り替える
+   /**
+     * 指定された名前のパネルUI要素の表示/非表示を切り替える (Depth制御付き)
      * @param {string} panelName - uiElementsマップに登録されたパネルの名前
      */
     togglePanelByName(panelName) {
-        // uiElementsマップから、動かすべきパネルオブジェクトを取得する
         const panelToToggle = this.uiElements.get(panelName);
-
-        // ★ パネルが見つからない場合は、警告を出して処理を中断
         if (!panelToToggle) {
-            console.error(`togglePanelByName: Panel with name '${panelName}' not found in uiElements.`);
+            console.error(`togglePanelByName: Panel with name '${panelName}' not found.`);
             return;
         }
 
         this.isPanelOpen = !this.isPanelOpen;
 
-        // ゲーム画面の高さを動的に取得
         const gameHeight = this.scale.height;
-        // パネルの高さを動的に取得 (setSizeで設定されている前提)
         const panelHeight = panelToToggle.height || 120;
-
-        // ★ Y座標の計算をより堅牢に
-        // 開いた時: 画面の下端から、パネルの高さの半分だけ上
-        // 閉じた時: 画面の下端から、パネルの高さの半分だけ下（完全に隠れる）
         const targetY = this.isPanelOpen 
             ? gameHeight - (panelHeight / 2) 
             : gameHeight + (panelHeight / 2);
 
-        console.log(`Toggling panel '${panelName}'. Target Y: ${targetY}`);
+       
+        if (this.isPanelOpen) {
+            // パネルを開くとき：
+            // depthを非常に大きな値に設定し、強制的に最前面に持ってくる
+            panelToToggle.setDepth(1000); 
+            console.log(`[UIScene] Bringing '${panelName}' to front with depth 100.`);
+        }
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // tweenを実行
         this.tweens.add({
-            targets: panelToToggle, // ★ 見つけてきたパネルを動かす
+            targets: panelToToggle,
             y: targetY,
             duration: 300,
-            ease: 'Cubic.easeInOut'
+            ease: 'Cubic.easeInOut',
+            onComplete: () => {
+                if (!this.isPanelOpen) {
+                    // パネルを閉じた後：
+                    // depthを元に戻すか、低い値に設定する（任意）
+                    // これにより、他のUI要素との予期せぬ競合を防ぐ
+                    panelToToggle.setDepth(50); // 例えば、通常のUIよりは手前だが、最前面ではない値
+                    console.log(`[UIScene] Resetting '${panelName}' depth to 50.`);
+                }
+            }
         });
     }
     /*togglePanel() {
