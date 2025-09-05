@@ -183,52 +183,62 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-             /**
-     * 文字列のJavaScript式を安全に評価・実行する (最終完成版)
-     * 代入のみの文と、値を返す式の両方を正しく扱います。
-     * @param {string} exp - 実行する式 (例: "f.love_meter = 10", "f.love_meter > 5")
-     * @returns {*} 評価結果。代入のみの場合はundefined、比較などの場合はその結果。
+        /**
+     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (代入専用)
+     * @param {string} path - "f.love_meter" や "sf.boot_count" のような変数パス
+     * @param {*} value - 設定する値
+     */
+    setValueByPath(path, value) {
+        try {
+            const keys = path.split('.');
+            const targetObjKey = keys.shift(); // 'f' または 'sf'
+            
+            if (targetObjKey !== 'f' && targetObjKey !== 'sf') {
+                throw new Error("パスは 'f.' または 'sf.' で始まる必要があります。");
+            }
+            const targetObj = this[targetObjKey];
+
+            // ネストされたプロパティに対応 (例: f.party.member1.hp)
+            let current = targetObj;
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (current[keys[i]] === undefined) {
+                    current[keys[i]] = {};
+                }
+                current = current[keys[i]];
+            }
+            const finalKey = keys[keys.length - 1];
+            const oldValue = current[finalKey];
+
+            if (oldValue !== value) {
+                current[finalKey] = value;
+                if (targetObjKey === 'f') {
+                    this.emit('f-variable-changed', keys.join('.'), value, oldValue);
+                }
+                // sf変数が変更されたら、自動で保存する
+                if (targetObjKey === 'sf') {
+                    this.saveSystemVariables();
+                }
+            }
+        } catch (e) {
+            console.error(`[StateManager.setValueByPath] 値の設定に失敗しました: path=${path}`, e);
+        }
+    }
+
+    /**
+     * 文字列の式を評価し、結果を返す (評価専用)
+     * [if]タグなどで使われることを想定
+     * @param {string} exp - "f.love_meter > 5" のような評価式
+     * @returns {*} 評価結果 (true/falseなど)
      */
     eval(exp) {
         try {
-            const f = this.f || {};
-            const sf = this.sf || {};
-            const f_before = { ...f };
-
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これが全てを解決する、唯一の修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            
-            let result;
-            // 'return'キーワードが式に含まれているか、あるいは代入(=)を含まない単純な式かをチェック
-            if (exp.trim().startsWith('return') || !exp.includes('=')) {
-                // [if]タグで使われるような、値を返すことを期待する式
-                result = new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
-            } else {
-                // [eval]タグで使われるような、代入などの操作を期待する文
-                // こちらは戻り値を期待しない
-                new Function('f', 'sf', `'use strict'; ${exp};`)(f, sf);
-            }
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-            this.f = f;
-            this.sf = sf;
-
-            // 変更検知とイベント発行 (変更なし)
-            const allKeys = new Set([...Object.keys(f_before), ...Object.keys(this.f)]);
-            allKeys.forEach(key => {
-                if (f_before[key] !== this.f[key]) {
-                    this.emit('f-variable-changed', key, this.f[key], f_before[key]);
-                }
-            });
-
-            this.saveSystemVariables(); // sfが変更された場合に備えて保存
-            return result;
-
+            const f = this.f;
+            const sf = this.sf;
+            // new Functionは、純粋な値の取得または比較にのみ使用する
+            return new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
         } catch (e) {
             console.warn(`[StateManager.eval] 式の評価中にエラーが発生しました: "${exp}"`, e);
-            return undefined; 
+            return undefined;
         }
     }
 
