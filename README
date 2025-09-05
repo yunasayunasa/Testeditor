@@ -202,6 +202,45 @@ shutdown()で後片付けをする
 shutdown()メソッドを実装し、そのシーンのcreate()で生成したタイマー (this.time.addEvent) やイベントリスナー (this.events.on) は、必ずここで破棄・解除してください。
 HUDは操作しない
 シーンの中からHPバーを直接操作しようとしないでください。代わりにthis.stateManager.setF('player_hp', 50);のように状態変数を変更します。UIの更新はUISceneとHUD自身が自動的に行います。
+6.4. 【UIコンポーネント開発の規約】
+Odyssey EngineのUIは、StateManagerと連携するデータ駆動型コンポーネントとして設計される。新しいUIコンポーネント（HPバー、所持金表示など）を作成する際は、以下の規約を必ず遵守すること。これは、UIの更新処理を自動化し、エンジン全体の安定性を保つための契約である。
+
+第1条：自己申告の原則 (The Principle of Self-Declaration)
+UIコンポーネントは、自身が依存するゲーム変数(f.)を、static dependenciesプロパティとして必ずクラス内に明記しなければならない。これにより、エンジンは起動時に依存関係を自動的に解決し、watchリストを構築する。
+
+記述例 (HpBar.js):
+
+code
+JavaScript
+export default class HpBar extends Phaser.GameObjects.Container {
+    // このクラスは f.player_hp と f.player_max_hp の変化を監視することを宣言する
+    static dependencies = ['player_hp', 'player_max_hp'];
+
+    // ... constructor ...
+}
+この申告により、あなたはuiRegistryファイルにwatchプロパティを手で記述する手間から解放される。
+
+第2条：更新メソッドの実装義務 (The Obligation to Implement updateValue)
+dependenciesを申告したUIコンポーネントは、updateValue(state)という名前のpublicメソッドを必ず実装しなければならない。このメソッドは、UISceneから呼び出される唯一の公式な窓口である。
+
+仕様:
+
+引数 state: StateManagerが保持する現在のゲーム変数オブジェクト (f) 全体が渡される。
+責務: stateオブジェクトの中から、dependenciesで申告したキー（例: state.player_hp）を自身で取り出し、自身の表示（バーの長さ、テキストなど）を更新する。
+実装例 (HpBar.js):
+
+code
+JavaScript
+updateValue(state) {
+        const currentHp = state.player_hp || 0;
+        const maxHp = state.player_max_hp || 100;
+
+        // ... この値を使ってバーの幅やテキストを更新する処理 ...
+    }
+第3条：StateManagerへの非干渉 (Non-Interference with StateManager)
+UIコンポーネントは、StateManagerの状態を直接購読してはならない (stateManager.on(...)の禁止)。状態変更の検知と通知は、GameSceneとUISceneから成る中央管理システムが一括して行う。コンポーネントの役割は、updateValueメソッドを通じて命令を受け取り、自身の見た目を更新することに限定される。
+
+これにより、イベントリスナーの登録漏れや解除忘れによるメモリリークを構造的に防止し、データの流れを常に一方向（StateManager → UIScene → Component）に保つ。
 【データ駆動シーンのための追加規約】
 BaseGameSceneを継承する
 新しいデータ駆動シーンは、import BaseGameScene from './BaseGameScene.js'; を行い、export default class YourScene extends BaseGameScene としてクラスを定義します。これにより、シーンはエディタ連携とデータ駆動の全ての恩恵を自動的に受け継ぎます。

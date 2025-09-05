@@ -4,7 +4,7 @@ import PreloadScene from './scenes/PreloadScene.js';
 import SystemScene from './scenes/SystemScene.js'; 
 import UIScene from './scenes/UIScene.js';       
 import GameScene from './scenes/GameScene.js';
-
+import { uiRegistry as rawUiRegistry } from './ui/index.js'; // ★元データを別名でインポート
 import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
@@ -13,6 +13,37 @@ import BattleScene from './scenes/BattleScene.js';
 //import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
 import JumpScene from './scenes/JumpScene.js';
+
+// ★★★ 新設：uiRegistryを自動処理する非同期関数 ★★★
+// pathから動的にモジュールをimportするため、asyncにする
+async function processUiRegistry(registry) {
+    const processed = JSON.parse(JSON.stringify(registry)); // 深いコピーで安全に作業
+    
+    for (const key in processed) {
+        const definition = processed[key];
+        
+        // pathプロパティを持つUI定義のみが対象
+        if (definition.path) {
+            try {
+                // 動的インポートでコンポーネントのモジュールを読み込む
+                const module = await import(definition.path);
+                const UiClass = module.default;
+                
+                // クラスに `dependencies` が自己申告されていれば...
+                if (UiClass && UiClass.dependencies) {
+                    // watchプロパティを自動生成！
+                    definition.watch = UiClass.dependencies;
+                    console.log(`[UI Registry] Auto-configured 'watch' for '${key}':`, UiClass.dependencies);
+                }
+            } catch (e) {
+                console.error(`Failed to process UI definition for '${key}'`, e);
+            }
+        }
+    }
+    return processed;
+}
+
+
 const config = {
     type: Phaser.AUTO,
     scale: {
@@ -56,4 +87,16 @@ const config = {
     }
 };
 
-const game = new Phaser.Game(config);
+// --- ゲームの起動処理 (非同期に変更) ---
+// 非同期処理(dynamic import)を待つために、window.onloadをasyncにする
+window.onload = async () => {
+    
+    // ★★★ ここで自動処理を実行し、完了を待つ ★★★
+    const uiRegistry = await processUiRegistry(rawUiRegistry);
+
+    // Phaser Gameインスタンスを生成
+    const game = new Phaser.Game(config);
+    
+    // ★★★ 処理済みのregistryをグローバルに登録する ★★★
+    game.registry.set('uiRegistry', uiRegistry);
+};
