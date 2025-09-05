@@ -47,11 +47,11 @@ import handleIf from './scenario/if.js';
 import handleElsif from './scenario/elsif.js';
 import handleElse from './scenario/else.js';
 import handleEndif from './scenario/endif.js';
-import handleLog from './scenario/log.js';
+import handleLog from './scenario/log.js';*/
 
 // --- フロー制御・待機系 ---
 import handleP from './scenario/p.js';
-import handleS from './scenario/s.js';
+/*import handleS from './scenario/s.js';
 import handleWait from './scenario/wait.js';
 import handleDelay from './scenario/delay.js';
 
@@ -110,11 +110,11 @@ export const tagHandlers = {
     'elsif': handleElsif,
     'else': handleElse,
     'endif': handleEndif,
-    'log': handleLog,
+    'log': handleLog,*/
 
     // フロー制御・待機系
     'p': handleP,
-    's': handleS,
+  /*  's': handleS,
     'wait': handleWait,
     'delay': handleDelay,
     
