@@ -109,7 +109,8 @@ export default class ScenarioManager {
     
 
 async parse(line) {
-const trimedLine = this.embedVariables(line.trim());
+ const trimedLine = line.trim();
+
 
 
 const ifState = this.ifStack.length > 0 ? this.ifStack[this.ifStack.length - 1] : null;
@@ -132,21 +133,35 @@ const ifState = this.ifStack.length > 0 ? this.ifStack[this.ifStack.length - 1] 
     
     } else if (trimedLine.startsWith('[')) {
         // --- タグ行 ---
-        const { tagName, params } = this.parseTag(trimedLine);
+          const { tagName, params } = this.parseTag(trimedLine);
         const handler = this.tagHandlers.get(tagName);
+
         if (handler) {
-            // すべてのハンドラがPromiseを返すので、常にawaitで待つ
+            // ★★★ ステップ2: [if]と[eval]だけ特別扱い ★★★
+            // expパラメータを持つタグの場合、その中身だけを変数展開する
+            if (params.exp && (tagName === 'if' || tagName === 'elsif' || tagName === 'eval')) {
+                params.exp = this.embedVariables(params.exp);
+            }
+            
+            // ★★★ ステップ3: 他のパラメータも必要ならここで展開 ★★★
+            // 例: [chara_show name="&f.main_char_name"] のような場合
+            for (const key in params) {
+                if (typeof params[key] === 'string') {
+                    params[key] = this.embedVariables(params[key]);
+                }
+            }
+
+            // 修正されたparamsでハンドラを実行
             await handler(this, params);
+
         } else {
             console.warn(`未定義のタグです: [${tagName}]`);
         }
     
-  // ScenarioManager.js の parse メソッド内のテキスト処理部分を、以下のように書き換えてください
-
-// ★★★ このブロックで置き換えてください ★★★
 
 } else if (trimedLine.length > 0) {
     // --- セリフまたは地の文 ---
+         const expandedLine = this.embedVariables(trimedLine);
     let speakerName = null;
     let dialogue = trimedLine;
     const speakerMatch = trimedLine.match(/^([a-zA-Z0-9_]+):/);
