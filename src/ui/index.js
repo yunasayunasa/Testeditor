@@ -1,14 +1,14 @@
 // ★ import文は不要
 
 export const uiRegistry = {
-    'coin_hud': { path: './CoinHud.js', groups: [ 'battle','hud'] },
-    'player_hp_bar': { path: './HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } , 
+    'coin_hud': { path: './ui/CoinHud.js', groups: [ 'battle','hud'] },
+    'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } , 
 },
-    'enemy_hp_bar': { path: './HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
-   'virtual_stick': { path: './VirtualStick.js', groups: ['controls', 'action'] },
-    'jump_button': { path: './JumpButton.js', groups: ['controls', 'action'] },
+    'enemy_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
+   'virtual_stick': { path: './ui/VirtualStick.js', groups: ['controls', 'action'] },
+    'jump_button': { path: './ui/JumpButton.js', groups: ['controls', 'action'] },
        'message_window': {
-        path: './MessageWindow.js',
+        path: './ui/MessageWindow.js',
         groups: ['game'] // GameSceneで表示されるべきなので 'game' グループに所属させる
     },
     // ★★★ メニューとパネルもデータ駆動の対象にする ★★★
