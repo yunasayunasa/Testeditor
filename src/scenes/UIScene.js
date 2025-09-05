@@ -53,21 +53,35 @@ export default class UIScene extends Phaser.Scene {
             if (!definition) return;
 
             let uiElement = null;
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが原因2を解決する修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            
+            // StateManagerを先に取得しておく
+            const stateManager = this.registry.get('stateManager');
+            // JSONのレイアウト情報に、動的なパラメータ（stateManagerなど）を結合する
+            const params = { ...definition.params, ...layout, stateManager };
+
             if (definition.path) {
                 try {
                     const module = await import(`../ui/${definition.path.replace('./', '')}`);
                     const UiClass = module.default;
-                    uiElement = new UiClass(this, layout);
+                    // ★ 結合したparamsをコンストラクタの第2引数として渡す
+                    uiElement = new UiClass(this, params);
                 } catch (err) {
                     console.error(`Failed to load UI component '${layout.name}'`, err);
                 }
             } else if (typeof definition.creator === 'function') {
-                uiElement = definition.creator(this, layout);
+                // creatorにも結合したparamsを渡す
+                uiElement = definition.creator(this, params);
             }
             
             if (uiElement) {
-                // this.panelへの代入は不要になったので、登録処理のみを行う
                 this.registerUiElement(layout.name, uiElement, layout);
+                if (layout.name === 'bottom_panel') {
+                    this.panel = uiElement;
+                }
             }
         });
         await Promise.all(creationPromises);
@@ -79,9 +93,17 @@ export default class UIScene extends Phaser.Scene {
         this.uiElements.set(name, element);
         element.setPosition(layout.x, layout.y);
         
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが原因1を解決する修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. JSONにwidthとheightが定義されているかチェック
         if (layout.width && layout.height) {
+            // 2. もし定義されていれば、それをコンテナのサイズとして設定する
             element.setSize(layout.width, layout.height);
         }
+        
+        // 3. サイズが確定した後で、setInteractiveを呼び出す
         element.setInteractive();
         
         const editor = this.plugins.get('EditorPlugin');
