@@ -183,8 +183,8 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-        /**
-     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (代入専用)
+      /**
+     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (最終修正版)
      * @param {string} path - "f.love_meter" や "sf.boot_count" のような変数パス
      * @param {*} value - 設定する値
      */
@@ -196,15 +196,30 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             if (targetObjKey !== 'f' && targetObjKey !== 'sf') {
                 throw new Error("パスは 'f.' または 'sf.' で始まる必要があります。");
             }
-            const targetObj = this[targetObjKey];
 
-            // ネストされたプロパティに対応 (例: f.party.member1.hp)
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ これが全てを解決する、唯一の修正です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            
+            // 1. もしthis.fやthis.sfが存在しなかったら、空のオブジェクトとして初期化する
+            if (this[targetObjKey] === undefined || this[targetObjKey] === null) {
+                console.warn(`[StateManager] ${targetObjKey} が初期化されていなかったため、{} を作成しました。`);
+                this[targetObjKey] = {};
+            }
+
+            // 2. 安全な参照を確保する
+            const targetObj = this[targetObjKey];
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+            // ネストされたプロパティに対応
             let current = targetObj;
             for (let i = 0; i < keys.length - 1; i++) {
-                if (current[keys[i]] === undefined) {
-                    current[keys[i]] = {};
+                const key = keys[i];
+                if (current[key] === undefined || typeof current[key] !== 'object') {
+                    current[key] = {}; // 途中のオブジェクトがなければ作成
                 }
-                current = current[keys[i]];
+                current = current[key];
             }
             const finalKey = keys[keys.length - 1];
             const oldValue = current[finalKey];
@@ -214,7 +229,6 @@ export default class StateManager extends Phaser.Events.EventEmitter {
                 if (targetObjKey === 'f') {
                     this.emit('f-variable-changed', keys.join('.'), value, oldValue);
                 }
-                // sf変数が変更されたら、自動で保存する
                 if (targetObjKey === 'sf') {
                     this.saveSystemVariables();
                 }
@@ -223,7 +237,6 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             console.error(`[StateManager.setValueByPath] 値の設定に失敗しました: path=${path}`, e);
         }
     }
-
     /**
      * 文字列の式を評価し、結果を返す (評価専用)
      * [if]タグなどで使われることを想定
