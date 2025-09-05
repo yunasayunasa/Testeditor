@@ -18,6 +18,7 @@ export default class GameScene extends Phaser.Scene {
         this.charaDefs = data.charaDefs;
         this.startScenario = data.startScenario || 'test';
         this.loadSlot = data.loadSlot; // ロードするスロット番号を受け取る
+        this.returnParams = data.returnParams || null;
     }
 
     preload() { this.load.text('test', 'assets/test.ks'); }
@@ -45,7 +46,8 @@ export default class GameScene extends Phaser.Scene {
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
   this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
         if (this.loadSlot !== undefined) {
-            this.performLoad(this.loadSlot).then(() => this._finalizeSetup());
+            this.performLoad(this.loadSlot, this.returnParams).then(() => 
+            this._finalizeSetup());
         } else {
             this.scenarioManager.load(this.startScenario);
             this._finalizeSetup();
