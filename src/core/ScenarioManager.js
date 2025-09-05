@@ -30,18 +30,7 @@ export default class ScenarioManager {
         this.tagHandlers.set(tagName, handler);
     }
 
-    load(scenarioKey) {
-        const rawText = this.scene.cache.text.get(scenarioKey);
-        if (!rawText) {
-            console.error(`シナリオファイル [${scenarioKey}] が見つからないか、中身が空です。`);
-            this.isEnd = true;
-            return;
-        }
-        this.scenario = rawText.split(/\r\n|\n|\r/).filter(line => line.trim() !== '');
-        this.currentFile = scenarioKey;
-        this.currentLine = 0;
-        console.log(`シナリオを解析しました: ${this.currentFile}`);
-    }
+   
  // ScenarioManager.js の next() と parse() を置き換える
 
        // --- 新しいゲームループの開始点 ---
@@ -201,32 +190,22 @@ else{
      // (constructor, next, parseなどの他の部分は、あなたの正常に動作しているコードのままでOKです)
 // ★★★ loadScenarioメソッドだけを、以下のコードで完全に置き換えてください ★★★
 
-async loadScenario(scenarioKey, targetLabel = null) {
+     /**
+     * 指定されたシナリオをロードし、解析して実行準備を整える (最終版)
+     * @param {string} scenarioKey - 'scene2.ks' のようなファイル名
+     * @param {string|null} targetLabel - ジャンプ先のラベル (例: '*start')
+     */
+    async loadScenario(scenarioKey, targetLabel = null) {
         console.log(`%c[loadScenario] START: ${scenarioKey}`, "color: yellow; font-weight: bold;");
         let rawText;
+        const keyWithoutExt = scenarioKey.replace('.ks', '');
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが全てを解決する、唯一の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        
-        // --- 1. シナリオテキストの取得（キャッシュ優先） ---
-        const keyWithoutExt = scenarioKey.replace('.ks', ''); // 'scene2.ks' -> 'scene2'
-
-        // まず、拡張子なしのキーでキャッシュを探す (PreloadSceneが登録したキー)
+        // --- 1. テキストの取得 ---
         if (this.scene.cache.text.has(keyWithoutExt)) {
             rawText = this.scene.cache.text.get(keyWithoutExt);
-            console.log(`[loadScenario] テキストをキャッシュから取得しました (キー: '${keyWithoutExt}')`);
-        } 
-        // 次に、完全なキーで探す（下位互換性のため）
-        else if (this.scene.cache.text.has(scenarioKey)) {
-            rawText = this.scene.cache.text.get(scenarioKey);
-            console.log(`[loadScenario] テキストをキャッシュから取得しました (キー: '${scenarioKey}')`);
-        } 
-        // キャッシュにない場合のみ、動的ロードを実行する
-        else {
-            console.log(`[loadScenario] 動的ロードを実行します: ${scenarioKey}`);
+        } else {
+            // (動的ロードのロジックは変更なし)
             await new Promise(resolve => {
-                // ロードする際のキーも、拡張子なしのキーに統一する
                 this.scene.load.text(keyWithoutExt, `assets/${scenarioKey}`);
                 this.scene.load.once('complete', resolve);
                 this.scene.load.start();
@@ -234,7 +213,22 @@ async loadScenario(scenarioKey, targetLabel = null) {
             rawText = this.scene.cache.text.get(keyWithoutExt);
         }
 
-        if (!rawText) { throw new Error(`[loadScenario] シナリオテキスト[${scenarioKey}]のロードに失敗しました。`); }
+        if (!rawText) {
+            console.error(`シナリオファイル [${scenarioKey}] が見つからないか、中身が空です。`);
+            this.isEnd = true;
+            return;
+        }
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここが新しい解決策です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
+        // --- 2. 取得したテキストを解析し、プロパティを更新 ---
+        // (古い`load`メソッドの仕事を、ここに持ってくる)
+        this.scenario = rawText.split(/\r\n|\n|\r/).filter(line => line.trim() !== '');
+        this.currentFile = scenarioKey; // 呼び出し元のファイル名を保持
+        this.currentLine = 0; // 行番号をリセット
+        console.log(`[loadScenario] シナリオを解析しました: ${this.currentFile} (${this.scenario.length}行)`);
 
 
         // --- 2. @asset宣言の解析 ---
@@ -274,12 +268,11 @@ async loadScenario(scenarioKey, targetLabel = null) {
             console.log("追加アセットのロードが完了しました。");
         }
 
-          // --- 3. シナリオコンテキストの入れ替え ---
-        // 内部で使うファイル名も、拡張子ありの元のキーを保持
-        this.load(scenarioKey); 
+        // --- 4. ラベルへのジャンプ ---
         if (targetLabel) {
             this.jumpTo(targetLabel);
         }
+        
         console.log(`%c[loadScenario] END: ${scenarioKey}`, "color: yellow; font-weight: bold;");
     }
     jumpTo(target) {
