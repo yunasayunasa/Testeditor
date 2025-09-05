@@ -65,7 +65,7 @@ import handleR from './scenario/r.js';
 // --- シーン・サブルーチン遷移系 ---
 import handleJump from './scenario/jump.js';
 import handleCall from './scenario/call.js';
-//import handleReturn from './scenario/return.js';
+import handleReturn from './scenario/return.js';
 
 // ============================================================================
 // ★★★ 唯一のエクスポートポイント ★★★
@@ -128,5 +128,5 @@ export const tagHandlers = {
     // シーン・サブルーチン遷移系
     'jump': handleJump,
     'call': handleCall,
-  //  'return': handleReturn,
+   'return': handleReturn,
 };
