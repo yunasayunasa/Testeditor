@@ -43,10 +43,9 @@ export default class UIScene extends Phaser.Scene {
 
     // buildUiFromLayout メソッド自体は async のままでOK
     async buildUiFromLayout(layoutData) {
-        // (この中身は変更なし)
         if (!layoutData || !layoutData.objects) {
             console.warn("UIScene: No layout data found. Skipping UI build.");
-            return; // ★ データがない場合は即座に解決(resolve)する Promise を返す
+            return;
         }
 
         const creationPromises = layoutData.objects.map(async (layout) => {
@@ -58,9 +57,7 @@ export default class UIScene extends Phaser.Scene {
                 try {
                     const module = await import(`../ui/${definition.path.replace('./', '')}`);
                     const UiClass = module.default;
-                    const stateManager = this.registry.get('stateManager');
-                    const params = { ...definition.params, ...layout.params, stateManager };
-                    uiElement = new UiClass(this, { ...layout, ...params });
+                    uiElement = new UiClass(this, layout);
                 } catch (err) {
                     console.error(`Failed to load UI component '${layout.name}'`, err);
                 }
@@ -69,12 +66,8 @@ export default class UIScene extends Phaser.Scene {
             }
             
             if (uiElement) {
+                // this.panelへの代入は不要になったので、登録処理のみを行う
                 this.registerUiElement(layout.name, uiElement, layout);
-                if (layout.name === 'bottom_panel') {
-                    // ...その参照を this.panel プロパティにも保存する！
-                    this.panel = uiElement;
-                    console.log("Bottom panel reference captured and set to this.panel.");
-                }
             }
         });
         await Promise.all(creationPromises);
@@ -110,10 +103,19 @@ export default class UIScene extends Phaser.Scene {
     
     // --- UI生成ヘルパーメソッド群 (creatorから呼ばれる) ---
     createMenuButton(layout) {
-        const button = this.add.text(0, 0, 'MENU', { fontSize: '36px', fill: '#fff' }).setOrigin(0.5);
-        button.on('pointerdown', () => this.togglePanel());
-        return button;
-    }
+const button = this.add.text(0, 0, 'MENU', { fontSize: '36px', fill: '#fff' })
+.setOrigin(0.5)
+.setInteractive();
+
+// ★★★ 修正の核心 ★★★
+    // クリックされたら、'bottom_panel'という名前のUI要素を探して動かすように命令する
+    button.on('pointerdown', () => {
+        console.log("Menu button clicked. Toggling 'bottom_panel'.");
+        this.togglePanelByName('bottom_panel');
+    });
+    
+    return button;
+}
 
 
         /**
@@ -209,7 +211,45 @@ export default class UIScene extends Phaser.Scene {
         }
     }
   
-    togglePanel() {
+    /**
+     * 指定された名前のパネルUI要素の表示/非表示を切り替える
+     * @param {string} panelName - uiElementsマップに登録されたパネルの名前
+     */
+    togglePanelByName(panelName) {
+        // uiElementsマップから、動かすべきパネルオブジェクトを取得する
+        const panelToToggle = this.uiElements.get(panelName);
+
+        // ★ パネルが見つからない場合は、警告を出して処理を中断
+        if (!panelToToggle) {
+            console.error(`togglePanelByName: Panel with name '${panelName}' not found in uiElements.`);
+            return;
+        }
+
+        this.isPanelOpen = !this.isPanelOpen;
+
+        // ゲーム画面の高さを動的に取得
+        const gameHeight = this.scale.height;
+        // パネルの高さを動的に取得 (setSizeで設定されている前提)
+        const panelHeight = panelToToggle.height || 120;
+
+        // ★ Y座標の計算をより堅牢に
+        // 開いた時: 画面の下端から、パネルの高さの半分だけ上
+        // 閉じた時: 画面の下端から、パネルの高さの半分だけ下（完全に隠れる）
+        const targetY = this.isPanelOpen 
+            ? gameHeight - (panelHeight / 2) 
+            : gameHeight + (panelHeight / 2);
+
+        console.log(`Toggling panel '${panelName}'. Target Y: ${targetY}`);
+
+        // tweenを実行
+        this.tweens.add({
+            targets: panelToToggle, // ★ 見つけてきたパネルを動かす
+            y: targetY,
+            duration: 300,
+            ease: 'Cubic.easeInOut'
+        });
+    }
+    /*togglePanel() {
         this.isPanelOpen = !this.isPanelOpen;
         const targetY = this.isPanelOpen ? 720 - 60 : 720 + 120;
         this.tweens.add({
@@ -218,7 +258,7 @@ export default class UIScene extends Phaser.Scene {
             duration: 300,
             ease: 'Cubic.easeInOut'
         });
-    }
+    }*/
 
     openScene(sceneKey, data = {}) {
         this.scene.pause('GameScene');
