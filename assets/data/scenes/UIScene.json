@@ -3,7 +3,8 @@
     {
       "name": "menu_button",
       "x": 75,
-      "y": 650
+      "y": 650,
+      "depth": 10
     },
     {
       "name": "bottom_panel",
