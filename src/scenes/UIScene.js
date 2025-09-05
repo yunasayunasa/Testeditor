@@ -11,86 +11,81 @@ export default class UIScene extends Phaser.Scene {
 
   // src/scenes/UIScene.js (修正後のコード)
 
-    create() { // ★ async を削除
+      // createメソッドは非同期である必要はない
+    create() {
         console.log("UIScene: Data-Driven Initialization Started");
         this.scene.bringToTop();
 
+        // ★ 1. layoutDataをここで取得する
         const layoutData = this.cache.json.get(this.scene.key);
         
-        // buildUiFromLayout は Promise を返すので、.then() で完了を待つ
+        // ★ 2. buildUiFromLayoutに、取得したlayoutDataを渡す
         this.buildUiFromLayout(layoutData).then(() => {
-            // ▼▼▼ 非同期処理がすべて完了した後に実行したい処理を、すべてこの中に入れる ▼▼▼
-
             console.log("UIScene: UI build complete. Finalizing setup.");
 
-            // SystemSceneとの連携設定
             const systemScene = this.scene.get('SystemScene');
             systemScene.events.on('transition-complete', this.onSceneTransition, this);
             
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ ここが最も重要な変更点です ★★★
-            // ★★★ UIの構築が100%完了したこのタイミングで ready を発行する
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             this.events.emit('scene-ready');
 
         }).catch(err => {
-            // もしUI構築中にエラーが起きたらコンソールに出す
             console.error("UIScene: Failed to build UI from layout.", err);
         });
-        
-        // ▲▲▲ createメソッド自体は、Promiseを開始したらすぐに終了する ▲▲▲
     }
 
-      // buildUiFromLayout を Promise.all を正しく使う形に修正
-    async buildUiFromLayout() {
+    // layoutDataを引数として受け取る、正しい非同期ビルドメソッド
+    async buildUiFromLayout(layoutData) {
         const processedUiRegistry = this.registry.get('uiRegistry');
         if (!processedUiRegistry) {
-            console.error("UIScene: uiRegistry not found in registry!");
-            return Promise.reject('uiRegistry not found'); 
+            return Promise.reject('uiRegistry not found');
         }
 
-        const layoutData = this.cache.json.get(this.scene.key);
+        if (!layoutData || !layoutData.objects) {
+            console.warn(`[UIScene] No layout data in ${this.scene.key}.json. Building UI from registry defaults.`);
+        }
+
         const stateManager = this.registry.get('stateManager');
 
-        // ★★★ ここからが修正の核心 ★★★
-        // 1. 各UI定義から、UI要素を生成・登録するためのPromiseの配列を作成する
         const creationPromises = Object.keys(processedUiRegistry).map(name => {
-            return new Promise((resolve) => {
-                const definition = processedUiRegistry[name];
-                
-                // paramsの準備
-                const layout = layoutData ? layoutData.objects.find(obj => obj.name === name) : {};
-                const params = { ...definition.params, ...layout, name, stateManager };
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const definition = processedUiRegistry[name];
+                    const layout = (layoutData && layoutData.objects) 
+                        ? layoutData.objects.find(obj => obj.name === name) || {}
+                        : {};
+                    const params = { ...definition.params, ...layout, name, stateManager };
 
-                let uiElement = null;
+                    let uiElement = null;
 
-                // componentまたはcreatorを使ってUI要素を生成
-                if (definition.component) {
-                    const UiClass = definition.component;
-                    uiElement = new UiClass(this, params);
-                } else if (typeof definition.creator === 'function') {
-                    uiElement = definition.creator(this, params);
+                    if (definition.component) {
+                        uiElement = new definition.component(this, params);
+                    } else if (typeof definition.creator === 'function') {
+                        uiElement = definition.creator(this, params);
+                    }
+
+                    if (uiElement) {
+                        this.registerUiElement(name, uiElement, params);
+                    }
+                    
+                    resolve();
+                } catch (e) {
+                    console.error(`[UIScene] Failed to create UI element '${name}'`, e);
+                    reject(e);
                 }
-
-                if (uiElement) {
-                    this.registerUiElement(name, uiElement, params);
-                }
-                
-                // このUI要素の生成処理が完了したことを通知
-                resolve();
             });
         });
 
-        // 2. すべてのUI要素の生成と登録が終わるのを待つ
         await Promise.all(creationPromises);
     }
+
+// ... registerUiElementと他のメソッドは変更なし ...
     
-    registerUiElement(name, element, params) { // ★引数をlayoutからparamsに変更
+    // registerUiElementは変更なしでOK
+    registerUiElement(name, element, params) {
         element.name = name;
         this.add.existing(element);
         this.uiElements.set(name, element);
         
-        // ★★★ 位置設定をparamsから行うように修正 ★★★
         if (params.x !== undefined && params.y !== undefined) {
             element.setPosition(params.x, params.y);
         }
