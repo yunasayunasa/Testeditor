@@ -188,8 +188,14 @@ export default class StateManager extends Phaser.Events.EventEmitter {
      * @param {*} value - 設定する値
      */
     setValueByPath(path, value) {
+        // ★★★ ここからデバッグコードを追加 ★★★
+        console.log('%c--- Debugging StateManager.setValueByPath ---', 'color: yellow; font-weight: bold;');
+        console.log('Received path:', path);
+        console.log('Received value:', value);
+        console.log('The state of "this.f" is:', this.f);
+        // ★★★ ここまで ★★★
+
         try {
-            // Lodashの`_.get`を使って、変更前の値を取得する
             const oldValue = _.get(this, path);
 
             if (oldValue !== value) {
