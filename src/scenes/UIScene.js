@@ -41,14 +41,11 @@ export default class UIScene extends Phaser.Scene {
         // ▲▲▲ createメソッド自体は、Promiseを開始したらすぐに終了する ▲▲▲
     }
 
-   // ... constructor, createメソッドは変更なし ...
-
-    // buildUiFromLayout を Promise.all を正しく使う形に修正
+      // buildUiFromLayout を Promise.all を正しく使う形に修正
     async buildUiFromLayout() {
         const processedUiRegistry = this.registry.get('uiRegistry');
         if (!processedUiRegistry) {
             console.error("UIScene: uiRegistry not found in registry!");
-            // Promiseをrejectして、エラーをcreateに伝える
             return Promise.reject('uiRegistry not found'); 
         }
 
@@ -56,35 +53,35 @@ export default class UIScene extends Phaser.Scene {
         const stateManager = this.registry.get('stateManager');
 
         // ★★★ ここからが修正の核心 ★★★
-        // 1. 各UI定義から、UI要素を生成するためのPromiseの配列を作成する
+        // 1. 各UI定義から、UI要素を生成・登録するためのPromiseの配列を作成する
         const creationPromises = Object.keys(processedUiRegistry).map(name => {
-            const definition = processedUiRegistry[name];
-            
-            // paramsの準備
-            const layout = layoutData ? layoutData.objects.find(obj => obj.name === name) : {};
-            const params = { ...definition.params, ...layout, name, stateManager }; // ★ nameもparamsに含める
+            return new Promise((resolve) => {
+                const definition = processedUiRegistry[name];
+                
+                // paramsの準備
+                const layout = layoutData ? layoutData.objects.find(obj => obj.name === name) : {};
+                const params = { ...definition.params, ...layout, name, stateManager };
 
-            let uiElement = null;
+                let uiElement = null;
 
-            // componentまたはcreatorを使ってUI要素を生成
-            if (definition.component) {
-                const UiClass = definition.component;
-                uiElement = new UiClass(this, params);
-            } else if (typeof definition.creator === 'function') {
-                uiElement = definition.creator(this, params);
-            }
+                // componentまたはcreatorを使ってUI要素を生成
+                if (definition.component) {
+                    const UiClass = definition.component;
+                    uiElement = new UiClass(this, params);
+                } else if (typeof definition.creator === 'function') {
+                    uiElement = definition.creator(this, params);
+                }
 
-            if (uiElement) {
-                // registerUiElementは同期的（Promiseを返さない）なので、ここで呼んでOK
-                this.registerUiElement(name, uiElement, params);
-            }
-            
-            // このmap処理は最終的にundefinedを返す配列を作るが、処理自体は行われる
-            // 本来は生成したuiElementを返すのが綺麗だが、なくても動作はする
-            return Promise.resolve(); // ダミーの成功Promiseを返す
+                if (uiElement) {
+                    this.registerUiElement(name, uiElement, params);
+                }
+                
+                // このUI要素の生成処理が完了したことを通知
+                resolve();
+            });
         });
 
-        // 2. すべてのUI要素の生成（と同期的登録）が終わるのを待つ
+        // 2. すべてのUI要素の生成と登録が終わるのを待つ
         await Promise.all(creationPromises);
     }
     
