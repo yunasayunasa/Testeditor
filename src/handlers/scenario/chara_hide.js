@@ -1,48 +1,49 @@
 /**
- * [chara_hide] タグの処理
- * キャラクターをフェードアウトさせてから破棄する
- * @param {ScenarioManager} manager
- * @param {Object} params - { name, time }
- * @returns {Promise<void>}
+ * [chara_hide] タグ - キャラクターの退場
+ * 
+ * 指定されたキャラクターを画面から退場させます。
+ * フェードアウト時間を指定できます。
+ * アニメーション完了後、オブジェクトは破棄されます。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ
+ * @param {string} params.name - 退場させるキャラクターの管理名 (必須)
+ * @param {number} [params.time=0] - フェードアウト時間(ms)
  */
-export function handleCharaHide(manager, params) {
-    return new Promise(resolve => {
-        const name = params.name;
-        if (!name) {
-            console.warn('[chara_hide] name属性は必須です。');
-            resolve();
-            return;
-        }
+export default async function handleCharaHide(manager, params) {
+    const { name, time = 0 } = params;
+    const scene = manager.scene;
 
-        const chara = manager.scene.characters[name];
-        if (!chara) {
-            console.warn(`[chara_hide] 非表示対象のキャラクター[${name}]は既に存在しません。`);
-            resolve();
-            return;
-        }
+    // --- 1. パラメータと対象キャラクターの検証 ---
+    if (!name) {
+        console.warn('[chara_hide] name属性は必須です。');
+        return;
+    }
 
-        // ★★★ 完了時の共通処理を内部関数として定義 ★★★
-        const finalize = () => {
-            chara.destroy();
-            delete manager.scene.characters[name];
-            // ★★★ stateManagerの更新は不要 ★★★
-            resolve(); // Promiseを解決して完了を通知
-        };
+    const chara = scene.characters[name];
+    if (!chara) {
+        // 対象がいない場合は、エラーではなく警告にとどめ、シナリオの進行を止めない
+        console.warn(`[chara_hide] 非表示対象のキャラクター[${name}]は既に存在しません。`);
+        return;
+    }
 
-        const time = Number(params.time) || 0;
-
-        if (time > 0) {
-            // フェードアウトさせてから完了処理を呼ぶ
-            manager.scene.tweens.add({
+    // --- 2. アニメーション（フェードアウト） ---
+    const duration = Number(time);
+    if (duration > 0) {
+        // TweenをPromise化し、完了を待つ
+        await new Promise(resolve => {
+            scene.tweens.add({
                 targets: chara,
                 alpha: 0,
-                duration: time,
+                duration: duration,
                 ease: 'Linear',
-                onComplete: finalize // アニメーション完了時に finalize を実行
+                onComplete: () => resolve() // アニメーション完了でPromiseを解決
             });
-        } else {
-            // 即座に完了処理を呼ぶ
-            finalize();
-        }
-    });
+        });
+    }
+    
+    // --- 3. オブジェクトの破棄 ---
+    // フェードアウト後、または即座に実行
+    chara.destroy();
+    delete scene.characters[name];
 }

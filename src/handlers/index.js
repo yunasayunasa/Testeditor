@@ -11,8 +11,8 @@
 
 // --- 表示・画像・キャラクター系 ---
 import handleCharaShow from './scenario/chara_show.js';
-/*import handleCharaHide from './scenario/chara_hide.js';
-import handleCharaMod from './scenario/chara_mod.js';
+import handleCharaHide from './scenario/chara_hide.js';
+/*import handleCharaMod from './scenario/chara_mod.js';
 import handleBg from './scenario/bg.js';
 import handleImage from './scenario/image.js';
 import handleFreeImage from './scenario/freeimage.js';
@@ -74,8 +74,8 @@ import handleReturn from './scenario/return.js';
 export const tagHandlers = {
     // 表示・画像・キャラクター系
     'chara_show': handleCharaShow,
-  /*  'chara_hide': handleCharaHide,
-    'chara_mod': handleCharaMod,
+    'chara_hide': handleCharaHide,
+   /* 'chara_mod': handleCharaMod,
     'bg': handleBg,
     'image': handleImage,
     'freeimage': handleFreeImage,
