@@ -49,6 +49,8 @@ export default class GameScene extends Phaser.Scene {
             this.performLoad(this.loadSlot, this.returnParams).then(() => 
             this._finalizeSetup());
         } else {
+             console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
+            this.stateManager.f = {}; // これが最も重要！
             this.scenarioManager.loadScenario(this.startScenario);
             this._finalizeSetup();
             this.performSave(0);
