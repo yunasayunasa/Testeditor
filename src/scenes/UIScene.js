@@ -262,7 +262,7 @@ const button = this.add.text(0, 0, 'MENU', { fontSize: '36px', fill: '#fff' })
         if (this.isPanelOpen) {
             // パネルを開くとき：
             // depthを非常に大きな値に設定し、強制的に最前面に持ってくる
-            panelToToggle.setDepth(1000); 
+            panelToToggle.setDepth(10000); 
             console.log(`[UIScene] Bringing '${panelName}' to front with depth 100.`);
         }
         
