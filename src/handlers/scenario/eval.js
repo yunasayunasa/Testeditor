@@ -12,12 +12,6 @@ export default async function handleEval(manager, params) {
     }
 
     try {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが全てを解決する、唯一の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // 式を '=' で分割し、代入の左辺(path)と右辺(value)に分ける
-        // "f.score = f.score + 10" のような式にも対応できるよう、最初の'='で分割
         const assignmentIndex = exp.indexOf('=');
         
         if (assignmentIndex > -1) {
@@ -26,25 +20,28 @@ export default async function handleEval(manager, params) {
             const valueExpression = exp.substring(assignmentIndex + 1).trim();
 
             if (path.startsWith('f.') || path.startsWith('sf.')) {
-                // 右辺(値)を、StateManagerの安全なevalで評価して実際の値を取得する
-                // 例: "f.score + 10" -> 110
-                // 例: "'マスター'" -> "マスター"
+                // 右辺(値)を、StateManagerの安全なevalで評価
                 const value = manager.stateManager.eval(valueExpression);
                 
-                // 新しいsetValueByPathメソッドで、安全に値を設定する
-                manager.stateManager.setValueByPath(path, value);
+                // evalが成功し、有効な値が返ってきた場合のみ、設定を実行する
+                if (value !== undefined) {
+                    manager.stateManager.setValueByPath(path, value);
+                } else {
+                    // evalが失敗した(undefinedを返した)場合は、警告を出す
+                    console.error(`[eval] 値の評価に失敗したため、代入を中止しました。右辺を確認してください: ${valueExpression}`);
+                }
+
             } else {
                 console.warn(`[eval] 無効な代入式です。左辺は 'f.' または 'sf.' で始まる必要があります: ${exp}`);
             }
 
         } else {
-            // --- 代入式ではない場合 (例: [eval exp="someFunction()"]) ---
-            // 従来のevalメソッドを呼び出す（ただし、戻り値は使わない）
-            console.warn(`[eval] 代入を伴わない式の実行は非推奨です: ${exp}`);
+            // --- 代入式ではない場合 ---
             manager.stateManager.eval(exp);
         }
 
     } catch (e) {
+        // ★★★ 構文エラーを修正 ★★★
         console.error(`[eval] 式の実行中に予期せぬエラーが発生しました: "${exp}"`, e);
     }
 }
