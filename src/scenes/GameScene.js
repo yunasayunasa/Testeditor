@@ -3,7 +3,7 @@ import SoundManager from '../core/SoundManager.js';
 import StateManager from '../core/StateManager.js';
 import MessageWindow from '../ui/MessageWindow.js';
 import ConfigManager from '../core/ConfigManager.js';
-import tagHandlers from '../handlers/index.js';
+import {tagHandlers }from '../handlers/index.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
