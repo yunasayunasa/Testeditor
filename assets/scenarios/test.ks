@@ -1,5 +1,7 @@
 
+
 表示テストです
+[p]
 ; --- １．基本的な表示と演出 ---
 ;[playbgm storage="cafe" time=1000]
 [bg storage="bg_school" time=1500]
