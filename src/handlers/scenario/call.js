@@ -1,51 +1,61 @@
 /**
- * [call] タグの処理
- * サブルーチンとして別のシナリオやPhaserシーンを呼び出す。
- * 呼び出し元の情報はcallStackに積まれる。
- * @param {ScenarioManager} manager
- * @param {Object} params - { storage, target }
+ * [call] タグ - サブルーチン呼び出し
+ * 
+ * 別のシナリオファイルやPhaserシーンをサブルーチンとして呼び出します。
+ * 呼び出し元の位置はコールスタックに記録され、[return]タグで復帰します。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - { storage, target, params }
  */
-export async function handleCall(manager, params) {
-    const storage = params.storage;
-    if (!storage) {
-        console.warn('[call] storageは必須です。');
-        return; // 何もせず同期的に完了
-    }
+export default async function handleCall(manager, params) {
+    const { storage, target, params: callParams } = params;
 
-    // ★★★ 戻り先の情報をコールスタックに積む ★★★
-    // manager.currentLine は既に次の行を指しているので、-1 するのが一般的。
-    // （ScenarioManagerの実装によるが、こうしておくと[call]の次の行に戻る）
+    // 1. 戻り先の情報をコールスタックに記録する
     manager.callStack.push({
         file: manager.currentFile,
-        line: manager.currentLine 
+        line: manager.currentLine // manager.currentLineは既に次の行を指しているので、これで正しい
     });
     console.log("CallStack Pushed:", manager.callStack);
 
-    if (storage.endsWith('.ks')) {
-        // --- .ksファイル（サブルーチン）呼び出し ---
-        console.log(`サブルーチン呼び出し: ${storage}`);
-        // [jump] と同じように、シナリオをロードしてジャンプするだけ
-        await manager.loadScenario(storage, params.target);
-        // この後の next() は ScenarioManager のメインループに任せる
+    // --- .ksファイル（サブルーチン）呼び出しの場合 ---
+    if (storage && storage.endsWith('.ks')) {
+        console.log(`[call] サブルーチンシナリオ [${storage}] を呼び出します。`);
+        await manager.loadScenario(storage, target);
+        // loadScenarioが終わったら、gameLoopが次の行から実行を再開する
+    } 
+    // --- 別のPhaserシーン呼び出しの場合 ---
+    else if (storage) {
+        console.log(`[call] サブルーチンシーン [${storage}] を呼び出します。`);
         
-    } else {
-        // --- 別のPhaserシーン呼び出し ---
-        const sceneKey = storage;
-        console.log(`Phaserシーン呼び出し: ${sceneKey}`);
-         manager.scene.performSave(0); 
-        // ★★★ SystemSceneを介した標準的なシーン遷移に任せる ★★★
-        // jumpハンドラと全く同じロジックでOK
-        manager.scene.scene.get('SystemScene').events.emit('request-scene-transition', {
-            to: sceneKey,
-            from: 'GameScene',
-            // isCall: true のようなフラグを持たせても良い
-            params: {
-                // サブシーンに渡したいパラメータがあればここに入れる
+        // ★★★ [jump]ハンドラと全く同じロジックで遷移する ★★★
+        
+        // a. オートセーブを実行
+        manager.scene.performSave(0);
+
+        // b. パラメータを解決
+        let transitionParams = {};
+        if (callParams) {
+            try {
+                transitionParams = manager.stateManager.getValue(`(${callParams})`);
+            } catch (e) {
+                console.error(`[call] params属性の解析に失敗しました: "${callParams}"`, e);
             }
+        }
+        
+        // c. SystemSceneに遷移をリクエスト
+        const fromSceneKey = manager.scene.scene.key;
+        manager.scene.scene.get('SystemScene').events.emit('request-scene-transition', {
+            to: storage,
+            from: fromSceneKey,
+            params: transitionParams
         });
         
-        // シーン遷移が始まるので、この後のScenarioManagerのループは止める必要がある
-        // そのため、ここでは何もせず、Promiseも解決しないでおく。
-        // returnで復帰した際に、SystemSceneがGameSceneを再開させ、next()を呼んでくれる。
+        // d. シナリオループを停止
+        manager.stop();
+
+    } else {
+        console.warn('[call] 有効なstorage属性が指定されていません。');
+        // 不正なcallの場合は、積んだスタックを戻すのが親切
+        manager.callStack.pop(); 
     }
 }
