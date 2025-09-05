@@ -267,13 +267,9 @@ else{
             });
             console.log("追加アセットのロードが完了しました。");
         }
- // ★★★ 4. ジャンプ先の指定 ★★★
-        if (targetLine !== null) {
-            // 行番号が指定されていれば、それを最優先で設定
-            this.currentLine = targetLine;
-            console.log(`[loadScenario] 指定された行番号 [${targetLine}] に設定しました。`);
-        } else if (targetLabel) {
-            // ラベルが指定されていれば、ラベルにジャンプ
+
+        // --- 4. ラベルへのジャンプ ---
+        if (targetLabel) {
             this.jumpTo(targetLabel);
         }
         
