@@ -129,6 +129,50 @@ export default class UIScene extends Phaser.Scene {
         }
     }
     
+// src/scenes/UIScene.js
+
+    // ... onSceneTransition メソッドなどの後に追加 ...
+
+    /**
+     * StateManagerからの変数変更通知を受け取り、
+     * "監視" を登録しているUI要素に更新を自動的に委譲する。
+     * 存在しないメソッド呼び出しによるTypeErrorを防ぎ、データ駆動の連携を完成させる。
+     * @param {string} key - 変更された変数のキー (例: 'player_hp')
+     * @param {*} value - 新しい値 (このメソッド内では直接使わないが、将来のために受け取っておく)
+     */
+    updateHud(key, value) {
+        // デバッグログ：GameSceneからの呼び出しが成功したことを確認
+        // console.log(`[UIScene.updateHud] Received update for key: ${key}`);
+
+        const uiRegistry = this.registry.get('uiRegistry'); // uiRegistryをどこかから取得する必要があるかもしれません
+        const stateManager = this.registry.get('stateManager');
+
+        if (!uiRegistry || !stateManager) {
+            console.error('[UIScene.updateHud] uiRegistry or stateManager is not available.');
+            return;
+        }
+
+        // 変更されたキー(key)を 'watch' しているUI要素をすべて探す
+        for (const [name, uiElement] of this.uiElements.entries()) {
+            const definition = uiRegistry[name];
+
+            // 1. UI定義が存在し、'watch'配列が定義されているかチェック
+            // 2. 'watch'配列に、変更があったキー(key)が含まれているかチェック
+            if (definition && definition.watch && definition.watch.includes(key)) {
+                
+                // 更新処理をUI要素自身に丸投げする
+                // UI要素が 'updateValue' という標準メソッドを持っていることを規約とする
+                if (typeof uiElement.updateValue === 'function') {
+                    // StateManagerの最新の状態(f)を丸ごと渡す
+                    uiElement.updateValue(stateManager.f);
+                } else {
+                    // 'watch'しているのに更新メソッドがない場合は警告を出す
+                    console.warn(`UI Element '${name}' is watching '${key}' but does not have an updateValue() method.`);
+                }
+            }
+        }
+    }
+
     // --- UI生成ヘルパーメソッド群 (creatorから呼ばれる) ---
     createMenuButton(layout) {
 const button = this.add.text(0, 0, 'MENU', { fontSize: '36px', fill: '#fff' })

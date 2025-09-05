@@ -1,6 +1,6 @@
 import ScenarioManager from '../core/ScenarioManager.js';
 import { tagHandlers } from '../handlers/index.js';
-
+import { uiRegistry } from '../ui/index.js';
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
@@ -67,6 +67,7 @@ export default class GameScene extends Phaser.Scene {
 
      /**
      * StateManagerのf変数が変更されたときに呼び出されるリスナー
+     * ★★★ 変更された変数がUIに関連する場合のみ、UISceneに通知する ★★★
      * @param {string} key - 変更された変数のキー
      * @param {*} value - 新しい値
      */
@@ -74,10 +75,37 @@ export default class GameScene extends Phaser.Scene {
         // シーンの準備が完全に終わっていない場合は、何もしない
         if (!this.isSceneFullyReady) return;
 
-        // 処理をUISceneに丸投げする
-        if (this.uiScene) {
-            this.uiScene.updateHud(key, value);
+        // ★★★ ここからが修正の核心 ★★★
+        
+        // 1. uiRegistryを取得する (SystemScene経由などが安全)
+        const systemScene = this.scene.get('SystemScene');
+        const uiRegistry = systemScene.registry.get('uiRegistry'); // SystemSceneで登録されていると仮定
+
+        if (!uiRegistry) {
+            console.warn('[GameScene] uiRegistry not found.');
+            return;
         }
+
+        // 2. 変更されたキー(key)が、いずれかのUI要素にwatchされているかチェック
+        let isHudVariable = false;
+        for (const definition of Object.values(uiRegistry)) {
+            if (definition.watch && definition.watch.includes(key)) {
+                isHudVariable = true;
+                break; // 1つでも見つかればチェック終了
+            }
+        }
+        
+        // 3. HUDに関連する変数だった場合のみ、UISceneのupdateHudを呼び出す
+        if (isHudVariable) {
+            if (this.uiScene && typeof this.uiScene.updateHud === 'function') {
+                this.uiScene.updateHud(key, value);
+            }
+        }
+        
+        // ★★★ ここまで修正 ★★★
+        
+        // f.love_meter など、UIに関係ない変数が変更された場合は、このメソッドは何もせずに終了する。
+        // これにより、不要なupdateHud呼び出しとTypeErrorを防ぐ。
     }
 
     displayChoiceButtons() {
