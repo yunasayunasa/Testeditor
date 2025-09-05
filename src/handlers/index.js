@@ -102,7 +102,7 @@ export const tagHandlers = {
     'playse': handlePlaySe,
     'playbgm': handlePlayBgm,
     'stopbgm': handleStopBgm,
-    'voice': handleVoice,
+    'voice': handleVoice,*/
 
     // 変数・ロジック・デバッグ系
     'eval': handleEval,
@@ -110,7 +110,7 @@ export const tagHandlers = {
     'elsif': handleElsif,
     'else': handleElse,
     'endif': handleEndif,
-    'log': handleLog,*/
+   // 'log': handleLog,
 
     // フロー制御・待機系
     'p': handleP,
