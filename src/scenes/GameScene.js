@@ -49,7 +49,7 @@ export default class GameScene extends Phaser.Scene {
             this.performLoad(this.loadSlot, this.returnParams).then(() => 
             this._finalizeSetup());
         } else {
-            this.scenarioManager.load(this.startScenario);
+            this.scenarioManager.loadScenario(this.startScenario);
             this._finalizeSetup();
             this.performSave(0);
             this.time.delayedCall(10, () => this.scenarioManager.next());
