@@ -1,14 +1,22 @@
-// src/handlers/overlay_end.js
-
-export function handleOverlayEnd(manager, params) {
+/**
+ * [overlay_end] タグ - オーバーレイシーンの終了
+ * 
+ * NovelOverlaySceneを終了し、呼び出し元のシーンへ戻るようSystemSceneに依頼します。
+ * このタグはNovelOverlaySceneでのみ使用されるべきです。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ (このタグでは使用しません)
+ */
+export default async function handleOverlayEnd(manager, params) {
     const scene = manager.scene; // scene は NovelOverlayScene のインスタンス
 
-    // ★★★ NovelOverlaySceneが保持している情報をSystemSceneに渡す ★★★
+    // NovelOverlaySceneがinitで受け取った情報を、SystemSceneに渡して終了処理を依頼
     scene.scene.get('SystemScene').events.emit('end-overlay', {
         from: scene.scene.key,
         returnTo: scene.returnTo,
-        inputWasBlocked: scene.inputWasBlocked // initで受け取った情報をそのまま返す
+        inputWasBlocked: scene.inputWasBlocked
     });
 
+    // SystemSceneがシーンの停止処理を行うが、念のためScenarioManagerのループも止める
     manager.stop();
 }
