@@ -11,6 +11,8 @@ export default class SaveLoadScene extends Phaser.Scene {
     }
 
     create() {
+            this.scene.bringToTop();
+
         // 背景を少し暗くして、UIが目立つようにする
         this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.7).setOrigin(0, 0);
         

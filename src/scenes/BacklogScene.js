@@ -7,6 +7,8 @@ export default class BacklogScene extends Phaser.Scene {
     }
 
     create() {
+            this.scene.bringToTop();
+
         const gameScene = this.scene.get('GameScene');
         if (!gameScene || !gameScene.stateManager) {
             console.error("BacklogScene: GameSceneまたはStateManagerが見つかりません。");
