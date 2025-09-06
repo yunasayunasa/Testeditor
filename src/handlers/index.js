@@ -61,6 +61,9 @@ import handleEr from './scenario/er.js';
 import handleLink from './scenario/link.js';
 import handleR from './scenario/r.js';
 import handleButton from './scenario/button.js';
+import handleHideWindow from './scenario/hidewindow.js';
+import handleShowWindow from './scenario/showwindow.js';
+
 
 // --- シーン・サブルーチン遷移系 ---
 import handleJump from './scenario/jump.js';
@@ -124,6 +127,8 @@ export const tagHandlers = {
     'link': handleLink,
     'r': handleR,
     'button': handleButton,
+     'hidewindow': handleHideWindow,
+    'showwindow': handleShowWindow,
     
     // シーン・サブルーチン遷移系
     'jump': handleJump,

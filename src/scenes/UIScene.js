@@ -294,6 +294,54 @@ export default class UIScene extends Phaser.Scene {
             if (this.panel) this.panel.y = this.scale.height + 120; 
         }
     }
+      /**
+     * メッセージウィンドウを画面外へ隠す
+     * @param {number} time - アニメーション時間(ms)
+     * @returns {Promise<void>} アニメーション完了時に解決されるPromise
+     */
+    hideMessageWindow(time = 300) {
+        return new Promise(resolve => {
+            const messageWindow = this.uiElements.get('message_window');
+            if (messageWindow) {
+                this.tweens.add({
+                    targets: messageWindow,
+                    y: this.scale.height + (messageWindow.height / 2), // 画面の下へ
+                    duration: time,
+                    ease: 'Cubic.easeInOut',
+                    onComplete: resolve
+                });
+            } else {
+                resolve(); // ウィンドウがなければ即座に完了
+            }
+        });
+    }
+
+    /**
+     * メッセージウィンドウを画面内の定位置へ表示する
+     * @param {number} time - アニメーション時間(ms)
+     * @returns {Promise<void>} アニメーション完了時に解決されるPromise
+     */
+    showMessageWindow(time = 300) {
+        return new Promise(resolve => {
+            const messageWindow = this.uiElements.get('message_window');
+            const layoutData = this.cache.json.get('UIScene'); // レイアウトJSONを取得
+            
+            if (messageWindow && layoutData) {
+                const windowLayout = layoutData.objects.find(obj => obj.name === 'message_window');
+                if (windowLayout) {
+                    this.tweens.add({
+                        targets: messageWindow,
+                        y: windowLayout.y, // JSONで定義されたY座標に戻す
+                        duration: time,
+                        ease: 'Cubic.easeInOut',
+                        onComplete: resolve
+                    });
+                } else { resolve(); }
+            } else {
+                resolve();
+            }
+        });
+    }
      shutdown() {
         const systemScene = this.scene.get('SystemScene');
         if (systemScene) {
