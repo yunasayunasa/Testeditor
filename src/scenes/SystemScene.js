@@ -78,30 +78,37 @@ export default class SystemScene extends Phaser.Scene {
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
-    _startInitialGame(initialData) {
+   _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
         
-        // --- ステップ1: まずUISceneを起動し、その完了を待つ ---
-        // _startAndMonitorSceneは非同期ではないので、完了を待つためにonceを使う
-        this.scene.get('UIScene').events.once('scene-ready', () => {
-            
-            // UISceneの準備が完了した！という報告が来た後で、
+        const uiScene = this.scene.get('UIScene');
+
+        // ★★★ これが全てを解決するロジックです ★★★
+
+        // 1. UISceneの完了を待つリスナーを先に登録する
+        uiScene.events.once('scene-ready', () => {
             console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
+            
             if (!this.scene.keys.GameScene) {
-                this.scene.add('GameScene', GameScene, false); // autoStartをfalseに
+                this.scene.add('GameScene', GameScene, false);
             }
-            // --- ステップ2: GameSceneを起動し、その完了を監視する ---
+            
             this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
         });
 
-        // --- トリガー: UISceneを起動する ---
-        // _startAndMonitorScene を直接使わず、単純にrunで起動する
-        // なぜなら、完了後の処理がGameSceneの起動という特殊なものだから
-      //  this.scene.run('UIScene');
+        // 2. UISceneがまだ起動していない(sleeping状態の)場合のみ、runで起動する
+        if (!this.scene.isActive('UIScene')) {
+            console.log("[SystemScene] UIScene is not active. Running it now.");
+            this.scene.run('UIScene');
+
+        } else {
+            // もし何らかの理由で既にアクティブなら、そのまま完了を待つ
+            console.log("[SystemScene] UIScene is already active. Waiting for scene-ready.");
+        }
     }
 
 
