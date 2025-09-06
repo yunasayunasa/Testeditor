@@ -14,11 +14,11 @@ import handleCharaShow from './scenario/chara_show.js';
 import handleCharaHide from './scenario/chara_hide.js';
 import handleCharaMod from './scenario/chara_mod.js';
 import handleBg from './scenario/bg.js';
-/*import handleImage from './scenario/image.js';
+import handleImage from './scenario/image.js';
 import handleFreeImage from './scenario/freeimage.js';
 
 // --- アニメーション・演出系 ---
-import handleMove from './scenario/move.js';
+/*import handleMove from './scenario/move.js';
 import handleWalk from './scenario/walk.js';
 import handleShake from './scenario/shake.js';
 import handleVibrate from './scenario/vibrate.js';
@@ -77,11 +77,11 @@ export const tagHandlers = {
     'chara_hide': handleCharaHide,
     'chara_mod': handleCharaMod,
     'bg': handleBg,
-   /* 'image': handleImage,
+    'image': handleImage,
     'freeimage': handleFreeImage,
 
     // アニメーション・演出系
-    'move': handleMove,
+    /*'move': handleMove,
     'walk': handleWalk,
     'shake': handleShake,
     'vibrate': handleVibrate,
