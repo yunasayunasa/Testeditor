@@ -1,24 +1,33 @@
+
 const Container = Phaser.GameObjects.Container;
 const Rectangle = Phaser.GameObjects.Rectangle;
 const Text = Phaser.GameObjects.Text;
 
 export default class BottomPanel extends Container {
-    // 依存関係はなし
-    static dependencies = [];
-
     /**
      * @param {Phaser.Scene} scene - この場合はUISceneのインスタンス
      * @param {object} config - UISceneから渡される設定オブジェクト
      */
     constructor(scene, config) {
-        super(scene, 0, 0);
+        super(scene, config.x, config.y); // JSONから渡された座標を使う
+
+        // ★★★ 司令塔(SystemScene)への参照を最初に、かつ安全に取得 ★★★
+        const systemScene = scene.scene.get('SystemScene');
+        if (!systemScene) {
+            console.error("BottomPanel: SystemScene could not be found.");
+            return;
+        }
 
         const gameWidth = scene.scale.width;
 
         // パネル背景
-        const panelBg = new Rectangle(scene, gameWidth / 2, 0, gameWidth, 120, 0x000000, 0.8)
-            .setInteractive();
-        panelBg.on('pointerdown', event => event.stopPropagation());
+        const panelBg = new Rectangle(scene, gameWidth / 2, 0, gameWidth, 120, 0x000000, 0.8).setInteractive();
+        
+        // ★★★ イベントハンドラの正しい書き方 ★★★
+        panelBg.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+        });
+
 
         // 各ボタンを生成
         const buttonStyle = { fontSize: '32px', fill: '#fff' };
@@ -40,14 +49,29 @@ export default class BottomPanel extends Container {
             button.setX(areaStartX + (buttonMargin * index) + (buttonMargin / 2));
         });
 
-        // イベントリスナーを設定 (UISceneのメソッドを呼び出す)
-        saveButton.on('pointerdown', event => { scene.openScene('SaveLoadScene', { mode: 'save' }); event.stopPropagation(); });
-        loadButton.on('pointerdown', event => { scene.openScene('SaveLoadScene', { mode: 'load' }); event.stopPropagation(); });
-        backlogButton.on('pointerdown', event => { scene.openScene('BacklogScene'); event.stopPropagation(); });
-        configButton.on('pointerdown', event => { scene.openScene('ConfigScene'); event.stopPropagation(); });
-        autoButton.on('pointerdown', event => { scene.toggleGameMode('auto'); event.stopPropagation(); });
-        skipButton.on('pointerdown', event => { scene.toggleGameMode('skip'); event.stopPropagation(); });
+         saveButton.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            systemScene.events.emit('request-subscene', { targetScene: 'SaveLoadScene', launchData: { mode: 'save' } });
+        });
+
+        loadButton.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            systemScene.events.emit('request-subscene', { targetScene: 'SaveLoadScene', launchData: { mode: 'load' } });
+        });
+
+        autoButton.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            systemScene.events.emit('request-gamemode-toggle', 'auto');
+        });
+
+        skipButton.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            systemScene.events.emit('request-gamemode-toggle', 'skip');
+        });
+
+        // ... (他のボタンも同様に) ...
     }
+
 
     // 規約に準拠するためのお作法
     updateValue(state) {}

@@ -43,7 +43,15 @@ export default class SystemScene extends Phaser.Scene {
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
-        
+         this.events.on('request-gamemode-toggle', (mode) => {
+            const gameScene = this.scene.get('GameScene');
+            if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
+                const currentMode = gameScene.scenarioManager.mode;
+                const newMode = currentMode === mode ? 'normal' : mode;
+                gameScene.scenarioManager.setMode(newMode);
+                console.log(`モード変更: ${currentMode} -> ${newMode}`);
+            }
+        });
         // --- 3. エディタ関連の初期化 ---
         this.initializeEditor();
          
