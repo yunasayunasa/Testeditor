@@ -1,26 +1,23 @@
 /**
- * [vibrate] タグの処理
- * カメラ（画面全体）を揺らす
- * @param {ScenarioManager} manager
- * @param {Object} params - { time, power }
- * @returns {Promise<void>}
+ * [vibrate] タグ - 画面全体の揺れ
+ * 
+ * カメラを揺らし、画面全体に振動を与えます。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ
+ * @param {number} [params.time=500] - 揺らす総時間(ms)
+ * @param {number} [params.power=0.005] - 揺れの強さ (0.0 to 1.0)
  */
-export function handleVibrate(manager, params) {
-    return new Promise(resolve => {
-        const time = Number(params.time) || 500;
-        // vibrateはshakeより弱い揺れのイメージなので、デフォルト値を少し小さくする
-        const power = Number(params.power) || 0.005; 
+export default async function handleVibrate(manager, params) {
+    const { time = 500, power = 0.005 } = params;
+    const scene = manager.scene;
+    const camera = scene.cameras.main;
 
-        const camera = manager.scene.cameras.main;
-
-        // ★★★ カメラのシェイク完了イベントを一度だけリッスンする ★★★
-        camera.once('camerashakecomplete', () => {
-            resolve(); // シェイク完了時にPromiseを解決
-        });
-
-        // Phaserのカメラシェイク機能を呼び出す
-        camera.shake(time, power);
-        
-        // ★★★ delayedCall や finishTagExecution は不要 ★★★
+    // カメラのシェイク完了をawaitで待つ
+    await new Promise(resolve => {
+        // 'camerashakecomplete' イベントを一度だけリッスンする
+        camera.once('camerashakecomplete', resolve);
+        // カメラシェイクを開始
+        camera.shake(Number(time), Number(power));
     });
 }

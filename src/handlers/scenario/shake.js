@@ -1,41 +1,38 @@
 /**
- * [shake] タグの処理
- * 指定されたキャラクターを揺らす
- * @param {ScenarioManager} manager
- * @param {Object} params - { name, time, power }
- * @returns {Promise<void>}
+ * [shake] タグ - キャラクターの揺れ
+ * 
+ * 指定されたキャラクターを水平に揺らします。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ
+ * @param {string} params.name - 対象キャラクターの管理名 (必須)
+ * @param {number} [params.time=500] - 揺らす総時間(ms)
+ * @param {number} [params.power=10] - 揺れの幅(pixel)
  */
-export function handleShake(manager, params) {
-    return new Promise(resolve => {
-        const name = params.name;
-        if (!name) {
-            console.warn('[shake] キャラクターを揺らす場合はname属性が必須です。');
-            resolve();
-            return;
-        }
+export default async function handleShake(manager, params) {
+    const { name, time = 500, power = 10 } = params;
+    const scene = manager.scene;
 
-        const chara = manager.scene.characters[name];
-        if (!chara) {
-            console.warn(`[shake] キャラクター[${name}]が見つかりません。`);
-            resolve();
-            return;
-        }
+    if (!name) { console.warn('[shake] name属性は必須です。'); return; }
+    const chara = scene.characters[name];
+    if (!chara) { console.warn(`[shake] キャラクター[${name}]が見つかりません。`); return; }
 
-        const time = Number(params.time) || 500;
-        const power = Number(params.power) || 10;
-        const originX = chara.x; // 元の位置を保存
+    const duration = Number(time);
+    const intensity = Number(power);
+    const originX = chara.x;
 
-        // ★★★ yoyoとrepeatを使った単一のTweenで実装 ★★★
-        manager.scene.tweens.add({
+    // Tweenの完了をawaitで待つ
+    await new Promise(resolve => {
+        scene.tweens.add({
             targets: chara,
-            x: originX + power, // 右に揺れる
-            duration: 50,       // 1回の揺れの速さ
+            x: originX + intensity,
+            duration: 50, // 1回の揺れの速さ
             ease: 'Linear',
-            yoyo: true,         // trueで元の位置に戻る
-            repeat: Math.floor((time / 100) - 1), // 総時間に合わせて回数を計算
+            yoyo: true,
+            repeat: Math.floor((duration / 100) - 1),
             onComplete: () => {
-                chara.setX(originX); // 念のため最終的な位置を補正
-                resolve(); // すべての揺れが終わったら完了を通知
+                chara.setX(originX); // 最終的な位置を補正
+                resolve();
             }
         });
     });
