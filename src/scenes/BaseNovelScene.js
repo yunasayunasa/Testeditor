@@ -34,8 +34,7 @@ export default class BaseNovelScene extends Phaser.Scene {
         
         // 子クラスで追加のタグ登録ができるように、フックメソッドを用意
         this.registerCustomTags();
-
-        this.scenarioManager.load(this.startScenario);
+ this.scenarioManager.loadScenario(this.startScenario);
         this._finalizeSetup();
     }
 
