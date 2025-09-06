@@ -78,26 +78,23 @@ export default class SystemScene extends Phaser.Scene {
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
-    _startInitialGame(initialData) {
+   _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
 
-        // ★★★ これが全てを解決するロジックです ★★★
-
-        // 1. UISceneを動的に追加する
-        if (!this.scene.keys.UIScene) {
+        // ★★★ 1. シーンが存在するかどうかを、正しいプロパティでチェック ★★★
+        if (!this.scene.manager.keys.UIScene) {
             this.scene.add('UIScene', UIScene, false);
+        }
+        if (!this.scene.manager.keys.GameScene) {
+            this.scene.add('GameScene', GameScene, false);
         }
 
         const uiScene = this.scene.get('UIScene');
 
-        // 2. UISceneの完了を待つリスナーを登録する
+        // ★★★ 2. UISceneの完了を待つリスナーを登録する (変更なし) ★★★
         uiScene.events.once('scene-ready', () => {
             console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-            
-            if (!this.scene.keys.GameScene) {
-                this.scene.add('GameScene', GameScene, false);
-            }
             
             this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
@@ -105,10 +102,11 @@ export default class SystemScene extends Phaser.Scene {
             });
         });
 
-        // 3. UISceneを起動する
+        // ★★★ 3. UISceneを起動する (変更なし) ★★★
         console.log("[SystemScene] Running UIScene now.");
         this.scene.run('UIScene');
     }
+
 
 
      /**
