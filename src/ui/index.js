@@ -26,6 +26,6 @@ export const sceneUiVisibility = {
       'NovelOverlayScene': ['game'], // メッセージウィンドウ('game'グループ)だけを表示
     'JumpScene': ['controls', 'action'], // 'hud' 'menu' はないのでHUDやメニューは出ない
     'BattleScene': ['hud', 'battle'],
-     'ActionScene': ['hud', 'battle'],
+     'ActionScene': ['menu', 'game'],
     'TitleScene': []
 };
