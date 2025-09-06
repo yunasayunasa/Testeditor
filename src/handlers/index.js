@@ -22,9 +22,9 @@ import handleMove from './scenario/move.js';
 import handleWalk from './scenario/walk.js';
 import handleShake from './scenario/shake.js';
 import handleVibrate from './scenario/vibrate.js';
-/*import handleFlip from './scenario/flip.js';
+import handleFlip from './scenario/flip.js';
 import handleCharaJump from './scenario/chara_jump.js';
-import handleStopAnim from './scenario/stop_anim.js';
+/*import handleStopAnim from './scenario/stop_anim.js';
 import handleFadeout from './scenario/fadeout.js';
 import handleFadein from './scenario/fadein.js';
 import handlePuppetMove from './scenario/puppet_move.js';
@@ -32,14 +32,14 @@ import handlePuppetIdleStart from './scenario/puppet_idle_start.js';
 import handlePuppetIdleStop from './scenario/puppet_idle_stop.js';
 import handleLiveBreathStart from './scenario/live_breath_start.js';
 import handleLiveBreathStop from './scenario/live_breath_stop.js';
-import handleVideo from './scenario/video.js';
-import handleStopVideo from './scenario/stopvideo.js';
+//import handleVideo from './scenario/video.js';
+//import handleStopVideo from './scenario/stopvideo.js';
 
 // --- 音声系 ---
 import handlePlaySe from './scenario/playse.js';
 import handlePlayBgm from './scenario/playbgm.js';
 import handleStopBgm from './scenario/stopbgm.js';
-import handleVoice from './scenario/voice.js';*/
+//import handleVoice from './scenario/voice.js';*/
 
 // --- 変数・ロジック・デバッグ系 ---
 import handleEval from './scenario/eval.js';
@@ -85,9 +85,9 @@ export const tagHandlers = {
     'walk': handleWalk,
     'shake': handleShake,
     'vibrate': handleVibrate,
-    /*'flip': handleFlip,
+    'flip': handleFlip,
     'chara_jump': handleCharaJump,
-    'stop_anim': handleStopAnim,
+   /* 'stop_anim': handleStopAnim,
     'fadeout': handleFadeout,
     'fadein': handleFadein,
     'puppet_move': handlePuppetMove,
