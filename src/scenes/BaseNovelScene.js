@@ -47,7 +47,17 @@ export default class BaseNovelScene extends Phaser.Scene {
         this.layer.background = this.add.container(0, 0).setDepth(0);
         this.layer.cg = this.add.container(0, 0).setDepth(5);
         this.layer.character = this.add.container(0, 0).setDepth(10);
-        
+           // --- 選択肢用のクリックブロッカーを生成 ---
+        this.choiceInputBlocker = this.add.rectangle(
+            this.scale.width / 2, 
+            this.scale.height / 2, 
+            this.scale.width, 
+            this.scale.height
+        )
+            .setInteractive()
+            .setVisible(false)
+            .setDepth(25); // ボタン(30)より奥、UI(20)より手前
+            
         const messageWindow = this.uiScene.uiElements.get('message_window');
         if (!messageWindow) { return; }
 
