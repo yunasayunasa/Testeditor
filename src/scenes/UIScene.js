@@ -299,42 +299,42 @@ export default class UIScene extends Phaser.Scene {
      * @param {number} time - アニメーション時間(ms)
      * @returns {Promise<void>} アニメーション完了時に解決されるPromise
      */
-    hideMessageWindow(time = 300) {
+hideMessageWindow(time = 300) {
+        // ★★★ return new Promise(...) で全体を囲む ★★★
         return new Promise(resolve => {
             const messageWindow = this.uiElements.get('message_window');
             if (messageWindow) {
                 this.tweens.add({
                     targets: messageWindow,
-                    y: this.scale.height + (messageWindow.height / 2), // 画面の下へ
+                    y: this.scale.height + (messageWindow.height / 2),
                     duration: time,
                     ease: 'Cubic.easeInOut',
-                    onComplete: resolve
+                    onComplete: resolve // ★ Tween完了時にPromiseを解決
                 });
             } else {
-                resolve(); // ウィンドウがなければ即座に完了
+                resolve();
             }
         });
     }
 
     /**
-     * メッセージウィンドウを画面内の定位置へ表示する
-     * @param {number} time - アニメーション時間(ms)
-     * @returns {Promise<void>} アニメーション完了時に解決されるPromise
+     * メッセージウィンドウを画面内の定位置へ表示する (Promise対応版)
      */
     showMessageWindow(time = 300) {
+        // ★★★ return new Promise(...) で全体を囲む ★★★
         return new Promise(resolve => {
             const messageWindow = this.uiElements.get('message_window');
-            const layoutData = this.cache.json.get('UIScene'); // レイアウトJSONを取得
+            const layoutData = this.cache.json.get('UIScene');
             
             if (messageWindow && layoutData) {
                 const windowLayout = layoutData.objects.find(obj => obj.name === 'message_window');
                 if (windowLayout) {
                     this.tweens.add({
                         targets: messageWindow,
-                        y: windowLayout.y, // JSONで定義されたY座標に戻す
+                        y: windowLayout.y,
                         duration: time,
                         ease: 'Cubic.easeInOut',
-                        onComplete: resolve
+                        onComplete: resolve // ★ Tween完了時にPromiseを解決
                     });
                 } else { resolve(); }
             } else {
