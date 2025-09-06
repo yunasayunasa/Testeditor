@@ -32,6 +32,7 @@ export default class GameScene extends Phaser.Scene {
         this.stateManager = this.registry.get('stateManager');
 
         this.layer.background = this.add.container(0, 0).setDepth(0);
+        this.layer.cg = this.add.container(0, 0).setDepth(5);
         this.layer.character = this.add.container(0, 0).setDepth(10);
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
             .setInteractive()
