@@ -47,7 +47,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         const OVERLAY_BASE_DEPTH = 1000; // 通常のUI(20など)より遥かに大きな基準値
 
         this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
-        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
+        this.layer.character = this.add.container(0, 0).setDepth( 10);
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
             .setInteractive()
             .setVisible(false)
