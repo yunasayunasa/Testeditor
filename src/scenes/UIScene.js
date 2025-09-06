@@ -310,6 +310,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     showMessageWindow(time = 0) {
+        this.scene.bringToTop();
         const messageWindow = this.uiElements.get('message_window');
         const layoutData = this.cache.json.get('UIScene');
         if (messageWindow && layoutData) {
