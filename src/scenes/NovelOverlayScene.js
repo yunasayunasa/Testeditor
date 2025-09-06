@@ -43,19 +43,29 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
 
-        // --- 2. レイヤーを生成 (背景は透過) ---
-        this.layer.cg = this.add.container(0, 0).setDepth(5);
-        this.layer.character = this.add.container(0, 0).setDepth(1);
-        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height).setInteractive().setVisible(false).setDepth(25);
-        
+      // --- 2. オーバーレイ専用の、非常に高いdepth値でレイヤーを生成 ---
+        const OVERLAY_BASE_DEPTH = 1000; // 通常のUI(20など)より遥かに大きな基準値
+
+        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
+        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
+        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
+            .setInteractive()
+            .setVisible(false)
+            .setDepth(OVERLAY_BASE_DEPTH + 25);
+            
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
         // --- 3. UIの表示をオーバーレイモードに切り替え ---
-        // ★★★ UIを完全にUISceneに委任する ★★★
-        this.uiScene.onSceneTransition('NovelOverlayScene'); // onSceneTransitionを直接呼び出す
+        this.uiScene.onSceneTransition('NovelOverlayScene');
         const messageWindow = this.uiScene.uiElements.get('message_window');
         if (!messageWindow) { return console.error("[NovelOverlayScene] MessageWindow not found in UIScene."); }
+        
+        // ★★★ メッセージウィンドウも、オーバーレイ中は最前面に持ってくる ★★★
+        messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
 
         // --- 4. ScenarioManagerを初期化 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
+        
         
         // --- 5. タグハンドラを登録 ---
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
