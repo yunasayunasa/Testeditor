@@ -226,7 +226,7 @@ kaito:「いよいよアクションシーンへ突入！戻ってきたら結�
 [chara_show name="yuna" pos="left" time=500] 
 ; 戻ってからキャラ表示
 [chara_show name="kaito" pos="right" time=500]
-
+[showwindow]
 kaito:「アクションシーンから戻ってきました！戦闘結果は &f.battle_result です。」
 [p]
 [log exp="f.battle_result"]

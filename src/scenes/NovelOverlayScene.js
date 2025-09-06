@@ -45,7 +45,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
 
         // --- 2. レイヤーを生成 (背景は透過) ---
         this.layer.cg = this.add.container(0, 0).setDepth(5);
-        this.layer.character = this.add.container(0, 0).setDepth(10);
+        this.layer.character = this.add.container(0, 0).setDepth(1);
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height).setInteractive().setVisible(false).setDepth(25);
         
         // --- 3. UIの表示をオーバーレイモードに切り替え ---
