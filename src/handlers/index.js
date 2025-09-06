@@ -27,10 +27,10 @@ import handleCharaJump from './scenario/chara_jump.js';
 import handleStopAnim from './scenario/stop_anim.js';
 import handleFadeout from './scenario/fadeout.js';
 import handleFadein from './scenario/fadein.js';
-import handlePuppetMove from './scenario/puppet_move.js';
+/*import handlePuppetMove from './scenario/puppet_move.js';
 import handlePuppetIdleStart from './scenario/puppet_idle_start.js';
-import handlePuppetIdleStop from './scenario/puppet_idle_stop.js';
-/*import handleLiveBreathStart from './scenario/live_breath_start.js';
+import handlePuppetIdleStop from './scenario/puppet_idle_stop.js';*/
+import handleLiveBreathStart from './scenario/live_breath_start.js';
 import handleLiveBreathStop from './scenario/live_breath_stop.js';
 //import handleVideo from './scenario/video.js';
 //import handleStopVideo from './scenario/stopvideo.js';
@@ -90,13 +90,13 @@ export const tagHandlers = {
     'stop_anim': handleStopAnim,
     'fadeout': handleFadeout,
     'fadein': handleFadein,
-    'puppet_move': handlePuppetMove,
+  /*  'puppet_move': handlePuppetMove,
     'puppet_idle_start': handlePuppetIdleStart,
-    'puppet_idle_stop': handlePuppetIdleStop,
-   /* 'live_breath_start': handleLiveBreathStart,
+    'puppet_idle_stop': handlePuppetIdleStop,*/
+   'live_breath_start': handleLiveBreathStart,
     'live_breath_stop': handleLiveBreathStop,
-    'video': handleVideo,
-    'stopvideo': handleStopVideo,
+   // 'video': handleVideo,
+    //'stopvideo': handleStopVideo,
 
     // 音声系
     'playse': handlePlaySe,

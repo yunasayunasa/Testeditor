@@ -1,26 +1,32 @@
-export function handleLiveBreathStop(manager, params) {
-    const name = params.name;
-    if (!name) { return Promise.resolve(); }
-    const chara = manager.scene.characters[name];
-    if (!chara) { return Promise.resolve(); }
+/**
+ * [live_breath_stop] タグ - 呼吸アニメーション停止
+ * 
+ * [live_breath_start]で開始した呼吸アニメーションを停止します。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ
+ */
+export default async function handleLiveBreathStop(manager, params) {
+    const { name } = params;
+    const scene = manager.scene;
 
+    if (!name) { console.warn('[live_breath_stop] name属性は必須です。'); return; }
+    const chara = scene.characters[name];
+    if (!chara) { console.warn(`[live_breath_stop] キャラクター[${name}]が見つかりません。`); return; }
+
+    // Tweenを停止
     const breathTween = chara.getData('liveBreathTween');
     if (breathTween) {
         breathTween.stop();
-        chara.setData('liveBreathTween', null);
-        
-        // ★★★ ここからが修正箇所 ★★★
-        // 1. 保存しておいた座標の補正量を取得
-        const yOffset = chara.getData('breathYOffset') || 0;
-
-        // 2. スケールと原点をデフォルトに戻す
-        chara.setScale(1);
-        chara.setOrigin(0.5, 0.5);
-
-        // 3. Y座標から補正量を引いて、完全に元の位置に戻す
-        chara.y -= yOffset;
-        chara.setData('breathYOffset', null); // データをクリア
-        // ★★★ ここまでが修正箇所 ★★★
+        chara.removeData('liveBreathTween');
     }
-    return Promise.resolve();
+
+    // 保存しておいた情報を使って、状態を完全に元に戻す
+    const breathInfo = chara.getData('breathInfo');
+    if (breathInfo) {
+        chara.setScale(chara.scaleX, breathInfo.originalScale);
+        chara.setOrigin(0.5, breathInfo.originalOriginY);
+        chara.y -= breathInfo.yOffset;
+        chara.removeData('breathInfo');
+    }
 }
