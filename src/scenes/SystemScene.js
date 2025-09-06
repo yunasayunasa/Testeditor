@@ -288,20 +288,26 @@ export default class SystemScene extends Phaser.Scene {
      * セーブ/ロード画面などのサブシーン起動リクエストを処理する
      * @param {object} data - { targetScene: string, launchData: object }
      */
-    // src/scenes/SystemScene.js
-
     _handleRequestSubScene(data) {
         const gameScene = this.scene.get('GameScene');
 
+        // GameSceneが実行中の場合のみ、特別な待機処理を行う
         if (gameScene && gameScene.scene.isActive()) {
+            console.log(`[SystemScene] Sub-scene request for ${data.targetScene}. Preparing GameScene...`);
+            
+            // 1. GameSceneにオートセーブを実行させる
             gameScene.performSave(0);
 
-            // ★★★ sleep の代わりに pause を使う ★★★
-            this.scene.pause('GameScene');
-            console.log("[SystemScene] GameScene has been paused.");
+            // 2. GameSceneをスリープさせる
+            this.scene.sleep('GameScene');
+            console.log("[SystemScene] GameScene has been put to sleep.");
 
+            // 3. 目的のサブシーンを起動する
             this.scene.launch(data.targetScene, data.launchData);
+
         } else {
+            // GameSceneが実行中でない場合 (タイトル画面など) は、そのまま起動する
+            console.log(`[SystemScene] Launching sub-scene ${data.targetScene} directly.`);
             this.scene.launch(data.targetScene, data.launchData);
         }
     }
