@@ -22,9 +22,9 @@
 
 ; --- １．基本的な表示と演出 ---
 [playbgm storage="cafe" time=1000]
-[bg storage="bg_school" time=1500]
+[bg storage="bg_school" time=150]
 [wait time=1500]
-[chara_show name="yuna" pos="center"] 
+[chara_show name="yuna" y=200 pos="center"] 
 ; y=800 は画面外のはず
 [move name="yuna" y=450 alpha=1 time=1000] 
 ; ★★★ y=450は画面内のy座標に修正（中心付近）★★★
@@ -37,7 +37,7 @@ yuna:「ようこそ！これは、あなたと一緒に作ったゲームエン
 yuna:「このゲームを起動するのは、&sf.boot_count 回目ですね。」
 [p]
  ; ★ sf.boot_countのテスト
-[jump storage="JumpScene" params="{player_level:f.love_meter, player_name:'&f.player_name;', start_area:'bridge', current_coin:f.coin, player_max_hp:f.player_max_hp, player_hp:f.player_hp}"]
+;[jump storage="JumpScene" params="{player_level:f.love_meter, player_name:'&f.player_name;', start_area:'bridge', current_coin:f.coin, player_max_hp:f.player_max_hp, player_hp:f.player_hp}"]
 
 [chara_show name="kaito" pos="right" time=1000]
 [wait time=1000]
