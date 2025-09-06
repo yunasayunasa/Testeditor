@@ -31,7 +31,7 @@ import handleFadein from './scenario/fadein.js';
 import handlePuppetIdleStart from './scenario/puppet_idle_start.js';
 import handlePuppetIdleStop from './scenario/puppet_idle_stop.js';*/
 import handleLiveBreathStart from './scenario/live_breath_start.js';
-import handleLiveBreathStop from './scenario/live_breath_stop.js';
+//mport handleLiveBreathStop from './scenario/live_breath_stop.js';
 //import handleVideo from './scenario/video.js';
 //import handleStopVideo from './scenario/stopvideo.js';
 
@@ -94,7 +94,7 @@ export const tagHandlers = {
     'puppet_idle_start': handlePuppetIdleStart,
     'puppet_idle_stop': handlePuppetIdleStop,*/
    'live_breath_start': handleLiveBreathStart,
-    'live_breath_stop': handleLiveBreathStop,
+    //'live_breath_stop': handleLiveBreathStop,
    // 'video': handleVideo,
     //'stopvideo': handleStopVideo,
 

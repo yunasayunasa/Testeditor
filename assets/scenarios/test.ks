@@ -113,7 +113,7 @@ yuna:「セリフを喋っている間も、このように生命感を表現で
 
 
 ; 3. 呼吸のパラメータを変更してみます
-[live_breath_stop name="yuna"]
+[stop_anim name="yuna"]
 「一度、呼吸を止めます。」
 [p]
 
