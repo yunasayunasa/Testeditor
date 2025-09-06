@@ -1,5 +1,3 @@
-// SoundManager.js (最終確定・統一版)
-
 export default class SoundManager {
     constructor(game) {
         this.game = game;
@@ -9,10 +7,9 @@ export default class SoundManager {
             console.error("SoundManager: ConfigManagerが見つかりません！");
         }
         
-        this.currentBgm = null;       // 現在のPhaser.Soundオブジェクト
-        this.currentBgmKey = null;    // 現在のBGMキー
+        this.currentBgm = null;
+        this.currentBgmKey = null;
 
-        // 音量変更イベントのリスナー
         this.configManager.on('change:bgmVolume', this.onBgmVolumeChange, this);
         this.game.events.once(Phaser.Core.Events.DESTROY, this.destroy, this);
     }
@@ -32,55 +29,96 @@ export default class SoundManager {
     }
 
     /**
-     * BGMを再生する (シンプル・確実版)
+     * BGMを再生する (フェード対応・Promise版)
      * @param {string} key - 再生するBGMのアセットキー
+     * @param {number} [fadeinTime=0] - フェードイン時間(ms)
+     * @returns {Promise<void>} フェードイン完了時に解決されるPromise
      */
-    playBgm(key) {
-        this.resumeContext();
+    playBgm(key, fadeinTime = 0) {
+        return new Promise(resolve => {
+            this.resumeContext();
 
-        // 1. もし何かBGMが再生中なら、まずそれを完全に停止・破棄する
-        //    (同じ曲のキーであっても、シーン再挑戦時のために一度クリーンにする)
-        if (this.currentBgm) {
-            console.log(`[SoundManager] 古いBGM '${this.currentBgmKey}' を停止・破棄します。`);
-            this.currentBgm.stop();
-            this.currentBgm.destroy();
-        }
-        
-        // 2. 新しいBGMを再生する
-        const targetVolume = this.configManager.getValue('bgmVolume');
-        console.log(`[SoundManager] 新しいBGM '${key}' を再生します。音量: ${targetVolume}`);
+            // 同じ曲が既に再生中の場合は、何もしないで即座に完了
+            if (this.currentBgm && this.currentBgmKey === key && this.currentBgm.isPlaying) {
+                resolve();
+                return;
+            }
 
-        const newBgm = this.sound.add(key, { loop: true });
-        
-        // 3. プロパティを更新
-        this.currentBgm = newBgm;
-        this.currentBgmKey = key;
-        
-        // 4. 音量を設定してから再生する (この順序が重要)
-        newBgm.setVolume(targetVolume);
-        newBgm.play();
+            // 既存のBGMがあれば、まずフェードアウトさせて止める
+            this.stopBgm(fadeinTime); // 新しい曲のフェードイン時間と同じ時間でクロスフェード
+
+            // 新しいBGMを再生
+            const targetVolume = this.configManager.getValue('bgmVolume');
+            const newBgm = this.sound.add(key, { loop: true, volume: 0 }); // 最初は音量0
+            newBgm.play();
+
+            this.currentBgm = newBgm;
+            this.currentBgmKey = key;
+
+            // フェードインTween
+            this.game.scene.getScene('SystemScene').tweens.add({
+                targets: newBgm,
+                volume: targetVolume,
+                duration: fadeinTime,
+                ease: 'Linear',
+                onComplete: () => {
+                    resolve(); // フェードイン完了でPromiseを解決
+                }
+            });
+        });
     }
 
     /**
-     * BGMを停止する (シンプル・確実版)
+     * BGMを停止する (フェード対応版)
+     * @param {number} [fadeoutTime=0] - フェードアウト時間(ms)
      */
-    stopBgm() {
+    stopBgm(fadeoutTime = 0) {
         if (this.currentBgm) {
-            console.log(`[SoundManager] BGM '${this.currentBgmKey}' を停止・破棄します。`);
-            this.currentBgm.stop();
-            this.currentBgm.destroy();
+            const bgmToStop = this.currentBgm; // クロージャで参照を保持
+            
+            if (fadeoutTime > 0) {
+                // フェードアウト
+                this.game.scene.getScene('SystemScene').tweens.add({
+                    targets: bgmToStop,
+                    volume: 0,
+                    duration: fadeoutTime,
+                    ease: 'Linear',
+                    onComplete: () => {
+                        bgmToStop.stop();
+                        bgmToStop.destroy();
+                    }
+                });
+            } else {
+                // 即時停止
+                bgmToStop.stop();
+                bgmToStop.destroy();
+            }
+
+            this.currentBgm = null;
+            this.currentBgmKey = null;
         }
-        // プロパティをクリア
-        this.currentBgm = null;
-        this.currentBgmKey = null;
     }
 
-    playSe(key) {
-        this.resumeContext();
-        const seVolume = this.configManager.getValue('seVolume');
-        this.sound.play(key, { volume: seVolume });
+    /**
+     * 効果音を再生する (Promise対応版)
+     * @param {string} key - 再生するSEのアセットキー
+     * @param {object} [config] - 追加の設定 (volumeなど)
+     * @returns {Promise<Phaser.Sound.BaseSound>} 再生完了時に解決されるPromise
+     */
+    playSe(key, config = {}) {
+        return new Promise(resolve => {
+            this.resumeContext();
+            const seVolume = this.configManager.getValue('seVolume');
+            const se = this.sound.add(key, { volume: seVolume, ...config });
+            
+            // 再生完了イベントをリッスン
+            se.once('complete', () => {
+                resolve(se);
+            });
+            
+            se.play();
+        });
     }
-
     getCurrentBgmKey() {
         // isPlayingのチェックは、シーン遷移直後などに不安定になることがあるため、
         // プロパティの存在だけで判断する方が安定する

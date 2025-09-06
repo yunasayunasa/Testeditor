@@ -1,20 +1,25 @@
 /**
- * [playse] タグの処理
- * 効果音(SE)を再生する。このタグは待機しない。
- * @param {ScenarioManager} manager
- * @param {Object} params - { storage, volume }
+ * [playse] タグ - 効果音の再生
+ * 
+ * 指定された効果音（SE）を再生します。
+ * デフォルトでは完了を待たずに次の行へ進みます。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - { storage: string, nowait?: boolean }
  */
-export function handlePlaySe(manager, params) {
-    const storage = params.storage;
+export default async function handlePlaySe(manager, params) {
+    const { storage, nowait = true } = params; // デフォルトは待たない
+
     if (!storage) {
         console.warn('[playse] storage属性は必須です。');
-       return Promise.resolve(); // 何もせず同期的に完了
+        return;
     }
+    
+    // SoundManagerのplaySeが、再生完了時に解決されるPromiseを返すように実装されていると仮定
+    const sePromise = manager.soundManager.playSe(storage, params);
 
-    // ★★★ SoundManagerに再生を依頼するだけ ★★★
-    // volumeなどの詳細な設定はSoundManager側で解釈するのが望ましい
-    manager.soundManager.playSe(storage, params);
-return Promise.resolve();
-    // ★★★ このタグの処理は一瞬で終わるので、何も呼び出す必要はない ★★★
-    // ScenarioManagerのメインループが、この関数の終了後に次の行の処理に進む
+    // nowaitがfalseの場合のみ、再生完了を待つ
+    if (!nowait && sePromise) {
+        await sePromise;
+    }
 }
