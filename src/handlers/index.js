@@ -24,8 +24,8 @@ import handleShake from './scenario/shake.js';
 import handleVibrate from './scenario/vibrate.js';
 import handleFlip from './scenario/flip.js';
 import handleCharaJump from './scenario/chara_jump.js';
-/*import handleStopAnim from './scenario/stop_anim.js';
-import handleFadeout from './scenario/fadeout.js';
+import handleStopAnim from './scenario/stop_anim.js';
+/*import handleFadeout from './scenario/fadeout.js';
 import handleFadein from './scenario/fadein.js';
 import handlePuppetMove from './scenario/puppet_move.js';
 import handlePuppetIdleStart from './scenario/puppet_idle_start.js';
@@ -87,8 +87,8 @@ export const tagHandlers = {
     'vibrate': handleVibrate,
     'flip': handleFlip,
     'chara_jump': handleCharaJump,
-   /* 'stop_anim': handleStopAnim,
-    'fadeout': handleFadeout,
+    'stop_anim': handleStopAnim,
+   /* 'fadeout': handleFadeout,
     'fadein': handleFadein,
     'puppet_move': handlePuppetMove,
     'puppet_idle_start': handlePuppetIdleStart,

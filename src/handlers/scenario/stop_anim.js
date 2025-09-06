@@ -1,35 +1,44 @@
 /**
- * [stop_anim] タグの処理
- * 指定されたターゲットのループアニメーションをすべて停止する
- * @param {ScenarioManager} manager
- * @param {Object} params - { name }
+ * [stop_anim] タグ - アニメーションの停止
+ * 
+ * 指定されたnameを持つオブジェクト（キャラクターなど）に適用されている
+ * 全てのTweenアニメーションを停止・破棄します。
+ * [chara_jump loop=true]などで開始した無限ループを止めるのに使用します。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ
+ * @param {string} params.name - 対象オブジェクトの管理名 (必須)
  */
-export function handleStopAnim(manager, params) {
-    const name = params.name;
+export default async function handleStopAnim(manager, params) {
+    const { name } = params;
+    const scene = manager.scene;
+
     if (!name) {
         console.warn('[stop_anim] name属性は必須です。');
-        return Promise.resolve();// 何もせず同期的に完了
+        return;
     }
     
-    // キャラクターだけでなく、name属性を持つあらゆるオブジェクトを対象にできる
-    const target = manager.scene.characters[name]; 
+    // キャラクターリストからまず探す
+    let target = scene.characters[name];
+    
+    // もしキャラクターリストに見つからなければ、他のレイヤーも探す (より汎用的に)
+    if (!target) {
+        for (const layerKey in manager.layers) {
+            const layer = manager.layers[layerKey];
+            // find()を使って、指定されたnameを持つオブジェクトを探す
+            target = layer.list.find(obj => obj.name === name);
+            if (target) break; // 見つかったらループを抜ける
+        }
+    }
+    
     if (!target) {
         console.warn(`[stop_anim] 停止対象のオブジェクト[${name}]が見つかりません。`);
-      return Promise.resolve();
+        return;
     }
 
-    // ★★★ 指定されたターゲットに紐づくTweenをすべて停止・削除する ★★★
-    manager.scene.tweens.killTweensOf(target);
-return Promise.resolve();
-    console.log(`オブジェクト[${name}]のアニメーションを停止しました。`);
+    // 指定されたターゲットに紐づくTweenをすべて停止・削除する
+    scene.tweens.killTweensOf(target);
+    console.log(`[stop_anim] オブジェクト[${name}]のアニメーションを停止しました。`);
 
-    // ★★★ StateManagerに関する処理はすべて不要 ★★★
-    // 位置を補正する必要があるかは、ゲームの仕様次第。
-    // 一般的には、アニメーションを止めたらその位置で静止するのが自然。
-    // もし「開始前の位置」に戻したいなら、アニメーション開始時に
-    // target.setData('originPos', { x: target.x, y: target.y }) のように保存し、
-    // ここで target.getData('originPos') を使って戻すのが良い設計。
-    // 今回は、補正処理は行わないシンプルで汎用的な実装とする。
-
-    // ★★★ このタグの処理は一瞬で終わるので、何も呼び出す必要はない ★★★
+    // このタグは同期的（待つべき処理がない）なので、これだけで完了です。
 }
