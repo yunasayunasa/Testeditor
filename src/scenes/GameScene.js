@@ -1,157 +1,34 @@
-import ScenarioManager from '../core/ScenarioManager.js';
-import { tagHandlers } from '../handlers/index.js';
-import { uiRegistry } from '../ui/index.js';
-export default class GameScene extends Phaser.Scene {
+import BaseNovelScene from './BaseNovelScene.js';
+
+// rebuildScene関数は変更なし
+
+export default class GameScene extends BaseNovelScene {
     constructor() {
         super({ key: 'GameScene' });
-        // プロパティの初期化
-        this.scenarioManager = null; this.uiScene = null; this.soundManager = null;
-        this.stateManager = null; this.layer = {}; this.charaDefs = {};
-        this.characters = {}; this.isSceneFullyReady = false; this.loadSlot = null;
-        this.choiceButtons = [];     // 表示されるボタンオブジェクトを保持する配列
-        this.pendingChoices = [];    // [link]タグで定義された選択肢情報を保持する配列
-        this.choiceInputBlocker = null; // クリックブロッカーへの参照
- 
+        this.loadSlot = null;
     }
 
     init(data) {
         this.charaDefs = data.charaDefs;
         this.startScenario = data.startScenario || 'test';
-        this.loadSlot = data.loadSlot; // ロードするスロット番号を受け取る
-        this.returnParams = data.returnParams || null;
+        this.loadSlot = data.loadSlot;
     }
 
     preload() { this.load.text('test', 'assets/test.ks'); }
 
-    create(data) {
-        console.log("GameScene: create処理を開始します。");
-        this.cameras.main.setBackgroundColor('#000000');
-        
-        this.uiScene = this.scene.get('UIScene');
-        this.soundManager = this.registry.get('soundManager');
-        this.stateManager = this.registry.get('stateManager');
-
-        this.layer.background = this.add.container(0, 0).setDepth(0);
-        this.layer.cg = this.add.container(0, 0).setDepth(5);
-        this.layer.character = this.add.container(0, 0).setDepth(10);
-        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
-            .setInteractive()
-            .setVisible(false)
-            .setDepth(25); // メッセージウィンドウ(depth:?)より手前、選択肢ボタン(depth:30)より奥
-        
-        const messageWindow = this.uiScene.uiElements.get('message_window');
-        if (!messageWindow) { return; }
-
-        this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
-        
-        for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
-  this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
+    create() {
+        // ロードモードに応じた分岐は維持
         if (this.loadSlot !== undefined) {
-            this.performLoad(this.loadSlot, this.returnParams).then(() => 
-            this._finalizeSetup());
+            // 親のcreateを呼ばずに、直接ロード処理を開始
+            // (ロード処理自体がcreateの役割を果たすため)
+            this.performLoad(this.loadSlot).then(() => this._finalizeSetup());
         } else {
-             console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
-            this.stateManager.f = {}; // これが最も重要！
-            this.scenarioManager.loadScenario(this.startScenario);
-            this._finalizeSetup();
+            // 通常起動の場合は、親のcreateメソッドを呼び出す
+            super.create();
             this.performSave(0);
-            this.time.delayedCall(10, () => this.scenarioManager.next());
         }
     }
-
-    _finalizeSetup() {
-        this.isSceneFullyReady = true;
-        this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
-        this.events.emit('gameScene-load-complete');
-        console.log("GameScene: 準備完了。SystemSceneに通知しました。");
-    }
-
-     /**
-     * StateManagerのf変数が変更されたときに呼び出されるリスナー
-     * ★★★ 変更された変数がUIに関連する場合のみ、UISceneに通知する ★★★
-     * @param {string} key - 変更された変数のキー
-     * @param {*} value - 新しい値
-     */
-    onFVariableChanged(key, value) {
-        // シーンの準備が完全に終わっていない場合は、何もしない
-        if (!this.isSceneFullyReady) return;
-
-        // ★★★ ここからが修正の核心 ★★★
-        
-        // 1. uiRegistryを取得する (SystemScene経由などが安全)
-        const systemScene = this.scene.get('SystemScene');
-        const uiRegistry = systemScene.registry.get('uiRegistry'); // SystemSceneで登録されていると仮定
-
-        if (!uiRegistry) {
-            console.warn('[GameScene] uiRegistry not found.');
-            return;
-        }
-
-        // 2. 変更されたキー(key)が、いずれかのUI要素にwatchされているかチェック
-        let isHudVariable = false;
-        for (const definition of Object.values(uiRegistry)) {
-            if (definition.watch && definition.watch.includes(key)) {
-                isHudVariable = true;
-                break; // 1つでも見つかればチェック終了
-            }
-        }
-        
-        // 3. HUDに関連する変数だった場合のみ、UISceneのupdateHudを呼び出す
-        if (isHudVariable) {
-            if (this.uiScene && typeof this.uiScene.updateHud === 'function') {
-                this.uiScene.updateHud(key, value);
-            }
-        }
-        
-        // ★★★ ここまで修正 ★★★
-        
-        // f.love_meter など、UIに関係ない変数が変更された場合は、このメソッドは何もせずに終了する。
-        // これにより、不要なupdateHud呼び出しとTypeErrorを防ぐ。
-    }
-
-    displayChoiceButtons() {
-        // ブロッカーを表示。depthはcreateで設定済み
-        this.choiceInputBlocker.setVisible(true);
-        
-        const totalButtons = this.pendingChoices.length;
-        // Y座標の計算ロジックもあなたのものをそのまま使用
-        const startY = (this.scale.height / 2) - ((totalButtons - 1) * 60); 
-
-        this.pendingChoices.forEach((choice, index) => {
-            const y = startY + (index * 120);
-            
-            // ボタンのスタイルもあなたのものをそのまま使用
-            const button = this.add.text(this.scale.width / 2, y, choice.text, { fontSize: '40px', fill: '#fff', backgroundColor: '#555', padding: { x: 20, y: 10 }})
-                .setOrigin(0.5)
-                .setInteractive()
-                .setDepth(30); // ★ ボタンを最前面に持ってくる (ブロッカーより手前)
-    
-            button.on('pointerdown', (pointer, localX, localY, event) => {
-                // イベントの伝播を止めて、下のGameSceneのクリックリスナーが反応しないようにする
-                event.stopPropagation();
-                
-                this.scenarioManager.jumpTo(choice.target);
-                this.clearChoiceButtons();
-                this.scenarioManager.next(); 
-            });
-    
-            this.choiceButtons.push(button);
-        });
-    
-        // 選択肢を表示したら、保留リストはクリアするのが一般的
-        this.pendingChoices = [];
-    }
-
-    clearChoiceButtons() {
-        this.choiceInputBlocker.setVisible(false);
-        this.choiceButtons.forEach(button => button.destroy());
-        this.choiceButtons = [];
-        this.pendingChoices = [];
-        
-        if (this.scenarioManager) {
-            this.scenarioManager.isWaitingChoice = false;
-        }
-    }
+ 
 
     performSave(slot) {
         try {
@@ -163,6 +40,7 @@ export default class GameScene extends Phaser.Scene {
             console.error(`セーブに失敗しました: スロット[${slot}]`, e);
         }
     }
+  
 
     async performLoad(slot, returnParams = null) {
         console.log(`スロット[${slot}]からのロード処理を開始します。`);
