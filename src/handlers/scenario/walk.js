@@ -1,66 +1,75 @@
 /**
- * [walk] タグの処理 (最終修正版)
- * キャラクターを歩いているように上下動させながら移動させる
- * @param {ScenarioManager} manager
- * @param {Object} params - { name, x, y, time, height, speed }
- * @returns {Promise<void>}
+ * [walk] タグ - キャラクターの歩行移動
+ * 
+ * キャラクターを上下に揺らしながら、指定されたX座標まで移動させます。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - タグのパラメータ
+ * @param {string} params.name - 対象キャラクターの管理名 (必須)
+ * @param {number} [params.x] - 目標X座標 (デフォルトは現在位置)
+ * @param {number} [params.time=2000] - 移動にかかる総時間(ms)
+ * @param {number} [params.height=10] - 上下に揺れる幅(pixel)
+ * @param {number} [params.speed=150] - 上下動一回の速さ(ms)
  */
-export function handleWalk(manager, params) {
-    return new Promise(resolve => {
-        const name = params.name;
-        if (!name) { console.warn('[walk] nameは必須です。'); resolve(); return; }
+export default async function handleWalk(manager, params) {
+    const { name, time = 2000, height = 10, speed = 150 } = params;
+    const scene = manager.scene;
 
-        const chara = manager.scene.characters[name];
-        if (!chara) { console.warn(`[walk] キャラクター[${name}]が見つかりません。`); resolve(); return; }
+    if (!name) { console.warn('[walk] name属性は必須です。'); return; }
+    const chara = scene.characters[name];
+    if (!chara) { console.warn(`[walk] キャラクター[${name}]が見つかりません。`); return; }
 
-        const time = Number(params.time) || 2000;
-        const targetX = params.x !== undefined ? Number(params.x) : chara.x;
-        // ★ y座標は、開始時の値を基準とする
-        const originY = chara.y; 
-        const walkHeight = Number(params.height) || 10;
-        const walkSpeed = Number(params.speed) || 150;
+    const targetX = params.x !== undefined ? Number(params.x) : chara.x;
+    const originY = chara.y; 
+    const walkHeight = Number(height);
+    const walkSpeed = Number(speed);
 
-        // 上下動のオフセットをデータ領域に設定
-        chara.setData('walkOffsetY', 0);
+    // 上下動のオフセット用データ
+    const walkData = { offsetY: 0 };
+    
+    // --- 毎フレームY座標を更新するリスナー ---
+    const onUpdate = () => {
+        chara.y = originY + walkData.offsetY;
+    };
 
-        // --- 1. メインの移動Tween（X座標のみを操作） ---
-        const moveTween = manager.scene.tweens.add({
-            // ★★★ ターゲットはキャラクター自身 ★★★
-            targets: chara,
-            // ★★★ x座標だけを動かす ★★★
-            x: targetX,
-            duration: time,
-            ease: 'Linear'
-        });
-
-        // --- 2. 上下動のTween（オフセットデータのみを操作）---
-        const walkTween = manager.scene.tweens.add({
-            targets: chara.data.values,
-            walkOffsetY: -walkHeight,
+    // ★★★ try...finallyで、後片付け処理を確実に実行する ★★★
+    try {
+        // --- 1. 上下動のTweenを開始 ---
+        // (データオブジェクトを揺らす)
+        const walkTween = scene.tweens.add({
+            targets: walkData,
+            offsetY: -walkHeight,
             duration: walkSpeed,
             ease: 'Sine.easeInOut',
             yoyo: true,
             repeat: -1
         });
+        
+        // --- 2. updateリスナーを開始 ---
+        scene.events.on('update', onUpdate);
 
-        // --- 3. 毎フレーム、Y座標をオフセットで更新 ---
-        const onUpdate = () => {
-            // ★★★ 開始時のY座標に、現在のオフセットを加算 ★★★
-            chara.y = originY + chara.getData('walkOffsetY');
-        };
-        manager.scene.events.on('update', onUpdate);
-
-        // --- 4. 完了処理 ---
-        // メインの移動Tweenが終わったら、すべてをクリーンアップする
-        moveTween.on('complete', () => {
-            walkTween.stop();
-            manager.scene.events.off('update', onUpdate);
-            chara.data.remove('walkOffsetY');
-
-            // 最終座標を正確に設定
-            chara.setPosition(targetX, originY); // y座標は開始時の高さに戻る
-            
-            resolve();
+        // --- 3. メインの移動Tween(X座標)の完了をawaitで待つ ---
+        await new Promise(resolve => {
+            scene.tweens.add({
+                targets: chara,
+                x: targetX,
+                duration: Number(time),
+                ease: 'Linear',
+                onComplete: resolve // 移動が終わったらPromiseを解決
+            });
         });
-    });
+
+    } finally {
+        // --- 4. 完了処理（成功時もエラー時も必ず実行される） ---
+        console.log(`[walk] キャラクター[${name}]の歩行が完了しました。`);
+        // a. 上下動Tweenを確実に停止
+        const walkTween = scene.tweens.getTweensOf(walkData)[0];
+        if (walkTween) {
+            walkTween.stop();
+        }
+        // b. updateリスナーを確実に解除
+        scene.events.off('update', onUpdate);
+        // c. 最終的な位置を正確に設定
+        chara.setPosition(targetX, originY);
+    }
 }

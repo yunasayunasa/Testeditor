@@ -19,8 +19,8 @@ import handleFreeImage from './scenario/freeimage.js';
 
 // --- アニメーション・演出系 ---
 import handleMove from './scenario/move.js';
-/*import handleWalk from './scenario/walk.js';
-import handleShake from './scenario/shake.js';
+import handleWalk from './scenario/walk.js';
+/*import handleShake from './scenario/shake.js';
 import handleVibrate from './scenario/vibrate.js';
 import handleFlip from './scenario/flip.js';
 import handleCharaJump from './scenario/chara_jump.js';
@@ -82,8 +82,8 @@ export const tagHandlers = {
 
     // アニメーション・演出系
     'move': handleMove,
-    /*'walk': handleWalk,
-    'shake': handleShake,
+    'walk': handleWalk,
+   /* 'shake': handleShake,
     'vibrate': handleVibrate,
     'flip': handleFlip,
     'chara_jump': handleCharaJump,
