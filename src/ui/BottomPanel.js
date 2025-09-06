@@ -68,6 +68,15 @@ export default class BottomPanel extends Container {
             pointer.event.stopPropagation();
             systemScene.events.emit('request-gamemode-toggle', 'skip');
         });
+ backlogButton.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            systemScene.events.emit('request-subscene', { targetScene: 'BacklogScene' });
+        });
+
+        configButton.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            systemScene.events.emit('request-subscene', { targetScene: 'ConfigScene' });
+        });
 
         // ... (他のボタンも同様に) ...
     }
