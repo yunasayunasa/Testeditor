@@ -15,6 +15,8 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.startScenario = null;
         this.returnTo = null;
         this.inputWasBlocked = false;
+
+       
     } 
 
     init(data) {
@@ -43,29 +45,25 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
 
-      // --- 2. オーバーレイ専用の、非常に高いdepth値でレイヤーを生成 ---
-        const OVERLAY_BASE_DEPTH = 1000; // 通常のUI(20など)より遥かに大きな基準値
-
-        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
-        this.layer.character = this.add.container(0, 0).setDepth( 10);
-        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
-            .setInteractive()
-            .setVisible(false)
-            .setDepth(OVERLAY_BASE_DEPTH + 25);
-            
+   
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // --- 3. UIの表示をオーバーレイモードに切り替え ---
-        this.uiScene.onSceneTransition('NovelOverlayScene');
-        const messageWindow = this.uiScene.uiElements.get('message_window');
-        if (!messageWindow) { return console.error("[NovelOverlayScene] MessageWindow not found in UIScene."); }
-        
-        // ★★★ メッセージウィンドウも、オーバーレイ中は最前面に持ってくる ★★★
-        messageWindow.setDepth(OVERLAY_BASE_DEPTH + 2000000000);
+        // 1. オーバーレイ用の巨大なdepth基準値を定義
+        const OVERLAY_BASE_DEPTH = 1000;
 
-        // --- 4. ScenarioManagerを初期化 ---
-        this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
+        // 2. GameSceneと全く同じ構造で、かつ高いdepth値を持つレイヤーを生成
+        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
+        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
+        this.choiceInputBlocker = this.add.rectangle(/*...*/).setDepth(OVERLAY_BASE_DEPTH + 25);
         
+        // 3. UISceneからmessageWindowを取得し、そのdepthも引き上げる
+        const messageWindow = this.uiScene.uiElements.get('message_window');
+        if (!messageWindow) { return; }
+        messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
+
+        // 4. ScenarioManagerに、新しく作った`this` (NovelOverlayScene) を渡す
+        //    (これにより、manager.scene.layerが正しく参照される)
+        this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
         // --- 5. タグハンドラを登録 ---
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
