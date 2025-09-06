@@ -1,22 +1,19 @@
-// src/handlers/wait.js (スキップモード対応)
-
 /**
- * [wait] タグの処理
- * 指定された時間、シナリオの進行を待機する。
- * スキップモード中は待機しない。
- * @param {ScenarioManager} manager
- * @param {Object} params - { time }
- * @returns {Promise<void>}
+ * [wait] タグ - 待機
+ * 
+ * 指定された時間、シナリオの進行を停止します。スキップモード中は待機しません。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - { time: number }
  */
-export function handleWait(manager, params) {
-    // ★★★ 修正箇所: manager.modeが'skip'の場合は即座に解決する ★★★
+export default async function handleWait(manager, params) {
+    // スキップモード中は、何もせずに即座に完了
     if (manager.mode === 'skip') {
-        return Promise.resolve();
+        return;
     }
     
-    // 通常モードまたはオートモードの場合は、これまで通り待機処理を行う
-    return new Promise(resolve => {
-        const time = parseInt(params.time, 10) || 1000; // time属性がなければ1秒待つ
-        manager.scene.time.delayedCall(time, resolve);
-    });
+    const time = Number(params.time) || 1000;
+    if (time > 0) {
+        await new Promise(resolve => setTimeout(resolve, time));
+    }
 }

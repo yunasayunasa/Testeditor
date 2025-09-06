@@ -1,19 +1,17 @@
-// handlers/delay.js
-
 /**
- * [delay] タグの処理
- * @returns {Promise<void>}
+ * [delay] タグ - テキスト表示速度の変更
+ * 
+ * メッセージウィンドウの文字送り速度を変更します。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - { speed: number }
  */
-export function handleDelay(manager, params) {
-    const speed = params.speed;
+export default async function handleDelay(manager, params) {
+    const { speed } = params;
     if (speed === undefined) {
         console.warn('[delay] speed属性は必須です。');
-        return Promise.resolve(); // ★ 即座に解決されるPromiseを返す
+        return;
     }
     
     manager.messageWindow.setTypingSpeed(Number(speed));
-    console.log(`テキスト表示速度を ${speed}ms に変更しました。`);
-    
-    // ★★★ 同期処理でも、必ずPromiseを返す ★★★
-    return Promise.resolve();
 }
