@@ -36,7 +36,7 @@ import handleLiveBreathStop from './scenario/live_breath_stop.js';
 //import handleStopVideo from './scenario/stopvideo.js';
 
 // --- 音声系 ---
-import handlePlaySe from './scenario/playse.js';
+/*import handlePlaySe from './scenario/playse.js';
 import handlePlayBgm from './scenario/playbgm.js';
 import handleStopBgm from './scenario/stopbgm.js';
 //import handleVoice from './scenario/voice.js';*/
@@ -99,10 +99,10 @@ export const tagHandlers = {
     //'stopvideo': handleStopVideo,
 
     // 音声系
-    'playse': handlePlaySe,
+  /*  'playse': handlePlaySe,
     'playbgm': handlePlayBgm,
-    'stopbgm': handleStopBgm,
-    'voice': handleVoice,*/
+    'stopbgm': handleStopBgm,*/
+  //  'voice': handleVoice,
 
     // 変数・ロジック・デバッグ系
     'eval': handleEval,
