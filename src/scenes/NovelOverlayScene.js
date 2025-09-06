@@ -61,7 +61,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         if (!messageWindow) { return console.error("[NovelOverlayScene] MessageWindow not found in UIScene."); }
         
         // ★★★ メッセージウィンドウも、オーバーレイ中は最前面に持ってくる ★★★
-        messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
+        messageWindow.setDepth(OVERLAY_BASE_DEPTH + 2000000000);
 
         // --- 4. ScenarioManagerを初期化 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
