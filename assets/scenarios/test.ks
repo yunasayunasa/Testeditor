@@ -215,7 +215,7 @@ yuna:「コールタグによるテストです。」
 ; --- 5. アクションシーン連携([jump]と[return-to-novel])のテスト ---
 kaito:「いよいよアクションシーンへ突入！戻ってきたら結果を確認しよう。」
 [p]
-
+[hidewindow]
 [fadeout time=500]
 [wait time=500]
 ; ★★★ jumpタグにparams属性を追加 ★★★
