@@ -101,7 +101,7 @@ export default class SystemScene extends Phaser.Scene {
         // --- トリガー: UISceneを起動する ---
         // _startAndMonitorScene を直接使わず、単純にrunで起動する
         // なぜなら、完了後の処理がGameSceneの起動という特殊なものだから
-        this.scene.run('UIScene');
+      //  this.scene.run('UIScene');
     }
 
 
