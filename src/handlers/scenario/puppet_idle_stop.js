@@ -1,10 +1,9 @@
 /**
- * [puppet_idle_stop] タグ - 人形劇風の待機アニメーション停止
+ * [puppet_idle_stop] タグ - 待機アニメーション停止
  * 
  * [puppet_idle_start]で開始した揺れを停止します。
- * 
- * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
- * @param {object} params - タグのパラメータ
+ * @param {ScenarioManager} manager
+ * @param {object} params
  */
 export default async function handlePuppetIdleStop(manager, params) {
     const { name } = params;
@@ -18,9 +17,9 @@ export default async function handlePuppetIdleStop(manager, params) {
     if (tweens && Array.isArray(tweens)) {
         tweens.forEach(tween => tween.stop());
         chara.removeData('puppetIdleTweens');
+        console.log(`[puppet_idle_stop] ${name}のアイドルアニメーションを停止しました。`);
     }
 
-    // 姿勢と原点をリセット
     const finalY = chara.originY === 1.0 ? chara.y - (chara.displayHeight / 2) : chara.y;
     chara.setOrigin(0.5, 0.5);
     chara.setAngle(0);

@@ -1,11 +1,9 @@
 /**
- * [puppet_idle_start] タグ - 人形劇風の待機アニメーション開始
+ * [puppet_idle_start] タグ - 待機アニメーション開始
  * 
  * キャラクターをその場で生命感を持ってゆらゆら揺らし始めます。
- * このタグは完了を待ちません。
- * 
- * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
- * @param {object} params - タグのパラメータ
+ * @param {ScenarioManager} manager
+ * @param {object} params
  */
 export default async function handlePuppetIdleStart(manager, params) {
     const { name, amount = 2, speed = 400, y_amount = 5, randomness = 150, pivot = 'bottom' } = params;
@@ -15,7 +13,7 @@ export default async function handlePuppetIdleStart(manager, params) {
     const chara = scene.characters[name];
     if (!chara) { console.warn(`[puppet_idle_start] キャラクター[${name}]が見つかりません。`); return; }
 
-    // 既存のidleアニメーションがあれば停止
+    // ★ 既存のアイドルアニメーションがあれば、まず停止させる
     handlePuppetIdleStop(manager, { name });
 
     // --- パラメータの数値化 ---
@@ -35,19 +33,35 @@ export default async function handlePuppetIdleStart(manager, params) {
     }
     chara.y = startY;
 
-    // --- Tweenの作成 ---
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ これがフリーズを解決する、唯一の修正です ★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    
+    // Tween A: 左右の揺れ (角度)
     const angleTween = scene.tweens.add({
-        targets: chara, angle: { from: -swayAmount, to: swayAmount },
-        duration: swaySpeed, ease: 'Sine.easeInOut', yoyo: true, repeat: -1,
-        onRepeat: (tween) => tween.updateTo('duration', swaySpeed + Phaser.Math.Between(-randomDelay, randomDelay), true)
+        targets: chara,
+        angle: { from: -swayAmount, to: swayAmount },
+        duration: swaySpeed,
+        ease: 'Sine.easeInOut',
+        yoyo: true,
+        repeat: -1,
+        // onRepeatでdurationを更新する代わりに、repeatDelayにランダム値を与える
+        repeatDelay: Phaser.Math.Between(0, randomDelay)
     });
 
+    // Tween B: 上下の揺れ (Y座標)
     const yTween = scene.tweens.add({
-        targets: chara, y: startY + yAmount,
-        duration: swaySpeed * 1.5, ease: 'Sine.easeInOut', yoyo: true, repeat: -1,
-        onRepeat: (tween) => tween.updateTo('duration', (swaySpeed * 1.5) + Phaser.Math.Between(-randomDelay, randomDelay), true)
+        targets: chara,
+        y: startY + yAmount,
+        duration: swaySpeed * 1.5,
+        ease: 'Sine.easeInOut',
+        yoyo: true,
+        repeat: -1,
+        repeatDelay: Phaser.Math.Between(0, randomDelay)
     });
+    
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-    // 停止用にTweenの参照をキャラクターに保存
+    // 作成したTweenをキャラクターオブジェクトに保存
     chara.setData('puppetIdleTweens', [angleTween, yTween]);
 }
