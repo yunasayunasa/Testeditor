@@ -1,6 +1,7 @@
 import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
-
+import UIScene from './UIScene.js';
+import GameScene from './GameScene.js'; 
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
