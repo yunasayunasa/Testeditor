@@ -299,7 +299,7 @@ export default class SystemScene extends Phaser.Scene {
             gameScene.performSave(0);
 
             // 2. GameSceneをスリープさせる
-            this.scene.sleep('GameScene');
+             this.scene.pause('GameScene');
             console.log("[SystemScene] GameScene has been put to sleep.");
 
             // 3. 目的のサブシーンを起動する
