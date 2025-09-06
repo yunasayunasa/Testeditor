@@ -10,6 +10,29 @@ export default class BaseNovelScene extends Phaser.Scene {
         this.stateManager = null; this.layer = {}; this.charaDefs = {};
         this.characters = {}; this.isSceneFullyReady = false;
         this.choiceButtons = []; this.pendingChoices = [];
+             // --- シナリオ実行の基本プロパティ ---
+        this.scenarioManager = null;
+        this.uiScene = null;
+        this.soundManager = null;
+        this.stateManager = null;
+        
+        // --- 表示レイヤー ---
+        this.layer = {};
+        this.charaDefs = {};
+        this.characters = {};
+
+        // --- 状態フラグ ---
+        this.isSceneFullyReady = false;
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが全てを解決する、唯一の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 選択肢機能のためのプロパティ ---
+        this.choiceButtons = [];     // 表示されるボタンオブジェクトを保持する配列
+        this.pendingChoices = [];    // [link]タグで定義された選択肢情報を一時的に保持する配列
+        this.choiceInputBlocker = null; // クリックをブロックするための透明な矩形
+        
     }
 
     // initとpreloadは、子クラスで個別に実装
