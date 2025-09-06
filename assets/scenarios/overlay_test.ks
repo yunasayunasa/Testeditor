@@ -4,7 +4,7 @@
 [eval exp="sf.overlay_count = (sf.overlay_count || 0) + 1"]
 [chara_show name="yuna" pos="center" time=500]
 [wait time=500]
-
+[showwindow]
 yuna:「アクションシーンの上に、私が表示されていますか？」
 yuna:「背後ではPLAYERの文字が動き続けているはずです。」
 
