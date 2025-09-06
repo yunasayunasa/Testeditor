@@ -43,6 +43,7 @@ export default class SystemScene extends Phaser.Scene {
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
+          this.events.on('request-subscene', this._handleRequestSubScene, this);
          this.events.on('request-gamemode-toggle', (mode) => {
             const gameScene = this.scene.get('GameScene');
             if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
@@ -282,5 +283,43 @@ export default class SystemScene extends Phaser.Scene {
         this.game.input.enabled = true;
         console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。ゲーム全体の入力を再有効化。`);
         this.events.emit('transition-complete', sceneKey);
+    }
+     /**
+     * セーブ/ロード画面などのサブシーン起動リクエストを処理する
+     * @param {object} data - { targetScene: string, launchData: object }
+     */
+    _handleRequestSubScene(data) {
+        const gameScene = this.scene.get('GameScene');
+
+        // GameSceneが実行中の場合のみ、特別な待機処理を行う
+        if (gameScene && gameScene.scene.isActive()) {
+            console.log(`[SystemScene] Sub-scene request for ${data.targetScene}. Preparing GameScene...`);
+            
+            // 1. GameSceneにオートセーブを実行させる
+            gameScene.performSave(0);
+
+            // 2. GameSceneをスリープさせる
+            this.scene.sleep('GameScene');
+            console.log("[SystemScene] GameScene has been put to sleep.");
+
+            // 3. 目的のサブシーンを起動する
+            this.scene.launch(data.targetScene, data.launchData);
+
+        } else {
+            // GameSceneが実行中でない場合 (タイトル画面など) は、そのまま起動する
+            console.log(`[SystemScene] Launching sub-scene ${data.targetScene} directly.`);
+            this.scene.launch(data.targetScene, data.launchData);
+        }
+    }
+
+    // ★★★ request-gamemode-toggleの処理も、専用メソッドに分離すると綺麗です ★★★
+    _handleRequestGameModeToggle(mode) {
+        const gameScene = this.scene.get('GameScene');
+        if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
+            const currentMode = gameScene.scenarioManager.mode;
+            const newMode = currentMode === mode ? 'normal' : mode;
+            gameScene.scenarioManager.setMode(newMode);
+            console.log(`モード変更: ${currentMode} -> ${newMode}`);
+        }
     }
 }
