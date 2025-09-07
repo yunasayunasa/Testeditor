@@ -10,8 +10,7 @@ export default class JumpScene extends BaseGameScene {
         // ★ プロパティをシンプルに
         this.actionInterpreter = null;
     }
-
-    create() {
+  create() {
         console.log("[JumpScene] Create started.");
         
         this.actionInterpreter = new ActionInterpreter(this);
@@ -22,10 +21,16 @@ export default class JumpScene extends BaseGameScene {
 
         const worldWidth = 3840;
         const worldHeight = 1440;
-        this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
-        this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
-        // ★ データからシーンを構築する命令を一度だけ出す
+        // ★★★ ここからがMatter.jsへの対応です ★★★
+        // 1. Matter.jsのAPIを使って、世界の境界を設定する
+        this.matter.world.setBounds(0, 0, worldWidth, worldHeight);
+
+        // 2. カメラの境界設定は、物理エンジンとは無関係なので、そのまま使える
+        this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+        // ★★★ ここまで ★★★
+
+        // データからシーンを構築する命令は最後に呼ぶ
         this.initSceneWithData();
     }
     addObjectFromEditor(assetKey, newName) {
