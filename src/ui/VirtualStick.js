@@ -13,37 +13,48 @@ export default class VirtualStick extends Phaser.GameObjects.Container {
         this.stickRadius = 50;
         this.direction = new Vector2(0, 0);
 
-        // --- 見た目の作成 ---
-        this.base = new Graphics(scene).fillStyle(0x888888, 0.5).fillCircle(0, 0, this.baseRadius);
-        this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
-        this.add([this.base, this.stick]);
-        
-        this.setScrollFactor(0);
-        this.setAlpha(0.7); // ★ 常に半透明で表示
-    }
+      // --- 見た目の作成 ---
+    const base = new Graphics(scene).fillStyle(0x888888, 0.5).fillCircle(0, 0, this.baseRadius);
+    this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
+    this.add([base, this.stick]);
     
-    /** JumpSceneから呼ばれる: ノブの位置を更新する */
-    updatePosition(pointer) {
-        // ワールド座標から、このコンテナの中心を(0,0)とするローカル座標に変換
-        const localX = pointer.x - this.x;
-        const localY = pointer.y - this.y;
-        const vec = new Vector2(localX, localY);
-        const distance = vec.length();
-        const maxDistance = this.baseRadius;
+    this.setScrollFactor(0);
+    this.setAlpha(0.7);
 
-        if (distance > maxDistance) vec.normalize().scale(maxDistance);
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ これが、全てを解決する最後の修正です ★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // コンテナ自身ではなく、土台(base)をインタラクティブにする
+    base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
+    // そして、コンテナをドラッグ可能にする
+    this.scene.input.setDraggable(base);
 
-        this.stick.setPosition(vec.x, vec.y);
-        
-        if (maxDistance > 0) {
-            this.direction.x = Phaser.Math.Clamp(vec.x / maxDistance, -1, 1);
-            this.direction.y = Phaser.Math.Clamp(vec.y / maxDistance, -1, 1);
-        }
-    }
+    // ★ イベントリスナーを、コンテナ(this)ではなく、土台(base)に設定する
+    base.on('drag', (pointer, dragX, dragY) => {
+        // dragX, dragYはbaseの中心からの相対座標になるので、計算がシンプルになる
+        const vec = new Vector2(dragX, dragY);
+        this.updatePositionWithVector(vec);
+    });
+    base.on('dragend', (pointer) => {
+        this.reset();
+    });
+}
+
+// メソッド名を変更して役割を明確化
+updatePositionWithVector(vec) {
+    const distance = vec.length();
+    const maxDistance = this.baseRadius;
+    if (distance > maxDistance) vec.normalize().scale(maxDistance);
+
+    this.stick.setPosition(vec.x, vec.y);
     
-    /** JumpSceneから呼ばれる: 操作が終わったのでノブを中央に戻す */
-    reset() {
-        this.stick.setPosition(0, 0);
-        this.direction.setTo(0, 0);
+    if (maxDistance > 0) {
+        this.direction.x = Phaser.Math.Clamp(vec.x / maxDistance, -1, 1);
+        this.direction.y = Phaser.Math.Clamp(vec.y / maxDistance, -1, 1);
     }
 }
+
+reset() {
+    this.stick.setPosition(0, 0);
+    this.direction.setTo(0, 0);
+}}

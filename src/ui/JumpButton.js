@@ -22,26 +22,24 @@ export default class JumpButton extends Phaser.GameObjects.Container {
             fontSize: '32px', fontStyle: 'bold', color: '#111111', align: 'center'
         }).setOrigin(0.5);
 
+     
         this.add([background, this.background_pressed, label]);
         
-            this.setSize(radius * 2, radius * 2);
-        this.setInteractive(new Circle(radius, radius, radius), Circle.Contains);
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する最後の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // コンテナ自身ではなく、背景(background)をインタラクティブにする
+        background.setInteractive(new Circle(0, 0, radius), Circle.Contains);
+        
         this.setScrollFactor(0);
         
-        // ★★★ 全てのリスナーを自分自身(this)に設定する ★★★
-        this.on('pointerdown', () => {
+        // ★ イベントリスナーを、コンテナ(this)ではなく、背景(background)に設定する
+        background.on('pointerdown', () => {
             this.background_pressed.setVisible(true);
-            // PlayerControllerはこの'pointerdown'をリッスンしているので、
-            // イベントを発火させるだけで仕事は完了
+            // ★★★ PlayerControllerがリッスンするのはコンテナのイベントなので、中から外へイベントを中継する ★★★
+            this.emit('pointerdown');
         });
-        
-        this.on('pointerup', () => {
-            this.background_pressed.setVisible(false);
-        });
-
-        // ボタンの外で指を離した場合にも対応
-        this.on('pointerout', () => {
-            this.background_pressed.setVisible(false);
-        });
+        background.on('pointerup', () => this.background_pressed.setVisible(false) );
+        background.on('pointerout', () => this.background_pressed.setVisible(false) );
     }
 }
