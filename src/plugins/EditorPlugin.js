@@ -98,71 +98,120 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return null;
     }
 
-  
-/**
- * プロパティパネルを安全に更新する。（最終ロジック）
- */
-updatePropertyPanel() {
-    if (this._isUpdatingPanel) return;
-    this._isUpdatingPanel = true;
+     /**
+     * プロパティパネルを絶対にクラッシュさせずに更新する最終メソッド。
+     */
+    updatePropertyPanel() {
+        // --- ガード節: 多重実行防止 ---
+        if (this._isUpdatingPanel) return;
+        this._isUpdatingPanel = true;
 
-    try {
-        if (this.selectedObject && (!this.selectedObject.scene || !this.selectedObject.active)) {
-            this.selectedObject = null;
+        try {
+            // --- ガード節: 必須DOM要素の確認 ---
+            if (!this.editorPropsContainer || !this.editorTitle) {
+                this._isUpdatingPanel = false;
+                return;
+            }
+
+            // --- 状態確認: 選択オブジェクトが破棄されていないか ---
+            if (this.selectedObject && (!this.selectedObject.scene || !this.selectedObject.active)) {
+                this.selectedObject = null;
+            }
+
+            // --- UIクリア ---
+            this.editorPropsContainer.innerHTML = '';
+
+            // --- 選択オブジェクトがない場合のUI ---
+            if (!this.selectedObject) {
+                this.editorTitle.innerText = 'No Object Selected';
+                this._isUpdatingPanel = false;
+                return;
+            }
+            
+            // --- これ以降、selectedObjectは「存在する」と仮定してUIを構築 ---
+            this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+            
+            // --- 各UIセクションを、それぞれ個別のtry/catchで囲んで防御 ---
+            this.safeCreateUI(this.createNameInput);
+            this.safeCreateUI(this.createGroupInput);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            
+            this.safeCreateUI(this.createTransformInputs);
+            this.safeCreateUI(this.createDepthInput);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            
+            this.safeCreateUI(this.createPhysicsSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+            // ... (他のセクションも同様) ...
+            this.safeCreateUI(this.createExportButton);
+            this.safeCreateUI(this.createDeleteObjectButton);
+
+        } catch (error) {
+            console.error("%c[updatePropertyPanel] UNEXPECTED FATAL CRASH:", "color: red; font-size: 1.2em;", error);
+        } finally {
+            this._isUpdatingPanel = false;
         }
+    }
 
-        if (!this.editorPropsContainer) return;
-        this.editorPropsContainer.innerHTML = '';
-
-        if (!this.selectedObject) {
-            if (this.editorTitle) this.editorTitle.innerText = 'No Object Selected';
-            return;
+    /**
+     * UI生成関数を安全に実行するためのラッパー関数。
+     * @param {function} createUIFunction - UIを生成する関数 (thisを束縛するためアロー関数を推奨)
+     */
+    safeCreateUI(createUIFunction) {
+        try {
+            // thisをEditorPluginインスタンスに束縛して実行
+            createUIFunction.call(this);
+        } catch (error) {
+            const funcName = createUIFunction.name || 'anonymous function';
+            console.error(`[EditorPlugin] Failed to create UI section: '${funcName}'`, error);
         }
-        
-        if (this.editorTitle) this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
-        
-        // --- UI要素の生成 ---
-        this.createNameInput();
-        this.createGroupInput();
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        this.createTransformInputs();
-        this.createDepthInput();
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        
+    }
+    
+    // --- 物理セクションを独立したメソッドに分離 ---
+    createPhysicsSection() {
         const physicsTitle = document.createElement('h4');
         physicsTitle.innerText = '物理ボディ (Matter.js)';
-        physicsTitle.style.margin = '10px 0 5px 0';
         this.editorPropsContainer.appendChild(physicsTitle);
 
-        // ▼▼▼▼▼ 【最終ロジック】シンプル・イズ・ベスト ▼▼▼▼▼
-        // 結局のところ、bodyプロパティの有無を直接見るのが最も確実。
-        // ただし、UI生成ロジックとイベントハンドラ内で安全に扱う。
-        if (this.selectedObject.body) {
+        // ★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここが最終防衛ライン ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★
+        const hasBody = this.selectedObject && this.selectedObject.body;
+
+        if (hasBody) {
             this.createMatterPropertiesUI(this.selectedObject);
             this.createRemoveBodyButton();
         } else {
             this.createAddBodyButton();
         }
-        // ▲▲▲▲▲ ここまで ▲▲▲▲▲
-        
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        
-        this.createAnimationSection();
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        this.createEventSection();
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        this.createComponentSection();
-        this.editorPropsContainer.appendChild(document.createElement('hr'));
-        this.createExportButton();
-        this.createDeleteObjectButton();
-
-    } catch (error) {
-        // クラッシュが発生した場合、コンソールに詳細なエラーオブジェクトを出力
-        console.error("%c[updatePropertyPanel] FATAL CRASH:", "color: red; font-size: 1.2em;", error);
-    } finally {
-        this._isUpdatingPanel = false;
     }
-}
+
+    createRemoveBodyButton() {
+        const removeButton = document.createElement('button');
+        removeButton.innerText = '物理ボディ 削除';
+        removeButton.style.backgroundColor = '#e65151';
+        
+        const targetObject = this.selectedObject; // 安全な参照の確保
+
+        removeButton.onclick = () => {
+            // onclickが呼ばれた瞬間に、再度オブジェクトとbodyの存在を確認する
+            if (targetObject && targetObject.body && targetObject.scene) {
+                try {
+                    targetObject.scene.matter.world.remove(targetObject.body);
+                    targetObject.body = null;
+                    // UI更新をスケジュール
+                    setTimeout(() => this.updatePropertyPanel(), 0);
+                } catch (e) {
+                    console.error("Error during body removal:", e);
+                    // エラーが起きてもUI更新を試みる
+                    setTimeout(() => this.updatePropertyPanel(), 0);
+                }
+            }
+        };
+        this.editorPropsContainer.appendChild(removeButton);
+    }
+
     // --- `updatePropertyPanel`から呼び出されるUI生成ヘルパーメソッド群 ---
 
     createNameInput() {
@@ -259,30 +308,6 @@ createAddBodyButton() {
         }
     };
     this.editorPropsContainer.appendChild(addButton);
-}
-
-  /**
- * 物理ボディを削除するボタンを生成する。
- */
-createRemoveBodyButton() {
-    const removeButton = document.createElement('button');
-    removeButton.innerText = '物理ボディ 削除';
-    removeButton.style.backgroundColor = '#e65151';
-    const targetObject = this.selectedObject;
-    removeButton.onclick = () => {
-        if (targetObject && targetObject.body) { // bodyが確実にある時だけ実行
-            try {
-                targetObject.scene.matter.world.remove(targetObject.body);
-                targetObject.body = null;
-                setTimeout(() => this.updatePropertyPanel(), 0);
-            } catch (e) {
-                console.error("物理ボディの削除中にエラーが発生:", e);
-                // クラッシュした場合でもUIの再描画を試みる
-                setTimeout(() => this.updatePropertyPanel(), 0);
-            }
-        }
-    };
-    this.editorPropsContainer.appendChild(removeButton);
 }
 
 
