@@ -1,6 +1,6 @@
 //
 // Odyssey Engine - VirtualStick Component
-// Final Architecture: Self-Contained Smart Component for Matter.js
+// Final Version for { topOnly: false } environment
 //
 
 const Container = Phaser.GameObjects.Container;
@@ -19,39 +19,50 @@ export default class VirtualStick extends Container {
         this.stickRadius = 50;
         this.direction = new Vector2(0, 0);
 
-        const base = new Graphics(scene).fillStyle(0x888888, 0.5).fillCircle(0, 0, this.baseRadius);
-        this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
+        // --- 見た目と当たり判定 ---
+        const base = new Graphics(scene)
+            .fillStyle(0x888888, 0.5)
+            .fillCircle(0, 0, this.baseRadius);
+        
+        this.stick = new Graphics(scene)
+            .fillStyle(0xcccccc, 0.8)
+            .fillCircle(0, 0, this.stickRadius);
+            
         this.add([base, this.stick]);
         
-        // --- 当たり判定を、見た目と完全に一致する土台(base)に設定 ---
+        // 当たり判定を、見た目と完全に一致する土台(base)に設定
         base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
         this.setScrollFactor(0);
 
-        // --- イベントリスナーを、全て自分自身(base)で完結させる ---
+        // --- イベントリスナー ---
         base.on('pointerdown', (pointer) => {
-            if (this.pointerId === null) { // 誰も所有していなければ
-                this.pointerId = pointer.id; // この指が所有者になる
+            // 誰も所有していなければ、この指が所有者になる
+            if (this.pointerId === null) {
+                this.pointerId = pointer.id;
+                this.updateStickPosition(pointer);
             }
         });
 
-        // ★ シーン全体のmoveとupを監視し、所有者IDでフィルタリングする
+        // シーン全体のmoveとupを監視し、所有者IDでフィルタリングする
         this.scene.input.on('pointermove', (pointer) => {
             if (pointer.id === this.pointerId) {
                 this.updateStickPosition(pointer);
             }
         });
+
         this.scene.input.on('pointerup', (pointer) => {
+            // 自分を所有していた指が離された場合のみ、リセット
             if (pointer.id === this.pointerId) {
-                this.pointerId = null;
+                this.pointerId = null; // 所有権を解放
                 this.reset();
             }
         });
 
-        // シーン終了時にグローバルリスナーを解除
+        // シーン終了時にグローバルリスナーを安全に解除
         this.scene.events.on('shutdown', () => {
              if (this.scene && this.scene.input) {
-                this.scene.input.off('pointermove');
-                this.scene.input.off('pointerup');
+                this.scene.input.off('pointermove', this.onPointerMove, this); // メソッド参照を渡すのがより安全
+                this.scene.input.off('pointerup', this.onPointerUp, this);
              }
         }, this);
 
@@ -64,7 +75,9 @@ export default class VirtualStick extends Container {
         const vec = new Vector2(localX, localY);
         const distance = vec.length();
 
-        if (distance > this.baseRadius) vec.normalize().scale(this.baseRadius);
+        if (distance > this.baseRadius) {
+            vec.normalize().scale(this.baseRadius);
+        }
 
         this.stick.setPosition(vec.x, vec.y);
         this.direction.x = Phaser.Math.Clamp(vec.x / this.baseRadius, -1, 1);
@@ -76,7 +89,7 @@ export default class VirtualStick extends Container {
         this.direction.setTo(0, 0);
     }
     
-    // ゲッターを追加
+    // --- PlayerControllerが参照するためのゲッター ---
     get isLeft() { return this.direction.x < -0.5; }
     get isRight() { return this.direction.x > 0.5; }
     get isUp() { return this.direction.y < -0.5; }

@@ -1,6 +1,6 @@
 //
 // Odyssey Engine - JumpButton Component
-// Final Architecture: Self-Contained Smart Component for Matter.js
+// Final Version for { topOnly: false } environment
 //
 
 const Container = Phaser.GameObjects.Container;
@@ -16,6 +16,7 @@ export default class JumpButton extends Container {
         
         const radius = 65;
         
+        // --- 見た目と当たり判定 ---
         const background = new Graphics(scene)
             .fillStyle(0xcccccc, 0.7)
             .fillCircle(0, 0, radius);
@@ -34,10 +35,14 @@ export default class JumpButton extends Container {
         background.setInteractive(new Circle(0, 0, radius), Circle.Contains);
         this.setScrollFactor(0);
         
+        // --- イベントリスナー ---
+        // 複雑なポインターID管理は不要。押されたら信号を送るだけ。
         background.on('pointerdown', () => {
             this.background_pressed.setVisible(true);
-            this.emit('button_pressed');
+ T           this.emit('button_pressed');
         });
+
+        // 押下状態の解除は、自分自身のupとoutだけで完結させる
         background.on('pointerup', () => {
             this.background_pressed.setVisible(false);
         });

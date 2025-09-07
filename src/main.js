@@ -48,6 +48,8 @@ async function processUiRegistry(registry) {
 
 const config = {
    type: Phaser.AUTO,
+   input: {
+        topOnly: false},
     scale: {
         mode: Phaser.Scale.FIT,
         // ★★★ 変更点1: 親要素のIDを変更 ★★★
