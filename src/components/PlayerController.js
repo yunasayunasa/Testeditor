@@ -36,7 +36,36 @@ export default class PlayerController {
             }
         }
     }
+ /** 
+     * ★★★ メソッド名を 'update' から 'updateWithStick' に変更 ★★★
+     * ★★★ 引数で stickDirection を受け取るように変更 ★★★
+     */
+    updateWithStick(stickDirection) {
+        if (!this.target || !this.target.body || !this.target.active) return;
+        
+        let moveX = 0;
+        
+        // --- キーボード入力 (変更なし) ---
+        if (this.keyboardEnabled && this.cursors) {
+            if (this.cursors.left.isDown) moveX = -1;
+            if (this.cursors.right.isDown) moveX = 1;
+        }
 
+        // --- スティック入力 (JumpSceneから渡された方向ベクトルを使う) ★★★
+        // ★★★ 以前の this.virtualStick へのアクセスをやめ、引数を使う ★★★
+        if (stickDirection) { // nullチェック
+            if (stickDirection.x < -0.5) moveX = -1;
+            else if (stickDirection.x > 0.5) moveX = 1;
+        }
+
+        // --- 物理ボディへの適用 (変更なし) ---
+        this.target.body.setVelocityX(moveX * this.moveSpeed);
+        
+        // --- キーボードジャンプ (変更なし) ---
+        if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+            this.jump();
+        }
+    }
     /**
      * UISceneから操作用のUI要素を検索し、プロパティに格納する
      * @param {Phaser.Scene} uiScene - UISceneのインスタンス

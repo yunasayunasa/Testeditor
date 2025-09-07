@@ -137,17 +137,13 @@ export default class JumpScene extends BaseGameScene {
 
 // ... (他のメソッドは変更なし) ...
 
-    /**
-     * シーン上の全GameObjectを走査し、アタッチされたコンポーネントを更新する
-     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
-     * (エラー捕捉機能付き・最終決戦バージョン)
-     */
    update() {
         if (this.playerController) {
             const stickDirection = this.virtualStick ? this.virtualStick.direction : new Phaser.Math.Vector2(0, 0);
             this.playerController.updateWithStick(stickDirection);
         }
     }
+    
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
