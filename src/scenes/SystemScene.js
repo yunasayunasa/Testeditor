@@ -42,7 +42,7 @@ export default class SystemScene extends Phaser.Scene {
         if (!this.scene.get('UIScene')) {
             this.scene.add('UIScene', UIScene, true); // ★ active: trueで追加・起動
         }
-        
+        this.scene.bringToTop('UIScene');
         // --- 2. イベントリスナーの設定 ---
         this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
