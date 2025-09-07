@@ -107,7 +107,10 @@ export default class UIScene extends Phaser.Scene {
         if (params.width && params.height) {
             element.setSize(params.width, params.height);
         }
-        
+           if (params.group) {
+            element.setData('group', params.group);
+            console.log(`[UIScene] UI Element '${name}' assigned to group '${params.group}'.`);
+        }
         
         // ★★★ setInteractiveの呼び出しを安全にする ★★★
         // setSizeが呼ばれていないと当たり判定が作れない場合があるため、
