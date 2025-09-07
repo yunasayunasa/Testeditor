@@ -44,45 +44,51 @@ export default class UIScene extends Phaser.Scene {
     }
 
     // layoutDataを引数として受け取る、正しい非同期ビルドメソッド
-    async buildUiFromLayout(layoutData) {
-        const processedUiRegistry = this.registry.get('uiRegistry');
-        if (!processedUiRegistry) {
-            return Promise.reject('uiRegistry not found');
-        }
-
-        if (!layoutData || !layoutData.objects) {
-            console.warn(`[UIScene] No layout data in ${this.scene.key}.json. Building UI from registry defaults.`);
+      async buildUiFromLayout(layoutData) {
+        // uiRegistryはPreloadSceneなどで事前に処理され、registryに格納されていると想定
+        const uiRegistry = this.registry.get('uiRegistry');
+        if (!uiRegistry) {
+            console.error('uiRegistry not found in Phaser.Registry');
+            return;
         }
 
         const stateManager = this.registry.get('stateManager');
 
-        const creationPromises = Object.keys(processedUiRegistry).map(name => {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const definition = processedUiRegistry[name];
-                    const layout = (layoutData && layoutData.objects) 
-                        ? layoutData.objects.find(obj => obj.name === name) || {}
-                        : {};
-                    const params = { ...definition.params, ...layout, name, stateManager };
+        // ★ mapの中でPromiseを生成する必要はない。async/awaitで十分
+        const creationPromises = Object.keys(uiRegistry).map(async (name) => {
+            try {
+                const definition = uiRegistry[name];
+                
+                // ★★★ ここが重要 ★★★
+                // JSONデータから、このUIに対応するレイアウト情報だけを探す
+                const layout = (layoutData?.objects?.find(obj => obj.name === name)) || {};
+                
+                // コンストラクタ/creatorに渡すための、全ての情報を含んだparamsオブジェクト
+                const params = { ...definition.params, ...layout, name, stateManager };
 
-                    let uiElement = null;
-
-                    if (definition.component) {
-                        uiElement = new definition.component(this, params);
-                    } else if (typeof definition.creator === 'function') {
-                        uiElement = definition.creator(this, params);
-                    }
-
-                    if (uiElement) {
-                        this.registerUiElement(name, uiElement, params);
-                    }
-                    
-                    resolve();
-                } catch (e) {
-                    console.error(`[UIScene] Failed to create UI element '${name}'`, e);
-                    reject(e);
+                let uiElement = null;
+                if (definition.component) {
+                    uiElement = new definition.component(this, params);
+                } else if (typeof definition.creator === 'function') {
+                    uiElement = definition.creator(this, params);
                 }
-            });
+
+                if (uiElement) {
+                    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                    // ★★★ これが全てを解決する、唯一の修正です ★★★
+                    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                    
+                    // 第3引数には、純粋なレイアウト情報(layout)を渡す！
+                    this.registerUiElement(name, uiElement, layout);
+
+                    // bottom_panelの参照取得もここが正しい
+                    if (name === 'bottom_panel') {
+                        this.panel = uiElement;
+                    }
+                }
+            } catch (e) {
+                console.error(`[UIScene] Failed to create UI element '${name}'`, e);
+            }
         });
 
         await Promise.all(creationPromises);
