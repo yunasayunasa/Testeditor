@@ -2,80 +2,8 @@
   "objects": [
     {
       "name": "walk_2",
-      "x": 534,
-      "y": 982,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "width": 102,
-      "height": 115,
-      "group": "Item",
-      "type": "Sprite",
-      "texture": "walk",
-      "physics": {
-        "isStatic": false,
-        "width": 102,
-        "height": 115,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": [
-        {
-          "trigger": "onOverlap_Start",
-          "actions": "[velocity y=-350]\n[anim 歩き]",
-          "targetName": "walk_3"
-        },
-        {
-          "trigger": "onKeyPress_UP",
-          "actions": "[velocity y=-350]\n[anim name=歩き]"
-        }
-      ]
-    },
-    {
-      "name": "walk_3",
-      "x": 690,
-      "y": 1383,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "width": 102,
-      "height": 115,
-      "type": "Sprite",
-      "texture": "walk",
-      "physics": {
-        "isStatic": false,
-        "width": 102,
-        "height": 115,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": true,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "animation": {
-        "default": "歩き",
-        "definitions": []
-      },
-      "events": [
-        {
-          "trigger": "onClick",
-          "actions": "[tween property=scale to=1.5 time=300 ease=Elastic.easeOut yoyo=true]"
-        }
-      ]
-    },
-    {
-      "name": "walk_2",
-      "x": 995,
-      "y": 1383,
+      "x": 800,
+      "y": 498,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -92,7 +20,7 @@
         "height": 115,
         "offsetX": 0,
         "offsetY": 0,
-        "allowGravity": true,
+        "allowGravity": false,
         "bounceX": 0,
         "bounceY": 0,
         "collideWorldBounds": true
@@ -105,49 +33,7 @@
         }
       ]
     },
-    {
-      "name": "untitled",
-      "x": 16,
-      "y": 16,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "width": 32,
-      "height": 32,
-      "physics": {
-        "isStatic": false,
-        "width": 102,
-        "height": 115,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": []
-    },
-    {
-      "name": "untitled",
-      "x": 0,
-      "y": 0,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "width": 32,
-      "height": 32,
-      "texture": "__MISSING",
-      "events": [
-        {
-          "trigger": "onOverlap_Start",
-          "actions": ""
-        }
-      ]
-    },
+   
     {
       "name": "next_arrow_1",
       "x": 462,
@@ -181,40 +67,9 @@
       ]
     },
     {
-      "name": "yuna_angry_1",
-      "x": 1099,
-      "y": 931,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "width": 317,
-      "height": 316,
-      "group": "floor",
-      "texture": "yuna_angry",
-      "physics": {
-        "isStatic": true,
-        "width": 317,
-        "height": 316,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": [
-        {
-          "trigger": "onKeyPress_SPACE",
-          "actions": ""
-        }
-      ]
-    },
-    {
       "name": "next_arrow_2",
-      "x": 466,
-      "y": 297,
+      "x": 1086,
+      "y": 514,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -225,7 +80,7 @@
       "group": "floor",
       "texture": "next_arrow",
       "physics": {
-        "isStatic": true,
+        "isStatic": false,
         "width": 90,
         "height": 62,
         "offsetX": 0,
@@ -242,58 +97,6 @@
           "targetGroup": "player"
         }
       ]
-    },
-    {
-      "name": "item_potion_1",
-      "x": 229,
-      "y": 1458,
-      "depth": 0,
-      "scaleX": 0.81,
-      "scaleY": 0.44,
-      "angle": 0,
-      "alpha": 1,
-      "width": 137,
-      "height": 137,
-      "group": "player",
-      "texture": "item_potion",
-      "physics": {
-        "isStatic": false,
-        "width": 72.80741700000002,
-        "height": 11.670208,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": []
-    },
-    {
-      "name": "item_shield_1",
-      "x": 467,
-      "y": 130,
-      "depth": 0,
-      "scaleX": 0.17,
-      "scaleY": 0.44,
-      "angle": 0,
-      "alpha": 1,
-      "width": 260,
-      "height": 260,
-      "group": "player",
-      "texture": "item_shield",
-      "physics": {
-        "isStatic": false,
-        "width": 1.2773800000000002,
-        "height": 22.147840000000002,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": []
     }
   ],
   "animations": [
