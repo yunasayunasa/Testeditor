@@ -220,61 +220,67 @@ this.add.existing(gameObject)
      * EditorPluginから呼び出され、イベントの再構築をトリガーする
      */
     onEditorEventChanged(targetObject) {
-        console.log(`[${this.scene.key}] Rebuilding for '${targetObject.name}'.`);
-        // イベントリスナーを再設定
+        console.log(`[${this.scene.key}] Rebuilding events for '${targetObject.name}'.`);
         this.applyEventsAndEditorFunctions(targetObject);
-        // 物理判定を再構築
-        this.rebuildPhysicsInteractions();
+        // ★ 物理判定の再構築は不要
     }
 
-    /**
-     * シーン全体の物理的な相互作用（衝突・接触）を再構築する
+
+      /**
+     * シーンのセットアップが完了した最終段階で呼ばれる
+     * ★★★ 以下のメソッドで、既存の finalizeSetup を完全に置き換えてください ★★★
      */
-    rebuildPhysicsInteractions() {
-        if (!this.dynamicColliders) this.dynamicColliders = [];
-        this.dynamicColliders.forEach(collider => collider.destroy());
-        this.dynamicColliders = [];
-        
-        const allGameObjects = this.children.getAll();
-        const collisionEvents = [];
-
-        allGameObjects.forEach(gameObject => {
-            const events = gameObject.getData('events');
-            if (events) {
-                events.forEach(eventData => {
-                    if ((eventData.trigger === 'onCollide_Start' || eventData.trigger === 'onOverlap_Start') && eventData.targetGroup) {
-                        collisionEvents.push({
-                            source: gameObject,
-                            eventType: eventData.trigger === 'onCollide_Start' ? 'collider' : 'overlap',
-                            targetGroup: eventData.targetGroup,
-                            actions: eventData.actions
-                        });
-                    }
-                });
-            }
-        });
-        
-        collisionEvents.forEach(eventInfo => {
-            const targetObjects = allGameObjects.filter(obj => obj.getData('group') === eventInfo.targetGroup);
-            if (targetObjects.length > 0) {
-                const newCollider = this.physics.add[eventInfo.eventType](eventInfo.source, targetObjects, (sourceObject, targetObject) => {
-                    if (this.actionInterpreter) {
-                        this.actionInterpreter.run(sourceObject, eventInfo.actions);
-                    }
-                });
-                this.dynamicColliders.push(newCollider);
-            }
-        });
-    }
-
     finalizeSetup() {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここで、Matter.jsの衝突イベントを監視します ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
+            // bodyAとbodyBは、衝突した2つの「物理ボディ」
+            // それぞれに対応するGameObjectを取得
+            const objA = bodyA.gameObject;
+            const objB = bodyB.gameObject;
+
+            // どちらかのオブジェクトが存在しない場合は何もしない
+            if (!objA || !objB) return;
+
+            // それぞれのオブジェクトについて、衝突イベントを処理
+            this.handleCollision(objA, objB);
+            this.handleCollision(objB, objA);
+        });
+        
+        // (オプション) onOverlapに対応させたい場合は、'collisionactive'も監視する
+        // this.matter.world.on('collisionactive', (event, bodyA, bodyB) => { ... });
+
+        // --- 従来の後処理 ---
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
-        this.rebuildPhysicsInteractions();
+        
         this.events.emit('scene-ready');
-        console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
+        console.log(`[${this.scene.key}] Setup complete. Matter.js collision listeners are active. Scene is ready.`);
     }
+
+    /**
+     * ★★★ 新規メソッド：衝突を処理するコアロジック ★★★
+     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点となるオブジェクト
+     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト
+     */
+    handleCollision(sourceObject, targetObject) {
+        const events = sourceObject.getData('events');
+        if (!events || !this.actionInterpreter) return;
+
+        // sourceObjectに設定されたイベント定義をループ
+        for (const eventData of events) {
+            // トリガーが'onCollide_Start'で、かつ衝突相手のグループが一致するかチェック
+            if (eventData.trigger === 'onCollide_Start' && eventData.targetGroup === targetObject.getData('group')) {
+                console.log(`[Collision] '${sourceObject.name}' collided with '${targetObject.name}'. Running actions.`);
+                // 条件が一致したら、ActionInterpreterを実行
+                this.actionInterpreter.run(sourceObject, eventData.actions);
+            }
+            // (オプション) 'onOverlap_Start'もここに追加
+        }
+    }
+    
     
     addObjectFromEditor(assetKey, newName) {
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
