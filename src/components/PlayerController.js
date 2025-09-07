@@ -9,8 +9,8 @@ export default class PlayerController {
         this.jumpVelocity = params.jumpVelocity || -10; // ★ Matter.js用に値を調整
 
         this.keyboardEnabled = !!scene.input.keyboard;
-        this.cursors = this.keyboardEnabled ? scene.input.keyboard.createKeys() : null;
-        
+      
+           this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
         this.virtualStick = null;
         this.jumpButton = null;
 
