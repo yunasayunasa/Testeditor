@@ -215,18 +215,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // --- すでに物理ボディがある場合 ---
             this.createMatterPropertiesUI(this.selectedObject); // ★ 新しいUI生成メソッドを呼ぶ
 
-            const removeButton = document.createElement('button');
-            removeButton.innerText = '物理ボディ 削除';
-            removeButton.style.backgroundColor = '#c44';
+               const removeButton = document.createElement('button');
             removeButton.onclick = () => {
-                if (this.selectedObject) {
+                if (this.selectedObject.body) {
                     this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
-                    this.selectedObject.setBody(null); // bodyをnullに戻す
+                    this.selectedObject.setBody(null);
+                    // ★★★ setDataは不要！オブジェクトの真実の状態を信じる ★★★
                     this.updatePropertyPanel();
                 }
             };
             this.editorPropsContainer.appendChild(removeButton);
-
         } else {
             // --- 物理ボディがない場合 ---
             const addButton = document.createElement('button');
@@ -806,7 +804,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
 
                 // ★★★ 物理ボディの書き出し部分を、Matter.js用に変更 ★★★
-                if (gameObject.body) {
+                     if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
@@ -1010,6 +1008,19 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             }
         }
     }
-    
+       /**
+     * ★ registerEditableという、新しいシンプルなメソッド
+     * BaseGameSceneから呼ばれ、編集リストに追加するだけ
+     */
+    registerEditable(gameObject, scene) {
+        if (!this.isEnabled) return;
+        const sceneKey = scene.scene.key;
+        if (!this.editableObjects.has(sceneKey)) {
+            this.editableObjects.set(sceneKey, new Set());
+        }
+        this.editableObjects.get(sceneKey).add(gameObject);
+
+        // ★★★ setInteractiveやイベントリスナーは、ここでは一切設定しない ★★★
+    }
     
 }
