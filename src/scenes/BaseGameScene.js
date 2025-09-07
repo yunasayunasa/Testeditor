@@ -1,107 +1,106 @@
+
+/**
+ * データ駆動型ゲームシーンの基底クラス。
+ * JSONレイアウトファイルに基づいてシーンを構築し、
+ * インゲームエディタとの連携機能を提供する。
+ */
 export default class BaseGameScene extends Phaser.Scene {
 
     constructor(config) {
         super(config);
-
-        /**
-         * このシーンで動的に生成された物理コライダーを管理する配列。
-         * @type {Phaser.Physics.Arcade.Collider[]}
-         */
+        // このクラスで定義されている他のプロパティは変更なし
         this.dynamicColliders = [];
-
-        /**
-         * このシーンのアクションインタープリタ。
-         * 継承先でインスタンス化されることを想定。
-         * @type {ActionInterpreter | null}
-         */
         this.actionInterpreter = null;
-        
-        /**
-         * キープレスイベントを管理するマップ。
-         * @type {Map<string, Array<object>>}
-         */
         this.keyPressEvents = new Map();
     }
    
     /**
-     * シーンのcreateメソッドから呼び出される、標準初期化ルーチン
+     * JSONデータに基づいてシーンの初期化を開始する。
+     * create()メソッドから呼び出されることを想定。
      */
     initSceneWithData() {
         const sceneKey = this.scene.key;
         console.log(`[${sceneKey}] Initializing with data-driven routine...`);
-
         const layoutData = this.cache.json.get(sceneKey);
-        
         this.buildSceneFromLayout(layoutData);
     }
     
+    /**
+     * レイアウトデータからシーンのオブジェクトを構築する。
+     * @param {object} layoutData - シーンのレイアウトを定義するJSONオブジェクト。
+     */
     buildSceneFromLayout(layoutData) {
-        const sceneKey = this.scene.key;
         if (!layoutData) {
             this.finalizeSetup();
             return;
         }
 
+        // アニメーションの登録
         if (layoutData.animations) {
-            for (const animData of layoutData.animations) {
-                if (this.anims.exists(animData.key)) continue;
-                
-                let frameConfig = Array.isArray(animData.frames) 
-                    ? { frames: animData.frames } 
-                    : animData.frames;
-                
-                this.anims.create({
-                    key: animData.key,
-                    frames: this.anims.generateFrameNumbers(animData.texture, frameConfig),
-                    frameRate: animData.frameRate,
-                    repeat: animData.repeat
-                });
-            }
+            layoutData.animations.forEach(animData => {
+                if (!this.anims.exists(animData.key)) {
+                    this.anims.create({
+                        key: animData.key,
+                        frames: this.anims.generateFrameNumbers(animData.texture, animData.frames),
+                        frameRate: animData.frameRate,
+                        repeat: animData.repeat
+                    });
+                }
+            });
         }
         
+        // オブジェクトの生成とプロパティ適用
         if (layoutData.objects) {
-            const createdObjects = [];
-            for (const layout of layoutData.objects) {
+            // 先にすべてのオブジェクトを生成し、後からプロパティを適用することで、
+            // オブジェクト間の依存関係による問題を回避する。
+            const createdObjects = layoutData.objects.map(layout => {
                 const gameObject = this.createObjectFromLayout(layout);
-                if (gameObject) createdObjects.push({ gameObject, layout });
-            }
-            for (const item of createdObjects) {
-                this.applyProperties(item.gameObject, item.layout);
-            }
+                return { gameObject, layout };
+            });
+
+            createdObjects.forEach(item => {
+                if (item.gameObject) {
+                    this.applyProperties(item.gameObject, item.layout);
+                }
+            });
         }
         
         this.finalizeSetup();
     }
     
     /**
-     * レイアウト定義から、正しい「種類」のゲームオブジェクトを生成する
+     * レイアウト定義に基づいてゲームオブジェクトを生成する。
+     * @param {object} layout - 単一オブジェクトのレイアウト定義。
+     * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト。
      */
     createObjectFromLayout(layout) {
-        const textureKey = layout.texture || (layout.name ? layout.name.split('_')[0] : '__DEFAULT');
+        // テクスチャキーが存在しない場合でもエラーにならないようにデフォルト値を設定
+        const textureKey = layout.texture || '__DEFAULT';
         
-        return (layout.type === 'Sprite')
-            ? new Phaser.GameObjects.Sprite(this, 0, 0, textureKey)
-            : new Phaser.GameObjects.Image(this, 0, 0, textureKey);
+        if (layout.type === 'Sprite') {
+            return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
+        }
+        return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
     }
 
-  /**
- * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終完成版)
- * ★★★ 以下のメソッドで、既存の applyProperties を完全に置き換えてください ★★★
- */
-  /**
-     * 単体のオブジェクトにプロパティを適用し、シーンに追加する (完全な権限を持つ最終完成版)
+    /**
+     * 単体のゲームオブジェクトにレイアウトデータからプロパティを適用する。
+     * @param {Phaser.GameObjects.GameObject} gameObject - プロパティを適用する対象。
+     * @param {object} layout - 適用するプロパティが記述されたレイアウトデータ。
      */
     applyProperties(gameObject, layout) {
-        const data = layout || {};
-
         // --- 1. 基本プロパティ ---
-        gameObject.name = data.name || 'untitled';
-        if (data.group) gameObject.setData('group', data.group);
-        if (data.texture) gameObject.setTexture(data.texture);
+        gameObject.name = layout.name || 'untitled_object';
+        if (layout.texture) gameObject.setTexture(layout.texture);
+        if (layout.group) gameObject.setData('group', layout.group);
+
+        // --- 2. シーンへの追加 (これ以降の処理はオブジェクトがシーンに存在することが前提) ---
+        this.add.existing(gameObject);
         
-        // --- 2. 物理ボディの生成 ---
-        if (data.physics) {
-            const phys = data.physics;
+        // --- 3. 物理ボディの適用 (Matter.js) ---
+        if (layout.physics) {
+            const phys = layout.physics;
+            // ボディの形状データをGameObjectに保存しておく（エディタでの再表示に利用）
             gameObject.setData('shape', phys.shape || 'rectangle');
 
             this.matter.add.gameObject(gameObject, {
@@ -110,111 +109,61 @@ export default class BaseGameScene extends Phaser.Scene {
                 restitution: phys.restitution !== undefined ? phys.restitution : 0,
             });
             
+            // JSONで定義された形状を適用
             if (phys.shape === 'circle') {
                 const radius = (gameObject.width + gameObject.height) / 4;
                 gameObject.setCircle(radius);
-            } else {
-                gameObject.setRectangle();
+            }
+            // 'rectangle'はデフォルトなので特別な処理は不要
+        }
+
+        // --- 4. Transformプロパティ (物理ボディ設定後に適用するのが安全) ---
+        gameObject.setPosition(layout.x || 0, layout.y || 0);
+        gameObject.setScale(layout.scaleX || 1, layout.scaleY || 1);
+        gameObject.setAngle(layout.angle || 0);
+        gameObject.setAlpha(layout.alpha !== undefined ? layout.alpha : 1);
+        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
+        if (layout.depth !== undefined) gameObject.setDepth(layout.depth);
+
+        // --- 5. アニメーション ---
+        if (layout.animation && gameObject.play) {
+            gameObject.setData('animation_data', layout.animation);
+            if (layout.animation.default && this.anims.exists(layout.animation.default)) {
+                gameObject.play(layout.animation.default);
             }
         }
-        
-        // --- 3. シーンへの追加 ---
-        this.add.existing(gameObject);
 
-    // --- 4. Transform (物理ボディ生成の後に設定) ---
-    gameObject.setPosition(data.x || 0, data.y || 0);
-    gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
-    gameObject.setAngle(data.angle || 0);
-    gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
-    if (data.visible !== undefined) gameObject.setVisible(data.visible);
-
-    // --- 5. イベントとエディタ機能の適用 ---
-    this.applyEventsAndEditorFunctions(gameObject, data.events);
-    
-    // --- 5. インタラクティブ化 (BaseGameSceneの責務) ---
-        // ★ Arcade Physicsの時と同じ、シンプルなロジックに戻す
-        try {
-            this.input.setDraggable(gameObject.setInteractive());
-        } catch(e) {
-            console.warn(`[BaseGameScene] Failed to setInteractive on '${gameObject.name}'`, e);
-        }
-
-        // --- 6. EditorPluginに、編集リストへの追加だけを依頼 ---
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.registerEditable(gameObject, this);
-        }
-        
-        // --- 5. アニメーションプロパティ ---
-        if (data.animation && gameObject.play) {
-            gameObject.setData('animation_data', data.animation);
-            if (data.animation.default && this.anims.exists(data.animation.default)) {
-                gameObject.play(data.animation.default);
-            }
-        }
-       // ★★★ 6. コンポーネントプロパティ ★★★
-        // (あなたの元のコードを、より確実な形に修正)
+        // --- 6. コンポーネント ---
         if (layout.components && typeof this.addComponent === 'function') {
-            for (const componentDef of layout.components) {
-                this.addComponent(gameObject, componentDef.type, componentDef.params);
-            }
-        }
-     // --- 7. 全てのプロパティ設定が完了した、一番最後にインタラクティブ化！ ---
-    try {
-        if (gameObject.body) {
-            // Matter.jsオブジェクトの場合
-            gameObject.setInteractive({
-                hitArea: gameObject.body,
-                hitAreaCallback: Phaser.Physics.Matter.Matter.Body.contains,
-                draggable: true
+            layout.components.forEach(comp => {
+                this.addComponent(gameObject, comp.type, comp.params);
             });
-        } else {
-            // 通常のオブジェクトの場合
-            gameObject.setInteractive();
-            this.input.setDraggable(gameObject);
         }
-    } catch(e) {
-        console.warn(`[BaseGameScene] Failed to setInteractive on '${gameObject.name}'`, e);
+        
+        // --- 7. イベントリスナーとエディタ登録 ---
+        this.applyEventsAndEditorFunctions(gameObject, layout.events);
     }
-}
     
-
     /**
-     * オブジェクトにイベントリスナーとエディタ機能を（再）設定する
+     * オブジェクトにイベントリスナーとエディタ機能を設定する。
+     * @param {Phaser.GameObjects.GameObject} gameObject - 対象オブジェクト。
+     * @param {object[]} eventsData - イベント定義の配列。
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
-        const events = eventsData || gameObject.getData('events') || [];
-        gameObject.setData('events', events);
+        const events = eventsData || [];
+        gameObject.setData('events', events); // 最新のイベントデータを保存
         
-        // --- 1. 既存のリスナーを全てクリアして競合を防ぐ ---
+        // 既存のゲームプレイ用リスナーをクリア
         gameObject.off('pointerdown');
 
-        // --- 2. インタラクティブ化とエディタへの登録 ---
-        // (リスナー設定の前に一度だけ行えば良い)
-        try {
-            if (!gameObject.input) { // まだインタラクティブでなければ
-                 if (gameObject.width === 0 || gameObject.height === 0) {
-                    gameObject.once('textureupdate', () => gameObject.setSize(gameObject.width, gameObject.height).setInteractive());
-                } else {
-                     gameObject.setSize(gameObject.width, gameObject.height).setInteractive();
-                }
-            }
-            const editor = this.plugins.get('EditorPlugin');
-            if (editor && editor.isEnabled) {
-                editor.makeEditable(gameObject, this);
-            }
-        } catch (e) {
-            console.error(`[BaseGameScene] Failed to make object interactive: '${gameObject.name}'`, e);
-        }
-
-        // --- 3. 新しいゲームプレイ用リスナーを設定 ---
+        // ゲームプレイ用リスナーを設定
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
                     const systemScene = this.game.scene.getScene('SystemScene');
                     const editorUI = systemScene ? systemScene.editorUI : null;
                     
-                    // Playモードの時、またはエディタが存在しない時だけ実行
+                    // エディタが存在しないか、Playモードの時だけアクションを実行
                     if (!editorUI || editorUI.currentMode === 'play') {
                         if (this.actionInterpreter) {
                             this.actionInterpreter.run(gameObject, eventData.actions);
@@ -223,74 +172,64 @@ export default class BaseGameScene extends Phaser.Scene {
                 });
             }
         });
+
+        // エディタプラグインにオブジェクトを登録
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            editor.makeEditable(gameObject, this);
+        }
     }
-    
+
     /**
-     * EditorPluginから呼び出され、イベントの再構築をトリガーする
-     */
-    onEditorEventChanged(targetObject) {
-        console.log(`[${this.scene.key}] Rebuilding events for '${targetObject.name}'.`);
-        this.applyEventsAndEditorFunctions(targetObject);
-        // ★ 物理判定の再構築は不要
-    }
-
-
-      /**
-     * シーンのセットアップが完了した最終段階で呼ばれる
-     * ★★★ 以下のメソッドで、既存の finalizeSetup を完全に置き換えてください ★★★
+     * シーンのセットアップ完了時に呼ばれる最終処理。
      */
     finalizeSetup() {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ ここで、Matter.jsの衝突イベントを監視します ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // Matter.jsの衝突イベント監視
         this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
-            // bodyAとbodyBは、衝突した2つの「物理ボディ」
-            // それぞれに対応するGameObjectを取得
-            const objA = bodyA.gameObject;
-            const objB = bodyB.gameObject;
-
-            // どちらかのオブジェクトが存在しない場合は何もしない
-            if (!objA || !objB) return;
-
-            // それぞれのオブジェクトについて、衝突イベントを処理
-            this.handleCollision(objA, objB);
-            this.handleCollision(objB, objA);
+            if (bodyA.gameObject && bodyB.gameObject) {
+                this.handleCollision(bodyA.gameObject, bodyB.gameObject);
+                this.handleCollision(bodyB.gameObject, bodyA.gameObject);
+            }
         });
         
-        // (オプション) onOverlapに対応させたい場合は、'collisionactive'も監視する
-        // this.matter.world.on('collisionactive', (event, bodyA, bodyB) => { ... });
-
-        // --- 従来の後処理 ---
-        if (this.onSetupComplete) {
+        // 継承先シーンのカスタムセットアップ処理を実行
+        if (typeof this.onSetupComplete === 'function') {
             this.onSetupComplete();
         }
         
+        // SystemSceneに準備完了を通知
         this.events.emit('scene-ready');
-        console.log(`[${this.scene.key}] Setup complete. Matter.js collision listeners are active. Scene is ready.`);
+        console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
 
     /**
-     * ★★★ 新規メソッド：衝突を処理するコアロジック ★★★
-     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点となるオブジェクト
-     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト
+     * 衝突イベントを処理する。
+     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点オブジェクト。
+     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト。
      */
     handleCollision(sourceObject, targetObject) {
         const events = sourceObject.getData('events');
         if (!events || !this.actionInterpreter) return;
 
-        // sourceObjectに設定されたイベント定義をループ
-        for (const eventData of events) {
-            // トリガーが'onCollide_Start'で、かつ衝突相手のグループが一致するかチェック
+        events.forEach(eventData => {
             if (eventData.trigger === 'onCollide_Start' && eventData.targetGroup === targetObject.getData('group')) {
                 console.log(`[Collision] '${sourceObject.name}' collided with '${targetObject.name}'. Running actions.`);
-                // 条件が一致したら、ActionInterpreterを実行
                 this.actionInterpreter.run(sourceObject, eventData.actions);
             }
-            // (オプション) 'onOverlap_Start'もここに追加
-        }
+        });
     }
-    
-    
+
+    /**
+     * エディタからイベント定義が変更された際に呼び出される。
+     * @param {Phaser.GameObjects.GameObject} targetObject - 対象オブジェクト。
+     */
+    onEditorEventChanged(targetObject) {
+        console.log(`[${this.scene.key}] Rebuilding events for '${targetObject.name}'.`);
+        // イベントリスナーのみを再適用する
+        this.applyEventsAndEditorFunctions(targetObject, targetObject.getData('events'));
+    }
+
+    // addObjectFromEditor, handleKeyPressEvents, shutdown は変更なし
     addObjectFromEditor(assetKey, newName) {
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
         return null;
