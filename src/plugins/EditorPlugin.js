@@ -187,30 +187,32 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
     }
 
-    createRemoveBodyButton() {
-        const removeButton = document.createElement('button');
-        removeButton.innerText = '物理ボディ 削除';
-        removeButton.style.backgroundColor = '#e65151';
-        
-        const targetObject = this.selectedObject; // 安全な参照の確保
+createRemoveBodyButton() {
+    const removeButton = document.createElement('button');
+    removeButton.innerText = '物理ボディ 削除';
+    removeButton.style.backgroundColor = '#e65151';
+    const targetObject = this.selectedObject;
 
-        removeButton.onclick = () => {
-            // onclickが呼ばれた瞬間に、再度オブジェクトとbodyの存在を確認する
-            if (targetObject && targetObject.body && targetObject.scene) {
-                try {
-                    targetObject.scene.matter.world.remove(targetObject.body);
-                    targetObject.body = null;
-                    // UI更新をスケジュール
-                    setTimeout(() => this.updatePropertyPanel(), 0);
-                } catch (e) {
-                    console.error("Error during body removal:", e);
-                    // エラーが起きてもUI更新を試みる
-                    setTimeout(() => this.updatePropertyPanel(), 0);
+    removeButton.onclick = () => {
+        if (targetObject && targetObject.scene && typeof targetObject.scene.removePhysicsBodyFromEditor === 'function') {
+            
+            // シーンにボディ削除処理を委譲
+            targetObject.scene.removePhysicsBodyFromEditor(targetObject);
+
+            // UI更新をスケジュール
+            setTimeout(() => {
+                // UI更新前に、オブジェクトがまだ生存しているか再度確認
+                if (this.selectedObject && this.selectedObject.active) {
+                    this.updatePropertyPanel();
                 }
-            }
-        };
-        this.editorPropsContainer.appendChild(removeButton);
-    }
+            }, 0);
+
+        } else {
+            console.error("[EditorPlugin] Cannot remove body: Invalid target or scene method.");
+        }
+    };
+    this.editorPropsContainer.appendChild(removeButton);
+}
 
     // --- `updatePropertyPanel`から呼び出されるUI生成ヘルパーメソッド群 ---
 
