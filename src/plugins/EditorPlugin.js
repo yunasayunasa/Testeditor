@@ -211,20 +211,27 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         physicsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(physicsTitle);
 
-        if (this.selectedObject.body) { // bodyプロパティがあるか
-            // --- すでに物理ボディがある場合 ---
-            this.createMatterPropertiesUI(this.selectedObject); // ★ 新しいUI生成メソッドを呼ぶ
+       if (this.selectedObject.body) { // bodyプロパティがあるか
+    // --- すでに物理ボディがある場合 ---
+    this.createMatterPropertiesUI(this.selectedObject);
 
-               const removeButton = document.createElement('button');
-            removeButton.onclick = () => {
-                if (this.selectedObject.body) {
-                    this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
-                    this.selectedObject.setBody(null);
-                    // ★★★ setDataは不要！オブジェクトの真実の状態を信じる ★★★
-                    this.updatePropertyPanel();
-                }
-            };
-            this.editorPropsContainer.appendChild(removeButton);
+    // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
+    const removeButton = document.createElement('button');
+    removeButton.innerText = '物理ボディ 削除'; // ボタンのテキストを追加
+    removeButton.style.backgroundColor = '#e65151'; // 少し目立たせる
+    removeButton.onclick = () => {
+        if (this.selectedObject && this.selectedObject.body) {
+            // 1. Matter.jsの世界からボディを削除
+            this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
+            
+            // 2. 【最重要】GameObjectからbodyプロパティを完全に切り離す
+            this.selectedObject.body = null; 
+            
+            // 3. UIを再描画して「付与」ボタンを表示させる
+            this.updatePropertyPanel();
+        }
+    };
+    this.editorPropsContainer.appendChild(removeButton);
         } else {
             // --- 物理ボディがない場合 ---
             const addButton = document.createElement('button');
@@ -370,6 +377,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const shapeSelect = document.getElementById('shape-select');
         shapeSelect.onchange = (e) => {
             const newShape = e.target.value;
+             // 【重要】GameObject自体に、選択された形状をデータとして保存する
+    if (this.selectedObject) {
+        this.selectedObject.setData('shape', newShape);
+    }
             if (newShape === 'rectangle') {
                 // 円形から四角形に戻す (テクスチャサイズに合わせる)
                 gameObject.setBody({ type: 'rectangle' }); 
@@ -808,7 +819,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
-                        shape: body.shape || 'rectangle', // 'rectangle' or 'circle'
+                           // body.shapeではなく、setDataで保存した値から形状を読み出す
+        shape: gameObject.getData('shape') || 'rectangle',
+                   
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)), // Bounce
                         // 必要に応じて、他のプロパティも追加
