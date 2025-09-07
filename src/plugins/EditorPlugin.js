@@ -305,6 +305,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 // 新しいコンポーネントを定義に追加
                 currentComps.push({ type: compToAdd, params: {} });
                 this.selectedObject.setData('components', currentComps);
+                   // ★★★ 2. リアルタイム適用のための命令 (ここが核心) ★★★
+                const targetScene = this.selectedObject.scene;
+                // シーンが addComponent メソッドを持っているか確認
+                if (targetScene && typeof targetScene.addComponent === 'function') {
+                    // シーンに、今すぐこのコンポーネントをインスタンス化するように命令する
+                    targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
+                }
                 this.updatePropertyPanel(); // パネルを再描画して反映
             }
         };

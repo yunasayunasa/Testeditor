@@ -52,6 +52,9 @@ export default class JumpScene extends BaseGameScene {
         return newObject;
     }
 
+     /**
+     * ★★★ 以下のメソッドで、既存の addComponent を完全に置き換えてください ★★★
+     */
     addComponent(target, componentType, params = {}) {
         let component = null;
         if (componentType === 'PlayerController') {
@@ -59,12 +62,23 @@ export default class JumpScene extends BaseGameScene {
         }
 
         if (component) {
+            // --- 1. ランタイム処理 (変更なし) ---
             this.components.push(component);
             if (!target.components) target.components = {};
             target.components[componentType] = component;
+
+            // --- 2. 永続化処理 (ここが修正の核心) ---
+            // 現在の永続化データを取得
+            const currentComps = target.getData('components') || [];
+            
+            // まだ同じタイプのコンポーネントが登録されていなければ、追加
+            if (!currentComps.some(c => c.type === componentType)) {
+                currentComps.push({ type: componentType, params: params });
+                // 更新された配列を、永続化データとして保存し直す
+                target.setData('components', currentComps);
+            }
         }
     }
-
     onSetupComplete() {
         const player = this.children.list.find(obj => obj.components?.PlayerController);
         
