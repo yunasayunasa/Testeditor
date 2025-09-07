@@ -86,38 +86,30 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-   /**
+      /**
      * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
      */
     onSetupComplete() {
-        // --- 1. グループ名でプレイヤーと床オブジェクトを全て検索 ---
+        // ★ Matter.jsでは、衝突はカテゴリ(category)とマスク(collidesWith)で管理する
+        // ★ もしくは、単純な衝突であれば何もしなくても良い
+        // ★ Arcade Physicsの collider のような明示的な設定は不要
+        
         const player = this.children.list.find(obj => obj.getData('group') === 'player');
         
-        // ★★★ "ground" を "floor" に修正 ★★★
-        // ★★★ find を filter に変更し、複数の床に対応 ★★★
-        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
-        
-        // --- 2. プレイヤーが見つかったら、カメラと衝突判定を設定 ---
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
+            
+            // ★ Matter.jsでは、デフォルトで全てのオブジェクトが互いに衝突する
+            // ★ そのため、this.physics.add.colliderは不要
+            console.log("[JumpScene] Matter.js setup complete. Default collision is enabled.");
 
-            // --- 3. 見つかった全ての床オブジェクトに対して、衝突判定を追加 ---
-            if (floors.length > 0) {
-                // floorsは配列なので、colliderは配列をそのまま受け取れる
-                this.physics.add.collider(player, floors);
-                console.log(`[JumpScene] Collider created between 'player' and ${floors.length} 'floor' objects.`);
-            } else {
-                console.warn("[JumpScene] No 'floor' group objects found to collide with.");
-            }
+            // ★（オプション）プレイヤーのボディを回転しないように固定する
+            player.setFixedRotation(); // これにより、坂道でキャラクターが転がらなくなる
+
         } else {
             console.warn("[JumpScene] 'player' group object not found.");
         }
     }
-    
-    
-   // src/scenes/JumpScene.js
-
-// ... (他のメソッドは変更なし) ...
 
     /**
      * シーン上の全GameObjectを走査し、アタッチされたコンポー-ネントを更新する
