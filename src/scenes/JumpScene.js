@@ -83,22 +83,34 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-     onSetupComplete() {
+   /**
+     * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
+     */
+    onSetupComplete() {
+        // --- 1. グループ名でプレイヤーと床オブジェクトを全て検索 ---
         const player = this.children.list.find(obj => obj.getData('group') === 'player');
-        const ground = this.children.list.find(obj => obj.getData('group') === 'ground');
         
+        // ★★★ "ground" を "floor" に修正 ★★★
+        // ★★★ find を filter に変更し、複数の床に対応 ★★★
+        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
+        
+        // --- 2. プレイヤーが見つかったら、カメラと衝突判定を設定 ---
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
 
-            // ★★★ プレイヤーと地面の衝突判定を追加 ★★★
-            if (ground) {
-                this.physics.add.collider(player, ground);
-                console.log("[JumpScene] Player and Ground collider created.");
+            // --- 3. 見つかった全ての床オブジェクトに対して、衝突判定を追加 ---
+            if (floors.length > 0) {
+                // floorsは配列なので、colliderは配列をそのまま受け取れる
+                this.physics.add.collider(player, floors);
+                console.log(`[JumpScene] Collider created between 'player' and ${floors.length} 'floor' objects.`);
+            } else {
+                console.warn("[JumpScene] No 'floor' group objects found to collide with.");
             }
         } else {
-            console.warn("[JumpScene] Player object not found.");
+            console.warn("[JumpScene] 'player' group object not found.");
         }
     }
+    
     
    // src/scenes/JumpScene.js
 
