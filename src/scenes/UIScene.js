@@ -43,73 +43,50 @@ export default class UIScene extends Phaser.Scene {
         }
     }
 
-    // layoutDataを引数として受け取る、正しい非同期ビルドメソッド
-   // layoutDataを引数として受け取る、動的インポート対応のビルドメソッド
-    async buildUiFromLayout(layoutData) {
-        // ★★★ SystemSceneからuiRegistryを取得するのが最も安全 ★★★
-        const systemScene = this.scene.get('SystemScene');
-        if (!systemScene || !systemScene.registry.get('uiRegistry')) {
-            console.error('[UIScene] uiRegistry not found in SystemScene registry.');
-            return Promise.reject('uiRegistry not found');
-        }
-        const processedUiRegistry = systemScene.registry.get('uiRegistry');
+   // src/scenes/UIScene.js
 
-        if (!layoutData || !layoutData.objects) {
-            console.warn(`[UIScene] No layout data in ${this.scene.key}.json. Building UI from registry defaults.`);
+// ... (他のメソッドやimportは変更なし) ...
+
+    /**
+     * ★★★ 以下のメソッドで、既存の buildUiFromLayout を完全に置き換えてください ★★★
+     * (デバッグ用・JSONレイアウトを無視するシンプル版)
+     */
+    async buildUiFromLayout(layoutData) { // layoutDataは受け取るが使わない
+        console.log("[UIScene] Starting UI build with SIMPLIFIED routine.");
+
+        const uiRegistry = this.registry.get('uiRegistry');
+        if (!uiRegistry) {
+            console.error('[UIScene] CRITICAL: uiRegistry not found in game registry.');
+            return;
         }
 
         const stateManager = this.registry.get('stateManager');
 
-        // ★★★ 全てのUI要素の生成をPromiseとして扱う ★★★
-        const creationPromises = Object.keys(processedUiRegistry).map(name => {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const definition = processedUiRegistry[name];
-                    const layout = (layoutData && layoutData.objects) 
-                        ? layoutData.objects.find(obj => obj.name === name) || {}
-                        : {};
-                    const params = { ...definition.params, ...layout, name, stateManager };
+        // uiRegistryの全てのキーをループ処理する
+        for (const name in uiRegistry) {
+            try {
+                const definition = uiRegistry[name];
+                
+                // ★ main.jsで前処理された 'component' プロパティが必須
+                const UiComponentClass = definition.component;
 
-                    let UiComponentClass = null;
-
-                    // --- ここからが修正の核心 ---
-                    if (definition.component) {
-                        // case 1: 'component'キーでクラスが直接指定されている場合
-                        UiComponentClass = definition.component;
-                    } else if (definition.path) {
-                        // case 2: 'path'キーでファイルパスが指定されている場合
-                        // 動的インポートを使って、モジュールを非同期で読み込む
-                        const module = await import(definition.path);
-                        UiComponentClass = module.default; // export defaultされているクラスを取得
-                    }
-                    // --- ここまでが修正の核心 ---
-
-                    if (UiComponentClass) {
-                        const uiElement = new UiComponentClass(this, params);
-                        this.registerUiElement(name, uiElement, params);
-                    } else if (typeof definition.creator === 'function') {
-                        // case 3: 従来のcreator関数形式もサポート
-                        const uiElement = definition.creator(this, params);
-                        if (uiElement) {
-                             this.registerUiElement(name, uiElement, params);
-                        }
-                    } else {
-                        console.warn(`[UIScene] UI element '${name}' has no valid 'component', 'path', or 'creator'.`);
-                    }
+                if (UiComponentClass) {
+                    // ★ JSONを無視し、registryのparamsだけを使う
+                    const params = { ...definition.params, name, stateManager };
                     
-                    resolve();
-                } catch (e) {
-                    console.error(`[UIScene] Failed to create UI element '${name}'`, e);
-                    reject(e);
+                    const uiElement = new UiComponentClass(this, params);
+                    this.registerUiElement(name, uiElement, params);
+                    console.log(`[UIScene] Successfully created '${name}'.`);
+                } else {
+                    console.warn(`[UIScene] UI definition for '${name}' is missing a 'component' class.`);
                 }
-            });
-        });
-
-        // 全てのUI要素の生成が完了するのを待つ
-        await Promise.all(creationPromises);
+            } catch (e) {
+                console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
+            }
+        }
     }
 
-
+// ... (他のメソッドは変更なし) ...
 // ... registerUiElementと他のメソッドは変更なし ...
     
     // registerUiElementは変更なしでOK
