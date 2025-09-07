@@ -2,8 +2,8 @@
   "objects": [
     {
       "name": "walk_2",
-      "x": 800,
-      "y": 498,
+      "x": 781,
+      "y": 254,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -20,7 +20,7 @@
         "height": 115,
         "offsetX": 0,
         "offsetY": 0,
-        "allowGravity": false,
+        "allowGravity": true,
         "bounceX": 0,
         "bounceY": 0,
         "collideWorldBounds": true
@@ -33,7 +33,6 @@
         }
       ]
     },
-   
     {
       "name": "next_arrow_1",
       "x": 462,
@@ -97,6 +96,32 @@
           "targetGroup": "player"
         }
       ]
+    },
+    {
+      "name": "cg01_1",
+      "x": 799,
+      "y": 774,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "width": 600,
+      "height": 315,
+         "group": "floor",
+      "texture": "cg01",
+      "physics": {
+        "isStatic": true,
+        "width": 600,
+        "height": 315,
+        "offsetX": 0,
+        "offsetY": 0,
+        "allowGravity": false,
+        "bounceX": 0,
+        "bounceY": 0,
+        "collideWorldBounds": true
+      },
+      "events": []
     }
   ],
   "animations": [

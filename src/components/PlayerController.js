@@ -58,45 +58,40 @@ export default class PlayerController {
             }, this);
         }
     }
-   
-
+  
     update(time, delta) {
         if (!this.target || !this.target.body || !this.target.active) return;
         
         let moveX = 0;
         
-        // --- キーボード入力 (PC向け) ---
         if (this.keyboardEnabled && this.cursors) {
             if (this.cursors.left.isDown) moveX = -1;
             if (this.cursors.right.isDown) moveX = 1;
         }
 
-        // --- バーチャルスティック入力 (モバイル/PC共通) ---
         if (this.virtualStick) {
             if (this.virtualStick.isLeft) moveX = -1;
             if (this.virtualStick.isRight) moveX = 1;
         }
 
-        // --- 物理ボディへの適用 ---
         this.target.body.setVelocityX(moveX * this.moveSpeed);
 
-        // --- キーボードでのジャンプ処理 ---
-        // ★★★ 以下のブロックを完全に書き換える ★★★
-        if (this.keyboardEnabled && this.cursors) {
-            // JustDownを安全に呼び出す
-            if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-                this.jump();
-            }
+        // ★★★ ここのキーボードジャンプ処理が、最後の「Script error.」の原因でした ★★★
+        // iPadでは this.cursors が null なので、エラーになります
+        if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+            this.jump();
         }
     }
 
     // jumpメソッドは、キーボードとジャンプボタンの両方から呼ばれる共通の処理
     jump() {
-        if (this.target && this.target.body && this.target.body.touching.down) {
+        // ★★★ touchingがnullの場合も考慮する、より安全なチェック ★★★
+        if (this.target && this.target.body && this.target.body.touching && this.target.body.touching.down) {
             this.target.body.setVelocityY(this.jumpVelocity);
         }
     }
 
+ 
    
 
     destroy() {

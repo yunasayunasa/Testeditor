@@ -83,13 +83,20 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-    onSetupComplete() {
-        const player = this.children.list.find(obj => obj.components?.PlayerController);
+     onSetupComplete() {
+        const player = this.children.list.find(obj => obj.getData('group') === 'player');
+        const ground = this.children.list.find(obj => obj.getData('group') === 'ground');
         
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
+
+            // ★★★ プレイヤーと地面の衝突判定を追加 ★★★
+            if (ground) {
+                this.physics.add.collider(player, ground);
+                console.log("[JumpScene] Player and Ground collider created.");
+            }
         } else {
-            console.warn("[JumpScene] PlayerController component not found on any object.");
+            console.warn("[JumpScene] Player object not found.");
         }
     }
     
