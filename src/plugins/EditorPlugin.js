@@ -218,10 +218,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             const removeButton = document.createElement('button');
             removeButton.innerText = '物理ボディ 削除';
             removeButton.style.backgroundColor = '#c44';
-            removeButton.onclick = () => {
-                if (this.selectedObject) {
+             removeButton.onclick = () => {
+                if (this.selectedObject && this.selectedObject.body) {
+                    // ★★★ Matter.jsのワールドからボディを削除 ★★★
                     this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
-                    this.selectedObject.setBody(null); // bodyをnullに戻す
+                    // ★★★ GameObjectからボディへの参照を、公式メソッドで断ち切る ★★★
+                    this.selectedObject.setBody(null); 
+                    // ★★★ UIを強制的に再描画して変更を反映 ★★★
                     this.updatePropertyPanel();
                 }
             };
@@ -684,6 +687,33 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // マウスが当たり判定から外れた時
             gameObject.clearTint();
         });
+              gameObject.on('dragstart', (pointer) => {
+            if (this.editorUI && this.editorUI.currentMode === 'select' && gameObject.body) {
+                // ドラッグ開始時に、一時的に静的にして物理演算を止める
+                gameObject.setStatic(true);
+            }
+        });
+
+        gameObject.on('drag', (pointer, dragX, dragY) => {
+            if (this.editorUI && this.editorUI.currentMode === 'select') {
+                gameObject.setPosition(Math.round(dragX), Math.round(dragY));
+                if (this.selectedObject === gameObject) {
+                    // ドラッグ中もプロパティパネルの座標を更新
+                    this.updatePropertyPanel();
+                }
+            }
+        });
+
+        gameObject.on('dragend', (pointer) => {
+            if (this.editorUI && this.editorUI.currentMode === 'select' && gameObject.body) {
+                // ドラッグ終了時に、元のisStaticの状態に戻す
+                // (JSONから読み込んだisStaticの値を参照するのが理想だが、
+                //  まずはシンプルにfalseに戻す)
+                const originalIsStatic = gameObject.scene.cache.json.get(gameObject.scene.scene.key)
+                    ?.objects.find(o => o.name === gameObject.name)?.physics.isStatic || false;
+                gameObject.setStatic(originalIsStatic);
+            }
+        });
     }
 
 // ...
@@ -788,9 +818,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             animations: []
         };
 
-        if (this.editableObjects.has(sceneKey)) {
+       if (this.editableObjects.has(sceneKey)) {
             for (const gameObject of this.editableObjects.get(sceneKey)) {
-                if (!gameObject.name) continue;
+                if (!gameObject.name || !gameObject.active) continue; // ★ activeでない(destroyされた)オブジェクトは除外
+
 
                 const objData = {
                     name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), depth: gameObject.depth,
@@ -807,17 +838,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
 
                 // ★★★ 物理ボディの書き出し部分を、Matter.js用に変更 ★★★
-                 if (gameObject.body) {
+                  if (gameObject.body && gameObject.body.id) { // Matter.jsのbodyはidを持つ
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
-                        // ★★★ body.shapeではなく、setDataした値を取得 ★★★
                         shape: gameObject.getData('shape') || 'rectangle', 
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
                     };
                 }
-
 
                 if (gameObject.getData('animation_data')) objData.animation = gameObject.getData('animation_data');
                 if (gameObject.getData('events')) objData.events = gameObject.getData('events');
