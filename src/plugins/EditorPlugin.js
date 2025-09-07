@@ -297,23 +297,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 addComponentSelect.innerHTML += `<option value="${compName}">${compName}</option>`;
             }
         });
-
-        addComponentSelect.onchange = (e) => {
+   addComponentSelect.onchange = (e) => {
             const compToAdd = e.target.value;
-            if (compToAdd) {
+            if (compToAdd && this.selectedObject) {
                 const currentComps = this.selectedObject.getData('components') || [];
-                // 新しいコンポーネントを定義に追加
-                currentComps.push({ type: compToAdd, params: {} });
+                // ★★★ constを外に出して、両方から見えるようにする ★★★
+                const newComponentDef = { type: compToAdd, params: {} }; 
+                currentComps.push(newComponentDef);
                 this.selectedObject.setData('components', currentComps);
-                   // ★★★ 2. リアルタイム適用のための命令 (ここが核心) ★★★
+                
                 const targetScene = this.selectedObject.scene;
-                // シーンが addComponent メソッドを持っているか確認
                 if (targetScene && typeof targetScene.addComponent === 'function') {
-                    // シーンに、今すぐこのコンポーネントをインスタンス化するように命令する
                     targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
                 }
-                this.updatePropertyPanel(); // パネルを再描画して反映
+
+                this.updatePropertyPanel();
             }
+    
         };
         this.editorPropsContainer.appendChild(addComponentSelect);
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★

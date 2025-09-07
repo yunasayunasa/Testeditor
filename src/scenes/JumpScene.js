@@ -8,7 +8,7 @@ export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-        this.components = [];
+
         this.actionInterpreter = null;
     }
 
@@ -52,33 +52,37 @@ export default class JumpScene extends BaseGameScene {
         return newObject;
     }
 
-     /**
+    /**
+     * コンポーネントをGameObjectにアタッチする (責務を単一化)
      * ★★★ 以下のメソッドで、既存の addComponent を完全に置き換えてください ★★★
      */
     addComponent(target, componentType, params = {}) {
-        let component = null;
+        let componentInstance = null;
+        
+        // --- 1. インスタンス生成 ---
         if (componentType === 'PlayerController') {
-            component = new PlayerController(this, target, params);
+            componentInstance = new PlayerController(this, target, params);
         }
+        // ... (将来、EnemyAIなどをここに追加) ...
 
-        if (component) {
-            // --- 1. ランタイム処理 (変更なし) ---
-            this.components.push(component);
-            if (!target.components) target.components = {};
-            target.components[componentType] = component;
-
-            // --- 2. 永続化処理 (ここが修正の核心) ---
-            // 現在の永続化データを取得
-            const currentComps = target.getData('components') || [];
-            
-            // まだ同じタイプのコンポーネントが登録されていなければ、追加
-            if (!currentComps.some(c => c.type === componentType)) {
-                currentComps.push({ type: componentType, params: params });
-                // 更新された配列を、永続化データとして保存し直す
-                target.setData('components', currentComps);
+        if (componentInstance) {
+            // --- 2. GameObjectにインスタンスを格納 ---
+            // これがコンポーネント管理の「唯一の正しい場所」
+            if (!target.components) {
+                target.components = {};
             }
+            target.components[componentType] = componentInstance;
+
+            // --- 3. 永続化用のデータも保存 ---
+            const currentData = target.getData('components') || [];
+            if (!currentData.some(c => c.type === componentType)) {
+                currentData.push({ type: componentType, params: params });
+                target.setData('components', currentData);
+            }
+            console.log(`[JumpScene] Component '${componentType}' added to '${target.name}'.`);
         }
     }
+
     onSetupComplete() {
         const player = this.children.list.find(obj => obj.components?.PlayerController);
         
@@ -89,20 +93,46 @@ export default class JumpScene extends BaseGameScene {
         }
     }
     
+    /**
+     * シーン上の全GameObjectを走査し、アタッチされたコンポーネントを更新する
+     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
+     */
     update(time, delta) {
-        for (const component of this.components) {
-            if (component.update) {
-                component.update(time, delta);
+        // this.children.list には、このシーンに追加された全てのGameObjectが入っている
+        for (const gameObject of this.children.list) {
+            // そのGameObjectがcomponentsプロパティを持っているかチェック
+            if (gameObject.components) {
+                // 持っているコンポーネントを全てループ処理
+                for (const key in gameObject.components) {
+                    const component = gameObject.components[key];
+                    // コンポーネントにupdateメソッドがあれば実行する
+                    if (component && typeof component.update === 'function') {
+                        component.update(time, delta);
+                    }
+                }
             }
         }
     }
 
+    /**
+     * シーン終了時に、全GameObjectのコンポーネントを破棄する
+     * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
+     */
     shutdown() {
         console.log("[JumpScene] Shutdown.");
-        for (const component of this.components) {
-            if (component.destroy) component.destroy();
+        // シーン上の全GameObjectを走査
+        if (this.children) { // シーンが正常に破棄されることを確認
+            for (const gameObject of this.children.list) {
+                if (gameObject.components) {
+                    for (const key in gameObject.components) {
+                        const component = gameObject.components[key];
+                        if (component && typeof component.destroy === 'function') {
+                            component.destroy();
+                        }
+                    }
+                }
+            }
         }
-        this.components = [];
         super.shutdown();
     }
 }
