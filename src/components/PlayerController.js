@@ -46,47 +46,69 @@ export default class PlayerController {
         }
     }
 
-    update() {
-        // ターゲットオブジェクトが存在し、物理ボディを持っているか確認
-        if (!this.target || !this.target.body || !this.target.active) {
-            return; // ターゲットが無効なら何もしない
-        }
+   // src/components/PlayerController.js (究極デバッグログ版)
 
-        // --- 入力状態を安全に取得 ---
-        let moveX = 0;
+export default class PlayerController {
+    
+    // ... (constructor, findUiElements は変更なし) ...
+    
+    update(time, delta) {
+        // --- ステップ1: ターゲットの存在確認 ---
+        if (!this.target || !this.target.active) {
+            // console.log("[PC-Debug] Target is null or inactive. Skipping.");
+            return;
+        }
         
-        // キーボード入力
-        if (this.cursors.left.isDown) {
-            moveX = -1;
-        } else if (this.cursors.right.isDown) {
-            moveX = 1;
+        // --- ステップ2: 物理ボディの存在確認 ---
+        const body = this.target.body;
+        if (!body) {
+            console.warn(`[PC-Debug] Target '${this.target.name}' has NO physics body. Skipping.`);
+            return;
         }
 
-        // バーチャルスティック入力 (キーボード入力を上書き)
-        if (this.virtualStick) { // ★ null チェック
-            if (this.virtualStick.isLeft) {
-                moveX = -1;
-            } else if (this.virtualStick.isRight) {
-                moveX = 1;
-            }
+        // --- ステップ3: 入力状態の取得 ---
+        let moveX = 0;
+        if (this.cursors.left.isDown) moveX = -1;
+        if (this.cursors.right.isDown) moveX = 1;
+
+        if (this.virtualStick) {
+            if (this.virtualStick.isLeft) moveX = -1;
+            if (this.virtualStick.isRight) moveX = 1;
         }
+        
+        // ★★★ 核心となるデバッグログ ★★★
+        if (moveX !== 0) {
+            console.log(`[PC-Debug] Frame ${Math.round(time)}: Input detected. moveX = ${moveX}. Applying velocity...`);
+            console.log(`[PC-Debug] Body before velocity change:`, {
+                x: body.x,
+                y: body.y,
+                vx: body.velocity.x,
+                vy: body.velocity.y,
+                isStatic: body.isStatic,
+                allowGravity: body.allowGravity,
+                moves: body.moves
+            });
+        }
+        // ★★★★★★★★★★★★★★★★★★★★★★
 
-        // --- 物理ボディを操作 ---
-        this.target.body.setVelocityX(moveX * this.moveSpeed);
+        // --- ステップ4: 物理ボディへの速度設定 ---
+        body.setVelocityX(moveX * this.moveSpeed);
 
-        // --- ジャンプ入力 (キーボード) ---
-        // JustDownを使うことで、押しっぱなしでの連続ジャンプを防ぐ
+        // --- ステップ5: ジャンプ入力 ---
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
         }
     }
 
     jump() {
-        // ターゲットが地面に接している場合のみジャンプを許可
         if (this.target && this.target.body && this.target.body.touching.down) {
+            console.log("[PC-Debug] Jump condition met. Applying velocity.");
             this.target.body.setVelocityY(this.jumpVelocity);
         }
     }
+
+    // ... (destroy は変更なし) ...
+}
 
     destroy() {
         // コンポーネントが破棄される時に、イベントリスナーを安全に解除する
