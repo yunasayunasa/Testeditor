@@ -142,6 +142,7 @@ export default class BaseGameScene extends Phaser.Scene {
         
         // --- 7. イベントリスナーとエディタ登録 ---
         this.applyEventsAndEditorFunctions(gameObject, layout.events);
+            return gameObject;
     }
     
     /**
@@ -247,33 +248,6 @@ export default class BaseGameScene extends Phaser.Scene {
         }
     }
 
-removePhysicsBodyFromEditor(targetObject) {
-    if (!targetObject || !targetObject.body) {
-        return;
-    }
-
-    try {
-        // ▼▼▼▼▼ 【重要】入力システムから一時的に除外 ▼▼▼▼▼
-        targetObject.disableInteractive();
-
-        // 物理ワールドからボディを削除
-        this.matter.world.remove(targetObject.body);
-        targetObject.body = null;
-        
-        // ▼▼▼▼▼ 【重要】再度、入力を有効化する ▼▼▼▼▼
-        // これにより、Phaserの入力システムがオブジェクトの状態を再認識する
-        targetObject.setInteractive();
-
-        console.log(`[BaseGameScene] Successfully removed and re-initialized physics body for '${targetObject.name}'.`);
-
-    } catch (error) {
-        console.error(`[BaseGameScene] Error removing physics body from '${targetObject.name}':`, error);
-        // エラーが起きても、インタラクティブを再試行
-        if (targetObject && targetObject.scene) {
-            targetObject.setInteractive();
-        }
-    }
-}
     shutdown() {
         super.shutdown();
     }

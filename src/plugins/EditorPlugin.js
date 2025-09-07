@@ -194,26 +194,53 @@ createRemoveBodyButton() {
     const targetObject = this.selectedObject;
 
     removeButton.onclick = () => {
-        if (targetObject && targetObject.scene && typeof targetObject.scene.removePhysicsBodyFromEditor === 'function') {
-            
-            // シーンにボディ削除処理を委譲
-            targetObject.scene.removePhysicsBodyFromEditor(targetObject);
+        if (!targetObject || !targetObject.scene) return;
 
-            // UI更新をスケジュール
-            setTimeout(() => {
-                // UI更新前に、オブジェクトがまだ生存しているか再度確認
-                if (this.selectedObject && this.selectedObject.active) {
-                    this.updatePropertyPanel();
-                }
-            }, 0);
+        // 1. 古いオブジェクトから、再生成に必要な情報を全て抽出する
+        const layout = {
+            name: targetObject.name,
+            type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+            texture: targetObject.texture.key,
+            x: targetObject.x,
+            y: targetObject.y,
+            depth: targetObject.depth,
+            scaleX: targetObject.scaleX,
+            scaleY: targetObject.scaleY,
+            angle: targetObject.angle,
+            alpha: targetObject.alpha,
+            group: targetObject.getData('group'),
+            animation_data: targetObject.getData('animation_data'),
+            events: targetObject.getData('events'),
+            components: targetObject.getData('components'),
+            // ★★★ 物理ボディの情報は意図的に含めない ★★★
+        };
+        
+        const scene = targetObject.scene;
+        const sceneKey = scene.scene.key;
 
-        } else {
-            console.error("[EditorPlugin] Cannot remove body: Invalid target or scene method.");
+        // 2. 編集リストから古いオブジェクトの参照を削除
+        if (this.editableObjects.has(sceneKey)) {
+            this.editableObjects.get(sceneKey).delete(targetObject);
         }
+
+        // 3. 古いオブジェクトをシーンから完全に破壊する
+        targetObject.destroy();
+
+        // 4. シーンのメソッドを使って、新しいオブジェクトを生成
+        const newGameObject = scene.createObjectFromLayout(layout);
+        
+        // 5. 新しいオブジェクトに、抽出したプロパティを適用
+        scene.applyProperties(newGameObject, layout);
+        
+        // 6. 新しいオブジェクトを、新しい選択対象として設定
+        this.selectedObject = newGameObject;
+
+        // 7. UIを更新
+        this.updatePropertyPanel();
     };
+
     this.editorPropsContainer.appendChild(removeButton);
 }
-
     // --- `updatePropertyPanel`から呼び出されるUI生成ヘルパーメソッド群 ---
 
     createNameInput() {
