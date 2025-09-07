@@ -1,7 +1,8 @@
 import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
-import GameScene from './GameScene.js'; 
+import GameScene from './GameScene.js';
+import JumpScene from './JumpScene.js';
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -88,19 +89,17 @@ export default class SystemScene extends Phaser.Scene {
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
-     _startInitialGame(initialData) {
-        this.globalChariable = initialData.charaDefs;
+    _startInitialGame(initialData) {
+        this.globalCharaDefs = initialData.charaDefs;
         console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
-
-        // ★★★ UISceneはすでに起動しているので、ここでの起動ロジックは全て不要 ★★★
         
-        // ★★★ UISceneの準備完了を待つ必要もない。すでにあるから。 ★★★
-        console.log("[SystemScene] UIScene is already active. Starting GameScene directly.");
+        // ★ GameSceneを起動する
         this._startAndMonitorScene('GameScene', {
-            charaDefs: this.globalChariable,
+            charaDefs: this.globalCharaDefs,
             startScenario: initialData.startScenario,
         });
     }
+
 
 
 
@@ -225,48 +224,55 @@ export default class SystemScene extends Phaser.Scene {
         }
     }
 
-  /**
-     * ★★★ 新しいシーンを起動し、完了まで監視するコアメソッド (真・最終確定版) ★★★
-     * @param {string} sceneKey - 起動するシーンのキー
-     * @param {object} params - シーンに渡すデータ
+   /**
+     * 新しいシーンを起動し、完了まで監視するコアメソッド (動的追加対応版)
+     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
     _startAndMonitorScene(sceneKey, params) {
-        if (this.isProcessingTransition && sceneKey !== 'GameScene') { // GameSceneの初回起動は例外
+        if (this.isProcessingTransition) {
             console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${sceneKey})が、無視されました。`);
             return;
         }
-
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
-        console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。ゲーム全体の入力を無効化。`);
-
-        this.tweens.killAll();
-        console.log("[SystemScene] すべての既存Tweenを強制終了しました。");
-
-        const targetScene = this.scene.get(sceneKey);
         
-        // 完了イベントを決定
-        const completionEvent = (sceneKey === 'GameScene')
-            ? 'gameScene-load-complete'
-            : 'scene-ready';
+        // --- 1. 起動するシーンのクラスを決定 ---
+        // このマップで、どのキーがどのクラスに対応するかを定義する
+        const sceneClassMap = {
+            'GameScene': GameScene,
+            'JumpScene': JumpScene,
+            // ... (将来、'BattleScene': BattleScene, を追加) ...
+        };
+        const SceneClass = sceneClassMap[sceneKey];
+        if (!SceneClass) {
+            console.error(`[SystemScene] '${sceneKey}'に対応するシーンクラスが見つかりません。`);
+            this.isProcessingTransition = false;
+            this.game.input.enabled = true;
+            return;
+        }
 
-        // ★★★ 核心: 完了イベントを一度だけリッスンする ★★★
+        // --- 2. シーンが既に存在しない場合、動的に追加する ---
+        if (!this.scene.get(sceneKey)) {
+            this.scene.add(sceneKey, SceneClass, false);
+            console.log(`[SystemScene] シーン[${sceneKey}]を動的に追加しました。`);
+        }
+        
+        // --- 3. これで、targetSceneは絶対にnullにならない ---
+        const targetScene = this.scene.get(sceneKey);
+        const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
+
         targetScene.events.once(completionEvent, () => {
             this._onTransitionComplete(sceneKey);
         });
 
-        // リスナーを登録した後に、シーンの起動/再開を行う
-        // launchではなくrunを使うことで、すでに存在するシーンでも確実に実行される
+        // --- 4. シーンを起動する ---
         this.scene.run(sceneKey, params);
+        console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。`);
     }
-    /**
-     * シーン遷移が完全に完了したときの処理
-     * @param {string} sceneKey - 完了したシーンのキー
-     */
     _onTransitionComplete(sceneKey) {
         this.isProcessingTransition = false;
         this.game.input.enabled = true;
-        console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。ゲーム全体の入力を再有効化。`);
+        console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。`);
         this.events.emit('transition-complete', sceneKey);
     }
      /**
