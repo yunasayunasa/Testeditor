@@ -764,92 +764,120 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     
+//
+// Odyssey Engine - EditorPlugin.exportLayoutToJson
+// Final Audited Version: Correct Syntax & Logic
+//
 
-    exportLayoutToJson() {
-        if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
-            alert("オブジェクトを選択してからエクスポートしてください。");
-            return;
-        }
-        const targetScene = this.selectedObject.scene;
-        const sceneKey = targetScene.scene.key;
-        
-        const sceneLayoutData = {
-            objects: [],
-            animations: []
-        };
+exportLayoutToJson() {
+    if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
+        alert("オブジェクトを選択してからエクスポートしてください。");
+        return;
+    }
+    const targetScene = this.selectedObject.scene;
+    const sceneKey = targetScene.scene.key;
+    
+    const sceneLayoutData = {
+        objects: [],
+        animations: []
+    };
 
-       if (this.editableObjects.has(sceneKey)) {
-            for (const gameObject of this.editableObjects.get(sceneKey)) {
-                if (!gameObject.name || !gameObject.active) continue; // ★ activeでない(destroyされた)オブジェクトは除外
+    if (this.editableObjects.has(sceneKey)) {
+        // --- 1. editableObjectsセット内の全てのGameObjectをループ処理 ---
+        for (const gameObject of this.editableObjects.get(sceneKey)) {
+            // オブジェクトが破棄済み、または名前がない場合はスキップ
+            if (!gameObject.active || !gameObject.name) continue;
 
+            // --- 2. 各オブジェクトのデータを格納するobjDataを初期化 ---
+            const objData = {
+                name: gameObject.name,
+                x: Math.round(gameObject.x),
+                y: Math.round(gameObject.y),
+                depth: gameObject.depth,
+                scaleX: parseFloat(gameObject.scaleX.toFixed(2)),
+                scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
+                angle: Math.round(gameObject.angle),
+                alpha: parseFloat(gameObject.alpha.toFixed(2)),
+                width: Math.round(gameObject.width),
+                height: Math.round(gameObject.height)
+            };
 
-                const objData = {
-                    name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), depth: gameObject.depth,
-                    scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
-                    angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)), width: Math.round(gameObject.width),
-                    height: Math.round(gameObject.height)
+            // --- 3. 各プロパティをobjDataに追加していく ---
+            if (gameObject.getData('group')) {
+                objData.group = gameObject.getData('group');
+            }
+            
+            if (gameObject instanceof Phaser.GameObjects.Sprite) {
+                objData.type = 'Sprite';
+            }
+
+            if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') {
+                objData.texture = gameObject.texture.key;
+            }
+
+            // 物理ボディの有無をチェックして追加
+            if (gameObject.body) {
+                const body = gameObject.body;
+                objData.physics = {
+                    isStatic: body.isStatic,
+                    shape: gameObject.getData('shape') || 'rectangle', 
+                    friction: parseFloat(body.friction.toFixed(2)),
+                    restitution: parseFloat(body.restitution.toFixed(2)),
                 };
+            }
 
-                if (gameObject.getData('group')) {
-        objData.group = gameObject.getData('group');
+            // その他のデータを追加
+            if (gameObject.getData('animation_data')) {
+                objData.animation = gameObject.getData('animation_data');
+            }
+            if (gameObject.getData('events')) {
+                objData.events = gameObject.getData('events');
+            }
+            if (gameObject.getData('components')) {
+                objData.components = gameObject.getData('components');
+            }
+
+            // --- 4. 全てのプロパティが追加されたobjDataを、配列に追加 ---
+            sceneLayoutData.objects.push(objData);
+            
+        } // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
+          // ★★★ ここが、正しい for ループの閉じ括弧です ★★★
+          // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
     }
-                
-                if (gameObject instanceof Phaser.GameObjects.Sprite) objData.type = 'Sprite';
-                if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
-
-                // ★★★ 物理ボディの書き出し部分を、Matter.js用に変更 ★★★
-                 if (gameObject.body) {
-                    const body = gameObject.body;
-                    objData.physics = {
-                        isStatic: body.isStatic,
-                        shape: gameObject.getData('shape') || 'rectangle', 
-                        friction: parseFloat(body.friction.toFixed(2)),
-                        restitution: parseFloat(body.restitution.toFixed(2)),
-                    };
+    
+    // --- 5. アニメーションデータの書き出し (ループの外) ---
+    const scene = this.game.scene.getScene(sceneKey);
+    if (scene && scene.anims) {
+        sceneLayoutData.animations = scene.anims.anims.getArray()
+            .filter(anim => {
+                if (!anim.frames[0]) return false;
+                const sceneObjects = this.editableObjects.get(sceneKey);
+                if (!sceneObjects) return false;
+                return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
+            })
+            .map(anim => {
+                let frames;
+                if (anim.generateFrameNumbers) {
+                    frames = { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame };
+                } else {
+                    frames = anim.frames.map(f => f.index);
                 }
-                
-                sceneLayoutData.objects.push(objData);
-            }
-        }
-
-                if (gameObject.getData('animation_data')) objData.animation = gameObject.getData('animation_data');
-                if (gameObject.getData('events')) objData.events = gameObject.getData('events');
-                   if (gameObject.getData('components')) {
-                    objData.components = gameObject.getData('components');
-                }
-                sceneLayoutData.objects.push(objData);
-            }
-        }
-        
-        const scene = this.game.scene.getScene(sceneKey);
-        if (scene && scene.anims) {
-            sceneLayoutData.animations = scene.anims.anims.getArray()
-                .filter(anim => {
-                    if (!anim.frames[0]) return false;
-                    const sceneObjects = this.editableObjects.get(sceneKey);
-                    if (!sceneObjects) return false;
-                    return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
-                })
-                .map(anim => {
-                    let frames;
-                    if (anim.generateFrameNumbers) {
-                        frames = { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame };
-                    } else {
-                        frames = anim.frames.map(f => f.index);
-                    }
-                    return {
-                        key: anim.key, texture: anim.frames[0].textureKey, frames: frames,
-                        frameRate: anim.frameRate, repeat: anim.repeat
-                    };
-                });
-        }
-
-        const jsonString = JSON.stringify(sceneLayoutData, null, 2);
-        console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
-        console.log(jsonString);
-        navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
+                return {
+                    key: anim.key,
+                    texture: anim.frames[0].textureKey,
+                    frames: frames,
+                    frameRate: anim.frameRate,
+                    repeat: anim.repeat
+                };
+            });
     }
 
+    // --- 6. 最終的なJSONの出力 (変更なし) ---
+    const jsonString = JSON.stringify(sceneLayoutData, null, 2);
+    console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
+    console.log(jsonString);
+    navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
+}
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
     // ★★★ 最新版のイベント関連メソッド群をここに配置 ★★★
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
