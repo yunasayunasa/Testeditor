@@ -38,7 +38,11 @@ export default class SystemScene extends Phaser.Scene {
         this.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
         console.log("SystemScene: SoundManagerを登録しました。");
-
+// ★★★ UISceneを動的に追加し、永続的に起動する ★★★
+        if (!this.scene.get('UIScene')) {
+            this.scene.add('UIScene', UIScene, true); // ★ active: trueで追加・起動
+        }
+        
         // --- 2. イベントリスナーの設定 ---
         this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
@@ -89,17 +93,16 @@ export default class SystemScene extends Phaser.Scene {
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
+
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
-        console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
         
-        // ★ GameSceneを起動する
+        // ★ UISceneはすでにcreateで起動済みなので、ここではGameSceneを起動するだけ
         this._startAndMonitorScene('GameScene', {
             charaDefs: this.globalCharaDefs,
             startScenario: initialData.startScenario,
         });
     }
-
 
 
 

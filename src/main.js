@@ -60,16 +60,16 @@ const config = {
     scene: [
         PreloadScene, 
         SystemScene, 
-     UIScene,       
+   //  UIScene,       
     //  GameScene,   
         
-      SaveLoadScene, 
+   /*   SaveLoadScene, 
         ConfigScene, 
         BacklogScene, 
         ActionScene,
          BattleScene,
         JumpScene,
-       NovelOverlayScene
+       NovelOverlayScene*/
    ],
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
  plugins: {
