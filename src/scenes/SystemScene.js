@@ -1,8 +1,7 @@
 import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
-import GameScene from './GameScene.js';
-import JumpScene from './JumpScene.js';
+import GameScene from './GameScene.js'; 
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -38,11 +37,7 @@ export default class SystemScene extends Phaser.Scene {
         this.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
         console.log("SystemScene: SoundManagerを登録しました。");
-// ★★★ UISceneを動的に追加し、永続的に起動する ★★★
-        if (!this.scene.get('UIScene')) {
-            this.scene.add('UIScene', UIScene, true); // ★ active: trueで追加・起動
-        }
-        this.scene.bringToTop('UIScene');
+
         // --- 2. イベントリスナーの設定 ---
         this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
@@ -93,15 +88,34 @@ export default class SystemScene extends Phaser.Scene {
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
-
-    _startInitialGame(initialData) {
+      _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
-        
-        // ★ UISceneはすでにcreateで起動済みなので、ここではGameSceneを起動するだけ
-        this._startAndMonitorScene('GameScene', {
-            charaDefs: this.globalCharaDefs,
-            startScenario: initialData.startScenario,
+        console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
+
+        // ★★★ 2. 常にシーンを追加するロジックに修正（より安全） ★★★
+        // main.jsで登録されていないので、ここで必ず追加する
+        if (!this.scene.get('UIScene')) { // getで存在確認する方がより確実
+            this.scene.add('UIScene', UIScene, false);
+            console.log("[SystemScene] UISceneを動的に追加しました。");
+        }
+        if (!this.scene.get('GameScene')) {
+            this.scene.add('GameScene', GameScene, false);
+            console.log("[SystemScene] GameSceneを動的に追加しました。");
+        }
+
+        const uiScene = this.scene.get('UIScene');
+
+        uiScene.events.once('scene-ready', () => {
+            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
+            
+            this._startAndMonitorScene('GameScene', {
+                charaDefs: this.globalCharaDefs,
+                startScenario: initialData.startScenario,
+            });
         });
+
+        console.log("[SystemScene] Running UIScene now.");
+        this.scene.run('UIScene');
     }
 
 
@@ -227,55 +241,48 @@ export default class SystemScene extends Phaser.Scene {
         }
     }
 
-   /**
-     * 新しいシーンを起動し、完了まで監視するコアメソッド (動的追加対応版)
-     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
+  /**
+     * ★★★ 新しいシーンを起動し、完了まで監視するコアメソッド (真・最終確定版) ★★★
+     * @param {string} sceneKey - 起動するシーンのキー
+     * @param {object} params - シーンに渡すデータ
      */
     _startAndMonitorScene(sceneKey, params) {
-        if (this.isProcessingTransition) {
+        if (this.isProcessingTransition && sceneKey !== 'GameScene') { // GameSceneの初回起動は例外
             console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${sceneKey})が、無視されました。`);
             return;
         }
+
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
-        
-        // --- 1. 起動するシーンのクラスを決定 ---
-        // このマップで、どのキーがどのクラスに対応するかを定義する
-        const sceneClassMap = {
-            'GameScene': GameScene,
-            'JumpScene': JumpScene,
-            // ... (将来、'BattleScene': BattleScene, を追加) ...
-        };
-        const SceneClass = sceneClassMap[sceneKey];
-        if (!SceneClass) {
-            console.error(`[SystemScene] '${sceneKey}'に対応するシーンクラスが見つかりません。`);
-            this.isProcessingTransition = false;
-            this.game.input.enabled = true;
-            return;
-        }
+        console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。ゲーム全体の入力を無効化。`);
 
-        // --- 2. シーンが既に存在しない場合、動的に追加する ---
-        if (!this.scene.get(sceneKey)) {
-            this.scene.add(sceneKey, SceneClass, false);
-            console.log(`[SystemScene] シーン[${sceneKey}]を動的に追加しました。`);
-        }
-        
-        // --- 3. これで、targetSceneは絶対にnullにならない ---
+        this.tweens.killAll();
+        console.log("[SystemScene] すべての既存Tweenを強制終了しました。");
+
         const targetScene = this.scene.get(sceneKey);
-        const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
+        
+        // 完了イベントを決定
+        const completionEvent = (sceneKey === 'GameScene')
+            ? 'gameScene-load-complete'
+            : 'scene-ready';
 
+        // ★★★ 核心: 完了イベントを一度だけリッスンする ★★★
         targetScene.events.once(completionEvent, () => {
             this._onTransitionComplete(sceneKey);
         });
 
-        // --- 4. シーンを起動する ---
+        // リスナーを登録した後に、シーンの起動/再開を行う
+        // launchではなくrunを使うことで、すでに存在するシーンでも確実に実行される
         this.scene.run(sceneKey, params);
-        console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。`);
     }
+    /**
+     * シーン遷移が完全に完了したときの処理
+     * @param {string} sceneKey - 完了したシーンのキー
+     */
     _onTransitionComplete(sceneKey) {
         this.isProcessingTransition = false;
         this.game.input.enabled = true;
-        console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。`);
+        console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。ゲーム全体の入力を再有効化。`);
         this.events.emit('transition-complete', sceneKey);
     }
      /**

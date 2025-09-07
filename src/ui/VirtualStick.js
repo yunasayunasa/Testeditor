@@ -1,102 +1,112 @@
-//
-// Odyssey Engine - VirtualStick Component
-// Version: 3.0 (Clean Room Implementation)
-//
+// src/ui/VirtualStick.js (ポインターID管理・最終完成版)
 
-// Phaserのグローバルオブジェクトから、必要なクラスを安全に取得
-const Container = Phaser.GameObjects.Container;
 const Graphics = Phaser.GameObjects.Graphics;
-const Circle = Phaser.Geom.Circle;
 const Vector2 = Phaser.Math.Vector2;
+const Circle = Phaser.Geom.Circle;
 
-export default class VirtualStick extends Container {
-
-    // uiRegistryの前処理が参照するための静的プロパティ
-    static dependencies = [];
-
+export default class VirtualStick extends Phaser.GameObjects.Container {
+    
     constructor(scene, config) {
-        // configから渡される座標、あるいはデフォルトの座標(150, 550)にコンテナを配置
-        super(scene, config.x || 150, config.y || 550);
+        super(scene, config.x || 0, config.y || 0);
 
-        // --- 1. プロパティの定義 ---
-        this.baseRadius = 100;
-        this.stickRadius = 50;
-        this.direction = new Vector2(0, 0); // 方向ベクトルを初期化
-        this.pointer = null; // 操作中のポインターを保持する変数
+        // --- 1. プロパティ定義 ---
+        this.baseRadius = config.baseRadius || 100;
+        this.stickRadius = config.stickRadius || 50;
+        this.pointerId = null; // ★ このスティックを操作しているポインターのID
+        this.direction = new Vector2(0, 0);
 
-        // --- 2. 見た目の作成 ---
-        // 土台となる円 (半透明の灰色)
-        const base = new Graphics(scene)
-            .fillStyle(0x888888, 0.5)
-            .fillCircle(0, 0, this.baseRadius);
+        // --- 2. グラフィック描画 ---
+        const base = new Graphics(scene);
+        base.fillStyle(0x888888, 0.5);
+        base.fillCircle(0, 0, this.baseRadius);
 
-        // 操作するノブ (不透明の明るい灰色)
-        this.stick = new Graphics(scene)
-            .fillStyle(0xcccccc, 0.8)
-            .fillCircle(0, 0, this.stickRadius);
-        
-        // 作成したグラフィックをコンテナに追加
+        this.stick = new Graphics(scene);
+        this.stick.fillStyle(0xcccccc, 0.8);
+        this.stick.fillCircle(0, 0, this.stickRadius);
         this.add([base, this.stick]);
 
-        // --- 3. 当たり判定とインタラクションの設定 ---
-        // 土台(base)のグラフィックに、見た目と完全に一致する円形の当たり判定を設定
+        // --- 3. 当たり判定とインタラクション ---
+        // ★★★ setInteractiveをコンテナ自身に設定するのではなく、土台(base)に設定するのがより確実 ★★★
         base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
-
-        // --- 4. 自身をシーンの更新ループとカメラから独立させる ---
         this.setScrollFactor(0);
         
-        // --- 5. イベントリスナーの設定 ---
-        // 土台が押された時に、そのポインターを「所有」する
-        base.on('pointerdown', (pointer) => {
-            if (!this.pointer) { // 誰も所有していなければ
-                this.pointer = pointer;
-            }
-        });
+        // --- 4. イベントリスナー ---
+        // ★★★ base(土台)のpointerdownを監視する ★★★
+        base.on('pointerdown', this.onStickDown, this);
 
-        // 画面全体のポインターupを監視する
-        this.scene.input.on('pointerup', (pointer) => {
-            // 所有しているポインターが離された場合のみリセット
-            if (this.pointer && this.pointer.id === pointer.id) {
-                this.pointer = null;
-                this.reset();
-            }
-        });
+        // ★★★ シーン全体のmoveとupを監視するのは変わらない ★★★
+        this.scene.input.on('pointermove', this.onPointerMove, this);
+        this.scene.input.on('pointerup', this.onPointerUp, this);
+
+        this.scene.events.on('shutdown', this.shutdown, this);
+    }
+    
+    /** スティックがタッチされた時の処理 */
+    onStickDown(pointer) {
+        // 既に他の指で操作中の場合は何もしない
+        if (this.pointerId !== null) return;
         
-        // --- 6. このコンテナをシーンに追加して、updateループを開始させる ---
-        scene.add.existing(this);
-    }
-
-    // --- 7. 毎フレーム実行される更新処理 ---
-    update() {
-        // ポインターを所有している（＝スティックが操作されている）間のみ処理を実行
-        if (this.pointer && this.pointer.isDown) {
-            this.updateStickPosition();
-        }
-    }
-
-    // --- 8. ノブの位置と方向を計算するコアロジック ---
-    updateStickPosition() {
-        const localX = this.pointer.x - this.x;
-        const localY = this.pointer.y - this.y;
-        const vec = new Vector2(localX, localY);
-        const distance = vec.length();
-        const maxDistance = this.baseRadius;
-
-        if (distance > maxDistance) {
-            vec.normalize().scale(maxDistance);
-        }
-
-        this.stick.setPosition(vec.x, vec.y);
+        // このタッチのIDを記録
+        this.pointerId = pointer.id;
         
-        if (maxDistance > 0) {
-            this.direction.x = Phaser.Math.Clamp(vec.x / maxDistance, -1, 1);
-            this.direction.y = Phaser.Math.Clamp(vec.y / maxDistance, -1, 1);
-        }
+        // ★ 押された瞬間にノブを更新
+        this.updateStickPosition(pointer);
     }
 
-    // --- 9. スティックの状態をリセットする ---
-    reset() {
+    /** ポインターが動いた時の処理 */
+    onPointerMove(pointer) {
+        // このスティックを操作している指でなければ、処理を無視
+        if (pointer.id !== this.pointerId) return;
+        
+        this.updateStickPosition(pointer);
+    }
+    
+    /** ポインターが離された時の処理 */
+    onPointerUp(pointer) {
+        // このスティックを操作している指でなければ、処理を無視
+        if (pointer.id !== this.pointerId) return;
+
+        // 状態をリセット
+        this.pointerId = null;
         this.stick.setPosition(0, 0);
         this.direction.setTo(0, 0);
+    }
+
+    /** ノブの位置と方向ベクトルを更新するコアロジック */
+    updateStickPosition(pointer) {
+        const localPoint = this.getLocalPoint(pointer.x, pointer.y);
+        const distance = localPoint.length();
+        const maxDistance = this.baseRadius; // ノブの可動範囲は土台の半径いっぱいまで
+
+        if (distance > maxDistance) {
+            localPoint.normalize().scale(maxDistance);
+        }
+
+        this.stick.setPosition(localPoint.x, localPoint.y);
+        
+        if (maxDistance > 0) {
+            this.direction.x = Phaser.Math.Clamp(localPoint.x / maxDistance, -1, 1);
+            this.direction.y = Phaser.Math.Clamp(localPoint.y / maxDistance, -1, 1);
+        }
+    }
+
+    getLocalPoint(x, y) {
+        const tempMatrix = new Phaser.GameObjects.Components.TransformMatrix();
+        this.getWorldTransformMatrix(tempMatrix);
+        const localPoint = tempMatrix.invert().transformPoint(x, y);
+        return new Vector2(localPoint.x, localPoint.y);
+    }
+
+    // --- ゲッター (変更なし) ---
+    get isLeft() { return this.direction.x < -0.5; }
+    get isRight() { return this.direction.x > 0.5; }
+    get isUp() { return this.direction.y < -0.5; }
+    get isDown() { return this.direction.y > 0.5; }
+
+    shutdown() {
+        if (this.scene && this.scene.input) {
+            this.scene.input.off('pointermove', this.onPointerMove, this);
+            this.scene.input.off('pointerup', this.onPointerUp, this);
+        }
     }
 }
