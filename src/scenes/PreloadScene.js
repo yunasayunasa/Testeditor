@@ -18,7 +18,7 @@ export default class PreloadScene extends Phaser.Scene {
         
         // --- 1. ロード画面UIの表示 ---
         this.setupLoadingUI();
-        
+          this.load.plugin('rexvirtualjoystickplugin', 'src/plugins/rexvirtualjoystickplugin.min.js', true);
         // --- 2. 最初に asset_define.json のみロード ---
         this.load.json('asset_define', 'assets/asset_define.json');
         //this.load.script('ui_definitions', 'src/ui/index.js');

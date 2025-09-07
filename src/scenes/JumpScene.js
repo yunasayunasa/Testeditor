@@ -7,7 +7,7 @@ export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-        // ★ プロパティをシンプルに
+      this.joystick = null;
         this.actionInterpreter = null;
     }
   create() {
@@ -32,6 +32,25 @@ export default class JumpScene extends BaseGameScene {
 
         // データからシーンを構築する命令は最後に呼ぶ
         this.initSceneWithData();
+       // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここで、Rex Virtual Joystick を生成します ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
+            x: 150,
+            y: 550,
+            radius: 100,
+            base: this.add.circle(0, 0, 100, 0x888888, 0.5),
+            thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8),
+            // dir: '8dir',   // 8方向
+            // forceMin: 16,
+            // enable: true
+        }).on('update', this.dumpJoyStickState, this);
+
+        this.dumpJoyStickState(); // 初期状態をダンプ
+    }
+     dumpJoyStickState() {
+        // このメソッドは、PlayerControllerのupdateで直接参照するため、
+        // デバッグ以外では空でも良い
     }
     addObjectFromEditor(assetKey, newName) {
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
@@ -93,29 +112,24 @@ export default class JumpScene extends BaseGameScene {
         // ★ Matter.jsでは、衝突はカテゴリ(category)とマスク(collidesWith)で管理する
         // ★ もしくは、単純な衝突であれば何もしなくても良い
         // ★ Arcade Physicsの collider のような明示的な設定は不要
-        
         const player = this.children.list.find(obj => obj.getData('group') === 'player');
-        
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
-            
-            // ★ Matter.jsでは、デフォルトで全てのオブジェクトが互いに衝突する
-            // ★ そのため、this.physics.add.colliderは不要
-            console.log("[JumpScene] Matter.js setup complete. Default collision is enabled.");
-
-            // ★（オプション）プレイヤーのボディを回転しないように固定する
-            player.setFixedRotation(); // これにより、坂道でキャラクターが転がらなくなる
-
-        } else {
-            console.warn("[JumpScene] 'player' group object not found.");
-        }
+            this.playerController = player.components?.PlayerController;
+        };
+        
+       
     }
 
     /**
      * シーン上の全GameObjectを走査し、アタッチされたコンポー-ネントを更新する
      * ★★★ これが、このシーンに残るべき唯一のupdateロジックです ★★★
      */
-    update(time, delta) {
+update(time, delta) {
+        // ★★★ PlayerControllerに、joystickオブジェクトを直接渡す ★★★
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+        }
         // this.children.list には、このシーンに追加された全てのGameObjectが入っている
         for (const gameObject of this.children.list) {
             // そのGameObjectがcomponentsプロパティを持っているかチェック

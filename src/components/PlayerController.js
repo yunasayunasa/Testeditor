@@ -17,34 +17,26 @@ export default class PlayerController {
         this.virtualStick = null;
         this.jumpButton = null;
 
-        // --- UI要素を自分で探しに行く ---
-        const uiScene = scene.scene.get('UIScene');
-        if (uiScene) {
-            this.virtualStick = uiScene.uiElements.get('virtual_stick');
-            this.jumpButton = uiScene.uiElements.get('jump_button');
-
-            if (this.jumpButton) {
-                this.jumpButton.on('button_pressed', this.jump, this);
-            }
-        }
     }
 
-    update() {
+   
+    // ★ メソッド名を updateWithJoystick に変更
+    updateWithJoystick(joystick) {
         if (!this.target || !this.target.body || !this.target.active) return;
         
         let moveX = 0;
+        
         
         if (this.keyboardEnabled && this.cursors) {
             if (this.cursors.left.isDown) moveX = -1;
             if (this.cursors.right.isDown) moveX = 1;
         }
 
-        if (this.virtualStick) {
-            // isLeft/isRight ゲッターを使う
-            if (this.virtualStick.isLeft) moveX = -1;
-            else if (this.virtualStick.isRight) moveX = 1;
+        // ★★★ Rex Joystick の状態を読み取る ★★★
+        if (joystick) {
+            if (joystick.left) moveX = -1;
+            else if (joystick.right) moveX = 1;
         }
-
         const currentVelocityY = this.target.body.velocity.y;
         this.target.setVelocityX(moveX * this.moveSpeed);
         if (moveX !== 0) {
