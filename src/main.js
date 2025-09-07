@@ -80,11 +80,28 @@ const config = {
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         ]
     },
-    physics: {
+   /* physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 800 }, // 標準の重力
             debug: true // 開発中はtrueにして当たり判定を可視化
+        }
+    }*/
+   physics: {
+        default: 'matter', // ★ デフォルトを 'matter' に変更
+        matter: {
+            gravity: { 
+                y: 1 // Matter.jsの重力はスケールが違う。1が標準的
+            },
+            // ★ Matter.jsのデバッグ表示設定
+            debug: {
+                showBody: true,
+                showStaticBody: true,
+                showVelocity: true,
+                bodyColor: 0xff00ff, // 動くボディの色 ( magenta )
+                staticBodyColor: 0x0000ff, // 静的なボディの色 ( blue )
+                velocityColor: 0x00ff00, // 速度ベクトルの色 ( lime green )
+            }
         }
     }
 };
