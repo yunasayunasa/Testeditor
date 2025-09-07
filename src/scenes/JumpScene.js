@@ -5,11 +5,13 @@ import PlayerController from '../components/PlayerController.js';
 
 export default class JumpScene extends BaseGameScene {
 
-    constructor() {
+     constructor() {
         super({ key: 'JumpScene' });
-      this.joystick = null;
+        this.joystick = null;
+        this.playerController = null; // ★ playerControllerもnullで初期化
         this.actionInterpreter = null;
     }
+
   create() {
         console.log("[JumpScene] Create started.");
         
@@ -31,22 +33,13 @@ export default class JumpScene extends BaseGameScene {
         // ★★★ ここまで ★★★
 
         // データからシーンを構築する命令は最後に呼ぶ
-        this.initSceneWithData();
-       // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ ここで、Rex Virtual Joystick を生成します ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+         this.initSceneWithData();
+
         this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
-            x: 150,
-            y: 550,
-            radius: 100,
+            x: 150, y: 550, radius: 100,
             base: this.add.circle(0, 0, 100, 0x888888, 0.5),
             thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8),
-            // dir: '8dir',   // 8方向
-            // forceMin: 16,
-            // enable: true
-        }).on('update', this.dumpJoyStickState, this);
-
-        this.dumpJoyStickState(); // 初期状態をダンプ
+        });
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
@@ -108,44 +101,38 @@ export default class JumpScene extends BaseGameScene {
       /**
      * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
      */
-    onSetupComplete() {
-        // ★ Matter.jsでは、衝突はカテゴリ(category)とマスク(collidesWith)で管理する
-        // ★ もしくは、単純な衝突であれば何もしなくても良い
-        // ★ Arcade Physicsの collider のような明示的な設定は不要
+ onSetupComplete() {
         const player = this.children.list.find(obj => obj.getData('group') === 'player');
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
             this.playerController = player.components?.PlayerController;
-        };
-        
-       
-    }
-
-    /**
-     * シーン上の全GameObjectを走査し、アタッチされたコンポー-ネントを更新する
-     * ★★★ これが、このシーンに残るべき唯一のupdateロジックです ★★★
-     */
-update(time, delta) {
-        // ★★★ PlayerControllerに、joystickオブジェクトを直接渡す ★★★
-        if (this.playerController) {
-            this.playerController.updateWithJoystick(this.joystick);
+            
+            // ★★★ プレイヤーが回転しないように固定する ★★★
+            player.setFixedRotation(); 
         }
-        // this.children.list には、このシーンに追加された全てのGameObjectが入っている
-        for (const gameObject of this.children.list) {
-            // そのGameObjectがcomponentsプロパティを持っているかチェック
-            if (gameObject.components) {
-                // 持っているコンポーネントを全てループ処理
-                for (const key in gameObject.components) {
-                    const component = gameObject.components[key];
-                    // コンポーネントにupdateメソッドがあれば実行する
-                    if (component && typeof component.update === 'function') {
-                        component.update(time, delta);
+        
+        // --- ジャンプボタンのイベント処理をここで行う ---
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            const jumpButton = uiScene.uiElements.get('jump_button');
+            if (jumpButton) {
+                jumpButton.on('button_pressed', () => {
+                    if (this.playerController) {
+                        this.playerController.jump();
                     }
-                }
+                }, this);
             }
         }
     }
-    
+
+
+     update(time, delta) {
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+        }
+        // ★ 他のコンポーネントのupdateループは不要 (PlayerControllerだけがupdateを持つため)
+    }
+
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★

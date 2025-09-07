@@ -4,11 +4,7 @@ export const uiRegistry = {
     'coin_hud': { path: './ui/CoinHud.js', groups: [ 'battle','hud'] },
     'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } },
     'enemy_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
-    'virtual_stick': { 
-        path: './ui/VirtualStick.js', 
-        groups: ['controls', 'action'],
-        params: { group: 'virtual_stick' } 
-    },
+
     'jump_button': { 
         path: './ui/JumpButton.js', 
         groups: ['controls', 'action'],

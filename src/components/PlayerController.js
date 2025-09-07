@@ -3,6 +3,8 @@
 // Final Architecture: Self-Sufficient Agent for Matter.js
 //
 
+
+    
 export default class PlayerController {
     
     constructor(scene, target, params = {}) {
@@ -14,11 +16,8 @@ export default class PlayerController {
         this.keyboardEnabled = !!scene.input.keyboard;
         this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
         
-        this.virtualStick = null;
-        this.jumpButton = null;
-
+        // ★★★ virtualStickとjumpButtonへの参照は、もう不要 ★★★
     }
-
    
     // ★ メソッド名を updateWithJoystick に変更
     updateWithJoystick(joystick) {
