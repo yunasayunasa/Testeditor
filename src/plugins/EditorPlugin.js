@@ -372,18 +372,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const shapeSelect = document.getElementById('shape-select');
         shapeSelect.onchange = (e) => {
             const newShape = e.target.value;
-            // ★★★ 形状の情報を、GameObject自身にデータとして保存 ★★★
-            gameObject.setData('shape', newShape);
-
             if (newShape === 'rectangle') {
+                // 円形から四角形に戻す (テクスチャサイズに合わせる)
                 gameObject.setBody({ type: 'rectangle' }); 
             } else if (newShape === 'circle') {
+                // テクスチャの幅と高さの平均を半径とする円形にする
                 const radius = (gameObject.width + gameObject.height) / 4;
                 gameObject.setCircle(radius);
             }
             this.updatePropertyPanel();
         };
-
 
         // Friction (摩擦)
         this.createRangeInput(this.editorPropsContainer, 'Friction', body.friction, 0, 1, 0.01, (value) => {
@@ -807,14 +805,14 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
 
                 // ★★★ 物理ボディの書き出し部分を、Matter.js用に変更 ★★★
-                 if (gameObject.body) {
+                if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
-                        // ★★★ body.shapeではなく、setDataした値を取得 ★★★
-                        shape: gameObject.getData('shape') || 'rectangle', 
+                        shape: body.shape || 'rectangle', // 'rectangle' or 'circle'
                         friction: parseFloat(body.friction.toFixed(2)),
-                        restitution: parseFloat(body.restitution.toFixed(2)),
+                        restitution: parseFloat(body.restitution.toFixed(2)), // Bounce
+                        // 必要に応じて、他のプロパティも追加
                     };
                 }
 
