@@ -1,6 +1,7 @@
 const Container = Phaser.GameObjects.Container;
 const Graphics = Phaser.GameObjects.Graphics;
 const Text = Phaser.GameObjects.Text;
+
 export default class JumpButton extends Container {
     static dependencies = [];
 
@@ -12,10 +13,28 @@ export default class JumpButton extends Container {
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         const radius = 65;
-        // ... (グラフィック作成は変更なし) ...
+        const background = new Graphics(scene);
+        background.fillStyle(0xcccccc, 0.7);
+        background.fillCircle(0, 0, radius);
+        
+        this.background_pressed = new Graphics(scene);
+        this.background_pressed.fillStyle(0x888888, 0.8);
+        this.background_pressed.fillCircle(0, 0, radius);
+        this.background_pressed.setVisible(false);
+
+        const label = new Text(scene, 0, 0, 'JUMP', {
+            fontSize: '32px',
+            fontStyle: 'bold',
+            color: '#111111',
+            align: 'center'
+        }).setOrigin(0.5);
+
+        // --- Containerに部品を追加 (変更なし) ---
         this.add([background, this.background_pressed, label]);
         
-        this.setSize(radius * 2, radius * 2);
+        // --- 当たり判定とインタラクティブ化 (変更なし) ---
+        // ★★★ 自己完結しているこのコンポーネントでは、ここで設定しても問題ない
+       this.setSize(radius * 2, radius * 2);
         this.setInteractive(new Phaser.Geom.Circle(radius, radius, radius), Circle.Contains);
         this.setScrollFactor(0);
         
