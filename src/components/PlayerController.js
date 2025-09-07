@@ -10,18 +10,15 @@ export default class PlayerController {
         
         // --- 内部的な状態 ---
         this.cursors = scene.input.keyboard.createCursorKeys();
-        
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが新しいUISceneアーキテクチャとの正しい連携方法です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        const uiScene = scene.scene.get('UIScene');
+         const uiScene = scene.scene.get('UIScene');
         if (uiScene) {
-            // UISceneのuiElementsマップから、名前でUIを取得する
-            this.virtualStick = uiScene.uiElements.get('virtual_stick');
-            this.jumpButton = uiScene.uiElements.get('jump_button'); // jump_buttonも同様
-        } else {
-            this.virtualStick = null;
-            this.jumpButton = null;
+            // UISceneが管理する全てのUI要素の中から、
+            // 'group'データが 'virtual_stick' であるものを探し出す
+            this.virtualStick = Array.from(uiScene.uiElements.values())
+                                     .find(ui => ui.getData('group') === 'virtual_stick');
+
+            this.jumpButton = Array.from(uiScene.uiElements.values())
+                                     .find(ui => ui.getData('group') === 'jump_button');
         }
         
         if (this.jumpButton) {

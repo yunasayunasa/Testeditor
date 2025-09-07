@@ -23,6 +23,7 @@
     },
     {
       "name": "virtual_stick",
+       "group": "virtual_stick",
       "x": 180,
       "y": 540,
       "width": 200,
@@ -38,6 +39,7 @@
     },
     {
       "name": "jump_button",
+      "group": "jump_button",
       "x": 1100,
       "y": 540,
       "width": 130,

@@ -160,13 +160,24 @@ export default class JumpScene extends BaseGameScene {
             component = new PlayerController(this, target);
         }
 
-        if (component) {
-            for (const key in params) {
-                if (component[key] !== undefined) component[key] = params[key];
-            }
+       if (component) {
+            // シーンの更新リストに追加
             this.components.push(component);
-            if (!target.components) target.components = {};
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ ここで、オブジェクト自身に情報を書き込みます ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            if (!target.components) {
+                target.components = {};
+            }
             target.components[componentType] = component;
+
+            // ★ データとしても保存しておくと、より堅牢
+            const currentComps = target.getData('components') || [];
+            if (!currentComps.some(c => c.type === componentType)) {
+                currentComps.push({ type: componentType, params: params });
+                target.setData('components', currentComps);
+            }
         }
     }
 
