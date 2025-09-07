@@ -8,13 +8,18 @@ export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-
+ this.movePointer = null;     // 移動操作を担当する指
+        this.actionPointer = null;   // アクション操作を担当する指
+        this.virtualStick = null;    // VirtualStickのインスタンスへの参照
+        this.playerController = null; // PlayerControllerのインスタンスへの参照
         this.actionInterpreter = null;
     }
 
     create() {
         console.log("[JumpScene] Create started.");
-        
+            this.input.on('pointerdown', this.handlePointerDown, this);
+        this.input.on('pointermove', this.handlePointerMove, this);
+        this.input.on('pointerup', this.handlePointerUp, this);
         this.actionInterpreter = new ActionInterpreter(this);
         this.cameras.main.setBackgroundColor('#4488cc');
         
@@ -82,70 +87,84 @@ export default class JumpScene extends BaseGameScene {
             console.log(`[JumpScene] Component '${componentType}' added to '${target.name}'.`);
         }
     }
-
-   /**
-     * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
-     */
-    onSetupComplete() {
-        // --- 1. グループ名でプレイヤーと床オブジェクトを全て検索 ---
+  onSetupComplete() {
         const player = this.children.list.find(obj => obj.getData('group') === 'player');
-        
-        // ★★★ "ground" を "floor" に修正 ★★★
-        // ★★★ find を filter に変更し、複数の床に対応 ★★★
-        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
-        
-        // --- 2. プレイヤーが見つかったら、カメラと衝突判定を設定 ---
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
+            // ★ PlayerControllerのインスタンスをシーン変数に格納
+            this.playerController = player.components?.PlayerController;
+        }
 
-            // --- 3. 見つかった全ての床オブジェクトに対して、衝突判定を追加 ---
-            if (floors.length > 0) {
-                // floorsは配列なので、colliderは配列をそのまま受け取れる
-                this.physics.add.collider(player, floors);
-                console.log(`[JumpScene] Collider created between 'player' and ${floors.length} 'floor' objects.`);
-            } else {
-                console.warn("[JumpScene] No 'floor' group objects found to collide with.");
-            }
-        } else {
-            console.warn("[JumpScene] 'player' group object not found.");
+        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
+        if (player && floors.length > 0) {
+            this.physics.add.collider(player, floors);
+        }
+        
+        // ★ UISceneからVirtualStickのインスタンスを取得
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            this.virtualStick = uiScene.uiElements.get('virtual_stick');
         }
     }
-    
-    
-   // src/scenes/JumpScene.js
 
-// ... (他のメソッドは変更なし) ...
+    handlePointerDown(pointer) {
+        const screenHalfX = this.scale.width / 2;
 
-    /**
-     * シーン上の全GameObjectを走査し、アタッチされたコンポーネントを更新する
-     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
-     * (エラー捕捉機能付き・最終決戦バージョン)
-     */
-    update(time, delta) {
-        try { // ★★★ 1. 全ての更新処理を try で囲む ★★★
-
-            for (const gameObject of this.children.list) {
-                if (gameObject.components) {
-                    for (const key in gameObject.components) {
-                        const component = gameObject.components[key];
-                        if (component && typeof component.update === 'function') {
-                            component.update(time, delta);
-                        }
-                    }
+        if (pointer.x < screenHalfX) {
+            // --- 画面左側がタッチされた ---
+            // 既に移動用の指がなければ、この指を移動用として割り当てる
+            if (this.movePointer === null) {
+                this.movePointer = pointer;
+                if (this.virtualStick) {
+                    this.virtualStick.show(pointer.x, pointer.y); // スティックをタッチ位置に表示
                 }
             }
+        } else {
+            // --- 画面右側がタッチされた ---
+            if (this.actionPointer === null) {
+                this.actionPointer = pointer;
+                if (this.playerController) {
+                    this.playerController.jump(); // PlayerControllerにジャンプを命令
+                }
+                 // (お好みで) JumpButtonの見た目を変える命令もここに追加できる
+            }
+        }
+    }
 
-        } catch (error) { // ★★★ 2. 発生したエラーを捕捉する ★★★
-            
-            // ★★★ 3. エラーの詳細をコンソールに表示する ★★★
-            console.error("!!! RUNTIME ERROR CAUGHT IN JUMPSCENE UPDATE !!!");
-            console.error("Error Message:", error.message);
-            console.error("Error Stack:", error.stack);
-            console.error("Error Object:", error);
-            
-            // ★★★ 4. (重要) エラーの連鎖を防ぐため、ゲームを安全に停止する ★★★
-            this.scene.pause(); 
-            console.error("!!! To prevent further errors, the scene has been paused. !!!");
+    handlePointerMove(pointer) {
+        // この指が、登録された移動用の指である場合のみ処理
+        if (this.movePointer && pointer.id === this.movePointer.id) {
+            if (this.virtualStick) {
+                // スティックに、現在の指の位置を渡して更新させる
+                this.virtualStick.updatePosition(pointer);
+            }
+        }
+    }
+
+    handlePointerUp(pointer) {
+        // この指が移動用の指だった場合
+        if (this.movePointer && pointer.id === this.movePointer.id) {
+            this.movePointer = null; // 割り当てを解除
+            if (this.virtualStick) {
+                this.virtualStick.hideAndReset(); // スティックを隠してリセット
+            }
+        }
+        
+        // この指がアクション用の指だった場合
+        if (this.actionPointer && pointer.id === this.actionPointer.id) {
+            this.actionPointer = null; // 割り当てを解除
+            // (お好みで) JumpButtonの見た目を元に戻す命令もここに追加できる
+        }
+    }
+
+    update(time, delta) {
+        // ★ PlayerControllerの更新処理を、シーンから直接呼び出す
+        if (this.playerController && this.virtualStick) {
+            // PlayerControllerにスティックの現在の方向を渡す
+            this.playerController.updateWithStick(this.virtualStick.direction);
+        } else if(this.playerController) {
+             // スティックがない場合も考慮 (PCキーボード操作など)
+             this.playerController.updateWithStick(new Phaser.Math.Vector2(0, 0));
         }
     }
     
