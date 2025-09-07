@@ -128,9 +128,10 @@ export default class BaseGameScene extends Phaser.Scene {
                 gameObject.play(data.animation.default);
             }
         }
-        // --- 6. コンポーネントプロパティ ---
-           if (data.components && this.addComponent) {
-            for (const componentDef of data.components) {
+       // ★★★ 6. コンポーネントプロパティ ★★★
+        // (あなたの元のコードを、より確実な形に修正)
+        if (layout.components && typeof this.addComponent === 'function') {
+            for (const componentDef of layout.components) {
                 this.addComponent(gameObject, componentDef.type, componentDef.params);
             }
         }

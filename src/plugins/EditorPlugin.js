@@ -267,6 +267,50 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         openEventEditorBtn.onclick = () => this.openEventEditor();
         this.editorPropsContainer.appendChild(openEventEditorBtn);
         
+        //compornents
+         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ このブロックを、Eventsセクションの後に追加します ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const componentsTitle = document.createElement('div');
+        componentsTitle.innerText = 'Components';
+        componentsTitle.style.fontWeight = 'bold';
+        componentsTitle.style.marginBottom = '10px';
+        this.editorPropsContainer.appendChild(componentsTitle);
+
+        const attachedComponents = this.selectedObject.getData('components') || [];
+
+        // アタッチ済みのコンポーネントをリスト表示
+        attachedComponents.forEach(comp => {
+            const div = document.createElement('div');
+            div.innerText = `- ${comp.type}`;
+            this.editorPropsContainer.appendChild(div);
+        });
+
+        // コンポーネントを追加するUI
+        const availableComponents = ['PlayerController']; // 将来的に増やせる
+        const addComponentSelect = document.createElement('select');
+        addComponentSelect.innerHTML = '<option value="">Add Component...</option>';
+        availableComponents.forEach(compName => {
+            // まだアタッチされていないものだけを選択肢に追加
+            if (!attachedComponents.some(c => c.type === compName)) {
+                addComponentSelect.innerHTML += `<option value="${compName}">${compName}</option>`;
+            }
+        });
+
+        addComponentSelect.onchange = (e) => {
+            const compToAdd = e.target.value;
+            if (compToAdd) {
+                const currentComps = this.selectedObject.getData('components') || [];
+                // 新しいコンポーネントを定義に追加
+                currentComps.push({ type: compToAdd, params: {} });
+                this.selectedObject.setData('components', currentComps);
+                this.updatePropertyPanel(); // パネルを再描画して反映
+            }
+        };
+        this.editorPropsContainer.appendChild(addComponentSelect);
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
         // Export
         this.editorPropsContainer.appendChild(document.createElement('hr'));
         const exportButton = document.createElement('button');
@@ -702,7 +746,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
                 if (gameObject.getData('animation_data')) objData.animation = gameObject.getData('animation_data');
                 if (gameObject.getData('events')) objData.events = gameObject.getData('events');
-                
+                   if (gameObject.getData('components')) {
+                    objData.components = gameObject.getData('components');
+                }
                 sceneLayoutData.objects.push(objData);
             }
         }

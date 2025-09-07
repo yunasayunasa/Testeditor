@@ -24,7 +24,7 @@ export default class JumpScene extends BaseGameScene {
         this.actionInterpreter = new ActionInterpreter(this);
         this.cameras.main.setBackgroundColor('#4488cc');
         this.cursors = this.input.keyboard.createCursorKeys();
-        
+            this.components = [];
         const soundManager = this.registry.get('soundManager');
         if (soundManager) soundManager.playBgm('bgm_action');
          // ★★★ 2. 毎フレーム、キー入力イベントをチェックするリスナーを追加 ★★★
@@ -77,54 +77,50 @@ export default class JumpScene extends BaseGameScene {
         return newImage;
     }
 
-onSetupComplete() {
+  /**
+     * BaseGameSceneから呼び出され、このシーン固有のコンポーネントを生成する
+     */
+    addComponent(target, componentType, params = {}) {
+        let component = null;
+        if (componentType === 'PlayerController') {
+            component = new PlayerController(this, target, params);
+        }
+        // ... 将来、他のコンポーネント（EnemyAIなど）もここに追加 ...
+
+        if (component) {
+            this.components.push(component); // シーンの更新リストに追加
+            
+            // オブジェクト自身にも、コンポーネントへの参照を持たせると便利
+            if (!target.components) target.components = {};
+            target.components[componentType] = component;
+        }
+    }
+
+    /**
+     * 全てのオブジェクトとコンポーネントが配置された後に呼ばれる
+     */
+    onSetupComplete() {
         console.log("[JumpScene] onSetupComplete called.");
-
-        // --- プレイヤーと床オブジェクトの取得 ---
-        this.player = this.children.list.find(obj => obj.getData('group') === 'player');
-        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
-
-        if (this.player) {
-            console.log("[JumpScene] Player object found. Setting up components, camera, and physics.");
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ 2. ここで PlayerController を生成し、登録する ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            const playerController = new PlayerController(this, this.player);
-            this.components.push(playerController);
-            
-            // --- 物理とカメラの設定 (これは元のコードのまま) ---
-            if (floors.length > 0) {
-                this.physics.add.collider(this.player, floors);
-            }
-            this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-            
+        
+        // PlayerControllerコンポーネントを持つオブジェクトを「プレイヤー」として扱う
+        const player = this.children.list.find(obj => obj.components?.PlayerController);
+        
+        if (player) {
+            console.log("[JumpScene] Player object found. Setting up camera and physics.");
+            this.cameras.main.startFollow(player, true, 0.1, 0.1);
         } else {
-            console.warn("[JumpScene] No object with group 'player' found.");
+            console.warn("[JumpScene] PlayerController component not found on any object.");
         }
     }
     
-    /**
-     * 毎フレーム呼び出される更新処理
-     */
-   update(time, delta) {
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが全てを解決する、唯一の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // 1. まず、UIScene上のスティックの状態を更新させる
-        const uiScene = this.scene.get('UIScene');
-        const virtualStick = uiScene.uiElements.get('virtual_stick');
-        if (virtualStick && typeof virtualStick.update === 'function') {
-            virtualStick.update();
-        }
-
-        // 2. 次に、このシーンのコンポーネント（PlayerController）を更新させる
+    update(time, delta) {
+        // シーンに登録された、全てのコンポーネントのupdateを呼び出す
         for (const component of this.components) {
             if (component.update) {
                 component.update(time, delta);
             }
         }
+    }
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
