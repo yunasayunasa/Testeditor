@@ -104,67 +104,100 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
        /**
      * プロパティパネルを安全に更新する。
      */
-    updatePropertyPanel() {
-        if (this._isUpdatingPanel) return;
-        this._isUpdatingPanel = true;
+  updatePropertyPanel() {
+    console.log("%c[updatePropertyPanel] Execution Started.", "color: blue; font-weight: bold;");
 
-        try {
-            // ▼▼▼▼▼ 【最重要修正】オブジェクトの生存確認 ▼▼▼▼▼
-            // selectedObjectが破棄されていたら、選択を解除して処理をやり直す
-            if (this.selectedObject && !this.selectedObject.scene) {
-                console.warn(`[EditorPlugin] Selected object '${this.selectedObject.name}' seems to be destroyed. Deselecting.`);
-                this.selectedObject = null;
-            }
-            // ▲▲▲▲▲ ここまで ▲▲▲▲▲
-
-            if (!this.editorPropsContainer) return;
-            this.editorPropsContainer.innerHTML = '';
-
-            if (!this.selectedObject) {
-                if (this.editorTitle) this.editorTitle.innerText = 'No Object Selected';
-                return;
-            }
-            
-            // これ以降、this.selectedObjectは「生存している」ことが保証される
-            if (this.editorTitle) this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
-            
-
-            this.createNameInput();
-            this.createGroupInput();
-            this.editorPropsContainer.appendChild(document.createElement('hr'));
-            this.createTransformInputs();
-            this.createDepthInput();
-            this.editorPropsContainer.appendChild(document.createElement('hr'));
-            
-            const physicsTitle = document.createElement('h4');
-            physicsTitle.innerText = '物理ボディ (Matter.js)';
-            physicsTitle.style.margin = '10px 0 5px 0';
-            this.editorPropsContainer.appendChild(physicsTitle);
-
-            if (this.selectedObject.body) {
-                this.createMatterPropertiesUI(this.selectedObject);
-                this.createRemoveBodyButton();
-            } else {
-                this.createAddBodyButton();
-            }
-            
-            this.editorPropsContainer.appendChild(document.createElement('hr'));
-            this.createAnimationSection();
-            this.editorPropsContainer.appendChild(document.createElement('hr'));
-            this.createEventSection();
-            this.editorPropsContainer.appendChild(document.createElement('hr'));
-            this.createComponentSection();
-            this.editorPropsContainer.appendChild(document.createElement('hr'));
-            this.createExportButton();
-            this.createDeleteObjectButton();
-
-        } catch (error) {
-            console.error("[EditorPlugin] Failed to update property panel:", error);
-        } finally {
-            this._isUpdatingPanel = false;
-        }
+    if (this._isUpdatingPanel) {
+        console.warn("[updatePropertyPanel] Guard clause: Already running. Aborting.");
+        return;
     }
+    this._isUpdatingPanel = true;
 
+    try {
+        console.log("[updatePropertyPanel] Step 1: Checking for destroyed object...");
+        if (this.selectedObject && (!this.selectedObject.scene || !this.selectedObject.active)) {
+            console.warn(`[updatePropertyPanel] Selected object '${this.selectedObject.name}' is destroyed or inactive. Deselecting.`);
+            this.selectedObject = null;
+        }
+        console.log("[updatePropertyPanel] Step 1: OK.");
+
+        console.log("[updatePropertyPanel] Step 2: Checking DOM elements...");
+        if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) {
+            console.error("[updatePropertyPanel] CRITICAL: Core DOM elements not found. Aborting.");
+            this._isUpdatingPanel = false;
+            return;
+        }
+        console.log("[updatePropertyPanel] Step 2: OK.");
+
+        console.log("[updatePropertyPanel] Step 3: Clearing UI content...");
+        this.editorPropsContainer.innerHTML = '';
+        console.log("[updatePropertyPanel] Step 3: OK.");
+        
+        console.log("[updatePropertyPanel] Step 4: Checking for selection...");
+        if (!this.selectedObject) {
+            this.editorTitle.innerText = 'No Object Selected';
+            console.log("[updatePropertyPanel] No object selected. Finalizing.");
+            this._isUpdatingPanel = false;
+            return;
+        }
+        console.log(`[updatePropertyPanel] Step 4: OK. Selected: '${this.selectedObject.name}'`);
+
+        console.log("[updatePropertyPanel] Step 5: Setting title...");
+        this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+        console.log("[updatePropertyPanel] Step 5: OK.");
+
+        // --- UI要素の生成 ---
+        console.log("[updatePropertyPanel] Step 6: Creating Name/Group inputs...");
+        this.createNameInput();
+        this.createGroupInput();
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        console.log("[updatePropertyPanel] Step 6: OK.");
+
+        console.log("[updatePropertyPanel] Step 7: Creating Transform/Depth inputs...");
+        this.createTransformInputs();
+        this.createDepthInput();
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        console.log("[updatePropertyPanel] Step 7: OK.");
+
+        console.log("[updatePropertyPanel] Step 8: Starting Physics section...");
+        const physicsTitle = document.createElement('h4');
+        physicsTitle.innerText = '物理ボディ (Matter.js)';
+        physicsTitle.style.margin = '10px 0 5px 0';
+        this.editorPropsContainer.appendChild(physicsTitle);
+        console.log("[updatePropertyPanel] Step 8: OK.");
+
+        console.log(`[updatePropertyPanel] Step 9: Checking for body on '${this.selectedObject.name}'...`);
+        if (this.selectedObject.body) {
+            console.log("[updatePropertyPanel] Body FOUND. Creating body properties UI and remove button.");
+            // ★★★ ここがクラッシュする最有力候補 ★★★
+            this.createMatterPropertiesUI(this.selectedObject);
+            this.createRemoveBodyButton();
+        } else {
+            console.log("[updatePropertyPanel] Body NOT FOUND. Creating add button.");
+            this.createAddBodyButton();
+        }
+        console.log("[updatePropertyPanel] Step 9: OK.");
+        
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        
+        console.log("[updatePropertyPanel] Step 10: Creating other sections (Animation, Events, etc.)...");
+        this.createAnimationSection();
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        this.createEventSection();
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        this.createComponentSection();
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        this.createExportButton();
+        this.createDeleteObjectButton();
+        console.log("[updatePropertyPanel] Step 10: OK.");
+
+    } catch (error) {
+        console.error("%c[updatePropertyPanel] FATAL CRASH inside try/catch block:", "color: red; font-size: 1.2em;", error);
+    } finally {
+        this._isUpdatingPanel = false;
+        console.log("%c[updatePropertyPanel] Execution Finished.", "color: blue; font-weight: bold;");
+    }
+}
     // --- `updatePropertyPanel`から呼び出されるUI生成ヘルパーメソッド群 ---
 
     createNameInput() {
