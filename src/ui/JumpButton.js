@@ -39,7 +39,7 @@ export default class JumpButton extends Container {
         // 複雑なポインターID管理は不要。押されたら信号を送るだけ。
         background.on('pointerdown', () => {
             this.background_pressed.setVisible(true);
- T           this.emit('button_pressed');
+            this.emit('button_pressed');
         });
 
         // 押下状態の解除は、自分自身のupとoutだけで完結させる
