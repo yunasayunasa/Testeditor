@@ -203,44 +203,44 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(depthRow);
 
         // Physics
+         // --- Physics (Matter.js) ---
         this.editorPropsContainer.appendChild(document.createElement('hr'));
         const physicsTitle = document.createElement('div');
-        physicsTitle.innerText = '物理ボディ';
+        physicsTitle.innerText = '物理ボディ (Matter.js)';
         physicsTitle.style.fontWeight = 'bold';
         physicsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(physicsTitle);
 
-        if (this.selectedObject.body) {
-            this.createPhysicsPropertiesUI(this.selectedObject);
+        if (this.selectedObject.body) { // bodyプロパティがあるか
+            // --- すでに物理ボディがある場合 ---
+            this.createMatterPropertiesUI(this.selectedObject); // ★ 新しいUI生成メソッドを呼ぶ
+
             const removeButton = document.createElement('button');
             removeButton.innerText = '物理ボディ 削除';
             removeButton.style.backgroundColor = '#c44';
-            removeButton.style.marginTop = '10px';
             removeButton.onclick = () => {
-                if (this.selectedObject && this.selectedObject.body) {
-                    this.selectedObject.body.destroy();
-                    this.selectedObject.body = null;
+                if (this.selectedObject) {
+                    this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
+                    this.selectedObject.setBody(null); // bodyをnullに戻す
                     this.updatePropertyPanel();
                 }
             };
             this.editorPropsContainer.appendChild(removeButton);
+
         } else {
+            // --- 物理ボディがない場合 ---
             const addButton = document.createElement('button');
             addButton.innerText = '物理ボディ 付与';
             addButton.onclick = () => {
                 if (this.selectedObject) {
-                    const targetScene = this.selectedObject.scene;
-                    targetScene.physics.add.existing(this.selectedObject, false);
-                    if (this.selectedObject.body) {
-                        this.selectedObject.body.allowGravity = false;
-                        this.selectedObject.body.collideWorldBounds = true;
-                    }
+                    const scene = this.selectedObject.scene;
+                    // ★ 物理ボディがないGameObjectを、Matter.jsの世界に追加する
+                    scene.matter.add.gameObject(this.selectedObject, { isStatic: false });
                     this.updatePropertyPanel();
                 }
             };
             this.editorPropsContainer.appendChild(addButton);
         }
-
         // Animation
         this.editorPropsContainer.appendChild(document.createElement('hr'));
         const animTitle = document.createElement('div');
@@ -347,7 +347,55 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(deleteButton);
     }
     
+    /**
+     * ★★★ 新規メソッド：Matter.js用のプロパティUIを生成する ★★★
+     */
+    createMatterPropertiesUI(gameObject) {
+        const body = gameObject.body;
 
+        // isStatic (静的か)
+        this.createCheckbox(this.editorPropsContainer, 'Is Static', body.isStatic, (isChecked) => {
+            // Matter.Body.setStatic(body, isChecked) でプロパティを変更
+            gameObject.setStatic(isChecked);
+            this.updatePropertyPanel(); // UIを再描画
+        });
+
+        // Shape (形状) - まずは四角形と円形をサポート
+        const shapeRow = document.createElement('div');
+        shapeRow.innerHTML = `<label>Shape:</label>
+            <select id="shape-select">
+                <option value="rectangle" ${body.shape === 'rectangle' ? 'selected' : ''}>Rectangle</option>
+                <option value="circle" ${body.shape === 'circle' ? 'selected' : ''}>Circle</option>
+            </select>`;
+        this.editorPropsContainer.appendChild(shapeRow);
+        
+        const shapeSelect = document.getElementById('shape-select');
+        shapeSelect.onchange = (e) => {
+            const newShape = e.target.value;
+            if (newShape === 'rectangle') {
+                // 円形から四角形に戻す (テクスチャサイズに合わせる)
+                gameObject.setBody({ type: 'rectangle' }); 
+            } else if (newShape === 'circle') {
+                // テクスチャの幅と高さの平均を半径とする円形にする
+                const radius = (gameObject.width + gameObject.height) / 4;
+                gameObject.setCircle(radius);
+            }
+            this.updatePropertyPanel();
+        };
+
+        // Friction (摩擦)
+        this.createRangeInput(this.editorPropsContainer, 'Friction', body.friction, 0, 1, 0.01, (value) => {
+            gameObject.setFriction(value);
+        });
+        
+        // Restitution (反発係数 / Bounce)
+        this.createRangeInput(this.editorPropsContainer, 'Bounce', body.restitution, 0, 1, 0.01, (value) => {
+            gameObject.setBounce(value);
+        });
+
+        // Angle (角度) - Transformの角度とは別に、物理ボディの角度も設定できる
+        // これはTransformのangleと連動しているので、UIはそちらに任せる
+    }
    
 
     openAnimationEditor() {
@@ -757,15 +805,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 if (gameObject instanceof Phaser.GameObjects.Sprite) objData.type = 'Sprite';
                 if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
 
+                // ★★★ 物理ボディの書き出し部分を、Matter.js用に変更 ★★★
                 if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
-                        isStatic: (body instanceof Phaser.Physics.Arcade.StaticBody), width: body.width, height: body.height,
-                        offsetX: body.offset.x, offsetY: body.offset.y, allowGravity: body.allowGravity,
-                        bounceX: parseFloat(body.bounce.x.toFixed(2)), bounceY: parseFloat(body.bounce.y.toFixed(2)),
-                        collideWorldBounds: body.collideWorldBounds
+                        isStatic: body.isStatic,
+                        shape: body.shape || 'rectangle', // 'rectangle' or 'circle'
+                        friction: parseFloat(body.friction.toFixed(2)),
+                        restitution: parseFloat(body.restitution.toFixed(2)), // Bounce
+                        // 必要に応じて、他のプロパティも追加
                     };
                 }
+
 
                 if (gameObject.getData('animation_data')) objData.animation = gameObject.getData('animation_data');
                 if (gameObject.getData('events')) objData.events = gameObject.getData('events');
