@@ -1,18 +1,17 @@
-// src/ui/VirtualStick.js (import追加・最終完成版)
+// src/ui/VirtualStick.js (グローバルオブジェクト版・最終完成版)
 
-// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-// ★★★ これが、全てを解決する、最後の修正です ★★★
-// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-import { GameObjects, Geom, Math as PhaserMath } from 'phaser';
+// ★★★ import文は全て削除 ★★★
 
-const { Container, Graphics } = GameObjects;
-const { Circle } = Geom;
-const { Vector2 } = PhaserMath;
-// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+// ★ Phaserのグローバルオブジェクトからクラスを取得
+const Container = Phaser.GameObjects.Container;
+const Graphics = Phaser.GameObjects.Graphics;
+const Circle = Phaser.Geom.Circle;
+const Vector2 = Phaser.Math.Vector2;
 
 export default class VirtualStick extends Container {
-    
+    // ★★★ 規約のために、空のdependenciesを定義しておく ★★★
+    static dependencies = [];
+
     constructor(scene, config) {
         super(scene, config.x || 150, config.y || 550);
 
@@ -43,7 +42,6 @@ export default class VirtualStick extends Container {
         const distance = vec.length();
         const maxDistance = this.baseRadius;
         if (distance > maxDistance) vec.normalize().scale(maxDistance);
-
         this.stick.setPosition(vec.x, vec.y);
         
         if (maxDistance > 0) {
@@ -57,7 +55,6 @@ export default class VirtualStick extends Container {
         this.direction.setTo(0, 0);
     }
     
-    // ★★★ ゲッターを忘れていました！これがないとPlayerControllerがエラーになります ★★★
     get isLeft() { return this.direction.x < -0.5; }
     get isRight() { return this.direction.x > 0.5; }
     get isUp() { return this.direction.y < -0.5; }
