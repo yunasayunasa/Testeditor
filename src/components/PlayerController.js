@@ -1,94 +1,35 @@
-// src/components/PlayerController.js (超防御的・デバッグ強化版)
+//
+// Odyssey Engine - PlayerController Component
+// Final Architecture: Self-Sufficient Agent
+//
 
 export default class PlayerController {
-
+    
     constructor(scene, target, params = {}) {
         this.scene = scene;
         this.target = target;
-        this.params = params; // パラメータを保持
-
         this.moveSpeed = params.moveSpeed || 200;
         this.jumpVelocity = params.jumpVelocity || -500;
         
-        // ★★★ 1. キーボードが存在するかどうかを確認 ★★★
-        this.keyboardEnabled = !!scene.input.keyboard; // キーボードサポートの有無をbooleanで保存
-        this.cursors = null; // nullで初期化
-        if (this.keyboardEnabled) {
-            // キーボードが存在する場合のみ、カーソルキーを生成
-            this.cursors = scene.input.keyboard.createCursorKeys();
-            console.log("[PlayerController] Keyboard input is enabled.");
-        } else {
-            console.log("[PlayerController] Keyboard input is not available.");
-        }
+        this.keyboardEnabled = !!scene.input.keyboard;
+        this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
         
         this.virtualStick = null;
         this.jumpButton = null;
 
-        // ★★★ UISceneの準備ができてからUI要素を探すように修正 ★★★
+        // --- UI要素を自分で探しに行く ---
         const uiScene = scene.scene.get('UIScene');
-        if (uiScene && uiScene.scene.isActive()) {
-            // UISceneがすでに準備完了している場合
-            if (uiScene.uiElements.size > 0) {
-                this.findUiElements(uiScene);
-            } else {
-                // まだ準備中の場合、一度だけイベントを待つ
-                uiScene.events.once('scene-ready', () => this.findUiElements(uiScene), this);
+        if (uiScene) {
+            this.virtualStick = uiScene.uiElements.get('virtual_stick');
+            this.jumpButton = uiScene.uiElements.get('jump_button');
+
+            if (this.jumpButton) {
+                this.jumpButton.on('button_pressed', this.jump, this);
             }
         }
     }
- /** 
-     * ★★★ メソッド名を 'update' から 'updateWithStick' に変更 ★★★
-     * ★★★ 引数で stickDirection を受け取るように変更 ★★★
-     */
-    updateWithStick(stickDirection) {
-        if (!this.target || !this.target.body || !this.target.active) return;
-        
-        let moveX = 0;
-        
-        // --- キーボード入力 (変更なし) ---
-        if (this.keyboardEnabled && this.cursors) {
-            if (this.cursors.left.isDown) moveX = -1;
-            if (this.cursors.right.isDown) moveX = 1;
-        }
 
-        // --- スティック入力 (JumpSceneから渡された方向ベクトルを使う) ★★★
-        // ★★★ 以前の this.virtualStick へのアクセスをやめ、引数を使う ★★★
-        if (stickDirection) { // nullチェック
-            if (stickDirection.x < -0.5) moveX = -1;
-            else if (stickDirection.x > 0.5) moveX = 1;
-        }
-
-        // --- 物理ボディへの適用 (変更なし) ---
-        this.target.body.setVelocityX(moveX * this.moveSpeed);
-        
-        // --- キーボードジャンプ (変更なし) ---
-        if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-            this.jump();
-        }
-    }
-    /**
-     * UISceneから操作用のUI要素を検索し、プロパティに格納する
-     * @param {Phaser.Scene} uiScene - UISceneのインスタンス
-     */
-    findUiElements(uiScene) {
-        this.virtualStick = Array.from(uiScene.uiElements.values())
-                                 .find(ui => ui.getData('group') === 'virtual_stick');
-         this.jumpButton = Array.from(uiScene.uiElements.values())
-                                 .find(ui => ui.getData('group') === 'jump_button');
-        
-        console.log(`[PlayerController] UI Search Complete. Stick found: ${!!this.virtualStick}, Button found: ${!!this.jumpButton}`);
-
-        if (this.jumpButton) {
-            this.jumpButton.off('pointerdown', this.jump, this);
-            this.jumpButton.on('pointerdown', () => { // ★★★ 無名関数でラップする ★★★
-                // ★★★ このログを追加 ★★★
-                console.log("%c[PlayerController] JumpButton signal RECEIVED!", "color: limegreen; font-weight: bold;");
-                this.jump(); // ★ 本来のjumpメソッドを呼び出す
-            }, this);
-        }
-    }
-  
-    update(time, delta) {
+    update() {
         if (!this.target || !this.target.body || !this.target.active) return;
         
         let moveX = 0;
@@ -99,19 +40,20 @@ export default class PlayerController {
         }
 
         if (this.virtualStick) {
-            if (this.virtualStick.isLeft) moveX = -1;
-            if (this.virtualStick.isRight) moveX = 1;
+            // ★★★ directionを直接参照する ★★★
+            const stickDirection = this.virtualStick.direction;
+            if (stickDirection.x < -0.5) moveX = -1;
+            else if (stickDirection.x > 0.5) moveX = 1;
         }
 
         this.target.body.setVelocityX(moveX * this.moveSpeed);
-
-        // ★★★ ここのキーボードジャンプ処理が、最後の「Script error.」の原因でした ★★★
-        // iPadでは this.cursors が null なので、エラーになります
+        
         if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
         }
     }
 
+ 
     // jumpメソッドは、キーボードとジャンプボタンの両方から呼ばれる共通の処理
     jump() {
         // ★★★ touchingがnullの場合も考慮する、より安全なチェック ★★★
@@ -121,12 +63,10 @@ export default class PlayerController {
     }
 
  
-   
-
+      
     destroy() {
-        // コンポーネントが破棄される時に、イベントリスナーを安全に解除する
         if (this.jumpButton) {
-            this.jumpButton.off('pointerdown', this.jump, this);
+            this.jumpButton.off('button_pressed', this.jump, this);
         }
     }
 }

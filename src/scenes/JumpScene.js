@@ -1,85 +1,33 @@
-// src/scenes/JumpScene.js (最終確定版)
 
 import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
 import PlayerController from '../components/PlayerController.js';
+
 export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-        
-        // --- 入力管理プロパティ ---
-        this.movePointerId = null;     // 移動操作を担当する指のID
-        this.actionPointerId = null;   // アクション操作を担当する指のID
-        
-        // --- 操作対象への参照 ---
-        this.virtualStick = null;
-        this.jumpButton = null;
-        this.playerController = null;
+        // ★ プロパティをシンプルに
+        this.actionInterpreter = null;
     }
 
     create() {
+        console.log("[JumpScene] Create started.");
+        
+        this.actionInterpreter = new ActionInterpreter(this);
+        this.cameras.main.setBackgroundColor('#4488cc');
+        
+        const soundManager = this.registry.get('soundManager');
+        if (soundManager) soundManager.playBgm('bgm_action');
+
+        const worldWidth = 3840;
+        const worldHeight = 1440;
+        this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
+        this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
+
+        // ★ データからシーンを構築する命令を一度だけ出す
         this.initSceneWithData();
-        
-        // ★★★ 唯一の入力リスナーを、シーン自身に設定 ★★★
-        this.input.on('pointerdown', this.handlePointerDown, this);
-        this.input.on('pointermove', this.handlePointerMove, this);
-        this.input.on('pointerup', this.handlePointerUp, this);
     }
-
-    onSetupComplete() {
-        // --- プレイヤーと床のセットアップ ---
-        const player = this.children.list.find(obj => obj.getData('group') === 'player');
-        if (player) {
-            this.cameras.main.startFollow(player, true, 0.1, 0.1);
-            this.playerController = player.components?.PlayerController;
-        }
-        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
-        if (player && floors.length > 0) this.physics.add.collider(player, floors);
-        
-        // --- UI部品への参照を取得 ---
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene) {
-            this.virtualStick = uiScene.uiElements.get('virtual_stick');
-            this.jumpButton = uiScene.uiElements.get('jump_button');
-        }
-    }
-
-    handlePointerDown(pointer) {
-        const screenHalfX = this.scale.width / 2;
-
-        if (pointer.x < screenHalfX) {
-            // --- 画面左側 ---
-            if (this.movePointerId === null) {
-                this.movePointerId = pointer.id;
-            }
-        } else {
-            // --- 画面右側 ---
-            if (this.actionPointerId === null) {
-                this.actionPointerId = pointer.id;
-                if (this.playerController) this.playerController.jump();
-                if (this.jumpButton) this.jumpButton.setPressed(true); // ★ JumpButtonに命令
-            }
-        }
-    }
-
-    handlePointerMove(pointer) {
-        if (pointer.id === this.movePointerId) {
-            if (this.virtualStick) this.virtualStick.updatePosition(pointer);
-        }
-    }
-
-    handlePointerUp(pointer) {
-        if (pointer.id === this.movePointerId) {
-            this.movePointerId = null;
-            if (this.virtualStick) this.virtualStick.reset();
-        }
-        if (pointer.id === this.actionPointerId) {
-            this.actionPointerId = null;
-            if (this.jumpButton) this.jumpButton.setPressed(false); // ★ JumpButtonに命令
-        }
-    }
-
     addObjectFromEditor(assetKey, newName) {
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
@@ -133,14 +81,57 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-  
+   /**
+     * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
+     */
+    onSetupComplete() {
+        // --- 1. グループ名でプレイヤーと床オブジェクトを全て検索 ---
+        const player = this.children.list.find(obj => obj.getData('group') === 'player');
+        
+        // ★★★ "ground" を "floor" に修正 ★★★
+        // ★★★ find を filter に変更し、複数の床に対応 ★★★
+        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
+        
+        // --- 2. プレイヤーが見つかったら、カメラと衝突判定を設定 ---
+        if (player) {
+            this.cameras.main.startFollow(player, true, 0.1, 0.1);
+
+            // --- 3. 見つかった全ての床オブジェクトに対して、衝突判定を追加 ---
+            if (floors.length > 0) {
+                // floorsは配列なので、colliderは配列をそのまま受け取れる
+                this.physics.add.collider(player, floors);
+                console.log(`[JumpScene] Collider created between 'player' and ${floors.length} 'floor' objects.`);
+            } else {
+                console.warn("[JumpScene] No 'floor' group objects found to collide with.");
+            }
+        } else {
+            console.warn("[JumpScene] 'player' group object not found.");
+        }
+    }
+    
+    
+   // src/scenes/JumpScene.js
 
 // ... (他のメソッドは変更なし) ...
 
-   update() {
-        if (this.playerController) {
-            const stickDirection = this.virtualStick ? this.virtualStick.direction : new Phaser.Math.Vector2(0, 0);
-            this.playerController.updateWithStick(stickDirection);
+    /**
+     * シーン上の全GameObjectを走査し、アタッチされたコンポー-ネントを更新する
+     * ★★★ これが、このシーンに残るべき唯一のupdateロジックです ★★★
+     */
+    update(time, delta) {
+        // this.children.list には、このシーンに追加された全てのGameObjectが入っている
+        for (const gameObject of this.children.list) {
+            // そのGameObjectがcomponentsプロパティを持っているかチェック
+            if (gameObject.components) {
+                // 持っているコンポーネントを全てループ処理
+                for (const key in gameObject.components) {
+                    const component = gameObject.components[key];
+                    // コンポーネントにupdateメソッドがあれば実行する
+                    if (component && typeof component.update === 'function') {
+                        component.update(time, delta);
+                    }
+                }
+            }
         }
     }
     

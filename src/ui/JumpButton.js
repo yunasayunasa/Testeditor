@@ -1,21 +1,18 @@
 //
 // Odyssey Engine - JumpButton Component
-// Final Architecture: Pure Display Lamp
+// Final Architecture: Self-Contained Smart Component
 //
 
 const Container = Phaser.GameObjects.Container;
 const Graphics = Phaser.GameObjects.Graphics;
 const Text = Phaser.GameObjects.Text;
+const Circle = Phaser.Geom.Circle;
 
 export default class JumpButton extends Container {
-
     static dependencies = [];
 
     constructor(scene, config) {
-        // configで渡された固定位置、あるいはデフォルト位置(1100, 550)に表示
         super(scene, config.x || 1100, config.y || 550);
-
-        const radius = 65;
         
         // --- 見た目の作成 ---
         const background = new Graphics(scene)
@@ -34,21 +31,18 @@ export default class JumpButton extends Container {
             align: 'center' 
         }).setOrigin(0.5);
 
-        this.add([background, this.background_pressed, label]);
-        
-        // --- 入力機能は一切持たない ---
-        // setInteractive() や .on() は、ここでは呼び出さない
-
-        // --- シーンに追加 ---
+        // --- 当たり判定をbackgroundに設定 ---
+        background.setInteractive(new Circle(0, 0, radius), Circle.Contains);
         this.setScrollFactor(0);
+        
+        // --- イベントリスナーをbackgroundで完結させる ---
+        background.on('pointerdown', () => {
+            this.background_pressed.setVisible(true);
+            this.emit('button_pressed'); // ★ PlayerControllerがリッスンする信号
+        });
+        background.on('pointerup', () => this.background_pressed.setVisible(false));
+        background.on('pointerout', () => this.background_pressed.setVisible(false));
+
         scene.add.existing(this);
-    }
-    
-    /**
-     * [JumpSceneから命令] ボタンの押下状態に応じて、見た目を変更する
-     * @param {boolean} isPressed - ボタンが押されているかどうか
-     */
-    setPressed(isPressed) {
-        this.background_pressed.setVisible(isPressed);
     }
 }
