@@ -47,6 +47,7 @@ export default class JumpButton extends Container {
         // --- 押したときの見た目を変えるイベントリスナー (変更なし) ---
         this.on('pointerdown', () => {
             this.background_pressed.setVisible(true);
+                 console.log("%c[JumpButton] Pointer Down Event FIRED!", "color: orange; font-weight: bold;");
         });
         this.on('pointerup', () => {
             this.background_pressed.setVisible(false);

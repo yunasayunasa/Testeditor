@@ -44,17 +44,20 @@ export default class PlayerController {
     findUiElements(uiScene) {
         this.virtualStick = Array.from(uiScene.uiElements.values())
                                  .find(ui => ui.getData('group') === 'virtual_stick');
-        this.jumpButton = Array.from(uiScene.uiElements.values())
+         this.jumpButton = Array.from(uiScene.uiElements.values())
                                  .find(ui => ui.getData('group') === 'jump_button');
         
         console.log(`[PlayerController] UI Search Complete. Stick found: ${!!this.virtualStick}, Button found: ${!!this.jumpButton}`);
 
         if (this.jumpButton) {
-            this.jumpButton.off('pointerdown', this.jump, this); // 念のため既存のリスナーを解除
-            this.jumpButton.on('pointerdown', this.jump, this);
+            this.jumpButton.off('pointerdown', this.jump, this);
+            this.jumpButton.on('pointerdown', () => { // ★★★ 無名関数でラップする ★★★
+                // ★★★ このログを追加 ★★★
+                console.log("%c[PlayerController] JumpButton signal RECEIVED!", "color: limegreen; font-weight: bold;");
+                this.jump(); // ★ 本来のjumpメソッドを呼び出す
+            }, this);
         }
     }
-
    
 
     update(time, delta) {
@@ -94,12 +97,7 @@ export default class PlayerController {
         }
     }
 
-    jump() {
-        if (this.target && this.target.body && this.target.body.touching.down) {
-            this.target.body.setVelocityY(this.jumpVelocity);
-        }
-    }
-
+   
 
     destroy() {
         // コンポーネントが破棄される時に、イベントリスナーを安全に解除する
