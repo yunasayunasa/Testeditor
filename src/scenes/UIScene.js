@@ -107,6 +107,13 @@ export default class UIScene extends Phaser.Scene {
         if (params.width && params.height) {
             element.setSize(params.width, params.height);
         }
+           // JSONレイアウトに "group" プロパティが存在すれば、
+        // それをゲームオブジェクトのデータとして設定する
+        if (layout.group) {
+            element.setData('group', layout.group);
+            console.log(`[UIScene] Set group '${layout.group}' to object '${name}'.`);
+        }
+        
         
         // ★★★ setInteractiveの呼び出しを安全にする ★★★
         // setSizeが呼ばれていないと当たり判定が作れない場合があるため、
