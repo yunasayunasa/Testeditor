@@ -1,66 +1,88 @@
-// src/components/PlayerController.js (修正後)
+// src/components/PlayerController.js (超防御的・デバッグ強化版)
 
 export default class PlayerController {
 
-    constructor(scene, target, params = {}) { // ★ paramsを受け取るようにする
+    constructor(scene, target, params = {}) {
         this.scene = scene;
         this.target = target;
+        this.params = params; // パラメータを保持
 
-        // --- 調整可能なパラメータ (paramsから上書き可能にする) ---
         this.moveSpeed = params.moveSpeed || 200;
         this.jumpVelocity = params.jumpVelocity || -500;
         
-        // --- 内部的な状態 ---
         this.cursors = scene.input.keyboard.createCursorKeys();
         
-        // ★★★ UI要素の検索を、より安全な方法に変更 ★★★
         this.virtualStick = null;
         this.jumpButton = null;
-        const uiScene = scene.scene.get('UIScene');
-        if (uiScene && uiScene.uiElements.size > 0) { // UISceneが準備完了しているか確認
-            this.virtualStick = Array.from(uiScene.uiElements.values())
-                                     .find(ui => ui.getData('group') === 'virtual_stick');
 
-            this.jumpButton = Array.from(uiScene.uiElements.values())
-                                     .find(ui => ui.getData('group') === 'jump_button');
+        // ★★★ UISceneの準備ができてからUI要素を探すように修正 ★★★
+        const uiScene = scene.scene.get('UIScene');
+        if (uiScene && uiScene.scene.isActive()) {
+            // UISceneがすでに準備完了している場合
+            if (uiScene.uiElements.size > 0) {
+                this.findUiElements(uiScene);
+            } else {
+                // まだ準備中の場合、一度だけイベントを待つ
+                uiScene.events.once('scene-ready', () => this.findUiElements(uiScene), this);
+            }
         }
+    }
+
+    /**
+     * UISceneから操作用のUI要素を検索し、プロパティに格納する
+     * @param {Phaser.Scene} uiScene - UISceneのインスタンス
+     */
+    findUiElements(uiScene) {
+        this.virtualStick = Array.from(uiScene.uiElements.values())
+                                 .find(ui => ui.getData('group') === 'virtual_stick');
+        this.jumpButton = Array.from(uiScene.uiElements.values())
+                                 .find(ui => ui.getData('group') === 'jump_button');
         
-        // ★★★ ボタンが存在する場合のみ、リスナーを設定 ★★★
+        console.log(`[PlayerController] UI Search Complete. Stick found: ${!!this.virtualStick}, Button found: ${!!this.jumpButton}`);
+
         if (this.jumpButton) {
+            this.jumpButton.off('pointerdown', this.jump, this); // 念のため既存のリスナーを解除
             this.jumpButton.on('pointerdown', this.jump, this);
         }
     }
 
     update() {
-        if (!this.target || !this.target.body) return;
-
-        // ★★★ スティックが存在するかを毎フレーム確認してから使う ★★★
-        const input = {
-            left: this.cursors.left.isDown || (this.virtualStick && this.virtualStick.isLeft),
-            right: this.cursors.right.isDown || (this.virtualStick && this.virtualStick.isRight),
-            up: this.cursors.up.isDown, // キーボードジャンプは常に有効
-        };
-        
-        const body = this.target.body;
-        
-        if (input.left) {
-            body.setVelocityX(-this.moveSpeed);
-        } else if (input.right) {
-            body.setVelocityX(this.moveSpeed);
-        } else {
-            body.setVelocityX(0);
+        // ターゲットオブジェクトが存在し、物理ボディを持っているか確認
+        if (!this.target || !this.target.body || !this.target.active) {
+            return; // ターゲットが無効なら何もしない
         }
+
+        // --- 入力状態を安全に取得 ---
+        let moveX = 0;
         
-        // キーボードでのジャンプ処理
-        if (input.up) {
-            // JustDownのような処理が必要な場合は、シーン側で別途実装する
-            // ここではシンプルにisDownで判定
+        // キーボード入力
+        if (this.cursors.left.isDown) {
+            moveX = -1;
+        } else if (this.cursors.right.isDown) {
+            moveX = 1;
+        }
+
+        // バーチャルスティック入力 (キーボード入力を上書き)
+        if (this.virtualStick) { // ★ null チェック
+            if (this.virtualStick.isLeft) {
+                moveX = -1;
+            } else if (this.virtualStick.isRight) {
+                moveX = 1;
+            }
+        }
+
+        // --- 物理ボディを操作 ---
+        this.target.body.setVelocityX(moveX * this.moveSpeed);
+
+        // --- ジャンプ入力 (キーボード) ---
+        // JustDownを使うことで、押しっぱなしでの連続ジャンプを防ぐ
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
         }
     }
 
     jump() {
-        // ★ is-downではなく、まさにジャンプすべき瞬間（地面にいる時）だけ実行
+        // ターゲットが地面に接している場合のみジャンプを許可
         if (this.target && this.target.body && this.target.body.touching.down) {
             this.target.body.setVelocityY(this.jumpVelocity);
         }
@@ -71,7 +93,5 @@ export default class PlayerController {
         if (this.jumpButton) {
             this.jumpButton.off('pointerdown', this.jump, this);
         }
-        this.virtualStick = null;
-        this.jumpButton = null;
     }
 }
