@@ -10,7 +10,16 @@ export default class PlayerController {
         this.moveSpeed = params.moveSpeed || 200;
         this.jumpVelocity = params.jumpVelocity || -500;
         
-        this.cursors = scene.input.keyboard.createCursorKeys();
+        // ★★★ 1. キーボードが存在するかどうかを確認 ★★★
+        this.keyboardEnabled = !!scene.input.keyboard; // キーボードサポートの有無をbooleanで保存
+        this.cursors = null; // nullで初期化
+        if (this.keyboardEnabled) {
+            // キーボードが存在する場合のみ、カーソルキーを生成
+            this.cursors = scene.input.keyboard.createCursorKeys();
+            console.log("[PlayerController] Keyboard input is enabled.");
+        } else {
+            console.log("[PlayerController] Keyboard input is not available.");
+        }
         
         this.virtualStick = null;
         this.jumpButton = null;
@@ -48,61 +57,35 @@ export default class PlayerController {
 
    
     
-    update(time, delta) {
-        // --- ステップ1: ターゲットの存在確認 ---
-        if (!this.target || !this.target.active) {
-             console.log("[PC-Debug] Target is null or inactive. Skipping.");
-            return;
-        }
+      update(time, delta) {
+        if (!this.target || !this.target.body || !this.target.active) return;
         
-        // --- ステップ2: 物理ボディの存在確認 ---
-        const body = this.target.body;
-        if (!body) {
-            console.warn(`[PC-Debug] Target '${this.target.name}' has NO physics body. Skipping.`);
-            return;
-        }
-
-        // --- ステップ3: 入力状態の取得 ---
         let moveX = 0;
-        if (this.cursors.left.isDown) moveX = -1;
-        if (this.cursors.right.isDown) moveX = 1;
+        
+        // ★★★ 2. キーボードが有効な場合のみ、キー入力をチェック ★★★
+        if (this.keyboardEnabled && this.cursors) {
+            if (this.cursors.left.isDown) moveX = -1;
+            if (this.cursors.right.isDown) moveX = 1;
+        }
 
         if (this.virtualStick) {
             if (this.virtualStick.isLeft) moveX = -1;
             if (this.virtualStick.isRight) moveX = 1;
         }
-        
-        // ★★★ 核心となるデバッグログ ★★★
-        if (moveX !== 0) {
-            console.log(`[PC-Debug] Frame ${Math.round(time)}: Input detected. moveX = ${moveX}. Applying velocity...`);
-            console.log(`[PC-Debug] Body before velocity change:`, {
-                x: body.x,
-                y: body.y,
-                vx: body.velocity.x,
-                vy: body.velocity.y,
-                isStatic: body.isStatic,
-                allowGravity: body.allowGravity,
-                moves: body.moves
-            });
-        }
-        // ★★★★★★★★★★★★★★★★★★★★★★
 
-        // --- ステップ4: 物理ボディへの速度設定 ---
-        body.setVelocityX(moveX * this.moveSpeed);
+        this.target.body.setVelocityX(moveX * this.moveSpeed);
 
-        // --- ステップ5: ジャンプ入力 ---
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+        // ★★★ 3. キーボードが有効な場合のみ、ジャンプ入力をチェック ★★★
+        if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
         }
     }
 
     jump() {
         if (this.target && this.target.body && this.target.body.touching.down) {
-            console.log("[PC-Debug] Jump condition met. Applying velocity.");
             this.target.body.setVelocityY(this.jumpVelocity);
         }
     }
-
 
 
     destroy() {
