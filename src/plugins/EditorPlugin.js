@@ -101,24 +101,33 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     /**
      * プロパティパネルのUIを、現在選択中のオブジェクトに基づいて再構築する。
      * このメソッドがUIを更新する唯一の公式なエントリーポイントとなる。
+       /**
+     * プロパティパネルを安全に更新する。
      */
     updatePropertyPanel() {
-        if (this._isUpdatingPanel) {
-            console.warn("[EditorPlugin] updatePropertyPanel is already running. Preventing recursive call.");
-            return;
-        }
+        if (this._isUpdatingPanel) return;
         this._isUpdatingPanel = true;
 
         try {
-            if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
+            // ▼▼▼▼▼ 【最重要修正】オブジェクトの生存確認 ▼▼▼▼▼
+            // selectedObjectが破棄されていたら、選択を解除して処理をやり直す
+            if (this.selectedObject && !this.selectedObject.scene) {
+                console.warn(`[EditorPlugin] Selected object '${this.selectedObject.name}' seems to be destroyed. Deselecting.`);
+                this.selectedObject = null;
+            }
+            // ▲▲▲▲▲ ここまで ▲▲▲▲▲
+
+            if (!this.editorPropsContainer) return;
             this.editorPropsContainer.innerHTML = '';
 
-            if (!this.selectedObject || !this.selectedObject.scene) {
-                this.editorTitle.innerText = 'No Object Selected';
+            if (!this.selectedObject) {
+                if (this.editorTitle) this.editorTitle.innerText = 'No Object Selected';
                 return;
             }
-
-            this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+            
+            // これ以降、this.selectedObjectは「生存している」ことが保証される
+            if (this.editorTitle) this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+            
 
             this.createNameInput();
             this.createGroupInput();
@@ -367,9 +376,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         button.innerText = 'オブジェクト 削除';
         button.style.backgroundColor = '#e65151';
         button.style.marginTop = '10px';
-        button.addEventListener('click', () => {
-            if (this.selectedObject && this.selectedObject.scene && confirm(`本当に '${this.selectedObject.name}' を削除しますか？`)) {
-                const targetObject = this.selectedObject;
+           button.addEventListener('click', () => {
+            // ▼▼▼▼▼ 【重要修正】ローカル変数で参照を固める ▼▼▼▼▼
+            const objectToDelete = this.selectedObject;
+            if (objectToDelete && objectToDelete.scene && confirm(`本当に '${objectToDelete.name}' を削除しますか？`)) {
+            // ▲▲▲▲▲ ここまで ▲▲▲▲▲
                 const sceneKey = targetObject.scene.scene.key;
                 if (this.editableObjects.has(sceneKey)) {
                     this.editableObjects.get(sceneKey).delete(targetObject);
@@ -495,9 +506,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const sceneLayoutData = { objects: [], animations: [] };
         
         if (this.editableObjects.has(sceneKey)) {
-            for (const gameObject of this.editableObjects.get(sceneKey)) {
-                if (!gameObject.name) continue;
-
+              const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
+            for (const gameObject of liveObjects) {
                 const objData = {
                     name: gameObject.name,
                     type: (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',

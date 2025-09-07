@@ -157,7 +157,7 @@ if (this.modeToggle && this.modeLabel) {
         }
 
         // --- 2. シーンに「オブジェクト追加」を依頼する ---
-        if (targetScene.addObjectFromEditor) {
+       if (targetScene && typeof targetScene.addObjectFromEditor === 'function') {
             
             // --- 2-1. 連番の名前を生成 ---
             if (!this.objectCounters[this.selectedAssetKey]) {
@@ -172,9 +172,11 @@ if (this.modeToggle && this.modeLabel) {
 
             // --- 2-3. 成功すれば、選択状態にしてパネルを更新 ---
             if (newObject) {
-                this.plugin.selectedObject = newObject;
-                this.plugin.updatePropertyPanel();
-            }
+               // ▼▼▼▼▼ 【重要修正】プラグインとメソッドの存在をチェックしてから呼び出す ▼▼▼▼▼
+                if (this.plugin && typeof this.plugin.updatePropertyPanel === 'function') {
+                    this.plugin.selectedObject = newObject;
+                    this.plugin.updatePropertyPanel();
+                }}
         } else {
             console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'addObjectFromEditor' method.`);
         }
