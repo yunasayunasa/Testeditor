@@ -493,8 +493,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         gameObject.on('pointerout', () => gameObject.clearTint());
     }
     
-    /**
+   /**
      * 現在のシーンレイアウトをJSON形式でエクスポートする。
+     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+     * ★★★ これが循環参照エラーを解決する最終的な修正です ★★★
+     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
      */
     exportLayoutToJson() {
         if (!this.selectedObject || !this.selectedObject.scene) {
@@ -503,11 +506,21 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
 
         const sceneKey = this.selectedObject.scene.scene.key;
-        const sceneLayoutData = { objects: [], animations: [] };
+        
+        // sceneLayoutDataは最終的にシリアライズされる純粋なオブジェクト
+        const sceneLayoutData = {
+            objects: [],
+            animations: []
+        };
         
         if (this.editableObjects.has(sceneKey)) {
-              const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
+            // 破壊されたオブジェクトを除外
+            const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
+
             for (const gameObject of liveObjects) {
+                if (!gameObject.name) continue;
+
+                // --- 1. 必要なプロパティだけを抽出した、新しいプレーンなオブジェクトを作成 ---
                 const objData = {
                     name: gameObject.name,
                     type: (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
@@ -521,9 +534,20 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     alpha: parseFloat(gameObject.alpha.toFixed(2)),
                 };
                 
+                // --- 2. getData()で取得したデータは、通常プレーンなので安全に追加できる ---
                 const group = gameObject.getData('group');
                 if (group) objData.group = group;
 
+                const animData = gameObject.getData('animation_data');
+                if (animData) objData.animation = animData;
+                
+                const events = gameObject.getData('events');
+                if (events && events.length > 0) objData.events = events;
+                
+                const components = gameObject.getData('components');
+                if (components && components.length > 0) objData.components = components;
+
+                // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
                 if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
@@ -534,19 +558,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     };
                 }
                 
-                const animData = gameObject.getData('animation_data');
-                if (animData) objData.animation = animData;
-                
-                const events = gameObject.getData('events');
-                if (events && events.length > 0) objData.events = events;
-                
-                const components = gameObject.getData('components');
-                if (components && components.length > 0) objData.components = components;
-                
                 sceneLayoutData.objects.push(objData);
             }
         }
         
+        // --- 4. アニメーションデータも同様に、必要なプロパティだけを抽出する ---
         const scene = this.game.scene.getScene(sceneKey);
         if (scene && scene.anims) {
             sceneLayoutData.animations = scene.anims.anims.getArray()
@@ -556,22 +572,33 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     if (!sceneObjects) return false;
                     return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
                 })
-                .map(anim => ({
+                         .map(anim => ({ // animオブジェクトそのものではなく、新しいプレーンなオブジェクトを返す
                     key: anim.key,
                     texture: anim.frames[0].textureKey,
-                    frames: { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame },
+                    // framesの定義も、Phaserオブジェクトへの参照を含まないようにする
+                    frames: { 
+                        start: anim.frames[0].frame.name, 
+                        end: anim.frames[anim.frames.length - 1].frame.name 
+                    },
                     frameRate: anim.frameRate,
                     repeat: anim.repeat
                 }));
         }
 
-        const jsonString = JSON.stringify(sceneLayoutData, null, 2);
-        console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
-        console.log(jsonString);
-        navigator.clipboard.writeText(jsonString).then(() => {
-            alert(`Layout for ${sceneKey} copied to clipboard!`);
-        });
+        // --- 5. 安全なオブジェクトをJSONに変換 ---
+        try {
+            const jsonString = JSON.stringify(sceneLayoutData, null, 2);
+            console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
+            console.log(jsonString);
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert(`Layout for ${sceneKey} copied to clipboard!`);
+            });
+        } catch (error) {
+            console.error("[EditorPlugin] FAILED to stringify layout data. This should not happen with the new structure.", error);
+            alert("Failed to export layout. Check the console for a critical error.");
+        }
     }
+
 
     // --- モーダルウィンドウ関連 ---
 
