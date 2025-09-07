@@ -120,7 +120,7 @@ export default class JumpScene extends BaseGameScene {
                 component.update(time, delta);
             }
         }
-    }
+    
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
