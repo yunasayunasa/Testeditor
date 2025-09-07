@@ -1,4 +1,3 @@
-// src/ui/VirtualStick.js (ポインターID管理・最終完成版)
 
 const Graphics = Phaser.GameObjects.Graphics;
 const Vector2 = Phaser.Math.Vector2;
@@ -8,14 +7,15 @@ export default class VirtualStick extends Phaser.GameObjects.Container {
     
     constructor(scene, config) {
         super(scene, config.x || 0, config.y || 0);
-
-        // --- 1. プロパティ定義 ---
+        
         this.baseRadius = config.baseRadius || 100;
         this.stickRadius = config.stickRadius || 50;
-        this.pointerId = null; // ★ このスティックを操作しているポインターのID
         this.direction = new Vector2(0, 0);
 
-        // --- 2. グラフィック描画 ---
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        this.pointerId = null; // ★ このスティックを操作している指のIDを記憶
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
         const base = new Graphics(scene);
         base.fillStyle(0x888888, 0.5);
         base.fillCircle(0, 0, this.baseRadius);
@@ -25,52 +25,45 @@ export default class VirtualStick extends Phaser.GameObjects.Container {
         this.stick.fillCircle(0, 0, this.stickRadius);
         this.add([base, this.stick]);
 
-        // --- 3. 当たり判定とインタラクション ---
-        // ★★★ setInteractiveをコンテナ自身に設定するのではなく、土台(base)に設定するのがより確実 ★★★
-        base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
+        // --- 当たり判定は、コンテナ自身に、中心を合わせて設定 ---
+        this.setSize(this.baseRadius * 2, this.baseRadius * 2);
+        this.setInteractive(new Circle(this.baseRadius, this.baseRadius, this.baseRadius), Circle.Contains);
         this.setScrollFactor(0);
         
-        // --- 4. イベントリスナー ---
-        // ★★★ base(土台)のpointerdownを監視する ★★★
-        base.on('pointerdown', this.onStickDown, this);
+        // --- イベントリスナーを修正 ---
+        this.on('pointerdown', this.onStickDown, this);
 
-        // ★★★ シーン全体のmoveとupを監視するのは変わらない ★★★
+        // ★ グローバルなリスナーは変わらないが、中のロジックが重要になる
         this.scene.input.on('pointermove', this.onPointerMove, this);
         this.scene.input.on('pointerup', this.onPointerUp, this);
 
         this.scene.events.on('shutdown', this.shutdown, this);
     }
     
-    /** スティックがタッチされた時の処理 */
     onStickDown(pointer) {
-        // 既に他の指で操作中の場合は何もしない
-        if (this.pointerId !== null) return;
-        
-        // このタッチのIDを記録
-        this.pointerId = pointer.id;
-        
-        // ★ 押された瞬間にノブを更新
-        this.updateStickPosition(pointer);
+        // 誰も所有していなければ、この指が所有者になる
+        if (this.pointerId === null) {
+            this.pointerId = pointer.id;
+            this.updateStickPosition(pointer);
+        }
     }
 
-    /** ポインターが動いた時の処理 */
     onPointerMove(pointer) {
-        // このスティックを操作している指でなければ、処理を無視
-        if (pointer.id !== this.pointerId) return;
-        
-        this.updateStickPosition(pointer);
+        // 自分を所有している指の動きでなければ、完全に無視
+        if (pointer.id === this.pointerId) {
+            this.updateStickPosition(pointer);
+        }
     }
     
-    /** ポインターが離された時の処理 */
     onPointerUp(pointer) {
-        // このスティックを操作している指でなければ、処理を無視
-        if (pointer.id !== this.pointerId) return;
-
-        // 状態をリセット
-        this.pointerId = null;
-        this.stick.setPosition(0, 0);
-        this.direction.setTo(0, 0);
+        // 自分を所有していた指が離された場合のみ、リセット
+        if (pointer.id === this.pointerId) {
+            this.pointerId = null; // 所有権を解放
+            this.stick.setPosition(0, 0);
+            this.direction.setTo(0, 0);
+        }
     }
+    
 
     /** ノブの位置と方向ベクトルを更新するコアロジック */
     updateStickPosition(pointer) {
