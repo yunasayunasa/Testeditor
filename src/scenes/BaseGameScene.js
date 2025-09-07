@@ -96,18 +96,34 @@ applyProperties(gameObject, layout) {
     if (data.group) gameObject.setData('group', data.group);
     if (data.texture) gameObject.setTexture(data.texture);
     
-    // --- 2. 物理ボディの生成 ---
-    if (data.physics) {
-        this.matter.add.gameObject(gameObject, {
-            isStatic: data.physics.isStatic || false,
-            friction: data.physics.friction || 0.1,
-            restitution: data.physics.restitution || 0,
-        });
-    }
+     // --- 2. 物理ボディの生成 ---
+        if (data.physics) {
+            const phys = data.physics;
+            
+            // ★★★ 形状の情報をGameObjectにデータとして保存 ★★★
+            gameObject.setData('shape', phys.shape || 'rectangle');
+
+            // ★ Matter.jsのAPIでGameObjectを物理世界に追加
+            this.matter.add.gameObject(gameObject, {
+                isStatic: phys.isStatic || false,
+                friction: phys.friction || 0.1,
+                restitution: phys.restitution || 0,
+            });
+            
+            // ★★★ 形状に応じて、当たり判定を再設定 ★★★
+            if (phys.shape === 'circle') {
+                const radius = (gameObject.width + gameObject.height) / 4;
+                gameObject.setCircle(radius);
+            } else {
+                // デフォルトは四角形なので、setRectangleを呼ぶ
+                // 引数なしで、テクスチャサイズに自動で合わせてくれる
+                gameObject.setRectangle(); 
+            }
+        }
     
     // --- 3. シーンへの追加 ---
-    if (!data.physics) this.add.existing(gameObject);
 
+this.add.existing(gameObject)
     // --- 4. Transform (物理ボディ生成の後に設定) ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
