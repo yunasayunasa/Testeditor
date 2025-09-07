@@ -48,17 +48,13 @@ export default class UIScene extends Phaser.Scene {
 // ... (他のメソッドやimportは変更なし) ...
 
     /**
-     * ★★★ 以下のメソッドで、既存の buildUiFromLayout を完全に置き換えてください ★★★
-     * (デバッグ用・JSONレイアウトを無視するシンプル版)
+     * UIをレイアウトデータに基づいて構築する (JSONレイアウト対応・最終確定版)
+     * ★★★ 以下のメソッドで、デバッグ用の buildUiFromLayout を完全に置き換えてください ★★★
      */
-    async buildUiFromLayout(layoutData) { // layoutDataは受け取るが使わない
-        console.log("[UIScene] Starting UI build with SIMPLIFIED routine.");
+    async buildUiFromLayout(layoutData) {
+        console.log("[UIScene] Starting UI build with FULL data-driven routine.");
 
         const uiRegistry = this.registry.get('uiRegistry');
-  // ★★★ 2. UISceneがまさに使おうとしているuiRegistryの中身をコンソールに出力 ★★★
-        console.log("%c[UIScene] uiRegistry data received from registry:", "color: cyan; font-weight: bold;", uiRegistry);
-
-
         if (!uiRegistry) {
             console.error('[UIScene] CRITICAL: uiRegistry not found in game registry.');
             return;
@@ -71,16 +67,22 @@ export default class UIScene extends Phaser.Scene {
             try {
                 const definition = uiRegistry[name];
                 
-                // ★ main.jsで前処理された 'component' プロパティが必須
+                // 1. JSONレイアウトから、このUI要素に対応する定義を探す (なければ空オブジェクト)
+                const layout = (layoutData && layoutData.objects) 
+                    ? layoutData.objects.find(obj => obj.name === name) || {}
+                    : {};
+                
+                // 2. registryの定義と、JSONの定義をマージする (JSONが優先される)
+                const params = { ...definition.params, ...layout, name, stateManager };
+
+                // 3. main.jsで前処理された 'component' プロパティを使ってクラスを取得
                 const UiComponentClass = definition.component;
 
                 if (UiComponentClass) {
-                    // ★ JSONを無視し、registryのparamsだけを使う
-                    const params = { ...definition.params, name, stateManager };
-                    
                     const uiElement = new UiComponentClass(this, params);
+                    // 4. マージ済みの最終的なparamsを使って、UI要素を登録・設定する
                     this.registerUiElement(name, uiElement, params);
-                    console.log(`[UIScene] Successfully created '${name}'.`);
+                    console.log(`[UIScene] Successfully created and configured '${name}'.`);
                 } else {
                     console.warn(`[UIScene] UI definition for '${name}' is missing a 'component' class.`);
                 }
@@ -88,12 +90,10 @@ export default class UIScene extends Phaser.Scene {
                 console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
             }
         }
+        // ★ forループなので、Promise.allは不要
     }
 
-// src/scenes/UIScene.js
-
-// ... (buildUiFromLayoutは、先ほどのデバッグ用のシンプル版のままでOKです) ...
-
+// ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**
      * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
      * (setSize/setInteractiveを安全に呼び出す最終確定版)
