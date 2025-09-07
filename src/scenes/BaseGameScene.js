@@ -84,48 +84,40 @@ export default class BaseGameScene extends Phaser.Scene {
             : new Phaser.GameObjects.Image(this, 0, 0, textureKey);
     }
 
-    /**
-     * 単体のオブジェクトにプロパティを適用し、シーンに追加する
-     */
-    applyProperties(gameObject, layout) {
-        const data = layout || {};
+  /**
+ * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終完成版)
+ * ★★★ 以下のメソッドで、既存の applyProperties を完全に置き換えてください ★★★
+ */
+applyProperties(gameObject, layout) {
+    const data = layout || {};
 
-        // --- 1. 基本プロパティ ---
-        gameObject.name = data.name || 'untitled';
-        if (data.group) gameObject.setData('group', data.group);
-        if (data.texture) gameObject.setTexture(data.texture);
-        this.add.existing(gameObject);
-     // --- 2. 物理ボディの生成 ---
-        if (data.physics) {
-            const phys = data.physics;
-            // ★ Matter.jsのAPIでGameObjectを物理世界に追加
-            this.matter.add.gameObject(gameObject, {
-                // isStatic, friction, restitutionなどをJSONから設定できるようにする
-                isStatic: phys.isStatic || false,
-                friction: phys.friction || 0.1,
-                restitution: phys.bounceY || 0, // bounceYをrestitution(反発係数)として流用
-            });
-            
-            // Matter.jsでは、テクスチャサイズに合わせて自動で当たり判定が作られる
-            // 必要であれば、ここで当たり判定の形状やサイズを調整することも可能
-            // gameObject.setRectangle(width, height);
-            // gameObject.setCircle(radius);
-            
-        }
-        
-        // --- 3. シーンへの追加 ---
-        // ★ this.matter.add.gameObject がすでに追加処理を行っているので、
-        // ★ this.add.existing(gameObject) は物理ボディがない場合のみ呼ぶ
-        if (!data.physics) {
-            this.add.existing(gameObject);
-        }
+    // --- 1. 基本プロパティ ---
+    gameObject.name = data.name || 'untitled';
+    if (data.group) gameObject.setData('group', data.group);
+    if (data.texture) gameObject.setTexture(data.texture);
+    
+    // --- 2. 物理ボディの生成 ---
+    if (data.physics) {
+        this.matter.add.gameObject(gameObject, {
+            isStatic: data.physics.isStatic || false,
+            friction: data.physics.friction || 0.1,
+            restitution: data.physics.restitution || 0,
+        });
+    }
+    
+    // --- 3. シーンへの追加 ---
+    if (!data.physics) this.add.existing(gameObject);
 
-        // --- 4. Transform (物理ボディ生成の後に設定) ---
-        gameObject.setPosition(data.x || 0, data.y || 0);
-        gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
-        gameObject.setAngle(data.angle || 0); // Matter.jsは回転もサポート！
-        gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
-        if (data.visible !== undefined) gameObject.setVisible(data.visible);
+    // --- 4. Transform (物理ボディ生成の後に設定) ---
+    gameObject.setPosition(data.x || 0, data.y || 0);
+    gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
+    gameObject.setAngle(data.angle || 0);
+    gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
+    if (data.visible !== undefined) gameObject.setVisible(data.visible);
+
+    // --- 5. イベントとエディタ機能の適用 ---
+    this.applyEventsAndEditorFunctions(gameObject, data.events);
+    
 
         
         // --- 5. アニメーションプロパティ ---
@@ -142,7 +134,24 @@ export default class BaseGameScene extends Phaser.Scene {
                 this.addComponent(gameObject, componentDef.type, componentDef.params);
             }
         }
+     // --- 7. 全てのプロパティ設定が完了した、一番最後にインタラクティブ化！ ---
+    try {
+        if (gameObject.body) {
+            // Matter.jsオブジェクトの場合
+            gameObject.setInteractive({
+                hitArea: gameObject.body,
+                hitAreaCallback: Phaser.Physics.Matter.Matter.Body.contains,
+                draggable: true
+            });
+        } else {
+            // 通常のオブジェクトの場合
+            gameObject.setInteractive();
+            this.input.setDraggable(gameObject);
+        }
+    } catch(e) {
+        console.warn(`[BaseGameScene] Failed to setInteractive on '${gameObject.name}'`, e);
     }
+}
     
 
     /**

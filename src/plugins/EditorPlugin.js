@@ -626,6 +626,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * オブジェクトを編集可能にする (Matter.js対応・最終完成版)
      * ★★★ 以下のメソッドで、既存の makeEditable を完全に置き換えてください ★★★
      */
+  /**
+     * オブジェクトを編集可能にする (setInteractiveを分離)
+     * ★★★ 以下のメソッドで、既存の makeEditable を完全に置き換えてください ★★★
+     */
     makeEditable(gameObject, scene) {
         if (!this.isEnabled || !gameObject.name) return;
 
@@ -635,31 +639,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
-        // --- ここからがMatter.js対応の核心 ---
+        // --- setInteractiveの呼び出しを、ここからは削除する ---
+        // --- 代わりに、isEditableフラグだけを立てておく ---
         if (!gameObject.getData('isEditable')) {
-            try {
-                // ★★★ 1. 物理ボディがあるか、ないかで処理を分ける ★★★
-                if (gameObject.body) {
-                    // --- Case A: 物理ボディがある場合 (Matter.jsオブジェクト) ---
-                    // 物理ボディ自身を当たり判定として設定する
-                    gameObject.setInteractive({ 
-                        hitArea: gameObject.body, 
-                        hitAreaCallback: Phaser.Physics.Matter.Matter.Body.contains, // Matter.js用の判定関数
-                        draggable: true // ドラッグ可能にする
-                    });
-                } else {
-                    // --- Case B: 物理ボディがない場合 (ただの画像など) ---
-                    // 従来通り、テクスチャのサイズを元に当たり判定を設定
-                    gameObject.setInteractive(); 
-                    scene.input.setDraggable(gameObject);
-                }
-                
-                gameObject.setData('isEditable', true);
-
-            } catch (e) {
-                console.warn(`[EditorPlugin] Failed to make '${gameObject.name}' interactive.`, e);
-            }
+            gameObject.setData('isEditable', true);
         }
+        
         
         // --- イベントリスナーの部分は、あなたのコードのままで完璧です ---
         // ★ 既存のリスナーを一度クリア
