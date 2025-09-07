@@ -93,26 +93,44 @@ export default class JumpScene extends BaseGameScene {
         }
     }
     
+   // src/scenes/JumpScene.js
+
+// ... (他のメソッドは変更なし) ...
+
     /**
      * シーン上の全GameObjectを走査し、アタッチされたコンポーネントを更新する
      * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
+     * (エラー捕捉機能付き・最終決戦バージョン)
      */
     update(time, delta) {
-        // this.children.list には、このシーンに追加された全てのGameObjectが入っている
-        for (const gameObject of this.children.list) {
-            // そのGameObjectがcomponentsプロパティを持っているかチェック
-            if (gameObject.components) {
-                // 持っているコンポーネントを全てループ処理
-                for (const key in gameObject.components) {
-                    const component = gameObject.components[key];
-                    // コンポーネントにupdateメソッドがあれば実行する
-                    if (component && typeof component.update === 'function') {
-                        component.update(time, delta);
+        try { // ★★★ 1. 全ての更新処理を try で囲む ★★★
+
+            for (const gameObject of this.children.list) {
+                if (gameObject.components) {
+                    for (const key in gameObject.components) {
+                        const component = gameObject.components[key];
+                        if (component && typeof component.update === 'function') {
+                            component.update(time, delta);
+                        }
                     }
                 }
             }
+
+        } catch (error) { // ★★★ 2. 発生したエラーを捕捉する ★★★
+            
+            // ★★★ 3. エラーの詳細をコンソールに表示する ★★★
+            console.error("!!! RUNTIME ERROR CAUGHT IN JUMPSCENE UPDATE !!!");
+            console.error("Error Message:", error.message);
+            console.error("Error Stack:", error.stack);
+            console.error("Error Object:", error);
+            
+            // ★★★ 4. (重要) エラーの連鎖を防ぐため、ゲームを安全に停止する ★★★
+            this.scene.pause(); 
+            console.error("!!! To prevent further errors, the scene has been paused. !!!");
         }
     }
+    
+// ... (他のメソッドは変更なし) ...
 
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
