@@ -93,6 +93,8 @@ window.onload = async () => {
     
     // ★ステップ1: 必要なデータを先に非同期で準備する
     const processedUiRegistry = await processUiRegistry(rawUiRegistry);
+   // ★★★ 1. 処理後のuiRegistryの中身をコンソールに出力 ★★★
+    console.log("%c[main.js] Final processed uiRegistry:", "color: limegreen; font-weight: bold;", processedUiRegistry);
 
     // Phaser Gameインスタンスを生成
     const game = new Phaser.Game(config);

@@ -55,6 +55,10 @@ export default class UIScene extends Phaser.Scene {
         console.log("[UIScene] Starting UI build with SIMPLIFIED routine.");
 
         const uiRegistry = this.registry.get('uiRegistry');
+  // ★★★ 2. UISceneがまさに使おうとしているuiRegistryの中身をコンソールに出力 ★★★
+        console.log("%c[UIScene] uiRegistry data received from registry:", "color: cyan; font-weight: bold;", uiRegistry);
+
+
         if (!uiRegistry) {
             console.error('[UIScene] CRITICAL: uiRegistry not found in game registry.');
             return;
