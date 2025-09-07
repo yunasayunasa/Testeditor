@@ -1,4 +1,3 @@
-import Phaser from 'phaser';
 
 /**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
