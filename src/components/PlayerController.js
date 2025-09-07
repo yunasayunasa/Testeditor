@@ -46,16 +46,12 @@ export default class PlayerController {
         }
     }
 
-   // src/components/PlayerController.js (究極デバッグログ版)
-
-export default class PlayerController {
-    
-    // ... (constructor, findUiElements は変更なし) ...
+   
     
     update(time, delta) {
         // --- ステップ1: ターゲットの存在確認 ---
         if (!this.target || !this.target.active) {
-            // console.log("[PC-Debug] Target is null or inactive. Skipping.");
+             console.log("[PC-Debug] Target is null or inactive. Skipping.");
             return;
         }
         
