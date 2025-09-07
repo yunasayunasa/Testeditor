@@ -32,3 +32,12 @@ export const uiRegistry = {
 };
 
 // ... sceneUiVisibility は変更なし ...
+
+export const sceneUiVisibility = {
+    'GameScene': ['hud', 'menu', 'game'], // 'controls' はないのでスティックは出ない
+      'NovelOverlayScene': ['game'], // メッセージウィンドウ('game'グループ)だけを表示
+    'JumpScene': ['controls', 'action'], // 'hud' 'menu' はないのでHUDやメニューは出ない
+    'BattleScene': ['hud', 'battle'],
+     'ActionScene': ['menu', 'game'],
+    'TitleScene': []
+};
