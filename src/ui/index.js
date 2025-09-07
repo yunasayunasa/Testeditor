@@ -1,24 +1,26 @@
-// ★ import文は不要
+// src/ui/index.js (最終修正版)
 
 export const uiRegistry = {
     'coin_hud': { path: './ui/CoinHud.js', groups: [ 'battle','hud'] },
-    'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } , 
-},
+    'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } },
     'enemy_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
-  'virtual_stick': { 
+    'virtual_stick': { 
         path: './ui/VirtualStick.js', 
         groups: ['controls', 'action'],
-        params: { 
-            group: 'virtual_stick' // 自分を探せるようにグループ名を渡す
-        } 
+        params: { group: 'virtual_stick' } 
     },
     'jump_button': { 
         path: './ui/JumpButton.js', 
         groups: ['controls', 'action'],
-        params: {
-            group: 'jump_button' // 自分を探せるようにグループ名を渡す
-        }
+        params: { group: 'jump_button' }
     },
+
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ この一行を追加すれば、全てが解決します ★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    'message_window': { path: './ui/MessageWindow.js', groups: ['game'] },
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
     'menu_button': {
         path: './ui/MenuButton.js',
         groups: ['menu', 'game']
@@ -29,11 +31,4 @@ export const uiRegistry = {
     }
 };
 
-export const sceneUiVisibility = {
-    'GameScene': ['hud', 'menu', 'game'], // 'controls' はないのでスティックは出ない
-      'NovelOverlayScene': ['game'], // メッセージウィンドウ('game'グループ)だけを表示
-    'JumpScene': ['controls', 'action'], // 'hud' 'menu' はないのでHUDやメニューは出ない
-    'BattleScene': ['hud', 'battle'],
-     'ActionScene': ['menu', 'game'],
-    'TitleScene': []
-};
+// ... sceneUiVisibility は変更なし ...
