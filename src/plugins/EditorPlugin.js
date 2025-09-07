@@ -98,14 +98,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         return null;
     }
 
-    /**
-     * プロパティパネルのUIを、現在選択中のオブジェクトに基づいて再構築する。
-     * このメソッドがUIを更新する唯一の公式なエントリーポイントとなる。
-       /**
-     * プロパティパネルを安全に更新する。
-     */
+  
 /**
- * プロパティパネルを安全に更新する。（デバッグログは削除済み）
+ * プロパティパネルを安全に更新する。（最終ロジック）
  */
 updatePropertyPanel() {
     if (this._isUpdatingPanel) return;
@@ -139,14 +134,11 @@ updatePropertyPanel() {
         physicsTitle.style.margin = '10px 0 5px 0';
         this.editorPropsContainer.appendChild(physicsTitle);
 
-        // ▼▼▼▼▼ 【最重要】クラッシュの原因だった箇所を修正 ▼▼▼▼▼
-        // this.selectedObject.body への直接アクセスを完全にやめ、setDataで記録した状態を信じる
-        if (this.selectedObject.getData('hasBody') === true) {
-            // bodyプロパティが実際に存在することも念のため確認してからUIを作る
-            if (this.selectedObject.body) {
-                this.createMatterPropertiesUI(this.selectedObject);
-            }
-            // bodyの有無に関わらず、hasBodyがtrueなら削除ボタンは表示する
+        // ▼▼▼▼▼ 【最終ロジック】シンプル・イズ・ベスト ▼▼▼▼▼
+        // 結局のところ、bodyプロパティの有無を直接見るのが最も確実。
+        // ただし、UI生成ロジックとイベントハンドラ内で安全に扱う。
+        if (this.selectedObject.body) {
+            this.createMatterPropertiesUI(this.selectedObject);
             this.createRemoveBodyButton();
         } else {
             this.createAddBodyButton();
@@ -165,7 +157,8 @@ updatePropertyPanel() {
         this.createDeleteObjectButton();
 
     } catch (error) {
-        console.error("[updatePropertyPanel] FATAL CRASH:", error);
+        // クラッシュが発生した場合、コンソールに詳細なエラーオブジェクトを出力
+        console.error("%c[updatePropertyPanel] FATAL CRASH:", "color: red; font-size: 1.2em;", error);
     } finally {
         this._isUpdatingPanel = false;
     }
@@ -252,23 +245,23 @@ updatePropertyPanel() {
     /**
  * 物理ボディを付与するボタンを生成する。
  */
+/**
+ * 物理ボディを付与するボタンを生成する。
+ */
 createAddBodyButton() {
     const addButton = document.createElement('button');
     addButton.innerText = '物理ボディ 付与';
     addButton.onclick = () => {
-        if (this.selectedObject) {
+        if (this.selectedObject && !this.selectedObject.body) { // 二重付与を防止
             this.selectedObject.scene.matter.add.gameObject(this.selectedObject, { isStatic: false });
             this.selectedObject.setData('shape', 'rectangle');
-            
-            // ▼▼▼▼▼ 【重要】状態を記録 ▼▼▼▼▼
-            this.selectedObject.setData('hasBody', true);
-            
             setTimeout(() => this.updatePropertyPanel(), 0);
         }
     };
     this.editorPropsContainer.appendChild(addButton);
 }
-  /* **
+
+  /**
  * 物理ボディを削除するボタンを生成する。
  */
 createRemoveBodyButton() {
@@ -277,30 +270,21 @@ createRemoveBodyButton() {
     removeButton.style.backgroundColor = '#e65151';
     const targetObject = this.selectedObject;
     removeButton.onclick = () => {
-        // ▼▼▼▼▼ 【重要】targetObject.bodyへのアクセスを削除 ▼▼▼▼▼
-        if (targetObject && targetObject.scene) { 
+        if (targetObject && targetObject.body) { // bodyが確実にある時だけ実行
             try {
-                // bodyが存在するかどうかに関わらず、削除処理を試みる
-                if(targetObject.body) {
-                    targetObject.scene.matter.world.remove(targetObject.body);
-                    targetObject.body = null;
-                }
-                targetObject.setData('shape', undefined);
-
-                // ▼▼▼▼▼ 【重要】状態を記録 ▼▼▼▼▼
-                targetObject.setData('hasBody', false);
-
+                targetObject.scene.matter.world.remove(targetObject.body);
+                targetObject.body = null;
                 setTimeout(() => this.updatePropertyPanel(), 0);
             } catch (e) {
                 console.error("物理ボディの削除中にエラーが発生:", e);
-                // エラーが発生しても、状態を強制的に更新してUIを再描画
-                targetObject.setData('hasBody', false);
+                // クラッシュした場合でもUIの再描画を試みる
                 setTimeout(() => this.updatePropertyPanel(), 0);
             }
         }
     };
     this.editorPropsContainer.appendChild(removeButton);
 }
+
 
 
     createMatterPropertiesUI(gameObject) {
