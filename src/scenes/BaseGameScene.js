@@ -95,31 +95,38 @@ export default class BaseGameScene extends Phaser.Scene {
         if (data.group) gameObject.setData('group', data.group);
         if (data.texture) gameObject.setTexture(data.texture);
         this.add.existing(gameObject);
+     // --- 2. 物理ボディの生成 ---
+        if (data.physics) {
+            const phys = data.physics;
+            // ★ Matter.jsのAPIでGameObjectを物理世界に追加
+            this.matter.add.gameObject(gameObject, {
+                // isStatic, friction, restitutionなどをJSONから設定できるようにする
+                isStatic: phys.isStatic || false,
+                friction: phys.friction || 0.1,
+                restitution: phys.bounceY || 0, // bounceYをrestitution(反発係数)として流用
+            });
+            
+            // Matter.jsでは、テクスチャサイズに合わせて自動で当たり判定が作られる
+            // 必要であれば、ここで当たり判定の形状やサイズを調整することも可能
+            // gameObject.setRectangle(width, height);
+            // gameObject.setCircle(radius);
+            
+        }
+        
+        // --- 3. シーンへの追加 ---
+        // ★ this.matter.add.gameObject がすでに追加処理を行っているので、
+        // ★ this.add.existing(gameObject) は物理ボディがない場合のみ呼ぶ
+        if (!data.physics) {
+            this.add.existing(gameObject);
+        }
 
-        // --- 2. Transform ---
+        // --- 4. Transform (物理ボディ生成の後に設定) ---
         gameObject.setPosition(data.x || 0, data.y || 0);
         gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
-        gameObject.setAngle(data.angle || 0);
+        gameObject.setAngle(data.angle || 0); // Matter.jsは回転もサポート！
         gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
         if (data.visible !== undefined) gameObject.setVisible(data.visible);
 
-        // --- 3. 物理ボディ ---
-        if (data.physics) {
-            const phys = data.physics;
-            this.physics.add.existing(gameObject, phys.isStatic || false);
-            if (gameObject.body) {
-                if (!gameObject.body.isStatic) {
-                    gameObject.body.setSize(phys.width, phys.height);
-                    gameObject.body.setOffset(phys.offsetX, phys.offsetY);
-                    gameObject.body.allowGravity = phys.allowGravity;
-                    gameObject.body.bounce.setTo(phys.bounceX, phys.bounceY);
-                }
-                gameObject.body.collideWorldBounds = phys.collideWorldBounds;
-            }
-        }
-        
-        // --- 4. ゲームプレイ用イベントとエディタ機能の適用 ---
-        this.applyEventsAndEditorFunctions(gameObject, data.events);
         
         // --- 5. アニメーションプロパティ ---
         if (data.animation && gameObject.play) {
