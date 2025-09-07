@@ -95,12 +95,6 @@ export default class UIScene extends Phaser.Scene {
         element.name = name;
         this.add.existing(element);
         this.uiElements.set(name, element);
-           // JSONレイアウトに "group" プロパティが存在すれば、
-        // それをゲームオブジェクトのデータとして設定する
-        if (layout.group) {
-            element.setData('group', layout.group);
-            console.log(`[UIScene] Set group '${layout.group}' to object '${name}'.`);
-        }
         
         if (params.x !== undefined && params.y !== undefined) {
             element.setPosition(params.x, params.y);
