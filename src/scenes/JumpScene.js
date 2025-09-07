@@ -8,18 +8,14 @@ export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-this.movePointerId = null;     // 移動操作を担当する指の「ID」
-        this.actionPointerId = null;   // アクション操作を担当する指の「ID」
-        this.virtualStick = null;
+ this.virtualStick = null;
         this.playerController = null;
     }
 
     create() {
         console.log("[JumpScene] Create started.");
        this.initSceneWithData();
-        this.input.on('pointerdown', this.handlePointerDown, this);
-        this.input.on('pointermove', this.handlePointerMove, this);
-        this.input.on('pointerup', this.handlePointerUp, this);
+     
         this.cameras.main.setBackgroundColor('#4488cc');
         
         const soundManager = this.registry.get('soundManager');
@@ -95,46 +91,23 @@ this.movePointerId = null;     // 移動操作を担当する指の「ID」
         const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
         if (player && floors.length > 0) this.physics.add.collider(player, floors);
         
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene) this.virtualStick = uiScene.uiElements.get('virtual_stick');
-    }
+         const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            this.virtualStick = uiScene.uiElements.get('virtual_stick');
+            const jumpButton = uiScene.uiElements.get('jump_button');
 
-    handlePointerDown(pointer) {
-        const screenHalfX = this.scale.width / 2;
-
-        if (pointer.x < screenHalfX) {
-            // --- 画面左側 ---
-            if (this.movePointerId === null) {
-                this.movePointerId = pointer.id; // この指を移動用としてロック
-            }
-        } else {
-            // --- 画面右側 ---
-            if (this.actionPointerId === null) {
-                this.actionPointerId = pointer.id; // この指をアクション用としてロック
-                if (this.playerController) this.playerController.jump();
+            // ★★★ ジャンプボタンのイベントを直接リッスンする ★★★
+            if (jumpButton) {
+                jumpButton.on('button_pressed', () => {
+                    if (this.playerController) {
+                        this.playerController.jump();
+                    }
+                }, this);
             }
         }
     }
 
-    handlePointerMove(pointer) {
-        // この指が、登録された移動用の指である場合のみ処理
-        if (this.movePointerId === pointer.id) {
-            if (this.virtualStick) this.virtualStick.updatePosition(pointer);
-        }
-    }
-
-    handlePointerUp(pointer) {
-        // この指が移動用の指だった場合
-        if (this.movePointerId === pointer.id) {
-            this.movePointerId = null; // ロックを解除
-            if (this.virtualStick) this.virtualStick.reset();
-        }
-        
-        // この指がアクション用の指だった場合
-        if (this.actionPointerId === pointer.id) {
-            this.actionPointerId = null; // ロックを解除
-        }
-    }
+    // ★★★ handlePointerDown, Move, Upは不要になる ★★★
 
     update(time, delta) {
         if (this.playerController) {

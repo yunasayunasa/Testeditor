@@ -15,24 +15,20 @@ export default class VirtualStick extends Phaser.GameObjects.Container {
 
       // --- 見た目の作成 ---
     const base = new Graphics(scene).fillStyle(0x888888, 0.5).fillCircle(0, 0, this.baseRadius);
-    this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
-    this.add([base, this.stick]);
-    
-    this.setScrollFactor(0);
-    this.setAlpha(0.7);
+        this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
+        this.add([base, this.stick]);
+        
+        // ★★★ 当たり判定をbaseグラフィックに設定 ★★★
+        base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
+        // ★ ドラッグ可能にするのはbase
+        scene.input.setDraggable(base);
 
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // ★★★ これが、全てを解決する最後の修正です ★★★
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // コンテナ自身ではなく、土台(base)をインタラクティブにする
-    base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
-    // そして、コンテナをドラッグ可能にする
-    this.scene.input.setDraggable(base);
+        this.setScrollFactor(0);
+        this.setAlpha(0.7);
 
-    // ★ イベントリスナーを、コンテナ(this)ではなく、土台(base)に設定する
-    base.on('drag', (pointer, dragX, dragY) => {
-        // dragX, dragYはbaseの中心からの相対座標になるので、計算がシンプルになる
-        const vec = new Vector2(dragX, dragY);
+        // ★★★ baseのdragイベントをリッスンする ★★★
+        base.on('drag', (pointer, dragX, dragY) => {
+            const vec = new Vector2(dragX, dragY);
         this.updatePositionWithVector(vec);
     });
     base.on('dragend', (pointer) => {
