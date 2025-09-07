@@ -1,4 +1,4 @@
-// src/ui/VirtualStick.js (純粋表示部品・最終完成版)
+// src/ui/VirtualStick.js (固定式・純粋表示部品・最終完成版)
 
 const Graphics = Phaser.GameObjects.Graphics;
 const Vector2 = Phaser.Math.Vector2;
@@ -6,29 +6,25 @@ const Vector2 = Phaser.Math.Vector2;
 export default class VirtualStick extends Phaser.GameObjects.Container {
     
     constructor(scene, config) {
-        super(scene, config.x || 0, config.y || 0);
+        // ★★★ configで渡された固定位置に表示する ★★★
+        super(scene, config.x || 150, config.y || 550);
 
         this.baseRadius = 100;
         this.stickRadius = 50;
         this.direction = new Vector2(0, 0);
-        this.basePosition = new Vector2(config.x || 150, config.y || 550); // デフォルト位置
 
+        // --- 見た目の作成 ---
         this.base = new Graphics(scene).fillStyle(0x888888, 0.5).fillCircle(0, 0, this.baseRadius);
         this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
         this.add([this.base, this.stick]);
         
         this.setScrollFactor(0);
-        this.setAlpha(0); // ★ 最初は透明にしておく
-    }
-
-    /** JumpSceneから呼ばれる: スティックを表示して、操作を開始する */
-    show(x, y) {
-        this.setPosition(x, y); // タッチされた位置に移動
-        this.setAlpha(1);
+        this.setAlpha(0.7); // ★ 常に半透明で表示
     }
     
     /** JumpSceneから呼ばれる: ノブの位置を更新する */
     updatePosition(pointer) {
+        // ワールド座標から、このコンテナの中心を(0,0)とするローカル座標に変換
         const localX = pointer.x - this.x;
         const localY = pointer.y - this.y;
         const vec = new Vector2(localX, localY);
@@ -45,10 +41,8 @@ export default class VirtualStick extends Phaser.GameObjects.Container {
         }
     }
     
-    /** JumpSceneから呼ばれる: 指が離れたので、非表示にして状態をリセット */
-    hideAndReset() {
-        this.setAlpha(0);
-        this.setPosition(this.basePosition.x, this.basePosition.y); // デフォルト位置に戻す
+    /** JumpSceneから呼ばれる: 操作が終わったのでノブを中央に戻す */
+    reset() {
         this.stick.setPosition(0, 0);
         this.direction.setTo(0, 0);
     }

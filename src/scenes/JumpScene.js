@@ -8,19 +8,18 @@ export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
- this.movePointer = null;     // 移動操作を担当する指
-        this.actionPointer = null;   // アクション操作を担当する指
-        this.virtualStick = null;    // VirtualStickのインスタンスへの参照
-        this.playerController = null; // PlayerControllerのインスタンスへの参照
-        this.actionInterpreter = null;
+this.movePointerId = null;     // 移動操作を担当する指の「ID」
+        this.actionPointerId = null;   // アクション操作を担当する指の「ID」
+        this.virtualStick = null;
+        this.playerController = null;
     }
 
     create() {
         console.log("[JumpScene] Create started.");
-            this.input.on('pointerdown', this.handlePointerDown, this);
+       this.initSceneWithData();
+        this.input.on('pointerdown', this.handlePointerDown, this);
         this.input.on('pointermove', this.handlePointerMove, this);
         this.input.on('pointerup', this.handlePointerUp, this);
-        this.actionInterpreter = new ActionInterpreter(this);
         this.cameras.main.setBackgroundColor('#4488cc');
         
         const soundManager = this.registry.get('soundManager');
@@ -87,89 +86,62 @@ export default class JumpScene extends BaseGameScene {
             console.log(`[JumpScene] Component '${componentType}' added to '${target.name}'.`);
         }
     }
-  onSetupComplete() {
+   onSetupComplete() {
         const player = this.children.list.find(obj => obj.getData('group') === 'player');
         if (player) {
             this.cameras.main.startFollow(player, true, 0.1, 0.1);
-            // ★ PlayerControllerのインスタンスをシーン変数に格納
             this.playerController = player.components?.PlayerController;
         }
-
         const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
-        if (player && floors.length > 0) {
-            this.physics.add.collider(player, floors);
-        }
+        if (player && floors.length > 0) this.physics.add.collider(player, floors);
         
-        // ★ UISceneからVirtualStickのインスタンスを取得
         const uiScene = this.scene.get('UIScene');
-        if (uiScene) {
-            this.virtualStick = uiScene.uiElements.get('virtual_stick');
-        }
+        if (uiScene) this.virtualStick = uiScene.uiElements.get('virtual_stick');
     }
 
     handlePointerDown(pointer) {
         const screenHalfX = this.scale.width / 2;
 
         if (pointer.x < screenHalfX) {
-            // --- 画面左側がタッチされた ---
-            // 既に移動用の指がなければ、この指を移動用として割り当てる
-            if (this.movePointer === null) {
-                this.movePointer = pointer;
-                if (this.virtualStick) {
-                    this.virtualStick.show(pointer.x, pointer.y); // スティックをタッチ位置に表示
-                }
+            // --- 画面左側 ---
+            if (this.movePointerId === null) {
+                this.movePointerId = pointer.id; // この指を移動用としてロック
             }
         } else {
-            // --- 画面右側がタッチされた ---
-            if (this.actionPointer === null) {
-                this.actionPointer = pointer;
-                if (this.playerController) {
-                    this.playerController.jump(); // PlayerControllerにジャンプを命令
-                }
-                 // (お好みで) JumpButtonの見た目を変える命令もここに追加できる
+            // --- 画面右側 ---
+            if (this.actionPointerId === null) {
+                this.actionPointerId = pointer.id; // この指をアクション用としてロック
+                if (this.playerController) this.playerController.jump();
             }
         }
     }
 
     handlePointerMove(pointer) {
         // この指が、登録された移動用の指である場合のみ処理
-        if (this.movePointer && pointer.id === this.movePointer.id) {
-            if (this.virtualStick) {
-                // スティックに、現在の指の位置を渡して更新させる
-                this.virtualStick.updatePosition(pointer);
-            }
+        if (this.movePointerId === pointer.id) {
+            if (this.virtualStick) this.virtualStick.updatePosition(pointer);
         }
     }
 
     handlePointerUp(pointer) {
         // この指が移動用の指だった場合
-        if (this.movePointer && pointer.id === this.movePointer.id) {
-            this.movePointer = null; // 割り当てを解除
-            if (this.virtualStick) {
-                this.virtualStick.hideAndReset(); // スティックを隠してリセット
-            }
+        if (this.movePointerId === pointer.id) {
+            this.movePointerId = null; // ロックを解除
+            if (this.virtualStick) this.virtualStick.reset();
         }
         
         // この指がアクション用の指だった場合
-        if (this.actionPointer && pointer.id === this.actionPointer.id) {
-            this.actionPointer = null; // 割り当てを解除
-            // (お好みで) JumpButtonの見た目を元に戻す命令もここに追加できる
+        if (this.actionPointerId === pointer.id) {
+            this.actionPointerId = null; // ロックを解除
         }
     }
 
     update(time, delta) {
-        // ★ PlayerControllerの更新処理を、シーンから直接呼び出す
-        if (this.playerController && this.virtualStick) {
-            // PlayerControllerにスティックの現在の方向を渡す
-            this.playerController.updateWithStick(this.virtualStick.direction);
-        } else if(this.playerController) {
-             // スティックがない場合も考慮 (PCキーボード操作など)
-             this.playerController.updateWithStick(new Phaser.Math.Vector2(0, 0));
+        if (this.playerController) {
+            const stickDirection = this.virtualStick ? this.virtualStick.direction : new Phaser.Math.Vector2(0, 0);
+            this.playerController.updateWithStick(stickDirection);
         }
     }
-    
-// ... (他のメソッドは変更なし) ...
-
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
