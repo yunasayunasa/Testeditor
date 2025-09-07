@@ -102,36 +102,69 @@ export default class JumpScene extends BaseGameScene {
      * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
      * (エラー捕捉機能付き・最終決戦バージョン)
      */
+  // src/components/PlayerController.js (究極デバッグログ版)
+
+export default class PlayerController {
+    
+    // ... (constructor, findUiElements は変更なし) ...
+    
     update(time, delta) {
-        try { // ★★★ 1. 全ての更新処理を try で囲む ★★★
+        // --- ステップ1: ターゲットの存在確認 ---
+        if (!this.target || !this.target.active) {
+            // console.log("[PC-Debug] Target is null or inactive. Skipping.");
+            return;
+        }
+        
+        // --- ステップ2: 物理ボディの存在確認 ---
+        const body = this.target.body;
+        if (!body) {
+            console.warn(`[PC-Debug] Target '${this.target.name}' has NO physics body. Skipping.`);
+            return;
+        }
 
-            for (const gameObject of this.children.list) {
-                if (gameObject.components) {
-                    for (const key in gameObject.components) {
-                        const component = gameObject.components[key];
-                        if (component && typeof component.update === 'function') {
-                            component.update(time, delta);
-                        }
-                    }
-                }
-            }
+        // --- ステップ3: 入力状態の取得 ---
+        let moveX = 0;
+        if (this.cursors.left.isDown) moveX = -1;
+        if (this.cursors.right.isDown) moveX = 1;
 
-        } catch (error) { // ★★★ 2. 発生したエラーを捕捉する ★★★
-            
-            // ★★★ 3. エラーの詳細をコンソールに表示する ★★★
-            console.error("!!! RUNTIME ERROR CAUGHT IN JUMPSCENE UPDATE !!!");
-            console.error("Error Message:", error.message);
-            console.error("Error Stack:", error.stack);
-            console.error("Error Object:", error);
-            
-            // ★★★ 4. (重要) エラーの連鎖を防ぐため、ゲームを安全に停止する ★★★
-            this.scene.pause(); 
-            console.error("!!! To prevent further errors, the scene has been paused. !!!");
+        if (this.virtualStick) {
+            if (this.virtualStick.isLeft) moveX = -1;
+            if (this.virtualStick.isRight) moveX = 1;
+        }
+        
+        // ★★★ 核心となるデバッグログ ★★★
+        if (moveX !== 0) {
+            console.log(`[PC-Debug] Frame ${Math.round(time)}: Input detected. moveX = ${moveX}. Applying velocity...`);
+            console.log(`[PC-Debug] Body before velocity change:`, {
+                x: body.x,
+                y: body.y,
+                vx: body.velocity.x,
+                vy: body.velocity.y,
+                isStatic: body.isStatic,
+                allowGravity: body.allowGravity,
+                moves: body.moves
+            });
+        }
+        // ★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- ステップ4: 物理ボディへの速度設定 ---
+        body.setVelocityX(moveX * this.moveSpeed);
+
+        // --- ステップ5: ジャンプ入力 ---
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+            this.jump();
         }
     }
-    
-// ... (他のメソッドは変更なし) ...
 
+    jump() {
+        if (this.target && this.target.body && this.target.body.touching.down) {
+            console.log("[PC-Debug] Jump condition met. Applying velocity.");
+            this.target.body.setVelocityY(this.jumpVelocity);
+        }
+    }
+
+    // ... (destroy は変更なし) ...
+}
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
