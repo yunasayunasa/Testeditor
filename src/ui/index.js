@@ -5,11 +5,19 @@ export const uiRegistry = {
     'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } , 
 },
     'enemy_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
-   'virtual_stick': { path: './ui/VirtualStick.js', groups: ['controls', 'action'] },
-    'jump_button': { path: './ui/JumpButton.js', groups: ['controls', 'action'] },
-       'message_window': {
-        path: './ui/MessageWindow.js',
-        groups: ['game'] // GameSceneで表示されるべきなので 'game' グループに所属させる
+  'virtual_stick': { 
+        path: './ui/VirtualStick.js', 
+        groups: ['controls', 'action'],
+        params: { 
+            group: 'virtual_stick' // 自分を探せるようにグループ名を渡す
+        } 
+    },
+    'jump_button': { 
+        path: './ui/JumpButton.js', 
+        groups: ['controls', 'action'],
+        params: {
+            group: 'jump_button' // 自分を探せるようにグループ名を渡す
+        }
     },
     'menu_button': {
         path: './ui/MenuButton.js',
