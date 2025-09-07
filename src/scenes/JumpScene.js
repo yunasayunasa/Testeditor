@@ -3,31 +3,81 @@
 import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
 import PlayerController from '../components/PlayerController.js';
-
 export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
-
-        this.actionInterpreter = null;
+        
+        // --- 入力管理プロパティ ---
+        this.movePointerId = null;     // 移動操作を担当する指のID
+        this.actionPointerId = null;   // アクション操作を担当する指のID
+        
+        // --- 操作対象への参照 ---
+        this.virtualStick = null;
+        this.jumpButton = null;
+        this.playerController = null;
     }
 
     create() {
-        console.log("[JumpScene] Create started.");
-        
-        this.actionInterpreter = new ActionInterpreter(this);
-        this.cameras.main.setBackgroundColor('#4488cc');
-        
-        const soundManager = this.registry.get('soundManager');
-        if (soundManager) soundManager.playBgm('bgm_action');
-
-        const worldWidth = 3840;
-        const worldHeight = 1440;
-        this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
-        this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
-
-        // ★ JSONからシーンを構築する親のメソッドを呼ぶ (これがJumpSceneのcreateの本体)
         this.initSceneWithData();
+        
+        // ★★★ 唯一の入力リスナーを、シーン自身に設定 ★★★
+        this.input.on('pointerdown', this.handlePointerDown, this);
+        this.input.on('pointermove', this.handlePointerMove, this);
+        this.input.on('pointerup', this.handlePointerUp, this);
+    }
+
+    onSetupComplete() {
+        // --- プレイヤーと床のセットアップ ---
+        const player = this.children.list.find(obj => obj.getData('group') === 'player');
+        if (player) {
+            this.cameras.main.startFollow(player, true, 0.1, 0.1);
+            this.playerController = player.components?.PlayerController;
+        }
+        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
+        if (player && floors.length > 0) this.physics.add.collider(player, floors);
+        
+        // --- UI部品への参照を取得 ---
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            this.virtualStick = uiScene.uiElements.get('virtual_stick');
+            this.jumpButton = uiScene.uiElements.get('jump_button');
+        }
+    }
+
+    handlePointerDown(pointer) {
+        const screenHalfX = this.scale.width / 2;
+
+        if (pointer.x < screenHalfX) {
+            // --- 画面左側 ---
+            if (this.movePointerId === null) {
+                this.movePointerId = pointer.id;
+            }
+        } else {
+            // --- 画面右側 ---
+            if (this.actionPointerId === null) {
+                this.actionPointerId = pointer.id;
+                if (this.playerController) this.playerController.jump();
+                if (this.jumpButton) this.jumpButton.setPressed(true); // ★ JumpButtonに命令
+            }
+        }
+    }
+
+    handlePointerMove(pointer) {
+        if (pointer.id === this.movePointerId) {
+            if (this.virtualStick) this.virtualStick.updatePosition(pointer);
+        }
+    }
+
+    handlePointerUp(pointer) {
+        if (pointer.id === this.movePointerId) {
+            this.movePointerId = null;
+            if (this.virtualStick) this.virtualStick.reset();
+        }
+        if (pointer.id === this.actionPointerId) {
+            this.actionPointerId = null;
+            if (this.jumpButton) this.jumpButton.setPressed(false); // ★ JumpButtonに命令
+        }
     }
 
     addObjectFromEditor(assetKey, newName) {
@@ -83,36 +133,7 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-   /**
-     * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
-     */
-    onSetupComplete() {
-        // --- 1. グループ名でプレイヤーと床オブジェクトを全て検索 ---
-        const player = this.children.list.find(obj => obj.getData('group') === 'player');
-        
-        // ★★★ "ground" を "floor" に修正 ★★★
-        // ★★★ find を filter に変更し、複数の床に対応 ★★★
-        const floors = this.children.list.filter(obj => obj.getData('group') === 'floor');
-        
-        // --- 2. プレイヤーが見つかったら、カメラと衝突判定を設定 ---
-        if (player) {
-            this.cameras.main.startFollow(player, true, 0.1, 0.1);
-
-            // --- 3. 見つかった全ての床オブジェクトに対して、衝突判定を追加 ---
-            if (floors.length > 0) {
-                // floorsは配列なので、colliderは配列をそのまま受け取れる
-                this.physics.add.collider(player, floors);
-                console.log(`[JumpScene] Collider created between 'player' and ${floors.length} 'floor' objects.`);
-            } else {
-                console.warn("[JumpScene] No 'floor' group objects found to collide with.");
-            }
-        } else {
-            console.warn("[JumpScene] 'player' group object not found.");
-        }
-    }
-    
-    
-   // src/scenes/JumpScene.js
+  
 
 // ... (他のメソッドは変更なし) ...
 
@@ -121,36 +142,12 @@ export default class JumpScene extends BaseGameScene {
      * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
      * (エラー捕捉機能付き・最終決戦バージョン)
      */
-    update(time, delta) {
-        try { // ★★★ 1. 全ての更新処理を try で囲む ★★★
-
-            for (const gameObject of this.children.list) {
-                if (gameObject.components) {
-                    for (const key in gameObject.components) {
-                        const component = gameObject.components[key];
-                        if (component && typeof component.update === 'function') {
-                            component.update(time, delta);
-                        }
-                    }
-                }
-            }
-
-        } catch (error) { // ★★★ 2. 発生したエラーを捕捉する ★★★
-            
-            // ★★★ 3. エラーの詳細をコンソールに表示する ★★★
-            console.error("!!! RUNTIME ERROR CAUGHT IN JUMPSCENE UPDATE !!!");
-            console.error("Error Message:", error.message);
-            console.error("Error Stack:", error.stack);
-            console.error("Error Object:", error);
-            
-            // ★★★ 4. (重要) エラーの連鎖を防ぐため、ゲームを安全に停止する ★★★
-            this.scene.pause(); 
-            console.error("!!! To prevent further errors, the scene has been paused. !!!");
+   update() {
+        if (this.playerController) {
+            const stickDirection = this.virtualStick ? this.virtualStick.direction : new Phaser.Math.Vector2(0, 0);
+            this.playerController.updateWithStick(stickDirection);
         }
     }
-    
-// ... (他のメソッドは変更なし) ...
-
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
