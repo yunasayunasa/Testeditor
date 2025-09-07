@@ -246,13 +246,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(row);
     }
 
-   createTransformInputs() {
-    const properties = {
-        x: { name: 'x' },
-        y: { name: 'y' },
-        scale: { name: 'scale', isVector: true }, // scaleX/Yをまとめる
-        angle: { name: 'angle' },
-        alpha: { name: 'alpha', min: 0, max: 1, step: 0.01 }
+   
+createTransformInputs() {
+    // オブジェクトから安全にプロパティ値を読み込むためのヘルパー関数
+    const getSafeValue = (propertyKey, defaultValue) => {
+        // オブジェクトが存在しない、またはアクティブでない場合はデフォルト値を返す
+        if (!this.selectedObject || !this.selectedObject.active) {
+            return defaultValue;
+        }
+        try {
+            const value = this.selectedObject[propertyKey];
+            // undefinedやnullも有効な値ではないため、デフォルト値にフォールバック
+            return (value !== undefined && value !== null) ? value : defaultValue;
+        } catch (e) {
+            // プロパティへのアクセス自体がエラーを引き起こした場合
+            console.warn(`Could not access property '${propertyKey}'. Defaulting to ${defaultValue}.`);
+            return defaultValue;
+        }
     };
 
     // --- x, y ---
@@ -262,8 +272,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         label.innerText = `${key}:`;
         const input = document.createElement('input');
         input.type = 'number';
-        // 安全なアクセス：gameObject['x'] は .x よりも安全
-        input.value = this.selectedObject[key] !== undefined ? this.selectedObject[key] : 0;
+        input.value = getSafeValue(key, 0);
         input.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             if (!isNaN(val) && this.selectedObject) {
@@ -283,13 +292,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     scaleInput.min = 0.1;
     scaleInput.max = 5;
     scaleInput.step = 0.01;
-    // scaleXとscaleYが同じならその値を、違うなら1をデフォルトにする
-    const currentScale = (this.selectedObject.scaleX === this.selectedObject.scaleY) ? this.selectedObject.scaleX : 1.0;
-    scaleInput.value = currentScale;
+    const scaleX = getSafeValue('scaleX', 1);
+    const scaleY = getSafeValue('scaleY', 1);
+    scaleInput.value = (scaleX === scaleY) ? scaleX : 1.0;
     scaleInput.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && this.selectedObject) {
-            // .setScale()メソッドを使うのが最も安全
             this.selectedObject.setScale(val);
         }
     });
@@ -304,18 +312,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         label.innerText = `${key}:`;
         const input = document.createElement('input');
         input.type = 'range';
+        const defaultValue = (key === 'alpha') ? 1 : 0;
         input.min = (key === 'angle') ? -180 : 0;
         input.max = (key === 'angle') ? 180 : 1;
         input.step = (key === 'angle') ? 1 : 0.01;
-        input.value = this.selectedObject[key] !== undefined ? this.selectedObject[key] : (key === 'alpha' ? 1 : 0);
+        input.value = getSafeValue(key, defaultValue);
         input.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             if (!isNaN(val) && this.selectedObject) {
-                if (key === 'angle') {
-                    this.selectedObject.setAngle(val); // 安全なメソッド呼び出し
-                } else {
-                    this.selectedObject.setAlpha(val); // 安全なメソッド呼び出し
-                }
+                if (key === 'angle') this.selectedObject.setAngle(val);
+                else if (key === 'alpha') this.selectedObject.setAlpha(val);
             }
         });
         row.append(label, input);
