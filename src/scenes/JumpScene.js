@@ -1,5 +1,3 @@
-// src/scenes/JumpScene.js (最終確定版)
-
 import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
 import PlayerController from '../components/PlayerController.js';
@@ -8,14 +6,17 @@ export default class JumpScene extends BaseGameScene {
 
     constructor() {
         super({ key: 'JumpScene' });
- this.virtualStick = null;
+        this.virtualStick = null;
         this.playerController = null;
+        // ★★★ actionInterpreterの初期化もここで行うのが作法として美しい ★★★
+        this.actionInterpreter = null; 
     }
 
     create() {
         console.log("[JumpScene] Create started.");
-       this.initSceneWithData();
-     
+
+        // --- 1. シーン固有のセットアップを先に行う ---
+        this.actionInterpreter = new ActionInterpreter(this); // ★ createの先頭に移動
         this.cameras.main.setBackgroundColor('#4488cc');
         
         const soundManager = this.registry.get('soundManager');
@@ -26,7 +27,8 @@ export default class JumpScene extends BaseGameScene {
         this.physics.world.setBounds(0, 0, worldWidth, worldHeight);
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
 
-        // ★ JSONからシーンを構築する親のメソッドを呼ぶ (これがJumpSceneのcreateの本体)
+        // --- 2. 最後に、データからシーンを構築する命令を一度だけ出す ---
+        // ★★★ 不要な方の呼び出しを削除 ★★★
         this.initSceneWithData();
     }
 
