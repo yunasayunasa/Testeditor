@@ -1,6 +1,6 @@
 //
 // Odyssey Engine - JumpButton Component
-// Final Audited Version: Self-Contained Smart Component
+// Final Architecture: Self-Contained Smart Component for Matter.js
 //
 
 const Container = Phaser.GameObjects.Container;
@@ -14,7 +14,7 @@ export default class JumpButton extends Container {
     constructor(scene, config) {
         super(scene, config.x || 1100, config.y || 550);
         
-        const radius = 65; // ★ 定義忘れを修正
+        const radius = 65;
         
         const background = new Graphics(scene)
             .fillStyle(0xcccccc, 0.7)
@@ -29,7 +29,7 @@ export default class JumpButton extends Container {
             fontSize: '32px', fontStyle: 'bold', color: '#111111', align: 'center' 
         }).setOrigin(0.5);
         
-        this.add([background, this.background_pressed, label]); // ★ add忘れを修正
+        this.add([background, this.background_pressed, label]);
 
         background.setInteractive(new Circle(0, 0, radius), Circle.Contains);
         this.setScrollFactor(0);

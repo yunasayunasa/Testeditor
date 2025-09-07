@@ -1,6 +1,6 @@
 //
 // Odyssey Engine - VirtualStick Component
-// Final Audited Version: Self-Contained Smart Component
+// Final Architecture: Self-Contained Smart Component for Matter.js
 //
 
 const Container = Phaser.GameObjects.Container;
@@ -14,7 +14,7 @@ export default class VirtualStick extends Container {
     constructor(scene, config) {
         super(scene, config.x || 150, config.y || 550);
 
-        this.pointerId = null;
+        this.pointerId = null; // 自分を操作している指のID
         this.baseRadius = 100;
         this.stickRadius = 50;
         this.direction = new Vector2(0, 0);
@@ -23,15 +23,18 @@ export default class VirtualStick extends Container {
         this.stick = new Graphics(scene).fillStyle(0xcccccc, 0.8).fillCircle(0, 0, this.stickRadius);
         this.add([base, this.stick]);
         
+        // --- 当たり判定を、見た目と完全に一致する土台(base)に設定 ---
         base.setInteractive(new Circle(0, 0, this.baseRadius), Circle.Contains);
         this.setScrollFactor(0);
 
+        // --- イベントリスナーを、全て自分自身(base)で完結させる ---
         base.on('pointerdown', (pointer) => {
-            if (this.pointerId === null) {
-                this.pointerId = pointer.id;
+            if (this.pointerId === null) { // 誰も所有していなければ
+                this.pointerId = pointer.id; // この指が所有者になる
             }
         });
 
+        // ★ シーン全体のmoveとupを監視し、所有者IDでフィルタリングする
         this.scene.input.on('pointermove', (pointer) => {
             if (pointer.id === this.pointerId) {
                 this.updateStickPosition(pointer);
@@ -44,6 +47,7 @@ export default class VirtualStick extends Container {
             }
         });
 
+        // シーン終了時にグローバルリスナーを解除
         this.scene.events.on('shutdown', () => {
              if (this.scene && this.scene.input) {
                 this.scene.input.off('pointermove');
@@ -71,4 +75,10 @@ export default class VirtualStick extends Container {
         this.stick.setPosition(0, 0);
         this.direction.setTo(0, 0);
     }
+    
+    // ゲッターを追加
+    get isLeft() { return this.direction.x < -0.5; }
+    get isRight() { return this.direction.x > 0.5; }
+    get isUp() { return this.direction.y < -0.5; }
+    get isDown() { return this.direction.y > 0.5; }
 }
