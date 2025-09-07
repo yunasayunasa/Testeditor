@@ -103,8 +103,7 @@ export default class PlayerController {
         }
     }
 
-    // ... (destroy は変更なし) ...
-}
+
 
     destroy() {
         // コンポーネントが破棄される時に、イベントリスナーを安全に解除する
