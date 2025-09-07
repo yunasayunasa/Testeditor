@@ -23,41 +23,66 @@ export default class GameScene extends Phaser.Scene {
 
     preload() { this.load.text('test', 'assets/test.ks'); }
 
-    create(data) {
+ async create(data) {
         console.log("GameScene: create処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
         
-        this.uiScene = this.scene.get('UIScene');
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
+
+        // ★★★ 2. UISceneの準備が完了するまで待機する処理を追加 ★★★
+        this.uiScene = this.scene.get('UIScene');
+        // UISceneが'scene-ready'イベントを発行するのを待つ
+        await new Promise(resolve => {
+            if (this.uiScene.scene.isActive()) {
+                // UISceneが既に準備完了している場合
+                if (this.uiScene.uiElements.size > 0) {
+                    resolve();
+                } else {
+                    // まだ準備中の場合、一度だけイベントを待つ
+                    this.uiScene.events.once('scene-ready', resolve);
+                }
+            } else {
+                // UISceneがアクティブでない異常系ケース（念のため）
+                resolve();
+            }
+        });
+        console.log("GameScene: UISceneの準備完了を確認しました。");
+
 
         this.layer.background = this.add.container(0, 0).setDepth(0);
         this.layer.cg = this.add.container(0, 0).setDepth(5);
         this.layer.character = this.add.container(0, 0).setDepth(10);
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
-            .setInteractive()
-            .setVisible(false)
-            .setDepth(25); // メッセージウィンドウ(depth:?)より手前、選択肢ボタン(depth:30)より奥
+            .setInteractive().setVisible(false).setDepth(25);
         
+        // ★★★ 3. この時点でmessageWindowは必ず取得できるので、早期リターンは削除 ★★★
         const messageWindow = this.uiScene.uiElements.get('message_window');
-        if (!messageWindow) { return; }
+        if (!messageWindow) {
+            console.error("重大なエラー: message_windowがUISceneに見つかりません。");
+            // 致命的なエラーなので、ここで処理を止めるのは妥当
+            return; 
+        }
 
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
-  this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
+        this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
+
+        // ★★★ 4. performLoadもawaitで待つように変更 ★★★
         if (this.loadSlot !== undefined) {
-            this.performLoad(this.loadSlot, this.returnParams).then(() => 
-            this._finalizeSetup());
+            await this.performLoad(this.loadSlot, this.returnParams);
+            this._finalizeSetup(); // awaitの後に実行
         } else {
-             console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
-            this.stateManager.f = {}; // これが最も重要！
-            this.scenarioManager.loadScenario(this.startScenario);
+            console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
+            this.stateManager.f = {};
+            await this.scenarioManager.loadScenario(this.startScenario); // loadScenarioも非同期の可能性があるのでawait
             this._finalizeSetup();
             this.performSave(0);
             this.time.delayedCall(10, () => this.scenarioManager.next());
         }
     }
+
 
     _finalizeSetup() {
         this.isSceneFullyReady = true;
