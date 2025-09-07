@@ -13,7 +13,7 @@ export default class JumpButton extends Container {
 
     constructor(scene, config) {
         super(scene, config.x || 1100, config.y || 550);
-        
+        const radius = 65;
         // --- 見た目の作成 ---
         const background = new Graphics(scene)
             .fillStyle(0xcccccc, 0.7)
