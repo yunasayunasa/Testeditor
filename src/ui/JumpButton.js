@@ -1,6 +1,8 @@
 const Container = Phaser.GameObjects.Container;
 const Graphics = Phaser.GameObjects.Graphics;
 const Text = Phaser.GameObjects.Text;
+const Circle = Phaser.Geom.Circle;
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 export default class JumpButton extends Container {
     static dependencies = [];
