@@ -94,53 +94,75 @@ export default class UIScene extends Phaser.Scene {
      * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
      * (setSize/setInteractiveを安全に呼び出す最終確定版)
      */
+    /**
+     * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
+     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
+     */
     registerUiElement(name, element, params) {
         element.name = name;
         this.add.existing(element);
         this.uiElements.set(name, element);
-        
-        // --- 1. 位置と深度を設定 (変更なし) ---
-        if (params.x !== undefined && params.y !== undefined) {
-            element.setPosition(params.x, params.y);
-        }
-        if (params.depth !== undefined) {
-            element.setDepth(params.depth);
-        }
-        
-        // --- 2. グループを設定 (変更なし) ---
-        if (params.group) {
-            element.setData('group', params.group);
-        }
 
-        // --- 3. setInteractiveを安全に呼び出すロジック (核心) ---
-        let canBeInteractive = false;
+        if (params.x !== undefined) element.x = params.x;
+        if (params.y !== undefined) element.y = params.y;
+        if (params.depth !== undefined) element.setDepth(params.depth);
+        if (params.group) element.setData('group', params.group);
+
+        // --- ここからが究極の解決策 ---
+        
+        // 当たり判定用の図形を定義する
+        let hitArea = null;
+        let hitAreaCallback = null;
+
         if (params.width && params.height) {
-            // paramsにwidth/heightがあれば、それを設定
-            element.setSize(params.width, params.hight);
-            canBeInteractive = true;
+            // Case 1: JSON or params に width/height がある場合
+            // これが当たり判定のサイズになる
+            element.setSize(params.width, params.height);
+            hitArea = new Phaser.Geom.Rectangle(0, 0, params.width, params.height);
+            // Containerの場合、当たり判定の中心を左上に合わせる必要がある
+            hitArea.centerX = params.width / 2;
+            hitArea.centerY = params.height / 2;
+            hitAreaCallback = Phaser.Geom.Rectangle.Contains;
+            
         } else if (element.width > 0 && element.height > 0) {
-            // コンポーネント自身がサイズを持っている場合 (例: Textオブジェクトなど)
-            // この場合はsetSizeは不要
-            canBeInteractive = true;
+            // Case 2: コンポーネント自身がサイズを持つ場合 (Text, Imageなど)
+            // 自身のサイズを当たり判定として使う
+            // setSizeは不要
+            hitArea = new Phaser.Geom.Rectangle(0, 0, element.width, element.height);
+            hitArea.centerX = element.width / 2;
+            hitArea.centerY = element.height / 2;
+            hitAreaCallback = Phaser.Geom.Rectangle.Contains;
+
+        } else if (element instanceof Phaser.GameObjects.Container) {
+            // Case 3: サイズのないコンテナの場合 (HpBar, MessageWindowなど)
+            // ★ デフォルトの当たり判定を与える！ ★
+            const defaultWidth = 200; // デフォルトの編集用サイズ
+            const defaultHeight = 100;
+            
+            // ★ setSizeで当たり判定のサイズだけを設定する
+            element.setSize(defaultWidth, defaultHeight);
+
+            hitArea = new Phaser.Geom.Rectangle(0, 0, defaultWidth, defaultHeight);
+            hitArea.centerX = defaultWidth / 2;
+            hitArea.centerY = defaultHeight / 2;
+            hitAreaCallback = Phaser.Geom.Rectangle.Contains;
+            
+            // ★（任意）デバッグ用に、当たり判定を可視化する
+            // const debugRect = this.add.graphics().lineStyle(1, 0x00ff00).strokeRectShape(hitArea);
+            // element.add(debugRect); // コンテナに追加することで、追従する
         }
 
-        // ★ クリック可能にできる条件が揃っている場合のみ、setInteractiveを呼ぶ
-        if (canBeInteractive) {
-            element.setInteractive();
-        } else {
-            // サイズが不明なコンテナは、クリックできないようにする
-            // これによりエラーが回避される
-            console.log(`[UIScene] Element '${name}' has no size. setInteractive() was skipped.`);
+        // ★ 当たり判定が定義できた場合のみ、インタラクティブにする
+        if (hitArea) {
+            element.setInteractive(hitArea, hitAreaCallback);
         }
-        
-        // --- 4. エディタへの登録 (変更なし) ---
+
+        // --- EditorPluginへの登録は変更なし ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(element, this);
         }
     }
-
-// ...
     onSceneTransition(newSceneKey) {
         const visibleGroups = sceneUiVisibility[newSceneKey] || [];
         for (const [name, uiElement] of this.uiElements.entries()) {

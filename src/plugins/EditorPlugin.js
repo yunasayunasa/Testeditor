@@ -566,6 +566,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      /**
      * オブジェクトを編集可能にする（モード切替対応版）
      */
+
+
+    /**
+     * オブジェクトを編集可能にする（モード切替＆サイズ安全確認対応版）
+     * ★★★ 以下のメソッドで、既存の makeEditable を完全に置き換えてください ★★★
+     */
     makeEditable(gameObject, scene) {
         if (!this.isEnabled || !gameObject.name) return;
 
@@ -575,30 +581,40 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
-        if (!gameObject.getData('isEditable')) {
-            gameObject.setInteractive();
-            scene.input.setDraggable(gameObject);
-            gameObject.setData('isEditable', true);
-        }
+        // --- ここからが修正の核心 ---
+        // サイズを持つオブジェクトだけがインタラクティブになれる
+        const hasSize = (gameObject.width > 0 && gameObject.height > 0);
 
-        // ★★★ 既存のリスナーを一度クリア ★★★
+        if (hasSize && !gameObject.getData('isEditable')) {
+            // サイズがある場合のみ、インタラクティブ化とドラッグ設定を行う
+            try {
+                gameObject.setInteractive();
+                scene.input.setDraggable(gameObject);
+                gameObject.setData('isEditable', true);
+            } catch (e) {
+                // setInteractiveが失敗するエッジケース（表示直後など）も考慮
+                console.warn(`[EditorPlugin] Failed to make '${gameObject.name}' interactive.`, e);
+            }
+        }
+        // --- ここまで ---
+
+        // ★ 既存のリスナーを一度クリア
         gameObject.off('pointerdown');
         gameObject.off('drag');
         gameObject.off('pointerover');
         gameObject.off('pointerout');
 
-        // ★★★ 新しいリスナーを設定 ★★★
+        // ★ 新しいリスナーを設定
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            // EditorUIから現在のモードを取得
-            if (this.editorUI && this.editorUI.currentMode === 'select') {
+            if (this.editorUI && this.editorUI.currentMode === 'select' && hasSize) {
                 this.selectedObject = gameObject;
                 this.updatePropertyPanel();
-                event.stopPropagation(); // Playモードのイベントを発火させない
+                event.stopPropagation();
             }
         });
 
         gameObject.on('drag', (pointer, dragX, dragY) => {
-            if (this.editorUI && this.editorUI.currentMode === 'select') {
+            if (this.editorUI && this.editorUI.currentMode === 'select' && hasSize) {
                 gameObject.x = Math.round(dragX);
                 gameObject.y = Math.round(dragY);
                 if (this.selectedObject === gameObject) this.updatePropertyPanel();
@@ -606,13 +622,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         });
 
         gameObject.on('pointerover', () => {
-             if (this.editorUI && this.editorUI.currentMode === 'select') {
+             if (this.editorUI && this.editorUI.currentMode === 'select' && hasSize) {
                 gameObject.setTint(0x00ff00);
              }
         });
+        
         gameObject.on('pointerout', () => gameObject.clearTint());
     }
-
 
    
     
