@@ -107,23 +107,29 @@ onSetupComplete() {
     /**
      * 毎フレーム呼び出される更新処理
      */
-    update(time, delta) {
-        if (!this.player || !this.player.body) {
-            return;
+   update(time, delta) {
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが全てを解決する、唯一の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // 1. まず、UIScene上のスティックの状態を更新させる
+        const uiScene = this.scene.get('UIScene');
+        const virtualStick = uiScene.uiElements.get('virtual_stick');
+        if (virtualStick && typeof virtualStick.update === 'function') {
+            virtualStick.update();
         }
- // 2. このシーンに登録された、全てのコンポーネントのupdateを呼び出す
+
+        // 2. 次に、このシーンのコンポーネント（PlayerController）を更新させる
         for (const component of this.components) {
             if (component.update) {
                 component.update(time, delta);
             }
         }
-      
-
-      
         
-        // --- ゲーム終了条件のチェック ---
-        if (this.player.y > this.cameras.main.height + 100) {
-            // ★★★ 開発の5ヶ条: 第3条 - ノベル復帰はSystemSceneに依頼 ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // ゲーム終了条件のチェック
+        if (this.player && this.player.y > this.physics.world.bounds.height + 100) {
             this.scene.get('SystemScene').events.emit('return-to-novel', { from: this.scene.key });
         }
     }

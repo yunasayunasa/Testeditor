@@ -59,54 +59,45 @@ export default class VirtualStick extends Container {
         // このコンポーネントは状態変数に応じて表示を更新する必要はない
     }
 
-    //
-    // --- 以下、既存のメソッドは変更なし ---
-    //
+    update() {
+        if (!this.isStickDown) return;
 
-    onPointerDown(pointer) {
-        this.isStickDown = true;
-        this.updateStickPosition(pointer);
-    }
+        // ★★★ 入力ポインターをシーンから直接取得する ★★★
+        const pointer = this.scene.input.activePointer;
 
-    onPointerMove(pointer) {
-        if (this.isStickDown) {
-            this.updateStickPosition(pointer);
-        }
-    }
-
-    onPointerUp(pointer) {
-        if (this.isStickDown) {
-            this.isStickDown = false;
-            this.stick.setPosition(0, 0);
-            this.direction.setTo(0, 0);
-            this.angle = 0;
-        }
-    }
-
-    updateStickPosition(pointer) {
-        // pointer座標をこのコンテナのローカル座標に変換
-        // ★★★ 5. (改善) getLocalPointはPhaserに存在しないため、transformPointに修正 ★★★
         const tempMatrix = new Phaser.GameObjects.Components.TransformMatrix();
         this.getWorldTransformMatrix(tempMatrix);
         const localPoint = tempMatrix.invert().transformPoint(pointer.x, pointer.y);
 
+        // ... (以降の座標計算ロジックは、updateStickPositionと全く同じ)
         const distance = Phaser.Math.Distance.Between(0, 0, localPoint.x, localPoint.y);
         const maxDistance = this.baseRadius - this.stickRadius;
 
-        // スティックが土台からはみ出さないように位置を制限
         if (distance > maxDistance) {
             const scale = maxDistance / distance;
             this.stick.setPosition(localPoint.x * scale, localPoint.y * scale);
         } else {
             this.stick.setPosition(localPoint.x, localPoint.y);
         }
-
-        // 方向ベクトルと角度を計算
         if (maxDistance > 0) {
             this.direction.x = Phaser.Math.Clamp(this.stick.x / maxDistance, -1, 1);
             this.direction.y = Phaser.Math.Clamp(this.stick.y / maxDistance, -1, 1);
         }
         this.angle = Phaser.Math.RadToDeg(Math.atan2(this.stick.y, this.stick.x));
+    }
+
+    onPointerDown(pointer) {
+        this.isStickDown = true;
+        // ★ ここでは更新しない
+    }
+    onPointerMove(pointer) {
+        // ★ ここでは更新しない
+    }
+    onPointerUp(pointer) {
+        this.isStickDown = false;
+        this.stick.setPosition(0, 0);
+        this.direction.setTo(0, 0);
+        this.angle = 0;
     }
 
     // --- 方向ゲッター (変更なし) ---
