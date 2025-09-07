@@ -86,46 +86,61 @@ export default class UIScene extends Phaser.Scene {
         }
     }
 
-// ... (他のメソッドは変更なし) ...
-// ... registerUiElementと他のメソッドは変更なし ...
-    
-    // registerUiElementは変更なしでOK
+// src/scenes/UIScene.js
+
+// ... (buildUiFromLayoutは、先ほどのデバッグ用のシンプル版のままでOKです) ...
+
+    /**
+     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
+     * (setSize/setInteractiveを安全に呼び出す最終確定版)
+     */
     registerUiElement(name, element, params) {
         element.name = name;
         this.add.existing(element);
         this.uiElements.set(name, element);
         
+        // --- 1. 位置と深度を設定 (変更なし) ---
         if (params.x !== undefined && params.y !== undefined) {
             element.setPosition(params.x, params.y);
         }
-        
         if (params.depth !== undefined) {
             element.setDepth(params.depth);
         }
-
-        if (params.width && params.height) {
-            element.setSize(params.width, params.height);
-        }
-           if (params.group) {
+        
+        // --- 2. グループを設定 (変更なし) ---
+        if (params.group) {
             element.setData('group', params.group);
-            console.log(`[UIScene] UI Element '${name}' assigned to group '${params.group}'.`);
+        }
+
+        // --- 3. setInteractiveを安全に呼び出すロジック (核心) ---
+        let canBeInteractive = false;
+        if (params.width && params.height) {
+            // paramsにwidth/heightがあれば、それを設定
+            element.setSize(params.width, params.hight);
+            canBeInteractive = true;
+        } else if (element.width > 0 && element.height > 0) {
+            // コンポーネント自身がサイズを持っている場合 (例: Textオブジェクトなど)
+            // この場合はsetSizeは不要
+            canBeInteractive = true;
+        }
+
+        // ★ クリック可能にできる条件が揃っている場合のみ、setInteractiveを呼ぶ
+        if (canBeInteractive) {
+            element.setInteractive();
+        } else {
+            // サイズが不明なコンテナは、クリックできないようにする
+            // これによりエラーが回避される
+            console.log(`[UIScene] Element '${name}' has no size. setInteractive() was skipped.`);
         }
         
-        // ★★★ setInteractiveの呼び出しを安全にする ★★★
-        // setSizeが呼ばれていないと当たり判定が作れない場合があるため、
-        // widthとheightがある、または入力判定用の図形が定義されている場合に呼ぶのがより安全
-        if ((params.width && params.height) || element.input) {
-             element.setInteractive();
-        }
-        
+        // --- 4. エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(element, this);
         }
     }
 
-// ... 以降のメソッドは変更なし ...
-
+// ...
     onSceneTransition(newSceneKey) {
         const visibleGroups = sceneUiVisibility[newSceneKey] || [];
         for (const [name, uiElement] of this.uiElements.entries()) {
