@@ -14,8 +14,8 @@ export default class JumpButton extends Container {
     constructor(scene, config) {
         // ★★★ 2. コンストラクタの引数をconfigオブジェクトから受け取るように変更 ★★★
         // コンテナ自身の位置はUISceneが設定するので、superにconfigのx, yは渡さない
-        super(scene, 0, 0);
-
+       super(scene, 0, 0); // ★ superの呼び出しを(0,0)に統一
+       
         // --- ボタンの「見た目」をプログラムで描画 (変更なし) ---
         const radius = 65;
         
@@ -41,7 +41,9 @@ export default class JumpButton extends Container {
         // --- 当たり判定とインタラクティブ化 (変更なし) ---
         // ★★★ 自己完結しているこのコンポーネントでは、ここで設定しても問題ない
         this.setSize(radius * 2, radius * 2);
-        this.setInteractive(new Phaser.Geom.Circle(0, 0, radius), Phaser.Geom.Circle.Contains);
+            // Circleの第1, 第2引数で、当たり判定の中心をコンテナの中心に合わせる
+        this.setInteractive(new Phaser.Geom.Circle(radius, radius, radius), Phaser.Geom.Circle.Contains);
+ 
         this.setScrollFactor(0);
         
         // --- 押したときの見た目を変えるイベントリスナー (変更なし) ---
