@@ -44,11 +44,15 @@ export default class UIScene extends Phaser.Scene {
     }
 
     // layoutDataを引数として受け取る、正しい非同期ビルドメソッド
+   // layoutDataを引数として受け取る、動的インポート対応のビルドメソッド
     async buildUiFromLayout(layoutData) {
-        const processedUiRegistry = this.registry.get('uiRegistry');
-        if (!processedUiRegistry) {
+        // ★★★ SystemSceneからuiRegistryを取得するのが最も安全 ★★★
+        const systemScene = this.scene.get('SystemScene');
+        if (!systemScene || !systemScene.registry.get('uiRegistry')) {
+            console.error('[UIScene] uiRegistry not found in SystemScene registry.');
             return Promise.reject('uiRegistry not found');
         }
+        const processedUiRegistry = systemScene.registry.get('uiRegistry');
 
         if (!layoutData || !layoutData.objects) {
             console.warn(`[UIScene] No layout data in ${this.scene.key}.json. Building UI from registry defaults.`);
@@ -56,6 +60,7 @@ export default class UIScene extends Phaser.Scene {
 
         const stateManager = this.registry.get('stateManager');
 
+        // ★★★ 全てのUI要素の生成をPromiseとして扱う ★★★
         const creationPromises = Object.keys(processedUiRegistry).map(name => {
             return new Promise(async (resolve, reject) => {
                 try {
@@ -65,16 +70,31 @@ export default class UIScene extends Phaser.Scene {
                         : {};
                     const params = { ...definition.params, ...layout, name, stateManager };
 
-                    let uiElement = null;
+                    let UiComponentClass = null;
 
+                    // --- ここからが修正の核心 ---
                     if (definition.component) {
-                        uiElement = new definition.component(this, params);
-                    } else if (typeof definition.creator === 'function') {
-                        uiElement = definition.creator(this, params);
+                        // case 1: 'component'キーでクラスが直接指定されている場合
+                        UiComponentClass = definition.component;
+                    } else if (definition.path) {
+                        // case 2: 'path'キーでファイルパスが指定されている場合
+                        // 動的インポートを使って、モジュールを非同期で読み込む
+                        const module = await import(definition.path);
+                        UiComponentClass = module.default; // export defaultされているクラスを取得
                     }
+                    // --- ここまでが修正の核心 ---
 
-                    if (uiElement) {
+                    if (UiComponentClass) {
+                        const uiElement = new UiComponentClass(this, params);
                         this.registerUiElement(name, uiElement, params);
+                    } else if (typeof definition.creator === 'function') {
+                        // case 3: 従来のcreator関数形式もサポート
+                        const uiElement = definition.creator(this, params);
+                        if (uiElement) {
+                             this.registerUiElement(name, uiElement, params);
+                        }
+                    } else {
+                        console.warn(`[UIScene] UI element '${name}' has no valid 'component', 'path', or 'creator'.`);
                     }
                     
                     resolve();
@@ -85,8 +105,10 @@ export default class UIScene extends Phaser.Scene {
             });
         });
 
+        // 全てのUI要素の生成が完了するのを待つ
         await Promise.all(creationPromises);
     }
+
 
 // ... registerUiElementと他のメソッドは変更なし ...
     
