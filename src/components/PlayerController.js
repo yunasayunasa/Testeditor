@@ -56,28 +56,41 @@ export default class PlayerController {
     }
 
    
-    
-      update(time, delta) {
+
+    update(time, delta) {
         if (!this.target || !this.target.body || !this.target.active) return;
         
         let moveX = 0;
         
-        // ★★★ 2. キーボードが有効な場合のみ、キー入力をチェック ★★★
+        // --- キーボード入力 (PC向け) ---
         if (this.keyboardEnabled && this.cursors) {
             if (this.cursors.left.isDown) moveX = -1;
             if (this.cursors.right.isDown) moveX = 1;
         }
 
+        // --- バーチャルスティック入力 (モバイル/PC共通) ---
         if (this.virtualStick) {
             if (this.virtualStick.isLeft) moveX = -1;
             if (this.virtualStick.isRight) moveX = 1;
         }
 
+        // --- 物理ボディへの適用 ---
         this.target.body.setVelocityX(moveX * this.moveSpeed);
 
-        // ★★★ 3. キーボードが有効な場合のみ、ジャンプ入力をチェック ★★★
-        if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
-            this.jump();
+        // --- キーボードでのジャンプ処理 ---
+        // ★★★ 以下のブロックを完全に書き換える ★★★
+        if (this.keyboardEnabled && this.cursors) {
+            // JustDownを安全に呼び出す
+            if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
+                this.jump();
+            }
+        }
+    }
+
+    // jumpメソッドは、キーボードとジャンプボタンの両方から呼ばれる共通の処理
+    jump() {
+        if (this.target && this.target.body && this.target.body.touching.down) {
+            this.target.body.setVelocityY(this.jumpVelocity);
         }
     }
 
