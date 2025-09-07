@@ -246,32 +246,82 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorPropsContainer.appendChild(row);
     }
 
-    createTransformInputs() {
-        const properties = { 
-            x: {}, y: {}, 
-            scaleX: {min:0.1, max:5, step:0.01}, scaleY: {min:0.1, max:5, step:0.01}, 
-            angle: {min:-180, max:180, step: 1}, alpha: {min:0, max:1, step:0.01} 
-        };
-        for (const key in properties) {
-            if (this.selectedObject[key] === undefined) continue;
-            const prop = properties[key];
-            const row = document.createElement('div');
-            const label = document.createElement('label');
-            label.innerText = `${key}:`;
-            const input = document.createElement('input');
-            input.type = (key==='x' || key==='y') ? 'number' : 'range';
-            if (prop.min !== undefined) input.min = prop.min;
-            if (prop.max !== undefined) input.max = prop.max;
-            if (prop.step !== undefined) input.step = prop.step;
-            input.value = this.selectedObject[key];
-            input.addEventListener('input', (e) => {
-                const val = parseFloat(e.target.value);
-                if (!isNaN(val) && this.selectedObject) this.selectedObject[key] = val;
-            });
-            row.append(label, input);
-            this.editorPropsContainer.appendChild(row);
+   createTransformInputs() {
+    const properties = {
+        x: { name: 'x' },
+        y: { name: 'y' },
+        scale: { name: 'scale', isVector: true }, // scaleX/Yをまとめる
+        angle: { name: 'angle' },
+        alpha: { name: 'alpha', min: 0, max: 1, step: 0.01 }
+    };
+
+    // --- x, y ---
+    ['x', 'y'].forEach(key => {
+        const row = document.createElement('div');
+        const label = document.createElement('label');
+        label.innerText = `${key}:`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        // 安全なアクセス：gameObject['x'] は .x よりも安全
+        input.value = this.selectedObject[key] !== undefined ? this.selectedObject[key] : 0;
+        input.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && this.selectedObject) {
+                this.selectedObject[key] = val;
+            }
+        });
+        row.append(label, input);
+        this.editorPropsContainer.appendChild(row);
+    });
+
+    // --- scale (まとめて処理) ---
+    const scaleRow = document.createElement('div');
+    const scaleLabel = document.createElement('label');
+    scaleLabel.innerText = 'scale:';
+    const scaleInput = document.createElement('input');
+    scaleInput.type = 'range';
+    scaleInput.min = 0.1;
+    scaleInput.max = 5;
+    scaleInput.step = 0.01;
+    // scaleXとscaleYが同じならその値を、違うなら1をデフォルトにする
+    const currentScale = (this.selectedObject.scaleX === this.selectedObject.scaleY) ? this.selectedObject.scaleX : 1.0;
+    scaleInput.value = currentScale;
+    scaleInput.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        if (!isNaN(val) && this.selectedObject) {
+            // .setScale()メソッドを使うのが最も安全
+            this.selectedObject.setScale(val);
         }
-    }
+    });
+    scaleRow.append(scaleLabel, scaleInput);
+    this.editorPropsContainer.appendChild(scaleRow);
+
+
+    // --- angle, alpha ---
+    ['angle', 'alpha'].forEach(key => {
+        const row = document.createElement('div');
+        const label = document.createElement('label');
+        label.innerText = `${key}:`;
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = (key === 'angle') ? -180 : 0;
+        input.max = (key === 'angle') ? 180 : 1;
+        input.step = (key === 'angle') ? 1 : 0.01;
+        input.value = this.selectedObject[key] !== undefined ? this.selectedObject[key] : (key === 'alpha' ? 1 : 0);
+        input.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && this.selectedObject) {
+                if (key === 'angle') {
+                    this.selectedObject.setAngle(val); // 安全なメソッド呼び出し
+                } else {
+                    this.selectedObject.setAlpha(val); // 安全なメソッド呼び出し
+                }
+            }
+        });
+        row.append(label, input);
+        this.editorPropsContainer.appendChild(row);
+    });
+}
 
     createDepthInput() {
         const row = document.createElement('div');
