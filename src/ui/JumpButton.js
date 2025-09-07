@@ -1,24 +1,18 @@
-const Container = Phaser.GameObjects.Container;
+// src/ui/JumpButton.js (当たり判定修正・最終完成版)
+
 const Graphics = Phaser.GameObjects.Graphics;
 const Text = Phaser.GameObjects.Text;
+const Circle = Phaser.Geom.Circle;
 
-export default class JumpButton extends Container {
-    // ★★★ 1. 依存関係を静的に宣言 ★★★
-    // このコンポーネントはゲーム変数(f)に依存しないため、空配列を宣言
-    static dependencies = [];
+export default class JumpButton extends Phaser.GameObjects.Container {
 
-    /**
-     * @param {Phaser.Scene} scene
-     * @param {object} config - UISceneから渡される設定オブジェクト (x, yなど)
-     */
     constructor(scene, config) {
-        // ★★★ 2. コンストラクタの引数をconfigオブジェクトから受け取るように変更 ★★★
-        // コンテナ自身の位置はUISceneが設定するので、superにconfigのx, yは渡さない
-        super(scene, 0, 0);
+        super(scene, config.x || 0, config.y || 0);
 
-        // --- ボタンの「見た目」をプログラムで描画 (変更なし) ---
-        const radius = 65;
-        
+        const radius = config.radius || 65;
+        const labelText = config.label || 'JUMP';
+
+        // --- 1. 見た目の作成 (変更なし) ---
         const background = new Graphics(scene);
         background.fillStyle(0xcccccc, 0.7);
         background.fillCircle(0, 0, radius);
@@ -28,40 +22,54 @@ export default class JumpButton extends Container {
         this.background_pressed.fillCircle(0, 0, radius);
         this.background_pressed.setVisible(false);
 
-        const label = new Text(scene, 0, 0, 'JUMP', {
-            fontSize: '32px',
-            fontStyle: 'bold',
-            color: '#111111',
-            align: 'center'
+        const label = new Text(scene, 0, 0, labelText, {
+            fontSize: '32px', fontStyle: 'bold', color: '#111111', align: 'center'
         }).setOrigin(0.5);
 
-        // --- Containerに部品を追加 (変更なし) ---
         this.add([background, this.background_pressed, label]);
         
-        // --- 当たり判定とインタラクティブ化 (変更なし) ---
-        // ★★★ 自己完結しているこのコンポーネントでは、ここで設定しても問題ない
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここからが、操作感を改善する究極の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 2. コンテナ自身のサイズを設定 ---
+        // これにより、コンテナの範囲が明確になります
         this.setSize(radius * 2, radius * 2);
-        this.setInteractive(new Phaser.Geom.Circle(0, 0, radius), Phaser.Geom.Circle.Contains);
+
+        // --- 3. 当たり判定を、コンテナの中心基準ではなく、左上基準で設定 ---
+        // new Circle(x, y, radius) の x, y は、当たり判定の中心座標です。
+        // コンテナの幅と高さの半分を指定することで、当たり判定がコンテナの中心に完璧に一致します。
+        const hitArea = new Circle(radius, radius, radius);
+        this.setInteractive(hitArea, Circle.Contains);
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
         this.setScrollFactor(0);
         
-        // --- 押したときの見た目を変えるイベントリスナー (変更なし) ---
-        this.on('pointerdown', () => {
+        this.on('pointerdown', (pointer) => {
+            // ★ イベントの伝播をここで止めるのが最も安全
+            pointer.event.stopPropagation();
+            
+            console.log("%c[JumpButton] Pointer Down Event FIRED!", "color: orange; font-weight: bold;");
             this.background_pressed.setVisible(true);
-                 console.log("%c[JumpButton] Pointer Down Event FIRED!", "color: orange; font-weight: bold;");
-        });
-        this.on('pointerup', () => {
-            this.background_pressed.setVisible(false);
-        });
-        this.on('pointerout', () => {
-            this.background_pressed.setVisible(false);
         });
 
-        // ★★★ 3. UISceneがadd.existing(this)を呼ぶので、ここでの追加は不要 ★★★
-        // scene.add.existing(this);
+        // upとoutのリスナーは、シーン全体で監視する方が、ボタンの外で指を離した場合にも対応できてより確実
+        const onPointerUpOrOut = () => {
+            if (this.background_pressed.visible) {
+                this.background_pressed.setVisible(false);
+            }
+        };
+        this.scene.input.on('pointerup', onPointerUpOrOut, this);
+        this.scene.input.on('pointerout', onPointerUpOrOut, this); // ゲームウィンドウから出た場合
+        
+        // シーン終了時にリスナーを解除
+        this.scene.events.on('shutdown', () => {
+            this.scene.input.off('pointerup', onPointerUpOrOut, this);
+            this.scene.input.off('pointerout', onPointerUpOrOut, this);
+        }, this);
     }
-    
-    // ★★★ 4. (推奨) 規約に準拠するため、空のupdateValueメソッドを追加 ★★★
-    updateValue(state) {
-        // このコンポーネントは状態変数に応じて表示を更新する必要はない
-    }
+
+    // updateValueメソッドは規約のために残しておいてOK
+    updateValue(state) {}
 }
