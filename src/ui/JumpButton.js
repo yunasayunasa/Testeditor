@@ -24,18 +24,22 @@ export default class JumpButton extends Phaser.GameObjects.Container {
 
         this.add([background, this.background_pressed, label]);
         
-        this.setSize(radius * 2, radius * 2);
+            this.setSize(radius * 2, radius * 2);
         this.setInteractive(new Circle(radius, radius, radius), Circle.Contains);
         this.setScrollFactor(0);
         
-        // ★★★ シンプルなイベントリスナーに修正 ★★★
-        this.on('pointerdown', (pointer) => {
+        // ★★★ 全てのリスナーを自分自身(this)に設定する ★★★
+        this.on('pointerdown', () => {
             this.background_pressed.setVisible(true);
-            // PlayerControllerがこのイベントをリッスンしているので、これだけでOK
+            // PlayerControllerはこの'pointerdown'をリッスンしているので、
+            // イベントを発火させるだけで仕事は完了
         });
+        
         this.on('pointerup', () => {
             this.background_pressed.setVisible(false);
         });
+
+        // ボタンの外で指を離した場合にも対応
         this.on('pointerout', () => {
             this.background_pressed.setVisible(false);
         });
