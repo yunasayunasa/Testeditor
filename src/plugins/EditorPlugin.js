@@ -216,22 +216,48 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     this.createMatterPropertiesUI(this.selectedObject);
 
     // ▼▼▼▼▼ ここから修正 ▼▼▼▼▼
-    const removeButton = document.createElement('button');
-    removeButton.innerText = '物理ボディ 削除'; // ボタンのテキストを追加
-    removeButton.style.backgroundColor = '#e65151'; // 少し目立たせる
-    removeButton.onclick = () => {
-        if (this.selectedObject && this.selectedObject.body) {
-            // 1. Matter.jsの世界からボディを削除
-            this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
+   const removeButton = document.createElement('button');
+removeButton.innerText = '物理ボディ 削除';
+removeButton.style.backgroundColor = '#e65151';
+
+// ▼▼▼▼▼ ここからが修正箇所です ▼▼▼▼▼
+
+// イベントハンドラに渡すための参照を、あらかじめ変数に確保しておく
+const targetObject = this.selectedObject; 
+
+removeButton.onclick = () => {
+    // 1. 操作対象のオブジェクトが存在し、かつ物理ボディを持っていることを再度確認
+    if (targetObject && targetObject.body) {
+        
+        // 2. 万が一オブジェクトが破壊されていてもエラーにならないように try...catch で囲む
+        try {
+            const scene = targetObject.scene;
             
-            // 2. 【最重要】GameObjectからbodyプロパティを完全に切り離す
-            this.selectedObject.body = null; 
+            // 3. 念のため、シーンとMatterワールドの存在も確認
+            if (scene && scene.matter && scene.matter.world) {
+                // Matterの世界からボディを削除
+                scene.matter.world.remove(targetObject.body);
+            }
+
+            // 4. 【重要】GameObjectからbodyプロパティを完全に切り離す
+            targetObject.body = null;
             
-            // 3. UIを再描画して「付与」ボタンを表示させる
+            // 5. 【重要】this.updatePropertyPanel() を直接呼ばず、プラグインのインスタンス経由で呼ぶ
+            this.updatePropertyPanel();
+
+        } catch (e) {
+            console.error("物理ボディの削除中にエラーが発生しました:", e);
+            // エラーが発生してもUIの更新を試みる
             this.updatePropertyPanel();
         }
-    };
-    this.editorPropsContainer.appendChild(removeButton);
+    } else {
+        console.warn("削除対象の物理ボディが見つかりませんでした。UIを更新します。");
+        // 状態が不正になっている可能性があるので、UIを強制的に再描画する
+        this.updatePropertyPanel();
+    }
+};
+
+this.editorPropsContainer.appendChild(removeButton);
         } else {
             // --- 物理ボディがない場合 ---
             const addButton = document.createElement('button');
