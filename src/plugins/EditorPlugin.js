@@ -121,10 +121,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
     }
      updatePropertyPanel() {
-        if (!this.isEnabled || !this.editorPropsContainer) return;
+        if (!this.isEnabled) return;
+        if (!this.editorPanel || !this.editorPropsContainer || !this.editorTitle) return;
         this.editorPropsContainer.innerHTML = '';
-        if (!this.selectedObject || !this.selectedObject.active) { // ★ activeでないオブジェクトも除外
-            this.selectedObject = null;
+        if (!this.selectedObject) {
             this.editorTitle.innerText = 'No Object Selected';
             return;
         }
@@ -202,38 +202,42 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         depthRow.append(depthLabel, depthInput);
         this.editorPropsContainer.appendChild(depthRow);
 
+        // Physics
          // --- Physics (Matter.js) ---
         this.editorPropsContainer.appendChild(document.createElement('hr'));
         const physicsTitle = document.createElement('div');
-        physicsTitle.innerText = 'Physics (Matter.js)';
+        physicsTitle.innerText = '物理ボディ (Matter.js)';
         physicsTitle.style.fontWeight = 'bold';
+        physicsTitle.style.marginBottom = '10px';
         this.editorPropsContainer.appendChild(physicsTitle);
 
-        if (this.selectedObject.body) {
-            // --- ボディがある場合 ---
-            this.createMatterPropertiesUI(this.selectedObject); // このヘルパーだけは便利なので使います
+        if (this.selectedObject.body) { // bodyプロパティがあるか
+            // --- すでに物理ボディがある場合 ---
+            this.createMatterPropertiesUI(this.selectedObject); // ★ 新しいUI生成メソッドを呼ぶ
 
             const removeButton = document.createElement('button');
-            removeButton.innerText = 'Remove Physics Body';
+            removeButton.innerText = '物理ボディ 削除';
             removeButton.style.backgroundColor = '#c44';
             removeButton.onclick = () => {
-                if (this.selectedObject.body) {
+                if (this.selectedObject) {
                     this.selectedObject.scene.matter.world.remove(this.selectedObject.body);
-                    this.selectedObject.setBody(null);
-                    // ★ 修正点1: 永続化データからも物理定義を削除する
-                    this.selectedObject.setData('physics', null);
+                    this.selectedObject.setBody(null); // bodyをnullに戻す
                     this.updatePropertyPanel();
                 }
             };
             this.editorPropsContainer.appendChild(removeButton);
 
         } else {
-            // --- ボディがない場合 ---
+            // --- 物理ボディがない場合 ---
             const addButton = document.createElement('button');
-            addButton.innerText = 'Add Physics Body';
+            addButton.innerText = '物理ボディ 付与';
             addButton.onclick = () => {
-                this.selectedObject.scene.matter.add.gameObject(this.selectedObject, { isStatic: false });
-                this.updatePropertyPanel();
+                if (this.selectedObject) {
+                    const scene = this.selectedObject.scene;
+                    // ★ 物理ボディがないGameObjectを、Matter.jsの世界に追加する
+                    scene.matter.add.gameObject(this.selectedObject, { isStatic: false });
+                    this.updatePropertyPanel();
+                }
             };
             this.editorPropsContainer.appendChild(addButton);
         }
@@ -629,55 +633,61 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * ★★★ 以下のメソッドで、既存の makeEditable を完全に置き換えてください ★★★
      */
     makeEditable(gameObject, scene) {
-        if (!this.isEnabled || !gameObject.name || gameObject.getData('isEditable')) return;
-        gameObject.setData('isEditable', true);
+        if (!this.isEnabled || !gameObject.name) return;
 
         const sceneKey = scene.scene.key;
         if (!this.editableObjects.has(sceneKey)) {
             this.editableObjects.set(sceneKey, new Set());
         }
         this.editableObjects.get(sceneKey).add(gameObject);
-        
-        // --- イベントリスナー ---
-        gameObject.setInteractive({ draggable: true }); // ★ Matter.jsではこれだけでOK
 
-        gameObject.on('pointerdown', (pointer) => {
-            if (this.editorUI?.currentMode === 'select') {
+        // --- setInteractiveの呼び出しを、ここからは削除する ---
+        // --- 代わりに、isEditableフラグだけを立てておく ---
+        if (!gameObject.getData('isEditable')) {
+            gameObject.setData('isEditable', true);
+        }
+        
+        
+        // --- イベントリスナーの部分は、あなたのコードのままで完璧です ---
+        // ★ 既存のリスナーを一度クリア
+        gameObject.off('pointerdown');
+        gameObject.off('drag');
+        gameObject.off('pointerover');
+        gameObject.off('pointerout');
+
+        // ★ 新しいリスナーを設定
+        gameObject.on('pointerdown', (pointer, localX, localY, event) => {
+            if (this.editorUI && this.editorUI.currentMode === 'select') {
                 this.selectedObject = gameObject;
                 this.updatePropertyPanel();
-                pointer.event.stopPropagation();
-            }
-        });
-
-        // ★ 修正点2: ドラッグ処理を Matter.js の作法に合わせる
-        gameObject.on('dragstart', () => {
-            if (this.editorUI?.currentMode === 'select' && gameObject.body) {
-                // 元の状態を記憶
-                gameObject.setData('wasStatic', gameObject.body.isStatic); 
-                gameObject.setStatic(true);
+                event.stopPropagation();
             }
         });
 
         gameObject.on('drag', (pointer, dragX, dragY) => {
-            if (this.editorUI?.currentMode === 'select') {
-                gameObject.setPosition(dragX, dragY);
+            if (this.editorUI && this.editorUI.currentMode === 'select') {
+                // Matter.jsのオブジェクトは、x,yを直接書き換えるのではなく、
+                // setPositionで位置を変更するのがより安全
+                gameObject.setPosition(Math.round(dragX), Math.round(dragY));
                 if (this.selectedObject === gameObject) this.updatePropertyPanel();
             }
         });
 
-        gameObject.on('dragend', () => {
-            if (this.editorUI?.currentMode === 'select' && gameObject.body) {
-                const wasStatic = gameObject.getData('wasStatic') || false;
-                gameObject.setStatic(wasStatic);
-            }
+        gameObject.on('pointerover', (pointer) => {
+             if (this.editorUI && this.editorUI.currentMode === 'select') {
+                // マウスが当たり判定の上に乗った時
+                gameObject.setTint(0x00ff00);
+             }
         });
         
-        gameObject.on('pointerover', () => {
-            if (this.editorUI?.currentMode === 'select') gameObject.setTint(0x00ff00);
+        gameObject.on('pointerout', (pointer) => {
+            // マウスが当たり判定から外れた時
+            gameObject.clearTint();
         });
-        
-        gameObject.on('pointerout', () => gameObject.clearTint());
     }
+
+// ...
+    
     createPhysicsPropertiesUI(gameObject) {
         const body = gameObject.body;
         const isCurrentlyStatic = (body instanceof Phaser.Physics.Arcade.StaticBody);
@@ -764,120 +774,89 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
 
     
-//
-// Odyssey Engine - EditorPlugin.exportLayoutToJson
-// Final Audited Version: Correct Syntax & Logic
-//
 
-exportLayoutToJson() {
-    if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
-        alert("オブジェクトを選択してからエクスポートしてください。");
-        return;
-    }
-    const targetScene = this.selectedObject.scene;
-    const sceneKey = targetScene.scene.key;
-    
-    const sceneLayoutData = {
-        objects: [],
-        animations: []
-    };
+    exportLayoutToJson() {
+        if (!this.isEnabled || !this.selectedObject || !this.selectedObject.scene) {
+            alert("オブジェクトを選択してからエクスポートしてください。");
+            return;
+        }
+        const targetScene = this.selectedObject.scene;
+        const sceneKey = targetScene.scene.key;
+        
+        const sceneLayoutData = {
+            objects: [],
+            animations: []
+        };
 
-    if (this.editableObjects.has(sceneKey)) {
-        // --- 1. editableObjectsセット内の全てのGameObjectをループ処理 ---
-        for (const gameObject of this.editableObjects.get(sceneKey)) {
-            // オブジェクトが破棄済み、または名前がない場合はスキップ
-            if (!gameObject.active || !gameObject.name) continue;
+        if (this.editableObjects.has(sceneKey)) {
+            for (const gameObject of this.editableObjects.get(sceneKey)) {
+                if (!gameObject.name) continue;
 
-            // --- 2. 各オブジェクトのデータを格納するobjDataを初期化 ---
-            const objData = {
-                name: gameObject.name,
-                x: Math.round(gameObject.x),
-                y: Math.round(gameObject.y),
-                depth: gameObject.depth,
-                scaleX: parseFloat(gameObject.scaleX.toFixed(2)),
-                scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
-                angle: Math.round(gameObject.angle),
-                alpha: parseFloat(gameObject.alpha.toFixed(2)),
-                width: Math.round(gameObject.width),
-                height: Math.round(gameObject.height)
-            };
-
-            // --- 3. 各プロパティをobjDataに追加していく ---
-            if (gameObject.getData('group')) {
-                objData.group = gameObject.getData('group');
-            }
-            
-            if (gameObject instanceof Phaser.GameObjects.Sprite) {
-                objData.type = 'Sprite';
-            }
-
-            if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') {
-                objData.texture = gameObject.texture.key;
-            }
-
-            // 物理ボディの有無をチェックして追加
-            if (gameObject.body) {
-                const body = gameObject.body;
-                objData.physics = {
-                    isStatic: body.isStatic,
-                    shape: gameObject.getData('shape') || 'rectangle', 
-                    friction: parseFloat(body.friction.toFixed(2)),
-                    restitution: parseFloat(body.restitution.toFixed(2)),
+                const objData = {
+                    name: gameObject.name, x: Math.round(gameObject.x), y: Math.round(gameObject.y), depth: gameObject.depth,
+                    scaleX: parseFloat(gameObject.scaleX.toFixed(2)), scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
+                    angle: Math.round(gameObject.angle), alpha: parseFloat(gameObject.alpha.toFixed(2)), width: Math.round(gameObject.width),
+                    height: Math.round(gameObject.height)
                 };
-            }
 
-            // その他のデータを追加
-            if (gameObject.getData('animation_data')) {
-                objData.animation = gameObject.getData('animation_data');
-            }
-            if (gameObject.getData('events')) {
-                objData.events = gameObject.getData('events');
-            }
-            if (gameObject.getData('components')) {
-                objData.components = gameObject.getData('components');
-            }
-
-            // --- 4. 全てのプロパティが追加されたobjDataを、配列に追加 ---
-            sceneLayoutData.objects.push(objData);
-            
-        } // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
-          // ★★★ ここが、正しい for ループの閉じ括弧です ★★★
-          // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                if (gameObject.getData('group')) {
+        objData.group = gameObject.getData('group');
     }
-    
-    // --- 5. アニメーションデータの書き出し (ループの外) ---
-    const scene = this.game.scene.getScene(sceneKey);
-    if (scene && scene.anims) {
-        sceneLayoutData.animations = scene.anims.anims.getArray()
-            .filter(anim => {
-                if (!anim.frames[0]) return false;
-                const sceneObjects = this.editableObjects.get(sceneKey);
-                if (!sceneObjects) return false;
-                return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
-            })
-            .map(anim => {
-                let frames;
-                if (anim.generateFrameNumbers) {
-                    frames = { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame };
-                } else {
-                    frames = anim.frames.map(f => f.index);
+                
+                if (gameObject instanceof Phaser.GameObjects.Sprite) objData.type = 'Sprite';
+                if (gameObject.texture && gameObject.texture.key !== '__DEFAULT') objData.texture = gameObject.texture.key;
+
+                // ★★★ 物理ボディの書き出し部分を、Matter.js用に変更 ★★★
+                 if (gameObject.body) {
+                    const body = gameObject.body;
+                    objData.physics = {
+                        isStatic: body.isStatic,
+                        // ★★★ body.shapeではなく、setDataした値を取得 ★★★
+                        shape: gameObject.getData('shape') || 'rectangle', 
+                        friction: parseFloat(body.friction.toFixed(2)),
+                        restitution: parseFloat(body.restitution.toFixed(2)),
+                    };
                 }
-                return {
-                    key: anim.key,
-                    texture: anim.frames[0].textureKey,
-                    frames: frames,
-                    frameRate: anim.frameRate,
-                    repeat: anim.repeat
-                };
-            });
+
+
+                if (gameObject.getData('animation_data')) objData.animation = gameObject.getData('animation_data');
+                if (gameObject.getData('events')) objData.events = gameObject.getData('events');
+                   if (gameObject.getData('components')) {
+                    objData.components = gameObject.getData('components');
+                }
+                sceneLayoutData.objects.push(objData);
+            }
+        }
+        
+        const scene = this.game.scene.getScene(sceneKey);
+        if (scene && scene.anims) {
+            sceneLayoutData.animations = scene.anims.anims.getArray()
+                .filter(anim => {
+                    if (!anim.frames[0]) return false;
+                    const sceneObjects = this.editableObjects.get(sceneKey);
+                    if (!sceneObjects) return false;
+                    return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
+                })
+                .map(anim => {
+                    let frames;
+                    if (anim.generateFrameNumbers) {
+                        frames = { start: anim.frames[0].frame, end: anim.frames[anim.frames.length - 1].frame };
+                    } else {
+                        frames = anim.frames.map(f => f.index);
+                    }
+                    return {
+                        key: anim.key, texture: anim.frames[0].textureKey, frames: frames,
+                        frameRate: anim.frameRate, repeat: anim.repeat
+                    };
+                });
+        }
+
+        const jsonString = JSON.stringify(sceneLayoutData, null, 2);
+        console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
+        console.log(jsonString);
+        navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
     }
 
-    // --- 6. 最終的なJSONの出力 (変更なし) ---
-    const jsonString = JSON.stringify(sceneLayoutData, null, 2);
-    console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
-    console.log(jsonString);
-    navigator.clipboard.writeText(jsonString).then(() => alert('Layout for ' + sceneKey + ' copied to clipboard!'));
-}
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
     // ★★★ 最新版のイベント関連メソッド群をここに配置 ★★★
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
