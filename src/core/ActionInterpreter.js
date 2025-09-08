@@ -8,24 +8,44 @@ export default class ActionInterpreter {
         this.tagHandlers = eventTagHandlers;
     }
 
+  
     /**
-     * オブジェクトと、実行すべきアクション文字列を受け取り、解釈・実行する
-     * @param {Phaser.GameObjects.GameObject} target - アクションの対象となるオブジェクト
-     * @param {string} actionsString - '[tag1][tag2]...' のようなアクション文字列
+     * アクションを解釈・実行する (ターゲット解決機能付き)
+     * @param {Phaser.GameObjects.GameObject} source - イベントを定義したオブジェクト
+     * @param {string} actionsString - アクション文字列
+     * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
-    async run(target, actionsString) {
-        // 文字列を、個々のタグに分割
+    async run(source, actionsString, collidedTarget = null) {
         const tags = actionsString.match(/\[(.*?)\]/g) || [];
 
         for (const tagString of tags) {
             try {
-                // タグをパースして、タグ名とパラメータを取得
                 const { tagName, params } = this.parseTag(tagString);
                 
+                // ★★★ ここからがターゲット解決ロジック ★★★
+                let finalTarget = source; // デフォルトはイベントの持ち主自身
+
+                if (params.target) {
+                    if (params.target === 'self') {
+                        finalTarget = source;
+                    } else if (params.target === 'other' && collidedTarget) {
+                        finalTarget = collidedTarget;
+                    } else {
+                        // "door_1" のような名前でシーンから探す
+                        finalTarget = this.scene.children.getByName(params.target);
+                    }
+                }
+                
+                if (!finalTarget) {
+                    console.warn(`[ActionInterpreter] Target not found: '${params.target}'`);
+                    continue; // ターゲットが見つからなければ、このタグはスキップ
+                }
+                // ★★★ ここまで ★★★
+
                 const handler = this.tagHandlers[tagName];
                 if (handler) {
-                    // await で、[tween]のような時間のかかる処理の完了を待つ
-                    await handler(this, target, params);
+                    // ★ ハンドラには、解決済みの finalTarget を渡す
+                    await handler(this, finalTarget, params);
                 } else {
                     console.warn(`[ActionInterpreter] Unknown action tag: ${tagName}`);
                 }
@@ -34,7 +54,6 @@ export default class ActionInterpreter {
             }
         }
     }
-
     /**
      
      * タグ文字列をパースして、タグ名とパラメータのオブジェクトを返す

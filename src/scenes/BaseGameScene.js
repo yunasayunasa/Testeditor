@@ -283,20 +283,16 @@ this.matter.world.on('beforeupdate', (event) => {
      * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点
      * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手
      */
-    handleCollision(sourceObject, targetObject) {
-        // ActionInterpreterがなければ何もしない
+      handleCollision(sourceObject, targetObject) {
         if (!this.actionInterpreter) return;
-
         const events = sourceObject.getData('events');
         if (!events) return;
 
-        // sourceObjectに設定されたイベント定義をループ
         for (const eventData of events) {
-            // トリガーが'onCollide_Start'で、かつ衝突相手のグループ名が一致するか
             if (eventData.trigger === 'onCollide_Start' && eventData.targetGroup === targetObject.getData('group')) {
                 console.log(`[Collision] Event triggered: '${sourceObject.name}' collided with group '${eventData.targetGroup}'.`);
-                // 条件が一致したら、ActionInterpreterを実行
-                this.actionInterpreter.run(sourceObject, eventData.actions);
+                // ★★★ ここに、第3引数として targetObject を追加する ★★★
+                this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
             }
         }
     }
