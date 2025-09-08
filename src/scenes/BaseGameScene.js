@@ -105,6 +105,8 @@ export default class BaseGameScene extends Phaser.Scene {
 
             this.matter.add.gameObject(gameObject, {
                 isStatic: phys.isStatic || false,
+                ignoreGravity: phys.ignoreGravity || false, // ★ ignoreGravityを適用
+                gravityScale: { x: 0, y: phys.gravityScaleY !== undefined ? phys.gravityScaleY : 1 }, // ★ gravityScaleを適用
                 friction: phys.friction !== undefined ? phys.friction : 0.1,
                 restitution: phys.restitution !== undefined ? phys.restitution : 0,
             });

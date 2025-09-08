@@ -142,7 +142,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             
             this.safeCreateUI(this.createPhysicsSection);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
+   this.safeCreateUI(this.createAnimationSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            
+            this.safeCreateUI(this.createEventSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
 
+            this.safeCreateUI(this.createComponentSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ... (他のセクションも同様) ...
             this.safeCreateUI(this.createExportButton);
             this.safeCreateUI(this.createDeleteObjectButton);
@@ -403,7 +411,26 @@ createAddBodyButton() {
         this.createCheckbox(this.editorPropsContainer, 'Is Static', body.isStatic, (isChecked) => {
             gameObject.setStatic(isChecked);
         });
+ // ★★★ 重力の影響を制御するUIを追加 ★★★
+        // body.ignoreGravity は true/false
+        this.createCheckbox(this.editorPropsContainer, 'Ignore Gravity', body.ignoreGravity, (isChecked) => {
+            gameObject.setIgnoreGravity(isChecked);
+        });
+        
+        // ★★★（応用）重力のスケールを調整するスライダーを追加 ★★★
+        // 基準値0が良い、というあなたのアイデアは素晴らしいです。
+        // -2 (反重力) から 2 (倍の重力) まで、0を中央にして設定できるようにしましょう。
+        // body.gravityScale は { x: number, y: number } というVectorなので、yを操作します。
+        this.createRangeInput(this.editorPropsContainer, 'Gravity Scale Y', body.gravityScale.y, -2, 2, 0.1, (value) => {
+            // gravityScaleは直接書き換えられないので、setBodyで再設定する
+            // 他のプロパティを維持しつつ、gravityScaleだけを更新する
+            gameObject.setBody({
+                ...body, // 現在のボディのプロパティを全てコピー
+                gravityScale: { x: body.gravityScale.x, y: value } // yだけを上書き
+            });
+        });
 
+        
         const currentShape = gameObject.getData('shape') || 'rectangle';
         this.createSelect(this.editorPropsContainer, 'Shape', currentShape, ['rectangle', 'circle'], (newShape) => {
             gameObject.setData('shape', newShape);
@@ -672,6 +699,8 @@ createAddBodyButton() {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
+                         ignoreGravity: body.ignoreGravity, // ★ ignoreGravityを追加
+                        gravityScaleY: body.gravityScale.y, // ★ gravityScale.yを追加
                         shape: gameObject.getData('shape') || 'rectangle',
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
