@@ -97,13 +97,11 @@ export default class BaseGameScene extends Phaser.Scene {
         if (data.group) gameObject.setData('group', data.group);
         if (data.texture) gameObject.setTexture(data.texture);
         
-        // --- 2. 物理ボディの生成 ---
-      if (data.physics) {
+     // --- 2. 物理ボディの生成 ---
+if (data.physics) {
     const phys = data.physics;
     gameObject.setData('shape', phys.shape || 'rectangle');
 
-    // --- ▼▼▼ ここから修正 ▼▼▼ ---
-    
     // 物理ボディのオプションを、一度変数にまとめる
     const bodyOptions = {
         isStatic: phys.isStatic || false,
@@ -111,30 +109,33 @@ export default class BaseGameScene extends Phaser.Scene {
         restitution: phys.restitution !== undefined ? phys.restitution : 0,
     };
 
-    // ★★★ ignoreGravityがtrueの場合だけ、オプションに明示的に追加する ★★★
+    // ▼▼▼【ここからが決定的な修正です】▼▼▼
     if (phys.ignoreGravity === true) {
+        // ignoreGravityがtrueの場合は、オプションに明示的に追加し、
+        // gravityScaleは絶対に設定しない。
         bodyOptions.ignoreGravity = true;
-    }
-
-    // ★★★ gravityScaleは、ignoreGravityがtrueでない場合にのみ設定する ★★★
-    if (phys.ignoreGravity !== true) {
-        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
+    } else {
+        // ignoreGravityがfalseまたは未定義の場合は、
+        // gravityScaleを必ず設定する。
+        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1; // デフォルトは1
         bodyOptions.gravityScale = { x: 0, y: gravityY };
+        // この場合、bodyOptions.ignoreGravity は未定義のまま（= falseとして扱われる）
     }
-    
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     // 最終的なオプションで、物理ボディを生成
     this.matter.add.gameObject(gameObject, bodyOptions);
-    
             
-            // 形状に応じて、当たり判定を再設定
-            if (phys.shape === 'circle') {
-                const radius = (gameObject.width + gameObject.height) / 4;
-                gameObject.setCircle(radius);
-            } else {
-                gameObject.setRectangle(); 
-            }
-        }
-        
+    // 形状に応じて、当たり判定を再設定
+    if (phys.shape === 'circle') {
+        const radius = (gameObject.width + gameObject.height) / 4;
+        gameObject.setCircle(radius);
+    } else {
+        // setRectangleはデフォルトなので、明示的に呼ぶ必要はない場合が多いですが、
+        // 念のため記述しておくと安全です。
+        gameObject.setRectangle(); 
+    }
+}
         // --- 3. シーンへの追加 ---
         this.add.existing(gameObject);
 
