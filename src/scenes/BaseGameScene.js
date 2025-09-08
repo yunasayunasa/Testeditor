@@ -98,21 +98,22 @@ export default class BaseGameScene extends Phaser.Scene {
         if (data.texture) gameObject.setTexture(data.texture);
         
         // --- 2. 物理ボディの生成 ---
-        if (data.physics) {
-            const phys = data.physics;
-            
-            // 形状の情報をGameObjectに先にデータとして保存
-            gameObject.setData('shape', phys.shape || 'rectangle');
+       if (data.physics) {
+    const phys = data.physics;
+    gameObject.setData('shape', phys.shape || 'rectangle');
 
-            // ★ Matter.jsのAPIでGameObjectを物理世界に追加
-            // ★ ignoreGravityとgravityScaleをJSONから読み込む
-            this.matter.add.gameObject(gameObject, {
-                isStatic: phys.isStatic || false,
-                ignoreGravity: phys.ignoreGravity || false,
-                gravityScale: { x: 0, y: phys.gravityScale !== undefined ? phys.gravityScale : 1 },
-                friction: phys.friction !== undefined ? phys.friction : 0.1,
-                restitution: phys.restitution !== undefined ? phys.restitution : 0,
-            });
+    // ★ gravityScaleのy軸の値だけを取り出す
+    const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
+
+    this.matter.add.gameObject(gameObject, {
+        isStatic: phys.isStatic || false,
+        // ★ ignoreGravity と gravityScale をJSONから読み込む
+        ignoreGravity: phys.ignoreGravity || false,
+        gravityScale: { x: 0, y: gravityY },
+        friction: phys.friction !== undefined ? phys.friction : 0.1,
+        restitution: phys.restitution !== undefined ? phys.restitution : 0,
+    });
+    
             
             // 形状に応じて、当たり判定を再設定
             if (phys.shape === 'circle') {

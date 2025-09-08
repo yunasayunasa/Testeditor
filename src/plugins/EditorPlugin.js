@@ -411,27 +411,28 @@ createAddBodyButton() {
     createMatterPropertiesUI(gameObject) {
         const body = gameObject.body;
         
-        // --- 静的(Static) --- (変更なし)
+        // --- 静的(Static) ---
         this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
+            // setStaticは後からでも安全に変更できる
             gameObject.setStatic(isChecked);
         });
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、重力問題を解決する、最後の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
         // --- 重力無視 (Ignore Gravity) ---
-         // ★★★ 重力プロパティの変更は、全て「安全な再生成」ラッパー経由で行う ★★★
         this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
+            // 重力関連の変更は、安全な再生成メソッドを経由する
             this.recreateBodyWithOptions({ ignoreGravity: isChecked });
         });
 
+        // --- 重力スケール (Gravity Scale) ---
+        // 重力が有効な場合のみ、スケールのスライダーを表示
         if (!body.ignoreGravity) {
             this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
-                this.recreateBodyWithOptions({ gravityScale: { x:0, y: value } });
+                this.recreateBodyWithOptions({ gravityScale: { x: 0, y: value } });
             });
         }
-        // ... Friction, Bounceも同様にラッパー経由にする ...
+        
+        // --- 摩擦 (Friction) & 反発 (Bounce) ---
+        // これらも再生成メソッドを経由すると、より確実
         this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
              this.recreateBodyWithOptions({ friction: value });
         });
@@ -439,30 +440,19 @@ createAddBodyButton() {
              this.recreateBodyWithOptions({ restitution: value });
         });
     
-
-        
+        // --- 形状 (Shape) ---
+        // 形状の変更も、ボディの再生成を伴うため、再生成メソッドに統合できるとより良いが、
+        // setCircle/setRectangleが便利なので、これはこのまま個別処理でもOK
         const currentShape = gameObject.getData('shape') || 'rectangle';
-        this.createSelect(this.editorPropsContainer, 'Shape', currentShape, ['rectangle', 'circle'], (newShape) => {
+        this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
             gameObject.setData('shape', newShape);
-            if (newShape === 'circle') {
-                const radius = (gameObject.width + gameObject.height) / 4;
-                gameObject.setCircle(radius);
-            } else {
-                gameObject.setRectangle();
-            }
-            setTimeout(() => this.updatePropertyPanel(), 0);
-        });
-
-        this.createRangeInput(this.editorPropsContainer, 'Friction', body.friction, 0, 1, 0.01, (value) => {
-            gameObject.setFriction(value);
-        });
-        this.createRangeInput(this.editorPropsContainer, 'Bounce', body.restitution, 0, 1, 0.01, (value) => {
-            gameObject.setBounce(value);
+            // 形状変更後にボディを再生成する
+            this.recreateBodyWithOptions({}); // オプションなしで呼び出し、形状を再適用させる
         });
     }
- /**
+  /**
      * ★★★ 新規ヘルパーメソッド：ボディを安全に再生成する ★★★
-     * @param {object} newOptions - 変更したいプロパティだけを含むオブジェクト
+     * @param {object} newOptions - 変更したいプロパティだけを含むオブジェクト (例: { ignoreGravity: true })
      */
     recreateBodyWithOptions(newOptions) {
         if (!this.selectedObject || !this.selectedObject.body) return;
@@ -477,14 +467,16 @@ createAddBodyButton() {
             gravityScale: { ...oldBody.gravityScale },
             friction: oldBody.friction,
             restitution: oldBody.restitution,
-            // ... 他にも維持したいプロパティがあればここに追加
+            // 他にも維持したいプロパティがあればここに追加
         };
 
         // --- 2. 新しいオプションで、現在のプロパティを上書き ---
         const finalOptions = { ...currentOptions, ...newOptions };
 
         // --- 3. ボディを再生成 ---
+        // シーンに存在する古いボディを削除
         gameObject.scene.matter.world.remove(oldBody);
+        // 新しいオプションで、同じGameObjectに新しいボディを追加
         gameObject.scene.matter.add.gameObject(gameObject, finalOptions);
 
         // --- 4. 形状を復元 ---
@@ -497,7 +489,7 @@ createAddBodyButton() {
         }
 
         // --- 5. UIを更新 ---
-        // setTimeoutで、物理エンジンが更新されるのを待ってからUIを描画
+        // 物理エンジンの状態が完全に更新された後にUIを再描画するため、setTimeoutを使用
         setTimeout(() => this.updatePropertyPanel(), 0);
     }
     createAnimationSection() {
@@ -747,18 +739,18 @@ createAddBodyButton() {
 
                 // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
                     // --- 物理ボディのプロパティ ---
-                if (gameObject.body) {
-                    const body = gameObject.body;
-                    objData.physics = {
-                        isStatic: body.isStatic,
-                        // ★★★ ignoreGravityとgravityScaleの両方を書き出す ★★★
-                        ignoreGravity: body.ignoreGravity,
-                        gravityScale: body.gravityScale.y, // y軸だけで十分
-                        shape: gameObject.getData('shape') || 'rectangle', 
-                        friction: parseFloat(body.friction.toFixed(2)),
-                        restitution: parseFloat(body.restitution.toFixed(2)),
-                    };
-                }
+               if (gameObject.body) {
+    const body = gameObject.body;
+    objData.physics = {
+        isStatic: body.isStatic,
+        // ★★★ ignoreGravityとgravityScaleの両方を書き出す ★★★
+        ignoreGravity: body.ignoreGravity,
+        gravityScale: body.gravityScale.y, // y軸の値だけで十分
+        shape: gameObject.getData('shape') || 'rectangle', 
+        friction: parseFloat(body.friction.toFixed(2)),
+        restitution: parseFloat(body.restitution.toFixed(2)),
+    };
+}
                 
                 sceneLayoutData.objects.push(objData);
             }
