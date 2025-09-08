@@ -405,29 +405,45 @@ createAddBodyButton() {
 
 
 
+  /**
+     * Matter.js用のプロパティUIを生成する (最終完成版)
+     */
     createMatterPropertiesUI(gameObject) {
         const body = gameObject.body;
         
-        this.createCheckbox(this.editorPropsContainer, 'Is Static', body.isStatic, (isChecked) => {
+        // --- 静的(Static) --- (変更なし)
+        this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
             gameObject.setStatic(isChecked);
         });
- // ★★★ 重力の影響を制御するUIを追加 ★★★
-        // body.ignoreGravity は true/false
-        this.createCheckbox(this.editorPropsContainer, 'Ignore Gravity', body.ignoreGravity, (isChecked) => {
-            gameObject.setIgnoreGravity(isChecked);
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、重力問題を解決する、最後の修正です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 重力無視 (Ignore Gravity) ---
+        // body.ignoreGravity は true/false ではなく、gravityScaleで制御するのが確実
+        // 現在の重力スケールが0かどうかで判断
+        const isGravityIgnored = (body.gravityScale.y === 0);
+        this.createCheckbox(this.editorPropsContainer, '重力無視', isGravityIgnored, (isChecked) => {
+            // isCheckedがtrueなら重力スケールを0に、falseなら1に戻す
+            const newGravityScale = isChecked ? 0 : 1;
+            // ★ Matter.jsの本体に直接命令する！
+            Phaser.Physics.Matter.Matter.Body.scale(body, 1, newGravityScale / body.gravityScale.y);
+            body.gravityScale.y = newGravityScale;
+            
+            // UIを再描画して、スライダーの値を更新
+            this.updatePropertyPanel();
         });
         
-        // ★★★（応用）重力のスケールを調整するスライダーを追加 ★★★
-        // 基準値0が良い、というあなたのアイデアは素晴らしいです。
-        // -2 (反重力) から 2 (倍の重力) まで、0を中央にして設定できるようにしましょう。
-        // body.gravityScale は { x: number, y: number } というVectorなので、yを操作します。
-        this.createRangeInput(this.editorPropsContainer, 'Gravity Scale Y', body.gravityScale.y, -2, 2, 0.1, (value) => {
-            // gravityScaleは直接書き換えられないので、setBodyで再設定する
-            // 他のプロパティを維持しつつ、gravityScaleだけを更新する
-            gameObject.setBody({
-                ...body, // 現在のボディのプロパティを全てコピー
-                gravityScale: { x: body.gravityScale.x, y: value } // yだけを上書き
-            });
+        // --- 重力スケール (Gravity Scale) ---
+        this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
+            // ★ Matter.jsの本体に直接命令する！
+            // 現在のスケールを、新しいスケールに「スケールアップ/ダウン」させる
+            // (body.gravityScale.yが0の時は計算できないので、安全策を入れる)
+            const currentScale = (body.gravityScale.y === 0) ? 0.0001 : body.gravityScale.y;
+            Phaser.Physics.Matter.Matter.Body.scale(body, 1, value / currentScale);
+            // プロパティを直接更新
+            body.gravityScale.y = value;
         });
 
         
@@ -695,13 +711,13 @@ createAddBodyButton() {
                 if (components && components.length > 0) objData.components = components;
 
                 // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
-                if (gameObject.body) {
+                 if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
-                         ignoreGravity: body.ignoreGravity, // ★ ignoreGravityを追加
-                        gravityScaleY: body.gravityScale.y, // ★ gravityScale.yを追加
-                        shape: gameObject.getData('shape') || 'rectangle',
+                        // ★★★ ignoreGravityは不要。gravityScaleで全てを表現する ★★★
+                        gravityScale: body.gravityScale.y,
+                        shape: gameObject.getData('shape') || 'rectangle', 
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
                     };
