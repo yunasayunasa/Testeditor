@@ -403,95 +403,99 @@ createAddBodyButton() {
     this.editorPropsContainer.appendChild(addButton);
 }
 
+  
+    /**
+     * Matter.js用のプロパティUIを生成する (完全な再構築モデル)
+     */
+    createMatterPropertiesUI(gameObject) {
+        const body = gameObject.body;
+        
+        this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
+            this.recreateBodyByReconstruction({ isStatic: isChecked });
+        });
 
-/**
- * Matter.js用のプロパティUIを生成する (シンプル・イズ・ベスト版)
- */
-createMatterPropertiesUI(gameObject) {
-    const body = gameObject.body;
-    
-    this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
-        // isStaticは後から変更できるので、これはこのままでOK
-        if (this.selectedObject) this.selectedObject.setStatic(isChecked);
-    });
+        this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
+            this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
+        });
 
-    this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
-        this.recreateBodyWithOptions({ ignoreGravity: isChecked });
-    });
+        if (!body.ignoreGravity) {
+            this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
+                this.recreateBodyByReconstruction({ gravityScale: { x: 0, y: value } });
+            });
+        }
+        
+        this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
+             this.recreateBodyByReconstruction({ friction: value });
+        });
+        this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
+             this.recreateBodyByReconstruction({ restitution: value });
+        });
 
-    if (!body.ignoreGravity) {
-        this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
-            this.recreateBodyWithOptions({ gravityScale: { x: 0, y: value } });
+        const currentShape = gameObject.getData('shape') || 'rectangle';
+        this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
+            if (this.selectedObject) {
+                this.selectedObject.setData('shape', newShape);
+                this.recreateBodyByReconstruction({}); // 形状データはsetDataで渡す
+            }
         });
     }
-    
-    this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
-         this.recreateBodyWithOptions({ friction: value });
-    });
-    this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
-         this.recreateBodyWithOptions({ restitution: value });
-    });
 
-    const currentShape = gameObject.getData('shape') || 'rectangle';
-    this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
-        if (this.selectedObject) {
-            this.selectedObject.setData('shape', newShape);
-            this.recreateBodyWithOptions({}); // 形状の変更をトリガー
+    /**
+     * ★★★ 新メソッド：ボディ削除と同じ「完全な再構築」でボディを再生成する ★★★
+     * @param {object} changedPhysicsOption - 変更された単一の物理オプション
+     */
+    recreateBodyByReconstruction(changedPhysicsOption = {}) {
+        const targetObject = this.selectedObject;
+        if (!targetObject || !targetObject.scene) return;
+
+        // --- 1. レイアウト情報を抽出 ---
+        const layout = {
+            name: targetObject.name,
+            type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+            texture: targetObject.texture.key,
+            x: targetObject.x,
+            y: targetObject.y,
+            depth: targetObject.depth,
+            scaleX: targetObject.scaleX,
+            scaleY: targetObject.scaleY,
+            angle: targetObject.angle,
+            alpha: targetObject.alpha,
+            group: targetObject.getData('group'),
+            animation_data: targetObject.getData('animation_data'),
+            events: targetObject.getData('events'),
+            components: targetObject.getData('components'),
+            // ★★★ 物理情報を、現在のbodyと最新の変更をマージして作成 ★★★
+            physics: {
+                ...(targetObject.body || {}), // 現在のbodyのプロパティをコピー
+                ...changedPhysicsOption         // 最新の変更を上書き
+            }
+        };
+        // 形状はgetDataから取得するので、physicsには含めない
+        layout.physics.shape = targetObject.getData('shape');
+
+
+        const scene = targetObject.scene;
+        const sceneKey = scene.scene.key;
+
+        // --- 2. 編集リストから古い参照を削除 ---
+        if (this.editableObjects.has(sceneKey)) {
+            this.editableObjects.get(sceneKey).delete(targetObject);
         }
-    });
-}
 
-/**
- * ボディを安全に再生成する (シンプル・イズ・ベスト版)
- * @param {object} changedOption - 変更された単一のオプション (例: { friction: 0.5 })
- */
-recreateBodyWithOptions(changedOption) {
-    if (!this.selectedObject || !this.selectedObject.body) return;
-    
-    const gameObject = this.selectedObject;
-    const scene = gameObject.scene;
-    const oldBody = gameObject.body;
+        // --- 3. 古いオブジェクトを破壊 ---
+        targetObject.destroy();
 
-    // --- 1. UIから、現在の全ての値を取得する ---
-    // (注意: この方法は、対応するDOM要素が存在することが前提)
-    const panel = this.editorPropsContainer;
-    const isStatic = panel.querySelector('label:has(input[type="checkbox"]) > input[type="checkbox"]').checked;
-    const ignoreGravity = panel.querySelectorAll('label:has(input[type="checkbox"]) > input[type="checkbox"]')[1].checked;
-    
-    let gravityScaleY = oldBody.gravityScale.y;
-    const gravitySlider = panel.querySelector('input[type="range"]'); // 最初のスライダー
-    if (gravitySlider) gravityScaleY = parseFloat(gravitySlider.value);
-    
-    const friction = parseFloat(panel.querySelectorAll('input[type="range"]')[1].value);
-    const restitution = parseFloat(panel.querySelectorAll('input[type="range"]')[2].value);
+        // --- 4. 新しいオブジェクトを生成 & プロパティ適用 ---
+        const newGameObject = scene.createObjectFromLayout(layout);
+        scene.applyProperties(newGameObject, layout);
+        
+        // --- 5. 新しいオブジェクトを選択対象に設定 ---
+        this.selectedObject = newGameObject;
 
-    // --- 2. 抽出した値と、今回変更された値をマージして最終的なオプションを作成 ---
-    let finalOptions = {
-        isStatic: isStatic,
-        ignoreGravity: ignoreGravity,
-        gravityScale: { x: 0, y: gravityScaleY },
-        friction: friction,
-        restitution: restitution,
-    };
-    // 変更された最新の値を上書き
-    Object.assign(finalOptions, changedOption);
-
-    // --- 3. ボディを再生成 ---
-    scene.matter.world.remove(oldBody);
-    scene.matter.add.gameObject(gameObject, finalOptions);
-
-    // --- 4. 形状を復元 ---
-    const shape = gameObject.getData('shape') || 'rectangle';
-    if (shape === 'circle') {
-        const radius = (gameObject.width + gameObject.height) / 4;
-        gameObject.setCircle(radius);
-    } else {
-        gameObject.setRectangle();
+        // --- 6. UIを更新 ---
+        this.updatePropertyPanel();
     }
-
-    // --- 5. UIを更新 ---
-    setTimeout(() => this.updatePropertyPanel(), 0);
-}
+    
     createAnimationSection() {
         const title = document.createElement('h4');
         title.innerText = 'スプライトシート';
@@ -676,12 +680,21 @@ recreateBodyWithOptions(changedOption) {
         
         gameObject.on('pointerover', () => {
              if (this.editorUI && this.editorUI.currentMode === 'select') {
-                gameObject.setTint(0x00ff00);
+                // ▼▼▼ 【setTintエラー対策】setTintメソッドが存在するか確認してから呼び出す ▼▼▼
+                if (typeof gameObject.setTint === 'function') {
+                    gameObject.setTint(0x00ff00);
+                }
              }
         });
         
-        gameObject.on('pointerout', () => gameObject.clearTint());
+         gameObject.on('pointerout', () => {
+            // ▼▼▼ 【setTintエラー対策】clearTintメソッドが存在するか確認してから呼び出す ▼▼▼
+            if (typeof gameObject.clearTint === 'function') {
+                gameObject.clearTint();
+            }
+        });
     }
+    
     
    /**
      * 現在のシーンレイアウトをJSON形式でエクスポートする。
