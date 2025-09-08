@@ -59,27 +59,27 @@
       "name": "next_arrow_2",
       "type": "Image",
       "texture": "next_arrow",
-      "x": 1098,
+      "x": 1099,
       "y": 1094,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "floor",
+      "group": "coin",
       "events": [
         {
           "trigger": "onCollide_Start",
-          "actions": "[destroy]",
+          "actions": "[eval exp=\"f.score = 100\"]\n[destroy target=self]",
           "targetGroup": "player"
         }
       ],
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 0.1,
+        "friction": 1,
         "restitution": 0
       }
     },
@@ -120,8 +120,8 @@
         "ignoreGravity": true,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 0.41,
-        "restitution": 0.24
+        "friction": 0.1,
+        "restitution": 0
       }
     }
   ],
