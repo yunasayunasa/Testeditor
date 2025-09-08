@@ -1,20 +1,14 @@
 
 /**
- * [eval] アクションタグ
- * StateManagerの変数を操作する。
- * @param {ActionInterpreter} interpreter - ActionInterpreterのインスタンス
- * @param {Phaser.GameObjects.GameObject} target - アクションの対象オブジェクト
- * @param {object} params - パラメータ
- * @param {string} params.exp - 実行するJavaScript式 (例: "f.score = f.score + 10")
+ * [eval] アクションタグ ...
  */
-export default async function eval(interpreter, target, params) {
-    // expパラメータがなければ何もしない
+// ★★★ 関数名を 'eval' から 'evalExpression' に変更 ★★★
+export default async function evalExpression(interpreter, target, params) {
     if (!params.exp) {
         console.warn('[eval tag] Missing required parameter: exp');
         return;
     }
 
-    // シーンからStateManagerを取得
     const stateManager = interpreter.scene.registry.get('stateManager');
     if (!stateManager) {
         console.error('[eval tag] StateManager not found in scene registry.');
@@ -22,8 +16,7 @@ export default async function eval(interpreter, target, params) {
     }
 
     try {
-        // StateManagerの安全なevalメソッドを呼び出す
-        // こちらは代入も許可するバージョン (もしなければStateManegerに実装が必要)
+        // StateManagerの安全なexecuteメソッドを呼び出す
         stateManager.execute(params.exp); 
     } catch (e) {
         console.error(`[eval tag] Error executing expression: "${params.exp}"`, e);
