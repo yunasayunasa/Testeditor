@@ -769,12 +769,18 @@ this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getDat
 
                 // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
                     // --- 物理ボディのプロパティ ---
-               if (gameObject.body) {
+         // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
+if (gameObject.body) {
     const body = gameObject.body;
     objData.physics = {
         isStatic: body.isStatic,
-        // ★★★ ignoreGravityとgravityScaleの両方を書き出す ★★★
-        ignoreGravity: body.ignoreGravity,
+        
+        // ▼▼▼【ここが修正点です】▼▼▼
+        // 信頼できない body.ignoreGravity を参照するのをやめ、
+        // 自分で設定した信頼できる getData('ignoreGravity') を書き出す。
+        ignoreGravity: gameObject.getData('ignoreGravity') === true,
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         gravityScale: body.gravityScale.y, // y軸の値だけで十分
         shape: gameObject.getData('shape') || 'rectangle', 
         friction: parseFloat(body.friction.toFixed(2)),
