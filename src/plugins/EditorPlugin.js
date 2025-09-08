@@ -446,7 +446,7 @@ createMatterPropertiesUI(gameObject) {
     this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
         if (this.selectedObject && this.selectedObject.body) {
             // 公式API: Matter.Body.set() を使ってプロパティを直接変更
-            Phaser.Physics.Matter.Matter.Body.set(this.selectedObject.body, 'ignoreGravity', isChecked);
+             this.selectedObject.body.ignoreGravity = isChecked;
             // UIを更新して、重力スケールスライダーの表示/非表示を切り替える
             this.updatePropertyPanel();
         }
@@ -462,7 +462,12 @@ createMatterPropertiesUI(gameObject) {
             }
         });
     }
-    
+    this.createRangeInput(this.editorPropsContainer, '空気抵抗', body.frictionAir, 0, 0.1, 0.001, (value) => {
+    if (this.selectedObject) {
+        // 公式API: .setFrictionAir()
+        this.selectedObject.setFrictionAir(value);
+    }
+});
     // --- 摩擦 & 反発 ---
     this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
         if (this.selectedObject) {
