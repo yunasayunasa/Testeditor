@@ -98,21 +98,32 @@ export default class BaseGameScene extends Phaser.Scene {
         if (data.texture) gameObject.setTexture(data.texture);
         
         // --- 2. 物理ボディの生成 ---
-       if (data.physics) {
+      if (data.physics) {
     const phys = data.physics;
     gameObject.setData('shape', phys.shape || 'rectangle');
 
-    // ★ gravityScaleのy軸の値だけを取り出す
-    const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
-
-    this.matter.add.gameObject(gameObject, {
+    // --- ▼▼▼ ここから修正 ▼▼▼ ---
+    
+    // 物理ボディのオプションを、一度変数にまとめる
+    const bodyOptions = {
         isStatic: phys.isStatic || false,
-        // ★ ignoreGravity と gravityScale をJSONから読み込む
-        ignoreGravity: phys.ignoreGravity || false,
-        gravityScale: { x: 0, y: gravityY },
         friction: phys.friction !== undefined ? phys.friction : 0.1,
         restitution: phys.restitution !== undefined ? phys.restitution : 0,
-    });
+    };
+
+    // ★★★ ignoreGravityがtrueの場合だけ、オプションに明示的に追加する ★★★
+    if (phys.ignoreGravity === true) {
+        bodyOptions.ignoreGravity = true;
+    }
+
+    // ★★★ gravityScaleは、ignoreGravityがtrueでない場合にのみ設定する ★★★
+    if (phys.ignoreGravity !== true) {
+        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
+        bodyOptions.gravityScale = { x: 0, y: gravityY };
+    }
+    
+    // 最終的なオプションで、物理ボディを生成
+    this.matter.add.gameObject(gameObject, bodyOptions);
     
             
             // 形状に応じて、当たり判定を再設定
