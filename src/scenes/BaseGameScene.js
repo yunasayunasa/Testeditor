@@ -97,43 +97,49 @@ export default class BaseGameScene extends Phaser.Scene {
         if (data.group) gameObject.setData('group', data.group);
         if (data.texture) gameObject.setTexture(data.texture);
         
-     // --- 2. 物理ボディの生成 ---
+     
+// --- 2. 物理ボディの生成 ---
 if (data.physics) {
     const phys = data.physics;
     gameObject.setData('shape', phys.shape || 'rectangle');
 
-    // 物理ボディのオプションを、一度変数にまとめる
+    // ▼▼▼【ここから全面的に書き換えます】▼▼▼
+
+    // Matter.jsに渡す最終的なオプションオブジェクトを定義
     const bodyOptions = {
         isStatic: phys.isStatic || false,
         friction: phys.friction !== undefined ? phys.friction : 0.1,
         restitution: phys.restitution !== undefined ? phys.restitution : 0,
     };
 
-    // ▼▼▼【ここからが決定的な修正です】▼▼▼
+    // --- 重力に関する設定を明確に分岐 ---
     if (phys.ignoreGravity === true) {
-        // ignoreGravityがtrueの場合は、オプションに明示的に追加し、
-        // gravityScaleは絶対に設定しない。
+        // 【Aルート】重力を無視する場合
+        // Matter.jsの ignoreGravity フラグを true にする
         bodyOptions.ignoreGravity = true;
+
     } else {
-        // ignoreGravityがfalseまたは未定義の場合は、
-        // gravityScaleを必ず設定する。
-        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1; // デフォルトは1
+        // 【Bルート】重力を適用する場合
+        // ignoreGravity フラグは設定せず（falseとして扱われる）、
+        // gravityScale を使って重力の大きさを制御する。
+        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
         bodyOptions.gravityScale = { x: 0, y: gravityY };
-        // この場合、bodyOptions.ignoreGravity は未定義のまま（= falseとして扱われる）
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    // デバッグ用に最終的なオプションを確認
+    console.log(`%c[BaseGameScene] Final body options for '${data.name}':`, 'color: yellow;', bodyOptions);
 
     // 最終的なオプションで、物理ボディを生成
     this.matter.add.gameObject(gameObject, bodyOptions);
+
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             
     // 形状に応じて、当たり判定を再設定
     if (phys.shape === 'circle') {
         const radius = (gameObject.width + gameObject.height) / 4;
         gameObject.setCircle(radius);
     } else {
-        // setRectangleはデフォルトなので、明示的に呼ぶ必要はない場合が多いですが、
-        // 念のため記述しておくと安全です。
-        gameObject.setRectangle(); 
+        gameObject.setRectangle();
     }
 }
         // --- 3. シーンへの追加 ---
