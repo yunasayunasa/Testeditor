@@ -447,15 +447,13 @@ createMatterPropertiesUI(gameObject) {
 // --- 重力無視 ---
 this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getData('ignoreGravity') === true, (isChecked) => {
     if (this.selectedObject) {
-        // ▼▼▼【ここを修正】▼▼▼
-        // 1. まずオブジェクトにデータを設定する
-        this.selectedObject.setData('ignoreGravity', isChecked);
+        // ▼▼▼【ここが最終修正です】▼▼▼
         
-        // 2. その後、物理ボディを安全に再構築する
-        //    (メモ：recreateBodyByReconstruction は内部で selectedObject.getData() を参照するため、
-        //     先にsetDataしておく必要がある)
-        //    今回は物理プロパティの変更ではないが、念のため再構築して状態をリフレッシュする
-        this.recreateBodyByReconstruction({}); // 空のオブジェクトを渡して再構築だけをトリガー
+        // 1. まずオブジェクトにデータを永続化用に設定する（これは正しい）
+        this.selectedObject.setData('ignoreGravity', isChecked);
+
+        // 2. 再構築メソッドには、「どの物理プロパティを変更したいか」を明確に伝える
+        this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
     }
 });
     // --- 重力スケール ---
