@@ -241,19 +241,33 @@ if (this.modeToggle && this.modeLabel) {
         button.addEventListener('touchcancel', stopPanning);
     }
      // ★★★ 新規メソッド：ヘルプボタンを生成する ★★★
+    
+    /**
+     * ヘルプボタンを生成する (移設・最終版)
+     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
+     */
     createHelpButton() {
-        // カメラコントロールの隣あたりに追加するのが良いだろう
-        const cameraControls = document.getElementById('camera-controls');
-        if (cameraControls) {
+        // ★ 移設先：アセットブラウザのヘッダー
+        const assetBrowserHeader = document.querySelector('#asset-browser .panel-header');
+        
+        if (assetBrowserHeader) {
             const helpButton = document.createElement('button');
             helpButton.innerText = '?';
             helpButton.title = 'Open Help Manual';
-            helpButton.style.marginLeft = '10px';
-            helpButton.style.borderRadius = '50%';
-            helpButton.style.width = '30px';
-            helpButton.style.height = '30px';
+            
+            // ★ スタイルを少し調整して、ヘッダーに馴染ませる
+            helpButton.style.marginLeft = 'auto'; // 右端に寄せる
+            helpButton.style.padding = '2px 8px';
+            helpButton.style.borderRadius = '4px';
+            helpButton.style.border = '1px solid #555';
+            helpButton.style.backgroundColor = '#444';
+            helpButton.style.color = '#eee';
+            helpButton.style.cursor = 'pointer';
+
             helpButton.addEventListener('click', () => this.openHelpModal());
-            cameraControls.appendChild(helpButton);
+            assetBrowserHeader.appendChild(helpButton);
+        } else {
+            console.warn('[EditorUI] Asset browser header not found for help button placement.');
         }
     }
 
