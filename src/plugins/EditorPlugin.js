@@ -444,57 +444,76 @@ createAddBodyButton() {
      * ★★★ 新メソッド：ボディ削除と同じ「完全な再構築」でボディを再生成する ★★★
      * @param {object} changedPhysicsOption - 変更された単一の物理オプション
      */
-    recreateBodyByReconstruction(changedPhysicsOption = {}) {
-        const targetObject = this.selectedObject;
-        if (!targetObject || !targetObject.scene) return;
+    
+/**
+ * ボディを、現在のUIの状態を完全に反映させて再構築する最終メソッド
+ * @param {object} changedOption - 今回トリガーとなった変更オプション
+ */
+recreateBodyByReconstruction(changedOption) {
+    const targetObject = this.selectedObject;
+    if (!targetObject || !targetObject.scene) return;
 
-        // --- 1. レイアウト情報を抽出 ---
-        const layout = {
-            name: targetObject.name,
-            type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
-            texture: targetObject.texture.key,
-            x: targetObject.x,
-            y: targetObject.y,
-            depth: targetObject.depth,
-            scaleX: targetObject.scaleX,
-            scaleY: targetObject.scaleY,
-            angle: targetObject.angle,
-            alpha: targetObject.alpha,
-            group: targetObject.getData('group'),
-            animation_data: targetObject.getData('animation_data'),
-            events: targetObject.getData('events'),
-            components: targetObject.getData('components'),
-            // ★★★ 物理情報を、現在のbodyと最新の変更をマージして作成 ★★★
-            physics: {
-                ...(targetObject.body || {}), // 現在のbodyのプロパティをコピー
-                ...changedPhysicsOption         // 最新の変更を上書き
-            }
-        };
-        // 形状はgetDataから取得するので、physicsには含めない
-        layout.physics.shape = targetObject.getData('shape');
+    // --- 1. レイアウト情報を抽出 (物理以外) ---
+    const layout = {
+        name: targetObject.name,
+        type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+        texture: targetObject.texture.key,
+        x: targetObject.x,
+        y: targetObject.y,
+        depth: targetObject.depth,
+        scaleX: targetObject.scaleX,
+        scaleY: targetObject.scaleY,
+        angle: targetObject.angle,
+        alpha: targetObject.alpha,
+        group: targetObject.getData('group'),
+        animation_data: targetObject.getData('animation_data'),
+        events: targetObject.getData('events'),
+        components: targetObject.getData('components'),
+    };
 
+    // --- 2. 物理情報を「現在のUIの状態」から完全に新規作成する ---
+    const panel = this.editorPropsContainer;
+    let physicsOptions = {}; // 空のオブジェクトから始める
 
-        const scene = targetObject.scene;
-        const sceneKey = scene.scene.key;
-
-        // --- 2. 編集リストから古い参照を削除 ---
-        if (this.editableObjects.has(sceneKey)) {
-            this.editableObjects.get(sceneKey).delete(targetObject);
-        }
-
-        // --- 3. 古いオブジェクトを破壊 ---
-        targetObject.destroy();
-
-        // --- 4. 新しいオブジェクトを生成 & プロパティ適用 ---
-        const newGameObject = scene.createObjectFromLayout(layout);
-        scene.applyProperties(newGameObject, layout);
+    try {
+        // UI要素から直接値を取得する。存在しない場合はエラーにならずundefinedになる
+        const isStaticCheckbox = panel.querySelector('#prop-isStatic');
+        const ignoreGravityCheckbox = panel.querySelector('#prop-ignoreGravity');
+        const gravityScaleSlider = panel.querySelector('#prop-gravityScale');
+        const frictionSlider = panel.querySelector('#prop-friction');
+        const restitutionSlider = panel.querySelector('#prop-restitution');
         
-        // --- 5. 新しいオブジェクトを選択対象に設定 ---
-        this.selectedObject = newGameObject;
+        // 存在すれば、その値を採用する
+        if (isStaticCheckbox) physicsOptions.isStatic = isStaticCheckbox.checked;
+        if (ignoreGravityCheckbox) physicsOptions.ignoreGravity = ignoreGravityCheckbox.checked;
+        if (gravityScaleSlider) physicsOptions.gravityScale = { x: 0, y: parseFloat(gravityScaleSlider.value) };
+        if (frictionSlider) physicsOptions.friction = parseFloat(frictionSlider.value);
+        if (restitutionSlider) physicsOptions.restitution = parseFloat(restitutionSlider.value);
+        
+        // 今回の変更を、最終的なオプションとして上書きする
+        Object.assign(physicsOptions, changedOption);
 
-        // --- 6. UIを更新 ---
-        this.updatePropertyPanel();
+        // 作成した物理オプションをレイアウトに追加
+        layout.physics = physicsOptions;
+        
+    } catch (e) {
+        console.error("Failed to build physics options from UI. Aborting reconstruction.", e);
+        return;
     }
+
+    // --- 3. 再構築プロセス (これは以前と同じ) ---
+    const scene = targetObject.scene;
+    const sceneKey = scene.scene.key;
+    if (this.editableObjects.has(sceneKey)) {
+        this.editableObjects.get(sceneKey).delete(targetObject);
+    }
+    targetObject.destroy();
+    const newGameObject = scene.createObjectFromLayout(layout);
+    scene.applyProperties(newGameObject, layout);
+    this.selectedObject = newGameObject;
+    this.updatePropertyPanel();
+}
+
     
     createAnimationSection() {
         const title = document.createElement('h4');
@@ -594,6 +613,8 @@ createAddBodyButton() {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = initialValue;
+           if (label === '静的ボディ') checkbox.id = 'prop-isStatic';
+    if (label === '重力無視') checkbox.id = 'prop-ignoreGravity';
         checkbox.addEventListener('change', () => callback(checkbox.checked));
         row.append(labelEl, checkbox);
         container.appendChild(row);
@@ -609,6 +630,9 @@ createAddBodyButton() {
         slider.max = max;
         slider.step = step;
         slider.value = initialValue;
+          if (label === '重力スケール') slider.id = 'prop-gravityScale';
+    if (label === '摩擦') slider.id = 'prop-friction';
+    if (label === '反発') slider.id = 'prop-restitution';
         const valueEl = document.createElement('span');
         valueEl.innerText = Number(initialValue).toFixed(2);
         slider.addEventListener('input', () => {
