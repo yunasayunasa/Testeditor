@@ -1,0 +1,36 @@
+
+<!-- manual.html -->
+
+<h1>アクションタグ・リファレンス</h1>
+<p>イベントに応じて、オブジェクトに様々なアクションを実行させるための命令です。</p>
+
+<h2>[destroy]</h2>
+<p>オブジェクトを破壊（シーンから削除）します。</p>
+<ul>
+    <li><strong>target</strong> (オプション): 破壊する対象を指定します。
+        <ul>
+            <li><code>self</code> (デフォルト): このイベントを持つオブジェクト自身。</li>
+            <li><code>other</code>: このイベントを引き起こした衝突相手。</li>
+            <li><code>オブジェクト名</code>: シーン上の特定の名前を持つオブジェクト。</li>
+        </ul>
+    </li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>[destroy]
+[destroy target=self]
+[destroy target=other]
+[destroy target=secret_door]
+</code></pre>
+
+<hr>
+
+<h2>[eval]</h2>
+<p>ゲーム変数 (f.) やシステム変数 (sf.) を操作するJavaScript式を実行します。</p>
+<ul>
+    <li><strong>exp</strong> (必須): 実行する式を、必ずダブルクォーテーションで囲んで記述します。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>[eval exp="f.score = f.score + 10"]
+[eval exp="f.has_key = true"]</code></pre>
+
+<!-- ▼▼▼ 今後、新しいタグを追加したら、ここに追記していく ▼▼▼ -->

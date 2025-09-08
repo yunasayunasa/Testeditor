@@ -6,7 +6,8 @@ export default class EditorUI {
         this.plugin = editorPlugin;
         this.selectedAssetKey = null;
      this.objectCounters = {};
-
+  this.helpModal = null;
+        this.helpModalContent = null;
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
 
@@ -28,6 +29,21 @@ export default class EditorUI {
         this.modeToggle = document.getElementById('mode-toggle-checkbox');
         this.modeLabel = document.getElementById('mode-label');
 
+
+        // ★★★ ヘルプモーダル関連のDOM要素を取得 ★★★
+        this.helpModal = document.getElementById('help-modal-overlay');
+        this.helpModalContent = document.getElementById('help-modal-content');
+        const helpModalCloseBtn = document.getElementById('help-modal-close-btn');
+        if (helpModalCloseBtn) {
+            helpModalCloseBtn.addEventListener('click', () => this.closeHelpModal());
+        }
+
+        this.initializeEventListeners();
+        this.populateAssetBrowser();
+        
+        // ★★★ ヘルプボタンを生成するメソッドを呼び出す ★★★
+        this.createHelpButton();
+    
         // ★★★ 3. 新しいメソッドを呼び出して、イベントリスナーをまとめて設定 ★★★
         this.initializeEventListeners();
         this.populateAssetBrowser();
@@ -224,4 +240,52 @@ if (this.modeToggle && this.modeLabel) {
         button.addEventListener('touchend', stopPanning);
         button.addEventListener('touchcancel', stopPanning);
     }
+     // ★★★ 新規メソッド：ヘルプボタンを生成する ★★★
+    createHelpButton() {
+        // カメラコントロールの隣あたりに追加するのが良いだろう
+        const cameraControls = document.getElementById('camera-controls');
+        if (cameraControls) {
+            const helpButton = document.createElement('button');
+            helpButton.innerText = '?';
+            helpButton.title = 'Open Help Manual';
+            helpButton.style.marginLeft = '10px';
+            helpButton.style.borderRadius = '50%';
+            helpButton.style.width = '30px';
+            helpButton.style.height = '30px';
+            helpButton.addEventListener('click', () => this.openHelpModal());
+            cameraControls.appendChild(helpButton);
+        }
+    }
+
+    // ★★★ 新規メソッド：ヘルプモーダルを開く ★★★
+    async openHelpModal() {
+        if (!this.helpModal || !this.helpModalContent) return;
+
+        // モーダルを表示
+        this.helpModal.style.display = 'flex';
+        // Phaserの入力を無効化
+        this.game.input.enabled = false;
+
+        try {
+            // manual.htmlの内容をフェッチ
+            const response = await fetch('manual.html');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const htmlContent = await response.text();
+            // 取得したHTMLをコンテンツエリアに挿入
+            this.helpModalContent.innerHTML = htmlContent;
+        } catch (error) {
+            this.helpModalContent.innerHTML = `<p style="color: red;">Error loading help content: ${error.message}</p>`;
+            console.error('Failed to fetch help manual:', error);
+        }
+    }
+
+    // ★★★ 新規メソッド：ヘルプモーダルを閉じる ★★★
+    closeHelpModal() {
+        if (!this.helpModal) return;
+        this.helpModal.style.display = 'none';
+        this.game.input.enabled = true;
+    }
+
 }
