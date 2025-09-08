@@ -83,42 +83,48 @@ export default class BaseGameScene extends Phaser.Scene {
         return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
     }
 
-    /**
-     * 単体のゲームオブジェクトにレイアウトデータからプロパティを適用する。
-     * @param {Phaser.GameObjects.GameObject} gameObject - プロパティを適用する対象。
-     * @param {object} layout - 適用するプロパティが記述されたレイアウトデータ。
+      /**
+     * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終完成版)
+     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+     * ★★★ これが、最後の完成版です ★★★
+     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
      */
     applyProperties(gameObject, layout) {
-        // --- 1. 基本プロパティ ---
-        gameObject.name = layout.name || 'untitled_object';
-        if (layout.texture) gameObject.setTexture(layout.texture);
-        if (layout.group) gameObject.setData('group', layout.group);
+        const data = layout || {};
 
-        // --- 2. シーンへの追加 (これ以降の処理はオブジェクトがシーンに存在することが前提) ---
-        this.add.existing(gameObject);
+        // --- 1. 基本プロパティ ---
+        gameObject.name = data.name || 'untitled';
+        if (data.group) gameObject.setData('group', data.group);
+        if (data.texture) gameObject.setTexture(data.texture);
         
-        // --- 3. 物理ボディの適用 (Matter.js) ---
-        if (layout.physics) {
-            const phys = layout.physics;
-            // ボディの形状データをGameObjectに保存しておく（エディタでの再表示に利用）
+        // --- 2. 物理ボディの生成 ---
+        if (data.physics) {
+            const phys = data.physics;
+            
+            // 形状の情報をGameObjectに先にデータとして保存
             gameObject.setData('shape', phys.shape || 'rectangle');
 
+            // ★ Matter.jsのAPIでGameObjectを物理世界に追加
+            // ★ ignoreGravityとgravityScaleをJSONから読み込む
             this.matter.add.gameObject(gameObject, {
                 isStatic: phys.isStatic || false,
-                // ★★★ gravityScaleを直接読み込む ★★★
-                // JSONにgravityScaleがなければ、デフォルトの1を使う
+                ignoreGravity: phys.ignoreGravity || false,
                 gravityScale: { x: 0, y: phys.gravityScale !== undefined ? phys.gravityScale : 1 },
                 friction: phys.friction !== undefined ? phys.friction : 0.1,
                 restitution: phys.restitution !== undefined ? phys.restitution : 0,
             });
             
-            // JSONで定義された形状を適用
+            // 形状に応じて、当たり判定を再設定
             if (phys.shape === 'circle') {
                 const radius = (gameObject.width + gameObject.height) / 4;
                 gameObject.setCircle(radius);
+            } else {
+                gameObject.setRectangle(); 
             }
-            // 'rectangle'はデフォルトなので特別な処理は不要
         }
+        
+        // --- 3. シーンへの追加 ---
+        this.add.existing(gameObject);
 
         // --- 4. Transformプロパティ (物理ボディ設定後に適用するのが安全) ---
         gameObject.setPosition(layout.x || 0, layout.y || 0);

@@ -406,7 +406,7 @@ createAddBodyButton() {
 
 
   /**
-     * Matter.js用のプロパティUIを生成する (最終完成版)
+     * Matter.js用のプロパティUIを生成する (安全な再生成モデル・最終完成版)
      */
     createMatterPropertiesUI(gameObject) {
         const body = gameObject.body;
@@ -421,30 +421,24 @@ createAddBodyButton() {
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         // --- 重力無視 (Ignore Gravity) ---
-        // body.ignoreGravity は true/false ではなく、gravityScaleで制御するのが確実
-        // 現在の重力スケールが0かどうかで判断
-        const isGravityIgnored = (body.gravityScale.y === 0);
-        this.createCheckbox(this.editorPropsContainer, '重力無視', isGravityIgnored, (isChecked) => {
-            // isCheckedがtrueなら重力スケールを0に、falseなら1に戻す
-            const newGravityScale = isChecked ? 0 : 1;
-            // ★ Matter.jsの本体に直接命令する！
-            Phaser.Physics.Matter.Matter.Body.scale(body, 1, newGravityScale / body.gravityScale.y);
-            body.gravityScale.y = newGravityScale;
-            
-            // UIを再描画して、スライダーの値を更新
-            this.updatePropertyPanel();
+         // ★★★ 重力プロパティの変更は、全て「安全な再生成」ラッパー経由で行う ★★★
+        this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
+            this.recreateBodyWithOptions({ ignoreGravity: isChecked });
         });
-        
-        // --- 重力スケール (Gravity Scale) ---
-        this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
-            // ★ Matter.jsの本体に直接命令する！
-            // 現在のスケールを、新しいスケールに「スケールアップ/ダウン」させる
-            // (body.gravityScale.yが0の時は計算できないので、安全策を入れる)
-            const currentScale = (body.gravityScale.y === 0) ? 0.0001 : body.gravityScale.y;
-            Phaser.Physics.Matter.Matter.Body.scale(body, 1, value / currentScale);
-            // プロパティを直接更新
-            body.gravityScale.y = value;
+
+        if (!body.ignoreGravity) {
+            this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
+                this.recreateBodyWithOptions({ gravityScale: { x:0, y: value } });
+            });
+        }
+        // ... Friction, Bounceも同様にラッパー経由にする ...
+        this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
+             this.recreateBodyWithOptions({ friction: value });
         });
+        this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
+             this.recreateBodyWithOptions({ restitution: value });
+        });
+    
 
         
         const currentShape = gameObject.getData('shape') || 'rectangle';
@@ -466,7 +460,46 @@ createAddBodyButton() {
             gameObject.setBounce(value);
         });
     }
+ /**
+     * ★★★ 新規ヘルパーメソッド：ボディを安全に再生成する ★★★
+     * @param {object} newOptions - 変更したいプロパティだけを含むオブジェクト
+     */
+    recreateBodyWithOptions(newOptions) {
+        if (!this.selectedObject || !this.selectedObject.body) return;
+        
+        const gameObject = this.selectedObject;
+        const oldBody = gameObject.body;
 
+        // --- 1. 現在のボディから、全ての関連プロパティを抽出 ---
+        const currentOptions = {
+            isStatic: oldBody.isStatic,
+            ignoreGravity: oldBody.ignoreGravity,
+            gravityScale: { ...oldBody.gravityScale },
+            friction: oldBody.friction,
+            restitution: oldBody.restitution,
+            // ... 他にも維持したいプロパティがあればここに追加
+        };
+
+        // --- 2. 新しいオプションで、現在のプロパティを上書き ---
+        const finalOptions = { ...currentOptions, ...newOptions };
+
+        // --- 3. ボディを再生成 ---
+        gameObject.scene.matter.world.remove(oldBody);
+        gameObject.scene.matter.add.gameObject(gameObject, finalOptions);
+
+        // --- 4. 形状を復元 ---
+        const shape = gameObject.getData('shape') || 'rectangle';
+        if (shape === 'circle') {
+            const radius = (gameObject.width + gameObject.height) / 4;
+            gameObject.setCircle(radius);
+        } else {
+            gameObject.setRectangle();
+        }
+
+        // --- 5. UIを更新 ---
+        // setTimeoutで、物理エンジンが更新されるのを待ってからUIを描画
+        setTimeout(() => this.updatePropertyPanel(), 0);
+    }
     createAnimationSection() {
         const title = document.createElement('h4');
         title.innerText = 'スプライトシート';
@@ -637,13 +670,15 @@ createAddBodyButton() {
             }
         });
 
-        gameObject.on('drag', (pointer, dragX, dragY) => {
-            if (this.editorUI && this.editorUI.currentMode === 'select') {
-                gameObject.x = Math.round(dragX);
-                gameObject.y = Math.round(dragY);
-                if (this.selectedObject === gameObject) {
-                    this.updatePropertyPanel();
+       gameObject.on('drag', (pointer, dragX, dragY) => {
+            if (this.editorUI?.currentMode === 'select') {
+                // ★ setPositionは物理エンジンに影響を与えない
+                gameObject.setPosition(dragX, dragY);
+                // ★ ドラッグ中は物理ボディの位置も強制的に合わせる
+                if (gameObject.body) {
+                    Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
                 }
+                if (this.selectedObject === gameObject) this.updatePropertyPanel();
             }
         });
         
@@ -711,12 +746,14 @@ createAddBodyButton() {
                 if (components && components.length > 0) objData.components = components;
 
                 // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
-                 if (gameObject.body) {
+                    // --- 物理ボディのプロパティ ---
+                if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
-                        // ★★★ ignoreGravityは不要。gravityScaleで全てを表現する ★★★
-                        gravityScale: body.gravityScale.y,
+                        // ★★★ ignoreGravityとgravityScaleの両方を書き出す ★★★
+                        ignoreGravity: body.ignoreGravity,
+                        gravityScale: body.gravityScale.y, // y軸だけで十分
                         shape: gameObject.getData('shape') || 'rectangle', 
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
