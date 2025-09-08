@@ -211,6 +211,67 @@ createRemoveBodyButton() {
     this.editorPropsContainer.appendChild(removeButton);
 }
 
+
+/**
+ * ボディを「完全な再構築」によって安全に再生成、または削除する最終メソッド
+ * @param {object | null} changedPhysicsOption - 変更オプション。nullが渡された場合はボディを削除する。
+ */
+recreateBodyByReconstruction(changedPhysicsOption) {
+    const targetObject = this.selectedObject;
+    if (!targetObject || !targetObject.scene) return;
+
+    // --- 1. レイアウト情報を抽出 (物理以外) ---
+    const layout = {
+        name: targetObject.name,
+        type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+        texture: targetObject.texture.key,
+        x: targetObject.x,
+        y: targetObject.y,
+        depth: targetObject.depth,
+        scaleX: targetObject.scaleX,
+        scaleY: targetObject.scaleY,
+        angle: targetObject.angle,
+        alpha: targetObject.alpha,
+        group: targetObject.getData('group'),
+        animation_data: targetObject.getData('animation_data'),
+        events: targetObject.getData('events'),
+        components: targetObject.getData('components'),
+    };
+    
+    // --- 2. 物理情報を、安全なプロパティだけを抽出して作成 ---
+    if (changedPhysicsOption !== null) {
+        const currentBody = targetObject.body;
+        // ★★★ 必要なプロパティだけを明示的にコピーする ★★★
+        const basePhysics = currentBody ? {
+            isStatic: currentBody.isStatic,
+            ignoreGravity: currentBody.ignoreGravity,
+            gravityScale: currentBody.gravityScale,
+            friction: currentBody.friction,
+            restitution: currentBody.restitution,
+            shape: targetObject.getData('shape') || 'rectangle'
+        } : {}; // ボディがなければ空オブジェクトから始める
+
+        // 抽出した安全な情報に、今回の変更をマージ
+        layout.physics = { ...basePhysics, ...changedPhysicsOption };
+    }
+    // changedPhysicsOptionがnullなら、layout.physicsはundefinedのまま = ボディなし
+
+    // --- 3. 再構築プロセス ---
+    const scene = targetObject.scene;
+    const sceneKey = scene.scene.key;
+    if (this.editableObjects.has(sceneKey)) {
+        this.editableObjects.get(sceneKey).delete(targetObject);
+    }
+    targetObject.destroy();
+    const newGameObject = scene.createObjectFromLayout(layout);
+    scene.applyProperties(newGameObject, layout);
+    this.selectedObject = newGameObject;
+    
+    // --- 4. UIを更新 ---
+    this.updatePropertyPanel();
+}
+    // --- `updatePropertyPanel`から呼び出されるUI生成ヘルパーメソッド群 ---
+
     createNameInput() {
         const row = document.createElement('div');
         const label = document.createElement('label');
@@ -404,43 +465,6 @@ createMatterPropertiesUI(gameObject) {
     });
 }
 
-/**
- * ボディを「完全な再構築」によって安全に再生成する最終メソッド
- * @param {object} changedPhysicsOption - 変更オプション
- */
-recreateBodyByReconstruction(changedPhysicsOption = {}) {
-    const targetObject = this.selectedObject;
-    if (!targetObject || !targetObject.scene) return;
-
-    // --- 1. レイアウト情報を抽出 (物理以外) ---
-    const layout = { /* ... (前回のコードと全く同じ) ... */ };
-    
-    // --- 2. 物理情報を、安全なプロパティだけを抽出して作成 ---
-    const currentBody = targetObject.body;
-    const basePhysics = currentBody ? {
-        isStatic: currentBody.isStatic,
-        ignoreGravity: currentBody.ignoreGravity,
-        gravityScale: currentBody.gravityScale,
-        friction: currentBody.friction,
-        restitution: currentBody.restitution,
-        shape: targetObject.getData('shape') || 'rectangle'
-    } : {};
-    layout.physics = { ...basePhysics, ...changedPhysicsOption };
-    
-    // --- 3. 再構築プロセス ---
-    const scene = targetObject.scene;
-    const sceneKey = scene.scene.key;
-    if (this.editableObjects.has(sceneKey)) {
-        this.editableObjects.get(sceneKey).delete(targetObject);
-    }
-    targetObject.destroy();
-    const newGameObject = scene.createObjectFromLayout(layout);
-    scene.applyProperties(newGameObject, layout);
-    this.selectedObject = newGameObject;
-    
-    // --- 4. UIを更新 ---
-    this.updatePropertyPanel();
-}
     createAnimationSection() {
         const title = document.createElement('h4');
         title.innerText = 'スプライトシート';
