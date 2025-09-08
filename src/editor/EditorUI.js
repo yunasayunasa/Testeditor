@@ -274,11 +274,14 @@ if (this.modeToggle && this.modeLabel) {
     // ★★★ 新規メソッド：ヘルプモーダルを開く ★★★
     async openHelpModal() {
         if (!this.helpModal || !this.helpModalContent) return;
-
+  // ★★★ bodyにクラスを追加 ★★★
+        document.body.classList.add('modal-open');
+        // ★★★ オーバーレイ自身にもクラスを追加 ★★★
+        this.helpModal.classList.add('is-active');
         // モーダルを表示
         this.helpModal.style.display = 'flex';
         // Phaserの入力を無効化
-        this.game.input.enabled = false;
+     
 
         try {
             // manual.htmlの内容をフェッチ
@@ -298,8 +301,12 @@ if (this.modeToggle && this.modeLabel) {
     // ★★★ 新規メソッド：ヘルプモーダルを閉じる ★★★
     closeHelpModal() {
         if (!this.helpModal) return;
+         // ★★★ bodyからクラスを削除 ★★★
+        document.body.classList.remove('modal-open');
+        // ★★★ オーバーレイ自身からもクラスを削除 ★★★
+        this.helpModal.classList.remove('is-active');
         this.helpModal.style.display = 'none';
-        this.game.input.enabled = true;
+      
     }
 
 }

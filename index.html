@@ -182,6 +182,22 @@
     border-radius: 4px;
     font-family: 'Courier New', Courier, monospace;
 }
+.editor-modal-overlay.is-active {
+    display: flex;
+}
+
+#game-container, #editor-ui-container {
+    /* ★ デフォルトの状態 */
+    pointer-events: auto;
+    transition: filter 0.3s; /* (任意) 見た目を滑らかに変化させる */
+}
+
+body.modal-open #game-container,
+body.modal-open #editor-ui-container {
+    /* ★ モーダルが開いている間 */
+    pointer-events: none; /* ★ これが魔法の一行。全てのクリックを無効化 */
+    filter: blur(2px);      /* (任意) 後ろをぼかして、モーダルを際立たせる */
+}
     </style>
 </head>
 <body>
