@@ -446,7 +446,7 @@ createMatterPropertiesUI(gameObject) {
     this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
         if (this.selectedObject && this.selectedObject.body) {
             // 公式API: Matter.Body.set() を使ってプロパティを直接変更
-             this.selectedObject.body.ignoreGravity = isChecked;
+             this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
             // UIを更新して、重力スケールスライダーの表示/非表示を切り替える
             this.updatePropertyPanel();
         }
