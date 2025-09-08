@@ -424,47 +424,81 @@ createAddBodyButton() {
     this.editorPropsContainer.appendChild(addButton);
 }
 
+  
+  
 /**
- * Matter.js用のプロパティUIを生成する (ハイブリッドモデル・最終完成版)
+ * Matter.js用のプロパティUIを生成する (Phaser公式API準拠・最終版)
  */
 createMatterPropertiesUI(gameObject) {
     const body = gameObject.body;
     
-    // --- 変更が「重い」プロパティ (再構築が必要) ---
+    // --- 静的ボディ ---
     this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
-        this.recreateBodyByReconstruction({ isStatic: isChecked });
+        if (this.selectedObject) {
+            // 公式API: .setStatic()
+            this.selectedObject.setStatic(isChecked);
+            // UIを更新して、他の部分の表示を正しくする
+            this.updatePropertyPanel(); 
+        }
     });
 
+    // --- 重力無視 ---
     this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
-        this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
+        if (this.selectedObject && this.selectedObject.body) {
+            // 公式API: Matter.Body.set() を使ってプロパティを直接変更
+            Phaser.Physics.Matter.Matter.Body.set(this.selectedObject.body, 'ignoreGravity', isChecked);
+            // UIを更新して、重力スケールスライダーの表示/非表示を切り替える
+            this.updatePropertyPanel();
+        }
     });
 
-    // --- 変更が「軽い」プロパティ (直接変更でOK) ---
+    // --- 重力スケール ---
     if (!body.ignoreGravity) {
         this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
             if (this.selectedObject && this.selectedObject.body) {
+                // gravityScaleは特殊なので、bodyに直接代入するのが公式な方法
                 this.selectedObject.body.gravityScale.y = value;
+                this.selectedObject.body.gravityScale.x = 0; // x軸は常に0に
             }
         });
     }
     
+    // --- 摩擦 & 反発 ---
     this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
-        if (this.selectedObject) this.selectedObject.setFriction(value);
+        if (this.selectedObject) {
+            // 公式API: .setFriction()
+            this.selectedObject.setFriction(value);
+        }
     });
-
     this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
-        if (this.selectedObject) this.selectedObject.setBounce(value);
+        if (this.selectedObject) {
+            // 公式API: .setBounce()
+            this.selectedObject.setBounce(value);
+        }
     });
 
+    // --- 形状 ---
     const currentShape = gameObject.getData('shape') || 'rectangle';
     this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
         if (this.selectedObject) {
             this.selectedObject.setData('shape', newShape);
-            this.recreateBodyByReconstruction({});
+            // 形状の変更は、ボディの再生成が必要
+            // ボディ削除→ボディ付与、という流れで実現する
+            if (this.selectedObject.body) {
+                const scene = this.selectedObject.scene;
+                scene.matter.world.remove(this.selectedObject.body);
+                scene.matter.add.gameObject(this.selectedObject); // デフォルトで再付与
+                // 新しい形状を適用
+                if (newShape === 'circle') this.selectedObject.setCircle();
+                else this.selectedObject.setRectangle();
+            }
+            this.updatePropertyPanel();
         }
     });
 }
 
+
+    
     createAnimationSection() {
         const title = document.createElement('h4');
         title.innerText = 'スプライトシート';
