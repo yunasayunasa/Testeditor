@@ -27,16 +27,42 @@ initSceneWithData() {
     // ▼▼▼【ここからが新しいコードです】▼▼▼
     // --- 物理エンジン更新前のイベントを捕捉する ---
     // このリスナーはシーンに一つだけあれば良い
-    this.matter.world.on('beforeupdate', (event) => {
-        // このシーンの全ての子オブジェクトをループ
-        for (const gameObject of this.children.list) {
-            // 物理ボディがあり、かつ 'ignoreGravity' のデータが true に設定されているか
-            if (gameObject.body && gameObject.getData('ignoreGravity') === true) {
-                // オブジェクトにかかっている重力を強制的にゼロにする
-                gameObject.body.force.y = 0;
-            }
+   
+// --- 物理エンジン更新前のイベントを捕捉する ---
+this.matter.world.on('beforeupdate', (event) => {
+    // このシーンの物理エンジンインスタンスを取得
+    const engine = this.matter.world.engine;
+    // ワールドの重力ベクトルを取得 (例: { x: 0, y: 1 })
+    const gravity = engine.gravity;
+
+    for (const gameObject of this.children.list) {
+        if (gameObject.body && gameObject.getData('ignoreGravity') === true) {
+            
+            // ▼▼▼【ここをより強力な方法に書き換える】▼▼▼
+
+            // 1. このボディにかかる重力加速度を計算する
+            //    (ボディの質量 * ワールドの重力)
+            const bodyGravity = {
+                x: gameObject.body.mass * gravity.x * gravity.scale,
+                y: gameObject.body.mass * gravity.y * gravity.scale
+            };
+
+            // 2. その重力を完全に打ち消す、真逆の力を計算する
+            const counterForce = {
+                x: -bodyGravity.x,
+                y: -bodyGravity.y
+            };
+
+            // 3. Matter.jsの公式APIを使って、この力をボディに適用する
+            Phaser.Physics.Matter.Matter.Body.applyForce(
+                gameObject.body,      // 対象のボディ
+                gameObject.body.position, // 力の中心点 (ボディの中心)
+                counterForce          // 適用する力ベクトル
+            );
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
-    });
+    }
+});
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     this.buildSceneFromLayout(layoutData);
