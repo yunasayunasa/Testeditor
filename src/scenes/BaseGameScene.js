@@ -14,16 +14,34 @@ export default class BaseGameScene extends Phaser.Scene {
         this.keyPressEvents = new Map();
     }
    
-    /**
-     * JSONデータに基づいてシーンの初期化を開始する。
-     * create()メソッドから呼び出されることを想定。
-     */
-    initSceneWithData() {
-        const sceneKey = this.scene.key;
-        console.log(`[${sceneKey}] Initializing with data-driven routine...`);
-        const layoutData = this.cache.json.get(sceneKey);
-        this.buildSceneFromLayout(layoutData);
-    }
+
+/**
+ * JSONデータに基づいてシーンの初期化を開始する。
+ * create()メソッドから呼び出されることを想定。
+ */
+initSceneWithData() {
+    const sceneKey = this.scene.key;
+    console.log(`[${sceneKey}] Initializing with data-driven routine...`);
+    const layoutData = this.cache.json.get(sceneKey);
+
+    // ▼▼▼【ここからが新しいコードです】▼▼▼
+    // --- 物理エンジン更新前のイベントを捕捉する ---
+    // このリスナーはシーンに一つだけあれば良い
+    this.matter.world.on('beforeupdate', (event) => {
+        // このシーンの全ての子オブジェクトをループ
+        for (const gameObject of this.children.list) {
+            // 物理ボディがあり、かつ 'ignoreGravity' のデータが true に設定されているか
+            if (gameObject.body && gameObject.getData('ignoreGravity') === true) {
+                // オブジェクトにかかっている重力を強制的にゼロにする
+                gameObject.body.force.y = 0;
+            }
+        }
+    });
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    this.buildSceneFromLayout(layoutData);
+}
+
     
     /**
      * レイアウトデータからシーンのオブジェクトを構築する。
@@ -99,38 +117,28 @@ export default class BaseGameScene extends Phaser.Scene {
         
      
 // --- 2. 物理ボディの生成 ---
-if (data.physics) {
-    const phys = data.physics;
-    gameObject.setData('shape', phys.shape || 'rectangle');
+ // --- 2. 物理ボディの生成 ---
+    if (data.physics) {
+        const phys = data.physics;
+        gameObject.setData('shape', phys.shape || 'rectangle');
 
-    // ▼▼▼【ここから全面的に書き換えます】▼▼▼
+        // ▼▼▼【ここも修正します】▼▼▼
+        // 物理ボディを生成する際は、もう ignoreGravity オプションに頼らない。
+        // 代わりに、gameObject のデータとして ignoreGravity の状態を保存する。
+        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
 
-    // Matter.jsに渡す最終的なオプションオブジェクトを定義
-    const bodyOptions = {
-        isStatic: phys.isStatic || false,
-        friction: phys.friction !== undefined ? phys.friction : 0.1,
-        restitution: phys.restitution !== undefined ? phys.restitution : 0,
-    };
-
-    // --- 重力に関する設定を明確に分岐 ---
-    if (phys.ignoreGravity === true) {
-        // 【Aルート】重力を無視する場合
-        // Matter.jsの ignoreGravity フラグを true にする
-        bodyOptions.ignoreGravity = true;
-
-    } else {
-        // 【Bルート】重力を適用する場合
-        // ignoreGravity フラグは設定せず（falseとして扱われる）、
-        // gravityScale を使って重力の大きさを制御する。
+        const bodyOptions = {
+            isStatic: phys.isStatic || false,
+            friction: phys.friction !== undefined ? phys.friction : 0.1,
+            restitution: phys.restitution !== undefined ? phys.restitution : 0,
+        };
+        
+        // gravityScaleは通常通り設定する
         const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
         bodyOptions.gravityScale = { x: 0, y: gravityY };
-    }
-    
-    // デバッグ用に最終的なオプションを確認
-    console.log(`%c[BaseGameScene] Final body options for '${data.name}':`, 'color: yellow;', bodyOptions);
-
-    // 最終的なオプションで、物理ボディを生成
-    this.matter.add.gameObject(gameObject, bodyOptions);
+        
+        this.matter.add.gameObject(gameObject, bodyOptions);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             
