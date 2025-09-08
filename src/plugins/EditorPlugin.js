@@ -424,44 +424,66 @@ createAddBodyButton() {
     this.editorPropsContainer.appendChild(addButton);
 }
 
-  
   /**
- * Matter.js用のプロパティUIを生成する (完成版)
+ * Matter.js用のプロパティUIを生成する (Phaser公式API準拠・最終完成版)
  */
 createMatterPropertiesUI(gameObject) {
     const body = gameObject.body;
     
-    // 全てのUI操作は、単一の「完全な再構築」メソッドを呼び出すように統一する
+    // --- 静的ボディ ---
     this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
-        this.recreateBodyByReconstruction({ isStatic: isChecked });
+        if (this.selectedObject) {
+            // 公式API: .setStatic() を呼び出すだけ。再構築は不要。
+            this.selectedObject.setStatic(isChecked);
+            // UIを更新して整合性を保つ
+            this.updatePropertyPanel(); 
+        }
     });
 
+    // --- 重力無視 ---
     this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
-        this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
+        if (this.selectedObject && this.selectedObject.body) {
+            // ボディのプロパティを直接変更するのが、Phaserの公式な方法。
+            this.selectedObject.body.ignoreGravity = isChecked;
+            // UIを更新して、重力スケールスライダーの表示/非表示を切り替える
+            this.updatePropertyPanel();
+        }
     });
 
+    // --- 重力スケール ---
+    // 重力が有効な場合のみスライダーを表示
     if (!body.ignoreGravity) {
         this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
-            this.recreateBodyByReconstruction({ gravityScale: { x: 0, y: value } });
+            if (this.selectedObject && this.selectedObject.body) {
+                // gravityScaleも、ボディのプロパティを直接変更する。
+                this.selectedObject.body.gravityScale.y = value;
+                this.selectedObject.body.gravityScale.x = 0; // x軸は常に0に
+            }
         });
     }
     
+    // --- 摩擦 & 反発 --- (これらも直接変更でOK)
     this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
-         this.recreateBodyByReconstruction({ friction: value });
+        if (this.selectedObject) {
+            this.selectedObject.setFriction(value);
+        }
     });
     this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
-         this.recreateBodyByReconstruction({ restitution: value });
+        if (this.selectedObject) {
+            this.selectedObject.setBounce(value);
+        }
     });
 
+    // --- 形状 --- (形状変更はボディの構造が変わるため、再構築が必要)
     const currentShape = gameObject.getData('shape') || 'rectangle';
     this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
         if (this.selectedObject) {
             this.selectedObject.setData('shape', newShape);
+            // 形状変更の時だけ、再構築メソッドを呼ぶ
             this.recreateBodyByReconstruction({});
         }
     });
 }
-
     
     createAnimationSection() {
         const title = document.createElement('h4');
