@@ -91,7 +91,7 @@ export default class BaseGameScene extends Phaser.Scene {
      */
     applyProperties(gameObject, layout) {
         const data = layout || {};
-
+   console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
         // --- 1. 基本プロパティ ---
         gameObject.name = data.name || 'untitled';
         if (data.group) gameObject.setData('group', data.group);

@@ -253,9 +253,10 @@ recreateBodyByReconstruction(changedPhysicsOption) {
 
         // 抽出した安全な情報に、今回の変更をマージ
         layout.physics = { ...basePhysics, ...changedPhysicsOption };
+        
     }
     // changedPhysicsOptionがnullなら、layout.physicsはundefinedのまま = ボディなし
-
+console.log('%c[EditorPlugin] Reconstructing with layout:', 'color: cyan;', layout);
     // --- 3. 再構築プロセス ---
     const scene = targetObject.scene;
     const sceneKey = scene.scene.key;
