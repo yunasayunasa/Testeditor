@@ -235,6 +235,36 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         }
     }
 
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 文字列の式を実行する (書き込み/代入を許可)
+     * [eval]タグなど、変数の状態を変更する目的で使用される。
+     * @param {string} exp - "f.score = f.score + 10" のような代入式
+     */
+    execute(exp) {
+        try {
+            // this.f と this.sf を、関数のスコープ内でアクセス可能にする
+            const f = this.f;
+            const sf = this.sf;
+            
+            // new Functionを使って、制御された環境で式を実行
+            // 'use strict'モードで、より安全に
+            new Function('f', 'sf', `'use strict'; ${exp};`)(f, sf);
+            
+            // ★（重要）式の実行後、変更された可能性のある変数を検知し、
+            // イベントを発行する必要がある。
+            // しかし、どの変数が変わったかを特定するのは非常に困難。
+            // ここでは、一旦fオブジェクト全体をチェックする簡易的な方法をとる。
+            // (より高度な実装では、Proxyを使うなどの方法がある)
+            
+            // 将来的な改善のため、今はコンソールにログを出すに留める
+            console.log(`[StateManager.execute] Executed: "${exp}". State may have changed.`);
+
+        } catch (e) {
+            console.error(`[StateManager.execute] 式の実行中にエラーが発生しました: "${exp}"`, e);
+        }
+    }
+    
 
     // システム変数のセーブ/ロード、履歴の追加 (変更なし)
     saveSystemVariables() {
