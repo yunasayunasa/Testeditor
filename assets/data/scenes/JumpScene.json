@@ -2,138 +2,137 @@
   "objects": [
     {
       "name": "walk_2",
+      "type": "Sprite",
+      "texture": "walk",
       "x": 781,
-      "y": 254,
+      "y": 1068,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "width": 102,
-      "height": 115,
       "group": "player",
-      "type": "Sprite",
-      "texture": "walk",
-      "physics": {
-        "isStatic": false,
-        "width": 102,
-        "height": 115,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": true,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": [],
       "components": [
         {
           "type": "PlayerController",
           "params": {}
         }
-      ]
+      ],
+      "physics": {
+        "isStatic": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 0.1,
+        "restitution": 0
+      }
     },
     {
       "name": "next_arrow_1",
-      "x": 462,
-      "y": 519,
+      "type": "Image",
+      "texture": "next_arrow",
+      "x": 399,
+      "y": 1395,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 0,
+      "angle": -90,
       "alpha": 1,
-      "width": 90,
-      "height": 62,
       "group": "floor",
-      "texture": "next_arrow",
-      "physics": {
-        "isStatic": false,
-        "width": 90,
-        "height": 62,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
       "events": [
         {
           "trigger": "onCollide_Start",
           "actions": "[destroy]",
           "targetGroup": "player"
         }
-      ]
+      ],
+      "physics": {
+        "isStatic": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 0.1,
+        "restitution": 0
+      }
     },
     {
       "name": "next_arrow_2",
-      "x": 1086,
-      "y": 514,
+      "type": "Image",
+      "texture": "next_arrow",
+      "x": 1098,
+      "y": 1094,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "width": 90,
-      "height": 62,
       "group": "floor",
-      "texture": "next_arrow",
-      "physics": {
-        "isStatic": false,
-        "width": 90,
-        "height": 62,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
       "events": [
         {
           "trigger": "onCollide_Start",
           "actions": "[destroy]",
           "targetGroup": "player"
         }
-      ]
+      ],
+      "physics": {
+        "isStatic": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 0.1,
+        "restitution": 0
+      }
     },
     {
       "name": "cg01_1",
-      "x": 799,
-      "y": 774,
+      "type": "Image",
+      "texture": "cg01",
+      "x": 800,
+      "y": 1283,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "width": 600,
-      "height": 315,
-         "group": "floor",
-      "texture": "cg01",
+      "group": "floor",
       "physics": {
-        "isStatic": true,
-        "width": 600,
-        "height": 315,
-        "offsetX": 0,
-        "offsetY": 0,
-        "allowGravity": false,
-        "bounceX": 0,
-        "bounceY": 0,
-        "collideWorldBounds": true
-      },
-      "events": []
+        "isStatic": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 0.1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "next_arrow_1",
+      "type": "Image",
+      "texture": "next_arrow",
+      "x": 1386,
+      "y": 1396,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "physics": {
+        "isStatic": false,
+        "ignoreGravity": true,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 0.41,
+        "restitution": 0.24
+      }
     }
   ],
   "animations": [
     {
       "key": "歩き",
       "texture": "walk",
-      "frames": [
-        1,
-        2,
-        3,
-        4
-      ],
+      "frames": {
+        "start": 0,
+        "end": 4
+      },
       "frameRate": 10,
       "repeat": -1
     }
