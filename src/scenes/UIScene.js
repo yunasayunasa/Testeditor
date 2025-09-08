@@ -102,71 +102,60 @@ export default class UIScene extends Phaser.Scene {
      * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
      * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
      */
-    registerUiElement(name, element, params) {
-        element.name = name;
-        this.add.existing(element);
-        this.uiElements.set(name, element);
+   
+/**
+ * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
+ * これまでの registerUiElement を、このメソッドで完全に置き換えてください。
+ */
+registerUiElement(name, element, params) {
+    element.name = name;
+    this.add.existing(element);
+    this.uiElements.set(name, element);
 
-        if (params.x !== undefined) element.x = params.x;
-        if (params.y !== undefined) element.y = params.y;
-        if (params.depth !== undefined) element.setDepth(params.depth);
-        if (params.group) element.setData('group', params.group);
+    if (params.x !== undefined) element.x = params.x;
+    if (params.y !== undefined) element.y = params.y;
+    if (params.depth !== undefined) element.setDepth(params.depth);
+    if (params.group) element.setData('group', params.group);
 
-        // --- ここからが究極の解決策 ---
-        
-        // 当たり判定用の図形を定義する
-        let hitArea = null;
-        let hitAreaCallback = null;
+    // --- 当たり判定 (Hit Area) の設定 ---
+    let hitArea = null;
+    let hitAreaCallback = null;
 
-        if (params.width && params.height) {
-            // Case 1: JSON or params に width/height がある場合
-            // これが当たり判定のサイズになる
-            element.setSize(params.width, params.height);
-            hitArea = new Phaser.Geom.Rectangle(0, 0, params.width, params.height);
-            // Containerの場合、当たり判定の中心を左上に合わせる必要がある
-            hitArea.centerX = params.width / 2;
-            hitArea.centerY = params.height / 2;
-            hitAreaCallback = Phaser.Geom.Rectangle.Contains;
-            
-        } else if (element.width > 0 && element.height > 0) {
-            // Case 2: コンポーネント自身がサイズを持つ場合 (Text, Imageなど)
-            // 自身のサイズを当たり判定として使う
-            // setSizeは不要
-            hitArea = new Phaser.Geom.Rectangle(0, 0, element.width, element.height);
-            hitArea.centerX = element.width / 2;
-            hitArea.centerY = element.height / 2;
-            hitAreaCallback = Phaser.Geom.Rectangle.Contains;
+    // UI要素の当たり判定サイズを決定する
+    // 優先順位: 1. params -> 2. element自身のサイズ -> 3. デフォルトサイズ
+    const width = params.width || (element.width > 1 ? element.width : 200);
+    const height = params.height || (element.height > 1 ? element.height : 100);
+    
+    // 当たり判定の領域と形状を設定
+    element.setSize(width, height);
+    hitArea = new Phaser.Geom.Rectangle(0, 0, width, height);
+    // Containerの場合、当たり判定の中心を左上に合わせる
+    hitArea.centerX = width / 2;
+    hitArea.centerY = height / 2;
+    hitAreaCallback = Phaser.Geom.Rectangle.Contains;
 
-        } else if (element instanceof Phaser.GameObjects.Container) {
-            // Case 3: サイズのないコンテナの場合 (HpBar, MessageWindowなど)
-            // ★ デフォルトの当たり判定を与える！ ★
-            const defaultWidth = 200; // デフォルトの編集用サイズ
-            const defaultHeight = 100;
-            
-            // ★ setSizeで当たり判定のサイズだけを設定する
-            element.setSize(defaultWidth, defaultHeight);
+    // --- インタラクティブ化とエディタ登録 ---
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    
+    // 1. まず、当たり判定を引数にして setInteractive を呼び出す
+    element.setInteractive(hitArea, hitAreaCallback);
 
-            hitArea = new Phaser.Geom.Rectangle(0, 0, defaultWidth, defaultHeight);
-            hitArea.centerX = defaultWidth / 2;
-            hitArea.centerY = defaultHeight / 2;
-            hitAreaCallback = Phaser.Geom.Rectangle.Contains;
-            
-            // ★（任意）デバッグ用に、当たり判定を可視化する
-            // const debugRect = this.add.graphics().lineStyle(1, 0x00ff00).strokeRectShape(hitArea);
-            // element.add(debugRect); // コンテナに追加することで、追従する
-        }
+    // 2. 次に、Phaserの入力システムにドラッグ可能であることを伝える
+    this.input.setDraggable(element);
 
-        // ★ 当たり判定が定義できた場合のみ、インタラクティブにする
-        if (hitArea) {
-            element.setInteractive(hitArea, hitAreaCallback);
-        }
-
-        // --- EditorPluginへの登録は変更なし ---
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(element, this);
-        }
+    // 3. 最後に、完全に操作可能になったオブジェクトをエディタプラグインに登録する
+    const editor = this.plugins.get('EditorPlugin');
+    if (editor && editor.isEnabled) {
+        editor.makeEditable(element, this);
     }
+    
+    // (任意) デバッグ用に当たり判定を可視化する
+    // const debugRect = this.add.graphics().lineStyle(2, 0x00ff00).strokeRect(0, 0, width, height);
+    // if (element instanceof Phaser.GameObjects.Container) {
+    //     element.add(debugRect);
+    // }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
     onSceneTransition(newSceneKey) {
         const visibleGroups = sceneUiVisibility[newSceneKey] || [];
         for (const [name, uiElement] of this.uiElements.entries()) {
