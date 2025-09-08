@@ -195,58 +195,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
     }
 
+/**
+ * ボディ削除ボタン (一番シンプルだったバージョン)
+ */
 createRemoveBodyButton() {
     const removeButton = document.createElement('button');
     removeButton.innerText = '物理ボディ 削除';
     removeButton.style.backgroundColor = '#e65151';
+    
     const targetObject = this.selectedObject;
 
     removeButton.onclick = () => {
-        if (!targetObject || !targetObject.scene) return;
-
-        // 1. 古いオブジェクトから、再生成に必要な情報を全て抽出する
-        const layout = {
-            name: targetObject.name,
-            type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
-            texture: targetObject.texture.key,
-            x: targetObject.x,
-            y: targetObject.y,
-            depth: targetObject.depth,
-            scaleX: targetObject.scaleX,
-            scaleY: targetObject.scaleY,
-            angle: targetObject.angle,
-            alpha: targetObject.alpha,
-            group: targetObject.getData('group'),
-            animation_data: targetObject.getData('animation_data'),
-            events: targetObject.getData('events'),
-            components: targetObject.getData('components'),
-            // ★★★ 物理ボディの情報は意図的に含めない ★★★
-        };
-        
-        const scene = targetObject.scene;
-        const sceneKey = scene.scene.key;
-
-        // 2. 編集リストから古いオブジェクトの参照を削除
-        if (this.editableObjects.has(sceneKey)) {
-            this.editableObjects.get(sceneKey).delete(targetObject);
+        if (targetObject && targetObject.body && targetObject.scene) {
+            targetObject.scene.matter.world.remove(targetObject.body);
+            targetObject.body = null;
+            this.updatePropertyPanel();
         }
-
-        // 3. 古いオブジェクトをシーンから完全に破壊する
-        targetObject.destroy();
-
-        // 4. シーンのメソッドを使って、新しいオブジェクトを生成
-        const newGameObject = scene.createObjectFromLayout(layout);
-        
-        // 5. 新しいオブジェクトに、抽出したプロパティを適用
-        scene.applyProperties(newGameObject, layout);
-        
-        // 6. 新しいオブジェクトを、新しい選択対象として設定
-        this.selectedObject = newGameObject;
-
-        // 7. UIを更新
-        this.updatePropertyPanel();
     };
-
     this.editorPropsContainer.appendChild(removeButton);
 }
     // --- `updatePropertyPanel`から呼び出されるUI生成ヘルパーメソッド群 ---
@@ -404,115 +369,78 @@ createAddBodyButton() {
 }
 
   
-    /**
-     * Matter.js用のプロパティUIを生成する (完全な再構築モデル)
-     */
-    createMatterPropertiesUI(gameObject) {
-        const body = gameObject.body;
-        
-        this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
-            this.recreateBodyByReconstruction({ isStatic: isChecked });
-        });
-
-        this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
-            this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
-        });
-
-        if (!body.ignoreGravity) {
-            this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
-                this.recreateBodyByReconstruction({ gravityScale: { x: 0, y: value } });
-            });
+  
+/**
+ * Matter.js用のプロパティUIを生成する (Phaser公式API準拠・最終版)
+ */
+createMatterPropertiesUI(gameObject) {
+    const body = gameObject.body;
+    
+    // --- 静的ボディ ---
+    this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
+        if (this.selectedObject) {
+            // 公式API: .setStatic()
+            this.selectedObject.setStatic(isChecked);
+            // UIを更新して、他の部分の表示を正しくする
+            this.updatePropertyPanel(); 
         }
-        
-        this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
-             this.recreateBodyByReconstruction({ friction: value });
-        });
-        this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
-             this.recreateBodyByReconstruction({ restitution: value });
-        });
+    });
 
-        const currentShape = gameObject.getData('shape') || 'rectangle';
-        this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
-            if (this.selectedObject) {
-                this.selectedObject.setData('shape', newShape);
-                this.recreateBodyByReconstruction({}); // 形状データはsetDataで渡す
+    // --- 重力無視 ---
+    this.createCheckbox(this.editorPropsContainer, '重力無視', body.ignoreGravity, (isChecked) => {
+        if (this.selectedObject && this.selectedObject.body) {
+            // 公式API: Matter.Body.set() を使ってプロパティを直接変更
+            Phaser.Physics.Matter.Matter.Body.set(this.selectedObject.body, 'ignoreGravity', isChecked);
+            // UIを更新して、重力スケールスライダーの表示/非表示を切り替える
+            this.updatePropertyPanel();
+        }
+    });
+
+    // --- 重力スケール ---
+    if (!body.ignoreGravity) {
+        this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
+            if (this.selectedObject && this.selectedObject.body) {
+                // gravityScaleは特殊なので、bodyに直接代入するのが公式な方法
+                this.selectedObject.body.gravityScale.y = value;
+                this.selectedObject.body.gravityScale.x = 0; // x軸は常に0に
             }
         });
     }
-
-    /**
-     * ★★★ 新メソッド：ボディ削除と同じ「完全な再構築」でボディを再生成する ★★★
-     * @param {object} changedPhysicsOption - 変更された単一の物理オプション
-     */
     
-/**
- * ボディを、現在のUIの状態を完全に反映させて再構築する最終メソッド
- * @param {object} changedOption - 今回トリガーとなった変更オプション
- */
-recreateBodyByReconstruction(changedOption) {
-    const targetObject = this.selectedObject;
-    if (!targetObject || !targetObject.scene) return;
+    // --- 摩擦 & 反発 ---
+    this.createRangeInput(this.editorPropsContainer, '摩擦', body.friction, 0, 1, 0.01, (value) => {
+        if (this.selectedObject) {
+            // 公式API: .setFriction()
+            this.selectedObject.setFriction(value);
+        }
+    });
+    this.createRangeInput(this.editorPropsContainer, '反発', body.restitution, 0, 1, 0.01, (value) => {
+        if (this.selectedObject) {
+            // 公式API: .setBounce()
+            this.selectedObject.setBounce(value);
+        }
+    });
 
-    // --- 1. レイアウト情報を抽出 (物理以外) ---
-    const layout = {
-        name: targetObject.name,
-        type: (targetObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
-        texture: targetObject.texture.key,
-        x: targetObject.x,
-        y: targetObject.y,
-        depth: targetObject.depth,
-        scaleX: targetObject.scaleX,
-        scaleY: targetObject.scaleY,
-        angle: targetObject.angle,
-        alpha: targetObject.alpha,
-        group: targetObject.getData('group'),
-        animation_data: targetObject.getData('animation_data'),
-        events: targetObject.getData('events'),
-        components: targetObject.getData('components'),
-    };
-
-    // --- 2. 物理情報を「現在のUIの状態」から完全に新規作成する ---
-    const panel = this.editorPropsContainer;
-    let physicsOptions = {}; // 空のオブジェクトから始める
-
-    try {
-        // UI要素から直接値を取得する。存在しない場合はエラーにならずundefinedになる
-        const isStaticCheckbox = panel.querySelector('#prop-isStatic');
-        const ignoreGravityCheckbox = panel.querySelector('#prop-ignoreGravity');
-        const gravityScaleSlider = panel.querySelector('#prop-gravityScale');
-        const frictionSlider = panel.querySelector('#prop-friction');
-        const restitutionSlider = panel.querySelector('#prop-restitution');
-        
-        // 存在すれば、その値を採用する
-        if (isStaticCheckbox) physicsOptions.isStatic = isStaticCheckbox.checked;
-        if (ignoreGravityCheckbox) physicsOptions.ignoreGravity = ignoreGravityCheckbox.checked;
-        if (gravityScaleSlider) physicsOptions.gravityScale = { x: 0, y: parseFloat(gravityScaleSlider.value) };
-        if (frictionSlider) physicsOptions.friction = parseFloat(frictionSlider.value);
-        if (restitutionSlider) physicsOptions.restitution = parseFloat(restitutionSlider.value);
-        
-        // 今回の変更を、最終的なオプションとして上書きする
-        Object.assign(physicsOptions, changedOption);
-
-        // 作成した物理オプションをレイアウトに追加
-        layout.physics = physicsOptions;
-        
-    } catch (e) {
-        console.error("Failed to build physics options from UI. Aborting reconstruction.", e);
-        return;
-    }
-
-    // --- 3. 再構築プロセス (これは以前と同じ) ---
-    const scene = targetObject.scene;
-    const sceneKey = scene.scene.key;
-    if (this.editableObjects.has(sceneKey)) {
-        this.editableObjects.get(sceneKey).delete(targetObject);
-    }
-    targetObject.destroy();
-    const newGameObject = scene.createObjectFromLayout(layout);
-    scene.applyProperties(newGameObject, layout);
-    this.selectedObject = newGameObject;
-    this.updatePropertyPanel();
+    // --- 形状 ---
+    const currentShape = gameObject.getData('shape') || 'rectangle';
+    this.createSelect(this.editorPropsContainer, '形状', currentShape, ['rectangle', 'circle'], (newShape) => {
+        if (this.selectedObject) {
+            this.selectedObject.setData('shape', newShape);
+            // 形状の変更は、ボディの再生成が必要
+            // ボディ削除→ボディ付与、という流れで実現する
+            if (this.selectedObject.body) {
+                const scene = this.selectedObject.scene;
+                scene.matter.world.remove(this.selectedObject.body);
+                scene.matter.add.gameObject(this.selectedObject); // デフォルトで再付与
+                // 新しい形状を適用
+                if (newShape === 'circle') this.selectedObject.setCircle();
+                else this.selectedObject.setRectangle();
+            }
+            this.updatePropertyPanel();
+        }
+    });
 }
+
 
     
     createAnimationSection() {
