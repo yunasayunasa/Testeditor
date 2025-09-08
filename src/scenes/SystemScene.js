@@ -88,35 +88,52 @@ export default class SystemScene extends Phaser.Scene {
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
-      _startInitialGame(initialData) {
-        this.globalCharaDefs = initialData.charaDefs;
-        console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
 
-        // ★★★ 2. 常にシーンを追加するロジックに修正（より安全） ★★★
-        // main.jsで登録されていないので、ここで必ず追加する
-        if (!this.scene.get('UIScene')) { // getで存在確認する方がより確実
-            this.scene.add('UIScene', UIScene, false);
-            console.log("[SystemScene] UISceneを動的に追加しました。");
+_startInitialGame(initialData) {
+    this.globalCharaDefs = initialData.charaDefs;
+    console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
+
+    // ▼▼▼【ここからが修正箇所です】▼▼▼
+
+    // --- UIScene専用の設定オブジェクトを定義 ---
+    const uiSceneConfig = {
+        physics: {
+            matter: {
+                enable: false // UISceneではMatter.jsを無効化する
+            }
         }
-        if (!this.scene.get('GameScene')) {
-            this.scene.add('GameScene', GameScene, false);
-            console.log("[SystemScene] GameSceneを動的に追加しました。");
-        }
+    };
 
-        const uiScene = this.scene.get('UIScene');
-
-        uiScene.events.once('scene-ready', () => {
-            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-            
-            this._startAndMonitorScene('GameScene', {
-                charaDefs: this.globalCharaDefs,
-                startScenario: initialData.startScenario,
-            });
-        });
-
-        console.log("[SystemScene] Running UIScene now.");
-        this.scene.run('UIScene');
+    // main.jsで登録されていないので、ここで必ず追加する
+    if (!this.scene.get('UIScene')) {
+        // ★第4引数に、専用の設定オブジェクトを渡す★
+        this.scene.add('UIScene', UIScene, false, uiSceneConfig);
+        console.log("[SystemScene] UISceneを「物理演算無効」で動的に追加しました。");
     }
+
+    if (!this.scene.get('GameScene')) {
+        // GameSceneはデフォルトの物理設定(matter: enable=true)を使いたいので、
+        // 設定オブジェクトは渡さない（あるいは空の{}を渡す）
+        this.scene.add('GameScene', GameScene, false);
+        console.log("[SystemScene] GameSceneを動的に追加しました。");
+    }
+    
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    const uiScene = this.scene.get('UIScene');
+
+    uiScene.events.once('scene-ready', () => {
+        console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
+        
+        this._startAndMonitorScene('GameScene', {
+            charaDefs: this.globalCharaDefs,
+            startScenario: initialData.startScenario,
+        });
+    });
+
+    console.log("[SystemScene] Running UIScene now.");
+    this.scene.run('UIScene');
+}
 
 
 
