@@ -181,43 +181,62 @@ export default class BaseGameScene extends Phaser.Scene {
         }
     }
 
+ 
     /**
-     * シーンのセットアップ完了時に呼ばれる最終処理。
+     * シーンのセットアップが完了した最終段階で呼ばれる
      */
     finalizeSetup() {
-        // Matter.jsの衝突イベント監視
-        this.matter.world.on('collisionstart', (event, bodyA, bodyB) => {
-            if (bodyA.gameObject && bodyB.gameObject) {
-                this.handleCollision(bodyA.gameObject, bodyB.gameObject);
-                this.handleCollision(bodyB.gameObject, bodyA.gameObject);
+        // --- Matter.jsの衝突イベント監視を開始 ---
+        this.matter.world.on('collisionstart', (event) => {
+            // event.pairs には、このフレームで衝突を開始したペアが全て含まれる
+            for (const pair of event.pairs) {
+                const { bodyA, bodyB } = pair;
+                
+                // bodyからGameObjectを取得
+                const objA = bodyA.gameObject;
+                const objB = bodyB.gameObject;
+
+                if (objA && objB) {
+                    // 両方向の衝突をチェック
+                    // (AがBにぶつかったイベント、BがAにぶつかったイベント)
+                    this.handleCollision(objA, objB);
+                    this.handleCollision(objB, objA);
+                }
             }
         });
         
-        // 継承先シーンのカスタムセットアップ処理を実行
-        if (typeof this.onSetupComplete === 'function') {
+        // (オプション) onOverlapに対応させたい場合は、'collisionactive'も監視する
+        
+        console.log("[BaseGameScene] Matter.js collision listeners activated.");
+
+        // --- 従来の完了処理 ---
+        if (this.onSetupComplete) {
             this.onSetupComplete();
         }
-        
-        // SystemSceneに準備完了を通知
         this.events.emit('scene-ready');
-        console.log(`[${this.scene.key}] Setup complete. Scene is ready.`);
     }
 
     /**
-     * 衝突イベントを処理する。
-     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点オブジェクト。
-     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト。
+     * 衝突を処理するコアロジック
+     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点
+     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手
      */
     handleCollision(sourceObject, targetObject) {
-        const events = sourceObject.getData('events');
-        if (!events || !this.actionInterpreter) return;
+        // ActionInterpreterがなければ何もしない
+        if (!this.actionInterpreter) return;
 
-        events.forEach(eventData => {
+        const events = sourceObject.getData('events');
+        if (!events) return;
+
+        // sourceObjectに設定されたイベント定義をループ
+        for (const eventData of events) {
+            // トリガーが'onCollide_Start'で、かつ衝突相手のグループ名が一致するか
             if (eventData.trigger === 'onCollide_Start' && eventData.targetGroup === targetObject.getData('group')) {
-                console.log(`[Collision] '${sourceObject.name}' collided with '${targetObject.name}'. Running actions.`);
+                console.log(`[Collision] Event triggered: '${sourceObject.name}' collided with group '${eventData.targetGroup}'.`);
+                // 条件が一致したら、ActionInterpreterを実行
                 this.actionInterpreter.run(sourceObject, eventData.actions);
             }
-        });
+        }
     }
 
     /**
