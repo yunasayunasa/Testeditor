@@ -137,9 +137,9 @@ export default class JumpScene extends BaseGameScene {
         
         // --- 1. プレイヤーコントローラーの更新 ---
         // ★ joystickを渡すのをやめる。左右移動はしないからだ。
-        if (this.playerController) {
+    /*    if (this.playerController) {
             this.playerController.updateWithoutJoystick();
-        }
+        }*/
 
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         // ★★★ これが、新しい「流れる世界」の心臓部だ ★★★
