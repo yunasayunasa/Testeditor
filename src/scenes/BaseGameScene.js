@@ -396,7 +396,20 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         }
     }
+ update(time, delta) {
+        // --- SystemSceneから、現在の「時間」の状態を取得 ---
+        const systemScene = this.scene.get('SystemScene');
+        
+        // --- 時間が停止しているかどうかを確認 ---
+        if (systemScene && systemScene.isTimeStopped) {
+            // isTimeStopped が true なら、ここで処理を終了
+            return; 
+        }
 
+        // ★★★ 継承先のシーンに update メソッドがあれば、それを呼び出す ★★★
+        // ★★★ この 'super.update()' の仕組みを利用します ★★★
+        // ★★★ そのため、このメソッドは、まだ何もしません ★★★
+    }
     shutdown() {
         super.shutdown();
     }
