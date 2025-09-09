@@ -30,7 +30,8 @@ export default class SystemScene extends Phaser.Scene {
      */
     broadcastTimeScale() {
         const newTimeScale = this._isTimeStopped ? 0 : 1;
-        
+             // ★★★ ログ爆弾 No.5 ★★★
+        console.log(`%c[LOG BOMB 5] broadcastTimeScale: Broadcasting new timeScale: ${newTimeScale}`, 'color: red; font-size: 1.2em; font-weight: bold;');
         // 現在アクティブな全てのシーンをループ
         for (const scene of this.game.scene.getScenes(true)) {
             // そのシーンが matter.world を持っているか（物理シーンか）を確認

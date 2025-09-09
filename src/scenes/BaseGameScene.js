@@ -107,9 +107,8 @@ buildSceneFromLayout(layoutData) {
             }).filter(Boolean);
         }
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、全てを解決する、最後のバトンパスだ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        console.log(`%c[LOG BOMB 1] buildSceneFromLayout: About to call finalizeSetup with ${allGameObjects.length} objects.`, 'color: yellow; font-weight: bold;', allGameObjects);
+        
         // --- 2. finalizeSetupに、完成したリストを「引数」として渡す ---
         this.finalizeSetup(allGameObjects);
     }
@@ -311,13 +310,15 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * シーンのセットアップが完了した最終段階で呼ばれる
      */
       finalizeSetup(allGameObjects) { // ★★★ 3. 引数として、オブジェクトのリストを受け取る ★★★
-        
-        // --- 4. 受け取ったリストを使って、onReadyイベントを実行する ---
+    console.log(`%c[LOG BOMB 2] finalizeSetup: Received ${allGameObjects.length} objects. Starting onReady loop...`, 'color: yellow; font-weight: bold;', allGameObjects);
+
         for (const gameObject of allGameObjects) {
             const events = gameObject.getData('events');
             if (events) {
                 for (const eventData of events) {
                     if (eventData.trigger === 'onReady') {
+                        // ★★★ ログ爆弾 No.3 ★★★
+                        console.log(`%c[LOG BOMB 3] finalizeSetup: Found onReady event for '${gameObject.name}'. Running actions...`, 'color: yellow; font-weight: bold;', eventData.actions);
                         if (this.actionInterpreter) {
                             this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
                         }
