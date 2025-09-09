@@ -22,7 +22,7 @@ export default class JumpScene extends BaseGameScene {
         if (soundManager) soundManager.playBgm('bgm_action');
 
         const worldWidth = 3840;
-        const worldHeight = 720;
+        const worldHeight = 1440;
 
         // ★★★ ここからがMatter.jsへの対応です ★★★
         // 1. Matter.jsのAPIを使って、世界の境界を設定する
