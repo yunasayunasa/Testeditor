@@ -7,7 +7,7 @@ import { handleVelocity } from './velocity.js';
 import animStopHandler from './anim_stop.js';
 import animFrameHandler from './anim_frame.js';
 // (もし、handleAnimのインポート名がanimPlayHandlerなどになっていたら、それに合わせる)
-import animPlayHandler from './anim_play.js'; 
+import animPlayHandler from './anim.js'; 
 import evalExpressionHandler from './eval.js';
 
 // ActionInterpreterが使う、イベントタグのカタログ
@@ -16,7 +16,7 @@ export const eventTagHandlers = {
     'destroy': handleDestroy,
     'set_visible': handleSetVisible,
       'velocity': handleVelocity,
-     'anim_play': animPlayHandler, // anim_playも正式に登録
+     'anim': animPlayHandler, // anim_playも正式に登録
     'anim_stop': animStopHandler,
     'anim_frame': animFrameHandler,
        'eval': evalExpressionHandler,  
