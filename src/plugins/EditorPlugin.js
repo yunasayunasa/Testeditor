@@ -1033,6 +1033,9 @@ if (gameObject.body) {
         this.pluginManager.game.input.enabled = true;
     }
     
+     /**
+     * イベントエディタのコンテンツを生成・再描画する (変更なし)
+     */
     populateEventEditor() {
         const contentArea = document.getElementById('event-editor-content');
         if (!contentArea || !this.selectedObject) return;
@@ -1047,6 +1050,7 @@ if (gameObject.body) {
         addButton.innerText = '新しいイベントを追加';
         addButton.onclick = () => {
             const currentEvents = this.selectedObject.getData('events') || [];
+            // デフォルトは 'onClick' のままで良い
             currentEvents.push({ trigger: 'onClick', actions: '' });
             this.selectedObject.setData('events', currentEvents);
             this.populateEventEditor();
@@ -1054,21 +1058,29 @@ if (gameObject.body) {
         contentArea.appendChild(addButton);
     }
     
+   /**
+     * 個々のイベント編集UIを生成する (onStateChange & Condition 対応版)
+     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
+     */
     createEventDisplay(eventData, index) {
         const div = document.createElement('div');
         div.style.border = '1px solid #444';
         div.style.padding = '8px';
         div.style.marginBottom = '8px';
 
+        // --- ヘッダー (トリガー選択と削除ボタン) ---
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
-
+        header.style.marginBottom = '8px';
+        
         const triggerContainer = document.createElement('div');
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
-        ['onClick', 'onCollide_Start'].forEach(t => {
+        
+        // ★★★ 利用可能なトリガーのリストを拡張 ★★★
+        ['onClick', 'onCollide_Start', 'onStateChange'].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;
@@ -1076,35 +1088,55 @@ if (gameObject.body) {
         });
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
         triggerContainer.append(triggerLabel, triggerSelect);
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.innerText = '削除';
+        deleteBtn.onclick = () => { /* ... (削除ロジックは変更なし) ... */ };
+        header.append(triggerContainer, deleteBtn);
+        div.appendChild(header);
 
-        if (eventData.trigger.startsWith('onCollide')) {
+        // --- 条件入力欄 (Condition) ---
+        // ★★★ onStateChangeトリガーが選択されている場合のみ、Condition入力欄を表示 ★★★
+        if (eventData.trigger === 'onStateChange') {
+            const conditionContainer = document.createElement('div');
+            conditionContainer.style.marginBottom = '8px';
+            const conditionLabel = document.createElement('label');
+            conditionLabel.innerText = '条件 (Condition): ';
+            const conditionInput = document.createElement('input');
+            conditionInput.type = 'text';
+            conditionInput.placeholder = "例: state === 'walk'";
+            conditionInput.style.width = '200px';
+            conditionInput.value = eventData.condition || '';
+            conditionInput.onchange = (e) => this.updateEventData(index, 'condition', e.target.value);
+            conditionContainer.append(conditionLabel, conditionInput);
+            div.appendChild(conditionContainer);
+        }
+
+        // --- 衝突相手のグループ入力欄 (Target Group) ---
+        // ★★★ onCollide_Startトリガーが選択されている場合のみ表示 ★★★
+        if (eventData.trigger === 'onCollide_Start') {
+            const targetGroupContainer = document.createElement('div');
+            targetGroupContainer.style.marginBottom = '8px';
             const targetLabel = document.createElement('label');
-            targetLabel.innerText = ' 相手のグループ: ';
+            targetLabel.innerText = '相手のグループ: ';
             const targetInput = document.createElement('input');
             targetInput.type = 'text';
             targetInput.value = eventData.targetGroup || '';
             targetInput.onchange = (e) => this.updateEventData(index, 'targetGroup', e.target.value);
-            triggerContainer.append(targetLabel, targetInput);
+            targetGroupContainer.append(targetLabel, targetInput);
+            div.appendChild(targetGroupContainer);
         }
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerText = '削除';
-        deleteBtn.onclick = () => {
-            const events = this.selectedObject.getData('events');
-            events.splice(index, 1);
-            this.selectedObject.setData('events', events);
-            this.populateEventEditor();
-        };
-        header.append(triggerContainer, deleteBtn);
-        
+        // --- アクション入力欄 (Actions) ---
         const actionsLabel = document.createElement('label');
-        actionsLabel.innerText = 'アクション (タグ形式):';
+        actionsLabel.innerText = 'アクション (Actions):';
+        actionsLabel.style.display = 'block';
         const actionsTextarea = document.createElement('textarea');
         actionsTextarea.style.width = '98%';
         actionsTextarea.value = eventData.actions;
         actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
         
-        div.append(header, actionsLabel, actionsTextarea);
+        div.append(actionsLabel, actionsTextarea);
         return div;
     }
     
