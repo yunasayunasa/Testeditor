@@ -73,44 +73,53 @@ this.matter.world.on('beforeupdate', (event) => {
      * レイアウトデータからシーンのオブジェクトを構築する。
      * @param {object} layoutData - シーンのレイアウトを定義するJSONオブジェクト。
      */
-    buildSceneFromLayout(layoutData) {
-        if (!layoutData) {
-            this.finalizeSetup();
-            return;
-        }
 
-        // アニメーションの登録
-        if (layoutData.animations) {
-            layoutData.animations.forEach(animData => {
-                if (!this.anims.exists(animData.key)) {
-                    this.anims.create({
-                        key: animData.key,
-                        frames: this.anims.generateFrameNumbers(animData.texture, animData.frames),
-                        frameRate: animData.frameRate,
-                        repeat: animData.repeat
-                    });
-                }
-            });
-        }
-        
-        // オブジェクトの生成とプロパティ適用
-        if (layoutData.objects) {
-            // 先にすべてのオブジェクトを生成し、後からプロパティを適用することで、
-            // オブジェクト間の依存関係による問題を回避する。
-            const createdObjects = layoutData.objects.map(layout => {
-                const gameObject = this.createObjectFromLayout(layout);
-                return { gameObject, layout };
-            });
-
-            createdObjects.forEach(item => {
-                if (item.gameObject) {
-                    this.applyProperties(item.gameObject, item.layout);
-                }
-            });
-        }
-        
-        this.finalizeSetup();
+buildSceneFromLayout(layoutData) {
+    // --- ガード節: レイアウトデータがなければ、何もせず終了 ---
+    if (!layoutData) {
+        this.finalizeSetup([]); // 空のリストを渡して、シーンを正常に完了させる
+        return;
     }
+
+    // --- 1. アニメーションの登録 (変更なし) ---
+    if (layoutData.animations) {
+        layoutData.animations.forEach(animData => {
+            if (!this.anims.exists(animData.key)) {
+                this.anims.create({
+                    key: animData.key,
+                    frames: this.anims.generateFrameNumbers(animData.texture, animData.frames),
+                    frameRate: animData.frameRate,
+                    repeat: animData.repeat
+                });
+            }
+        });
+    }
+    
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ これが、全てを解決する、最後のロジックです ★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+    // --- 2. オブジェクトの生成とプロパティ適用 ---
+    const allGameObjects = []; // 生成されたGameObjectを格納する、信頼できるリスト
+
+    if (layoutData.objects) {
+        // a. 全てのオブジェクト定義をループする
+        for (const layout of layoutData.objects) {
+            // b. GameObjectを生成する
+            const gameObject = this.createObjectFromLayout(layout);
+            
+            if (gameObject) {
+                // c. 生成に成功したら、プロパティを適用する
+                this.applyProperties(gameObject, layout);
+                // d. そして、信頼できるリストに追加する
+                allGameObjects.push(gameObject);
+            }
+        }
+    }
+    
+    // --- 3. 全てのオブジェクトが揃った状態で、最終処理を呼び出す ---
+    this.finalizeSetup(allGameObjects);
+}
     
     /**
      * レイアウト定義に基づいてゲームオブジェクトを生成する。
@@ -309,14 +318,12 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      */
     finalizeSetup() {
               // --- 1. まず、全てのオブジェクトに対して onReady イベントを実行する ---
-        // (onReadyは、オブジェクト個別の初期化命令として使う)
-        for (const gameObject of this.children.list) {
+            // --- 1. 全ての生成済みオブジェクトに対して onReady イベントを実行する ---
+        for (const gameObject of allGameObjects) {
             const events = gameObject.getData('events');
             if (events) {
                 for (const eventData of events) {
                     if (eventData.trigger === 'onReady') {
-                        // ここではPlayモードのチェックはしない方が良いかもしれない
-                        // (常に実行されるべき初期化処理のため)
                         if (this.actionInterpreter) {
                             console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}' in finalizeSetup.`);
                             this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
