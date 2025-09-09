@@ -646,28 +646,41 @@ createComponentSection() {
         this.editorPropsContainer.appendChild(button);
     }
 
+    /**
+     * ★★★ 以下のメソッドで、既存の createDeleteObjectButton を完全に置き換えてください ★★★
+     */
     createDeleteObjectButton() {
         const button = document.createElement('button');
         button.innerText = 'オブジェクト 削除';
         button.style.backgroundColor = '#e65151';
         button.style.marginTop = '10px';
-           button.addEventListener('click', () => {
-            // ▼▼▼▼▼ 【重要修正】ローカル変数で参照を固める ▼▼▼▼▼
+        
+        button.addEventListener('click', () => {
+            // クリックされた瞬間の選択オブジェクトを、ローカル変数に固定する
             const objectToDelete = this.selectedObject;
+            
             if (objectToDelete && objectToDelete.scene && confirm(`本当に '${objectToDelete.name}' を削除しますか？`)) {
-            // ▲▲▲▲▲ ここまで ▲▲▲▲▲
-                const sceneKey = targetObject.scene.scene.key;
+                
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                // ★★★ "targetObject" を、全て "objectToDelete" に修正 ★★★
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                const sceneKey = objectToDelete.scene.scene.key;
+                
                 if (this.editableObjects.has(sceneKey)) {
-                    this.editableObjects.get(sceneKey).delete(targetObject);
+                    this.editableObjects.get(sceneKey).delete(objectToDelete);
                 }
-                targetObject.destroy();
+                
+                objectToDelete.destroy();
+                // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+                // 選択を解除し、UIを更新する
                 this.selectedObject = null;
                 this.updatePropertyPanel();
             }
         });
+        
         this.editorPropsContainer.appendChild(button);
     }
-
     // --- 汎用UI生成ヘルパー ---
 
     createCheckbox(container, label, initialValue, callback) {
