@@ -10,9 +10,38 @@ export default class SystemScene extends Phaser.Scene {
         this.initialGameData = null;
         this.novelBgmKey = null; // BGMキーの保持
         this.editorUI = null; // EditorUIへの参照を保持
-         this.isTimeStopped = false;
+         this._isTimeStopped = false;
+    }
+// ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
+    get isTimeStopped() {
+        return this._isTimeStopped;
     }
 
+    set isTimeStopped(value) {
+        if (this._isTimeStopped === value) return; // 状態が変わらないなら何もしない
+        this._isTimeStopped = value;
+
+        // --- 状態が変化した瞬間に、全てのシーンに影響を及ぼす ---
+        this.broadcastTimeScale();
+    }
+
+    /**
+     * ★★★ 新規メソッド：アクティブな全シーンに、タイムスケールを伝播させる ★★★
+     */
+    broadcastTimeScale() {
+        const newTimeScale = this._isTimeStopped ? 0 : 1;
+        
+        // 現在アクティブな全てのシーンをループ
+        for (const scene of this.game.scene.getScenes(true)) {
+            // そのシーンが matter.world を持っているか（物理シーンか）を確認
+            if (scene.matter && scene.matter.world) {
+                // ★★★ これが、物理の世界の時間を止める、魔法の呪文だ ★★★
+                scene.matter.world.engine.timing.timeScale = newTimeScale;
+                
+                console.log(`[SystemScene] Time scale of scene '${scene.scene.key}' set to ${newTimeScale}`);
+            }
+        }
+    }
     init(data) {
         if (data && data.initialGameData) {
             this.initialGameData = data.initialGameData;
