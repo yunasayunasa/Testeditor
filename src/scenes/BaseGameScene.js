@@ -231,17 +231,7 @@ this.matter.world.on('beforeupdate', (event) => {
         // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
             
-             // --- 'onReady' トリガーの処理 ---
-            if (eventData.trigger === 'onReady') {
-                // onReadyは一度だけ、この場で即座に実行する
-                const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
-                if (!editorUI || editorUI.currentMode === 'play') {
-                    if (this.actionInterpreter) {
-                        console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}'`);
-                        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
-                    }
-                }
-            }
+         
 
 
             // --- 'onClick' トリガーの処理 ---
@@ -318,6 +308,23 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * シーンのセットアップが完了した最終段階で呼ばれる
      */
     finalizeSetup() {
+              // --- 1. まず、全てのオブジェクトに対して onReady イベントを実行する ---
+        // (onReadyは、オブジェクト個別の初期化命令として使う)
+        for (const gameObject of this.children.list) {
+            const events = gameObject.getData('events');
+            if (events) {
+                for (const eventData of events) {
+                    if (eventData.trigger === 'onReady') {
+                        // ここではPlayモードのチェックはしない方が良いかもしれない
+                        // (常に実行されるべき初期化処理のため)
+                        if (this.actionInterpreter) {
+                            console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}' in finalizeSetup.`);
+                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                        }
+                    }
+                }
+            }
+        }
         // --- Matter.jsの衝突イベント監視を開始 ---
         this.matter.world.on('collisionstart', (event) => {
             // event.pairs には、このフレームで衝突を開始したペアが全て含まれる
