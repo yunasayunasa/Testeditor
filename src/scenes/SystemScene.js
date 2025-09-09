@@ -10,6 +10,7 @@ export default class SystemScene extends Phaser.Scene {
         this.initialGameData = null;
         this.novelBgmKey = null; // BGMキーの保持
         this.editorUI = null; // EditorUIへの参照を保持
+         this.isTimeStopped = false;
     }
 
     init(data) {

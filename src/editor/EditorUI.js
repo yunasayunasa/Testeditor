@@ -216,20 +216,18 @@ if (this.modeToggle && this.modeLabel) {
             pauseButton.style.borderRadius = '5px';
             pauseButton.style.cursor = 'pointer';
 
-            pauseButton.addEventListener('click', () => {
-                // 現在アクティブな「ゲーム」シーンを取得
-                const gameScene = this.plugin.getActiveGameCamera()?.scene;
-                if (gameScene) {
-                    if (gameScene.scene.isPaused()) {
-                        // --- 再開処理 ---
-                        gameScene.scene.resume();
+             pauseButton.addEventListener('click', () => {
+                // ★★★ SystemSceneのフラグを直接、切り替える ★★★
+                const systemScene = this.game.scene.getScene('SystemScene');
+                if (systemScene) {
+                    systemScene.isTimeStopped = !systemScene.isTimeStopped; // true/falseを反転
+
+                    if (systemScene.isTimeStopped) {
+                        pauseButton.innerText = '▶️ Play';
+                        pauseButton.style.backgroundColor = '#2a9d8f';
+                    } else {
                         pauseButton.innerText = '⏸️ Pause';
                         pauseButton.style.backgroundColor = '#555';
-                    } else {
-                        // --- 一時停止処理 ---
-                        gameScene.scene.pause();
-                        pauseButton.innerText = '▶️ Play';
-                        pauseButton.style.backgroundColor = '#2a9d8f'; // 目立つ色に
                     }
                 }
             });
