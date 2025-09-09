@@ -122,3 +122,63 @@
 ; オブジェクトを再表示する
 [set_visible value=true]
 </code></pre>
+<!-- ====================================================== -->
+<h2>カスタムイベントトリガー (エディタ)</h2>
+<p>PlayerControllerのような特定のコンポーネントが、自身の状態変化を知らせるために発行する、独自のイベントです。これにより、オブジェクトの内部状態とアニメーションやサウンドを、エディタだけで簡単に関連付けることができます。</p>
+<!-- ====================================================== -->
+
+<h3>onStateChange</h3>
+<p><code>PlayerController</code>コンポーネントが、自身の状態（<code>idle</code>, <code>walk</code>, <code>jump_up</code>, <code>fall_down</code>）を変更した瞬間に一度だけ発火します。</p>
+<h4>利用可能な変数 (Condition欄):</h4>
+<ul>
+    <li>
+        <strong><code>state</code></strong>: 遷移先の<strong>新しい</strong>状態名（文字列）。
+        <br>例: <code>'idle'</code>, <code>'walk'</code>, <code>'jump_up'</code>, <code>'fall_down'</code>
+    </li>
+    <li>
+        <strong><code>oldState</code></strong>: 遷移元の<strong>古い</strong>状態名（文字列）。
+    </li>
+</ul>
+
+<p><strong>使用例 (アニメーション連携):</strong></p>
+<pre><code>
+--- イベント1: 歩き始め ---
+Trigger: onStateChange
+Condition: state === 'walk'
+Actions: [anim_play name=walk_animation]
+
+--- イベント2: 停止 ---
+Trigger: onStateChange
+Condition: state === 'idle'
+Actions: [anim_frame name=walk_animation frame=0]
+
+--- イベント3: 歩行終了時 ---
+Trigger: onStateChange
+Condition: oldState === 'walk'
+Actions: [anim_stop]
+</code></pre>
+
+<hr>
+
+<h3>onDirectionChange</h3>
+<p><code>PlayerController</code>コンポーネントが、キャラクターの向き（<code>left</code>, <code>right</code>）を変更した瞬間に一度だけ発火します。</p>
+<h4>利用可能な変数 (Condition欄):</h4>
+<ul>
+    <li>
+        <strong><code>direction</code></strong>: 新しい向き（文字列）。
+        <br>例: <code>'left'</code>, <code>'right'</code>
+    </li>
+</ul>
+
+<p><strong>使用例 (左右反転):</strong></p>
+<pre><code>
+--- イベント1: 左を向いた時 ---
+Trigger: onDirectionChange
+Condition: direction === 'left'
+Actions: [set_flip_x value=true]
+
+--- イベント2: 右を向いた時 ---
+Trigger: onDirectionChange
+Condition: direction === 'right'
+Actions: [set_flip_x value=false]
+</code></pre>
