@@ -219,7 +219,7 @@ this.matter.world.on('beforeupdate', (event) => {
         // これにより、定義を更新した際に古いリスナーが残るのを防ぐ
         gameObject.off('pointerdown');
         gameObject.off('onStateChange'); // 我々のカスタムイベントもクリア
-
+ gameObject.off('onDirectionChange'); // 新しいカスタムイベントもクリア
         // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
             
@@ -268,7 +268,18 @@ this.matter.world.on('beforeupdate', (event) => {
                 });
             }
         });
+ // ★★★ 'onDirectionChange' トリガーの処理を追加 ★★★
+            if (eventData.trigger === 'onDirectionChange') {
+                gameObject.on('onDirectionChange', (newDirection) => {
+                    // Conditionを評価 (例: "direction === 'left'")
+                    let conditionMet = new Function('direction', `'use strict'; return (${eventData.condition});`)(newDirection);
 
+                    if (conditionMet) {
+                        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                    }
+                });
+            }
+        });
         // --- エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {

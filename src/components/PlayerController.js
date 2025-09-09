@@ -17,7 +17,7 @@ export default class PlayerController {
         this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
         
           this.state = 'idle'; // 初期状態は 'idle' (待機)
-        // ★★★ virtualStickとjumpButtonへの参照は、もう不要 ★★★
+        this.direction = 'right'; // 初期方向は 'right'
     }
    /**
      * JumpSceneのupdateから毎フレーム呼ばれる
@@ -39,6 +39,21 @@ export default class PlayerController {
         if (joystick) {
             if (joystick.left) moveX = -1;
             else if (joystick.right) moveX = 1;
+
+              // --- 1. 新しい向きを判断する ---
+        let newDirection = this.direction;
+        if (moveX < 0) {
+            newDirection = 'left';
+        } else if (moveX > 0) {
+            newDirection = 'right';
+        }
+
+        // --- 2. 向きが変化した瞬間だけ、イベントを発行する ---
+        if (this.direction !== newDirection) {
+            this.direction = newDirection;
+            this.target.emit('onDirectionChange', this.direction);
+            console.log(`%c[PlayerController] Direction changed: -> ${this.direction}`, 'color: magenta');
+        }
         }
         
         // --- 3. 物理ボディを操作 ---
