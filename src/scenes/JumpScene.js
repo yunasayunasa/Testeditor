@@ -130,7 +130,7 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-   update(time, delta) {
+     sceneUpdate(time, delta) {
         
         // --- 1. PlayerControllerのための特別な更新 ---
         if (this.playerController) {
