@@ -95,23 +95,25 @@ buildSceneFromLayout(layoutData) {
         });
     }
     
-    let allGameObjects = []; 
-
-        // --- 2. オブジェクトの生成とプロパティ適用 ---
+       // --- 1. 変数を宣言し、オブジェクトを生成して格納する ---
+        let allGameObjects = []; 
         if (layoutData.objects) {
-            // mapを使って、生成されたGameObjectの配列を一度に作成
             allGameObjects = layoutData.objects.map(layout => {
                 const gameObject = this.createObjectFromLayout(layout);
                 if (gameObject) {
                     this.applyProperties(gameObject, layout);
                 }
                 return gameObject;
-            }).filter(Boolean); // nullやundefinedになったものを配列から取り除く
+            }).filter(Boolean);
         }
         
-        // --- 3. これで、ifブロックの外からでも、allGameObjectsを参照できる ---
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、全てを解決する、最後のバトンパスだ ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // --- 2. finalizeSetupに、完成したリストを「引数」として渡す ---
         this.finalizeSetup(allGameObjects);
     }
+
     
     /**
      * レイアウト定義に基づいてゲームオブジェクトを生成する。
@@ -308,22 +310,22 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     /**
      * シーンのセットアップが完了した最終段階で呼ばれる
      */
-    finalizeSetup() {
-              // --- 1. まず、全てのオブジェクトに対して onReady イベントを実行する ---
-            // --- 1. 全ての生成済みオブジェクトに対して onReady イベントを実行する ---
+      finalizeSetup(allGameObjects) { // ★★★ 3. 引数として、オブジェクトのリストを受け取る ★★★
+        
+        // --- 4. 受け取ったリストを使って、onReadyイベントを実行する ---
         for (const gameObject of allGameObjects) {
             const events = gameObject.getData('events');
             if (events) {
                 for (const eventData of events) {
                     if (eventData.trigger === 'onReady') {
                         if (this.actionInterpreter) {
-                            console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}' in finalizeSetup.`);
                             this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
                         }
                     }
                 }
             }
         }
+        
         // --- Matter.jsの衝突イベント監視を開始 ---
         this.matter.world.on('collisionstart', (event) => {
             // event.pairs には、このフレームで衝突を開始したペアが全て含まれる
