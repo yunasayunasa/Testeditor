@@ -53,6 +53,14 @@ export default class SystemScene extends Phaser.Scene {
                 console.log(`モード変更: ${currentMode} -> ${newMode}`);
             }
         });
+         this.events.on('request-scene-resume', (sceneKey) => {
+            const targetScene = this.scene.get(sceneKey);
+            if (targetScene && targetScene.scene.isPaused()) {
+                targetScene.scene.resume();
+                console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
+            }
+        });
+    
         // --- 3. エディタ関連の初期化 ---
         this.initializeEditor();
          

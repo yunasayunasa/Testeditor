@@ -10,10 +10,16 @@ export const uiRegistry = {
         groups: ['controls', 'action'],
         params: { group: 'jump_button' }
     },
+ 'start_button': {
+        path: './ui/JumpButton.js', // 既存のJumpButtonクラスを再利用できる
+        groups: ['game_start'],     // ★ 'game_start' という新しいグループ
+        params: {
+            x: 640,
+            y: 360,
+            label: 'TAP TO START' // 表示される文字
+        }
+    },
 
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // ★★★ この一行を追加すれば、全てが解決します ★★★
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
     'message_window': { path: './ui/MessageWindow.js', groups: ['game'] },
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
@@ -32,7 +38,7 @@ export const uiRegistry = {
 export const sceneUiVisibility = {
     'GameScene': ['hud', 'menu', 'game'], // 'controls' はないのでスティックは出ない
       'NovelOverlayScene': ['game'], // メッセージウィンドウ('game'グループ)だけを表示
-    'JumpScene': ['controls', 'action'], // 'hud' 'menu' はないのでHUDやメニューは出ない
+    'JumpScene': ['controls', 'action', 'game_start'], // 'hud' 'menu' はないのでHUDやメニューは出ない
     'BattleScene': ['hud', 'battle'],
      'ActionScene': ['menu', 'game'],
     'TitleScene': []

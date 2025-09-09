@@ -207,7 +207,26 @@ this.matter.world.on('beforeupdate', (event) => {
         
         // --- 7. イベントリスナーとエディタ登録 ---
         this.applyEventsAndEditorFunctions(gameObject, layout.events);
+            // ★★★ 'onReady' イベントを実行する ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        if (layout.events) {
+            layout.events.forEach(eventData => {
+                if (eventData.trigger === 'onReady') {
+                    if (this.actionInterpreter) {
+                        // onReadyはゲームロジックなので、Playモードでのみ実行する
+                        const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
+                        if (!editorUI || editorUI.currentMode === 'play') {
+                            console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}'`);
+                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                        }
+                    }
+                }
+            });
+        }
+    
             return gameObject;
+
+            
     }
     
     

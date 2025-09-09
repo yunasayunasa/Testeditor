@@ -1164,7 +1164,7 @@ if (gameObject.body) {
         const triggerSelect = document.createElement('select');
         
         // ★★★ 'onDirectionChange' もトリガーリストに追加 ★★★
-        ['onClick', 'onCollide_Start', 'onStateChange', 'onDirectionChange'].forEach(t => {
+        ['onClick', 'onCollide_Start', 'onStateChange', 'onDirectionChange', 'onReady'].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;

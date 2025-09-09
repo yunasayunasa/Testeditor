@@ -90,8 +90,21 @@ export default class UIScene extends Phaser.Scene {
                 console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
             }
         }
-        // ★ forループなので、Promise.allは不要
+         const startButton = this.uiElements.get('start_button');
+    if (startButton) {
+        // start_buttonに、一度だけ実行されるクリックリスナーを設定
+        startButton.once('button_pressed', () => { // ★ JumpButtonが発するカスタムイベント
+            
+            // 1. 舞台監督に「JumpSceneを起こしてくれ」と依頼
+            this.scene.get('SystemScene').events.emit('request-scene-resume', 'JumpScene');
+            
+            // 2. 役目を終えたボタンを、舞台袖に隠す
+            startButton.setVisible(false);
+            
+            console.log("[UIScene] Start button pressed. Resume signal sent to SystemScene.");
+        });
     }
+}
 
 // ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**

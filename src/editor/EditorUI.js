@@ -15,7 +15,7 @@ export default class EditorUI {
         this.assetBrowserPanel = document.getElementById('asset-browser');
         if (this.editorPanel) this.editorPanel.style.display = 'flex';
         if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
-
+this.createPauseToggle();
         this.assetListContainer = document.getElementById('asset-list');
         this.cameraControls = document.getElementById('camera-controls');
         this.zoomInBtn = document.getElementById('camera-zoom-in');
@@ -197,6 +197,46 @@ if (this.modeToggle && this.modeLabel) {
             console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'addObjectFromEditor' method.`);
         }
     }
+
+       /**
+     * ★★★ 新規メソッド：ゲーム内時間の「ポーズ/再開」を制御するボタンを生成する ★★★
+     */
+    createPauseToggle() {
+        // モード切替スイッチの隣あたりに配置するのが良いだろう
+        const modeControls = document.getElementById('editor-mode-controls');
+        if (modeControls) {
+            const pauseButton = document.createElement('button');
+            pauseButton.id = 'editor-pause-btn';
+            pauseButton.innerText = '⏸️ Pause'; // 絵文字を使うと分かりやすい
+            pauseButton.style.marginLeft = '20px';
+            pauseButton.style.padding = '5px 10px';
+            pauseButton.style.border = '1px solid #777';
+            pauseButton.style.backgroundColor = '#555';
+            pauseButton.style.color = '#eee';
+            pauseButton.style.borderRadius = '5px';
+            pauseButton.style.cursor = 'pointer';
+
+            pauseButton.addEventListener('click', () => {
+                // 現在アクティブな「ゲーム」シーンを取得
+                const gameScene = this.plugin.getActiveGameCamera()?.scene;
+                if (gameScene) {
+                    if (gameScene.scene.isPaused()) {
+                        // --- 再開処理 ---
+                        gameScene.scene.resume();
+                        pauseButton.innerText = '⏸️ Pause';
+                        pauseButton.style.backgroundColor = '#555';
+                    } else {
+                        // --- 一時停止処理 ---
+                        gameScene.scene.pause();
+                        pauseButton.innerText = '▶️ Play';
+                        pauseButton.style.backgroundColor = '#2a9d8f'; // 目立つ色に
+                    }
+                }
+            });
+            modeControls.appendChild(pauseButton);
+        }
+    }
+
 
      /**
      * ★★★ 新規ヘルパーメソッド ★★★
