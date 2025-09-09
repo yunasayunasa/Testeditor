@@ -1068,7 +1068,7 @@ if (gameObject.body) {
         div.style.padding = '8px';
         div.style.marginBottom = '8px';
 
-        // --- ヘッダー (トリガー選択と削除ボタン) ---
+         // --- ヘッダー (トリガー選択と削除ボタン) ---
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
@@ -1079,8 +1079,8 @@ if (gameObject.body) {
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
         
-        // ★★★ 利用可能なトリガーのリストを拡張 ★★★
-        ['onClick', 'onCollide_Start', 'onStateChange'].forEach(t => {
+        // ★★★ 'onDirectionChange' もトリガーリストに追加 ★★★
+        ['onClick', 'onCollide_Start', 'onStateChange', 'onDirectionChange'].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;
@@ -1089,25 +1089,44 @@ if (gameObject.body) {
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
         triggerContainer.append(triggerLabel, triggerSelect);
         
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、削除ボタンの完全なロジックだ ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         const deleteBtn = document.createElement('button');
         deleteBtn.innerText = '削除';
-        deleteBtn.onclick = () => { /* ... (削除ロジックは変更なし) ... */ };
+        deleteBtn.style.backgroundColor = '#c44'; // 見やすいように少し色を付ける
+        deleteBtn.onclick = () => {
+            // ユーザーに最終確認を行う
+            if (confirm('このイベント定義を本当に削除しますか？')) {
+                // 1. 現在選択されているオブジェクトから、イベントの配列を取得
+                const events = this.selectedObject.getData('events');
+                // 2. このイベントを、インデックスを使って配列から削除
+                events.splice(index, 1);
+                // 3. 更新された配列を、オブジェクトのデータとして保存し直す
+                this.selectedObject.setData('events', events);
+                // 4. イベントエディタのUI全体を再描画して、変更を反映させる
+                this.populateEventEditor();
+            }
+        };
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        
         header.append(triggerContainer, deleteBtn);
         div.appendChild(header);
-
-        // --- 条件入力欄 (Condition) ---
-        // ★★★ onStateChangeトリガーが選択されている場合のみ、Condition入力欄を表示 ★★★
-        if (eventData.trigger === 'onStateChange') {
+         // --- 条件入力欄 (Condition) ---
+        if (eventData.trigger === 'onStateChange' || eventData.trigger === 'onDirectionChange') {
             const conditionContainer = document.createElement('div');
             conditionContainer.style.marginBottom = '8px';
+            
             const conditionLabel = document.createElement('label');
             conditionLabel.innerText = '条件 (Condition): ';
+            
             const conditionInput = document.createElement('input');
             conditionInput.type = 'text';
             conditionInput.placeholder = "例: state === 'walk'";
-            conditionInput.style.width = '200px';
+            conditionInput.style.width = 'calc(100% - 120px)'; // ★ 幅を調整
             conditionInput.value = eventData.condition || '';
             conditionInput.onchange = (e) => this.updateEventData(index, 'condition', e.target.value);
+            
             conditionContainer.append(conditionLabel, conditionInput);
             div.appendChild(conditionContainer);
         }

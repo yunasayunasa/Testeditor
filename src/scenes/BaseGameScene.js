@@ -236,42 +236,19 @@ this.matter.world.on('beforeupdate', (event) => {
                 });
             }
 
-            // --- 'onStateChange' トリガーの処理 ---
+              // --- 'onStateChange' トリガーの処理 ---
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
-                    let conditionMet = true; // デフォルトはtrue
-                    if (eventData.condition) {
-                        try {
-                            conditionMet = new Function('state', 'oldState', `'use strict'; return (${eventData.condition});`)(newState, oldState);
-                        } catch (e) {
-                            console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
-                            conditionMet = false;
-                        }
-                    }
-                    if (conditionMet && this.actionInterpreter) {
-                        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
-                    }
+                    // ★ 変数名を state, oldState で統一
+                    this.evaluateConditionAndRun(gameObject, eventData, { state: newState, oldState: oldState });
                 });
             }
             
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ 'onDirectionChange' の処理を、ループの内側に正しく配置 ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // --- 'onDirectionChange' トリガーの処理 ---
             if (eventData.trigger === 'onDirectionChange') {
                 gameObject.on('onDirectionChange', (newDirection) => {
-                    let conditionMet = true; // デフォルトはtrue
-                    if (eventData.condition) {
-                        try {
-                            // ★ 式の中では "direction" という変数名でアクセスできるようにする
-                            conditionMet = new Function('direction', `'use strict'; return (${eventData.condition});`)(newDirection);
-                        } catch (e) {
-                            console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
-                            conditionMet = false;
-                        }
-                    }
-                    if (conditionMet && this.actionInterpreter) {
-                        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
-                    }
+                    // ★ 変数名を direction で統一
+                    this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
                 });
             }
             
@@ -285,6 +262,38 @@ this.matter.world.on('beforeupdate', (event) => {
     }
 
  
+/**
+ * ★★★ 新規ヘルパーメソッド ★★★
+ * 条件式を安全に評価し、条件が満たされればアクションを実行する
+ * @param {Phaser.GameObjects.GameObject} gameObject - アクションの起点
+ * @param {object} eventData - イベント定義
+ * @param {object} context - 条件式の中で利用可能にする変数 (例: { state: 'walk' })
+ */
+evaluateConditionAndRun(gameObject, eventData, context) {
+    let conditionMet = true; // デフォルトはtrue
+
+    if (eventData.condition) {
+        // --- 1. コンテキストオブジェクトから、変数名と値のリストを作成 ---
+        const varNames = Object.keys(context); // 例: ['state', 'oldState']
+        const varValues = Object.values(context); // 例: ['walk', 'idle']
+
+        try {
+            // --- 2. Functionコンストラクタに、変数名を引数として明示的に渡す ---
+            const func = new Function(...varNames, `'use strict'; return (${eventData.condition});`);
+            
+            // --- 3. 作成した関数に、実際の値を渡して実行 ---
+            conditionMet = func(...varValues);
+
+        } catch (e) {
+            console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
+            conditionMet = false;
+        }
+    }
+
+    if (conditionMet && this.actionInterpreter) {
+        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+    }
+}
     /**
      * シーンのセットアップが完了した最終段階で呼ばれる
      */
