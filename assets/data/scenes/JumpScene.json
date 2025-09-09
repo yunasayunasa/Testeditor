@@ -30,8 +30,8 @@
         },
         {
           "trigger": "onStateChange",
-          "actions": "[anim_stop]",
-          "condition": "oldState === 'walk'"
+          "actions": "[anim_frame name=歩き frame=0]",
+          "condition": "state === 'idle'"
         },
         {
           "trigger": "onStateChange",
