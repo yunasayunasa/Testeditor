@@ -209,54 +209,82 @@ this.matter.world.on('beforeupdate', (event) => {
     
     
   
-    /**
+     /**
      * オブジェクトにイベントリスナーとエディタ機能を設定する (最終完成版)
-     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
         const events = eventsData || [];
         gameObject.setData('events', events);
         
-        // --- 既存のゲームプレイ用リスナーを全てクリア ---
         gameObject.off('pointerdown');
         gameObject.off('onStateChange');
         gameObject.off('onDirectionChange');
 
-        // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
             
-            // --- 'onClick' トリガーの処理 ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
                     this.runActions(gameObject, eventData, gameObject);
                 });
             }
 
-            // --- 'onStateChange' トリガーの処理 ---
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
-                    // ★★★ 条件式をここで、安全に評価する ★★★
-                    if (this.evaluateCondition(eventData.condition, { state: newState, oldState: oldState })) {
+                    // ★ StateManagerの安全なevalに、評価を依頼する
+                    if (this.evaluateConditionWithStateManager(eventData.condition, { state: newState, oldState: oldState })) {
                         this.runActions(gameObject, eventData, gameObject);
                     }
                 });
             }
             
-            // --- 'onDirectionChange' トリガーの処理 ---
             if (eventData.trigger === 'onDirectionChange') {
                 gameObject.on('onDirectionChange', (newDirection) => {
-                    // ★★★ 条件式をここで、安全に評価する ★★★
-                    if (this.evaluateCondition(eventData.condition, { direction: newDirection })) {
+                    if (this.evaluateConditionWithStateManager(eventData.condition, { direction: newDirection })) {
                         this.runActions(gameObject, eventData, gameObject);
                     }
                 });
             }
         });
 
-        // --- エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(gameObject, this);
+        }
+    }
+
+    /**
+     * ★★★ 新規メソッド：StateManagerの力を借りて、条件式を安全に評価する ★★★
+     */
+    evaluateConditionWithStateManager(conditionString, context) {
+        if (!conditionString || conditionString.trim() === '') {
+            return true;
+        }
+        
+        const stateManager = this.registry.get('stateManager');
+        if (!stateManager) {
+            console.error("[Event System] StateManager not found for condition evaluation.");
+            return false;
+        }
+
+        // --- 1. "state === 'walk'" のような式を、一時的な変数宣言に変換する ---
+        // 例: "let state = 'walk'; let oldState = 'idle'; state === 'walk'"
+        let fullExpression = '';
+        for (const key in context) {
+            const value = context[key];
+            if (typeof value === 'string') {
+                fullExpression += `let ${key} = '${value}'; `;
+            } else {
+                fullExpression += `let ${key} = ${value}; `;
+            }
+        }
+        fullExpression += conditionString;
+
+        // --- 2. StateManagerの安全なevalに、この完全な式を渡して評価させる ---
+        try {
+            return stateManager.eval(fullExpression);
+        } catch (e) {
+            console.warn(`[Event System] Failed to evaluate condition: "${conditionString}"`, e);
+            return false;
         }
     }
 
