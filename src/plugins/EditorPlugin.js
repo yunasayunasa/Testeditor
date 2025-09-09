@@ -528,53 +528,115 @@ this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getDat
         this.editorPropsContainer.append(title, button);
     }
 
-    createComponentSection() {
-        const title = document.createElement('h4');
-        title.innerText = 'Components';
-        title.style.margin = '10px 0 5px 0';
-        this.editorPropsContainer.appendChild(title);
-        
-        const attachedComponents = this.selectedObject.getData('components') || [];
-        attachedComponents.forEach(comp => {
-            const div = document.createElement('div');
-            div.innerText = `- ${comp.type}`;
-            this.editorPropsContainer.appendChild(div);
-        });
+createComponentSection() {
+    const title = document.createElement('h4');
+    title.innerText = 'Components';
+    title.style.margin = '10px 0 5px 0';
+    this.editorPropsContainer.appendChild(title);
+    
+    // --- 1. 永続化データから、アタッチされているコンポーネント定義を取得 ---
+    const attachedComponents = this.selectedObject.getData('components') || [];
 
+    // --- 2. 各コンポーネント定義をループ処理し、UIを生成 ---
+    attachedComponents.forEach((componentDef, index) => {
         
-         const availableComponents = ['PlayerController', 'Scrollable'];
-        const select = document.createElement('select');
-        select.innerHTML = '<option value="">Add Component...</option>';
-        availableComponents.forEach(compName => {
-            if (!attachedComponents.some(c => c.type === compName)) {
-                select.innerHTML += `<option value="${compName}">${compName}</option>`;
-            }
-        });
-         select.onchange = (e) => {
-            const compToAdd = e.target.value;
-            if (compToAdd && this.selectedObject) {
-                
-                // --- 1. 永続化用のデータを準備・保存する (変更なし) ---
+        // --- a. コンポーネントごとのコンテナを作成 ---
+        const containerDiv = document.createElement('div');
+        containerDiv.style.flexDirection = 'column';
+        containerDiv.style.alignItems = 'flex-start';
+        containerDiv.style.border = '1px solid #444';
+        containerDiv.style.padding = '8px';
+        containerDiv.style.marginBottom = '8px';
+        
+        // --- b. ヘッダー (コンポーネント名と削除ボタン) ---
+        const headerDiv = document.createElement('div');
+        headerDiv.style.width = '100%';
+        headerDiv.style.justifyContent = 'space-between';
+        
+        const compTitle = document.createElement('strong');
+        compTitle.innerText = componentDef.type;
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.innerText = '×';
+        removeBtn.style.width = '25px';
+        removeBtn.style.padding = '2px';
+        removeBtn.style.backgroundColor = '#666';
+        removeBtn.onclick = () => {
+            // 確認ダイアログは不要なら省略しても良い
+            if (confirm(`Component '${componentDef.type}' を削除しますか？`)) {
+                // イミュータブルな再構築で、コンポーネントを安全に削除
                 const currentComps = this.selectedObject.getData('components') || [];
-                // ★ デフォルトのパラメータもここで定義できる (将来的に)
-                const newComponentDef = { type: compToAdd, params: {} }; 
-                currentComps.push(newComponentDef);
+                currentComps.splice(index, 1); // このコンポーネントを配列から削除
                 this.selectedObject.setData('components', currentComps);
-                
-              
-                const targetScene = this.selectedObject.scene;
-                // シーンが addComponent メソッドを持っていることを確認
-                if (targetScene && typeof targetScene.addComponent === 'function') {
-                    // シーンに、今すぐこのコンポーネントをインスタンス化するように命令する
-                    targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
-                }
-
-                // --- 3. UIを更新して変更を反映する (変更なし) ---
-                this.updatePropertyPanel();
+                this.recreateBodyByReconstruction({}); // 再構築をトリガー
             }
         };
-        this.editorPropsContainer.appendChild(select);
-    }
+        headerDiv.append(compTitle, removeBtn);
+        containerDiv.appendChild(headerDiv);
+
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここからが、パラメータ編集UIの、真の心臓部だ ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- c. パラメータ編集UIの生成 ---
+        if (componentDef.type === 'Scrollable') {
+            // パラメータの現在値を取得 (なければデフォルト値)
+            const currentSpeed = componentDef.params.speed !== undefined ? componentDef.params.speed : -5;
+            
+            // 汎用ヘルパーを使って、スライダーを生成
+            this.createRangeInput(containerDiv, 'speed', currentSpeed, -20, 20, 0.5, (newValue) => {
+                // 1. 永続化データ (componentDef.params) を更新
+                componentDef.params.speed = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                
+                // 2. 実行中のインスタンスのプロパティを、リアルタイムで更新
+                if (this.selectedObject.components?.Scrollable) {
+                    this.selectedObject.components.Scrollable.scrollSpeed = newValue;
+                }
+            });
+        }
+        
+        if (componentDef.type === 'PlayerController') {
+            // 同様に、PlayerControllerのパラメータUIもここに追加できる
+            const currentMoveSpeed = componentDef.params.moveSpeed !== undefined ? componentDef.params.moveSpeed : 4;
+            this.createRangeInput(containerDiv, 'moveSpeed', currentMoveSpeed, 1, 20, 0.5, (newValue) => {
+                componentDef.params.moveSpeed = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                if (this.selectedObject.components?.PlayerController) {
+                    this.selectedObject.components.PlayerController.moveSpeed = newValue;
+                }
+            });
+        }
+
+        this.editorPropsContainer.appendChild(containerDiv);
+    });
+
+    // --- 3. 新しいコンポーネントを追加するUI (変更なし) ---
+    const availableComponents = ['PlayerController', 'Scrollable'];
+    const select = document.createElement('select');
+    select.innerHTML = '<option value="">Add Component...</option>';
+    availableComponents.forEach(compName => {
+        if (!attachedComponents.some(c => c.type === compName)) {
+            select.innerHTML += `<option value="${compName}">${compName}</option>`;
+        }
+    });
+    select.onchange = (e) => {
+        const compToAdd = e.target.value;
+        if (compToAdd && this.selectedObject) {
+            const currentComps = this.selectedObject.getData('components') || [];
+            const newComponentDef = { type: compToAdd, params: {} };
+            currentComps.push(newComponentDef);
+            this.selectedObject.setData('components', currentComps);
+            
+            const targetScene = this.selectedObject.scene;
+            if (targetScene && typeof targetScene.addComponent === 'function') {
+                targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
+            }
+            this.updatePropertyPanel();
+        }
+    };
+    this.editorPropsContainer.appendChild(select);
+}
 
     createExportButton() {
         const button = document.createElement('button');
