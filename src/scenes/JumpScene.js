@@ -130,29 +130,25 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-   /**
-     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
-     */
-    update(time, delta) {
+   update(time, delta) {
         
-        // --- 1. プレイヤーコントローラーの更新 ---
-        // ★ joystickを渡すのをやめる。左右移動はしないからだ。
-    /*    if (this.playerController) {
-            this.playerController.updateWithoutJoystick();
-        }*/
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、新しい「流れる世界」の心臓部だ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        // --- 2. スクロール対象のオブジェクトを全て動かす ---
-        const scrollSpeed = -5; // 左向きに動かすので、負の値を設定
-
+        // --- 1. PlayerControllerのための特別な更新 ---
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+        }
+        
+        // --- 2. その他の全てのコンポーネントのための汎用的な更新ループ ---
         for (const gameObject of this.children.list) {
-            // isScrollableの印が付けられたオブジェクトで、かつ物理ボディを持つものだけ
-            if (gameObject.getData('isScrollable') && gameObject.body) {
-                // 水平速度だけを設定し、垂直速度は物理演算に任せる
-                gameObject.setVelocityX(scrollSpeed);
+            if (gameObject.components) {
+                for (const componentName in gameObject.components) {
+                    // PlayerControllerはすでに更新したので、スキップする
+                    if (componentName === 'PlayerController') continue;
+                    
+                    const component = gameObject.components[componentName];
+                    if (component && typeof component.update === 'function') {
+                        component.update(time, delta);
+                    }
+                }
             }
         }
     }
