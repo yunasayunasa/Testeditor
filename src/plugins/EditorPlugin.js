@@ -1031,9 +1031,6 @@ if (gameObject.body) {
         if (!this.eventEditorOverlay) return;
         this.eventEditorOverlay.style.display = 'none';
         this.pluginManager.game.input.enabled = true;
-          if (this.eventEditorHelpPanel) {
-            this.eventEditorHelpPanel.style.display = 'none';
-        }
     }
     
      /**

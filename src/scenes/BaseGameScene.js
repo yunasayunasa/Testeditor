@@ -208,9 +208,8 @@ this.matter.world.on('beforeupdate', (event) => {
     }
     
     
-  
     /**
-     * オブジェクトにイベントリスナーとエディタ機能を設定する (最終完成版)
+     * オブジェクトにイベントリスナーとエディタ機能を設定する (構文修正・最終完成版)
      * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
@@ -228,30 +227,32 @@ this.matter.world.on('beforeupdate', (event) => {
             // --- 'onClick' トリガーの処理 ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
-                    this.runActions(gameObject, eventData, gameObject);
+                    const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
+                    if (!editorUI || editorUI.currentMode === 'play') {
+                        if (this.actionInterpreter) {
+                            this.actioninterpreter.run(gameObject, eventData.actions, gameObject);
+                        }
+                    }
                 });
             }
 
-            // --- 'onStateChange' トリガーの処理 ---
+              // --- 'onStateChange' トリガーの処理 ---
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
-                    // ★★★ 条件式をここで、安全に評価する ★★★
-                    if (this.evaluateCondition(eventData.condition, { state: newState, oldState: oldState })) {
-                        this.runActions(gameObject, eventData, gameObject);
-                    }
+                    // ★ 変数名を state, oldState で統一
+                    this.evaluateConditionAndRun(gameObject, eventData, { state: newState, oldState: oldState });
                 });
             }
             
             // --- 'onDirectionChange' トリガーの処理 ---
             if (eventData.trigger === 'onDirectionChange') {
                 gameObject.on('onDirectionChange', (newDirection) => {
-                    // ★★★ 条件式をここで、安全に評価する ★★★
-                    if (this.evaluateCondition(eventData.condition, { direction: newDirection })) {
-                        this.runActions(gameObject, eventData, gameObject);
-                    }
+                    // ★ 変数名を direction で統一
+                    this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
                 });
             }
-        });
+            
+        }); // ★★★ ここが、forEach ループの正しい閉じ括弧です ★★★
 
         // --- エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
@@ -260,45 +261,39 @@ this.matter.world.on('beforeupdate', (event) => {
         }
     }
 
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * 条件式を安全に評価する
-     * @param {string} conditionString - "state === 'walk'" のような条件式
-     * @param {object} context - 式の中で利用可能にする変数
-     * @returns {boolean} 条件が満たされたかどうか
-     */
-    evaluateCondition(conditionString, context) {
-        // 条件が設定されていなければ、常にtrue (実行する)
-        if (!conditionString || conditionString.trim() === '') {
-            return true;
-        }
-        
-        const varNames = Object.keys(context);   // 例: ['state', 'oldState']
+ 
+/**
+ * ★★★ 新規ヘルパーメソッド ★★★
+ * 条件式を安全に評価し、条件が満たされればアクションを実行する
+ * @param {Phaser.GameObjects.GameObject} gameObject - アクションの起点
+ * @param {object} eventData - イベント定義
+ * @param {object} context - 条件式の中で利用可能にする変数 (例: { state: 'walk' })
+ */
+evaluateConditionAndRun(gameObject, eventData, context) {
+    let conditionMet = true; // デフォルトはtrue
+
+    if (eventData.condition) {
+        // --- 1. コンテキストオブジェクトから、変数名と値のリストを作成 ---
+        const varNames = Object.keys(context); // 例: ['state', 'oldState']
         const varValues = Object.values(context); // 例: ['walk', 'idle']
 
         try {
-            const func = new Function(...varNames, `'use strict'; return (${conditionString});`);
-            return func(...varValues);
+            // --- 2. Functionコンストラクタに、変数名を引数として明示的に渡す ---
+            const func = new Function(...varNames, `'use strict'; return (${eventData.condition});`);
+            
+            // --- 3. 作成した関数に、実際の値を渡して実行 ---
+            conditionMet = func(...varValues);
+
         } catch (e) {
-            console.warn(`[Event System] Failed to evaluate condition: "${conditionString}"`, e);
-            return false; // エラーの場合は実行しない
-        }
-    }
-    
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * アクションを実行するための共通処理
-     */
-    runActions(gameObject, eventData, collidedTarget) {
-        const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
-        if (!editorUI || editorUI.currentMode === 'play') {
-            if (this.actionInterpreter) {
-                // collidedTargetを渡すのを忘れない
-                this.actionInterpreter.run(gameObject, eventData.actions, collidedTarget);
-            }
+            console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
+            conditionMet = false;
         }
     }
 
+    if (conditionMet && this.actionInterpreter) {
+        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+    }
+}
     /**
      * シーンのセットアップが完了した最終段階で呼ばれる
      */
