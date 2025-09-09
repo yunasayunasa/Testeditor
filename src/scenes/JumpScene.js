@@ -35,11 +35,11 @@ export default class JumpScene extends BaseGameScene {
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
 
-        this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
+       /* this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
             x: 150, y: 550, radius: 100,
             base: this.add.circle(0, 0, 100, 0x888888, 0.5),
             thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8),
-        });
+        });*/
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
@@ -103,15 +103,10 @@ export default class JumpScene extends BaseGameScene {
      * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
      */
     onSetupComplete() {
-        // ★★★ this.player への参照は、ゲームオーバー判定のために必要なので残す ★★★
+        // ★★★ プレイヤーの参照取得は、ここで行うのが最も確実 ★★★
         this.player = this.children.list.find(obj => obj.getData('group') === 'player');
         
         if (this.player) {
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ この startFollow の呪いを、ここから削除する ★★★
-            // this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
             this.playerController = this.player.components?.PlayerController;
             this.player.setFixedRotation(); 
         }
@@ -130,30 +125,30 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
- update(time, delta) {
+   /**
+     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
+     */
+    update(time, delta) {
         
-        // --- 1. プレイヤーコントローラーの更新 (変更なし) ---
-        // これにより、プレイヤーはスクロールする世界の中で、自由に行動できる
+        // --- 1. プレイヤーコントローラーの更新 ---
+        // ★ joystickを渡すのをやめる。左右移動はしないからだ。
         if (this.playerController) {
-            this.playerController.updateWithJoystick(this.joystick);
+            this.playerController.updateWithoutJoystick();
         }
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ ここからが、世界を動かす、新しいロジックだ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、新しい「流れる世界」の心臓部だ ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // --- 2. ステージの強制スクロール ---
-        // 毎フレーム、カメラのX座標を一定量だけ増加させる
-        const scrollSpeed = 2; // この値を調整すれば、ゲームの速度が変わる
-        this.cameras.main.scrollX += scrollSpeed;
+        // --- 2. スクロール対象のオブジェクトを全て動かす ---
+        const scrollSpeed = -5; // 左向きに動かすので、負の値を設定
 
-        // --- 3. (応用) ゲームオーバー判定 ---
-        // プレイヤーが、カメラの左端から見切れてしまったら
-        if (this.player && this.player.x < this.cameras.main.scrollX - (this.player.width / 2)) {
-            // ここにゲームオーバー処理を追加する
-            // (例: シーンをリスタートする)
-            console.log("GAME OVER");
-            this.scene.restart(); 
+        for (const gameObject of this.children.list) {
+            // isScrollableの印が付けられたオブジェクトで、かつ物理ボディを持つものだけ
+            if (gameObject.getData('isScrollable') && gameObject.body) {
+                // 水平速度だけを設定し、垂直速度は物理演算に任せる
+                gameObject.setVelocityX(scrollSpeed);
+            }
         }
     }
     /**

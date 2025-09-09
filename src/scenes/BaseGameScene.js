@@ -141,6 +141,9 @@ this.matter.world.on('beforeupdate', (event) => {
         if (data.group) gameObject.setData('group', data.group);
         if (data.texture) gameObject.setTexture(data.texture);
         
+        if (layout.scrollable) {
+            gameObject.setData('isScrollable', true);
+        }
      
 // --- 2. 物理ボディの生成 ---
  // --- 2. 物理ボディの生成 ---
