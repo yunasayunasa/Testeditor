@@ -95,31 +95,23 @@ buildSceneFromLayout(layoutData) {
         });
     }
     
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // ★★★ これが、全てを解決する、最後のロジックです ★★★
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    let allGameObjects = []; 
 
-    // --- 2. オブジェクトの生成とプロパティ適用 ---
-    const allGameObjects = []; // 生成されたGameObjectを格納する、信頼できるリスト
-
-    if (layoutData.objects) {
-        // a. 全てのオブジェクト定義をループする
-        for (const layout of layoutData.objects) {
-            // b. GameObjectを生成する
-            const gameObject = this.createObjectFromLayout(layout);
-            
-            if (gameObject) {
-                // c. 生成に成功したら、プロパティを適用する
-                this.applyProperties(gameObject, layout);
-                // d. そして、信頼できるリストに追加する
-                allGameObjects.push(gameObject);
-            }
+        // --- 2. オブジェクトの生成とプロパティ適用 ---
+        if (layoutData.objects) {
+            // mapを使って、生成されたGameObjectの配列を一度に作成
+            allGameObjects = layoutData.objects.map(layout => {
+                const gameObject = this.createObjectFromLayout(layout);
+                if (gameObject) {
+                    this.applyProperties(gameObject, layout);
+                }
+                return gameObject;
+            }).filter(Boolean); // nullやundefinedになったものを配列から取り除く
         }
+        
+        // --- 3. これで、ifブロックの外からでも、allGameObjectsを参照できる ---
+        this.finalizeSetup(allGameObjects);
     }
-    
-    // --- 3. 全てのオブジェクトが揃った状態で、最終処理を呼び出す ---
-    this.finalizeSetup(allGameObjects);
-}
     
     /**
      * レイアウト定義に基づいてゲームオブジェクトを生成する。
