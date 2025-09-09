@@ -207,8 +207,9 @@ this.matter.world.on('beforeupdate', (event) => {
             return gameObject;
     }
     
+    
     /**
-     * オブジェクトにイベントリスナーとエディタ機能を設定する (カスタムイベント対応・最終版)
+     * オブジェクトにイベントリスナーとエディタ機能を設定する (構文修正・最終完成版)
      * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
@@ -216,70 +217,66 @@ this.matter.world.on('beforeupdate', (event) => {
         gameObject.setData('events', events);
         
         // --- 既存のゲームプレイ用リスナーを全てクリア ---
-        // これにより、定義を更新した際に古いリスナーが残るのを防ぐ
         gameObject.off('pointerdown');
-        gameObject.off('onStateChange'); // 我々のカスタムイベントもクリア
- gameObject.off('onDirectionChange'); // 新しいカスタムイベントもクリア
+        gameObject.off('onStateChange');
+        gameObject.off('onDirectionChange');
+
         // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
             
-            // --- 'onClick' トリガーの処理 (変更なし) ---
+            // --- 'onClick' トリガーの処理 ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
                     const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
                     if (!editorUI || editorUI.currentMode === 'play') {
                         if (this.actionInterpreter) {
-                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                            this.actioninterpreter.run(gameObject, eventData.actions, gameObject);
                         }
                     }
                 });
             }
 
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ ここからが、アニメーション連携の核心です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
             // --- 'onStateChange' トリガーの処理 ---
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
-                    
-                    // --- 1. 条件(condition)を評価する ---
-                    let conditionMet = false;
+                    let conditionMet = true; // デフォルトはtrue
                     if (eventData.condition) {
                         try {
-                            // "state === 'walk'" のような文字列を、安全に評価する
-                            // newState と oldState を、式の中で使えるようにする
                             conditionMet = new Function('state', 'oldState', `'use strict'; return (${eventData.condition});`)(newState, oldState);
                         } catch (e) {
                             console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
                             conditionMet = false;
                         }
-                    } else {
-                        // 条件がなければ、常に実行
-                        conditionMet = true; 
                     }
-
-                    // --- 2. 条件が満たされていれば、アクションを実行 ---
-                    if (conditionMet) {
-                        if (this.actionInterpreter) {
-                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
-                        }
-                    }
-                });
-            }
-        });
- // ★★★ 'onDirectionChange' トリガーの処理を追加 ★★★
-            if (eventData.trigger === 'onDirectionChange') {
-                gameObject.on('onDirectionChange', (newDirection) => {
-                    // Conditionを評価 (例: "direction === 'left'")
-                    let conditionMet = new Function('direction', `'use strict'; return (${eventData.condition});`)(newDirection);
-
-                    if (conditionMet) {
+                    if (conditionMet && this.actionInterpreter) {
                         this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
                     }
                 });
             }
-        });
+            
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ 'onDirectionChange' の処理を、ループの内側に正しく配置 ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            if (eventData.trigger === 'onDirectionChange') {
+                gameObject.on('onDirectionChange', (newDirection) => {
+                    let conditionMet = true; // デフォルトはtrue
+                    if (eventData.condition) {
+                        try {
+                            // ★ 式の中では "direction" という変数名でアクセスできるようにする
+                            conditionMet = new Function('direction', `'use strict'; return (${eventData.condition});`)(newDirection);
+                        } catch (e) {
+                            console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
+                            conditionMet = false;
+                        }
+                    }
+                    if (conditionMet && this.actionInterpreter) {
+                        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                    }
+                });
+            }
+            
+        }); // ★★★ ここが、forEach ループの正しい閉じ括弧です ★★★
+
         // --- エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
