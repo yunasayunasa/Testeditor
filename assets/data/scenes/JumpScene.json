@@ -4,7 +4,7 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 682,
+      "x": 702,
       "y": 1068,
       "depth": 0,
       "scaleX": 1,
@@ -30,7 +30,7 @@
         },
         {
           "trigger": "onStateChange",
-          "actions": "[anim_frame name=歩き frame=0]",
+          "actions": "[anim_stop]",
           "condition": "state === 'idle'"
         },
         {
