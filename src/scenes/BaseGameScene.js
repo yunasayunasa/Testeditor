@@ -252,8 +252,8 @@ this.matter.world.on('beforeupdate', (event) => {
         }
     }
 
-    /**
-     * ★★★ 新規メソッド：StateManagerの力を借りて、条件式を安全に評価する ★★★
+     /**
+     * ★★★ evaluateConditionWithStateManager を、新しいevalを使うように修正 ★★★
      */
     evaluateConditionWithStateManager(conditionString, context) {
         if (!conditionString || conditionString.trim() === '') {
@@ -261,27 +261,11 @@ this.matter.world.on('beforeupdate', (event) => {
         }
         
         const stateManager = this.registry.get('stateManager');
-        if (!stateManager) {
-            console.error("[Event System] StateManager not found for condition evaluation.");
-            return false;
-        }
+        if (!stateManager) { /* ... */ return false; }
 
-        // --- 1. "state === 'walk'" のような式を、一時的な変数宣言に変換する ---
-        // 例: "let state = 'walk'; let oldState = 'idle'; state === 'walk'"
-        let fullExpression = '';
-        for (const key in context) {
-            const value = context[key];
-            if (typeof value === 'string') {
-                fullExpression += `let ${key} = '${value}'; `;
-            } else {
-                fullExpression += `let ${key} = ${value}; `;
-            }
-        }
-        fullExpression += conditionString;
-
-        // --- 2. StateManagerの安全なevalに、この完全な式を渡して評価させる ---
         try {
-            return stateManager.eval(fullExpression);
+            // ★★★ StateManager.evalに、条件式とコンテキストを直接渡す ★★★
+            return stateManager.eval(conditionString, context);
         } catch (e) {
             console.warn(`[Event System] Failed to evaluate condition: "${conditionString}"`, e);
             return false;
