@@ -4,8 +4,8 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 319,
-      "y": 69,
+      "x": 51,
+      "y": 322,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -42,7 +42,15 @@
       "components": [
         {
           "type": "PlayerController",
-          "params": {}
+          "params": {
+            "moveSpeed": 12
+          }
+        },
+        {
+          "type": "Scrollable",
+          "params": {
+            "speed": 4.5
+          }
         }
       ],
       "physics": {
@@ -58,12 +66,12 @@
       "name": "cg01_1",
       "type": "Image",
       "texture": "cg01",
-      "x": 304,
-      "y": 582,
+      "x": 302,
+      "y": 627,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -2,
+      "angle": 1,
       "alpha": 1,
       "components": [
         {
@@ -72,11 +80,11 @@
         }
       ],
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 0.1,
+        "friction": 1,
         "restitution": 0
       }
     },
@@ -84,8 +92,8 @@
       "name": "kaito_normal_1",
       "type": "Image",
       "texture": "kaito_normal",
-      "x": 1715,
-      "y": 473,
+      "x": 1650,
+      "y": 631,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -98,11 +106,11 @@
         }
       ],
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 0.1,
+        "friction": 1,
         "restitution": 0
       }
     },
@@ -110,12 +118,12 @@
       "name": "cg01_2",
       "type": "Image",
       "texture": "cg01",
-      "x": 759,
-      "y": 407,
+      "x": 933,
+      "y": 555,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -99,
+      "angle": -14,
       "alpha": 1,
       "components": [
         {
@@ -128,11 +136,11 @@
         }
       ],
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 0.1,
+        "friction": 1,
         "restitution": 0
       }
     },
@@ -140,12 +148,12 @@
       "name": "next_arrow_1",
       "type": "Image",
       "texture": "next_arrow",
-      "x": 787,
-      "y": 45,
+      "x": 1043,
+      "y": 208,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 91,
+      "angle": -88,
       "alpha": 1,
       "events": [
         {
@@ -169,23 +177,11 @@
       }
     },
     {
-      "name": "next_arrow_2",
-      "type": "Image",
-      "texture": "next_arrow",
-      "x": 3200,
-      "y": 1800,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1
-    },
-    {
       "name": "yuna_angry_1",
       "type": "Image",
       "texture": "yuna_angry",
-      "x": 1183,
-      "y": 839,
+      "x": 2190,
+      "y": 587,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -198,11 +194,51 @@
         }
       ],
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "circle",
-        "friction": 0.1,
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "umi_1",
+      "type": "Image",
+      "texture": "umi",
+      "x": 2700,
+      "y": 730,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "physics": {
+        "isStatic": true,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "umi_2",
+      "type": "Image",
+      "texture": "umi",
+      "x": 3470,
+      "y": 730,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "physics": {
+        "isStatic": true,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
         "restitution": 0
       }
     }
