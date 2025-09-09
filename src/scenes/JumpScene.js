@@ -2,6 +2,7 @@
 import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
 import PlayerController from '../components/PlayerController.js';
+import Scrollable from '../components/Scrollable.js';
 
 export default class JumpScene extends BaseGameScene {
 
@@ -78,7 +79,11 @@ export default class JumpScene extends BaseGameScene {
         if (componentType === 'PlayerController') {
             componentInstance = new PlayerController(this, target, params);
         }
-        // ... (将来、EnemyAIなどをここに追加) ...
+          // ★★★ Scrollableコンポーネントの生成ロジックを追加 ★★★
+        else if (componentType === 'Scrollable') {
+            componentInstance = new Scrollable(this, target, params);
+        }
+
 
         if (componentInstance) {
             // --- 2. GameObjectにインスタンスを格納 ---

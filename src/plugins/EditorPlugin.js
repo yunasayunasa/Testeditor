@@ -541,7 +541,8 @@ this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getDat
             this.editorPropsContainer.appendChild(div);
         });
 
-        const availableComponents = ['PlayerController'];
+        
+         const availableComponents = ['PlayerController', 'Scrollable'];
         const select = document.createElement('select');
         select.innerHTML = '<option value="">Add Component...</option>';
         availableComponents.forEach(compName => {
