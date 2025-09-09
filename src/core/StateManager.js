@@ -217,25 +217,18 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             console.error(`[StateManager.setValueByPath] 値の設定に失敗しました: path=${path}`, e);
         }
     }
-     /**
-     * 文字列の式を評価し、結果を返す (究極版)
-     * [if]タグやイベントのCondition評価で使われることを想定
-     * @param {string} exp - "f.love_meter > 5" や "state === 'walk'" のような評価式
-     * @param {object} [context={}] - 式の中で一時的に利用可能にする変数
+    /**
+     * 文字列の式を評価し、結果を返す (評価専用)
+     * [if]タグなどで使われることを想定
+     * @param {string} exp - "f.love_meter > 5" のような評価式
      * @returns {*} 評価結果 (true/falseなど)
      */
-    eval(exp, context = {}) {
+    eval(exp) {
         try {
-            // --- 1. スコープに含める変数の名前と値のリストを作成 ---
-            const varNames = ['f', 'sf', ...Object.keys(context)];
-            const varValues = [this.f, this.sf, ...Object.values(context)];
-
-            // --- 2. Functionコンストラクタに、全ての変数を引数として渡す ---
-            const func = new Function(...varNames, `'use strict'; return (${exp});`);
-            
-            // --- 3. 作成した関数に、実際の値を渡して実行 ---
-            return func(...varValues);
-            
+            const f = this.f;
+            const sf = this.sf;
+            // new Functionは、純粋な値の取得または比較にのみ使用する
+            return new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
         } catch (e) {
             console.warn(`[StateManager.eval] 式の評価中にエラーが発生しました: "${exp}"`, e);
             return undefined;

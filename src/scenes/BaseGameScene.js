@@ -209,76 +209,43 @@ this.matter.world.on('beforeupdate', (event) => {
     
     
   
-     /**
+    /**
      * オブジェクトにイベントリスナーとエディタ機能を設定する (最終完成版)
+     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
         const events = eventsData || [];
         gameObject.setData('events', events);
         
+        // --- 既存のゲームプレイ用リスナーを全てクリア ---
         gameObject.off('pointerdown');
         gameObject.off('onStateChange');
         gameObject.off('onDirectionChange');
 
+        // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
             
+            // --- 'onClick' トリガーの処理 ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
                     this.runActions(gameObject, eventData, gameObject);
                 });
             }
 
+            // --- 'onStateChange' トリガーの処理 ---
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
-                    // ★ StateManagerの安全なevalに、評価を依頼する
-                    if (this.evaluateConditionWithStateManager(eventData.condition, { state: newState, oldState: oldState })) {
-                        this.runActions(gameObject, eventData, gameObject);
-                    }
-                });
-            }
-            
-            if (eventData.trigger === 'onDirectionChange') {
-                gameObject.on('onDirectionChange', (newDirection) => {
-                    if (this.evaluateConditionWithStateManager(eventData.condition, { direction: newDirection })) {
-                        this.runActions(gameObject, eventData, gameObject);
-                    }
-                });
-            }
-        });
-
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(gameObject, this);
-        }
-    }
-
-    
-   
-
-      /**
-     * オブジェクトにイベントリスナーとエディタ機能を設定する
-     */
-    applyEventsAndEditorFunctions(gameObject, eventsData) {
-        const events = eventsData || [];
-        gameObject.setData('events', events);
-        
-        gameObject.off('pointerdown');
-        gameObject.off('onStateChange');
-        gameObject.off('onDirectionChange');
-
-        events.forEach(eventData => {
-            if (eventData.trigger === 'onClick') {
-                gameObject.on('pointerdown', () => this.runActions(gameObject, eventData, gameObject));
-            }
-            if (eventData.trigger === 'onStateChange') {
-                gameObject.on('onStateChange', (newState, oldState) => {
+                    // ★★★ 条件式をここで、安全に評価する ★★★
                     if (this.evaluateCondition(eventData.condition, { state: newState, oldState: oldState })) {
                         this.runActions(gameObject, eventData, gameObject);
                     }
                 });
             }
+            
+            // --- 'onDirectionChange' トリガーの処理 ---
             if (eventData.trigger === 'onDirectionChange') {
                 gameObject.on('onDirectionChange', (newDirection) => {
+                    // ★★★ 条件式をここで、安全に評価する ★★★
                     if (this.evaluateCondition(eventData.condition, { direction: newDirection })) {
                         this.runActions(gameObject, eventData, gameObject);
                     }
@@ -286,43 +253,38 @@ this.matter.world.on('beforeupdate', (event) => {
             }
         });
 
+        // --- エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) editor.makeEditable(gameObject, this);
+        if (editor && editor.isEnabled) {
+            editor.makeEditable(gameObject, this);
+        }
     }
 
     /**
-     * 条件式を、完全に独立した、安全なスコープで評価する
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 条件式を安全に評価する
+     * @param {string} conditionString - "state === 'walk'" のような条件式
+     * @param {object} context - 式の中で利用可能にする変数
+     * @returns {boolean} 条件が満たされたかどうか
      */
     evaluateCondition(conditionString, context) {
+        // 条件が設定されていなければ、常にtrue (実行する)
         if (!conditionString || conditionString.trim() === '') {
             return true;
         }
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、全てを解決する、最後の修正だ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // 汚染されたバッククォートを、ここで完全に浄化する
-        const cleanCondition = String(conditionString).replace(/`/g, '');
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        const stateManager = this.registry.get('stateManager');
-        const f = stateManager ? stateManager.f : {};
-        const sf = stateManager ? stateManager.sf : {};
-
-        const fullContext = { ...f, ...sf, ...context };
-
-        // ★★★ 私のコピーミスを、ここで修正する ★★★
-        const varNames = Object.keys(fullContext);
-        const varValues = Object.values(fullContext);
+        const varNames = Object.keys(context);   // 例: ['state', 'oldState']
+        const varValues = Object.values(context); // 例: ['walk', 'idle']
 
         try {
-            const func = new Function(...varNames, `'use strict'; return (${cleanCondition});`);
+            const func = new Function(...varNames, `'use strict'; return (${conditionString});`);
             return func(...varValues);
         } catch (e) {
-            console.warn(`[Event System] Failed to evaluate condition: "${cleanCondition}"`, e);
-            return false;
+            console.warn(`[Event System] Failed to evaluate condition: "${conditionString}"`, e);
+            return false; // エラーの場合は実行しない
         }
     }
+    
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * アクションを実行するための共通処理
