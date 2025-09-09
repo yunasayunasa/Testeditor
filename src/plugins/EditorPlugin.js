@@ -97,19 +97,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         return null;
     }
-update(time, delta) {
-        // --- 1. 時間停止の確認 (エンジンの基本機能) ---
-        const systemScene = this.scene.get('SystemScene');
-        if (systemScene && systemScene.isTimeStopped) {
-            return; // 時間が止まっていれば、この先の処理を全てスキップ
-        }
 
-        // --- 2. 継承先のシーン独自の更新処理を呼び出す (テンプレートメソッド) ---
-        // これにより、JumpSceneなどは、時間を気にせず自分のロジックに集中できる
-        if (typeof this.sceneUpdate === 'function') {
-            this.sceneUpdate(time, delta);
-        }
-    }
      /**
      * プロパティパネルを絶対にクラッシュさせずに更新する最終メソッド。
      */
@@ -780,13 +768,7 @@ createComponentSection() {
         });
 
        gameObject.on('drag', (pointer, dragX, dragY) => {
-         
-            // ★★★ 時間が止まっている時だけ、ドラッグを許可する ★★★
-            const systemScene = this.game.scene.getScene('SystemScene');
-            if (this.editorUI?.currentMode === 'select' && systemScene?.isTimeStopped) {
-                // ... (setPositionとBody.setPositionの処理) ...
-          
-          
+            if (this.editorUI?.currentMode === 'select') {
                 // ★ setPositionは物理エンジンに影響を与えない
                 gameObject.setPosition(dragX, dragY);
                 // ★ ドラッグ中は物理ボディの位置も強制的に合わせる
@@ -1182,7 +1164,7 @@ if (gameObject.body) {
         const triggerSelect = document.createElement('select');
         
         // ★★★ 'onDirectionChange' もトリガーリストに追加 ★★★
-        ['onClick', 'onCollide_Start', 'onStateChange', 'onDirectionChange', 'onReady'].forEach(t => {
+        ['onClick', 'onCollide_Start', 'onStateChange', 'onDirectionChange'].forEach(t => {
             const option = document.createElement('option');
             option.value = t; option.innerText = t;
             if (t === eventData.trigger) option.selected = true;
