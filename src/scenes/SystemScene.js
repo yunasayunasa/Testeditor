@@ -90,7 +90,10 @@ export default class SystemScene extends Phaser.Scene {
                 console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
             }
         });
-    
+     // ★★★ 時間を再開させるための、公式な命令を追加 ★★★
+        this.events.on('request-time-resume', () => {
+            this.isTimeStopped = false;
+        });
         // --- 3. エディタ関連の初期化 ---
         this.initializeEditor();
          

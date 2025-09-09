@@ -1,5 +1,6 @@
 // src/handlers/events/index.js
-import scenePauseHandler from './scene_pause.js';
+import timeStopHandler from './time_stop.js';
+import timeResumeHandler from './time_resume.js';
 import { handleTween } from './tween.js';
 import { handleDestroy } from './destroy.js';
 import { handleSetVisible } from './set_visible.js';
@@ -12,7 +13,8 @@ import evalExpressionHandler from './eval.js';
 import setFlipXHandler from './set_flip_x.js';
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
-   'scene_pause': scenePauseHandler,
+   'time_stop': timeStopHandler,
+    'time_resume': timeResumeHandler,
     'tween': handleTween,
     'destroy': handleDestroy,
     'set_visible': handleSetVisible,

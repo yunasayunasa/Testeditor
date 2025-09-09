@@ -207,22 +207,7 @@ this.matter.world.on('beforeupdate', (event) => {
         
         // --- 7. イベントリスナーとエディタ登録 ---
         this.applyEventsAndEditorFunctions(gameObject, layout.events);
-            // ★★★ 'onReady' イベントを実行する ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        if (layout.events) {
-            layout.events.forEach(eventData => {
-                if (eventData.trigger === 'onReady') {
-                    if (this.actionInterpreter) {
-                        // onReadyはゲームロジックなので、Playモードでのみ実行する
-                        const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
-                        if (!editorUI || editorUI.currentMode === 'play') {
-                            console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}'`);
-                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
-                        }
-                    }
-                }
-            });
-        }
+         
     
             return gameObject;
 
@@ -246,6 +231,19 @@ this.matter.world.on('beforeupdate', (event) => {
         // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
             
+             // --- 'onReady' トリガーの処理 ---
+            if (eventData.trigger === 'onReady') {
+                // onReadyは一度だけ、この場で即座に実行する
+                const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
+                if (!editorUI || editorUI.currentMode === 'play') {
+                    if (this.actionInterpreter) {
+                        console.log(`[Event System] Firing 'onReady' event for '${gameObject.name}'`);
+                        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                    }
+                }
+            }
+
+
             // --- 'onClick' トリガーの処理 ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
