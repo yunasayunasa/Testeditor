@@ -4,7 +4,7 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 781,
+      "x": 682,
       "y": 1068,
       "depth": 0,
       "scaleX": 1,
@@ -12,6 +12,33 @@
       "angle": 0,
       "alpha": 1,
       "group": "player",
+      "events": [
+        {
+          "trigger": "onDirectionChange",
+          "actions": "[set_flip_x value=true]",
+          "condition": "direction === 'left'"
+        },
+        {
+          "trigger": "onDirectionChange",
+          "actions": "[set_flip_x value=false]",
+          "condition": "direction === 'right'"
+        },
+        {
+          "trigger": "onStateChange",
+          "actions": "[anim_play name=歩き]",
+          "condition": "state === 'walk'"
+        },
+        {
+          "trigger": "onStateChange",
+          "actions": "[anim_stop]",
+          "condition": "oldState === 'walk'"
+        },
+        {
+          "trigger": "onStateChange",
+          "actions": "[anim_frame name=歩き frame=0]",
+          "condition": "`state === 'idle'"
+        }
+      ],
       "components": [
         {
           "type": "PlayerController",
@@ -59,12 +86,12 @@
       "name": "next_arrow_2",
       "type": "Image",
       "texture": "next_arrow",
-      "x": 1099,
-      "y": 1094,
+      "x": 1189,
+      "y": 1409,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 0,
+      "angle": -180,
       "alpha": 1,
       "group": "coin",
       "events": [
@@ -75,11 +102,11 @@
         }
       ],
       "physics": {
-        "isStatic": true,
+        "isStatic": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 1,
+        "friction": 0.1,
         "restitution": 0
       }
     },
@@ -87,7 +114,7 @@
       "name": "cg01_1",
       "type": "Image",
       "texture": "cg01",
-      "x": 800,
+      "x": 799,
       "y": 1283,
       "depth": 0,
       "scaleX": 1,
