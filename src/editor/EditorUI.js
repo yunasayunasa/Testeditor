@@ -202,12 +202,14 @@ if (this.modeToggle && this.modeLabel) {
      * ★★★ 新規メソッド：ゲーム内時間の「ポーズ/再開」を制御するボタンを生成する ★★★
      */
     createPauseToggle() {
-        // モード切替スイッチの隣あたりに配置するのが良いだろう
+        // モード切替スイッチが置かれているコンテナを取得
         const modeControls = document.getElementById('editor-mode-controls');
         if (modeControls) {
             const pauseButton = document.createElement('button');
             pauseButton.id = 'editor-pause-btn';
-            pauseButton.innerText = '⏸️ Pause'; // 絵文字を使うと分かりやすい
+            pauseButton.innerText = '⏸️ Pause'; // 初期状態は「一時停止」
+            
+            // --- ボタンのスタイルを定義 ---
             pauseButton.style.marginLeft = '20px';
             pauseButton.style.padding = '5px 10px';
             pauseButton.style.border = '1px solid #777';
@@ -215,22 +217,30 @@ if (this.modeToggle && this.modeLabel) {
             pauseButton.style.color = '#eee';
             pauseButton.style.borderRadius = '5px';
             pauseButton.style.cursor = 'pointer';
+            pauseButton.style.fontSize = '14px';
 
-             pauseButton.addEventListener('click', () => {
-                // ★★★ SystemSceneのフラグを直接、切り替える ★★★
+            // --- ボタンがクリックされた時の処理を定義 ---
+            pauseButton.addEventListener('click', () => {
+                // SystemSceneへの参照を取得
                 const systemScene = this.game.scene.getScene('SystemScene');
                 if (systemScene) {
-                    systemScene.isTimeStopped = !systemScene.isTimeStopped; // true/falseを反転
+                    // isTimeStoppedフラグを、現在の状態の逆(true/false)に設定
+                    systemScene.isTimeStopped = !systemScene.isTimeStopped;
 
+                    // ボタンの見た目を、新しい状態に合わせて更新
                     if (systemScene.isTimeStopped) {
+                        // 時間が停止した場合
                         pauseButton.innerText = '▶️ Play';
-                        pauseButton.style.backgroundColor = '#2a9d8f';
+                        pauseButton.style.backgroundColor = '#2a9d8f'; // 目立つ色に
                     } else {
+                        // 時間が再開した場合
                         pauseButton.innerText = '⏸️ Pause';
                         pauseButton.style.backgroundColor = '#555';
                     }
                 }
             });
+
+            // 完成したボタンをDOMに追加
             modeControls.appendChild(pauseButton);
         }
     }
