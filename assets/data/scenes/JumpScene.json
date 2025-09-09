@@ -5,7 +5,7 @@
       "type": "Sprite",
       "texture": "walk",
       "x": 702,
-      "y": 1068,
+      "y": 1383,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -53,8 +53,33 @@
         "friction": 0.1,
         "restitution": 0
       }
+    },
+    {
+      "name": "kaito_normal_1",
+      "type": "Image",
+      "texture": "kaito_normal",
+      "x": 1880,
+      "y": 1057,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "components": [
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "circle",
+        "friction": 0.1,
+        "restitution": 0
+      }
     }
-    
   ],
   "animations": [
     {
