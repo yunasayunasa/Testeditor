@@ -253,47 +253,78 @@ this.matter.world.on('beforeupdate', (event) => {
     }
 
      /**
-     * ★★★ evaluateConditionWithStateManager を、新しいevalを使うように修正 ★★★
+     * オブジェクトにイベントリスナーとエディタ機能を設定する (最終完成版)
      */
-    evaluateConditionWithStateManager(conditionString, context) {
-        if (!conditionString || conditionString.trim() === '') {
-            return true;
-        }
+    applyEventsAndEditorFunctions(gameObject, eventsData) {
+        const events = eventsData || [];
+        gameObject.setData('events', events);
         
-        const stateManager = this.registry.get('stateManager');
-        if (!stateManager) { /* ... */ return false; }
+        gameObject.off('pointerdown');
+        gameObject.off('onStateChange');
+        gameObject.off('onDirectionChange');
 
-        try {
-            // ★★★ StateManager.evalに、条件式とコンテキストを直接渡す ★★★
-            return stateManager.eval(conditionString, context);
-        } catch (e) {
-            console.warn(`[Event System] Failed to evaluate condition: "${conditionString}"`, e);
-            return false;
+        events.forEach(eventData => {
+            
+            if (eventData.trigger === 'onClick') {
+                gameObject.on('pointerdown', () => {
+                    this.runActions(gameObject, eventData, gameObject);
+                });
+            }
+
+            if (eventData.trigger === 'onStateChange') {
+                gameObject.on('onStateChange', (newState, oldState) => {
+                    if (this.evaluateCondition(eventData.condition, { state: newState, oldState: oldState })) {
+                        this.runActions(gameObject, eventData, gameObject);
+                    }
+                });
+            }
+            
+            if (eventData.trigger === 'onDirectionChange') {
+                gameObject.on('onDirectionChange', (newDirection) => {
+                    if (this.evaluateCondition(eventData.condition, { direction: newDirection })) {
+                        this.runActions(gameObject, eventData, gameObject);
+                    }
+                });
+            }
+        });
+
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            editor.makeEditable(gameObject, this);
         }
     }
 
     /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * 条件式を安全に評価する
-     * @param {string} conditionString - "state === 'walk'" のような条件式
-     * @param {object} context - 式の中で利用可能にする変数
-     * @returns {boolean} 条件が満たされたかどうか
+     * ★★★ これが、このエンジンの最後の心臓部だ ★★★
+     * 条件式を、完全に独立した、安全なスコープで評価する
      */
     evaluateCondition(conditionString, context) {
-        // 条件が設定されていなければ、常にtrue (実行する)
         if (!conditionString || conditionString.trim() === '') {
             return true;
         }
         
-        const varNames = Object.keys(context);   // 例: ['state', 'oldState']
-        const varValues = Object.values(context); // 例: ['walk', 'idle']
+        // --- 1. StateManagerから、グローバル変数を取得 ---
+        const stateManager = this.registry.get('stateManager');
+        const f = stateManager ? stateManager.f : {};
+        const sf = stateManager ? stateManager.sf : {};
+
+        // --- 2. グローバル変数と、ローカルなコンテキスト変数をマージ ---
+        const fullContext = { ...f, ...sf, ...context };
+
+        // --- 3. 変数名をキーの配列として、値を値の配列として取得 ---
+        const varNames = Object.keys(fullContext);
+        const varValues = Object.values(fullContext);
 
         try {
+            // --- 4. new Function に、全ての変数を引数として渡す ---
             const func = new Function(...varNames, `'use strict'; return (${conditionString});`);
+            
+            // --- 5. 関数に、全ての値を渡して実行 ---
             return func(...varValues);
+
         } catch (e) {
             console.warn(`[Event System] Failed to evaluate condition: "${conditionString}"`, e);
-            return false; // エラーの場合は実行しない
+            return false;
         }
     }
     
