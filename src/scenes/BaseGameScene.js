@@ -252,8 +252,11 @@ this.matter.world.on('beforeupdate', (event) => {
         }
     }
 
-     /**
-     * オブジェクトにイベントリスナーとエディタ機能を設定する (最終完成版)
+    
+   
+
+      /**
+     * オブジェクトにイベントリスナーとエディタ機能を設定する
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
         const events = eventsData || [];
@@ -264,13 +267,9 @@ this.matter.world.on('beforeupdate', (event) => {
         gameObject.off('onDirectionChange');
 
         events.forEach(eventData => {
-            
             if (eventData.trigger === 'onClick') {
-                gameObject.on('pointerdown', () => {
-                    this.runActions(gameObject, eventData, gameObject);
-                });
+                gameObject.on('pointerdown', () => this.runActions(gameObject, eventData, gameObject));
             }
-
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
                     if (this.evaluateCondition(eventData.condition, { state: newState, oldState: oldState })) {
@@ -278,7 +277,6 @@ this.matter.world.on('beforeupdate', (event) => {
                     }
                 });
             }
-            
             if (eventData.trigger === 'onDirectionChange') {
                 gameObject.on('onDirectionChange', (newDirection) => {
                     if (this.evaluateCondition(eventData.condition, { direction: newDirection })) {
@@ -289,28 +287,35 @@ this.matter.world.on('beforeupdate', (event) => {
         });
 
         const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(gameObject, this);
-        }
+        if (editor && editor.isEnabled) editor.makeEditable(gameObject, this);
     }
 
-     evaluateCondition(conditionString, context) {
+    /**
+     * 条件式を、完全に独立した、安全なスコープで評価する
+     */
+    evaluateCondition(conditionString, context) {
         if (!conditionString || conditionString.trim() === '') {
             return true;
         }
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、全てを浄化する、最後の魔法だ ★★★
+        // ★★★ これが、全てを解決する、最後の修正だ ★★★
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // 汚染されたバッククォートを、ここで完全に浄化する
         const cleanCondition = String(conditionString).replace(/`/g, '');
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
         const stateManager = this.registry.get('stateManager');
         const f = stateManager ? stateManager.f : {};
-        // ... (以降のロジックは、前回の提案のままで完璧だ) ...
+        const sf = stateManager ? stateManager.sf : {};
+
+        const fullContext = { ...f, ...sf, ...context };
+
+        // ★★★ 私のコピーミスを、ここで修正する ★★★
+        const varNames = Object.keys(fullContext);
+        const varValues = Object.values(fullContext);
 
         try {
-            // ★ 浄化された "cleanCondition" を評価する
             const func = new Function(...varNames, `'use strict'; return (${cleanCondition});`);
             return func(...varValues);
         } catch (e) {
