@@ -98,17 +98,22 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-      /**
+  
+    /**
      * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
      */
- onSetupComplete() {
-        const player = this.children.list.find(obj => obj.getData('group') === 'player');
-        if (player) {
-            this.cameras.main.startFollow(player, true, 0.1, 0.1);
-            this.playerController = player.components?.PlayerController;
-            
-            // ★★★ プレイヤーが回転しないように固定する ★★★
-            player.setFixedRotation(); 
+    onSetupComplete() {
+        // ★★★ this.player への参照は、ゲームオーバー判定のために必要なので残す ★★★
+        this.player = this.children.list.find(obj => obj.getData('group') === 'player');
+        
+        if (this.player) {
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ この startFollow の呪いを、ここから削除する ★★★
+            // this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+            this.playerController = this.player.components?.PlayerController;
+            this.player.setFixedRotation(); 
         }
         
         // --- ジャンプボタンのイベント処理をここで行う ---
@@ -125,14 +130,32 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-
-     update(time, delta) {
+ update(time, delta) {
+        
+        // --- 1. プレイヤーコントローラーの更新 (変更なし) ---
+        // これにより、プレイヤーはスクロールする世界の中で、自由に行動できる
         if (this.playerController) {
             this.playerController.updateWithJoystick(this.joystick);
         }
-        // ★ 他のコンポーネントのupdateループは不要 (PlayerControllerだけがupdateを持つため)
-    }
 
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ ここからが、世界を動かす、新しいロジックだ ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+        // --- 2. ステージの強制スクロール ---
+        // 毎フレーム、カメラのX座標を一定量だけ増加させる
+        const scrollSpeed = 2; // この値を調整すれば、ゲームの速度が変わる
+        this.cameras.main.scrollX += scrollSpeed;
+
+        // --- 3. (応用) ゲームオーバー判定 ---
+        // プレイヤーが、カメラの左端から見切れてしまったら
+        if (this.player && this.player.x < this.cameras.main.scrollX - (this.player.width / 2)) {
+            // ここにゲームオーバー処理を追加する
+            // (例: シーンをリスタートする)
+            console.log("GAME OVER");
+            this.scene.restart(); 
+        }
+    }
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
