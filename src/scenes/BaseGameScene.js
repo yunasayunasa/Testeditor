@@ -208,35 +208,68 @@ this.matter.world.on('beforeupdate', (event) => {
     }
     
     /**
-     * オブジェクトにイベントリスナーとエディタ機能を設定する。
-     * @param {Phaser.GameObjects.GameObject} gameObject - 対象オブジェクト。
-     * @param {object[]} eventsData - イベント定義の配列。
+     * オブジェクトにイベントリスナーとエディタ機能を設定する (カスタムイベント対応・最終版)
+     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
     applyEventsAndEditorFunctions(gameObject, eventsData) {
         const events = eventsData || [];
-        gameObject.setData('events', events); // 最新のイベントデータを保存
+        gameObject.setData('events', events);
         
-        // 既存のゲームプレイ用リスナーをクリア
+        // --- 既存のゲームプレイ用リスナーを全てクリア ---
+        // これにより、定義を更新した際に古いリスナーが残るのを防ぐ
         gameObject.off('pointerdown');
+        gameObject.off('onStateChange'); // 我々のカスタムイベントもクリア
 
-        // ゲームプレイ用リスナーを設定
+        // --- 新しいリスナーを設定 ---
         events.forEach(eventData => {
+            
+            // --- 'onClick' トリガーの処理 (変更なし) ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
-                    const systemScene = this.game.scene.getScene('SystemScene');
-                    const editorUI = systemScene ? systemScene.editorUI : null;
-                    
-                    // エディタが存在しないか、Playモードの時だけアクションを実行
+                    const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
                     if (!editorUI || editorUI.currentMode === 'play') {
                         if (this.actionInterpreter) {
-                            this.actionInterpreter.run(gameObject, eventData.actions);
+                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                        }
+                    }
+                });
+            }
+
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            // ★★★ ここからが、アニメーション連携の核心です ★★★
+            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+            // --- 'onStateChange' トリガーの処理 ---
+            if (eventData.trigger === 'onStateChange') {
+                gameObject.on('onStateChange', (newState, oldState) => {
+                    
+                    // --- 1. 条件(condition)を評価する ---
+                    let conditionMet = false;
+                    if (eventData.condition) {
+                        try {
+                            // "state === 'walk'" のような文字列を、安全に評価する
+                            // newState と oldState を、式の中で使えるようにする
+                            conditionMet = new Function('state', 'oldState', `'use strict'; return (${eventData.condition});`)(newState, oldState);
+                        } catch (e) {
+                            console.warn(`[Event System] Failed to evaluate condition: "${eventData.condition}"`, e);
+                            conditionMet = false;
+                        }
+                    } else {
+                        // 条件がなければ、常に実行
+                        conditionMet = true; 
+                    }
+
+                    // --- 2. 条件が満たされていれば、アクションを実行 ---
+                    if (conditionMet) {
+                        if (this.actionInterpreter) {
+                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
                         }
                     }
                 });
             }
         });
 
-        // エディタプラグインにオブジェクトを登録
+        // --- エディタへの登録 (変更なし) ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(gameObject, this);
