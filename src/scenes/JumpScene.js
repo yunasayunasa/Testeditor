@@ -130,8 +130,18 @@ export default class JumpScene extends BaseGameScene {
         }
     }
 
-     update(time, delta) {
-         super.update(time, delta); 
+    /**
+     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
+     */
+    update(time, delta) {
+        
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、このシーンの時間を止める、絶対的な門番です ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        const systemScene = this.scene.get('SystemScene');
+        if (systemScene && systemScene.isTimeStopped) {
+            return; // 時間が止まっていれば、この先の処理を全てスキップ
+        }
 
         // --- 1. PlayerControllerのための特別な更新 ---
         if (this.playerController) {
