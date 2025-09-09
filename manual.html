@@ -33,4 +33,92 @@
 <pre><code>[eval exp="f.score = f.score + 10"]
 [eval exp="f.has_key = true"]</code></pre>
 
-<!-- ▼▼▼ 今後、新しいタグを追加したら、ここに追記していく ▼▼▼ -->
+<hr>
+
+<h2>[tween]</h2>
+<p>オブジェクトのプロパティを、滑らかに変化させるアニメーション（トゥイーン）を再生します。このタグは処理に時間がかかるため、<code>ActionInterpreter</code>はアニメーションが完了するまで次のタグの実行を待ちます。</p>
+
+<h4>パラメータ:</h4>
+<ul>
+    <li>
+        <strong>property</strong> (必須): 変化させたいプロパティ名。
+        <br>例: <code>x</code>, <code>y</code>, <code>scale</code>, <code>scaleX</code>, <code>scaleY</code>, <code>angle</code>, <code>alpha</code>
+    </li>
+    <li>
+        <strong>to</strong> (必須): 目標となる値。<code>"+=100"</code>や<code>"-=50"</code>といった相対値も指定可能です。
+    </li>
+    <li>
+        <strong>time</strong> (任意): アニメーション時間（ミリ秒）。デフォルトは<code>1000</code> (1秒)。
+    </li>
+    <li>
+        <strong>ease</strong> (任意): 動きの緩急。デフォルトは<code>Linear</code> (等速)。
+        <br>例: <code>Sine.easeIn</code>, <code>Bounce.easeOut</code>, <code>Elastic.easeOut</code>
+    </li>
+    <li>
+        <strong>yoyo</strong> (任意): <code>true</code>にすると、アニメーションが終点に達した後、始点まで逆再生します。心臓の鼓動のような表現に使えます。
+    </li>
+</ul>
+
+<p><strong>使用例:</strong></p>
+<pre><code>; 1秒かけて右に200ピクセル移動
+[tween property=x to="+=200" time=1000]
+
+; 0.5秒かけて、跳ねながらY座標500の位置に着地
+[tween property=y to=500 time=500 ease=Bounce.easeOut]
+
+; 0.3秒かけて1.5倍に拡大する
+[tween property=scale to=1.5 time=300]
+</code></pre>
+
+<hr>
+
+<h2>[body_velocity]</h2>
+<p>対象オブジェクトの物理ボディの速度 (Velocity) を直接設定します。物理的な挙動を強制的に変更したい場合に使います。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>x</strong> (任意): X方向の速度を設定します。</li>
+    <li><strong>y</strong> (任意): Y方向の速度を設定します。</li>
+</ul>
+<p><strong>注意:</strong> XとY、どちらか一方だけの指定も可能です。指定されなかった方向の速度は、現在の値を維持します。</p>
+<p><strong>使用例:</strong></p>
+<pre><code>; 右方向に速さ5で押し出す
+[body_velocity x=5]
+
+; 上方向に強く打ち上げる
+[body_velocity y=-15]
+
+; 右斜め上にジャンプさせる
+[body_velocity x=7 y=-12]
+</code></pre>
+
+<hr>
+
+<h2>[anim_play]</h2>
+<p>対象オブジェクトのスプライトアニメーションを再生します。対象はスプライトである必要があります。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>name</strong> (必須): 再生したいアニメーションの名前（キー）を指定します。アニメーションは、あらかじめシーンのJSONで定義されている必要があります。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; "walk" という名前のアニメーションを再生
+[anim_play name=walk]
+
+; "jump_attack" という名前のアニメーションを再生
+[anim_play name=jump_attack]
+</code></pre>
+
+<hr>
+
+<h2>[set_visible]</h2>
+<p>対象オブジェクトの表示・非表示を切り替えます。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>value</strong> (必須): <code>true</code>で表示、<code>false</code>で非表示にします。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; オブジェクトを非表示にする
+[set_visible value=false]
+
+; オブジェクトを再表示する
+[set_visible value=true]
+</code></pre>
