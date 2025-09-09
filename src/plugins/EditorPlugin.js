@@ -550,18 +550,26 @@ this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getDat
                 select.innerHTML += `<option value="${compName}">${compName}</option>`;
             }
         });
-        select.onchange = (e) => {
+         select.onchange = (e) => {
             const compToAdd = e.target.value;
             if (compToAdd && this.selectedObject) {
+                
+                // --- 1. 永続化用のデータを準備・保存する (変更なし) ---
                 const currentComps = this.selectedObject.getData('components') || [];
-                const newComponentDef = { type: compToAdd, params: {} };
+                // ★ デフォルトのパラメータもここで定義できる (将来的に)
+                const newComponentDef = { type: compToAdd, params: {} }; 
                 currentComps.push(newComponentDef);
                 this.selectedObject.setData('components', currentComps);
                 
+              
                 const targetScene = this.selectedObject.scene;
+                // シーンが addComponent メソッドを持っていることを確認
                 if (targetScene && typeof targetScene.addComponent === 'function') {
+                    // シーンに、今すぐこのコンポーネントをインスタンス化するように命令する
                     targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
                 }
+
+                // --- 3. UIを更新して変更を反映する (変更なし) ---
                 this.updatePropertyPanel();
             }
         };
