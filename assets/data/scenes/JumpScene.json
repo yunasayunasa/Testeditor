@@ -4,8 +4,8 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 51,
-      "y": 1065,
+      "x": 319,
+      "y": 69,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -58,8 +58,8 @@
       "name": "cg01_1",
       "type": "Image",
       "texture": "cg01",
-      "x": 297,
-      "y": 1274,
+      "x": 304,
+      "y": 582,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -84,12 +84,12 @@
       "name": "kaito_normal_1",
       "type": "Image",
       "texture": "kaito_normal",
-      "x": 1560,
-      "y": 1208,
+      "x": 1715,
+      "y": 473,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -92,
+      "angle": -91,
       "alpha": 1,
       "components": [
         {
@@ -110,12 +110,12 @@
       "name": "cg01_2",
       "type": "Image",
       "texture": "cg01",
-      "x": 886,
-      "y": 1272,
+      "x": 759,
+      "y": 407,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -2,
+      "angle": -99,
       "alpha": 1,
       "components": [
         {
@@ -140,13 +140,19 @@
       "name": "next_arrow_1",
       "type": "Image",
       "texture": "next_arrow",
-      "x": 1467,
-      "y": 940,
+      "x": 787,
+      "y": 45,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -56,
+      "angle": 91,
       "alpha": 1,
+      "events": [
+        {
+          "trigger": "onReady",
+          "actions": "[time_stop]"
+        }
+      ],
       "components": [
         {
           "type": "Scrollable",
@@ -178,12 +184,12 @@
       "name": "yuna_angry_1",
       "type": "Image",
       "texture": "yuna_angry",
-      "x": 2102,
-      "y": 1282,
+      "x": 1183,
+      "y": 839,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 10,
+      "angle": -140,
       "alpha": 1,
       "components": [
         {
