@@ -1,0 +1,321 @@
+/* ==========================================================================
+   Odyssey Engine - Main Stylesheet
+   Version: 1.0 (Final & Complete)
+   ========================================================================== */
+
+/* --- 基本設定 & フォント --- */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #1e1e1e; /* デフォルトの背景色 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    color: #d4d4d4;
+}
+
+/* --- レイアウトコンテナ --- */
+#game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#editor-root {
+    display: none; /* デバッグモード以外では非表示 */
+}
+
+/* ==========================================================================
+   DEBUG MODE STYLES
+   ========================================================================== */
+
+body.debug-mode {
+    display: flex;
+    background-color: #3d3d3d;
+}
+
+body.debug-mode #game-container {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    margin: auto 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+}
+
+body.debug-mode #editor-root {
+    display: contents;
+}
+
+/* --- サイドバー --- */
+#editor-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    min-width: 300px; /* 最小幅 */
+    padding: 10px;
+    gap: 10px;
+    height: calc(100vh - 20px);
+    background-color: #252526;
+}
+
+.editor-panel {
+    background-color: #1e1e1e;
+    border: 1px solid #3c3c3c;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#asset-browser { flex: 1; }
+#editor-panel { flex: 1; }
+
+.panel-header {
+    padding: 8px 12px;
+    background-color: #3c3c3c;
+    border-bottom: 1px solid #1e1e1e;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+.panel-content {
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.panel-footer-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-top: 1px solid #3c3c3c;
+}
+.panel-footer-button:hover { background-color: #1177bb; }
+
+/* --- アセットブラウザの中身 --- */
+.asset-item {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid #3c3c3c;
+    cursor: grab;
+    user-select: none;
+}
+.asset-item:hover { background-color: #3c3c3c; }
+.asset-item.selected { background-color: #094771; }
+.asset-preview {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    margin-right: 10px;
+    background-color: #1e1e1e;
+    border: 1px solid #3c3c3c;
+}
+
+/* --- プロパティパネルの中身 --- */
+#editor-props label {
+    display: inline-block;
+    width: 80px;
+    font-size: 13px;
+    margin-right: 5px;
+    color: #ccc;
+    flex-shrink: 0;
+}
+#editor-props input, 
+#editor-props select, 
+#editor-props textarea {
+    flex-grow: 1;
+    background-color: #3c3c3c;
+    border: 1px solid #1e1e1e;
+    color: #d4d4d4;
+    padding: 4px;
+    border-radius: 3px;
+    width: auto;
+}
+#editor-props div {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+#editor-props hr {
+    border: none;
+    border-top: 1px solid #3c3c3c;
+    margin: 15px 0;
+}
+#editor-props button {
+    width: 100%;
+    padding: 8px;
+    background-color: #0e639c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+}
+#editor-props button:hover { background-color: #1177bb; }
+
+/* --- 画面左下のオーバーレイコントロール --- */
+#overlay-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 9990;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+}
+#camera-controls {
+    background-color: rgba(40, 40, 40, 0.8);
+    border-radius: 5px;
+    padding: 5px;
+    display: flex;
+    gap: 5px;
+}
+#camera-controls button {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #555;
+    color: #eee;
+    border: 1px solid #777;
+    border-radius: 5px;
+}
+#camera-controls button:hover { background-color: #6a6a6a; }
+#camera-controls button:active { background-color: #4a4a4a; }
+
+#editor-mode-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(40, 40, 40, 0.8);
+    padding: 8px 12px;
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+    user-select: none;
+}
+.mode-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+.mode-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #888;
+    transition: .4s;
+    border-radius: 24px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider { background-color: #2196F3; }
+input:checked + .slider:before { transform: translateX(26px); }
+
+/* ==========================================================================
+   MODAL WINDOW STYLES
+   ========================================================================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+.modal-overlay.is-active {
+    display: flex;
+}
+
+.modal-window {
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    background-color: #2b2b2b;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 10px 15px;
+    background-color: #3c3c3c;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #1e1e1e;
+    user-select: none;
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.modal-close-btn, .modal-help-btn {
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #d4d4d4;
+    font-size: 24px;
+    line-height: 1;
+    padding: 0 5px;
+}
+.modal-help-btn {
+    margin-left: auto;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #555;
+}
+
+.modal-content {
+    padding: 15px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+.modal-sub-panel {
+    display: none;
+    padding: 15px;
+    background-color: #1e1e1e;
+    border-top: 1px solid #555;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.modal-sub-panel.is-visible {
+    display: block;
+}
+
+/* --- モーダル表示中の背景制御 --- */
+body.modal-open #game-container,
+body.modal-open #editor-root {
+    pointer-events: none;
+    filter: blur(2px);
+}

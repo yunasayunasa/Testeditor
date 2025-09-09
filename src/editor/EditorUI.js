@@ -37,7 +37,18 @@ export default class EditorUI {
         if (helpModalCloseBtn) {
             helpModalCloseBtn.addEventListener('click', () => this.closeHelpModal());
         }
+  this.eventEditorHelpBtn = null;
+        this.eventEditorHelpPanel = null;
+        this.manualContent = null; // マニュアル全体のHTMLをキャッシュする
 
+         this.eventEditorHelpBtn = document.getElementById('event-editor-help-btn');
+        this.eventEditorHelpPanel = document.getElementById('event-editor-help-panel');
+        
+        if (this.eventEditorHelpBtn) {
+            this.eventEditorHelpBtn.addEventListener('click', () => this.toggleEventHelp());
+        }
+        // ★ ゲーム起動時に、一度だけマニュアルを読み込んでおく
+        this.loadManual();
         this.initializeEventListeners();
         this.populateAssetBrowser();
         
@@ -301,6 +312,54 @@ if (this.modeToggle && this.modeLabel) {
       
         this.helpModal.style.display = 'none';
       
+    }
+
+  // ★★★ 新規メソッド：マニュアルを非同期で読み込み、キャッシュする ★★★
+    async loadManual() {
+        try {
+            const response = await fetch('manual.html');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.manualContent = await response.text();
+            console.log("[EditorUI] Help manual loaded and cached.");
+        } catch (error) {
+            console.error('Failed to preload help manual:', error);
+            this.manualContent = `<p style="color:red">Manual not found.</p>`;
+        }
+    }
+
+    // ★★★ 新規メソッド：イベントヘルプの表示/非表示を切り替える ★★★
+    toggleEventHelp() {
+        if (!this.eventEditorHelpPanel) return;
+
+        const isVisible = this.eventEditorHelpPanel.style.display === 'block';
+        if (isVisible) {
+            this.eventEditorHelpPanel.style.display = 'none';
+        } else {
+            this.eventEditorHelpPanel.style.display = 'block';
+            this.updateEventHelpContent(); // 表示する瞬間に、内容を更新
+        }
+    }
+    
+    // ★★★ 新規メソッド：イベントヘルプの内容を、現在の文脈に合わせて更新する ★★★
+    updateEventHelpContent() {
+        if (!this.manualContent || !this.selectedObject) {
+            this.eventEditorHelpPanel.innerHTML = 'No context.';
+            return;
+        }
+
+        // --- 1. HTML全体をDOMとしてパース ---
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(this.manualContent, 'text/html');
+
+        // --- 2. 汎用的なアクションタグのセクションを抽出 ---
+        // manual.htmlで、セクションにIDを振っておくと便利
+        // 例: <div id="manual-action-tags"> ... </div>
+        const actionTagsSection = doc.querySelector('#manual-action-tags')?.innerHTML || '';
+
+        // --- 3. (応用) 現在選択中のトリガーに応じたヘルプを追加 ---
+        // ここでは、一旦全ての情報を表示する
+        
+        this.eventEditorHelpPanel.innerHTML = actionTagsSection;
     }
 
 }

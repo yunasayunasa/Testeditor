@@ -3,262 +3,93 @@
 <head>
     <meta charset="UTF-8" />
     <title>Odyssey Engine - Editor</title>
-     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    
+    <!-- ▼▼▼ 外部CSSファイルを読み込む ▼▼▼ -->
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-    <style>
-        /* --- 基本設定 --- */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            overflow: hidden;
-        }
-
-        /* --- 通常プレイ時のレイアウト --- */
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-        /* ★★★ これがCSSだけで表示を制御する、最も確実な方法です ★★★ */
-        /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ */
-        
-        /* --- デフォルト状態（通常プレイ時）のスタイル --- */
-        body:not(.debug-mode) #editor-ui-container,
-        body:not(.debug-mode) #camera-controls,
-        body:not(.debug-mode) #editor-mode-controls {
-            display: none !important; /* !importantで最優先で非表示にする */
-        }
-
-        /* --- デバッグモード時のレイアウト変更 --- */
-        body.debug-mode {
-            display: flex;
-            background-color: #3d3d3d;
-            overflow-x: auto;
-        }
-
-        body.debug-mode #game-container {
-            width: 1280px;
-            height: 720px;
-            margin: auto 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            flex-shrink: 0;
-        }
-        
-        /* --- デバッグモード時に「表示」するスタイルを定義 --- */
-        body.debug-mode #editor-ui-container,
-        body.debug-mode #camera-controls,
-        body.debug-mode #editor-mode-controls {
-            display: flex;
-        }
-        
-        body.debug-mode #editor-ui-container {
-            flex-grow: 1;
-            flex-direction: column;
-            padding: 10px;
-            gap: 10px;
-            height: calc(100vh - 20px);
-            min-width: 300px;
-        }
-        
-        /* --- 以下、各UIパーツの「見た目」に関するスタイル (変更なし) --- */
-        /* (元のコードからコピー＆ペーストでOKです) */
-        .editor-panel {
-            background-color: #2b2b2b; color: #d4d4d4; border: 1px solid #1e1e1e;
-            border-radius: 5px; display: flex; flex-direction: column; overflow: hidden;
-        }
-        .panel-header {
-            padding: 8px 12px; background-color: #3c3c3c; color: #d4d4d4;
-            border-bottom: 1px solid #1e1e1e; font-weight: bold; font-size: 14px; user-select: none;
-        }
-        .panel-content { padding: 10px; flex-grow: 1; overflow-y: auto; }
-        #asset-browser { flex-grow: 1; min-height: 250px; }
-        .asset-item { display: flex; align-items: center; padding: 5px; border-bottom: 1px solid #3c3c3c; cursor: grab; user-select: none; }
-        .asset-item:hover { background-color: #3c3c3c; }
-        .asset-preview { width: 48px; height: 48px; object-fit: contain; margin-right: 10px; background-color: #1e1e1e; border: 1px solid #3c3c3c; }
-        .asset-key { font-size: 13px; word-break: break-all; }
-        #editor-panel { min-height: 250px; }
-        #editor-props input, #editor-props textarea, #editor-props select { width: calc(100% - 80px); background-color: #3c3c3c; border: 1px solid #1e1e1e; color: #d4d4d4; padding: 4px; border-radius: 3px; }
-        #editor-props label { display: inline-block; width: 70px; font-size: 13px; margin-right: 5px; }
-        #editor-props div { margin-bottom: 8px; display: flex; align-items: center; }
-        #editor-props hr { border-color: #3c3c3c; margin: 15px 0; }
-        #editor-props button { width: 100%; padding: 8px; background-color: #0e639c; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 14px; }
-        #editor-props button:hover { background-color: #1177bb; }
-
-        /* --- カメラコントロールUIの見た目 --- */
-        #camera-controls { position: absolute; bottom: 20px; left: 20px; z-index: 9990; background-color: rgba(40, 40, 40, 0.8); border: 1px solid #555; border-radius: 5px; padding: 5px; flex-direction: row; gap: 5px; }
-        #camera-controls button { width: 35px; height: 35px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #555; color: #eee; border: 1px solid #777; border-radius: 5px; padding: 0; line-height: 35px; text-align: center; }
-        #camera-controls button:hover { background-color: #6a6a6a; }
-        #camera-controls button:active { background-color: #4a4a4a; }
-
-        /* --- エディタモード切替スイッチの見た目 --- */
-        #editor-mode-controls { position: absolute; bottom: 20px; left: 300px; z-index: 9990; align-items: center; gap: 10px; background-color: rgba(40, 40, 40, 0.8); padding: 8px 12px; border-radius: 20px; color: white; font-size: 14px; user-select: none; }
-        .mode-switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-        .mode-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #888; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #2196F3; }
-        input:checked + .slider:before { transform: translateX(26px); }
-        
-        /* --- モーダルウィンドウのスタイル --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 10000; display: none; justify-content: center; align-items: center; }
-        .modal-window { width: 600px; background-color: #2b2b2b; color: #d4d4d4; border: 1px solid #1e1e1e; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; }
-        .modal-header { padding: 10px 15px; background-color: #3c3c3c; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1e1e; }
-        .modal-close-btn { cursor: pointer; font-size: 20px; border: none; background: none; color: #d4d4d4; }
-        .modal-content { padding: 15px; max-height: 70vh; overflow-y: auto; }
-
-/* --- Editor Modal Windows --- */
-.editor-modal-overlay {
-    display: none; /* ★ 最初は隠しておく */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 10000; /* エディタUIよりもさらに手前に */
-    justify-content: center;
-    align-items: center;
-}
-
-.editor-modal-window {
-    background-color: #2e2e2e;
-    border: 1px solid #555;
-    border-radius: 8px;
-    width: 80%;
-    max-width: 800px;
-    height: 80%;
-    max-height: 600px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-}
-
-.editor-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    border-bottom: 1px solid #555;
-}
-
-.editor-modal-header h3 {
-    margin: 0;
-    color: #eee;
-}
-
-.editor-modal-close-btn {
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 24px;
-    cursor: pointer;
-}
-.editor-modal-close-btn:hover {
-    color: #fff;
-}
-
-.editor-modal-content {
-    padding: 15px;
-    overflow-y: auto; /* ★ コンテンツが多ければスクロールできるように */
-    color: #ccc;
-    flex-grow: 1;
-}
-
-/* --- ヘルプコンテンツ用のスタイル --- */
-.editor-modal-content h1, .editor-modal-content h2 {
-    border-bottom: 1px solid #444;
-    padding-bottom: 5px;
-    color: #fff;
-}
-.editor-modal-content code {
-    background-color: #1e1e1e;
-    padding: 2px 5px;
-    border-radius: 4px;
-    font-family: 'Courier New', Courier, monospace;
-}
-
-    </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="phaser-game"></div>
+
+    <!-- ゲーム本体のコンテナ -->
+    <div id="game-container"></div>
+
+    <!-- ===== エディタ専用UI (ここから下は全てデバッグモードでのみ表示) ===== -->
+    <div id="editor-root">
+
+        <!-- 画面左下のコントロール群 -->
+        <div id="overlay-controls">
+            <div id="camera-controls">
+                <button id="camera-zoom-in" title="Zoom In">+</button>
+                <button id="camera-zoom-out" title="Zoom Out">-</button>
+                <button id="camera-pan-up" title="Pan Up">↑</button>
+                <button id="camera-pan-down" title="Pan Down">↓</button>
+                <button id="camera-pan-left" title="Pan Left">←</button>
+                <button id="camera-pan-right" title="Pan Right">→</button>
+                <button id="camera-reset" title="Reset Camera">Reset</button>
+            </div>
+            <div id="editor-mode-controls">
+                <label class="mode-switch">
+                    <input type="checkbox" id="mode-toggle-checkbox">
+                    <span class="slider"></span>
+                </label>
+                <span id="mode-label">Select Mode</span>
+            </div>
+        </div>
+
+        <!-- 画面右側のパネル群 -->
+        <div id="editor-sidebar">
+            <div id="asset-browser" class="editor-panel">
+                <div class="panel-header">
+                    <span>Asset Browser</span>
+                    <!-- ヘルプボタンはここに配置 -->
+                </div>
+                <div id="asset-list" class="panel-content"></div>
+                <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
+            </div>
+            <div id="editor-panel" class="editor-panel">
+                <div id="editor-title" class="panel-header">Properties</div>
+                <div id="editor-props" class="panel-content"></div>
+            </div>
+        </div>
+
+        <!-- 全画面を覆うモーダルウィンドウ群 -->
+        <div id="anim-editor-overlay" class="modal-overlay">
+            <div class="modal-window">
+                <div class="modal-header">
+                    <h3 id="animation-editor-title">Animation Editor</h3>
+                    <button id="animation-editor-close-btn" class="modal-close-btn">&times;</button>
+                </div>
+                <div id="animation-editor-content" class="modal-content"></div>
+            </div>
+        </div>
+
+        <div id="event-editor-overlay" class="modal-overlay">
+            <div class="modal-window">
+                <div class="modal-header">
+                    <h3 id="event-editor-title">Event Editor</h3>
+                    <button id="event-editor-help-btn" class="modal-help-btn">?</button>
+                    <button id="event-editor-close-btn" class="modal-close-btn">&times;</button>
+                </div>
+                <div id="event-editor-content" class="modal-content"></div>
+                <div id="event-editor-help-panel" class="modal-sub-panel"></div>
+            </div>
+        </div>
+
+        <div id="help-modal-overlay" class="modal-overlay">
+            <div class="modal-window">
+                <div class="modal-header">
+                    <h3 id="help-modal-title">Odyssey Engine Help</h3>
+                    <button id="help-modal-close-btn" class="modal-close-btn">&times;</button>
+                </div>
+                <div id="help-modal-content" class="modal-content"></div>
+            </div>
+        </div>
     </div>
 
-       <!-- カメラコントロールUI -->
-    <div id="camera-controls">
-        <button id="camera-zoom-in" title="Zoom In">+</button>
-        <button id="camera-zoom-out" title="Zoom Out">-</button>
-          <button id="camera-pan-up" title="Pan Up">↑</button>
-        <button id="camera-pan-down" title="Pan Down">↓</button>
-        <button id="camera-pan-left" title="Pan Left">←</button>
-        <button id="camera-pan-right" title="Pan Right">→</button>
-        <button id="camera-reset" title="Reset Camera">Reset</button>
-    </div>
-    <div id="editor-mode-controls">
-    <label class="mode-switch">
-        <input type="checkbox" id="mode-toggle-checkbox">
-        <span class="slider"></span>
-    </label>
-    <span id="mode-label">Select Mode</span>
-</div>
-    <div id="editor-ui-container">
-        <div id="asset-browser" class="editor-panel">
-            <div id="asset-browser-title" class="panel-header">Asset Browser</div>
-            <div class="panel-content">
-                <div id="asset-list"></div>
-            </div>
-        </div>
-        <button id="add-asset-button" style="width: 100%; padding: 10px; font-size: 16px;">Add Selected Asset to Scene</button>
-
-        <div id="editor-panel" class="editor-panel">
-            <div id="editor-title" class="panel-header">Properties</div>
-            <div class="panel-content">
-                <div id="editor-props"></div>
-            </div>
-        </div>
-    </div>
-       <div id="anim-editor-overlay" class="modal-overlay">
-        <div id="animation-editor">
-            <div id="animation-editor-header">
-                <span id="animation-editor-title">Animation Editor</span>
-                <button id="animation-editor-close-btn">&times;</button>
-            </div>
-            <div id="animation-editor-content">
-                <!-- アニメーション編集UIは、ここにJSで動的に生成されます -->
-                <p>Animation settings will appear here.</p>
-            </div>
-        </div>
-    </div>
-    <div id="event-editor-overlay" class="modal-overlay">
-        <div id="event-editor" style="width: 600px; background-color: #2b2b2b; /* 他のスタイルはanim-editorと同じ */">
-            <div id="event-editor-header" style="background-color: #3c3c3c; /* ... */">
-                <span id="event-editor-title">Event Editor</span>
-                <button id="event-editor-close-btn">&times;</button>
-            </div>
-            <div id="event-editor-content" style="padding: 15px; height: 400px; overflow-y: auto;">
-                <!-- イベント編集UIは、ここにJSで動的に生成されます -->
-            </div>
-        </div>
-    </div>
-<div id="help-modal-overlay" class="editor-modal-overlay">
-    <div class="editor-modal-window">
-        <div class="editor-modal-header">
-            <h3 id="help-modal-title">Odyssey Engine Help</h3>
-            <button id="help-modal-close-btn" class="editor-modal-close-btn">&times;</button>
-        </div>
-        <div id="help-modal-content" class="editor-modal-content">
-            <!-- ここに manual.html の中身が挿入される -->
-            <p>Loading help content...</p>
-        </div>
-    </div>
-</div>
-
+    <!-- JSのエントリーポイント -->
     <script type="module" src="src/main.js"></script>
+
 </body>
 </html>
