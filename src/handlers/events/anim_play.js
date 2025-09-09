@@ -2,7 +2,7 @@
  * [anim_play name=...] タグの処理
  * 対象オブジェクトのアニメーションを再生する
  */
-export function handleAnim(interpreter, target, params) {
+export default function handleAnim(interpreter, target, params) {
     if (target && typeof target.play === 'function') {
         const animKey = params.name;
         if (animKey) {
