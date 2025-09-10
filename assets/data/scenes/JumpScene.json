@@ -1,11 +1,31 @@
 {
   "objects": [
     {
+      "name": "cg01_1",
+      "type": "Image",
+      "texture": "cg01",
+      "x": 304,
+      "y": 455,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "physics": {
+        "isStatic": true,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 51,
-      "y": 137,
+      "x": 123,
+      "y": 240,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -43,13 +63,7 @@
         {
           "type": "PlayerController",
           "params": {
-            "moveSpeed": 12
-          }
-        },
-        {
-          "type": "Scrollable",
-          "params": {
-            "speed": 4.5
+            "moveSpeed": 7.5
           }
         }
       ],
@@ -59,26 +73,6 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "cg01_1",
-      "type": "Image",
-      "texture": "cg01",
-      "x": 304,
-      "y": 455,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "physics": {
-        "isStatic": true,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 1,
         "restitution": 0
       }
     }
