@@ -61,7 +61,7 @@
           {
           "trigger": "onStomp",
           "targetGroup": "enemy",
-"actions": "[destroy target=other][eval exp=\"Phaser.Physics.Matter.Matter.Body.setVelocity(source.body, { x: source.body.velocity.x, y: -5 })\"]"
+"actions": "[destroy target=other][apply_force y=-0.05]"
         },
         {
           "trigger": "onHit",

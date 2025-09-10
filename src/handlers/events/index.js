@@ -12,7 +12,7 @@ import animPlayHandler from './anim_play.js';
 import evalExpressionHandler from './eval.js';
 import setFlipXHandler from './set_flip_x.js';
 import reload_scene from './reload_scene.js'; // ★ この行を追加
-
+import apply_force from './apply_force.js';
 
 
 // ActionInterpreterが使う、イベントタグのカタログ
@@ -29,5 +29,6 @@ export const eventTagHandlers = {
       'set_flip_x': setFlipXHandler,
  'reload_scene': reload_scene, // ★ この行を追加
        'eval': evalExpressionHandler,  
+        'apply_force': apply_force,
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
