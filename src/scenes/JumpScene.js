@@ -36,11 +36,11 @@ export default class JumpScene extends BaseGameScene {
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
 
-       /* this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
+     this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
             x: 150, y: 550, radius: 100,
             base: this.add.circle(0, 0, 100, 0x888888, 0.5),
             thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8),
-        });*/
+        });
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
