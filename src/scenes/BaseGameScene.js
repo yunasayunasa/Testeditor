@@ -147,34 +147,28 @@ buildSceneFromLayout(layoutData) {
             gameObject.setData('isScrollable', true);
         }
      
+// BaseGameScene.js (applyProperties メソッド内)
+
 // --- 2. 物理ボディの生成 ---
- // --- 2. 物理ボディの生成 ---
-    if (data.physics) {
-        const phys = data.physics;
-        gameObject.setData('shape', phys.shape || 'rectangle');
+if (data.physics) {
+    const phys = data.physics;
+    gameObject.setData('shape', phys.shape || 'rectangle');
 
-        // ▼▼▼【ここも修正します】▼▼▼
-        // 物理ボディを生成する際は、もう ignoreGravity オプションに頼らない。
-        // 代わりに、gameObject のデータとして ignoreGravity の状態を保存する。
-        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+    gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
 
-        const bodyOptions = {
-            isStatic: phys.isStatic || false,
-            friction: phys.friction !== undefined ? phys.friction : 0.1,
-            restitution: phys.restitution !== undefined ? phys.restitution : 0,
-        };
-        
-        // gravityScaleは通常通り設定する
-        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
-        bodyOptions.gravityScale = { x: 0, y: gravityY };
-        
-        this.matter.add.gameObject(gameObject, bodyOptions);
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-if (gameObject.body) {
-    console.log(`[BaseGameScene] Body created for '${gameObject.name}'. isStatic: ${gameObject.body.isStatic}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
-}
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-            
+    const bodyOptions = {
+        isStatic: phys.isStatic || false,
+        friction: phys.friction !== undefined ? phys.friction : 0.1,
+        restitution: phys.restitution !== undefined ? phys.restitution : 0,
+    };
+    
+    const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
+    bodyOptions.gravityScale = { x: 0, y: gravityY };
+    
+    this.matter.add.gameObject(gameObject, bodyOptions);
+    // ★ gameObject.setStatic(phys.isStatic); のような行は不要です。
+    // Matter.jsはbodyOptionsのisStaticを見てボディを生成します。
+
     // 形状に応じて、当たり判定を再設定
     if (phys.shape === 'circle') {
         const radius = (gameObject.width + gameObject.height) / 4;
@@ -182,6 +176,9 @@ if (gameObject.body) {
     } else {
         gameObject.setRectangle();
     }
+}
+if (gameObject.body) {
+    console.log(`[BaseGameScene] Body created for '${gameObject.name}'. isStatic: ${gameObject.body.isStatic}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
 }
         // --- 3. シーンへの追加 ---
         this.add.existing(gameObject);
