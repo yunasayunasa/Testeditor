@@ -73,12 +73,7 @@
       "scaleY": 1,
       "angle": 1,
       "alpha": 1,
-      "components": [
-        {
-          "type": "Scrollable",
-          "params": {}
-        }
-      ],
+     
       "physics": {
         "isStatic": true,
         "ignoreGravity": false,
@@ -99,12 +94,7 @@
       "scaleY": 1,
       "angle": -91,
       "alpha": 1,
-      "components": [
-        {
-          "type": "Scrollable",
-          "params": {}
-        }
-      ],
+     
       "physics": {
         "isStatic": true,
         "ignoreGravity": false,
@@ -125,16 +115,7 @@
       "scaleY": 1,
       "angle": -14,
       "alpha": 1,
-      "components": [
-        {
-          "type": "Scrollable",
-          "params": {}
-        },
-        {
-          "type": "PlayerController",
-          "params": {}
-        }
-      ],
+    
       "physics": {
         "isStatic": true,
         "ignoreGravity": false,
@@ -187,12 +168,7 @@
       "scaleY": 1,
       "angle": -140,
       "alpha": 1,
-      "components": [
-        {
-          "type": "Scrollable",
-          "params": {}
-        }
-      ],
+    
       "physics": {
         "isStatic": true,
         "ignoreGravity": false,
