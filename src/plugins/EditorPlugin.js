@@ -239,50 +239,24 @@ recreateBodyByReconstruction(changedPhysicsOption) {
     };
     
     // --- 2. 物理情報を、安全なプロパティだけを抽出して作成 ---
-    // EditorPlugin.js (recreateBodyByReconstruction メソッド内)
+    if (changedPhysicsOption !== null) {
+        const currentBody = targetObject.body;
+        // ★★★ 必要なプロパティだけを明示的にコピーする ★★★
+        const basePhysics = currentBody ? {
+            isStatic: currentBody.isStatic,
+            ignoreGravity: currentBody.ignoreGravity,
+            gravityScale: currentBody.gravityScale,
+            friction: currentBody.friction,
+            restitution: currentBody.restitution,
+            shape: targetObject.getData('shape') || 'rectangle'
+        } : {}; // ボディがなければ空オブジェクトから始める
 
-// --- 2. 物理情報を、安全なプロパティだけを抽出して作成 ---
-if (changedPhysicsOption !== null) {
-    const currentBody = targetObject.body;
-    // ★★★ 必要なプロパティだけを明示的にコピーする ★★★
-    const basePhysics = currentBody ? {
-        isStatic: currentBody.isStatic,
-        // Matter.jsのbodyにはignoreGravityプロパティがないため、
-        // gameObjectのgetData()から取得する
-        ignoreGravity: targetObject.getData('ignoreGravity') || false,
-        gravityScale: currentBody.gravityScale.y, // X軸は0固定なのでY軸のみでOK
-        friction: currentBody.friction,
-        restitution: currentBody.restitution,
-        shape: targetObject.getData('shape') || 'rectangle'
-    } : {
-        // ボディがない場合は、デフォルト値を設定
-        isStatic: false,
-        ignoreGravity: false,
-        gravityScale: 1,
-        friction: 0.1,
-        restitution: 0,
-        shape: 'rectangle'
-    };
-
-    // 抽出した安全な情報に、今回の変更をマージ
-    layout.physics = { ...basePhysics, ...changedPhysicsOption };
-    
-    // ★追加: isStaticとignoreGravityが確実にboolean型であることを保証
-    if (typeof layout.physics.isStatic !== 'boolean') {
-        layout.physics.isStatic = false;
+        // 抽出した安全な情報に、今回の変更をマージ
+        layout.physics = { ...basePhysics, ...changedPhysicsOption };
+        
     }
-    if (typeof layout.physics.ignoreGravity !== 'boolean') {
-        layout.physics.ignoreGravity = false;
-    }
-    if (typeof layout.physics.gravityScale !== 'number') {
-        layout.physics.gravityScale = 1;
-    }
-
-}
-// changedPhysicsOptionがnullなら、layout.physicsはundefinedのまま = ボディなし
-
-console.log('%c[EditorPlugin] Reconstructing with layout (final physics):', 'color: cyan;', layout.physics); // ★追加: 最終的なphysicsオプションを確認
-// ... (残りのコードは変更なし)
+    // changedPhysicsOptionがnullなら、layout.physicsはundefinedのまま = ボディなし
+console.log('%c[EditorPlugin] Reconstructing with layout:', 'color: cyan;', layout);
     // --- 3. 再構築プロセス ---
     const scene = targetObject.scene;
     const sceneKey = scene.scene.key;
