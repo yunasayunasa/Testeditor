@@ -6,6 +6,8 @@ export default class ActionInterpreter {
     constructor(scene) {
         this.scene = scene;
         this.tagHandlers = eventTagHandlers;
+         this.currentSource = null;
+        this.currentTarget = null;
     }
 
   
@@ -15,36 +17,36 @@ export default class ActionInterpreter {
      * @param {string} actionsString - アクション文字列
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
-    async run(source, actionsString, collidedTarget = null) {
+     async run(source, actionsString, collidedTarget = null) {
+        // ★★★ 実行開始時に、コンテキストを保存する ★★★
+        this.currentSource = source;
+        this.currentTarget = collidedTarget;
+
         const tags = actionsString.match(/\[(.*?)\]/g) || [];
 
         for (const tagString of tags) {
             try {
                 const { tagName, params } = this.parseTag(tagString);
                 
-                // ★★★ ここからがターゲット解決ロジック ★★★
-                let finalTarget = source; // デフォルトはイベントの持ち主自身
-
+                let finalTarget = source;
                 if (params.target) {
                     if (params.target === 'self') {
                         finalTarget = source;
                     } else if (params.target === 'other' && collidedTarget) {
                         finalTarget = collidedTarget;
                     } else {
-                        // "door_1" のような名前でシーンから探す
                         finalTarget = this.scene.children.getByName(params.target);
                     }
                 }
                 
                 if (!finalTarget) {
                     console.warn(`[ActionInterpreter] Target not found: '${params.target}'`);
-                    continue; // ターゲットが見つからなければ、このタグはスキップ
+                    continue;
                 }
-                // ★★★ ここまで ★★★
-
+                
                 const handler = this.tagHandlers[tagName];
                 if (handler) {
-                    // ★ ハンドラには、解決済みの finalTarget を渡す
+                    // ★★★ ハンドラには、これまで通り解決済みのfinalTargetを渡す ★★★
                     await handler(this, finalTarget, params);
                 } else {
                     console.warn(`[ActionInterpreter] Unknown action tag: ${tagName}`);
@@ -53,6 +55,10 @@ export default class ActionInterpreter {
                 console.error(`[ActionInterpreter] Error running action: ${tagString}`, error);
             }
         }
+        
+        // ★★★ 実行終了後に、コンテキストをクリアする ★★★
+        this.currentSource = null;
+        this.currentTarget = null;
     }
     /**
      

@@ -241,27 +241,33 @@ export default class StateManager extends Phaser.Events.EventEmitter {
      * [eval]タグなど、変数の状態を変更する目的で使用される。
      * @param {string} exp - "f.score = f.score + 10" のような代入式
      */
-    execute(exp) {
+    /**
+     * 文字列の式を実行する (書き込み/代入を許可)
+     * [eval]タグなど、変数の状態を変更する目的で使用される。
+     * @param {string} exp - "f.score = f.score + 10" のような代入式
+     * @param {object} [context={}] - 式の中で利用可能にする追加の変数 (self, source, targetなど)
+     */
+    execute(exp, context = {}) {
+        // --- コンテキストから変数を安全に取り出す ---
+        const self = context.self;
+        const source = context.source;
+        const target = context.target;
+        
+        // --- StateManagerが管理する変数を準備 ---
+        const f = this.f;
+        const sf = this.sf;
+        
         try {
-            // this.f と this.sf を、関数のスコープ内でアクセス可能にする
-            const f = this.f;
-            const sf = this.sf;
-            
-            // new Functionを使って、制御された環境で式を実行
+            // --- new Functionを使って、制御された環境で式を実行 ---
             // 'use strict'モードで、より安全に
-            new Function('f', 'sf', `'use strict'; ${exp};`)(f, sf);
+            new Function('f', 'sf', 'self', 'source', 'target', 'Phaser', `'use strict'; ${exp};`)(f, sf, self, source, target, Phaser);
             
-            // ★（重要）式の実行後、変更された可能性のある変数を検知し、
-            // イベントを発行する必要がある。
-            // しかし、どの変数が変わったかを特定するのは非常に困難。
-            // ここでは、一旦fオブジェクト全体をチェックする簡易的な方法をとる。
-            // (より高度な実装では、Proxyを使うなどの方法がある)
-            
-            // 将来的な改善のため、今はコンソールにログを出すに留める
-            console.log(`[StateManager.execute] Executed: "${exp}". State may have changed.`);
+            console.log(`[StateManager.execute] Executed: "${exp}".`);
 
         } catch (e) {
             console.error(`[StateManager.execute] 式の実行中にエラーが発生しました: "${exp}"`, e);
+            // エラーを再スローして、呼び出し元（ActionInterpreterなど）に伝える
+            throw e;
         }
     }
     
