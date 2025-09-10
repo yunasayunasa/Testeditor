@@ -320,3 +320,54 @@ body.modal-open #editor-root {
     pointer-events: none;
     filter: blur(2px);
 }
+
+/* in index.html <style> tag */
+
+/* --- モーダルウィンドウ共通の調整 --- */
+.modal-window {
+    /* 既存の .modal-window のスタイルに display: flex と flex-direction: column を追加または確認 */
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content {
+    /* 既存の .modal-content のスタイルに flex-grow: 1 を追加または確認 */
+    flex-grow: 1;
+}
+
+/* ▼▼▼【ここからイベントエディタ専用のスタイルを追加】▼▼▼ */
+
+#event-editor-content label {
+    display: inline-block;
+    width: auto; /* #editor-props の幅指定を打ち消す */
+    margin-right: 5px;
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+#event-editor-content input, 
+#event-editor-content select, 
+#event-editor-content textarea {
+    flex-grow: 1;
+    background-color: #3c3c3c;
+    border: 1px solid #1e1e1e;
+    color: #d4d4d4;
+    padding: 4px;
+    border-radius: 3px;
+    width: auto;
+}
+
+#event-editor-content .add-event-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px; /* 上の要素との間に余白を設ける */
+    background-color: #4a8a4a; /* より分かりやすい色に */
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+}
+#event-editor-content .add-event-button:hover { 
+    background-color: #5cb85c;
+}

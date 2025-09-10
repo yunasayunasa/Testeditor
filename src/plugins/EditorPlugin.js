@@ -1102,12 +1102,18 @@ if (gameObject.body) {
         this.openAnimationEditor();
     }
 
-    openEventEditor() {
-        if (!this.eventEditorOverlay || !this.selectedObject) return;
+   openEventEditor() {
+        if (!this.eventEditorOverlay || !this.selectedObject) {
+            alert('先にイベントを編集するオブジェクトを選択してください。');
+            return;
+        }
         this.pluginManager.game.input.enabled = false;
         const titleElement = document.getElementById('event-editor-title');
         if (titleElement) titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
+        
+        // ★★★ UIを生成するコアメソッドを呼び出す ★★★
         this.populateEventEditor();
+        
         this.eventEditorOverlay.style.display = 'flex';
     }
 
@@ -1117,144 +1123,157 @@ if (gameObject.body) {
         this.pluginManager.game.input.enabled = true;
     }
     
-     /**
-     * イベントエディタのコンテンツを生成・再描画する (変更なし)
+    /**
+     * イベントエディタのコンテンツを生成・再描画する (UI最終版)
      */
     populateEventEditor() {
         const contentArea = document.getElementById('event-editor-content');
         if (!contentArea || !this.selectedObject) return;
+        
+        // --- UIを一度完全にクリア ---
         contentArea.innerHTML = '';
         
+        // --- データソースを取得 ---
         const events = this.selectedObject.getData('events') || [];
+        
+        // --- 各イベント定義から、編集UIを生成して追加 ---
         events.forEach((eventData, index) => {
             const eventDiv = this.createEventDisplay(eventData, index);
             contentArea.appendChild(eventDiv);
         });
+        
+        // --- 「新しいイベントを追加」ボタンを生成 ---
         const addButton = document.createElement('button');
         addButton.innerText = '新しいイベントを追加';
+        addButton.className = 'add-event-button'; // スタイリング用
         addButton.onclick = () => {
             const currentEvents = this.selectedObject.getData('events') || [];
-            // デフォルトは 'onClick' のままで良い
+            // デフォルトのイベント定義を追加
             currentEvents.push({ trigger: 'onClick', actions: '' });
             this.selectedObject.setData('events', currentEvents);
-            this.populateEventEditor();
+            this.populateEventEditor(); // UIを再描画
         };
         contentArea.appendChild(addButton);
     }
     
-   /**
-     * 個々のイベント編集UIを生成する (onStateChange & Condition 対応版)
-     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
+    // in src/plugins/EditorPlugin.js
+
+    /**
+     * 個々のイベント編集UIを生成する (全てのトリガーをサポートする統合・最終版)
+     * @param {object} eventData - 単一のイベント定義オブジェクト
+     * @param {number} index - events配列内でのインデックス
+     * @returns {HTMLElement} 生成されたdiv要素
      */
     createEventDisplay(eventData, index) {
         const div = document.createElement('div');
-        div.style.border = '1px solid #444';
-        div.style.padding = '8px';
-        div.style.marginBottom = '8px';
+        div.className = 'event-card';
 
-         // --- ヘッダー (トリガー選択と削除ボタン) ---
+        // --- ヘッダー (トリガー選択と削除ボタン) ---
         const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.marginBottom = '8px';
+        header.className = 'event-header';
         
         const triggerContainer = document.createElement('div');
         const triggerLabel = document.createElement('label');
         triggerLabel.innerText = 'トリガー: ';
         const triggerSelect = document.createElement('select');
         
-        // ★★★ 'onDirectionChange' もトリガーリストに追加 ★★★
-          ['onClick', 'onCollide_Start', 'onStateChange', 'onDirectionChange', 'onReady'].forEach(t => {
+        // ★★★ 全ての利用可能なトリガーをリスト化 ★★★
+        const availableTriggers = ['onClick', 'onReady', 'onCollide_Start', 'onStomp', 'onHit', 'onStateChange', 'onDirectionChange'];
+        availableTriggers.forEach(t => {
             const option = document.createElement('option');
-            option.value = t; option.innerText = t;
+            option.value = t;
+            option.innerText = t;
             if (t === eventData.trigger) option.selected = true;
             triggerSelect.appendChild(option);
         });
         triggerSelect.onchange = (e) => this.updateEventData(index, 'trigger', e.target.value);
+        
         triggerContainer.append(triggerLabel, triggerSelect);
         
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、削除ボタンの完全なロジックだ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         const deleteBtn = document.createElement('button');
         deleteBtn.innerText = '削除';
-        deleteBtn.style.backgroundColor = '#c44'; // 見やすいように少し色を付ける
+        deleteBtn.className = 'delete-button';
         deleteBtn.onclick = () => {
-            // ユーザーに最終確認を行う
-            if (confirm('このイベント定義を本当に削除しますか？')) {
-                // 1. 現在選択されているオブジェクトから、イベントの配列を取得
+            if (confirm('このイベントを削除しますか？')) {
                 const events = this.selectedObject.getData('events');
-                // 2. このイベントを、インデックスを使って配列から削除
                 events.splice(index, 1);
-                // 3. 更新された配列を、オブジェクトのデータとして保存し直す
                 this.selectedObject.setData('events', events);
-                // 4. イベントエディタのUI全体を再描画して、変更を反映させる
                 this.populateEventEditor();
             }
         };
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         
         header.append(triggerContainer, deleteBtn);
         div.appendChild(header);
-         // --- 条件入力欄 (Condition) ---
-        if (eventData.trigger === 'onStateChange' || eventData.trigger === 'onDirectionChange') {
-            const conditionContainer = document.createElement('div');
-            conditionContainer.style.marginBottom = '8px';
-            
-            const conditionLabel = document.createElement('label');
-            conditionLabel.innerText = '条件 (Condition): ';
-            
-            const conditionInput = document.createElement('input');
-            conditionInput.type = 'text';
-            conditionInput.placeholder = "例: state === 'walk'";
-            conditionInput.style.width = 'calc(100% - 120px)'; // ★ 幅を調整
-            conditionInput.value = eventData.condition || '';
-            conditionInput.onchange = (e) => this.updateEventData(index, 'condition', e.target.value);
-            
-            conditionContainer.append(conditionLabel, conditionInput);
-            div.appendChild(conditionContainer);
-        }
 
-        // --- 衝突相手のグループ入力欄 (Target Group) ---
-        // ★★★ onCollide_Startトリガーが選択されている場合のみ表示 ★★★
-        if (eventData.trigger === 'onCollide_Start') {
-            const targetGroupContainer = document.createElement('div');
-            targetGroupContainer.style.marginBottom = '8px';
+        // --- コンテキスト入力欄 (動的に表示) ---
+        const contextContainer = document.createElement('div');
+        contextContainer.className = 'event-context';
+        
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // "onCollide_Start", "onStomp", "onHit" のいずれかの場合に、'targetGroup'入力欄を表示
+        if (['onCollide_Start', 'onStomp', 'onHit'].includes(eventData.trigger)) {
             const targetLabel = document.createElement('label');
             targetLabel.innerText = '相手のグループ: ';
             const targetInput = document.createElement('input');
             targetInput.type = 'text';
+            targetInput.placeholder = 'e.g., enemy, coin, wall';
             targetInput.value = eventData.targetGroup || '';
             targetInput.onchange = (e) => this.updateEventData(index, 'targetGroup', e.target.value);
-            targetGroupContainer.append(targetLabel, targetInput);
-            div.appendChild(targetGroupContainer);
+            contextContainer.append(targetLabel, targetInput);
         }
+        // "onStateChange", "onDirectionChange" の場合に、'condition'入力欄を表示
+        else if (['onStateChange', 'onDirectionChange'].includes(eventData.trigger)) {
+            const conditionLabel = document.createElement('label');
+            conditionLabel.innerText = '条件(Condition): ';
+            const conditionInput = document.createElement('input');
+            conditionInput.type = 'text';
+            conditionInput.placeholder = "e.g., state === 'walk'";
+            conditionInput.value = eventData.condition || '';
+            conditionInput.onchange = (e) => this.updateEventData(index, 'condition', e.target.value);
+            contextContainer.append(conditionLabel, conditionInput);
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- アクション入力欄 (Actions) ---
+        div.appendChild(contextContainer);
+
+        // --- アクション入力欄 (変更なし) ---
+        const actionsContainer = document.createElement('div');
+        actionsContainer.className = 'event-actions';
         const actionsLabel = document.createElement('label');
         actionsLabel.innerText = 'アクション (Actions):';
-        actionsLabel.style.display = 'block';
         const actionsTextarea = document.createElement('textarea');
-        actionsTextarea.style.width = '98%';
-        actionsTextarea.value = eventData.actions;
+        actionsTextarea.placeholder = '[destroy target=other][play_sound key=...]'
+        actionsTextarea.value = eventData.actions || '';
         actionsTextarea.onchange = (e) => this.updateEventData(index, 'actions', e.target.value);
         
-        div.append(actionsLabel, actionsTextarea);
+        actionsContainer.append(actionsLabel, actionsTextarea);
+        div.appendChild(actionsContainer);
+
         return div;
     }
     
+    /**
+     * ★★★ 新規メソッド ★★★
+     * UIからの変更をGameObjectのデータに書き込み、UIを再描画する
+     * @param {number} index - events配列内でのインデックス
+     * @param {string} key - 変更するプロパティ名 ('trigger', 'targetGroup'など)
+     * @param {string} value - 新しい値
+     */
     updateEventData(index, key, value) {
         if (!this.selectedObject) return;
         const events = this.selectedObject.getData('events') || [];
         if (events[index]) {
             events[index][key] = value;
-            this.selectedObject.setData('events', events);
-            this.populateEventEditor();
             
-            const targetScene = this.selectedObject.scene;
-            if (targetScene && typeof targetScene.onEditorEventChanged === 'function') {
-                targetScene.onEditorEventChanged(this.selectedObject);
+            // ★ もしトリガーが変更されたら、不要なプロパティを削除してデータを綺麗に保つ
+            if (key === 'trigger') {
+                delete events[index].targetGroup;
+                delete events[index].condition;
             }
+
+            this.selectedObject.setData('events', events);
+            this.populateEventEditor(); // ★ UIを再描画して変更を確定させる
         }
     }
+    
 }
