@@ -1,7 +1,7 @@
 {
   "name": "coin",
   "type": "Sprite",
-  "texture": "cg_01",
+  "texture": "cg01",
   "animation": {
     "default": "coin_spin"
   },
