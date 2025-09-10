@@ -99,21 +99,35 @@ export default class SoundManager {
         }
     }
 
+   // in src/core/SoundManager.js
+
     /**
-     * 効果音を再生する (Promise対応版)
+     * 効果音を再生する (個別音量指定対応・Promise対応版)
      * @param {string} key - 再生するSEのアセットキー
-     * @param {object} [config] - 追加の設定 (volumeなど)
+     * @param {object} [config] - 追加の設定 (volume, loopなど)
      * @returns {Promise<Phaser.Sound.BaseSound>} 再生完了時に解決されるPromise
      */
     playSe(key, config = {}) {
         return new Promise(resolve => {
             this.resumeContext();
-            const seVolume = this.configManager.getValue('seVolume');
-            const se = this.sound.add(key, { volume: seVolume, ...config });
             
-            // 再生完了イベントをリッスン
-            se.once('complete', () => {
-                resolve(se);
+            // 1. グローバルSE音量を基本音量とする
+            const baseVolume = this.configManager.getValue('seVolume');
+
+            // 2. configで個別のvolumeが指定されていれば、それをグローバル音量に乗算する
+            //    例: グローバル=0.8, 個別=0.5 -> 最終音量=0.4
+            const finalVolume = (config.volume !== undefined)
+                ? baseVolume * config.volume
+                : baseVolume;
+
+            // 3. 最終的な設定オブジェクトを作成
+            const finalConfig = { ...config, volume: finalVolume };
+
+            const se = this.sound.add(key, finalConfig);
+            
+            se.once('complete', (sound) => {
+                resolve(sound);
+                sound.destroy(); // 再生完了後にサウンドオブジェクトを破棄してメモリを解放
             });
             
             se.play();
