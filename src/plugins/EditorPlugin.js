@@ -253,7 +253,14 @@ recreateBodyByReconstruction(changedPhysicsOption) {
 
         // 抽出した安全な情報に、今回の変更をマージ
         layout.physics = { ...basePhysics, ...changedPhysicsOption };
-        
+        // Matter.jsのisStaticはBooleanでなければならない
+if (layout.physics && typeof layout.physics.isStatic !== 'boolean') {
+    layout.physics.isStatic = false; // デフォルト値を設定するか、エラー処理
+}
+// 同様にignoreGravityも
+if (layout.physics && typeof layout.physics.ignoreGravity !== 'boolean') {
+    layout.physics.ignoreGravity = false;
+}
     }
     // changedPhysicsOptionがnullなら、layout.physicsはundefinedのまま = ボディなし
 console.log('%c[EditorPlugin] Reconstructing with layout:', 'color: cyan;', layout);
