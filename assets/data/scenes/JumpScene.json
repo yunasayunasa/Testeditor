@@ -57,7 +57,18 @@
           "trigger": "onStateChange",
           "actions": "[anim_frame name=歩き frame=0]",
           "condition": "state === 'idle'"
+        },
+          {
+          "trigger": "onStomp",
+          "targetGroup": "enemy",
+          "actions": "[destroy target=other][eval exp=\"self.setVelocityY(-5)\"]"
+        },
+        {
+          "trigger": "onHit",
+          "targetGroup": "enemy",
+          "actions": "[reload_scene]"
         }
+
       ],
       "components": [
         {

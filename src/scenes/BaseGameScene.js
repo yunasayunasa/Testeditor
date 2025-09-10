@@ -322,19 +322,14 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
     }
 }
-    /**
-     * シーンのセットアップが完了した最終段階で呼ばれる
-     */
-      finalizeSetup(allGameObjects) { // ★★★ 3. 引数として、オブジェクトのリストを受け取る ★★★
-    console.log(`%c[LOG BOMB 2] finalizeSetup: Received ${allGameObjects.length} objects. Starting onReady loop...`, 'color: yellow; font-weight: bold;', allGameObjects);
+   finalizeSetup(allGameObjects) {
+        console.log(`[BaseGameScene] Finalizing setup with ${allGameObjects.length} objects.`);
 
         for (const gameObject of allGameObjects) {
             const events = gameObject.getData('events');
             if (events) {
                 for (const eventData of events) {
                     if (eventData.trigger === 'onReady') {
-                        // ★★★ ログ爆弾 No.3 ★★★
-                        console.log(`%c[LOG BOMB 3] finalizeSetup: Found onReady event for '${gameObject.name}'. Running actions...`, 'color: yellow; font-weight: bold;', eventData.actions);
                         if (this.actionInterpreter) {
                             this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
                         }
@@ -343,30 +338,25 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         }
         
-        // --- Matter.jsの衝突イベント監視を開始 ---
+        // --- Matter.jsの衝突イベント監視を強化 ---
+        // 'collisionstart'イベントから、より詳細なペア情報を取得する
         this.matter.world.on('collisionstart', (event) => {
-            // event.pairs には、このフレームで衝突を開始したペアが全て含まれる
             for (const pair of event.pairs) {
                 const { bodyA, bodyB } = pair;
                 
-                // bodyからGameObjectを取得
                 const objA = bodyA.gameObject;
                 const objB = bodyB.gameObject;
 
                 if (objA && objB) {
-                    // 両方向の衝突をチェック
-                    // (AがBにぶつかったイベント、BがAにぶつかったイベント)
-                    this.handleCollision(objA, objB);
-                    this.handleCollision(objB, objA);
+                    // ★★★ handleCollisionに、衝突の詳細情報(pair)を渡すように変更 ★★★
+                    this.handleCollision(objA, objB, pair);
+                    this.handleCollision(objB, objA, pair);
                 }
             }
         });
         
-        // (オプション) onOverlapに対応させたい場合は、'collisionactive'も監視する
-        
-        console.log("[BaseGameScene] Matter.js collision listeners activated.");
+        console.log("[BaseGameScene] Advanced Matter.js collision listeners activated.");
 
-        // --- 従来の完了処理 ---
         if (this.onSetupComplete) {
             this.onSetupComplete();
         }
@@ -374,23 +364,51 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     }
 
     /**
-     * 衝突を処理するコアロジック
-     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点
-     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手
+     * 衝突を処理するコアロジック (衝突方向判定機能付き・最終確定版)
+     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点となるオブジェクト
+     * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト
+     * @param {object} pair - Matter.jsが提供する衝突の詳細情報
      */
-      handleCollision(sourceObject, targetObject) {
-        if (!this.actionInterpreter) return;
+    handleCollision(sourceObject, targetObject, pair) {
+        if (!this.actionInterpreter || !sourceObject.getData) return;
         const events = sourceObject.getData('events');
         if (!events) return;
 
         for (const eventData of events) {
-            if (eventData.trigger === 'onCollide_Start' && eventData.targetGroup === targetObject.getData('group')) {
-                console.log(`[Collision] Event triggered: '${sourceObject.name}' collided with group '${eventData.targetGroup}'.`);
-                // ★★★ ここに、第3引数として targetObject を追加する ★★★
+            // グループが一致しないイベントは、即座にスキップ
+            if (eventData.targetGroup !== targetObject.getData('group')) {
+                continue;
+            }
+
+            // ▼▼▼【ここが新しいエンジンの心臓部です】▼▼▼
+
+            // --- 1. 衝突の法線ベクトルを取得し、sourceObject視点に正規化する ---
+            let collisionNormal = pair.collision.normal;
+            // もしsourceObjectがペアの2番目のボディ(bodyB)なら、法線ベクトルを反転させる
+            if (sourceObject.body === pair.bodyB) {
+                collisionNormal = { x: -collisionNormal.x, y: -collisionNormal.y };
+            }
+
+            // --- 2. ベクトルから「踏みつけ」か「接触」かを判定する ---
+            // 法線ベクトルのY成分が-0.7より小さい = ほぼ真上からの衝突
+            const isStomp = collisionNormal.y < -0.7; 
+            // 法線ベクトルのY成分が-0.7以上 = 横または下からの衝突
+            const isHit = collisionNormal.y >= -0.7;
+
+            // --- 3. イベントのトリガーと、判定結果を照合する ---
+            if (eventData.trigger === 'onStomp' && isStomp) {
+                console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
                 this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
             }
+            else if (eventData.trigger === 'onHit' && isHit) {
+                console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
+                this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+            }
+            
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     }
+
 
     /**
      * エディタからイベント定義が変更された際に呼び出される。
