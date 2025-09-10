@@ -1,36 +1,39 @@
 //
 // Odyssey Engine - PlayerController Component
-// Final Architecture: Self-Sufficient Agent for Matter.js
+// Final Architecture: Force-Based Control for Matter.js
 //
 
-
-    
 export default class PlayerController {
     
     constructor(scene, target, params = {}) {
         this.scene = scene;
         this.target = target;
-        this.moveSpeed = params.moveSpeed || 4; 
-        this.jumpVelocity = params.jumpVelocity || -10;
+        
+        // --- パラメータの強化 ---
+        this.maxSpeed = params.maxSpeed || 5;          // 最高速度
+        this.acceleration = params.acceleration || 0.1;  // 加速力
+        this.jumpVelocity = params.jumpVelocity || -10;    // ジャンプの初速
 
         this.keyboardEnabled = !!scene.input.keyboard;
         this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
         
-          this.state = 'idle'; // 初期状態は 'idle' (待機)
-        this.direction = 'right'; // 初期方向は 'right'
+        this.state = 'idle';
+        this.direction = 'right';
     }
-   /**
+
+    /**
      * JumpSceneのupdateから毎フレーム呼ばれる
      * @param {object} joystick - Rex Virtual Joystick のインスタンス
      */
     updateWithJoystick(joystick) {
-        // --- 1. ガード節: ターゲットが存在しない場合は 'idle' 状態にして終了 ---
         if (!this.target || !this.target.body || !this.target.active) {
             this.changeState('idle');
             return;
         }
         
-        // --- 2. 入力から、左右の移動意志を取得 ---
+        const body = this.target.body;
+        
+        // --- 1. 入力から、目標とする移動方向（-1, 0, 1）を取得 ---
         let moveX = 0;
         if (this.keyboardEnabled && this.cursors) {
             if (this.cursors.left.isDown) moveX = -1;
@@ -39,92 +42,104 @@ export default class PlayerController {
         if (joystick) {
             if (joystick.left) moveX = -1;
             else if (joystick.right) moveX = 1;
-
-              // --- 1. 新しい向きを判断する ---
-        let newDirection = this.direction;
-        if (moveX < 0) {
-            newDirection = 'left';
-        } else if (moveX > 0) {
-            newDirection = 'right';
         }
 
-        // --- 2. 向きが変化した瞬間だけ、イベントを発行する ---
+        // --- 2. 向きの変更を検知し、イベントを発行 ---
+        let newDirection = this.direction;
+        if (moveX < 0) newDirection = 'left';
+        else if (moveX > 0) newDirection = 'right';
         if (this.direction !== newDirection) {
             this.direction = newDirection;
             this.target.emit('onDirectionChange', this.direction);
-            console.log(`%c[PlayerController] Direction changed: -> ${this.direction}`, 'color: magenta');
-        }
         }
         
-        // --- 3. 物理ボディを操作 ---
-        const body = this.target.body;
-        const currentVelocityY = body.velocity.y;
-        this.target.setVelocityX(moveX * this.moveSpeed);
-        // 水平移動中は、垂直速度を維持 (重力の影響を受け続けるため)
-        if (moveX !== 0) {
-            this.target.setVelocityY(currentVelocityY);
-        }
-        
-        // ★★★ 4. 物理状態から、新しい状態を判断する ★★★
+        // ▼▼▼【ここからが物理制御の核心です】▼▼▼
+
+        // --- 3. 目標速度と現在の速度の差から、加えるべき力を計算 ---
+        const targetVelocityX = moveX * this.maxSpeed;
+        const currentVelocityX = body.velocity.x;
+        const velocityDifference = targetVelocityX - currentVelocityX;
+
+        // 加える力の計算（目標速度に近づくように、差分に応じた力を加える）
+        const forceX = this.acceleration * velocityDifference;
+
+        // --- 4. 物理エンジンに「力を加える」よう依頼 ---
+        // これにより、他のコンポーネントからの力と安全に共存できる
+        this.target.applyForce({ x: forceX, y: 0 });
+
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 5. 状態機械のロジック (変更なし、ただし接地判定を強化) ---
+        const isOnGround = this.checkIsOnGround();
         let newState = this.state;
 
-        // Matter.jsの接地判定は、垂直速度が非常に小さいことで判断するのが一般的
-        const isOnGround = Math.abs(body.velocity.y) < 0.1;
-
         if (!isOnGround) {
-            // 地面にいない場合
             newState = (body.velocity.y < 0) ? 'jump_up' : 'fall_down';
-        } else if (Math.abs(body.velocity.x) > 0.1) {
-            // 地面にいて、水平に動いている場合
+        } else if (Math.abs(body.velocity.x) > 0.2) { // 少し閾値を上げる
             newState = 'walk';
         } else {
-            // 地面にいて、動いていない場合
             newState = 'idle';
         }
-
-        // --- 5. 状態が変化した瞬間だけ、イベントを発行する ---
         this.changeState(newState);
         
-        // --- 6. キーボードジャンプ処理 ---
+        // --- 6. キーボードジャンプ (変更なし) ---
         if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
         }
     }
 
     /**
-     * 状態を変更し、変更があった場合のみイベントを発行する
-     * @param {string} newState - 新しい状態名
+     * 状態を変更し、変更があった場合のみイベントを発行する (変更なし)
      */
     changeState(newState) {
         if (this.state !== newState) {
             const oldState = this.state;
             this.state = newState;
-            
-            // ★ ターゲットオブジェクト自身に、イベントを発行！
             this.target.emit('onStateChange', newState, oldState);
             console.log(`%c[PlayerController] State changed: ${oldState} -> ${newState}`, 'color: cyan');
         }
     }
 
     /**
-     * JumpSceneやキーボード入力から呼び出される
+     * ジャンプ命令
      */
     jump() {
-        if (this.target && this.target.body) {
-            // 接地している場合のみジャンプを許可
-            if (Math.abs(this.target.body.velocity.y) < 0.1) {
-                this.target.setVelocityY(this.jumpVelocity);
-                // ★ ジャンプした瞬間に、状態を強制的に 'jump_up' に変更
-                this.changeState('jump_up'); 
-            }
-        }
-    }
-    
-    destroy() {
-        if (this.jumpButton) {
-            this.jumpButton.off('button_pressed', this.jump, this);
+        if (this.target && this.target.body && this.checkIsOnGround()) {
+            // ジャンプは初速を与える「一度きりの命令」なので、setVelocityYは適切
+            this.target.setVelocityY(this.jumpVelocity);
+            this.changeState('jump_up'); 
         }
     }
 
+    /**
+     * Matter.js用の、より信頼性の高い接地判定メソッド
+     * @returns {boolean} 地面に接しているかどうか
+     */
+    checkIsOnGround() {
+        if (!this.target || !this.target.body) return false;
+        
+        const world = this.scene.matter.world;
+        const body = this.target.body;
+        const bounds = body.bounds;
+        const checkY = bounds.max.y + 1; // ボディの底面の少し下をチェック
+
+        // ボディの底面の左右と中央の3点をチェック
+        const pointsToCheck = [
+            { x: bounds.min.x, y: checkY },
+            { x: body.position.x, y: checkY },
+            { x: bounds.max.x, y: checkY }
+        ];
+
+        for (const point of pointsToCheck) {
+            const bodies = world.queryPoint(point);
+            if (bodies.length > 1) { // 1つ以上（自分自身以外）のボディがあれば接地している
+                return true;
+            }
+        }
+        return false;
+    }
     
+    destroy() {
+       // クリーンアップ処理
+    }
 }
