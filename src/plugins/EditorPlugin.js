@@ -153,6 +153,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ... (他のセクションも同様) ...
             this.safeCreateUI(this.createExportButton);
+this.safeCreateUI(this.createExportPrefabButton);
+
+
             this.safeCreateUI(this.createDeleteObjectButton);
 
         } catch (error) {
@@ -175,7 +178,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             console.error(`[EditorPlugin] Failed to create UI section: '${funcName}'`, error);
         }
     }
-    
+    createExportPrefabButton() {
+        const button = document.createElement('button');
+        button.innerText = 'Export Selection as Prefab';
+        button.style.backgroundColor = '#4a8a4a'; // 分かりやすいように色を変える
+        button.addEventListener('click', () => this.exportSelectionToPrefab());
+        this.editorPropsContainer.appendChild(button);
+    }
     // --- 物理セクションを独立したメソッドに分離 ---
     createPhysicsSection() {
         const physicsTitle = document.createElement('h4');
@@ -913,7 +922,90 @@ if (gameObject.body) {
         }
     }
 
+// in src/plugins/EditorPlugin.js
 
+    // ... (既存の exportLayoutToJson メソッド) ...
+
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 現在選択されている単一のオブジェクトを、プレハブ用のJSONとしてエクスポートする。
+     */
+    exportSelectionToPrefab() {
+        if (!this.selectedObject) {
+            alert("プレハブとして保存したいオブジェクトを、まず選択してください。");
+            return;
+        }
+
+        const gameObject = this.selectedObject;
+        const prefabName = prompt("このプレハブの名前を入力してください (例: coin, bullet):", gameObject.name);
+
+        if (!prefabName) {
+            console.log("[EditorPlugin] Prefab export cancelled.");
+            return;
+        }
+
+        // --- 1. 必要なプロパティだけを抽出した、プレーンなオブジェクトを作成 ---
+        // (exportLayoutToJsonとほぼ同じロジック)
+        const prefabData = {
+            // ★ nameはプレハブのデフォルト名として保存
+            name: prefabName, 
+            type: (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+            texture: gameObject.texture.key,
+            
+            // ★ 座標(x, y)はプレハブに不要なので、含めない
+
+            depth: gameObject.depth,
+            scaleX: parseFloat(gameObject.scaleX.toFixed(2)),
+            scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
+            angle: Math.round(gameObject.angle),
+            alpha: parseFloat(gameObject.alpha.toFixed(2)),
+        };
+        
+        // --- 2. getData()で取得した安全なデータを追加 ---
+        const group = gameObject.getData('group');
+        if (group) prefabData.group = group;
+
+        const animData = gameObject.getData('animation_data');
+        if (animData) prefabData.animation = animData;
+        
+        const events = gameObject.getData('events');
+        if (events && events.length > 0) prefabData.events = events;
+        
+        const components = gameObject.getData('components');
+        if (components && components.length > 0) prefabData.components = components;
+
+        // --- 3. 物理ボディのプロパティを抽出 ---
+        if (gameObject.body) {
+            const body = gameObject.body;
+            prefabData.physics = {
+                isStatic: body.isStatic,
+                ignoreGravity: gameObject.getData('ignoreGravity') === true,
+                gravityScale: body.gravityScale.y,
+                shape: gameObject.getData('shape') || 'rectangle', 
+                friction: parseFloat(body.friction.toFixed(2)),
+                frictionAir: parseFloat(body.frictionAir.toFixed(2)), // 空気抵抗も忘れずに
+                restitution: parseFloat(body.restitution.toFixed(2)),
+            };
+        }
+        
+        // --- 4. 安全なオブジェクトをJSONに変換して出力 ---
+        try {
+            const jsonString = JSON.stringify(prefabData, null, 2);
+            
+            console.log(`%c--- Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
+            console.log(jsonString);
+            
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert(`Prefab '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' という名前で保存してください。`);
+            });
+        } catch (error) {
+            console.error("[EditorPlugin] FAILED to stringify prefab data.", error);
+            alert("プレハブのエクスポートに失敗しました。コンソールを確認してください。");
+        }
+    }
+
+    // ... (ファイルの末尾まで) ...
     // --- モーダルウィンドウ関連 ---
 
     // --- モーダルウィンドウ関連 ---
