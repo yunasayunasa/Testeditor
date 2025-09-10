@@ -147,54 +147,40 @@ buildSceneFromLayout(layoutData) {
             gameObject.setData('isScrollable', true);
         }
      
-// BaseGameScene.js (applyProperties メソッド内)
-
 // --- 2. 物理ボディの生成 ---
-// BaseGameScene.js (applyProperties メソッド内)
+ // --- 2. 物理ボディの生成 ---
+    if (data.physics) {
+        const phys = data.physics;
+        gameObject.setData('shape', phys.shape || 'rectangle');
 
-// --- 2. 物理ボディの生成 ---
-if (data.physics) {
-    const phys = data.physics;
-    gameObject.setData('shape', phys.shape || 'rectangle');
+        // ▼▼▼【ここも修正します】▼▼▼
+        // 物理ボディを生成する際は、もう ignoreGravity オプションに頼らない。
+        // 代わりに、gameObject のデータとして ignoreGravity の状態を保存する。
+        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
 
-    // ignoreGravity の状態をGameObjectのデータとして設定
-    gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+        const bodyOptions = {
+            isStatic: phys.isStatic || false,
+            friction: phys.friction !== undefined ? phys.friction : 0.1,
+            restitution: phys.restitution !== undefined ? phys.restitution : 0,
+        };
+        
+        // gravityScaleは通常通り設定する
+        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
+        bodyOptions.gravityScale = { x: 0, y: gravityY };
+        
+        this.matter.add.gameObject(gameObject, bodyOptions);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    const bodyOptions = {
-        isStatic: phys.isStatic === true, // ★ isStaticを明示的にtrue/falseに
-        friction: phys.friction !== undefined ? phys.friction : 0.1,
-        restitution: phys.restitution !== undefined ? phys.restitution : 0,
-        // collisionFilter: { group: 0, category: 1, mask: 1 }, // 必要であればここに追加
-    };
-    
-    // gravityScale の設定はMatter.jsのオプションとして直接渡す
-    // ignoreGravityがtrueの場合はgravityScaleを0にするのは、
-    // beforeupdateのロジックがあるので不要（または冗長）
-    // ただし、Matter.jsの内部でgravityScaleが0だと衝突が不安定になる場合もあるので、
-    // beforeupdateのロジックを優先し、gravityScaleはJSONの値をそのまま適用する。
-    bodyOptions.gravityScale = { x: 0, y: phys.gravityScale !== undefined ? phys.gravityScale : 1 };
-    
-    this.matter.add.gameObject(gameObject, bodyOptions);
-    
-    // ★重要: Matter.jsのbodyが生成された後、setStatic()を呼び出すのは安全ではない場合があります。
-    // add.gameObjectにisStaticを渡していれば、通常は不要です。
-    // もしここで落ちる現象が続くなら、この行をコメントアウトして試してください。
-    // gameObject.setStatic(phys.isStatic === true); // ★一旦コメントアウト推奨
-    
-    // 形状に応じて、当たり判定を再設定 (既存のコード)
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            
+    // 形状に応じて、当たり判定を再設定
     if (phys.shape === 'circle') {
         const radius = (gameObject.width + gameObject.height) / 4;
         gameObject.setCircle(radius);
     } else {
         gameObject.setRectangle();
     }
-
-    // ★追加: 最終的なボディの状態をログ出力
-    if (gameObject.body) {
-        console.log(`%c[BaseGameScene] Body created for '${gameObject.name}' - Final state: isStatic=${gameObject.body.isStatic}, ignoreGravity=${gameObject.getData('ignoreGravity')}, gravityScale.y=${gameObject.body.gravityScale.y}`, 'color: yellow;');
-    }
 }
-// ... (残りのコードは変更なし)
         // --- 3. シーンへの追加 ---
         this.add.existing(gameObject);
 
