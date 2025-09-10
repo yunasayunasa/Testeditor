@@ -137,6 +137,14 @@ buildSceneFromLayout(layoutData) {
  * @param {object} layout - このオブジェクトのレイアウトデータ
  * @returns {Phaser.GameObjects.GameObject} プロパティ適用済みのGameObject
  */
+// in src/scenes/BaseGameScene.js
+
+/**
+ * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終確定版・API呼び出し順を厳格化)
+ * @param {Phaser.GameObjects.GameObject} gameObject - 生成されたGameObjectインスタンス
+ * @param {object} layout - このオブジェクトのレイアウトデータ
+ * @returns {Phaser.GameObjects.GameObject} プロパティ適用済みのGameObject
+ */
 applyProperties(gameObject, layout) {
     const data = layout || {};
     console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
@@ -146,13 +154,10 @@ applyProperties(gameObject, layout) {
     if (data.group) gameObject.setData('group', data.group);
     if (data.texture) gameObject.setTexture(data.texture);
 
-    // --- 2. シーンへの追加 (Transform適用前に必要) ---
+    // --- 2. シーンへの追加 ---
     this.add.existing(gameObject);
 
-    // ▼▼▼【ここからが最重要修正箇所です】▼▼▼
-
     // --- 3. Transformプロパティ (物理ボディ生成「前」に適用) ---
-    // これにより、物理ボディは最初から正しい位置・角度・スケールで生成される
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
     gameObject.setAngle(data.angle || 0);
@@ -160,50 +165,56 @@ applyProperties(gameObject, layout) {
     if (data.visible !== undefined) gameObject.setVisible(data.visible);
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
 
-    // --- 4. 物理ボディの生成 ---
+    // --- 4. 物理ボディの生成と設定 ---
     if (data.physics) {
         const phys = data.physics;
-        gameObject.setData('shape', phys.shape || 'rectangle');
-        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-
-        const bodyOptions = {
-            isStatic: phys.isStatic || false, // JSONから読み取ったisStaticを直接使用
-            friction: phys.friction !== undefined ? phys.friction : 0.1,
-            restitution: phys.restitution !== undefined ? phys.restitution : 0,
-        };
-
-        const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
-        // Matter.js v0.14.2以降、gravityScaleは非推奨。setGravityScaleを使うか、
-        // もしくはbody作成後に設定するのがより安全だが、ここでは簡潔性を維持する。
-        // bodyOptions.gravityScale = { x: 0, y: gravityY }; // この方法は古いAPIに依存する可能性
-
-        // 物理ボディをシーンに追加
-        this.matter.add.gameObject(gameObject, bodyOptions);
         
-        // gravityScaleはボディ作成後に設定する方がより確実
+        // ▼▼▼【ここからが最終修正です】▼▼▼
+        
+        // --- Step 4a: まず、デフォルト設定で物理ボディをGameObjectにアタッチする ---
+        // この時点では isStatic などのオプションはまだ渡さない
+        this.matter.add.gameObject(gameObject);
+
+        // --- Step 4b: ボディが存在することを確認してから、個別のプロパティを公式APIで設定していく ---
         if (gameObject.body) {
-             gameObject.body.gravityScale.y = gravityY;
-        }
+            
+            // ★★★ 最重要: isStatic の設定 ★★★
+            // Phaserの公式APIである `setStatic` メソッドを明示的に呼び出す
+            gameObject.setStatic(phys.isStatic || false);
 
-        // 形状に応じて、当たり判定を再設定
-        // setCircle/setRectangleは内部でボディを再生成するため、オプション設定後に行うのが良い
-        if (phys.shape === 'circle') {
-            const radius = (gameObject.width * gameObject.scaleX + gameObject.height * gameObject.scaleY) / 4;
-            gameObject.setCircle(radius);
-        } else {
-            // デフォルトは長方形なので明示的な呼び出しは不要な場合も多いが、確実を期す
-            gameObject.setRectangle();
+            // その他の物理プロパティを設定
+            gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
+            gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0); // setBounceはrestitutionと同義
+            
+            // gravityScaleはbodyオブジェクトに直接設定
+            const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
+            gameObject.body.gravityScale.y = gravityY;
+
+            // 形状のデータは永続化用に保存
+            gameObject.setData('shape', phys.shape || 'rectangle');
+            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+
+            // --- Step 4c: 最後に、ボディの形状を設定する ---
+            // これらは内部でボディを再生成する可能性があるため、他の設定を全て終えた後に行うのが最も安全
+            if (phys.shape === 'circle') {
+                const radius = (gameObject.width * gameObject.scaleX + gameObject.height * gameObject.scaleY) / 4;
+                gameObject.setCircle(radius);
+                // setCircleがisStaticをリセットする可能性に備え、念のため再設定する
+                gameObject.setStatic(phys.isStatic || false);
+            } else {
+                gameObject.setRectangle();
+                // 同様に再設定
+                gameObject.setStatic(phys.isStatic || false);
+            }
+            
+            // --- Step 4d: 最終確認ログ ---
+            console.log(`[BaseGameScene] Body configured for '${data.name}'. Final isStatic: ${gameObject.body.isStatic}`);
         }
-        
-        // ログで最終的なボディの状態を確認
-        if(gameObject.body){
-             console.log(`[BaseGameScene] Body created for '${data.name}'. isStatic: ${gameObject.body.isStatic}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
-        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // --- 5. アニメーション ---
+    
+    // --- 5. アニメーション、コンポーネント、イベント (順序変更なし) ---
+    // ... (これらのセクションは前回のコードのままでOKです) ...
     if (data.animation && gameObject.play) {
         gameObject.setData('animation_data', data.animation);
         if (data.animation.default && this.anims.exists(data.animation.default)) {
@@ -211,19 +222,16 @@ applyProperties(gameObject, layout) {
         }
     }
 
-    // --- 6. コンポーネント ---
     if (data.components && typeof this.addComponent === 'function') {
         data.components.forEach(comp => {
             this.addComponent(gameObject, comp.type, comp.params);
         });
     }
 
-    // --- 7. イベントリスナーとエディタ登録 ---
     this.applyEventsAndEditorFunctions(gameObject, data.events);
 
     return gameObject;
 }
-    
     
     /**
      * オブジェクトにイベントリスナーとエディタ機能を設定する (構文修正・最終完成版)
