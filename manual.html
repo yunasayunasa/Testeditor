@@ -4,6 +4,83 @@
 <h1>アクションタグ・リファレンス</h1>
 <p>イベントに応じて、オブジェクトに様々なアクションを実行させるための命令です。</p>
 
+<hr>
+
+<h2>[time_stop]</h2>
+<p>ゲーム全体の時間を停止させます。物理演算、Tween、タイマーなど、時間経過に依存する全てのものが停止します。アクションステージの冒頭などに用います。</p>
+<p><strong>注意:</strong> このタグは、<code>onReady</code>トリガーと併用するのが最も安全で効果的です。これにより、シーンの全てのオブジェクトが生成された直後に時間が停止し、予期せぬ挙動を防ぎます。</p>
+<p><strong>パラメータ:</strong> なし</p>
+<p><strong>使用例:</strong></p>
+<pre><code>
+--- イベント (オブジェクト "OpeningEvent" に設定) ---
+Trigger: onReady
+Actions: [time_stop]
+</code></pre>
+
+<hr>
+
+<h2>[time_resume]</h2>
+<p><code>[time_stop]</code>によって停止されたゲーム全体の時間を再開させます。通常、UIボタン（例：「イベント開始」ボタン）が押された際の<code>onClick</code>イベントと連携して使用されます。</p>
+<p><strong>パラメータ:</strong> なし</p>
+<p><strong>使用例:</strong></p>
+<pre><code>
+--- イベント (オブジェクト "StartButton" に設定) ---
+Trigger: onClick
+Actions: [time_resume][destroy target=self]
+</code></pre>
+
+<hr>
+
+<h2>[set_flip_x]</h2>
+<p>対象オブジェクトを左右に反転させます。キャラクターが左右を向くアニメーションの代わりとして、あるいはそれと組み合わせて使用します。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>value</strong> (必須): <code>true</code>で左右反転（左向き）、<code>false</code>で通常表示（右向き）にします。</li>
+</ul>
+<p><strong>使用例 (onDirectionChangeと連携):</strong></p>
+<pre><code>
+--- イベント1: 左を向いた時 ---
+Trigger: onDirectionChange
+Condition: direction === 'left'
+Actions: [set_flip_x value=true]
+
+--- イベント2: 右を向いた時 ---
+Trigger: onDirectionChange
+Condition: direction === 'right'
+Actions: [set_flip_x value=false]
+</code></pre>
+
+<hr>
+
+<h2>[anim_stop]</h2>
+<p>対象オブジェクトで現在再生中のスプライトアニメーションを停止し、その時点のフレームで静止させます。</p>
+<p><strong>パラメータ:</strong> なし</p>
+<p><strong>使用例:</strong></p>
+<pre><code>
+--- イベント: 歩行が中断された時 ---
+Trigger: onStateChange
+Condition: oldState === 'walk'
+Actions: [anim_stop]
+</code></pre>
+
+<hr>
+
+<h2>[anim_frame]</h2>
+<p>対象オブジェクトを、特定のアニメーションの、特定のフレームで静止させます。アニメーションを再生することなく、キャラクターの「立ち絵」として特定のポーズを表示させたい場合に非常に便利です。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>name</strong> (必須): 参照したいアニメーションの名前（キー）を指定します。</li>
+    <li><strong>frame</strong> (必須): 表示したいフレームの番号（0から始まる）。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>
+; "walk"アニメーションの最初のフレーム(立ちポーズ)で静止させる
+[anim_frame name=walk frame=0]
+
+; "attack"アニメーションの3番目のフレーム(剣を振りかぶったポーズ)で静止させる
+[anim_frame name=attack frame=2]
+</code></pre>
+
 <h2>[destroy]</h2>
 <p>オブジェクトを破壊（シーンから削除）します。</p>
 <ul>
