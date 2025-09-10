@@ -1,6 +1,6 @@
 //
 // Odyssey Engine - PlayerController Component
-// Final Architecture: Simple Force Method for Stable Control
+// Final Architecture: With Coyote Time for Robust Jumping
 //
 
 export default class PlayerController {
@@ -9,10 +9,13 @@ export default class PlayerController {
         this.scene = scene;
         this.target = target;
         
-        // --- パラメータをより直感的に変更 ---
-        this.moveForce = params.moveForce || 0.01;      // 左右に押す力の強さ
-        this.maxSpeed = params.maxSpeed || 5;           // 最高速度
-        this.jumpVelocity = params.jumpVelocity || -10; // ジャンプの初速
+        this.moveForce = params.moveForce || 0.01;
+        this.maxSpeed = params.maxSpeed || 5;
+        this.jumpVelocity = params.jumpVelocity || -10;
+
+        // ★★★ コヨーテ・タイム用のパラメータを追加 ★★★
+        this.coyoteTimeThreshold = 100; // 100ミリ秒 (0.1秒) の猶予
+        this.lastGroundedTime = 0;      // 最後に地面にいた時刻
 
         this.keyboardEnabled = !!scene.input.keyboard;
         this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
@@ -29,7 +32,7 @@ export default class PlayerController {
         
         const body = this.target.body;
         
-        // --- 1. 入力から、目標とする移動方向（-1, 0, 1）を取得 (変更なし) ---
+        // ... (入力取得と向きの変更ロジックは変更なし) ...
         let moveX = 0;
         if (this.keyboardEnabled && this.cursors) {
             if (this.cursors.left.isDown) moveX = -1;
@@ -39,8 +42,6 @@ export default class PlayerController {
             if (joystick.left) moveX = -1;
             else if (joystick.right) moveX = 1;
         }
-
-        // --- 2. 向きの変更を検知 (変更なし) ---
         let newDirection = this.direction;
         if (moveX < 0) newDirection = 'left';
         else if (moveX > 0) newDirection = 'right';
@@ -49,37 +50,51 @@ export default class PlayerController {
             this.target.emit('onDirectionChange', this.direction);
         }
         
-        // ▼▼▼【ここが振動を止めるための、新しい物理制御ロジックです】▼▼▼
-
+        // ... (力ベースの移動ロジックも変更なし) ...
         const currentVelocityX = body.velocity.x;
-
-        // --- 3. 入力があり、かつ最高速度に達していない場合のみ力を加える ---
         if (moveX !== 0 && Math.abs(currentVelocityX) < this.maxSpeed) {
-            // ★★★ 非常にシンプル: 入力方向に、決まった大きさの力を加えるだけ ★★★
             this.target.applyForce({ x: moveX * this.moveForce, y: 0 });
         }
 
-        // 減速は、Matter.jsの摩擦(friction)に完全に任せる。
-        // 何もしなければ、摩擦で自然に止まる。
+        // ▼▼▼【ここからが状態管理の核心です】▼▼▼
         
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // --- 4. 状態機械のロジック (変更なし) ---
         const isOnGround = this.checkIsOnGround();
-        let newState = this.state;
 
+        // --- 1. 接地している瞬間を記録する ---
+        if (isOnGround) {
+            this.lastGroundedTime = this.scene.time.now;
+        }
+
+        // --- 2. 状態機械のロジック ---
+        let newState = this.state;
         if (!isOnGround) {
             newState = (body.velocity.y < 0) ? 'jump_up' : 'fall_down';
-        } else if (Math.abs(body.velocity.x) > 0.1) { // 閾値は少し調整
+        } else if (Math.abs(body.velocity.x) > 0.1) {
             newState = 'walk';
         } else {
             newState = 'idle';
         }
         this.changeState(newState);
         
-        // --- 5. キーボードジャンプ (変更なし) ---
+        // ... (キーボードジャンプは変更なし) ...
         if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
+        }
+    }
+
+    jump() {
+        if (!this.target || !this.target.body) return;
+
+        // ▼▼▼【ジャンプの門番を、コヨーテ・タイムを使うように変更】▼▼▼
+        const timeSinceGrounded = this.scene.time.now - this.lastGroundedTime;
+
+        // ★★★「最後に地面にいてから、まだ猶予時間内か？」をチェックする★★★
+        if (timeSinceGrounded <= this.coyoteTimeThreshold) {
+            this.target.setVelocityY(this.jumpVelocity);
+            this.changeState('jump_up');
+            
+            // 一度ジャンプしたら、猶予時間を無効化して連続ジャンプを防ぐ
+            this.lastGroundedTime = 0; 
         }
     }
 
