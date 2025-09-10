@@ -322,7 +322,8 @@ if (this.modeToggle && this.modeLabel) {
     // ★★★ 新規メソッド：ヘルプモーダルを開く ★★★
     async openHelpModal() {
         if (!this.helpModal || !this.helpModalContent) return;
-
+ this.game.input.enabled = false;
+            console.log("[EditorUI] Phaser input disabled for Help Modal.");
         // モーダルを表示
         this.helpModal.style.display = 'flex';
         // Phaserの入力を無効化
@@ -346,7 +347,8 @@ if (this.modeToggle && this.modeLabel) {
     // ★★★ 新規メソッド：ヘルプモーダルを閉じる ★★★
     closeHelpModal() {
         if (!this.helpModal) return;
-      
+         this.game.input.enabled = true;
+            console.log("[EditorUI] Phaser input re-enabled.");
         this.helpModal.style.display = 'none';
       
     }
