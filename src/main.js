@@ -73,6 +73,9 @@ const config = {
         JumpScene,
        NovelOverlayScene
    ],
+    input: {
+        activePointers: 3 // 同時に3つのタッチを認識できるようにする
+    },
     // ★★★ 変更点2: EditorPluginをグローバルプラグインとして登録 ★★★
  plugins: {
         global: [
