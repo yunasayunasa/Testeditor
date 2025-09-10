@@ -217,6 +217,27 @@ Actions: [anim_stop]
 ; オブジェクトを再表示する
 [set_visible value=true]
 </code></pre>
+<hr>
+
+<h2>[play_sound]</h2>
+<p>効果音（SFX）を再生します。あらかじめ<code>asset_define.json</code>でオーディオアセットとして読み込んでおく必要があります。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>key</strong> (必須): 再生したい効果音のアセットキー。</li>
+    <li><strong>volume</strong> (任意): 音量。<code>0.0</code>（無音）から<code>1.0</code>（最大音量）の範囲で指定します。デフォルトは<code>1.0</code>。</li>
+    <li><strong>loop</strong> (任意): <code>true</code>にすると、効果音がループ再生されます。<code>[stop_sound]</code>タグ（未実装）で停止させるまで鳴り続けます。デフォルトは<code>false</code>。</li>
+</ul>
+<p><strong>注意:</strong> このタグは音の再生を「開始」するだけで、再生が完了するのを待ちません。すぐに次のアクションの処理に移ります。</p>
+<p><strong>使用例:</strong></p>
+<pre><code>; "jump_sfx" というキーの効果音を再生
+[play_sound key=jump_sfx]
+
+; 敵を倒した時の音を、少し小さめの音量で再生
+[play_sound key=enemy_defeat_sfx volume=0.7]
+
+; アイテム取得音がループ再生される (特殊な演出)
+[play_sound key=item_get_loop loop=true]
+</code></pre>
 <!-- ====================================================== -->
 <h2>カスタムイベントトリガー (エディタ)</h2>
 <p>PlayerControllerのような特定のコンポーネントが、自身の状態変化を知らせるために発行する、独自のイベントです。これにより、オブジェクトの内部状態とアニメーションやサウンドを、エディタだけで簡単に関連付けることができます。</p>
