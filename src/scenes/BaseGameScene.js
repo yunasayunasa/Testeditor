@@ -170,7 +170,9 @@ buildSceneFromLayout(layoutData) {
         
         this.matter.add.gameObject(gameObject, bodyOptions);
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+if (gameObject.body) {
+    console.log(`[BaseGameScene] Body created for '${gameObject.name}'. isStatic: ${gameObject.body.isStatic}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
+}
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             
     // 形状に応じて、当たり判定を再設定
