@@ -138,7 +138,7 @@
       "alpha": 1,
       "events": [
         {
-          "trigger": "onReady",
+          "trigger": "oClick",
           "actions": "[time_stop]"
         }
       ],
