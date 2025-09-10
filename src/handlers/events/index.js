@@ -14,7 +14,7 @@ import setFlipXHandler from './set_flip_x.js';
 import reload_scene from './reload_scene.js'; // ★ この行を追加
 import apply_force from './apply_force.js';
 import play_sound from './play_sound.js';
-
+import spawn_object from './spawn_object.js';
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
    'time_stop': timeStopHandler,
@@ -31,5 +31,6 @@ export const eventTagHandlers = {
        'eval': evalExpressionHandler,  
         'apply_force': apply_force,
          'play_sound': play_sound, // ★ この行を追加
+           'spawn_object': spawn_object,
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };

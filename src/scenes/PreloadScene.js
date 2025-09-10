@@ -60,6 +60,8 @@ export default class PreloadScene extends Phaser.Scene {
         });
     }
 
+ // in src/scenes/PreloadScene.js
+
     /**
      * asset_define.json の定義を解析し、すべてのアセットをロードキューに追加する
      */
@@ -80,16 +82,26 @@ export default class PreloadScene extends Phaser.Scene {
                 this.load.spritesheet(key, sheet.path, { frameWidth: sheet.frameWidth, frameHeight: sheet.frameHeight });
             }
         }
+        
+        // ▼▼▼【ここからがプレハブ読み込み処理です】▼▼▼
+        if (Array.isArray(assetDefine.prefabs)) {
+            for (const prefabInfo of assetDefine.prefabs) {
+                if (prefabInfo.key && prefabInfo.path) {
+                    // PhaserのJSONローダーを使って、キーとパスを指定して読み込みキューに追加
+                    this.load.json(prefabInfo.key, 'assets/' + prefabInfo.path);
+                    console.log(`[PreloadScene] Queued: prefab - key='${prefabInfo.key}', path='assets/${prefabInfo.path}'`);
+                }
+            }
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ ここが新しい file_lists を処理するロジックです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // file_lists の処理 (これは変更なし)
         if (assetDefine.file_lists) {
             for (const groupKey in assetDefine.file_lists) {
                 const group = assetDefine.file_lists[groupKey];
                 if (group.path && group.type && Array.isArray(group.list)) {
                     for (const filename of group.list) {
-                        const key = filename.split('.')[0]; // 'scene1.ks' -> 'scene1'
+                        const key = filename.split('.')[0];
                         const path = group.path + filename;
                         this.load[group.type](key, path);
                         console.log(`[PreloadScene] Queued: ${group.type} - key='${key}', path='${path}'`);

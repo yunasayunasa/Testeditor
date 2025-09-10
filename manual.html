@@ -31,6 +31,25 @@ Actions: [time_resume][destroy target=self]
 
 <hr>
 
+<h2>[spawn_object]</h2>
+<p>あらかじめ定義された「プレハブ（設計図）」に基づいて、新しいオブジェクトをシーンに出現させます。弾の発射、アイテムのドロップ、敵の出現など、動的なゲームプレイの核となるタグです。</p>
+<p>プレハブは、<code>assets/data/prefabs/</code>フォルダ内に、単一のオブジェクト定義を持つJSONファイルとして作成します。</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>prefab</strong> (必須): 出現させたいプレハブのキー（JSONファイル名から拡張子を除いたもの）。</li>
+    <li><strong>name</strong> (任意): 出現するオブジェクトに固有の名前を付けたい場合に指定します。指定しない場合、<code>prefab名_タイムスタンプ</code>という名前が自動で付きます。</li>
+    <li><strong>offsetX, offsetY</strong> (任意): タグを実行したオブジェクトの位置を基準とした、出現位置のオフセット（ずれ）を指定します。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; 敵を倒した時に、その場に"coin"プレハブのオブジェクトを出現させる
+[spawn_object prefab=coin]
+
+; プレイヤーの右手側(X座標+50)から、"bullet"プレハブの弾を発射する
+[spawn_object prefab=bullet offsetX=50]
+</code></pre>
+
+<hr>
+
 <h2>[set_flip_x]</h2>
 <p>対象オブジェクトを左右に反転させます。キャラクターが左右を向くアニメーションの代わりとして、あるいはそれと組み合わせて使用します。</p>
 <h4>パラメータ:</h4>

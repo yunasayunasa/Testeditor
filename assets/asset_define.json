@@ -29,10 +29,14 @@
 "popopo": "assets/gyakuten_popopo.mp3",
 "cafe": "assets/cafe.mp3",
  "bgm_action": "assets/gyakuten_bgm.mp3",
-"ronpa_bgm": "assets/ronpa_bgm.mp3"
-
+"ronpa_bgm": "assets/ronpa_bgm.mp3",
+"smash": "assets/smash.mp3"
   },
 "//": "--- ここからが新しいカテゴリです ---",
+ "prefabs": [
+        { "key": "coin", "path": "data/prefabs/coin.json" },
+        { "key": "bullet", "path": "data/prefabs/bullet.json" }
+    ],
 
   "file_lists": {
     "scenarios": {
@@ -47,6 +51,7 @@
         "test_sub.ks"
       ]
     },
+    
     "scene_layouts": {
       "path": "assets/data/scenes/",
       "type": "json",
