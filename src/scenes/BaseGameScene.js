@@ -339,29 +339,89 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         }
         
         // --- Matter.jsの衝突イベント監視を強化 ---
-        // 'collisionstart'イベントから、より詳細なペア情報を取得する
+        // --- 衝突イベント監視 (変更なし) ---
         this.matter.world.on('collisionstart', (event) => {
             for (const pair of event.pairs) {
-                const { bodyA, bodyB } = pair;
-                
-                const objA = bodyA.gameObject;
-                const objB = bodyB.gameObject;
+                // ...
+                this.handleCollision(objA, objB, pair);
+                this.handleCollision(objB, objA, pair);
+            }
+        });
 
-                if (objA && objB) {
-                    // ★★★ handleCollisionに、衝突の詳細情報(pair)を渡すように変更 ★★★
-                    this.handleCollision(objA, objB, pair);
-                    this.handleCollision(objB, objA, pair);
+        // ▼▼▼【ここからオーバーラップイベント監視を追加】▼▼▼
+        
+        // --- オーバーラップ開始・継続イベント監視 ---
+        this.matter.world.on('collisionactive', (event) => {
+            for (const pair of event.pairs) {
+                // isSensorボディが含まれるペアのみを処理
+                if (pair.bodyA.isSensor || pair.bodyB.isSensor) {
+                    const objA = pair.bodyA.gameObject;
+                    const objB = pair.bodyB.gameObject;
+                    if (objA && objB) {
+                        this.handleOverlap(objA, objB, 'active');
+                        this.handleOverlap(objB, objA, 'active');
+                    }
+                }
+            }
+        });
+
+        // --- オーバーラップ終了イベント監視 ---
+        this.matter.world.on('collisionend', (event) => {
+            for (const pair of event.pairs) {
+                if (pair.bodyA.isSensor || pair.bodyB.isSensor) {
+                    const objA = pair.bodyA.gameObject;
+                    const objB = pair.bodyB.gameObject;
+                    if (objA && objB) {
+                        this.handleOverlap(objA, objB, 'end');
+                        this.handleOverlap(objB, objA, 'end');
+                    }
                 }
             }
         });
         
-        console.log("[BaseGameScene] Advanced Matter.js collision listeners activated.");
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        if (this.onSetupComplete) {
-            this.onSetupComplete();
-        }
+        console.log("[BaseGameScene] All collision and overlap listeners activated.");
+
+        if (this.onSetupComplete) { this.onSetupComplete(); }
         this.events.emit('scene-ready');
     }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * オーバーラップ（センサー接触）を処理する
+     * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点
+     * @param {Phaser.GameObjects.GameObject} targetObject - 接触相手
+     * @param {string} phase - 'active' (重なり中) or 'end' (重なり終了)
+     */
+    handleOverlap(sourceObject, targetObject, phase) {
+        if (!this.actionInterpreter || !sourceObject.getData) return;
+        const events = sourceObject.getData('events');
+        if (!events) return;
+
+        // "重なり始め" をエミュレートするためのフラグ管理
+        const overlapKey = `overlap_${targetObject.name || targetObject.id}`;
+        const wasOverlapping = sourceObject.getData(overlapKey);
+
+        if (phase === 'active' && !wasOverlapping) {
+            // --- Overlap Start ---
+            sourceObject.setData(overlapKey, true); // 今、重なったことを記録
+            for (const eventData of events) {
+                if (eventData.trigger === 'onOverlap_Start' && eventData.targetGroup === targetObject.getData('group')) {
+                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                }
+            }
+        } else if (phase === 'end' && wasOverlapping) {
+            // --- Overlap End ---
+            sourceObject.setData(overlapKey, false); // 重なりが解消したことを記録
+            for (const eventData of events) {
+                if (eventData.trigger === 'onOverlap_End' && eventData.targetGroup === targetObject.getData('group')) {
+                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                }
+            }
+        }
+    }
+
 
       /**
      * 衝突を処理するコアロジック (全ての衝突トリガーに対応した最終確定版)

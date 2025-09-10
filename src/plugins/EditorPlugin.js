@@ -1270,7 +1270,7 @@ if (gameObject.body) {
         const triggerSelect = document.createElement('select');
         
         // ★★★ 全ての利用可能なトリガーをリスト化 ★★★
-        const availableTriggers = ['onClick', 'onReady', 'onCollide_Start', 'onStomp', 'onHit', 'onStateChange', 'onDirectionChange'];
+        const availableTriggers = ['onClick', 'onReady', 'onCollide_Start','onInteract', 'onStomp', 'onHit', 'onStateChange', 'onDirectionChange'];
         availableTriggers.forEach(t => {
             const option = document.createElement('option');
             option.value = t;
