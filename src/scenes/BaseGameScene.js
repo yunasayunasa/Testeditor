@@ -129,92 +129,100 @@ buildSceneFromLayout(layoutData) {
         return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
     }
 
-      /**
-     * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終完成版)
-     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-     * ★★★ これが、最後の完成版です ★★★
-     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-     */
-    applyProperties(gameObject, layout) {
-        const data = layout || {};
-   console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
-        // --- 1. 基本プロパティ ---
-        gameObject.name = data.name || 'untitled';
-        if (data.group) gameObject.setData('group', data.group);
-        if (data.texture) gameObject.setTexture(data.texture);
-        
-        if (layout.scrollable) {
-            gameObject.setData('isScrollable', true);
-        }
-     
-// --- 2. 物理ボディの生成 ---
- // --- 2. 物理ボディの生成 ---
+// in src/scenes/BaseGameScene.js
+
+/**
+ * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終修正版・物理ボディ生成順序修正済み)
+ * @param {Phaser.GameObjects.GameObject} gameObject - 生成されたGameObjectインスタンス
+ * @param {object} layout - このオブジェクトのレイアウトデータ
+ * @returns {Phaser.GameObjects.GameObject} プロパティ適用済みのGameObject
+ */
+applyProperties(gameObject, layout) {
+    const data = layout || {};
+    console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
+
+    // --- 1. 基本プロパティ ---
+    gameObject.name = data.name || 'untitled';
+    if (data.group) gameObject.setData('group', data.group);
+    if (data.texture) gameObject.setTexture(data.texture);
+
+    // --- 2. シーンへの追加 (Transform適用前に必要) ---
+    this.add.existing(gameObject);
+
+    // ▼▼▼【ここからが最重要修正箇所です】▼▼▼
+
+    // --- 3. Transformプロパティ (物理ボディ生成「前」に適用) ---
+    // これにより、物理ボディは最初から正しい位置・角度・スケールで生成される
+    gameObject.setPosition(data.x || 0, data.y || 0);
+    gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
+    gameObject.setAngle(data.angle || 0);
+    gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
+    if (data.visible !== undefined) gameObject.setVisible(data.visible);
+    if (data.depth !== undefined) gameObject.setDepth(data.depth);
+
+    // --- 4. 物理ボディの生成 ---
     if (data.physics) {
         const phys = data.physics;
         gameObject.setData('shape', phys.shape || 'rectangle');
-
-        // ▼▼▼【ここも修正します】▼▼▼
-        // 物理ボディを生成する際は、もう ignoreGravity オプションに頼らない。
-        // 代わりに、gameObject のデータとして ignoreGravity の状態を保存する。
         gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
 
         const bodyOptions = {
-            isStatic: phys.isStatic || false,
+            isStatic: phys.isStatic || false, // JSONから読み取ったisStaticを直接使用
             friction: phys.friction !== undefined ? phys.friction : 0.1,
             restitution: phys.restitution !== undefined ? phys.restitution : 0,
         };
-        
-        // gravityScaleは通常通り設定する
+
         const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
-        bodyOptions.gravityScale = { x: 0, y: gravityY };
-        
+        // Matter.js v0.14.2以降、gravityScaleは非推奨。setGravityScaleを使うか、
+        // もしくはbody作成後に設定するのがより安全だが、ここでは簡潔性を維持する。
+        // bodyOptions.gravityScale = { x: 0, y: gravityY }; // この方法は古いAPIに依存する可能性
+
+        // 物理ボディをシーンに追加
         this.matter.add.gameObject(gameObject, bodyOptions);
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-            
-    // 形状に応じて、当たり判定を再設定
-    if (phys.shape === 'circle') {
-        const radius = (gameObject.width + gameObject.height) / 4;
-        gameObject.setCircle(radius);
-    } else {
-        gameObject.setRectangle();
-    }
-}
-        // --- 3. シーンへの追加 ---
-        this.add.existing(gameObject);
-
-        // --- 4. Transformプロパティ (物理ボディ設定後に適用するのが安全) ---
-        gameObject.setPosition(layout.x || 0, layout.y || 0);
-        gameObject.setScale(layout.scaleX || 1, layout.scaleY || 1);
-        gameObject.setAngle(layout.angle || 0);
-        gameObject.setAlpha(layout.alpha !== undefined ? layout.alpha : 1);
-        if (layout.visible !== undefined) gameObject.setVisible(layout.visible);
-        if (layout.depth !== undefined) gameObject.setDepth(layout.depth);
-
-        // --- 5. アニメーション ---
-        if (layout.animation && gameObject.play) {
-            gameObject.setData('animation_data', layout.animation);
-            if (layout.animation.default && this.anims.exists(layout.animation.default)) {
-                gameObject.play(layout.animation.default);
-            }
+        
+        // gravityScaleはボディ作成後に設定する方がより確実
+        if (gameObject.body) {
+             gameObject.body.gravityScale.y = gravityY;
         }
 
-        // --- 6. コンポーネント ---
-        if (layout.components && typeof this.addComponent === 'function') {
-            layout.components.forEach(comp => {
-                this.addComponent(gameObject, comp.type, comp.params);
-            });
+        // 形状に応じて、当たり判定を再設定
+        // setCircle/setRectangleは内部でボディを再生成するため、オプション設定後に行うのが良い
+        if (phys.shape === 'circle') {
+            const radius = (gameObject.width * gameObject.scaleX + gameObject.height * gameObject.scaleY) / 4;
+            gameObject.setCircle(radius);
+        } else {
+            // デフォルトは長方形なので明示的な呼び出しは不要な場合も多いが、確実を期す
+            gameObject.setRectangle();
         }
         
-        // --- 7. イベントリスナーとエディタ登録 ---
-        this.applyEventsAndEditorFunctions(gameObject, layout.events);
-         
-    
-            return gameObject;
-
-            
+        // ログで最終的なボディの状態を確認
+        if(gameObject.body){
+             console.log(`[BaseGameScene] Body created for '${data.name}'. isStatic: ${gameObject.body.isStatic}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
+        }
     }
+
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // --- 5. アニメーション ---
+    if (data.animation && gameObject.play) {
+        gameObject.setData('animation_data', data.animation);
+        if (data.animation.default && this.anims.exists(data.animation.default)) {
+            gameObject.play(data.animation.default);
+        }
+    }
+
+    // --- 6. コンポーネント ---
+    if (data.components && typeof this.addComponent === 'function') {
+        data.components.forEach(comp => {
+            this.addComponent(gameObject, comp.type, comp.params);
+        });
+    }
+
+    // --- 7. イベントリスナーとエディタ登録 ---
+    this.applyEventsAndEditorFunctions(gameObject, data.events);
+
+    return gameObject;
+}
     
     
     /**
