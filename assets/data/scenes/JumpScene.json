@@ -4,8 +4,8 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 1240,
-      "y": 1068,
+      "x": 51,
+      "y": 137,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -66,160 +66,8 @@
       "name": "cg01_1",
       "type": "Image",
       "texture": "cg01",
-      "x": 314,
-      "y": 1283,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "kaito_normal_1",
-      "type": "Image",
-      "texture": "kaito_normal",
-      "x": 1673,
-      "y": 1223,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": -90,
-      "alpha": 1,
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "cg01_2",
-      "type": "Image",
-      "texture": "cg01",
-      "x": 975,
-      "y": 1283,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "next_arrow_1",
-      "type": "Image",
-      "texture": "next_arrow",
-      "x": 33,
-      "y": 1079,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": -88,
-      "alpha": 1,
-      "events": [
-        {
-          "trigger": "oClick",
-          "actions": "[time_stop]"
-        }
-      ],
-      "components": [
-        {
-          "type": "Scrollable",
-          "params": {}
-        }
-      ],
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "yuna_angry_1",
-      "type": "Image",
-      "texture": "yuna_angry",
-      "x": 2212,
-      "y": 1283,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": -159,
-      "alpha": 1,
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "circle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "umi_1",
-      "type": "Image",
-      "texture": "umi",
-      "x": 2736,
-      "y": 1233,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "umi_2",
-      "type": "Image",
-      "texture": "umi",
-      "x": 3472,
-      "y": 1233,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "physics": {
-        "isStatic": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "yuna_angry_1",
-      "type": "Image",
-      "texture": "yuna_angry",
-      "x": 480,
-      "y": 356,
+      "x": 304,
+      "y": 455,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
