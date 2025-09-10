@@ -239,21 +239,7 @@ input:checked + .slider:before { transform: translateX(26px); }
    MODAL WINDOW STYLES
    ========================================================================== */
 
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 10000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-}
-.modal-overlay.is-active {
-    display: flex;
-}
+
 
 .modal-window {
     width: 90%;
@@ -370,4 +356,27 @@ body.modal-open #editor-root {
 }
 #event-editor-content .add-event-button:hover { 
     background-color: #5cb85c;
+}
+/* in your main CSS file */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    
+    /* ▼▼▼【ここからが重要】▼▼▼ */
+    z-index: 10000;  /* 非常に大きな値を設定し、他のどの要素よりも手前に来るようにする */
+    pointer-events: auto; /* この要素自身とその子要素が、マウスクリックを受け付けることを保証する */
+    /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+
+    display: none; /* is-activeクラスで表示を切り替える */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.is-active {
+    display: flex;
 }
