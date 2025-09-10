@@ -11,6 +11,10 @@ import animFrameHandler from './anim_frame.js';
 import animPlayHandler from './anim_play.js'; 
 import evalExpressionHandler from './eval.js';
 import setFlipXHandler from './set_flip_x.js';
+import reload_scene from './reload_scene.js'; // ★ この行を追加
+
+
+
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
    'time_stop': timeStopHandler,
@@ -23,7 +27,7 @@ export const eventTagHandlers = {
     'anim_stop': animStopHandler,
     'anim_frame': animFrameHandler,
       'set_flip_x': setFlipXHandler,
-
+ 'reload_scene': reload_scene, // ★ この行を追加
        'eval': evalExpressionHandler,  
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
