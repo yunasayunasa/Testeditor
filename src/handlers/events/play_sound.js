@@ -25,7 +25,7 @@ export default async function play_sound(interpreter, target, params) {
     };
 
     // 4. SoundManagerに効果音の再生を依頼する
-    soundManager.playSfx(soundKey, config);
+    soundManager.playSe(Key, config);
     console.log(`[play_sound] Playing sound effect: '${soundKey}'`);
     
     // このアクションは再生を指示したら即座に完了する (音の再生終了は待たない)
