@@ -363,8 +363,8 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         this.events.emit('scene-ready');
     }
 
-    /**
-     * 衝突を処理するコアロジック (衝突方向判定機能付き・最終確定版)
+      /**
+     * 衝突を処理するコアロジック (全ての衝突トリガーに対応した最終確定版)
      * @param {Phaser.GameObjects.GameObject} sourceObject - イベントの起点となるオブジェクト
      * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト
      * @param {object} pair - Matter.jsが提供する衝突の詳細情報
@@ -380,35 +380,45 @@ evaluateConditionAndRun(gameObject, eventData, context) {
                 continue;
             }
 
-            // ▼▼▼【ここが新しいエンジンの心臓部です】▼▼▼
+            // ▼▼▼【ここが全てのトリガーを正しく捌く、新しいロジックです】▼▼▼
 
-            // --- 1. 衝突の法線ベクトルを取得し、sourceObject視点に正規化する ---
-            let collisionNormal = pair.collision.normal;
-            // もしsourceObjectがペアの2番目のボディ(bodyB)なら、法線ベクトルを反転させる
-            if (sourceObject.body === pair.bodyB) {
-                collisionNormal = { x: -collisionNormal.x, y: -collisionNormal.y };
+            const trigger = eventData.trigger;
+
+            // --- ケース1: トリガーが 'onCollide_Start' の場合 ---
+            // 方向を問わないので、グループが一致すれば即座にアクションを実行
+            if (trigger === 'onCollide_Start') {
+                console.log(`%c[Collision] COLLIDE Event: '${sourceObject.name}' collided with '${targetObject.name}'`, 'color: yellow');
+                this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                // 一致するイベントが見つかったので、このイベント定義に対する処理は終了
+                continue; 
             }
 
-            // --- 2. ベクトルから「踏みつけ」か「接触」かを判定する ---
-            // 法線ベクトルのY成分が-0.7より小さい = ほぼ真上からの衝突
-            const isStomp = collisionNormal.y < -0.7; 
-            // 法線ベクトルのY成分が-0.7以上 = 横または下からの衝突
-            const isHit = collisionNormal.y >= -0.7;
+            // --- ケース2: トリガーが 'onStomp' または 'onHit' の場合 ---
+            // 衝突方向の判定が必要
+            if (trigger === 'onStomp' || trigger === 'onHit') {
+                
+                // 衝突の法線ベクトルを取得し、sourceObject視点に正規化
+                let collisionNormal = pair.collision.normal;
+                if (sourceObject.body === pair.bodyB) {
+                    collisionNormal = { x: -collisionNormal.x, y: -collisionNormal.y };
+                }
 
-            // --- 3. イベントのトリガーと、判定結果を照合する ---
-            if (eventData.trigger === 'onStomp' && isStomp) {
-                console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
-                this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
-            }
-            else if (eventData.trigger === 'onHit' && isHit) {
-                console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
-                this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                const isStomp = collisionNormal.y < -0.7; // ほぼ真上からの衝突
+                const isHit = !isStomp; // それ以外は全て 'Hit' とする
+
+                if (trigger === 'onStomp' && isStomp) {
+                    console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
+                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                }
+                else if (trigger === 'onHit' && isHit) {
+                    console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
+                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                }
             }
             
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     }
-
 
     /**
      * エディタからイベント定義が変更された際に呼び出される。
