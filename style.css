@@ -380,3 +380,21 @@ body.modal-open #editor-root {
 .modal-overlay.is-active {
     display: flex;
 }
+
+
+/* ▼▼▼【ここからがモーダルが吸われる問題の最終修正です】▼▼▼ */
+
+#help-modal-overlay,
+#event-editor-overlay,
+#anim-editor-overlay {
+    z-index: 10000;
+    pointer-events: auto; /* このオーバーレイ自身がイベントを受け取ることを保証 */
+}
+
+/* オーバーレイの中のウィンドウは、さらに手前にいることを保証 */
+#help-modal-overlay .modal-window,
+#event-editor-overlay .modal-window,
+#anim-editor-overlay .modal-window {
+    z-index: 10001; 
+    pointer-events: all; /* ウィンドウ内の全ての要素(ボタン含む)がイベントを受け取る */
+}
