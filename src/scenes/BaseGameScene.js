@@ -12,21 +12,47 @@ export default class BaseGameScene extends Phaser.Scene {
         this.dynamicColliders = [];
         this.actionInterpreter = null;
         this.keyPressEvents = new Map();
+        this.layoutDataKey = null;
     }
-   
+     /**
+     * ★★★ 新規メソッド ★★★
+     * シーンが起動する際にPhaserによって自動的に呼び出される
+     * SystemSceneから渡されたデータを受け取る
+     * @param {object} data - SystemScene.launch()から渡されたデータ
+     */
+    init(data) {
+        // dataオブジェクトが存在し、その中にlayoutDataKeyプロパティがあれば、
+        // それをこのシーンのプロパティとして保存する
+        if (data && data.layoutDataKey) {
+            this.layoutDataKey = data.layoutDataKey;
+            console.log(`[${this.scene.key}] Initialized with specific layout data key: '${this.layoutDataKey}'`);
+        } else {
+            // 指定がなければ、nullのまま
+            this.layoutDataKey = null;
+            console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
+        }
+    }
+
 
 /**
  * JSONデータに基づいてシーンの初期化を開始する。
  * create()メソッドから呼び出されることを想定。
  */
-initSceneWithData() {
-    const sceneKey = this.scene.key;
-    console.log(`[${sceneKey}] Initializing with data-driven routine...`);
-    const layoutData = this.cache.json.get(sceneKey);
+  /**
+     * JSONデータに基づいてシーンの初期化を開始する (データキー動的選択版)
+     */
+    initSceneWithData() {
+        // ▼▼▼【ここからが修正の核心です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 1. 読み込むべきJSONのキーを決定する ---
+        // initで渡されたlayoutDataKeyがあればそれを使い、なければシーン自身のキーをフォールバックとして使う
+        const keyToLoad = this.layoutDataKey || this.scene.key;
 
-    // ▼▼▼【ここからが新しいコードです】▼▼▼
-    // --- 物理エンジン更新前のイベントを捕捉する ---
-    // このリスナーはシーンに一つだけあれば良い
+        console.log(`[${this.scene.key}] Attempting to build layout from JSON key: '${keyToLoad}'`);
+
+        // --- 2. 決定したキーを使って、キャッシュからJSONデータを取得 ---
+        const layoutData = this.cache.json.get(keyToLoad);
+        // --------------------------------------------------------------------
    
 // --- 物理エンジン更新前のイベントを捕捉する ---
 this.matter.world.on('beforeupdate', (event) => {
