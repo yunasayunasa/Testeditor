@@ -11,6 +11,8 @@ export default class SystemScene extends Phaser.Scene {
         this.novelBgmKey = null; // BGMキーの保持
         this.editorUI = null; // EditorUIへの参照を保持
          this._isTimeStopped = false;
+          this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
+        this.transitionData = null;
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
     get isTimeStopped() {
@@ -103,7 +105,32 @@ export default class SystemScene extends Phaser.Scene {
             this._startInitialGame(this.initialGameData);
         }
     }
+ // ★★★ updateメソッドを新しく追加 ★★★
+    update(time, delta) {
+        // 遷移処理中でなければ、何もしない
+        if (!this.isProcessingTransition) return;
 
+        // 現在の遷移状態に応じて処理を振り分ける
+        switch (this.transitionState) {
+            case 'fading_out':
+                // カメラのアルファ値が1(真っ暗)になったかチェック
+                if (this.cameras.main.alpha === 1) {
+                    this.transitionState = 'switching';
+                }
+                break;
+            
+            case 'switching':
+                this._performSceneSwitch();
+                break;
+                
+            case 'fading_in':
+                // カメラのアルファ値が0(完全に見える)になったかチェック
+                if (this.cameras.main.alpha === 0) {
+                    this._endTransition();
+                }
+                break;
+        }
+    }
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
@@ -177,70 +204,77 @@ _startInitialGame(initialData) {
     this.scene.run('UIScene');
 }
 
-
-
-      /**
-     * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
-     * @param {object} data - { from: string, to: string, params: object, fade: object }
+ /**
+     * ★★★ _handleRequestSceneTransitionをリネームし、処理を開始するだけの役割に ★★★
      */
-    _handleRequestSceneTransition(data) {
-        // --- 遷移処理中の多重実行を防止 ---
-        if (this.isProcessingTransition) {
-            console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${data.to})が無視されました。`);
-            return;
-        }
-        this.isProcessingTransition = true;
-        this.game.input.enabled = false; // 遷移開始時に即座に入力を無効化
+    _startTransition(data) {
+        if (this.isProcessingTransition) return;
 
-        console.log(`[SystemScene] シーン遷移リクエスト: ${data.from} -> ${data.to}`);
+        console.log(`[SystemScene] シーン遷移リクエスト開始: ${data.from} -> ${to}`);
         
-        // --- デフォルト値の設定 ---
-        const fromScene = this.scene.get(data.from);
+        this.isProcessingTransition = true;
+        this.game.input.enabled = false;
+        this.transitionData = data; // 遷移情報を保存
+        
         const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
-        // ★★★ data.paramsが渡されない古い[jump]タグのために、空のオブジェクトを保証する ★★★
-        const sceneParams = data.params || {}; 
-
-        // --- 1. フェードアウトを開始 ---
         this.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+        
+        this.transitionState = 'fading_out'; // 状態を「フェードアウト中」に設定
+    }
 
-        // --- 2. フェードアウト完了を待って、シーンを切り替える ---
-        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-            
-            // --- 3. 古いシーンを停止 ---
-            if (fromScene && fromScene.scene.isActive()) {
-                this.scene.stop(data.from);
-            }
-            if (this.scene.isActive('UIScene')) {
-                this.scene.get('UIScene').setVisible(false);
-            }
-            
-            // --- 4. 新しいシーンを、渡されたパラメータを付けて起動 ---
-            // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
-            const toScene = this.scene.get(data.to);
+    /**
+     * ★★★ 新規メソッド：実際のシーン切り替え処理 ★★★
+     */
+    _performSceneSwitch() {
+        const data = this.transitionData;
+        const sceneParams = data.params || {};
+        
+        const toScene = this.scene.get(data.to);
+          // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
+           
             if (!toScene) {
                 console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
                 this.isProcessingTransition = false;
                 this.game.input.enabled = true;
                 return;
             }
-
-            const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
-            
-            toScene.events.once(completionEvent, () => {
-                // --- 5. 新しいシーンの準備ができたらフェードイン ---
-                this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
-                this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
-                    this.isProcessingTransition = false;
-                    this.game.input.enabled = true; // 全て完了してから入力を再開
-                    console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
-                    this.events.emit('transition-complete', data.to);
-                });
-            });
-            
-            // ★★★ launchではなくrunを使い、すでに存在するシーンでも確実に実行させる ★★★
-            this.scene.run(data.to, sceneParams);
+        const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
+        
+        // ★★★ このリスナーは、シーンが破棄されてもSystemScene上に残るため安全 ★★★
+        toScene.events.once(completionEvent, () => {
+            const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
+            this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+            this.transitionState = 'fading_in'; // 状態を「フェードイン中」に設定
         });
+
+        // 古いシーンを停止
+        if (this.scene.isActive(data.from)) {
+            this.scene.stop(data.from);
+        }
+        if (this.scene.isActive('UIScene')) {
+            this.scene.get('UIScene').setVisible(false);
+        }
+        
+        // 新しいシーンを開始
+        this.scene.run(data.to, sceneParams);
+        
+        // 次のupdateループで別の処理をしないように、状態を更新
+        this.transitionState = 'waiting_for_ready';
     }
+
+    /**
+     * ★★★ 新規メソッド：遷移の最終処理 ★★★
+     */
+    _endTransition() {
+        this.isProcessingTransition = false;
+        this.game.input.enabled = true;
+        this.transitionState = 'none';
+        console.log(`[SystemScene] シーン[${this.transitionData.to}]への遷移が完了しました。`);
+        this.events.emit('transition-complete', this.transitionData.to);
+        this.transitionData = null;
+    }
+    
+
     
 
    /**
