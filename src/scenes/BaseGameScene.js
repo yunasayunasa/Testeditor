@@ -224,7 +224,13 @@ applyProperties(gameObject, layout) {
 
         // --- Step 4b: ボディが存在することを確認してから、個別のプロパティを公式APIで設定していく ---
         if (gameObject.body) {
-            
+                  // --- Step 4b-1: センサーかどうかを先に設定 ---
+        if (phys.isSensor) {
+            gameObject.setSensor(true);
+        }
+
+        // --- Step 4b-2: isStaticなどの他のプロパティを設定 ---
+        gameObject.setStatic(phys.isStatic || false);
             // ★★★ 最重要: isStatic の設定 ★★★
             // Phaserの公式APIである `setStatic` メソッドを明示的に呼び出す
             gameObject.setStatic(phys.isStatic || false);
