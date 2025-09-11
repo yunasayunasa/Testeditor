@@ -173,7 +173,7 @@
       "events": [
         {
           "trigger": "onOverlap_Start",
-          "actions": "[interact_add target=self]",
+          "actions": "[destroy target=self]",
           "targetGroup": "player"
         },
         {
