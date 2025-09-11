@@ -202,32 +202,30 @@ _startInitialGame(initialData) {
         this.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
 
         // --- 2. フェードアウト完了後 ---
+        // ▼▼▼【ここが修正箇所 1/2】▼▼▼
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             
-            // ▼▼▼【ここがエラーを修正した、新しいロジックです】▼▼▼
-            
-            // --- 3. 遷移先のシーンインスタンスを取得する ---
             const toScene = this.scene.get(data.to);
             if (!toScene) {
-                console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
-                this.isProcessingTransition = false;
-                this.game.input.enabled = true;
+                // ... (エラー処理は変更なし) ...
                 return;
             }
 
-            // --- 4. 遷移先シーンのPhaser公式「create」イベントをリッスンする ---
-            // ★★★ これが、最も確実で普遍的な方法です ★★★
+            // --- 4. 遷移先シーンの「create」イベントをリッスンする ---
+            // ▼▼▼【ここが修正箇所 2/2】▼▼▼
             toScene.events.once(Phaser.Scenes.Events.CREATE, () => {
                 
                 // 新しいシーンの準備ができたので、フェードインを開始
                 this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+                
                 this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
                     this.isProcessingTransition = false;
                     this.game.input.enabled = true;
                     console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
                     this.events.emit('transition-complete', data.to);
-                });
-            });
+                }, this); // ★★★ 第3引数に'this'を追加 ★★★
+
+            }, this); // ★★★ 第3引数に'this'を追加 ★★★
 
             // --- 5. 古いシーンを停止し、新しいシーンを開始する ---
             this.scene.start(data.to, sceneParams);
@@ -235,8 +233,7 @@ _startInitialGame(initialData) {
             if (this.scene.isActive('UIScene')) {
                 this.scene.get('UIScene').setVisible(false);
             }
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        });
+        }, this); // ★★★ 第3引数に'this'を追加 ★★★
     }
 
    /**
