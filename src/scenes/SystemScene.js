@@ -183,8 +183,6 @@ _startInitialGame(initialData) {
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
      * @param {object} data - { from: string, to: string, params: object, fade: object }
      */
-    // in src/scenes/SystemScene.js
-
     _handleRequestSceneTransition(data) {
         if (this.isProcessingTransition) {
             console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${data.to})が無視されました。`);
@@ -194,38 +192,43 @@ _startInitialGame(initialData) {
         this.game.input.enabled = false;
 
         console.log(`[SystemScene] シーン遷移リクエスト: ${data.from} -> ${data.to}`);
-
-        // ▼▼▼【ここからが核心的な修正です】▼▼▼
         
-        // ★★★ 1. 'this'への参照を、ローカル変数 'self' に固定する ★★★
         const self = this;
-        
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
         const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
         const sceneParams = data.params || {};
 
-        // --- フェードアウト ---
-        self.cameras.main.fadeOut(fadeConfig.duration, ...self.hexToRgb(fadeConfig.color));
+        // ▼▼▼【ここがカメラ操作の最終修正です】▼▼▼
+        // ★★★ 自身のカメラ(this.cameras.main)ではなく、ゲーム全体のカメラマネージャーに指示を出す ★★★
+        const cameraManager = self.game.cameras;
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- フェードアウト完了後 ---
-        self.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        // --- 1. フェードアウト ---
+        cameraManager.main.fadeOut(fadeConfig.duration, ...self.hexToRgb(fadeConfig.color));
+
+        // --- 2. フェードアウト完了後 ---
+        cameraManager.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             
+            const fromScene = self.scene.get(data.from);
             const toScene = self.scene.get(data.to);
+            
+            // --- 4. 新しいシーンを、渡されたパラメータを付けて起動 ---
+            // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
+            const toScene = this.scene.get(data.to);
             if (!toScene) {
                 console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
-                self.isProcessingTransition = false;
-                self.game.input.enabled = true;
+                this.isProcessingTransition = false;
+                this.game.input.enabled = true;
                 return;
             }
 
-            // --- 遷移先シーンの「create」イベントをリッスンする ---
-            toScene.events.once(Phaser.Scenes.Events.CREATE, () => {
+             // --- 3. 新しいシーンからの「準備完了」信号を待つ (元の信頼できる方法に戻す) ---
+            const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
+            
+            toScene.events.once(completionEvent, () => {
                 
-                // ★★★ 'this'の代わりに、固定された変数 'self' を使う ★★★
-                self.cameras.main.fadeIn(fadeConfig.duration, ...self.hexToRgb(fadeConfig.color));
-                
-                self.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+                // --- 5. 準備ができたらフェードイン ---
+                cameraManager.main.fadeIn(fadeConfig.duration, ...self.hexToRgb(fadeConfig.color));
+                cameraManager.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
                     self.isProcessingTransition = false;
                     self.game.input.enabled = true;
                     console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
@@ -233,14 +236,19 @@ _startInitialGame(initialData) {
                 });
             });
 
-            // --- 古いシーンを停止し、新しいシーンを開始する ---
-            self.scene.start(data.to, sceneParams);
-
+            // --- 4. 古いシーンを停止し、新しいシーンを開始する ---
+            // ★ stopしてからlaunch/runする方が、ライフサイクル上、より安全
+            if (fromScene && fromScene.scene.isActive()) {
+                self.scene.stop(data.from);
+            }
             if (self.scene.isActive('UIScene')) {
                 self.scene.get('UIScene').setVisible(false);
             }
+            
+            self.scene.run(data.to, sceneParams);
         });
     }
+    
 
    /**
      * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
