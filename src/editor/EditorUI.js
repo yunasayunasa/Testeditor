@@ -5,104 +5,88 @@ export default class EditorUI {
         this.game = game;
         this.plugin = editorPlugin;
         this.selectedAssetKey = null;
-     this.objectCounters = {};
-  this.helpModal = null;
+        this.objectCounters = {};
+        this.helpModal = null;
         this.helpModalContent = null;
+
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
 
+        // --- 1. DOM要素の参照をまとめて取得 ---
         this.editorPanel = document.getElementById('editor-panel');
         this.assetBrowserPanel = document.getElementById('asset-browser');
-        if (this.editorPanel) this.editorPanel.style.display = 'flex';
-        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
-this.createPauseToggle();
         this.assetListContainer = document.getElementById('asset-list');
         this.cameraControls = document.getElementById('camera-controls');
         this.zoomInBtn = document.getElementById('camera-zoom-in');
         this.zoomOutBtn = document.getElementById('camera-zoom-out');
-         this.panUpBtn = document.getElementById('camera-pan-up');
+        this.panUpBtn = document.getElementById('camera-pan-up');
         this.panDownBtn = document.getElementById('camera-pan-down');
         this.panLeftBtn = document.getElementById('camera-pan-left');
         this.panRightBtn = document.getElementById('camera-pan-right');
         this.resetBtn = document.getElementById('camera-reset');
-        this.currentMode = 'select'; // 'select' or 'play'
         this.modeToggle = document.getElementById('mode-toggle-checkbox');
         this.modeLabel = document.getElementById('mode-label');
-
-
-        // ★★★ ヘルプモーダル関連のDOM要素を取得 ★★★
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
-        const helpModalCloseBtn = document.getElementById('help-modal-close-btn');
-        if (helpModalCloseBtn) {
-            helpModalCloseBtn.addEventListener('click', () => this.closeHelpModal());
-        }
 
-        this.initializeEventListeners();
-        this.populateAssetBrowser();
+        // --- 2. プロパティの初期化 ---
+        this.currentMode = 'select';
+
+        // --- 3. UIの初期セットアップを一度だけ実行 ---
+        if (this.editorPanel) this.editorPanel.style.display = 'flex';
+        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
         
-        // ★★★ ヘルプボタンを生成するメソッドを呼び出す ★★★
+        this.createPauseToggle();
         this.createHelpButton();
-    
-        // ★★★ 3. 新しいメソッドを呼び出して、イベントリスナーをまとめて設定 ★★★
-        this.initializeEventListeners();
+        this.initializeEventListeners(); // ★★★ リスナー設定はここで一度だけ呼び出す
         this.populateAssetBrowser();
     }
- /**
-     * ★★★ 新規メソッド ★★★
-     * このクラスが管理する全てのUI要素にイベントリスナーを設定する
+
+    /**
+     * このクラスが管理する全てのUI要素にイベントリスナーを設定する (重複登録防止版)
      */
     initializeEventListeners() {
+        // ▼▼▼【重要】古いリスナーを安全に解除するためのヘルパー関数 ▼▼▼
+        const replaceListener = (element, event, handler) => {
+            if (!element) return;
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+            newElement.addEventListener(event, handler);
+            return newElement; // 新しい要素への参照を返す
+        };
+        
         // --- カメラコントロール ---
-        if (this.cameraControls) {
-            this.cameraControls.style.display = 'flex'; // 表示する
-        }
-        if (this.zoomInBtn) {
-            console.log("[EditorUI] Adding listener to Zoom In button.");
-            this.zoomInBtn.addEventListener('click', () => {
-                this.plugin.zoomCamera(0.2); // Pluginに命令
-            });
-        }
-        if (this.zoomOutBtn) {
-            this.zoomOutBtn.addEventListener('click', () => {
-                this.plugin.zoomCamera(-0.2); // Pluginに命令
-            });
-        }
-        if (this.resetBtn) {
-            this.resetBtn.addEventListener('click', () => {
-                this.plugin.resetCamera(); // Pluginに命令
-            });
-        }
-         const panSpeed = 10; // カメラの移動速度
+        if (this.cameraControls) this.cameraControls.style.display = 'flex';
+        this.zoomInBtn = replaceListener(this.zoomInBtn, 'click', () => this.plugin.zoomCamera(0.2));
+        this.zoomOutBtn = replaceListener(this.zoomOutBtn, 'click', () => this.plugin.zoomCamera(-0.2));
+        this.resetBtn = replaceListener(this.resetBtn, 'click', () => this.plugin.resetCamera());
+
+        const panSpeed = 10;
         this.setupPanButton(this.panUpBtn, 0, -panSpeed);
         this.setupPanButton(this.panDownBtn, 0, panSpeed);
         this.setupPanButton(this.panLeftBtn, -panSpeed, 0);
         this.setupPanButton(this.panRightBtn, panSpeed, 0);
-if (this.modeToggle && this.modeLabel) {
+
+        // --- モード切替 ---
+        if (this.modeToggle && this.modeLabel) {
             this.modeToggle.addEventListener('change', (event) => {
-                if (event.target.checked) {
-                    this.currentMode = 'play';
-                    this.modeLabel.textContent = 'Play Mode';
-                } else {
-                    this.currentMode = 'select';
-                    this.modeLabel.textContent = 'Select Mode';
-                }
-                console.log(`[EditorUI] Mode changed to: ${this.currentMode}`);
+                this.currentMode = event.target.checked ? 'play' : 'select';
+                this.modeLabel.textContent = event.target.checked ? 'Play Mode' : 'Select Mode';
             });
         }
+
+        // --- アセットブラウザのボタン ---
         const addAssetButton = document.getElementById('add-asset-button');
-        if (addAssetButton) {
-            // ★ onAddButtonClickedを呼び出すように統一
-            addAssetButton.addEventListener('click', () => this.onAddButtonClicked());
-        }
-        
+        replaceListener(addAssetButton, 'click', () => this.onAddButtonClicked());
+
         const addTextButton = document.getElementById('add-text-button');
-        if (addTextButton) {
-            // ★ onAddTextClickedを呼び出すように設定
-            addTextButton.addEventListener('click', () => this.onAddTextClicked());
-        }
-    
+        replaceListener(addTextButton, 'click', () => this.onAddTextClicked());
+        
+        // --- ヘルプモーダル ---
+        const helpModalCloseBtn = document.getElementById('help-modal-close-btn');
+        replaceListener(helpModalCloseBtn, 'click', () => this.closeHelpModal());
     }
+
        /**
      * ★★★ 新規メソッド ★★★
      * "Add Text"ボタンがクリックされたときに呼び出される
@@ -418,4 +402,5 @@ if (this.modeToggle && this.modeLabel) {
 
 
 }
+
 
