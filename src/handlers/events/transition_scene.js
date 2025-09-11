@@ -20,3 +20,4 @@ const transitionData = {
 };
 
 currentScene.scene.get('SystemScene').events.emit('request-scene-transition', transitionData);
+}
