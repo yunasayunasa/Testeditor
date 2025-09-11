@@ -1,3 +1,8 @@
+export default async function transition_scene(interpreter, target, params) {
+const currentScene = interpreter.scene;
+
+code
+Code
 const toSceneKey = params.scene;
 if (!toSceneKey) {
     console.warn('[transition_scene] Missing required parameter: "scene".');
