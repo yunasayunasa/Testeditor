@@ -72,7 +72,7 @@ export default class SystemScene extends Phaser.Scene {
         console.log("SystemScene: SoundManagerを登録しました。");
 
         // --- 2. イベントリスナーの設定 ---
-        this.events.on('request-scene-transition', this._handleRequestSceneTransition, this);
+          this.events.on('request-scene-transition', this._startTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
