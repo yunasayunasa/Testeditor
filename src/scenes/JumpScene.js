@@ -1,9 +1,7 @@
 
 import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
-import PlayerController from '../components/PlayerController.js';
-import Scrollable from '../components/Scrollable.js';
-import Interactor from '../components/Interactor.js';
+import { ComponentRegistry } from '../components/index.js';
 export default class JumpScene extends BaseGameScene {
 
      constructor() {
@@ -68,41 +66,39 @@ export default class JumpScene extends BaseGameScene {
         return newObject;
     }
 
-    /**
-     * コンポーネントをGameObjectにアタッチする (責務を単一化)
-     * ★★★ 以下のメソッドで、既存の addComponent を完全に置き換えてください ★★★
+     /**
+     * コンポーネントをGameObjectにアタッチする (動的読み込み対応版)
      */
     addComponent(target, componentType, params = {}) {
-        let componentInstance = null;
         
-        // --- 1. インスタンス生成 ---
-        if (componentType === 'PlayerController') {
-            componentInstance = new PlayerController(this, target, params);
-        }
-          // ★★★ Scrollableコンポーネントの生成ロジックを追加 ★★★
-        else if (componentType === 'Scrollable') {
-            componentInstance = new Scrollable(this, target, params);
-        }
- else if (componentType === 'Interactor') {
-            componentInstance = new Interactor(this, target, params);
-        }
+        // ▼▼▼【ここからが修正箇所 2/2】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 1. ComponentRegistryに、指定された名前のコンポーネントが存在するか確認 ---
+        const ComponentClass = ComponentRegistry[componentType];
 
-        if (componentInstance) {
-            // --- 2. GameObjectにインスタンスを格納 ---
-            // これがコンポーネント管理の「唯一の正しい場所」
+        if (ComponentClass) {
+            // --- 2. 存在すれば、そのクラスをインスタンス化する ---
+            const componentInstance = new ComponentClass(this, target, params);
+
+            // --- 3. GameObjectにインスタンスを格納する (以降の処理は変更なし) ---
             if (!target.components) {
                 target.components = {};
             }
             target.components[componentType] = componentInstance;
 
-            // --- 3. 永続化用のデータも保存 ---
             const currentData = target.getData('components') || [];
             if (!currentData.some(c => c.type === componentType)) {
                 currentData.push({ type: componentType, params: params });
                 target.setData('components', currentData);
             }
             console.log(`[JumpScene] Component '${componentType}' added to '${target.name}'.`);
+
+        } else {
+            // --- 4. 存在しないコンポーネントが指定された場合は、警告を出す ---
+            console.warn(`[JumpScene] Attempted to add an unknown component: '${componentType}'`);
         }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
   

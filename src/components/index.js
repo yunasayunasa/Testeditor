@@ -1,0 +1,17 @@
+// src/components/index.js
+
+// --- 1. 存在する全てのコンポーネントクラスをインポートします ---
+import PlayerController from './PlayerController.js';
+import Scrollable from './Scrollable.js';
+import Interactor from './Interactor.js';
+// (将来、新しいコンポーネントを追加したら、ここにもimport文を追加します)
+
+
+// --- 2. インポートしたクラスを、キーと値が同じオブジェクトにまとめます ---
+// これが、エンジン全体で共有される「コンポーネントの名簿」になります。
+export const ComponentRegistry = {
+    PlayerController,
+    Scrollable,
+    Interactor
+    // (新しいコンポーネントを追加したら、ここにも名前を追加します)
+};
