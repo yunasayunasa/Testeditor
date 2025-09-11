@@ -343,7 +343,9 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
     }
 }
-   finalizeSetup(allGameObjects) {
+// in src/scenes/BaseGameScene.js
+
+    finalizeSetup(allGameObjects) {
         console.log(`[BaseGameScene] Finalizing setup with ${allGameObjects.length} objects.`);
 
         for (const gameObject of allGameObjects) {
@@ -359,22 +361,24 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         }
         
-        // --- Matter.jsの衝突イベント監視を強化 ---
-        // --- 衝突イベント監視 (変更なし) ---
+        // --- 衝突イベント監視 ---
         this.matter.world.on('collisionstart', (event) => {
             for (const pair of event.pairs) {
-                // ...
-                this.handleCollision(objA, objB, pair);
-                this.handleCollision(objB, objA, pair);
+                // ▼▼▼【ここに不足していた変数宣言を追加】▼▼▼
+                const objA = pair.bodyA.gameObject;
+                const objB = pair.bodyB.gameObject;
+
+                if (objA && objB) {
+                    this.handleCollision(objA, objB, pair);
+                    this.handleCollision(objB, objA, pair);
+                }
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             }
         });
 
-        // ▼▼▼【ここからオーバーラップイベント監視を追加】▼▼▼
-        
-        // --- オーバーラップ開始・継続イベント監視 ---
+        // --- オーバーラップイベント監視 (ここは変更なし) ---
         this.matter.world.on('collisionactive', (event) => {
             for (const pair of event.pairs) {
-                // isSensorボディが含まれるペアのみを処理
                 if (pair.bodyA.isSensor || pair.bodyB.isSensor) {
                     const objA = pair.bodyA.gameObject;
                     const objB = pair.bodyB.gameObject;
@@ -386,7 +390,6 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         });
 
-        // --- オーバーラップ終了イベント監視 ---
         this.matter.world.on('collisionend', (event) => {
             for (const pair of event.pairs) {
                 if (pair.bodyA.isSensor || pair.bodyB.isSensor) {
@@ -400,8 +403,6 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         });
         
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
         console.log("[BaseGameScene] All collision and overlap listeners activated.");
 
         if (this.onSetupComplete) { this.onSetupComplete(); }
