@@ -209,7 +209,7 @@ _startInitialGame(initialData) {
         cameraManager.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             
             const fromScene = self.scene.get(data.from);
-            const toScene = self.scene.get(data.to);
+          
             
             // --- 4. 新しいシーンを、渡されたパラメータを付けて起動 ---
             // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
