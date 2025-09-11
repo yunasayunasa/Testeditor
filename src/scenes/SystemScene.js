@@ -106,32 +106,7 @@ export default class SystemScene extends Phaser.Scene {
             this._startInitialGame(this.initialGameData);
         }
     }
- // ★★★ updateメソッドを新しく追加 ★★★
-    update(time, delta) {
-        // 遷移処理中でなければ、何もしない
-        if (!this.isProcessingTransition) return;
 
-        // 現在の遷移状態に応じて処理を振り分ける
-        switch (this.transitionState) {
-            case 'fading_out':
-                // カメラのアルファ値が1(真っ暗)になったかチェック
-                if (this.cameras.main.alpha === 1) {
-                    this.transitionState = 'switching';
-                }
-                break;
-            
-            case 'switching':
-                this._performSceneSwitch();
-                break;
-                
-            case 'fading_in':
-                // カメラのアルファ値が0(完全に見える)になったかチェック
-                if (this.cameras.main.alpha === 0) {
-                    this._endTransition();
-                }
-                break;
-        }
-    }
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
@@ -229,50 +204,77 @@ _startInitialGame(initialData) {
         // ★★★ 以前からある、信頼性の高いメソッドを再利用 ★★★
         this._startAndMonitorScene(data.to, data.params);
     }
- /**
-     * ★★★ _handleRequestSceneTransitionをリネームし、処理を開始するだけの役割に ★★★
-     */
-    _startTransition(data) {
-        if (this.isProcessingTransition) return;
+ update(time, delta) {
+        if (!this.isProcessingTransition) return;
 
-        console.log(`[SystemScene] シーン遷移リクエスト開始: ${data.from} -> ${to}`);
-        
-        this.isProcessingTransition = true;
-        this.game.input.enabled = false;
-        this.transitionData = data; // 遷移情報を保存
-        
-        const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
-        this.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
-        
-        this.transitionState = 'fading_out'; // 状態を「フェードアウト中」に設定
+        switch (this.transitionState) {
+            case 'fading_out':
+                // カメラが完全に真っ暗になったかチェック
+                if (this.cameras.main.fadeAlpha >= 1) {
+                    this.transitionState = 'switching';
+                }
+                break;
+            
+            case 'switching':
+                // この状態になった最初のフレームで一度だけ実行
+                this._performSceneSwitch();
+                this.transitionState = 'waiting_for_ready'; // 即座に次の状態へ
+                break;
+                
+            case 'fading_in':
+                // カメラが完全に見えるようになったかチェック
+                if (this.cameras.main.fadeAlpha <= 0) {
+                    this._endTransition();
+                }
+                break;
+        }
     }
 
     /**
-     * ★★★ 新規メソッド：実際のシーン切り替え処理 ★★★
+     * アップデート駆動の遷移を開始する
+     */
+    _startTransition(data) {
+        if (this.isProcessingTransition) return;
+        
+        // ▼▼▼【ここがエラーの原因でした】▼▼▼
+        console.log(`[SystemScene] シーン遷移リクエスト開始: ${data.from} -> ${data.to}`);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        this.isProcessingTransition = true;
+        this.game.input.enabled = false;
+        this.transitionData = data;
+        
+        const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
+        // ゲーム全体のメインカメラをフェードアウトさせる
+        this.game.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+        
+        this.transitionState = 'fading_out';
+    }
+
+    /**
+     * 実際のシーン切り替え処理
      */
     _performSceneSwitch() {
         const data = this.transitionData;
         const sceneParams = data.params || {};
         
         const toScene = this.scene.get(data.to);
-          // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
-           
-            if (!toScene) {
-                console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
-                this.isProcessingTransition = false;
-                this.game.input.enabled = true;
-                return;
-            }
+        if (!toScene) {
+            console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
+            this._endTransition(); // エラーでも遷移処理を終了させる
+            return;
+        }
+
         const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
         
-        // ★★★ このリスナーは、シーンが破棄されてもSystemScene上に残るため安全 ★★★
         toScene.events.once(completionEvent, () => {
             const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
-            this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
-            this.transitionState = 'fading_in'; // 状態を「フェードイン中」に設定
+            // ゲーム全体のメインカメラをフェードインさせる
+            this.game.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+            this.transitionState = 'fading_in';
         });
 
-        // 古いシーンを停止
+        // 古いシーンを停止し、新しいシーンを開始
         if (this.scene.isActive(data.from)) {
             this.scene.stop(data.from);
         }
@@ -280,15 +282,11 @@ _startInitialGame(initialData) {
             this.scene.get('UIScene').setVisible(false);
         }
         
-        // 新しいシーンを開始
         this.scene.run(data.to, sceneParams);
-        
-        // 次のupdateループで別の処理をしないように、状態を更新
-        this.transitionState = 'waiting_for_ready';
     }
 
     /**
-     * ★★★ 新規メソッド：遷移の最終処理 ★★★
+     * 遷移の最終処理
      */
     _endTransition() {
         this.isProcessingTransition = false;
@@ -298,7 +296,6 @@ _startInitialGame(initialData) {
         this.events.emit('transition-complete', this.transitionData.to);
         this.transitionData = null;
     }
-    
 
     
 
