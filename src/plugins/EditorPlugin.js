@@ -1366,7 +1366,7 @@ if (gameObject.body) {
         const triggerSelect = document.createElement('select');
         
         // ★★★ 全ての利用可能なトリガーをリスト化 ★★★
-        const availableTriggers = ['onClick', 'onReady', 'onCollide_Start','onInteract', 'onStomp', 'onHit', 'onStateChange', 'onDirectionChange'];
+        const availableTriggers = ['onClick', 'onReady',  'onOverlap_Start', 'onOverlap_End', 'onCollide_Start','onInteract', 'onStomp', 'onHit', 'onStateChange', 'onDirectionChange'];
         availableTriggers.forEach(t => {
             const option = document.createElement('option');
             option.value = t;
@@ -1399,7 +1399,7 @@ if (gameObject.body) {
         
         // ▼▼▼【ここが修正の核心です】▼▼▼
         // "onCollide_Start", "onStomp", "onHit" のいずれかの場合に、'targetGroup'入力欄を表示
-        if (['onCollide_Start', 'onStomp', 'onHit'].includes(eventData.trigger)) {
+        if (['onCollide_Start','onOverlap_Start', 'onOverlap_End',  'onStomp', 'onHit'].includes(eventData.trigger)) {
             const targetLabel = document.createElement('label');
             targetLabel.innerText = '相手のグループ: ';
             const targetInput = document.createElement('input');
