@@ -31,6 +31,32 @@ Actions: [time_resume][destroy target=self]
 
 <hr>
 
+<h2>[transition_scene]</h2>
+<p>
+    現在のゲームシーンを終了し、指定された新しいゲームシーンを開始します。
+    ステージ間の移動、ワールドマップからダンジョンへの進入など、ゲームエリアの遷移全般を管理する、極めて重要なタグです。
+</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>scene</strong> (必須): 遷移先のシーンのキー（例: <code>JumpScene</code>, <code>WorldMapScene</code>）。</li>
+    <li><strong>data</strong> (任意): 遷移先のシーンが読み込むべき、レイアウトJSONデータのキーを指定します。これにより、同じ<code>JumpScene</code>を使いながら、異なるステージ（例: <code>cave_stage</code>, <code>castle_stage</code>）を読み込ませることができます。</li>
+    <li><strong>script</strong> (任意): 遷移先がノベルシーンの場合に、開始するシナリオファイル名を指定します。</li>
+    <li><strong>fade_time</strong> (任意): 画面が暗転するフェードアウト・フェードインの時間（ミリ秒）。デフォルトは<code>500</code>。</li>
+    <li><strong>fade_color</strong> (任意): フェードの色を16進数で指定。デフォルトは<code>0x000000</code>（黒）。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; 同じJumpSceneを使い、"stage_2"のデータで再起動する
+[transition_scene scene=JumpScene data=stage_2]
+
+; WorldMapSceneから、"ShopScene"に遷移する
+[transition_scene scene=ShopScene data=shop_interior script=shop_keeper_talk]
+
+; 赤い画面で、1秒かけてフェードしながらボス戦シーンに突入
+[transition_scene scene=BossScene data=boss_room fade_color=0xff0000 fade_time=1000]
+</code></pre>
+
+<hr>
+
 <h3>onOverlap_Start / onOverlap_End</h3>
 <p>
     物理的に反発しない「センサー」ボディ同士が、重なり合った瞬間 (<code>onOverlap_Start</code>) と、重なりが解消された瞬間 (<code>onOverlap_End</code>) に発火します。

@@ -17,6 +17,8 @@ import play_sound from './play_sound.js';
 import spawn_object from './spawn_object.js';
 import interact_add from './interact_add.js';
 import interact_remove from './interact_remove.js';
+import transition_scene from './transition_scene.js';
+
 
 //*******************++++++++++++++++++++++ */
 // ActionInterpreterが使う、イベントタグのカタログ
@@ -37,8 +39,8 @@ export const eventTagHandlers = {
          'play_sound': play_sound, // ★ この行を追加
            'spawn_object': spawn_object,
 'interact_add':interact_add,
-'interact_remove': interact_remove
-
+'interact_remove': interact_remove,
+ 'transition_scene': transition_scene,
 
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
