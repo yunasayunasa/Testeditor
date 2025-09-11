@@ -45,18 +45,26 @@ export default class EditorUI {
     /**
      * このクラスが管理する全てのUI要素にイベントリスナーを設定する (重複登録防止版)
      */
+    // in src/editor/EditorUI.js
+
+    /**
+     * このクラスが管理する全てのUI要素にイベントリスナーを設定する (重複登録防止・最終版)
+     */
     initializeEventListeners() {
         // ▼▼▼【重要】古いリスナーを安全に解除するためのヘルパー関数 ▼▼▼
         const replaceListener = (element, event, handler) => {
             if (!element) return;
+            // 要素をDOMツリーからクローンして入れ替えることで、全ての既存リスナーを破棄する
             const newElement = element.cloneNode(true);
             element.parentNode.replaceChild(newElement, element);
+            // 新しい要素に、リスナーを「一度だけ」設定する
             newElement.addEventListener(event, handler);
             return newElement; // 新しい要素への参照を返す
         };
         
         // --- カメラコントロール ---
         if (this.cameraControls) this.cameraControls.style.display = 'flex';
+        // cloneNodeで要素が置き換わるため、thisのプロパティも更新する
         this.zoomInBtn = replaceListener(this.zoomInBtn, 'click', () => this.plugin.zoomCamera(0.2));
         this.zoomOutBtn = replaceListener(this.zoomOutBtn, 'click', () => this.plugin.zoomCamera(-0.2));
         this.resetBtn = replaceListener(this.resetBtn, 'click', () => this.plugin.resetCamera());
@@ -68,6 +76,8 @@ export default class EditorUI {
         this.setupPanButton(this.panRightBtn, panSpeed, 0);
 
         // --- モード切替 ---
+        // addEventListenerを直接使う場合、一度しか呼ばれないことが保証されている場所で行う
+        // constructor内で一度しか呼ばれないので、ここはcloneNodeなしでも安全
         if (this.modeToggle && this.modeLabel) {
             this.modeToggle.addEventListener('change', (event) => {
                 this.currentMode = event.target.checked ? 'play' : 'select';
@@ -86,7 +96,6 @@ export default class EditorUI {
         const helpModalCloseBtn = document.getElementById('help-modal-close-btn');
         replaceListener(helpModalCloseBtn, 'click', () => this.closeHelpModal());
     }
-
        /**
      * ★★★ 新規メソッド ★★★
      * "Add Text"ボタンがクリックされたときに呼び出される
@@ -402,5 +411,6 @@ export default class EditorUI {
 
 
 }
+
 
 
