@@ -90,8 +90,74 @@ if (this.modeToggle && this.modeLabel) {
                 console.log(`[EditorUI] Mode changed to: ${this.currentMode}`);
             });
         }
-    }
+        const addAssetButton = document.getElementById('add-asset-button');
+        if (addAssetButton) {
+            // ★ onAddButtonClickedを呼び出すように統一
+            addAssetButton.addEventListener('click', () => this.onAddButtonClicked());
+        }
+        
+        const addTextButton = document.getElementById('add-text-button');
+        if (addTextButton) {
+            // ★ onAddTextClickedを呼び出すように設定
+            addTextButton.addEventListener('click', () => this.onAddTextClicked());
+        }
     
+    }
+       /**
+     * ★★★ 新規メソッド ★★★
+     * "Add Text"ボタンがクリックされたときに呼び出される
+     */
+    onAddTextClicked() {
+        // 1. 現在アクティブなゲームシーンを特定 (onAddButtonClickedと同じロジック)
+        const targetScene = this.getActiveGameScene();
+        
+        if (!targetScene) {
+             console.error("[EditorUI] Could not find a suitable target scene for adding text.");
+             alert("テキストオブジェクトを追加できるアクティブなゲームシーンが見つかりません。");
+             return;
+        }
+
+        // 2. シーンに「テキストオブジェクト追加」を依頼する
+        if (typeof targetScene.addTextObjectFromEditor === 'function') {
+            // 一意な名前を生成
+            const newName = `text_${Date.now()}`;
+
+            // シーンに、新しい名前を渡して追加を依頼
+            const newObject = targetScene.addTextObjectFromEditor(newName);
+
+            // 3. 成功すれば、選択状態にしてパネルを更新
+            if (newObject && this.plugin) {
+                this.plugin.selectedObject = newObject;
+                this.plugin.updatePropertyPanel();
+            }
+        } else {
+            console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'addTextObjectFromEditor' method.`);
+        }
+    }
+
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 現在編集対象となるべき、アクティブなゲームシーンを返す
+     * @returns {Phaser.Scene | null}
+     */
+    getActiveGameScene() {
+        // EditorPluginが参照を持っていれば、それを使うのが最も確実
+        if (this.plugin && typeof this.plugin.getActiveGameScene === 'function') {
+            const scene = this.plugin.getActiveGameScene();
+            if (scene) return scene;
+        }
+
+        // フォールバックとして、シーンリストから探す (onAddButtonClickedと同じロジック)
+        const scenes = this.game.scene.getScenes(true);
+        for (let i = scenes.length - 1; i >= 0; i--) {
+            const scene = scenes[i];
+            // GameScene(ノベル)とコアシーン以外を対象とする
+            if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
+                return scene;
+            }
+        }
+        return null;
+    }
    // src/editor/EditorUI.js
 
     populateAssetBrowser() {
@@ -352,5 +418,6 @@ if (this.modeToggle && this.modeLabel) {
         this.helpModal.style.display = 'none';
       
     }
+
 
 }
