@@ -478,8 +478,7 @@ _startInitialGame(initialData) {
         }
     }
 
-       /**
-     * ★★★ 新規ヘルパーメソッド ★★★
+   /**
      * 16進数カラーコード(0xRRGGBB)を、Phaserのカメラが要求するRGB(0-255)に変換する
      * @param {number} hex - 0x000000のような16進数カラーコード
      * @returns {Array<number>} [r, g, b] の配列
