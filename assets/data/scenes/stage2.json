@@ -25,11 +25,11 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 277,
+      "x": 211,
       "y": 250,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 3,
+      "scaleY": 12,
       "angle": 0,
       "alpha": 1,
       "group": "player",
@@ -183,7 +183,7 @@
         },
         {
           "trigger": "onInteract",
-          "actions": " [transition_scene scene=JumpScene data=stage2]"
+          "actions": "[destroy target=self]"
         }
       ],
       "physics": {

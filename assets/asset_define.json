@@ -58,6 +58,7 @@
       "list": [
         "GameScene.json",
         "UIScene.json",
+        "stage2.json",
         "JumpScene.json"
       ]
     }
