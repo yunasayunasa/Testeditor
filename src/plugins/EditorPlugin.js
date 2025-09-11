@@ -205,19 +205,46 @@ this.safeCreateUI(this.createExportPrefabButton);
         textRow.append(textLabel, textInput);
         this.editorPropsContainer.appendChild(textRow);
 
-        // --- Font Size ---
-        const sizeRow = document.createElement('div');
+       // --- Font Family ---
+        const familyRow = document.createElement('div');
+        const familyLabel = document.createElement('label');
+        familyLabel.innerText = 'Font:';
+        const familyInput = document.createElement('input');
+        familyInput.type = 'text';
+        familyInput.placeholder = 'Arial, sans-serif';
+        familyInput.value = target.style.fontFamily;
+        familyInput.addEventListener('input', (e) => {
+            target.setFontFamily(e.target.value);
+        });
+        familyRow.append(familyLabel, familyInput);
+        this.editorPropsContainer.appendChild(familyRow);
+
+        // --- Font Size & Style (統合) ---
+        const styleRow = document.createElement('div');
+        // Size
         const sizeLabel = document.createElement('label');
         sizeLabel.innerText = 'Size:';
         const sizeInput = document.createElement('input');
         sizeInput.type = 'number';
+        sizeInput.style.width = '60px'; // 幅を固定
         sizeInput.value = parseInt(target.style.fontSize);
         sizeInput.addEventListener('input', (e) => {
             target.setFontSize(parseInt(e.target.value));
         });
-        sizeRow.append(sizeLabel, sizeInput);
-        this.editorPropsContainer.appendChild(sizeRow);
-
+        // Style (Bold/Italic)
+        const styleSelect = document.createElement('select');
+        ['normal', 'bold', 'italic', 'bold italic'].forEach(style => {
+            const option = document.createElement('option');
+            option.value = style;
+            option.innerText = style;
+            if (target.style.fontStyle === style) option.selected = true;
+            styleSelect.appendChild(option);
+        });
+        styleSelect.addEventListener('change', (e) => {
+            target.setFontStyle(e.target.value);
+        });
+        styleRow.append(sizeLabel, sizeInput, styleSelect);
+        this.editorPropsContainer.appendChild(styleRow);
         // --- Color ---
         const colorRow = document.createElement('div');
         const colorLabel = document.createElement('label');
@@ -230,6 +257,44 @@ this.safeCreateUI(this.createExportPrefabButton);
         });
         colorRow.append(colorLabel, colorInput);
         this.editorPropsContainer.appendChild(colorRow);
+         // --- Shadow (ドロップシャドウ) ---
+        const shadowTitle = document.createElement('h5'); // 少し小さい見出し
+        shadowTitle.innerText = 'Shadow';
+        shadowTitle.style.margin = '10px 0 5px 0';
+        this.editorPropsContainer.appendChild(shadowTitle);
+
+        const shadowRow = document.createElement('div');
+        // Color
+        const shadowColorLabel = document.createElement('label');
+        shadowColorLabel.innerText = 'Color:';
+        const shadowColorInput = document.createElement('input');
+        shadowColorInput.type = 'color';
+        shadowColorInput.value = target.style.shadowColor || '#000000';
+        // Offset X/Y
+        const shadowXInput = document.createElement('input');
+        shadowXInput.type = 'number';
+        shadowXInput.title = 'Shadow Offset X';
+        shadowXInput.value = target.style.shadowOffsetX || 2;
+        const shadowYInput = document.createElement('input');
+        shadowYInput.type = 'number';
+        shadowYInput.title = 'Shadow Offset Y';
+        shadowYInput.value = target.style.shadowOffsetY || 2;
+        
+        const updateShadow = () => {
+            target.setShadow(
+                parseInt(shadowXInput.value),
+                parseInt(shadowYInput.value),
+                shadowColorInput.value,
+                2 // Blur (固定)
+            );
+        };
+        shadowColorInput.addEventListener('input', updateShadow);
+        shadowXInput.addEventListener('input', updateShadow);
+        shadowYInput.addEventListener('input', updateShadow);
+
+        shadowRow.append(shadowColorLabel, shadowColorInput, shadowXInput, shadowYInput);
+        this.editorPropsContainer.appendChild(shadowRow);
+    
     }
     createExportPrefabButton() {
         const button = document.createElement('button');
@@ -927,10 +992,23 @@ createComponentSection() {
                  if (objData.type === 'Text') {
             objData.text = gameObject.text;
             objData.style = {
+                // --- 既存のスタイル ---
                 fontSize: gameObject.style.fontSize,
                 fill: gameObject.style.color,
-                // 他にも fontFamily など、必要なスタイルがあれば追加
+                // ▼▼▼【新しいスタイルを追加】▼▼▼
+                fontFamily: gameObject.style.fontFamily,
+                fontStyle: gameObject.style.fontStyle,
+                // 影のスタイルも保存
+                shadow: {
+                    offsetX: gameObject.style.shadowOffsetX,
+                    offsetY: gameObject.style.shadowOffsetY,
+                    color: gameObject.style.shadowColor,
+                    blur: gameObject.style.shadowBlur,
+                    stroke: gameObject.style.shadowStroke,
+                    fill: gameObject.style.shadowFill
+                }
             };
+      
         } else {
             // 画像/スプライトの場合
             objData.texture = gameObject.texture.key;
@@ -1055,9 +1133,21 @@ if (gameObject.body) {
          if (objData.type === 'Text') {
             objData.text = gameObject.text;
             objData.style = {
+                // --- 既存のスタイル ---
                 fontSize: gameObject.style.fontSize,
                 fill: gameObject.style.color,
-                // 他にも fontFamily など、必要なスタイルがあれば追加
+                // ▼▼▼【新しいスタイルを追加】▼▼▼
+                fontFamily: gameObject.style.fontFamily,
+                fontStyle: gameObject.style.fontStyle,
+                // 影のスタイルも保存
+                shadow: {
+                    offsetX: gameObject.style.shadowOffsetX,
+                    offsetY: gameObject.style.shadowOffsetY,
+                    color: gameObject.style.shadowColor,
+                    blur: gameObject.style.shadowBlur,
+                    stroke: gameObject.style.shadowStroke,
+                    fill: gameObject.style.shadowFill
+                }
             };
         } else {
             // 画像/スプライトの場合

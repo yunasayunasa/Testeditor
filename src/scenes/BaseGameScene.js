@@ -177,15 +177,26 @@ buildSceneFromLayout(layoutData) {
         // ▼▼▼【ここからが修正箇所です】▼▼▼
         
         // --- ケース1: タイプが 'Text' の場合 ---
-        if (layout.type === 'Text') {
-            const text = layout.text || ''; // 表示するテキスト
-            const style = layout.style || { fontSize: '32px', fill: '#fff' }; // スタイル
+           if (layout.type === 'Text') {
+            const text = layout.text || '';
             
-            // ビットマップテキストを使うと、ドット絵風フォントで見栄えが良くなる
-            // return new Phaser.GameObjects.BitmapText(this, 0, 0, 'your-bitmap-font-key', text, style.fontSize);
+            // ★★★ スタイルオブジェクトをそのまま渡せる ★★★
+            const style = layout.style || { fontSize: '32px', fill: '#fff' };
+            
+            const textObject = new Phaser.GameObjects.Text(this, 0, 0, text, style);
 
-            // まずは標準のテキストオブジェクトで実装
-            return new Phaser.GameObjects.Text(this, 0, 0, text, style);
+            // ★★★ 影のスタイルは、個別のメソッドで設定する必要がある ★★★
+            if (style.shadow && style.shadow.color) {
+                textObject.setShadow(
+                    style.shadow.offsetX,
+                    style.shadow.offsetY,
+                    style.shadow.color,
+                    style.shadow.blur || 0,
+                    style.shadow.stroke,
+                    style.shadow.fill
+                );
+            }
+            return textObject;
         }
 
         // --- ケース2: タイプが 'Sprite' の場合 (変更なし) ---
