@@ -949,7 +949,7 @@ if (gameObject.body) {
     const body = gameObject.body;
     objData.physics = {
         isStatic: body.isStatic,
-        
+        isSensor: body.isSensor,
         // ▼▼▼【ここが修正点です】▼▼▼
         // 信頼できない body.ignoreGravity を参照するのをやめ、
         // 自分で設定した信頼できる getData('ignoreGravity') を書き出す。
@@ -1075,6 +1075,7 @@ if (gameObject.body) {
             const body = gameObject.body;
             prefabData.physics = {
                 isStatic: body.isStatic,
+                isSensor: body.isSensor,
                 ignoreGravity: gameObject.getData('ignoreGravity') === true,
                 gravityScale: body.gravityScale.y,
                 shape: gameObject.getData('shape') || 'rectangle', 
