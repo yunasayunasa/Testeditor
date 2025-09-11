@@ -81,6 +81,8 @@ buildSceneFromLayout(layoutData) {
         return;
     }
 
+    
+
     // --- 1. アニメーションの登録 (変更なし) ---
     if (layoutData.animations) {
         layoutData.animations.forEach(animData => {
@@ -113,21 +115,40 @@ buildSceneFromLayout(layoutData) {
         this.finalizeSetup(allGameObjects);
     }
 
-    
+   
     /**
-     * レイアウト定義に基づいてゲームオブジェクトを生成する。
+     * レイアウト定義に基づいてゲームオブジェクトを生成する (テキストオブジェクト対応版)
      * @param {object} layout - 単一オブジェクトのレイアウト定義。
      * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト。
      */
     createObjectFromLayout(layout) {
-        // テクスチャキーが存在しない場合でもエラーにならないようにデフォルト値を設定
-        const textureKey = layout.texture || '__DEFAULT';
+        // ▼▼▼【ここからが修正箇所です】▼▼▼
         
+        // --- ケース1: タイプが 'Text' の場合 ---
+        if (layout.type === 'Text') {
+            const text = layout.text || ''; // 表示するテキスト
+            const style = layout.style || { fontSize: '32px', fill: '#fff' }; // スタイル
+            
+            // ビットマップテキストを使うと、ドット絵風フォントで見栄えが良くなる
+            // return new Phaser.GameObjects.BitmapText(this, 0, 0, 'your-bitmap-font-key', text, style.fontSize);
+
+            // まずは標準のテキストオブジェクトで実装
+            return new Phaser.GameObjects.Text(this, 0, 0, text, style);
+        }
+
+        // --- ケース2: タイプが 'Sprite' の場合 (変更なし) ---
         if (layout.type === 'Sprite') {
+            const textureKey = layout.texture || '__DEFAULT';
             return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
         }
+
+        // --- ケース3: デフォルト (Image) の場合 (変更なし) ---
+        const textureKey = layout.texture || '__DEFAULT';
         return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
+        
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
+        
 
 // in src/scenes/BaseGameScene.js
 

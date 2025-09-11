@@ -136,6 +136,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             this.safeCreateUI(this.createGroupInput);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
             
+   // --- オブジェクトのタイプに応じて、表示するUIを切り替える ---
+            if (this.selectedObject instanceof Phaser.GameObjects.Text) {
+                // テキストオブジェクト専用のUI
+                this.safeCreateUI(this.createTextPropertiesUI);
+            } else {
+                // 画像/スプライトオブジェクト用のUI (変更なし)
+                // this.safeCreateUI(this.createTextureUI); // 将来的にテクスチャ変更UIを作るなら
+            }
+
+
             this.safeCreateUI(this.createTransformInputs);
             this.safeCreateUI(this.createDepthInput);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
@@ -177,6 +187,53 @@ this.safeCreateUI(this.createExportPrefabButton);
             const funcName = createUIFunction.name || 'anonymous function';
             console.error(`[EditorPlugin] Failed to create UI section: '${funcName}'`, error);
         }
+    }
+
+       /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * テキストオブジェクト専用のプロパティ編集UIを生成する
+     */
+    createTextPropertiesUI() {
+        const target = this.selectedObject;
+
+        // --- Text Content ---
+        const textRow = document.createElement('div');
+        const textLabel = document.createElement('label');
+        textLabel.innerText = 'Text:';
+        const textInput = document.createElement('textarea');
+        textInput.style.minHeight = '40px';
+        textInput.value = target.text;
+        textInput.addEventListener('input', (e) => {
+            target.setText(e.target.value);
+        });
+        textRow.append(textLabel, textInput);
+        this.editorPropsContainer.appendChild(textRow);
+
+        // --- Font Size ---
+        const sizeRow = document.createElement('div');
+        const sizeLabel = document.createElement('label');
+        sizeLabel.innerText = 'Size:';
+        const sizeInput = document.createElement('input');
+        sizeInput.type = 'number';
+        sizeInput.value = parseInt(target.style.fontSize);
+        sizeInput.addEventListener('input', (e) => {
+            target.setFontSize(parseInt(e.target.value));
+        });
+        sizeRow.append(sizeLabel, sizeInput);
+        this.editorPropsContainer.appendChild(sizeRow);
+
+        // --- Color ---
+        const colorRow = document.createElement('div');
+        const colorLabel = document.createElement('label');
+        colorLabel.innerText = 'Color:';
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = target.style.color;
+        colorInput.addEventListener('input', (e) => {
+            target.setColor(e.target.value);
+        });
+        colorRow.append(colorLabel, colorInput);
+        this.editorPropsContainer.appendChild(colorRow);
     }
     createExportPrefabButton() {
         const button = document.createElement('button');
@@ -836,7 +893,9 @@ createComponentSection() {
                 // --- 1. 必要なプロパティだけを抽出した、新しいプレーンなオブジェクトを作成 ---
                 const objData = {
                     name: gameObject.name,
-                    type: (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+                    type:  (gameObject instanceof Phaser.GameObjects.Text) ? 'Text' :
+                    (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+                  
                     texture: gameObject.texture.key,
                     x: Math.round(gameObject.x),
                     y: Math.round(gameObject.y),
@@ -850,6 +909,18 @@ createComponentSection() {
                 // --- 2. getData()で取得したデータは、通常プレーンなので安全に追加できる ---
                 const group = gameObject.getData('group');
                 if (group) objData.group = group;
+
+                 if (objData.type === 'Text') {
+            objData.text = gameObject.text;
+            objData.style = {
+                fontSize: gameObject.style.fontSize,
+                fill: gameObject.style.color,
+                // 他にも fontFamily など、必要なスタイルがあれば追加
+            };
+        } else {
+            // 画像/スプライトの場合
+            objData.texture = gameObject.texture.key;
+        }
 
                 const animData = gameObject.getData('animation_data');
                 if (animData) objData.animation = animData;
@@ -950,7 +1021,8 @@ if (gameObject.body) {
         const prefabData = {
             // ★ nameはプレハブのデフォルト名として保存
             name: prefabName, 
-            type: (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
+            type: (gameObject instanceof Phaser.GameObjects.Text) ? 'Text' :
+             (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
             texture: gameObject.texture.key,
             
             // ★ 座標(x, y)はプレハブに不要なので、含めない
@@ -965,6 +1037,18 @@ if (gameObject.body) {
         // --- 2. getData()で取得した安全なデータを追加 ---
         const group = gameObject.getData('group');
         if (group) prefabData.group = group;
+
+         if (objData.type === 'Text') {
+            objData.text = gameObject.text;
+            objData.style = {
+                fontSize: gameObject.style.fontSize,
+                fill: gameObject.style.color,
+                // 他にも fontFamily など、必要なスタイルがあれば追加
+            };
+        } else {
+            // 画像/スプライトの場合
+            objData.texture = gameObject.texture.key;
+        }
 
         const animData = gameObject.getData('animation_data');
         if (animData) prefabData.animation = animData;
