@@ -183,53 +183,61 @@ _startInitialGame(initialData) {
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
      * @param {object} data - { from: string, to: string, params: object, fade: object }
      */
+    // in src/scenes/SystemScene.js
+
     _handleRequestSceneTransition(data) {
-        // --- 遷移処理中の多重実行を防止 ---
         if (this.isProcessingTransition) {
             console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${data.to})が無視されました。`);
             return;
         }
         this.isProcessingTransition = true;
-        this.game.input.enabled = false; // 遷移開始時に即座に入力を無効化
+        this.game.input.enabled = false;
 
         console.log(`[SystemScene] シーン遷移リクエスト: ${data.from} -> ${data.to}`);
         
-        // --- デフォルト値の設定 ---
-        const fromScene = this.scene.get(data.from);
         const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
-        // ★★★ data.paramsが渡されない古い[jump]タグのために、空のオブジェクトを保証する ★★★
-        const sceneParams = data.params || {}; 
+        const sceneParams = data.params || {};
 
-        // --- 1. フェードアウトを開始 ---
+        // --- 1. フェードアウト ---
         this.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
 
-        // --- 2. フェードアウト完了を待って、シーンを切り替える ---
+        // --- 2. フェードアウト完了後 ---
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             
-            // --- 3. 新しいシーンの「起動完了(CREATE)」をリッスンする ---
-        // ★★★ 'scene-ready'のようなカスタムイベントではなく、Phaserの公式イベントを使う ★★★
-        this.scene.manager.once(`create-${data.to}`, (scene) => {
+            // ▼▼▼【ここがエラーを修正した、新しいロジックです】▼▼▼
             
-            // 新しいシーンの準備ができたので、フェードインを開始
-            this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
-            this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+            // --- 3. 遷移先のシーンインスタンスを取得する ---
+            const toScene = this.scene.get(data.to);
+            if (!toScene) {
+                console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
                 this.isProcessingTransition = false;
-                this.game.input.enabled = true; // 全て完了してから入力を再開
-                console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
+                this.game.input.enabled = true;
+                return;
+            }
+
+            // --- 4. 遷移先シーンのPhaser公式「create」イベントをリッスンする ---
+            // ★★★ これが、最も確実で普遍的な方法です ★★★
+            toScene.events.once(Phaser.Scenes.Events.CREATE, () => {
+                
+                // 新しいシーンの準備ができたので、フェードインを開始
+                this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+                this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+                    this.isProcessingTransition = false;
+                    this.game.input.enabled = true;
+                    console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
+                    this.events.emit('transition-complete', data.to);
+                });
             });
+
+            // --- 5. 古いシーンを停止し、新しいシーンを開始する ---
+            this.scene.start(data.to, sceneParams);
+
+            if (this.scene.isActive('UIScene')) {
+                this.scene.get('UIScene').setVisible(false);
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         });
-
-        // --- 4. 古いシーンを停止し、新しいシーンを開始する ---
-        // ★★★ launchやrunではなく、'start'を使うのが最も確実 ★★★
-        // 'start'は、シーンが存在すれば停止してから再起動し、なければ新規に起動する、最も強力な命令
-        this.scene.start(data.to, sceneParams);
-
-        if (this.scene.isActive('UIScene')) {
-            this.scene.get('UIScene').setVisible(false);
-        }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-    });
-}
+    }
 
    /**
      * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
