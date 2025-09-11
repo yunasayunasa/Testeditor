@@ -4,7 +4,7 @@ import { eventTagHandlers } from '../handlers/events/index.js';
 
 export default class ActionInterpreter {
     constructor(scene) {
-        this.scene = scene;
+        
         this.tagHandlers = eventTagHandlers;
          this.currentSource = null;
         this.currentTarget = null;
@@ -17,49 +17,58 @@ export default class ActionInterpreter {
      * @param {string} actionsString - アクション文字列
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
-     async run(source, actionsString, collidedTarget = null) {
-        // ★★★ 実行開始時に、コンテキストを保存する ★★★
-        this.currentSource = source;
-        this.currentTarget = collidedTarget;
+  async run(source, actionsString, collidedTarget = null) {
+    this.currentSource = source;
+    this.currentTarget = collidedTarget;
 
-        const tags = actionsString.match(/\[(.*?)\]/g) || [];
+    const tags = actionsString.match(/\[(.*?)\]/g) || [];
 
-        for (const tagString of tags) {
-            try {
-                const { tagName, params } = this.parseTag(tagString);
-                
-                let finalTarget = source;
-                if (params.target) {
-                    if (params.target === 'self') {
-                        finalTarget = source;
-                    } else if (params.target === 'other' && collidedTarget) {
-                        finalTarget = collidedTarget;
-                    } else {
-                        finalTarget = this.scene.children.getByName(params.target);
-                    }
-                }
-                
-                if (!finalTarget) {
-                    console.warn(`[ActionInterpreter] Target not found: '${params.target}'`);
-                    continue;
-                }
-                
-                const handler = this.tagHandlers[tagName];
-                if (handler) {
-                    // ★★★ ハンドラには、これまで通り解決済みのfinalTargetを渡す ★★★
-                    await handler(this, finalTarget, params);
-                } else {
-                    console.warn(`[ActionInterpreter] Unknown action tag: ${tagName}`);
-                }
-            } catch (error) {
-                console.error(`[ActionInterpreter] Error running action: ${tagString}`, error);
+    for (const tagString of tags) {
+        try {
+            const { tagName, params } = this.parseTag(tagString);
+            
+            // ▼▼▼ ターゲット解決ロジックで、source.sceneを使うように変更 ▼▼▼
+            const currentScene = source.scene;
+            if (!currentScene) {
+                console.warn(`[ActionInterpreter] Source object has no valid scene.`);
+                continue;
             }
+            
+            let finalTarget = source;
+            if (params.target) {
+                if (params.target === 'self') {
+                    finalTarget = source;
+                } else if (params.target === 'other' && collidedTarget) {
+                    finalTarget = collidedTarget;
+                } else {
+                    // ★★★ this.sceneではなく、currentSceneから探す ★★★
+                    finalTarget = currentScene.children.getByName(params.target);
+                }
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+            if (!finalTarget) {
+                console.warn(`[ActionInterpreter] Target not found: '${params.target}'`);
+                continue;
+            }
+            
+            const handler = this.tagHandlers[tagName];
+            if (handler) {
+                // ▼▼▼ ハンドラに渡す第一引数を、ActionInterpreter自身(this)から、
+                //     現在のシーンインスタンス(currentScene)に変更する ▼▼▼
+                await handler(currentScene, finalTarget, params);
+            } else {
+                console.warn(`[ActionInterpreter] Unknown action tag: ${tagName}`);
+            }
+        } catch (error) {
+            console.error(`[ActionInterpreter] Error running action: ${tagString}`, error);
         }
-        
-        // ★★★ 実行終了後に、コンテキストをクリアする ★★★
-        this.currentSource = null;
-        this.currentTarget = null;
     }
+    
+    this.currentSource = null;
+    this.currentTarget = null;
+}
+
     /**
      
      * タグ文字列をパースして、タグ名とパラメータのオブジェクトを返す

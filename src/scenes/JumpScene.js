@@ -14,7 +14,7 @@ export default class JumpScene extends BaseGameScene {
   create() {
         console.log("[JumpScene] Create started.");
         
-        this.actionInterpreter = new ActionInterpreter(this);
+     this.actionInterpreter = new ActionInterpreter();
         this.cameras.main.setBackgroundColor('#4488cc');
         
         const soundManager = this.registry.get('soundManager');
