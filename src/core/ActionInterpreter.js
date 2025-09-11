@@ -18,6 +18,10 @@ export default class ActionInterpreter {
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
   async run(source, actionsString, collidedTarget = null) {
+     if (!source || !source.scene || !source.scene.scene.isActive()) {
+        // シーンがアクティブでない（シャットダウン中など）場合は、アクションを実行しない
+        return;
+    }
     this.currentSource = source;
     this.currentTarget = collidedTarget;
 
