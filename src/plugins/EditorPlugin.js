@@ -1,4 +1,4 @@
-
+import { ComponentRegistry } from '../components/index.js';
 /**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
  * オブジェクトの選択、プロパティ編集、レイアウトのエクスポート機能などを管理する。
@@ -651,9 +651,7 @@ createComponentSection() {
         headerDiv.append(compTitle, removeBtn);
         containerDiv.appendChild(headerDiv);
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ ここからが、パラメータ編集UIの、真の心臓部だ ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+       
 
         // --- c. パラメータ編集UIの生成 ---
         if (componentDef.type === 'Scrollable') {
@@ -688,15 +686,20 @@ createComponentSection() {
         this.editorPropsContainer.appendChild(containerDiv);
     });
 
-    // --- 3. 新しいコンポーネントを追加するUI (変更なし) ---
-    const availableComponents = ['PlayerController', 'Scrollable', 'Interactor']; 
-    const select = document.createElement('select');
-    select.innerHTML = '<option value="">Add Component...</option>';
-    availableComponents.forEach(compName => {
-        if (!attachedComponents.some(c => c.type === compName)) {
-            select.innerHTML += `<option value="${compName}">${compName}</option>`;
-        }
-    });
+       // --- ComponentRegistryから、利用可能なコンポーネント名のリストを自動生成 ---
+        const availableComponents = Object.keys(ComponentRegistry);
+        // --------------------------------------------------------------------
+  
+        
+        const select = document.createElement('select');
+        select.innerHTML = '<option value="">Add Component...</option>';
+        
+        availableComponents.forEach(compName => {
+            // 既にアタッチされていないコンポーネントのみをリストに追加
+            if (!attachedComponents.some(c => c.type === compName)) {
+                select.innerHTML += `<option value="${compName}">${compName}</option>`;
+            }
+        });
     select.onchange = (e) => {
         const compToAdd = e.target.value;
         if (compToAdd && this.selectedObject) {
