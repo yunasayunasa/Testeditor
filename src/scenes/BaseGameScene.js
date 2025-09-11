@@ -277,19 +277,20 @@ applyProperties(gameObject, layout) {
         // --- 4b. ボディが存在すれば、プロパティを順番に設定 ---
         if (gameObject.body) {
             
-            // ★★★ 1. isSensorを最初に設定 ★★★
+            // --- 1. JSONから読み込んだ 'ignoreGravity' の値をデータとして保存 ---
+            // これが、'beforeupdate'ループで参照される唯一の正しい情報源となる
+            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+
+            // --- 2. isSensorの場合は、強制的に重力無視リストに追加 ---
             if (phys.isSensor) {
                 gameObject.setSensor(true);
+                gameObject.setData('ignoreGravity', true); // ★ PhaserのAPIではなく、setDataを使う
             }
             
-            // ★★★ 2. isStaticを設定 ★★★
+            // --- 3. isStaticを設定 ---
             gameObject.setStatic(phys.isStatic || false);
 
-            // ★★★ 3. センサーかつ静的なら重力を無視する特別処理 ★★★
-            if (phys.isSensor && phys.isStatic) {
-                gameObject.setIgnoreGravity(true);
-            }
-
+            // --- 4. ★★★ PhaserのsetIgnoreGravity()は、一切呼び出さない ★★★ ---
             // ★★★ 4. その他の物理プロパティを設定 ★★★
             gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
             gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01); // 空気抵抗も適用
@@ -316,7 +317,7 @@ applyProperties(gameObject, layout) {
             gameObject.setStatic(phys.isStatic || false);
             
             // --- 4d. 最終確認ログ ---
-            console.log(`[BaseGameScene] Body configured for '${data.name}'. Final isStatic: ${gameObject.body.isStatic}, isSensor: ${gameObject.body.isSensor}`);
+           console.log(`[BaseGameScene] Body configured for '${data.name}'. isStatic: ${gameObject.body.isStatic}, isSensor: ${gameObject.body.isSensor}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
         }
     }
     
