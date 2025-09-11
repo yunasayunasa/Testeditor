@@ -1010,6 +1010,11 @@ createComponentSection() {
             };
       
         } else {
+        // ★★★ textureプロパティが存在するか確認してからキーを取得 ★★★
+        if (gameObject.texture && gameObject.texture.key) {
+            objData.texture = gameObject.texture.key;
+        }
+    
             // 画像/スプライトの場合
             objData.texture = gameObject.texture.key;
         }
@@ -1150,6 +1155,12 @@ if (gameObject.body) {
                 }
             };
         } else {
+           
+        // ★★★ textureプロパティが存在するか確認してからキーを取得 ★★★
+        if (gameObject.texture && gameObject.texture.key) {
+            objData.texture = gameObject.texture.key;
+        }
+    
             // 画像/スプライトの場合
             objData.texture = gameObject.texture.key;
         }

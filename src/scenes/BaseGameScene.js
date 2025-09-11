@@ -247,8 +247,32 @@ applyProperties(gameObject, layout) {
     if (data.physics) {
         const phys = data.physics;
         
-        // --- 4a. まず、デフォルト設定で物理ボディをアタッチ ---
-        this.matter.add.gameObject(gameObject);
+       if (gameObject instanceof Phaser.GameObjects.Text) {
+            // テキストオブジェクトは、add.textではなく、matter.add.textで生成するのが最も安全
+            // しかし、ここでは既存のオブジェクトに追加するので、add.gameObjectを使うが、
+            // サイズが確定した後に当たり判定を設定する必要がある。
+
+            // 1. テキストの表示原点を中心に設定する (物理ボディとのズレを防ぐため)
+            gameObject.setOrigin(0.5, 0.5);
+            
+            // 2. テキストの幅と高さを取得
+            const width = gameObject.width;
+            const height = gameObject.height;
+
+            // 3. Matter.jsのファクトリを直接使い、長方形のボディを生成
+            const body = this.matter.bodies.rectangle(gameObject.x, gameObject.y, width, height, { isSensor: phys.isSensor });
+
+            // 4. 生成したボディを、既存のテキストオブジェクトにセットする
+            gameObject.setExistingBody(body);
+            
+            console.log(`[BaseGameScene] Physics body created for TEXT object '${gameObject.name}'`);
+
+        } else {
+        // --- ケース2: 画像またはスプライトの場合 (既存のロジック) ---
+            this.matter.add.gameObject(gameObject);
+        }
+        
+        
 
         // --- 4b. ボディが存在すれば、プロパティを順番に設定 ---
         if (gameObject.body) {
