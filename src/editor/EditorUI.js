@@ -360,31 +360,28 @@ if (this.modeToggle && this.modeLabel) {
      * ヘルプボタンを生成する (移設・最終版)
      * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
+    // in src/editor/EditorUI.js
+
     createHelpButton() {
-        // ★ 移設先：アセットブラウザのヘッダー
-        const assetBrowserHeader = document.querySelector('#asset-browser .panel-header');
+        // ★ 移設先：新しいボタン用コンテナ
+        const buttonContainer = document.querySelector('#asset-browser .panel-header-buttons');
         
-        if (assetBrowserHeader) {
+        if (buttonContainer) {
             const helpButton = document.createElement('button');
             helpButton.innerText = '?';
             helpButton.title = 'Open Help Manual';
             
-            // ★ スタイルを少し調整して、ヘッダーに馴染ませる
-            helpButton.style.marginLeft = 'auto'; // 右端に寄せる
-            helpButton.style.padding = '2px 8px';
-            helpButton.style.borderRadius = '4px';
-            helpButton.style.border = '1px solid #555';
-            helpButton.style.backgroundColor = '#444';
-            helpButton.style.color = '#eee';
-            helpButton.style.cursor = 'pointer';
+            // ★ スタイルはCSSで管理するので、JavaScriptでの設定は不要
 
             helpButton.addEventListener('click', () => this.openHelpModal());
-            assetBrowserHeader.appendChild(helpButton);
+            
+            // ★ コンテナの末尾に追加
+            buttonContainer.appendChild(helpButton);
+
         } else {
-            console.warn('[EditorUI] Asset browser header not found for help button placement.');
+            console.warn('[EditorUI] Asset browser button container not found for help button placement.');
         }
     }
-
     // ★★★ 新規メソッド：ヘルプモーダルを開く ★★★
     async openHelpModal() {
         if (!this.helpModal || !this.helpModalContent) return;
@@ -421,3 +418,4 @@ if (this.modeToggle && this.modeLabel) {
 
 
 }
+
