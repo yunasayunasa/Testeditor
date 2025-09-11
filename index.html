@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <title>Odyssey Engine - Editor</title>
     
-    <!-- ▼▼▼ 外部CSSファイルを読み込む ▼▼▼ -->
+    <!-- 外部CSSファイルを読み込む -->
     <link rel="stylesheet" href="style.css">
     
+    <!-- 外部ライブラリを読み込む -->
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
@@ -40,29 +41,31 @@
 
         <!-- 画面右側のパネル群 -->
         <div id="editor-sidebar">
-            <!-- in index.html -->
-<div id="asset-browser" class="editor-panel">
-    <div class="panel-header">
-        <!-- ▼▼▼ 左側のグループ ▼▼▼ -->
-        <span class="panel-title">Asset Browser</span>
 
-        <!-- ▼▼▼ 右側のグループ（ボタン用コンテナ） ▼▼▼ -->
-        <div class="panel-header-buttons">
-            <button id="add-text-button" title="Add New Text Object">T+</button>
-            <!-- ヘルプボタンは、ここにJavaScriptによって動的に追加されます -->
-        </div>
-    </div>
-    <div id="asset-list" class="panel-content"></div>
-    <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
-</div>
+            <!-- アセットブラウザパネル -->
+            <div id="asset-browser" class="editor-panel">
+                <div class="panel-header">
+                    <span class="panel-title">Asset Browser</span>
+                    <div class="panel-header-buttons">
+                        <button id="add-text-button" title="Add New Text Object">T+</button>
+                        <!-- ヘルプボタンは、ここにJavaScriptによって動的に追加されます -->
+                    </div>
+                </div>
+                <div id="asset-list" class="panel-content"></div>
+                <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
             </div>
+
+            <!-- プロパティパネル -->
             <div id="editor-panel" class="editor-panel">
                 <div id="editor-title" class="panel-header">Properties</div>
                 <div id="editor-props" class="panel-content"></div>
             </div>
-        </div>
+
+        </div> <!-- ★★★ #editor-sidebar はここで正しく閉じられます ★★★ -->
 
         <!-- 全画面を覆うモーダルウィンドウ群 -->
+
+        <!-- アニメーションエディタ・モーダル -->
         <div id="anim-editor-overlay" class="modal-overlay">
             <div class="modal-window">
                 <div class="modal-header">
@@ -73,6 +76,7 @@
             </div>
         </div>
 
+        <!-- イベントエディタ・モーダル -->
         <div id="event-editor-overlay" class="modal-overlay">
             <div class="modal-window">
                 <div class="modal-header">
@@ -85,6 +89,7 @@
             </div>
         </div>
 
+        <!-- ヘルプ・モーダル -->
         <div id="help-modal-overlay" class="modal-overlay">
             <div class="modal-window">
                 <div class="modal-header">
@@ -94,11 +99,11 @@
                 <div id="help-modal-content" class="modal-content"></div>
             </div>
         </div>
-    </div>
+        
+    </div> <!-- ★★★ #editor-root はここで正しく閉じられます ★★★ -->
 
     <!-- JSのエントリーポイント -->
     <script type="module" src="src/main.js"></script>
 
 </body>
-
 </html>
