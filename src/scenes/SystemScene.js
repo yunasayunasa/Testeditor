@@ -73,6 +73,7 @@ export default class SystemScene extends Phaser.Scene {
 
         // --- 2. イベントリスナーの設定 ---
           this.events.on('request-scene-transition', this._startTransition, this);
+           this.events.on('request-simple-transition', this._handleSimpleTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
@@ -203,7 +204,31 @@ _startInitialGame(initialData) {
     console.log("[SystemScene] Running UIScene now.");
     this.scene.run('UIScene');
 }
+ /**
+     * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
+     * @param {object} data - { from: string, to: string, params: object, fade: object }
+     */
+     /**
+     * ★★★ 新規メソッド ★★★
+     * GameSceneからの[jump]など、シンプルな遷移を処理する
+     */
+    _handleSimpleTransition(data) {
+        if (this.isProcessingTransition) return;
 
+        console.log(`[SystemScene] シンプルな遷移リクエスト: ${data.from} -> ${data.to}`);
+
+        // 古いシーンを停止
+        if (this.scene.isActive(data.from)) {
+            this.scene.stop(data.from);
+        }
+        if (this.scene.isActive('UIScene')) {
+            this.scene.get('UIScene').setVisible(false);
+        }
+
+        // 監視付きで新しいシーンを起動（フェードなし）
+        // ★★★ 以前からある、信頼性の高いメソッドを再利用 ★★★
+        this._startAndMonitorScene(data.to, data.params);
+    }
  /**
      * ★★★ _handleRequestSceneTransitionをリネームし、処理を開始するだけの役割に ★★★
      */

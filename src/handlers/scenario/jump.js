@@ -32,7 +32,7 @@ export default async function handleJump(manager, params) {
         
         // 3. SystemSceneに遷移をリクエスト
         const fromSceneKey = manager.scene.scene.key; 
-        manager.scene.scene.get('SystemScene').events.emit('request-scene-transition', {
+            manager.scene.scene.get('SystemScene').events.emit('request-simple-transition', {
             to: toSceneKey,
             from: fromSceneKey,
             params: transitionParams,
