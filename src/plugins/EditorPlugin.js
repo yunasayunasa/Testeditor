@@ -52,12 +52,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      
     setUI(editorUI) {
         this.editorUI = editorUI;
-        const addButton = document.getElementById('add-asset-button');
-        if (addButton && this.editorUI) {
-            addButton.addEventListener('click', () => {
-                this.editorUI.onAddButtonClicked();
-            });
-        }
+        // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
+        // ★★★ イベントリスナーの登録は、ここで行わない ★★★
     }
 
     panCamera(dx, dy) {
