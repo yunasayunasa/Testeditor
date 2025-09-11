@@ -184,32 +184,35 @@ _startInitialGame(initialData) {
      * @param {object} data - { from: string, to: string, params: object, fade: object }
      */
     _handleRequestSceneTransition(data) {
+        // --- 遷移処理中の多重実行を防止 ---
         if (this.isProcessingTransition) {
             console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${data.to})が無視されました。`);
             return;
         }
         this.isProcessingTransition = true;
-        this.game.input.enabled = false;
+        this.game.input.enabled = false; // 遷移開始時に即座に入力を無効化
 
         console.log(`[SystemScene] シーン遷移リクエスト: ${data.from} -> ${data.to}`);
         
-        const self = this;
+        // --- デフォルト値の設定 ---
+        const fromScene = this.scene.get(data.from);
         const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
-        const sceneParams = data.params || {};
+        // ★★★ data.paramsが渡されない古い[jump]タグのために、空のオブジェクトを保証する ★★★
+        const sceneParams = data.params || {}; 
 
-        // ▼▼▼【ここがカメラ操作の最終修正です】▼▼▼
-        // ★★★ 自身のカメラ(this.cameras.main)ではなく、ゲーム全体のカメラマネージャーに指示を出す ★★★
-        const cameraManager = self.game.cameras;
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // --- 1. フェードアウトを開始 ---
+        this.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
 
-        // --- 1. フェードアウト ---
-        cameraManager.main.fadeOut(fadeConfig.duration, ...self.hexToRgb(fadeConfig.color));
-
-        // --- 2. フェードアウト完了後 ---
-        cameraManager.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        // --- 2. フェードアウト完了を待って、シーンを切り替える ---
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             
-            const fromScene = self.scene.get(data.from);
-          
+            // --- 3. 古いシーンを停止 ---
+            if (fromScene && fromScene.scene.isActive()) {
+                this.scene.stop(data.from);
+            }
+            if (this.scene.isActive('UIScene')) {
+                this.scene.get('UIScene').setVisible(false);
+            }
             
             // --- 4. 新しいシーンを、渡されたパラメータを付けて起動 ---
             // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
@@ -221,31 +224,21 @@ _startInitialGame(initialData) {
                 return;
             }
 
-             // --- 3. 新しいシーンからの「準備完了」信号を待つ (元の信頼できる方法に戻す) ---
             const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
             
             toScene.events.once(completionEvent, () => {
-                
-                // --- 5. 準備ができたらフェードイン ---
-                cameraManager.main.fadeIn(fadeConfig.duration, ...self.hexToRgb(fadeConfig.color));
-                cameraManager.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
-                    self.isProcessingTransition = false;
-                    self.game.input.enabled = true;
+                // --- 5. 新しいシーンの準備ができたらフェードイン ---
+                this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+                this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+                    this.isProcessingTransition = false;
+                    this.game.input.enabled = true; // 全て完了してから入力を再開
                     console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
-                    self.events.emit('transition-complete', data.to);
+                    this.events.emit('transition-complete', data.to);
                 });
             });
-
-            // --- 4. 古いシーンを停止し、新しいシーンを開始する ---
-            // ★ stopしてからlaunch/runする方が、ライフサイクル上、より安全
-            if (fromScene && fromScene.scene.isActive()) {
-                self.scene.stop(data.from);
-            }
-            if (self.scene.isActive('UIScene')) {
-                self.scene.get('UIScene').setVisible(false);
-            }
             
-            self.scene.run(data.to, sceneParams);
+            // ★★★ launchではなくrunを使い、すでに存在するシーンでも確実に実行させる ★★★
+            this.scene.run(data.to, sceneParams);
         });
     }
     
