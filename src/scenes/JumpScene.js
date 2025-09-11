@@ -3,7 +3,7 @@ import BaseGameScene from './BaseGameScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js';
 import PlayerController from '../components/PlayerController.js';
 import Scrollable from '../components/Scrollable.js';
-
+import Interactor from '../components/Interactor.js';
 export default class JumpScene extends BaseGameScene {
 
      constructor() {
@@ -83,7 +83,9 @@ export default class JumpScene extends BaseGameScene {
         else if (componentType === 'Scrollable') {
             componentInstance = new Scrollable(this, target, params);
         }
-
+ else if (componentType === 'Interactor') {
+            componentInstance = new Interactor(this, target, params);
+        }
 
         if (componentInstance) {
             // --- 2. GameObjectにインスタンスを格納 ---

@@ -689,7 +689,7 @@ createComponentSection() {
     });
 
     // --- 3. 新しいコンポーネントを追加するUI (変更なし) ---
-    const availableComponents = ['PlayerController', 'Scrollable'];
+    const availableComponents = ['PlayerController', 'Scrollable', 'Interactor']; 
     const select = document.createElement('select');
     select.innerHTML = '<option value="">Add Component...</option>';
     availableComponents.forEach(compName => {

@@ -31,6 +31,91 @@ Actions: [time_resume][destroy target=self]
 
 <hr>
 
+<h3>onOverlap_Start / onOverlap_End</h3>
+<p>
+    物理的に反発しない「センサー」ボディ同士が、重なり合った瞬間 (<code>onOverlap_Start</code>) と、重なりが解消された瞬間 (<code>onOverlap_End</code>) に発火します。
+    当たり判定は欲しいが、通り抜けさせたいオブジェクト（アイテム、ワープゾーン、イベントエリアなど）に最適です。
+</p>
+<p>このトリガーを機能させるには、対象オブジェクトの物理プロパティで<strong>「センサー」</strong>チェックボックスを<code>true</code>に設定する必要があります。</p>
+
+<h4>必須パラメータ:</h4>
+<ul>
+    <li>
+        <strong><code>targetGroup</code></strong>: 反応する相手のグループ名。
+        <br>例: <code>player</code>, <code>enemy_bullet</code>
+    </li>
+</ul>
+
+<p><strong>使用例 (アイテム取得):</strong></p>
+<pre><code>
+--- イベント (コインオブジェクトに設定) ---
+Trigger: onOverlap_Start
+Target Group: player
+Actions: [play_sound key=coin_get][destroy target=self]
+</code></pre>
+
+<hr>
+
+<h3>onInteract</h3>
+<p>
+    プレイヤーが近くにいて、「調べる」キー（デフォルトは上矢印キー）を押した瞬間に発火します。扉を開ける、NPCに話しかける、宝箱を開けるといった「近接インタラクション」を実装するための専用トリガーです。
+</p>
+<p>このトリガーが機能するには、以下の3つの要素が正しく設定されている必要があります。</p>
+<ol>
+    <li>プレイヤーオブジェクトに<code>Interactor</code>コンポーネントがアタッチされていること。</li>
+    <li>
+        このオブジェクト（扉など）が、プレイヤーとの<code>onOverlap_Start</code>で<code>[interact_add]</code>タグを実行していること。
+    </li>
+    <li>
+        このオブジェクトが、プレイヤーとの<code>onOverlap_End</code>で<code>[interact_remove]</code>タグを実行していること。
+    </li>
+</ol>
+<p><strong>パラメータ:</strong> なし</p>
+
+<!-- ====================================================== -->
+<!-- 次に、アクションタグ・リファレンスのセクションに追加 -->
+<!-- ====================================================== -->
+
+<hr>
+
+<h2>[interact_add]</h2>
+<p>
+    このタグを持つオブジェクト（扉、NPCなど）を、プレイヤーの「インタラクト可能リスト」に追加します。
+    通常、プレイヤーとの<code>onOverlap_Start</code>イベントと組み合わせて使用します。これにより、プレイヤーがオブジェクトの近くにいる間だけ、「調べる」ことが可能になります。
+</p>
+<p><strong>パラメータ:</strong></p>
+<ul>
+    <li><strong>target</strong> (任意): <code>self</code>を指定するのが一般的です。これにより、このタグが設定されたオブジェクト自身がリストに追加されます。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>
+--- イベント (扉オブジェクトに設定) ---
+Trigger: onOverlap_Start
+Target Group: player
+Actions: [interact_add target=self][set_visible target=interact_mark value=true]
+</code></pre>
+
+<hr>
+
+<h2>[interact_remove]</h2>
+<p>
+    このタグを持つオブジェクトを、プレイヤーの「インタラクト可能リスト」から削除します。
+    通常、プレイヤーとの<code>onOverlap_End</code>イベントと組み合わせて使用します。これにより、プレイヤーがオブジェクトから離れると、「調べる」ことができなくなります。
+</p>
+<p><strong>パラメータ:</strong></p>
+<ul>
+    <li><strong>target</strong> (任意): <code>self</code>を指定するのが一般的です。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>
+--- イベント (扉オブジェクトに設定) ---
+Trigger: onOverlap_End
+Target Group: player
+Actions: [interact_remove target=self][set_visible target=interact_mark value=false]
+</code></pre>
+
+<hr>
+
 <h2>[spawn_object]</h2>
 <p>あらかじめ定義された「プレハブ（設計図）」に基づいて、新しいオブジェクトをシーンに出現させます。弾の発射、アイテムのドロップ、敵の出現など、動的なゲームプレイの核となるタグです。</p>
 <p>プレハブは、<code>assets/data/prefabs/</code>フォルダ内に、単一のオブジェクト定義を持つJSONファイルとして作成します。</p>
