@@ -505,6 +505,21 @@ createMatterPropertiesUI(gameObject) {
         }
     });
 
+  // --- センサー (すり抜け) ---
+    this.createCheckbox(this.editorPropsContainer, 'センサー', body.isSensor, (isChecked) => {
+        if (this.selectedObject) {
+            // 公式API: .setSensor() を使って設定
+            this.selectedObject.setSensor(isChecked);
+            
+            // センサーボディは通常、重力の影響を受けないので、連動させると便利
+            if (isChecked) {
+                this.selectedObject.setIgnoreGravity(true);
+            }
+            
+            // UIを再描画して、他のプロパティ(ignoreGravityなど)の表示を更新
+            this.updatePropertyPanel(); 
+        }
+    });
    
 // --- 重力無視 ---
 this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getData('ignoreGravity') === true, (isChecked) => {
