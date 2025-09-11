@@ -176,18 +176,8 @@ buildSceneFromLayout(layoutData) {
     }
         
 
-// in src/scenes/BaseGameScene.js
-
 /**
- * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終修正版・物理ボディ生成順序修正済み)
- * @param {Phaser.GameObjects.GameObject} gameObject - 生成されたGameObjectインスタンス
- * @param {object} layout - このオブジェクトのレイアウトデータ
- * @returns {Phaser.GameObjects.GameObject} プロパティ適用済みのGameObject
- */
-// in src/scenes/BaseGameScene.js
-
-/**
- * 単体のオブジェクトにプロパティを適用し、シーンに追加する (最終確定版・API呼び出し順を厳格化)
+ * 単体のオブジェクトにプロパティを適用し、シーンに追加する (センサー対応・最終確定版)
  * @param {Phaser.GameObjects.GameObject} gameObject - 生成されたGameObjectインスタンス
  * @param {object} layout - このオブジェクトのレイアウトデータ
  * @returns {Phaser.GameObjects.GameObject} プロパティ適用済みのGameObject
@@ -199,12 +189,16 @@ applyProperties(gameObject, layout) {
     // --- 1. 基本プロパティ ---
     gameObject.name = data.name || 'untitled';
     if (data.group) gameObject.setData('group', data.group);
-    if (data.texture) gameObject.setTexture(data.texture);
+
+    // テキストオブジェクト以外の場合のみテクスチャを設定
+    if (data.type !== 'Text' && data.texture) {
+        gameObject.setTexture(data.texture);
+    }
 
     // --- 2. シーンへの追加 ---
     this.add.existing(gameObject);
 
-    // --- 3. Transformプロパティ (物理ボディ生成「前」に適用) ---
+    // --- 3. Transformプロパティ ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
     gameObject.setAngle(data.angle || 0);
@@ -216,58 +210,56 @@ applyProperties(gameObject, layout) {
     if (data.physics) {
         const phys = data.physics;
         
-        // ▼▼▼【ここからが最終修正です】▼▼▼
-        
-        // --- Step 4a: まず、デフォルト設定で物理ボディをGameObjectにアタッチする ---
-        // この時点では isStatic などのオプションはまだ渡さない
+        // --- 4a. まず、デフォルト設定で物理ボディをアタッチ ---
         this.matter.add.gameObject(gameObject);
 
-        // --- Step 4b: ボディが存在することを確認してから、個別のプロパティを公式APIで設定していく ---
+        // --- 4b. ボディが存在すれば、プロパティを順番に設定 ---
         if (gameObject.body) {
-                  // --- Step 4b-1: センサーかどうかを先に設定 ---
-        if (phys.isSensor) {
-            gameObject.setSensor(true);
-        }
-
-        // --- Step 4b-2: isStaticなどの他のプロパティを設定 ---
-        gameObject.setStatic(phys.isStatic || false);
-            // ★★★ 最重要: isStatic の設定 ★★★
-            // Phaserの公式APIである `setStatic` メソッドを明示的に呼び出す
+            
+            // ★★★ 1. isSensorを最初に設定 ★★★
+            if (phys.isSensor) {
+                gameObject.setSensor(true);
+            }
+            
+            // ★★★ 2. isStaticを設定 ★★★
             gameObject.setStatic(phys.isStatic || false);
 
-            // その他の物理プロパティを設定
+            // ★★★ 3. センサーかつ静的なら重力を無視する特別処理 ★★★
+            if (phys.isSensor && phys.isStatic) {
+                gameObject.setIgnoreGravity(true);
+            }
+
+            // ★★★ 4. その他の物理プロパティを設定 ★★★
             gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
-            gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0); // setBounceはrestitutionと同義
+            gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01); // 空気抵抗も適用
+            gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
             
-            // gravityScaleはbodyオブジェクトに直接設定
             const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
             gameObject.body.gravityScale.y = gravityY;
 
-            // 形状のデータは永続化用に保存
+            // ★★★ 5. 永続化用のデータを保存 ★★★
             gameObject.setData('shape', phys.shape || 'rectangle');
+            // ignoreGravityはJSONの値を正として保存
             gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
 
-            // --- Step 4c: 最後に、ボディの形状を設定する ---
-            // これらは内部でボディを再生成する可能性があるため、他の設定を全て終えた後に行うのが最も安全
+            // ★★★ 6. 最後に、ボディの形状を設定 ★★★
             if (phys.shape === 'circle') {
                 const radius = (gameObject.width * gameObject.scaleX + gameObject.height * gameObject.scaleY) / 4;
                 gameObject.setCircle(radius);
-                // setCircleがisStaticをリセットする可能性に備え、念のため再設定する
-                gameObject.setStatic(phys.isStatic || false);
             } else {
                 gameObject.setRectangle();
-                // 同様に再設定
-                gameObject.setStatic(phys.isStatic || false);
             }
             
-            // --- Step 4d: 最終確認ログ ---
-            console.log(`[BaseGameScene] Body configured for '${data.name}'. Final isStatic: ${gameObject.body.isStatic}`);
+            // ★★★ 7. 形状変更後にプロパティがリセットされる可能性に備え、再設定 ★★★
+            if (phys.isSensor) gameObject.setSensor(true);
+            gameObject.setStatic(phys.isStatic || false);
+            
+            // --- 4d. 最終確認ログ ---
+            console.log(`[BaseGameScene] Body configured for '${data.name}'. Final isStatic: ${gameObject.body.isStatic}, isSensor: ${gameObject.body.isSensor}`);
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
     
-    // --- 5. アニメーション、コンポーネント、イベント (順序変更なし) ---
-    // ... (これらのセクションは前回のコードのままでOKです) ...
+    // --- 5. アニメーション、コンポーネント、イベント ---
     if (data.animation && gameObject.play) {
         gameObject.setData('animation_data', data.animation);
         if (data.animation.default && this.anims.exists(data.animation.default)) {
