@@ -559,7 +559,7 @@ createAddBodyButton() {
  */
 createMatterPropertiesUI(gameObject) {
     const body = gameObject.body;
-    
+    const isTextObject = (gameObject instanceof Phaser.GameObjects.Text);
     // --- 静的ボディ ---
     this.createCheckbox(this.editorPropsContainer, '静的ボディ', body.isStatic, (isChecked) => {
         if (this.selectedObject) {
@@ -570,34 +570,36 @@ createMatterPropertiesUI(gameObject) {
         }
     });
 
-  // --- センサー (すり抜け) ---
+ // --- センサー (すり抜け) ---
     this.createCheckbox(this.editorPropsContainer, 'センサー', body.isSensor, (isChecked) => {
         if (this.selectedObject) {
-            // 公式API: .setSensor() を使って設定
+            // setSensorも安全なので、直接呼び出す
             this.selectedObject.setSensor(isChecked);
-            
-            // センサーボディは通常、重力の影響を受けないので、連動させると便利
             if (isChecked) {
-                this.selectedObject.setIgnoreGravity(true);
+                // センサーON時は、再構築せずにsetDataで重力無視を設定
+                this.selectedObject.setData('ignoreGravity', true);
             }
-            
-            // UIを再描画して、他のプロパティ(ignoreGravityなど)の表示を更新
             this.updatePropertyPanel(); 
         }
     });
    
-// --- 重力無視 ---
-this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getData('ignoreGravity') === true, (isChecked) => {
-    if (this.selectedObject) {
-        // ▼▼▼【ここが最終修正です】▼▼▼
-        
-        // 1. まずオブジェクトにデータを永続化用に設定する（これは正しい）
-        this.selectedObject.setData('ignoreGravity', isChecked);
+    // --- 重力無視 ---
+    this.createCheckbox(this.editorPropsContainer, '重力無視', gameObject.getData('ignoreGravity') === true, (isChecked) => {
+        if (this.selectedObject) {
+            // ★★★ ここで処理を分岐 ★★★
+            if (isTextObject) {
+                // テキストオブジェクトの場合：再構築せず、setDataで状態を更新するだけ
+                this.selectedObject.setData('ignoreGravity', isChecked);
+                console.log(`[EditorPlugin] Set ignoreGravity=${isChecked} for Text object (no reconstruction).`);
+                // UIの表示を更新するために、PropertyPanelの更新だけは呼び出す
+                this.updatePropertyPanel();
+            } else {
+                // 画像・スプライトの場合：これまで通り、安全な再構築メソッドを呼び出す
+                this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
+            }
+        }
+    });
 
-        // 2. 再構築メソッドには、「どの物理プロパティを変更したいか」を明確に伝える
-        this.recreateBodyByReconstruction({ ignoreGravity: isChecked });
-    }
-});
     // --- 重力スケール ---
     if (!body.ignoreGravity) {
         this.createRangeInput(this.editorPropsContainer, '重力スケール', body.gravityScale.y, -2, 2, 0.1, (value) => {
