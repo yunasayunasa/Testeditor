@@ -40,14 +40,21 @@
 
         <!-- 画面右側のパネル群 -->
         <div id="editor-sidebar">
-            <div id="asset-browser" class="editor-panel">
-                <div class="panel-header">
-                    <span>Asset Browser</span>
-                       <button id="add-text-button" title="Add New Text Object" style="padding: 2px 8px; font-size: 1.2em;">T+</button>
-                    <!-- ヘルプボタンはここに配置 -->
-                </div>
-                <div id="asset-list" class="panel-content"></div>
-                <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
+            <!-- in index.html -->
+<div id="asset-browser" class="editor-panel">
+    <div class="panel-header">
+        <!-- ▼▼▼ 左側のグループ ▼▼▼ -->
+        <span class="panel-title">Asset Browser</span>
+
+        <!-- ▼▼▼ 右側のグループ（ボタン用コンテナ） ▼▼▼ -->
+        <div class="panel-header-buttons">
+            <button id="add-text-button" title="Add New Text Object">T+</button>
+            <!-- ヘルプボタンは、ここにJavaScriptによって動的に追加されます -->
+        </div>
+    </div>
+    <div id="asset-list" class="panel-content"></div>
+    <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
+</div>
             </div>
             <div id="editor-panel" class="editor-panel">
                 <div id="editor-title" class="panel-header">Properties</div>
@@ -93,4 +100,5 @@
     <script type="module" src="src/main.js"></script>
 
 </body>
+
 </html>
