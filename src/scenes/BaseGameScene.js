@@ -67,7 +67,33 @@ this.matter.world.on('beforeupdate', (event) => {
 
     this.buildSceneFromLayout(layoutData);
 }
+  /**
+     * エディタからの要求に応じて、新しいテキストオブジェクトを生成する
+     * @param {string} newName - 新しいオブジェクトに付ける一意な名前
+     * @returns {Phaser.GameObjects.Text} 生成されたテキストオブジェクト
+     */
+    addTextObjectFromEditor(newName) {
+        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+        
+        const layout = {
+            name: newName,
+            type: 'Text',
+            text: 'New Text',
+            x: Math.round(centerX),
+            y: Math.round(centerY),
+            style: {
+                fontSize: '32px',
+                fill: '#ffffff',
+            }
+        };
 
+        const newGameObject = this.createObjectFromLayout(layout);
+        this.applyProperties(newGameObject, layout);
+        
+        // ★ EditorUI側で選択状態にするので、ここではオブジェクトを返すだけで良い
+        return newGameObject;
+    }
     
     /**
      * レイアウトデータからシーンのオブジェクトを構築する。
