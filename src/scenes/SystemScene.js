@@ -179,29 +179,68 @@ _startInitialGame(initialData) {
 
 
 
-     /**
-     * [jump]などによるシーン遷移リクエストを処理 (修正版)
+      /**
+     * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
+     * @param {object} data - { from: string, to: string, params: object, fade: object }
      */
-       _handleRequestSceneTransition(data) {
+    _handleRequestSceneTransition(data) {
+        // --- 遷移処理中の多重実行を防止 ---
+        if (this.isProcessingTransition) {
+            console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${data.to})が無視されました。`);
+            return;
+        }
+        this.isProcessingTransition = true;
+        this.game.input.enabled = false; // 遷移開始時に即座に入力を無効化
+
         console.log(`[SystemScene] シーン遷移リクエスト: ${data.from} -> ${data.to}`);
         
-        // ★ BGMの操作は一切しない ★
+        // --- デフォルト値の設定 ---
+        const fromScene = this.scene.get(data.from);
+        const fadeConfig = data.fade || { duration: 500, color: 0x000000 };
+        // ★★★ data.paramsが渡されない古い[jump]タグのために、空のオブジェクトを保証する ★★★
+        const sceneParams = data.params || {}; 
 
-        if (this.scene.isActive(data.from)) {
-            this.scene.stop(data.from); 
-        }
-        if (this.scene.isActive('UIScene')) {
-            this.scene.get('UIScene').setVisible(false);
-        }
+        // --- 1. フェードアウトを開始 ---
+        this.cameras.main.fadeOut(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
 
+        // --- 2. フェードアウト完了を待って、シーンを切り替える ---
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            
+            // --- 3. 古いシーンを停止 ---
+            if (fromScene && fromScene.scene.isActive()) {
+                this.scene.stop(data.from);
+            }
+            if (this.scene.isActive('UIScene')) {
+                this.scene.get('UIScene').setVisible(false);
+            }
+            
+            // --- 4. 新しいシーンを、渡されたパラメータを付けて起動 ---
+            // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
+            const toScene = this.scene.get(data.to);
+            if (!toScene) {
+                console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
+                this.isProcessingTransition = false;
+                this.game.input.enabled = true;
+                return;
+            }
 
-        // ★ 4. 新しいシーンを起動
-        // BattleSceneのinitに渡すデータ構造を調整
-        this._startAndMonitorScene(data.to, { 
-            // BattleSceneのinitが `data.transitionParams` を期待している場合
-            transitionParams: data.params 
+            const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
+            
+            toScene.events.once(completionEvent, () => {
+                // --- 5. 新しいシーンの準備ができたらフェードイン ---
+                this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+                this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+                    this.isProcessingTransition = false;
+                    this.game.input.enabled = true; // 全て完了してから入力を再開
+                    console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
+                    this.events.emit('transition-complete', data.to);
+                });
+            });
+            
+            // ★★★ launchではなくrunを使い、すでに存在するシーンでも確実に実行させる ★★★
+            this.scene.run(data.to, sceneParams);
         });
-    };
+    }
     
 
    /**
@@ -381,5 +420,18 @@ _startInitialGame(initialData) {
             gameScene.scenarioManager.setMode(newMode);
             console.log(`モード変更: ${currentMode} -> ${newMode}`);
         }
+    }
+
+       /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 16進数カラーコード(0xRRGGBB)を、Phaserのカメラが要求するRGB(0-255)に変換する
+     * @param {number} hex - 0x000000のような16進数カラーコード
+     * @returns {Array<number>} [r, g, b] の配列
+     */
+    hexToRgb(hex) {
+        const r = (hex >> 16) & 255;
+        const g = (hex >> 8) & 255;
+        const b = hex & 255;
+        return [r, g, b];
     }
 }
