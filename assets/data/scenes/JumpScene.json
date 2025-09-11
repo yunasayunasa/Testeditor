@@ -201,12 +201,12 @@
       "name": "text_1757603076799",
       "type": "Text",
       "texture": null,
-      "x": 755,
-      "y": 423,
+      "x": 795,
+      "y": 409,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -90,
+      "angle": 0,
       "alpha": 1,
       "text": "New Text",
       "style": {
@@ -223,6 +223,13 @@
           "fill": false
         }
       },
+      "events": [
+        {
+          "trigger": "onOverlap_Start",
+          "actions": "[destroy]",
+          "targetGroup": "player"
+        }
+      ],
       "physics": {
         "isStatic": false,
         "isSensor": true,
