@@ -206,42 +206,30 @@ _startInitialGame(initialData) {
         // --- 2. フェードアウト完了を待って、シーンを切り替える ---
         this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
             
-            // --- 3. 古いシーンを停止 ---
-            if (fromScene && fromScene.scene.isActive()) {
-                this.scene.stop(data.from);
-            }
-            if (this.scene.isActive('UIScene')) {
-                this.scene.get('UIScene').setVisible(false);
-            }
+            // --- 3. 新しいシーンの「起動完了(CREATE)」をリッスンする ---
+        // ★★★ 'scene-ready'のようなカスタムイベントではなく、Phaserの公式イベントを使う ★★★
+        this.scene.manager.once(`create-${data.to}`, (scene) => {
             
-            // --- 4. 新しいシーンを、渡されたパラメータを付けて起動 ---
-            // ★ _startAndMonitorSceneは使わず、ここで直接launch/runと監視を行う
-            const toScene = this.scene.get(data.to);
-            if (!toScene) {
-                console.error(`[SystemScene] 遷移先のシーンが見つかりません: ${data.to}`);
+            // 新しいシーンの準備ができたので、フェードインを開始
+            this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
+            this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
                 this.isProcessingTransition = false;
-                this.game.input.enabled = true;
-                return;
-            }
-
-            const completionEvent = (data.to === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
-            
-            toScene.events.once(completionEvent, () => {
-                // --- 5. 新しいシーンの準備ができたらフェードイン ---
-                this.cameras.main.fadeIn(fadeConfig.duration, ...this.hexToRgb(fadeConfig.color));
-                this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
-                    this.isProcessingTransition = false;
-                    this.game.input.enabled = true; // 全て完了してから入力を再開
-                    console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
-                    this.events.emit('transition-complete', data.to);
-                });
+                this.game.input.enabled = true; // 全て完了してから入力を再開
+                console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
             });
-            
-            // ★★★ launchではなくrunを使い、すでに存在するシーンでも確実に実行させる ★★★
-            this.scene.run(data.to, sceneParams);
         });
-    }
-    
+
+        // --- 4. 古いシーンを停止し、新しいシーンを開始する ---
+        // ★★★ launchやrunではなく、'start'を使うのが最も確実 ★★★
+        // 'start'は、シーンが存在すれば停止してから再起動し、なければ新規に起動する、最も強力な命令
+        this.scene.start(data.to, sceneParams);
+
+        if (this.scene.isActive('UIScene')) {
+            this.scene.get('UIScene').setVisible(false);
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    });
+}
 
    /**
      * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
