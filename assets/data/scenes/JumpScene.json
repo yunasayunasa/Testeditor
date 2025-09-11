@@ -182,8 +182,9 @@
           "targetGroup": "player"
         },
         {
-          "trigger": "onInteract",
-          "actions": " [transition_scene scene=JumpScene data=stage2]"
+          "trigger": "onOverlap_Start",
+          "actions": " [transition_scene scene=JumpScene data=stage2]",
+          "targetGroup": "player"
         }
       ],
       "physics": {
