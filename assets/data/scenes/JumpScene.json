@@ -13,6 +13,7 @@
       "alpha": 1,
       "physics": {
         "isStatic": true,
+        "isSensor": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
@@ -24,8 +25,8 @@
       "name": "walk_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 98,
-      "y": 130,
+      "x": 211,
+      "y": 250,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -58,17 +59,16 @@
           "actions": "[anim_frame name=歩き frame=0]",
           "condition": "state === 'idle'"
         },
-          {
+        {
           "trigger": "onStomp",
           "targetGroup": "enemy",
-"actions": "[destroy target=other][apply_force y=-0.05]"
+          "actions": "[destroy target=other][apply_force y=-0.05]"
         },
         {
           "trigger": "onHit",
           "targetGroup": "enemy",
           "actions": "[reload_scene]"
         }
-
       ],
       "components": [
         {
@@ -76,10 +76,19 @@
           "params": {
             "moveSpeed": 7.5
           }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
         }
       ],
       "physics": {
         "isStatic": false,
+        "isSensor": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
@@ -100,6 +109,7 @@
       "alpha": 1,
       "physics": {
         "isStatic": true,
+        "isSensor": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
@@ -116,10 +126,11 @@
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -29,
+      "angle": 0,
       "alpha": 1,
       "physics": {
         "isStatic": true,
+        "isSensor": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
@@ -140,6 +151,7 @@
       "alpha": 1,
       "physics": {
         "isStatic": true,
+        "isSensor": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
@@ -148,20 +160,36 @@
       }
     },
     {
-      "name": "next_arrow_1",
+      "name": "item_shield_1",
       "type": "Image",
-      "texture": "next_arrow",
-      "x": 845,
-      "y": 235,
+      "texture": "item_shield",
+      "x": 647,
+      "y": 169,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "enemy",
+      "events": [
+        {
+          "trigger": "onOverlap_Start",
+          "actions": "[interact_add target=self]",
+          "targetGroup": "player"
+        },
+        {
+          "trigger": "onOverlap_End",
+          "actions": "[interact_remove target=self]",
+          "targetGroup": "player"
+        },
+        {
+          "trigger": "onInteract",
+          "actions": "[destroy target=self]"
+        }
+      ],
       "physics": {
         "isStatic": false,
-        "ignoreGravity": false,
+        "isSensor": true,
+        "ignoreGravity": true,
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 0.1,
