@@ -8,7 +8,8 @@ export default class EditorUI {
         this.objectCounters = {};
         this.helpModal = null;
         this.helpModalContent = null;
-
+ this.selectedAssetType = null; // ★ 選択中のアセットタイプも保持
+        this.currentAssetTab = 'image'; // ★ 現在のアクティブなタブ
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
 
@@ -28,6 +29,7 @@ export default class EditorUI {
         this.modeLabel = document.getElementById('mode-label');
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
+        this.assetTabContainer = document.getElementById('asset-tabs');
 
         // --- 2. プロパティの初期化 ---
         this.currentMode = 'select';
@@ -151,44 +153,82 @@ export default class EditorUI {
         }
         return null;
     }
-   // src/editor/EditorUI.js
-
+     /**
+     * アセットブラウザをタブ付きで生成・更新する (バグ修正・完成版)
+     */
     populateAssetBrowser() {
         const assetList = this.game.registry.get('asset_list');
-        if (!assetList || !this.assetListContainer) return;
-        
+        if (!assetList || !this.assetListContainer || !this.assetTabContainer) return;
+
+        // --- 1. 利用可能なアセットタイプを特定 ---
+        // ★ 'image'と'spritesheet'をまとめて'image'タブで扱うようにする
+        const assetTypes = [...new Set(assetList.map(asset => (asset.type === 'spritesheet' ? 'image' : asset.type)))];
+        if (!assetTypes.includes('image')) assetTypes.unshift('image'); // 画像がなくてもタブは表示
+
+        // --- 2. タブボタンを生成 ---
+        this.assetTabContainer.innerHTML = '';
+        assetTypes.forEach(type => {
+            if (!type) return; // 空のタイプを除外
+            const tabButton = document.createElement('div');
+            tabButton.className = 'asset-tab';
+            tabButton.innerText = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+            if (type === this.currentAssetTab) {
+                tabButton.classList.add('active');
+            }
+            tabButton.addEventListener('click', () => {
+                this.currentAssetTab = type;
+                this.selectedAssetKey = null; // タブを切り替えたら選択をリセット
+                this.selectedAssetType = null;
+                this.populateAssetBrowser();
+            });
+            this.assetTabContainer.appendChild(tabButton);
+        });
+
+        // --- 3. 現在のタブに応じてアセットリストを表示 ---
         this.assetListContainer.innerHTML = '';
-        
-        const displayableAssets = assetList.filter(asset => asset.type === 'image' || asset.type === 'spritesheet');
+        const displayableAssets = assetList.filter(asset => {
+            if (this.currentAssetTab === 'image') {
+                return asset.type === 'image' || asset.type === 'spritesheet';
+            }
+            return asset.type === this.currentAssetTab;
+        });
 
         for (const asset of displayableAssets) {
-            
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-            // ★★★ これが、全てを解決する、最後の修正です ★★★
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
             const itemDiv = document.createElement('div');
             itemDiv.className = 'asset-item';
             itemDiv.dataset.assetKey = asset.key;
+
             itemDiv.addEventListener('click', () => {
                 this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
                 itemDiv.classList.add('selected');
                 this.selectedAssetKey = asset.key;
+                this.selectedAssetType = asset.type; // ★ タイプも保存
             });
             
-            const previewImg = document.createElement('img');
-            previewImg.className = 'asset-preview';
-            previewImg.src = asset.path;
+            // --- プレビュー表示 ---
+            if (asset.path) {
+                const previewImg = document.createElement('img');
+                previewImg.className = 'asset-preview';
+                previewImg.src = asset.path;
+                itemDiv.appendChild(previewImg);
+            } else {
+                const iconSpan = document.createElement('span');
+                iconSpan.innerText = '📦';
+                iconSpan.className = 'asset-preview';
+                iconSpan.style.display = 'flex';
+                iconSpan.style.justifyContent = 'center';
+                iconSpan.style.alignItems = 'center';
+                iconSpan.style.fontSize = '32px';
+                itemDiv.appendChild(iconSpan);
+            }
             
+            // --- キー表示 ---
             const keySpan = document.createElement('span');
-            keySpan.className = 'asset-key';
             keySpan.innerText = asset.key;
-
-            itemDiv.appendChild(previewImg);
-
             itemDiv.appendChild(keySpan);
-
-            if (asset.type === 'spritesheet') {
+            
+            // --- スプライトシート用バッジ ---
+           if (asset.type === 'spritesheet') {
                 const badge = document.createElement('span');
                 badge.innerText = 'Sheet';
                 badge.style.backgroundColor = '#3a86ff';
@@ -201,59 +241,57 @@ export default class EditorUI {
                 itemDiv.appendChild(badge);
             }
 
-            // 4. 全ての部品が揃ったitemDivを、リストのコンテナに「追加」する
+
             this.assetListContainer.appendChild(itemDiv);
         }
-        
-        console.log(`[EditorUI] Asset Browser populated with ${displayableAssets.length} displayable assets.`);
     }
 
+ 
+     /**
+     * "Add Selected Asset"ボタンの処理 (プレハブ対応・完成版)
+     */
     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
             alert('Please select an asset from the browser first.');
             return;
         }
 
-        // --- 1. 現在アクティブな「ゲーム」シーンを特定 ---
-        let targetScene = null;
-        const scenes = this.game.scene.getScenes(true);
-        for (let i = scenes.length - 1; i >= 0; i--) {
-            const scene = scenes[i];
-            if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
-                targetScene = scene;
-                break;
+        const targetScene = this.getActiveGameScene();
+        if (!targetScene) {
+            alert("Could not find a suitable target scene.");
+            return;
+        }
+
+        // --- 連番の名前を生成 ---
+        if (!this.objectCounters[this.selectedAssetKey]) {
+            this.objectCounters[this.selectedAssetKey] = 1;
+        } else {
+            this.objectCounters[this.selectedAssetKey]++;
+        }
+        const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
+        
+        let newObject = null;
+
+        // ★★★ 選択中のアセットタイプに応じて、呼び出すメソッドを分岐 ★★★
+        if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
+            if (typeof targetScene.addObjectFromEditor === 'function') {
+                newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName);
+            } else {
+                console.error(`[EditorUI] Target scene does not have 'addObjectFromEditor' method.`);
+            }
+        } 
+        else if (this.selectedAssetType === 'prefab') {
+            if (typeof targetScene.addPrefabFromEditor === 'function') {
+                newObject = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName);
+            } else {
+                console.error(`[EditorUI] Target scene does not have 'addPrefabFromEditor' method.`);
             }
         }
         
-        if (!targetScene) {
-             console.error("[EditorUI] Could not find a suitable target scene (e.g., JumpScene).");
-             alert("Could not find a suitable target scene. Make sure you are not in GameScene.");
-             return;
-        }
-
-        // --- 2. シーンに「オブジェクト追加」を依頼する ---
-       if (targetScene && typeof targetScene.addObjectFromEditor === 'function') {
-            
-            // --- 2-1. 連番の名前を生成 ---
-            if (!this.objectCounters[this.selectedAssetKey]) {
-                this.objectCounters[this.selectedAssetKey] = 1;
-            } else {
-                this.objectCounters[this.selectedAssetKey]++;
-            }
-            const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
-
-            // --- 2-2. シーンに、アセットキーと新しい名前を渡して、追加を依頼 ---
-            const newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName);
-
-            // --- 2-3. 成功すれば、選択状態にしてパネルを更新 ---
-            if (newObject) {
-               // ▼▼▼▼▼ 【重要修正】プラグインとメソッドの存在をチェックしてから呼び出す ▼▼▼▼▼
-                if (this.plugin && typeof this.plugin.updatePropertyPanel === 'function') {
-                    this.plugin.selectedObject = newObject;
-                    this.plugin.updatePropertyPanel();
-                }}
-        } else {
-            console.error(`[EditorUI] Target scene '${targetScene.scene.key}' does not have an 'addObjectFromEditor' method.`);
+        // --- 成功すれば、選択状態にしてパネルを更新 ---
+        if (newObject && this.plugin) {
+            this.plugin.selectedObject = newObject;
+            this.plugin.updatePropertyPanel();
         }
     }
 

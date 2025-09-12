@@ -616,6 +616,35 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         }
     }
 
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * エディタからの要求に応じて、プレハブをシーンにインスタンス化する
+     * @param {string} prefabKey - 生成するプレハブのキー
+     * @param {string} newName - 新しいオブジェクトに付ける一意な名前
+     * @returns {Phaser.GameObjects.GameObject | null} 生成されたオブジェクト
+     */
+    addPrefabFromEditor(prefabKey, newName) {
+        const prefabData = this.cache.json.get(prefabKey);
+        if (!prefabData) {
+            console.error(`[BaseGameScene] Prefab data for key '${prefabKey}' not found.`);
+            return null;
+        }
+
+        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+
+        const newObjectLayout = { ...prefabData };
+        newObjectLayout.name = newName;
+        newObjectLayout.x = Math.round(centerX);
+        newObjectLayout.y = Math.round(centerY);
+
+        const newGameObject = this.createObjectFromLayout(newObjectLayout);
+        this.applyProperties(newGameObject, newObjectLayout);
+        
+        return newGameObject;
+    }
+
     shutdown() {
         super.shutdown();
     }

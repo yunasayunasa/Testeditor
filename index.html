@@ -54,7 +54,16 @@
                         <!-- ヘルプボタンは、ここにJavaScriptによって動的に追加されます -->
                     </div>
                 </div>
-                <div id="asset-list" class="panel-content"></div>
+                  <!-- 1. タブ切り替えボタンのコンテナ -->
+    <div id="asset-tabs" class="panel-tabs">
+        <!-- EditorUIがここにタブボタンを動的に生成します -->
+    </div>
+
+    <!-- 2. タブコンテンツのコンテナ -->
+    <div id="asset-list" class="panel-content">
+        <!-- EditorUIがここにアセットリストを動的に生成します -->
+    </div>
+              
                 <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
             </div>
 

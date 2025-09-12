@@ -169,7 +169,18 @@ export default class PreloadScene extends Phaser.Scene {
                 });
             }
         }
-
+ // --- 3. 'prefabs' セクションから情報を取得 ---
+        if (Array.isArray(assetDefine.prefabs)) {
+            for (const prefabInfo of assetDefine.prefabs) {
+                if (prefabInfo.key) {
+                    assetList.push({
+                        key: prefabInfo.key,
+                        type: 'prefab', // ★ タイプを'prefab'として識別
+                        path: null // ★ プレビュー画像はないのでnull
+                    });
+                }
+            }
+        }
         // --- 3. 他のタイプのアセットも、必要であればここに追加 ---
         // (例: 音声ファイルなども、将来的にアセットブラウザで扱いたくなった場合)
         
