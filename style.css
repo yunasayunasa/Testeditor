@@ -35,7 +35,9 @@ body {
    ========================================================================== */
 body.debug-mode {
     display: flex;
-    background-color: #3d3d3d;
+    height: 100vh; /* ビューポートの高さに固定 */
+    overflow: hidden; /* スクロールバーを完全に消す */
+    flex-direction: column; /* ★ レイアウトの主軸を「縦」に変更 */
 }
 
 body.debug-mode #game-container {
