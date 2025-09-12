@@ -34,13 +34,6 @@ body {
    DEBUG MODE STYLES
    ========================================================================== */
 
-body.debug-mode {
-    display: flex;
-    /* ★★★ height: 100vh と overflow: hidden を追加 ★★★ */
-    height: 100vh; /* ビューポートの高さに固定 */
-    overflow: hidden; /* スクロールバーを完全に消す */
-    flex-direction: column; /* ★ レイアウトの主軸を「縦」に変更 */
-}
 
 body.debug-mode #game-container {
     position: relative;
@@ -231,18 +224,12 @@ border-color: #555;
 }
 #editor-props button:hover { background-color: #1177bb; }
 
-/* --- 画面左下のオーバーレイコントロール --- */
+/* --- 画面左下のオーバーレイコントロールの重ね順とアニメーション --- */
 #overlay-controls {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    /* ★★★ z-indexを追加して、ボトムパネルより手前に来るようにする ★★★ */
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-    /* ▼▼▼ パネル表示時に上にスライドさせるための設定 ▼▼▼ */
+    z-index: 10000; /* ★ ボトムパネルより手前に来るように高い値を設定 */
     transition: transform 0.3s ease-in-out;
 }
 
@@ -489,7 +476,7 @@ body.modal-open #editor-root {
    BOTTOM PANEL STYLES (for Tilemap Editor)
    ========================================================================== */
 
-/* --- BOTTOM PANEL STYLES --- */
+/* --- BOTTOM PANEL STYLES (for Tilemap Editor) --- */
 #bottom-panel {
     position: fixed;
     bottom: 0;
@@ -497,18 +484,20 @@ body.modal-open #editor-root {
     width: 100%;
     background-color: #252526;
     border-top: 1px solid #3c3c3c;
-    /* ★ z-indexを #overlay-controls よりも低く設定 */
-    z-index: 9995; 
-    height: 220px; /* パネルの高さを明示 */
+    z-index: 9995; /* overlay-controlsよりは低い値 */
+    height: 220px;
     
-    /* ▼▼▼ パネルを画面外からスライドインさせるための設定 ▼▼▼ */
-    transform: translateY(100%); /* 初期状態では、下に隠しておく */
+    /* 初期状態では、下に隠しておく */
+    transform: translateY(100%); 
     transition: transform 0.3s ease-in-out;
-    /* display: none/block の代わりに、transformで表示/非表示を制御 */
 }
 
+/* ★★★ タイルマップモード時に、UIをスライドさせる ★★★ */
 body.tilemap-mode #bottom-panel {
     transform: translateY(0); /* 画面内にスライドイン */
+}
+body.tilemap-mode #overlay-controls {
+    transform: translateY(-220px); /* ボトムパネルの高さ分だけ上にスライド */
 }
 
 
