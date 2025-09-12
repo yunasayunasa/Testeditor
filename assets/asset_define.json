@@ -10,12 +10,8 @@
      "yuna_angry": "assets/images/title_button.png",
      "next_arrow": "assets/images/next_arrow.png",
     "roger_normal": "assets/images/roger_normal.png",
-    "umi": "assets/images/umi.jpg" ,
- "item_sword": "assets/item/sword.png" ,
-"item_shield": "assets/item/shield.png" ,
-"item_potion": "assets/item/potion.png" ,
-     "enzan": "assets/images/enzan.jpg" ,
-     "enzan2": "assets/images/enzan2.png"
+   
+"tileset_terrain": "images/tileset_terrain.png" 
       
   },
    "spritesheets": {
@@ -25,6 +21,14 @@
       "frameHeight": 115
     }
   },
+
+  "tilesets": {
+        "terrain": {
+            "key": "tileset_terrain",
+            "tileWidth": 32,
+            "tileHeight": 32
+        }
+    },
   "sounds": {
 "popopo": "assets/gyakuten_popopo.mp3",
 "cafe": "assets/cafe.mp3",

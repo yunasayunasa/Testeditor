@@ -33,9 +33,15 @@ export default class EditorUI {
         this.assetTabContainer = document.getElementById('asset-tabs');
         this.selectModeBtn = document.getElementById('select-mode-btn');
         this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
-
+this.tilesetPanel = document.getElementById('tileset-panel');
+        this.tilesetPreview = document.getElementById('tileset-preview');
         // --- 2. プロパティの初期化 ---
         this.currentMode = 'select';
+
+         // ★ タイルマップエディタ用のプロパティ
+        this.currentTileset = null; // 現在選択中のタイルセット情報
+        this.selectedTileIndex = 0; // 現在選択中のタイルのインデックス
+        this.tilesetHighlight = null; // 選択範囲を示すハイライト要素
 
         // --- 3. UIの初期セットアップを一度だけ実行 ---
         if (this.editorPanel) this.editorPanel.style.display = 'flex';
@@ -124,6 +130,20 @@ export default class EditorUI {
             this.tilemapModeBtn.classList.add('active');
             this.selectModeBtn.classList.remove('active');
         } else {
+            document.body.classList.remove('tilemap-mode');
+            this.selectModeBtn.classList.add('active');
+            this.tilemapModeBtn.classList.remove('active');
+        }
+         // ★★★ タイルマップモード有効化/無効化の処理を追加 ★★★
+        if (mode === 'tilemap') {
+            document.body.classList.add('tilemap-mode');
+            this.tilemapModeBtn.classList.add('active');
+            this.selectModeBtn.classList.remove('active');
+            
+            // ★ タイルセットパネルを初期化して表示する
+            this.initTilesetPanel();
+
+        } else { // 'select' mode
             document.body.classList.remove('tilemap-mode');
             this.selectModeBtn.classList.add('active');
             this.tilemapModeBtn.classList.remove('active');
@@ -476,6 +496,99 @@ export default class EditorUI {
             console.log("[EditorUI] Phaser input re-enabled.");
         this.helpModal.style.display = 'none';
       
+    }
+
+      /**
+     * ★★★ 新規メソッド ★★★
+     * タイルセットパネルを初期化し、タイルセットを表示する
+     */
+    initTilesetPanel() {
+        if (!this.tilesetPreview) return;
+
+        // asset_define.jsonからタイルセット情報を取得
+        const assetDefine = this.game.cache.json.get('asset_define');
+        const tilesets = assetDefine.tilesets;
+
+        // ★ とりあえず、最初のタイルセットを読み込む (将来的には選択式にする)
+        const firstTilesetKey = Object.keys(tilesets)[0];
+        this.currentTileset = tilesets[firstTilesetKey];
+        if (!this.currentTileset) {
+            console.error("No tilesets defined in asset_define.json");
+            return;
+        }
+
+        // --- 1. プレビューエリアをクリア ---
+        this.tilesetPreview.innerHTML = '';
+
+        // --- 2. タイルセット画像を表示するimg要素を作成 ---
+        const img = document.createElement('img');
+        const texture = this.game.textures.get(this.currentTileset.key);
+        img.src = texture.getSourceImage().src;
+        img.style.imageRendering = 'pixelated'; // ドット絵がぼやけないようにする
+
+        // --- 3. 選択範囲ハイライト用のdiv要素を作成 ---
+        this.tilesetHighlight = document.createElement('div');
+        this.tilesetHighlight.style.position = 'absolute';
+        this.tilesetHighlight.style.border = '2px solid #00ff00'; // 目立つ緑色
+        this.tilesetHighlight.style.pointerEvents = 'none'; // クリックを邪魔しないように
+        this.tilesetHighlight.style.width = `${this.currentTileset.tileWidth - 4}px`; // ボーダーの太さを考慮
+        this.tilesetHighlight.style.height = `${this.currentTileset.tileHeight - 4}px`;
+
+        // --- 4. クリックイベントリスナーを設定 ---
+        this.tilesetPreview.addEventListener('click', (event) => {
+            this.onTilesetClick(event);
+        });
+
+        // --- 5. DOMに追加 ---
+        this.tilesetPreview.appendChild(img);
+        this.tilesetPreview.appendChild(this.tilesetHighlight);
+        
+        // 初期選択タイルをハイライト
+        this.updateTilesetHighlight();
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * タイルセットパネルがクリックされたときに、選択タイルを更新する
+     */
+    onTilesetClick(event) {
+        if (!this.currentTileset) return;
+
+        // クリックされた座標を計算 (パネルの左上からの相対座標)
+        const rect = this.tilesetPreview.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // 座標から、どのタイルがクリックされたかを計算
+        const tileX = Math.floor(x / this.currentTileset.tileWidth);
+        const tileY = Math.floor(y / this.currentTileset.tileHeight);
+        
+        const texture = this.game.textures.get(this.currentTileset.key);
+        const tilesPerRow = texture.getSourceImage().width / this.currentTileset.tileWidth;
+
+        // タイルのインデックスを計算 (左上から0, 1, 2...)
+        this.selectedTileIndex = tileY * tilesPerRow + tileX;
+        
+        console.log(`Selected tile index: ${this.selectedTileIndex}`);
+        
+        this.updateTilesetHighlight();
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 選択タイルのハイライト表示を更新する
+     */
+    updateTilesetHighlight() {
+        if (!this.tilesetHighlight || !this.currentTileset) return;
+
+        const texture = this.game.textures.get(this.currentTileset.key);
+        const tilesPerRow = texture.getSourceImage().width / this.currentTileset.tileWidth;
+
+        const tileX = this.selectedTileIndex % tilesPerRow;
+        const tileY = Math.floor(this.selectedTileIndex / tilesPerRow);
+
+        this.tilesetHighlight.style.left = `${tileX * this.currentTileset.tileWidth}px`;
+        this.tilesetHighlight.style.top = `${tileY * this.currentTileset.tileHeight}px`;
     }
 
 
