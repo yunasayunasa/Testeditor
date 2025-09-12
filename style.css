@@ -52,13 +52,6 @@ body.debug-mode #editor-root {
 
 
 
-
-
-
-
-/* in style.css */
-
-/* --- サイドバー --- */
 /* --- サイドバー --- */
 #editor-sidebar {
     display: flex;
@@ -67,10 +60,14 @@ body.debug-mode #editor-root {
     min-width: 300px;
     padding: 10px;
     gap: 10px;
-    height: calc(100vh - 20px);
+    height: calc(100vh - 20px); /* ★ ビューポートの高さに合わせて調整 */
     background-color: #252526;
+    flex-shrink: 0; /* ★ ゲーム画面に押されて縮まないようにする */
 }
+/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
+
+/* .editor-panel のスタイルは、おそらく残っているはずですが、念のため確認 */
 .editor-panel {
     background-color: #1e1e1e;
     border: 1px solid #3c3c3c;
@@ -79,6 +76,9 @@ body.debug-mode #editor-root {
     flex-direction: column;
     overflow: hidden;
 }
+
+
+/* ... (以降のスタイル) ... */
 #asset-browser { flex: 1; }
 #editor-panel { flex: 1; }
 
