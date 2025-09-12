@@ -1,7 +1,6 @@
-
 /* ==========================================================================
    Odyssey Engine - Main Stylesheet
-   Version: 1.1 (Layout Fixed)
+   Version: 1.2 (IDE Layout Fix)
    ========================================================================== */
 
 /* --- 基本設定 & フォント --- */
@@ -14,60 +13,72 @@ body {
     overflow: hidden; /* ★ ゲーム/エディタではスクロールを禁止 */
 }
 
-/* --- レイアウトコンテナ --- */
+/* --- 通常時のゲームコンテナ --- */
 #game-container {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* ★ 通常時は中央揃え */
 }
 
+/* #editor-rootは基本的に非表示。JSでdebug-mode時に表示切替 */
 #editor-root {
-    display: none; /* デバッグモード以外では非表示 */
+    display: none;
+}
+#editor-main-view {
+    display: none; /* 通常時は非表示 */
 }
 
 /* ==========================================================================
    DEBUG MODE STYLES
    ========================================================================== */
 body.debug-mode {
-    display: flex; /* ★ ゲーム画面とサイドバーを横並びにする基本設定 */
     background-color: #3d3d3d;
 }
 
+/* ▼▼▼【ここが最重要変更箇所】▼▼▼ */
+/* メインレイアウトコンテナ（ゲーム画面 + サイドバー） */
+body.debug-mode #editor-main-view {
+    display: flex; /* ★ レイアウトの主役をこのコンテナに移譲 */
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    width: 100vw;
+    height: 100vh;
+    box-sizing: border-box; /* paddingを含めて100%にする */
+}
+
+/* debug-mode時のgame-containerはflexの子として振る舞う */
 body.debug-mode #game-container {
-    position: relative;
-    margin: auto 20px;
+    position: relative; /* absoluteを解除 */
+    top: auto;
+    left: auto;
+    transform: none; /* 中央揃えを解除 */
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
     flex-shrink: 0; /* サイドバーに押されて縮まないようにする */
 }
-
-body.debug-mode #editor-root {
-    display: contents; /* ★ EditorUI要素を<body>直下に展開するための設定 */
-}
+/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
 
-
-
-/* --- サイドバー --- */
-#editor-sidebar {
+/* --- 右サイドバー --- */
+body.debug-mode #editor-sidebar {
     display: flex;
     flex-direction: column;
     width: 320px;
     min-width: 300px;
-    padding: 10px;
     gap: 10px;
-    height: calc(100vh - 20px); /* ★ ビューポートの高さに合わせて調整 */
+    height: 100%; /* ★ 親コンテナ(main-view)の高さ一杯に広がる */
     background-color: #252526;
-    flex-shrink: 0; /* ★ ゲーム画面に押されて縮まないようにする */
+    flex-shrink: 0; /* ゲーム画面に押されて縮まないようにする */
 }
-/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
+/* debug-mode時にはeditor-rootを表示する（ただしレイアウトには影響しない） */
+body.debug-mode #editor-root {
+    display: block;
+}
 
-/* .editor-panel のスタイルは、おそらく残っているはずですが、念のため確認 */
+/* --- パネル共通スタイル --- */
 .editor-panel {
     background-color: #1e1e1e;
     border: 1px solid #3c3c3c;
@@ -77,8 +88,6 @@ body.debug-mode #editor-root {
     overflow: hidden;
 }
 
-
-/* ... (以降のスタイル) ... */
 #asset-browser { flex: 1; }
 #editor-panel { flex: 1; }
 
@@ -131,9 +140,6 @@ body.debug-mode #editor-root {
 }
 .panel-footer-button:hover { background-color: #1177bb; }
 
-
-
-/* --- アセットブラウザの中身 --- */
 /* --- アセットブラウザのタブとリスト --- */
 .panel-tabs {
     display: flex;
@@ -227,12 +233,16 @@ body.debug-mode #editor-root {
 }
 #editor-props button:hover { background-color: #1177bb; }
 
-/* --- 画面左下のオーバーレイコントロールの重ね順とアニメーション --- */
+/* ==========================================================================
+   OVERLAY & FIXED POSITION ELEMENTS
+   ========================================================================== */
+
+/* --- 画面左下のオーバーレイコントロール --- */
 #overlay-controls {
     position: absolute;
     bottom: 10px;
-    left: 10px;
-    z-index: 10000; /* ★ ボトムパネルより手前に来るように高い値を設定 */
+    left: 30px; /* main-viewのpaddingに合わせる */
+    z-index: 10000;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -240,10 +250,6 @@ body.debug-mode #editor-root {
     transition: transform 0.3s ease-in-out;
 }
 
-/* ★★★ タイルマップモード時に、#overlay-controlsを上に押し上げる ★★★ */
-body.tilemap-mode #overlay-controls {
-    transform: translateY(-220px); /* ボトムパネルの高さ分だけ上に移動 */
-}
 #camera-controls {
     background-color: rgba(40, 40, 40, 0.8);
     border-radius: 5px;
@@ -316,11 +322,60 @@ body.tilemap-mode #overlay-controls {
 input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(26px); }
 
+
+/* --- ボトムパネル (タイルマップエディタ) --- */
+#bottom-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #252526;
+    border-top: 1px solid #3c3c3c;
+    z-index: 9995;
+    height: 220px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+    display: none; /* tilemap-mode以外では非表示 */
+}
+
+#tilemap-editor-panel {
+    display: flex;
+    height: 100%;
+    padding: 10px;
+    gap: 10px;
+}
+/* ... (以降のボトムパネル内スタイルは変更なし) ... */
+.bottom-panel-section{background-color:#1e1e1e;border:1px solid #3c3c3c;border-radius:5px;display:flex;flex-direction:column;overflow:hidden}.panel-section-header{padding:5px 10px;background-color:#3c3c3c;font-weight:700;font-size:13px;user-select:none}.panel-section-content{padding:5px;flex-grow:1;overflow:auto}#tools-panel{flex-basis:80px;flex-shrink:0}#tools-panel .panel-section-content{display:flex;flex-direction:column;gap:5px}.tool-button{width:100%;height:40px;background-color:#555;border:1px solid #777;border-radius:3px;cursor:pointer}.tool-button:hover{background-color:#6a6a6a}.tool-button.active{background-color:#0e639c;border-color:#1177bb}.tool-button img{width:24px;height:24px}#layers-panel{flex-basis:200px;flex-shrink:0}.layer-item{display:flex;align-items:center;padding:5px;gap:10px;cursor:pointer;user-select:none}.layer-item:hover{background-color:#3c3c3c}.layer-item .layer-name{flex-grow:1}
+
+
+/* ★★★ タイルマップモード時のレイアウト変更 ★★★ */
+body.tilemap-mode #bottom-panel {
+    display: block; /* パネルを表示 */
+    transform: translateY(0); /* 画面内にスライドイン */
+}
+body.tilemap-mode #overlay-controls {
+    transform: translateY(-220px); /* ボトムパネルの高さ分だけ上にスライド */
+}
+
+
 /* ==========================================================================
    MODAL WINDOW STYLES
    ========================================================================== */
-
-
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+.modal-overlay.is-active {
+    display: flex;
+}
 
 .modal-window {
     width: 90%;
@@ -381,202 +436,10 @@ input:checked + .slider:before { transform: translateX(26px); }
     display: block;
 }
 
-/* --- モーダル表示中の背景制御 --- */
-body.modal-open #game-container,
+body.modal-open #editor-main-view,
 body.modal-open #editor-root {
     pointer-events: none;
     filter: blur(2px);
 }
 
-/* in index.html <style> tag */
-
-/* --- モーダルウィンドウ共通の調整 --- */
-.modal-window {
-    /* 既存の .modal-window のスタイルに display: flex と flex-direction: column を追加または確認 */
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-content {
-    /* 既存の .modal-content のスタイルに flex-grow: 1 を追加または確認 */
-    flex-grow: 1;
-}
-
-/* ▼▼▼【ここからイベントエディタ専用のスタイルを追加】▼▼▼ */
-
-#event-editor-content label {
-    display: inline-block;
-    width: auto; /* #editor-props の幅指定を打ち消す */
-    margin-right: 5px;
-    color: #ccc;
-    flex-shrink: 0;
-}
-
-#event-editor-content input, 
-#event-editor-content select, 
-#event-editor-content textarea {
-    flex-grow: 1;
-    background-color: #3c3c3c;
-    border: 1px solid #1e1e1e;
-    color: #d4d4d4;
-    padding: 4px;
-    border-radius: 3px;
-    width: auto;
-}
-
-#event-editor-content .add-event-button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 15px; /* 上の要素との間に余白を設ける */
-    background-color: #4a8a4a; /* より分かりやすい色に */
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-}
-#event-editor-content .add-event-button:hover { 
-    background-color: #5cb85c;
-}
-/* in your main CSS file */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 10000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-}
-.modal-overlay.is-active {
-    display: flex;
-}
-
-/* ▼▼▼【ここからがモーダルが吸われる問題の最終修正です】▼▼▼ */
-
-#help-modal-overlay,
-#event-editor-overlay,
-#anim-editor-overlay {
-    z-index: 10000;
-    pointer-events: auto; /* このオーバーレイ自身がイベントを受け取ることを保証 */
-}
-
-/* オーバーレイの中のウィンドウは、さらに手前にいることを保証 */
-#help-modal-overlay .modal-window,
-#event-editor-overlay .modal-window,
-#anim-editor-overlay .modal-window {
-    z-index: 10001; 
-    pointer-events: all; /* ウィンドウ内の全ての要素(ボタン含む)がイベントを受け取る */
-}
-
-/* ==========================================================================
-   BOTTOM PANEL STYLES (for Tilemap Editor)
-   ========================================================================== */
-
-/* --- BOTTOM PANEL STYLES (for Tilemap Editor) --- */
-#bottom-panel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #252526;
-    border-top: 1px solid #3c3c3c;
-    z-index: 9995;
-    height: 220px;
-    transform: translateY(100%);
-    transition: transform 0.3s ease-in-out;
-}
-
-/* ★★★ タイルマップモード時に、UIをスライドさせる ★★★ */
-body.tilemap-mode #bottom-panel {
-    transform: translateY(0); /* 画面内にスライドイン */
-}
-body.tilemap-mode #overlay-controls {
-    transform: translateY(-220px); /* ボトムパネルの高さ分だけ上にスライド */
-}
-
-
-#tilemap-editor-panel {
-    display: flex;
-    height: 100%;
-    padding: 10px;
-    gap: 10px;
-}
-
-.bottom-panel-section {
-    background-color: #1e1e1e;
-    border: 1px solid #3c3c3c;
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.panel-section-header {
-    padding: 5px 10px;
-    background-color: #3c3c3c;
-    font-weight: bold;
-    font-size: 13px;
-    user-select: none;
-}
-
-.panel-section-content {
-    padding: 5px;
-    flex-grow: 1;
-    overflow: auto; /* コンテンツがはみ出たらスクロール */
-}
-
-/* --- 個別セクションのスタイル --- */
-
-/* ツールパネル */
-#tools-panel {
-    flex-basis: 80px; /* 幅を固定 */
-    flex-shrink: 0;
-}
-#tools-panel .panel-section-content {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-.tool-button {
-    width: 100%;
-    height: 40px;
-    background-color: #555;
-    border: 1px solid #777;
-    border-radius: 3px;
-    cursor: pointer;
-}
-.tool-button:hover { background-color: #6a6a6a; }
-.tool-button.active {
-    background-color: #0e639c; /* 選択中のツールの色 */
-    border-color: #1177bb;
-}
-.tool-button img { width: 24px; height: 24px; }
-
-/* レイヤーパネル */
-#layers-panel {
-    flex-basis: 200px;
-    flex-shrink: 0;
-}
-.layer-item {
-    display: flex;
-    align-items: center;
-    padding: 5px;
-    gap: 10px;
-    cursor: pointer;
-    user-select: none;
-}
-.layer-item:hover { background-color: #3c3c3c; }
-.layer-item .layer-name { flex-grow: 1; }
-
-/* ★★★ タイルマップモード時のレイアウト変更 ★★★ */
-body.tilemap-mode #bottom-panel {
-    transform: translateY(0);
-}
-body.tilemap-mode #overlay-controls {
-    transform: translateY(-220px);
-}
+#event-editor-content label{display:inline-block;width:auto;margin-right:5px;color:#ccc;flex-shrink:0}#event-editor-content input,#event-editor-content select,#event-editor-content textarea{flex-grow:1;background-color:#3c3c3c;border:1px solid #1e1e1e;color:#d4d4d4;padding:4px;border-radius:3px;width:auto}#event-editor-content .add-event-button{width:100%;padding:10px;margin-top:15px;background-color:#4a8a4a;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:14px}#event-editor-content .add-event-button:hover{background-color:#5cb85c}#help-modal-overlay,#event-editor-overlay,#anim-editor-overlay{z-index:10000;pointer-events:auto}#help-modal-overlay .modal-window,#event-editor-overlay .modal-window,#anim-editor-overlay .modal-window{z-index:10001;pointer-events:all}

@@ -6,45 +6,26 @@
     
     <!-- 外部CSSファイルを読み込む -->
     <link rel="stylesheet" href="style.css">
-    <!--DotGothic16-->
+    
+    <!-- 外部フォントを読み込む -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    
     <!-- 外部ライブラリを読み込む -->
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
 
-    <!-- ゲーム本体のコンテナ -->
-    <div id="game-container"></div>
+    <!-- ★★★【メインレイアウト】ゲーム画面と右サイドバーを囲む大枠 ★★★ -->
+    <!-- このdivにflexboxを適用し、中の要素(game-containerとeditor-sidebar)を横並びにする -->
+    <div id="editor-main-view">
 
-    <!-- ===== エディタ専用UI (ここから下は全てデバッグモードでのみ表示) ===== -->
-    <div id="editor-root">
+        <!-- 1. ゲーム本体が表示されるコンテナ -->
+        <div id="game-container"></div>
 
-        <!-- 画面左下のコントロール群 -->
-        <div id="overlay-controls">
-            <div id="camera-controls">
-                <button id="camera-zoom-in" title="Zoom In">+</button>
-                <button id="camera-zoom-out" title="Zoom Out">-</button>
-                <button id="camera-pan-up" title="Pan Up">↑</button>
-                <button id="camera-pan-down" title="Pan Down">↓</button>
-                <button id="camera-pan-left" title="Pan Left">←</button>
-                <button id="camera-pan-right" title="Pan Right">→</button>
-                <button id="camera-reset" title="Reset Camera">Reset</button>
-            </div>
-            <div id="editor-mode-controls">
-                  <button id="select-mode-btn" class="mode-button active">Select</button>
-    <button id="tilemap-mode-btn" class="mode-button">Tilemap</button>
-                <label class="mode-switch" style="margin-left: auto;"> <!-- 右に寄せる -->
-                    <input type="checkbox" id="mode-toggle-checkbox">
-                    <span class="slider"></span>
-                </label>
-                <span id="mode-label">Select Mode</span>
-            </div>
-        </div>
-
-        <!-- 画面右側のパネル群 -->
+        <!-- 2. 画面右側のパネル群（サイドバー） -->
         <div id="editor-sidebar">
 
             <!-- アセットブラウザパネル -->
@@ -56,29 +37,85 @@
                         <!-- ヘルプボタンは、ここにJavaScriptによって動的に追加されます -->
                     </div>
                 </div>
-                  <!-- 1. タブ切り替えボタンのコンテナ -->
-    <div id="asset-tabs" class="panel-tabs">
-        <!-- EditorUIがここにタブボタンを動的に生成します -->
-    </div>
-
-    <!-- 2. タブコンテンツのコンテナ -->
-    <div id="asset-list" class="panel-content">
-        <!-- EditorUIがここにアセットリストを動的に生成します -->
-    </div>
-              
+                <div id="asset-tabs" class="panel-tabs">
+                    <!-- EditorUIがここにタブボタンを動的に生成します -->
+                </div>
+                <div id="asset-list" class="panel-content">
+                    <!-- EditorUIがここにアセットリストを動的に生成します -->
+                </div>
                 <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
             </div>
 
-            <!-- プロパティパネル -->
+            <!-- プロパティ編集パネル -->
             <div id="editor-panel" class="editor-panel">
                 <div id="editor-title" class="panel-header">Properties</div>
-                <div id="editor-props" class="panel-content"></div>
+                <div id="editor-props" class="panel-content">
+                    <!-- オブジェクトを選択すると、ここにプロパティが表示されます -->
+                </div>
             </div>
 
-        </div> <!-- ★★★ #editor-sidebar はここで正しく閉じられます ★★★ -->
+        </div> <!-- /#editor-sidebar -->
+    </div> <!-- /#editor-main-view -->
 
-        <!-- 全画面を覆うモーダルウィンドウ群 -->
 
+    <!-- =====【オーバーレイ要素群】メインレイアウトとは独立して表示されるUI ===== -->
+    <!-- ここにある要素は、メインレイアウトの上に重ねて表示される（モーダル、固定パネルなど） -->
+    <div id="editor-root">
+
+        <!-- (A) 画面左下のコントロール群 -->
+        <div id="overlay-controls">
+            <div id="camera-controls">
+                <button id="camera-zoom-in" title="Zoom In">+</button>
+                <button id="camera-zoom-out" title="Zoom Out">-</button>
+                <button id="camera-pan-up" title="Pan Up">↑</button>
+                <button id="camera-pan-down" title="Pan Down">↓</button>
+                <button id="camera-pan-left" title="Pan Left">←</button>
+                <button id="camera-pan-right" title="Pan Right">→</button>
+                <button id="camera-reset" title="Reset Camera">Reset</button>
+            </div>
+            <div id="editor-mode-controls">
+                <button id="select-mode-btn" class="mode-button active">Select</button>
+                <button id="tilemap-mode-btn" class="mode-button">Tilemap</button>
+                <label class="mode-switch" style="margin-left: auto;">
+                    <input type="checkbox" id="mode-toggle-checkbox">
+                    <span class="slider"></span>
+                </label>
+                <span id="mode-label">Select Mode</span>
+            </div>
+        </div>
+
+        <!-- (B) 画面下のタイルマップエディタパネル -->
+        <div id="bottom-panel">
+            <div id="tilemap-editor-panel">
+                <!-- ツール選択エリア (左側) -->
+                <div id="tools-panel" class="bottom-panel-section">
+                    <div class="panel-section-header">Tools</div>
+                    <div class="panel-section-content">
+                        <button class="tool-button active" title="Brush (B)"><img src="editor_icons/brush.svg" alt="Brush"></button>
+                        <button class="tool-button" title="Eraser (E)"><img src="editor_icons/eraser.svg" alt="Eraser"></button>
+                        <button class="tool-button" title="Fill (F)"><img src="editor_icons/fill.svg" alt="Fill"></button>
+                    </div>
+                </div>
+
+                <!-- レイヤー管理エリア (中央) -->
+                <div id="layers-panel" class="bottom-panel-section">
+                    <div class="panel-section-header">Layers</div>
+                    <div class="panel-section-content">
+                        <!-- JavaScriptで動的にレイヤーリストを生成します -->
+                    </div>
+                </div>
+
+                <!-- タイルセット表示エリア (右側) -->
+                <div id="tileset-panel" class="bottom-panel-section">
+                    <div class="panel-section-header">Tileset</div>
+                    <div id="tileset-preview" class="panel-section-content">
+                        <!-- JavaScriptでタイルセット画像と選択ハイライトを表示します -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- (C) 全画面を覆うモーダルウィンドウ群 -->
         <!-- アニメーションエディタ・モーダル -->
         <div id="anim-editor-overlay" class="modal-overlay">
             <div class="modal-window">
@@ -113,48 +150,8 @@
                 <div id="help-modal-content" class="modal-content"></div>
             </div>
         </div>
-        <div id="bottom-panel">
-            <div id="tilemap-editor-panel">
 
-                <!-- ツール選択エリア (左側) -->
-                <div id="tools-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Tools</div>
-                    <div class="panel-section-content">
-                        <button class="tool-button active" title="Brush (B)"><img src="editor_icons/brush.svg" alt="Brush"></button>
-                        <button class="tool-button" title="Eraser (E)"><img src="editor_icons/eraser.svg" alt="Eraser"></button>
-                        <button class="tool-button" title="Fill (F)"><img src="editor_icons/fill.svg" alt="Fill"></button>
-                    </div>
-                </div>
-
-                <!-- レイヤー管理エリア (中央) -->
-                <div id="layers-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Layers</div>
-                    <div class="panel-section-content">
-                        <!-- JavaScriptで動的にレイヤーリストを生成します -->
-                        <div class="layer-item">
-                            <span>👁️</span>
-                            <span>🔒</span>
-                            <span class="layer-name">Gameplay</span>
-                        </div>
-                        <div class="layer-item">
-                            <span>👁️</span>
-                            <span>🔓</span>
-                            <span class="layer-name">Background</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- タイルセット表示エリア (右側) -->
-                <div id="tileset-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Tileset</div>
-                    <div id="tileset-preview" class="panel-section-content">
-                        <!-- JavaScriptでタイルセット画像と選択ハイライトを表示します -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div> <!-- ★★★ #editor-root はここで正しく閉じられます ★★★ -->
+    </div> <!-- /#editor-root -->
 
     <!-- JSのエントリーポイント -->
     <script type="module" src="src/main.js"></script>
