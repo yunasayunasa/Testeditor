@@ -112,7 +112,10 @@ const config = {
 };
 
 window.onload = async () => {
-    
+   const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('debug')) {
+        document.body.classList.add('debug-mode');
+    } 
     // ★ステップ1: 必要なデータを先に非同期で準備する
     const processedUiRegistry = await processUiRegistry(rawUiRegistry);
    // ★★★ 1. 処理後のuiRegistryの中身をコンソールに出力 ★★★

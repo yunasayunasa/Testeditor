@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8" />
-    <title>Odyssey Engine - Editor</title>
+    <title>Odyssey Engine</title>
     
     <!-- 外部CSSファイルを読み込む -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- 外部フォントを読み込む -->
+    <!-- 外部フォントを読み込む (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
@@ -18,51 +18,55 @@
 </head>
 <body>
 
-    <!-- ★★★【メインレイアウト】ゲーム画面と右サイドバーを囲む大枠 ★★★ -->
-    <!-- このdivにflexboxを適用し、中の要素(game-containerとeditor-sidebar)を横並びにする -->
-    <div id="editor-main-view">
+    <!-- ====================================================================== -->
+    <!--  1. Phaser Game Container                                              -->
+    <!-- ====================================================================== -->
+    <!-- PhaserのScaleManagerが、この要素内に<canvas>を生成し、         -->
+    <!-- その位置とサイズを自動的に管理します。                               -->
+    <!-- 通常モードでは画面中央に、デバッグモードではCSSの補助で配置されます。    -->
+    <div id="game-container"></div>
 
-        <!-- 1. ゲーム本体が表示されるコンテナ -->
-        <div id="game-container"></div>
 
-        <!-- 2. 画面右側のパネル群（サイドバー） -->
+    <!-- ====================================================================== -->
+    <!--  2. Editor UI Root Container                                           -->
+    <!-- ====================================================================== -->
+    <!-- すべてのエディタ関連UIは、このコンテナの中に格納します。             -->
+    <!-- 通常時は display: none で非表示になり、デバッグモードでのみ表示されます。 -->
+    <div id="editor-root">
+
+        <!-- (A) Right Sidebar: アセットブラウザとプロパティパネル -->
         <div id="editor-sidebar">
 
-            <!-- アセットブラウザパネル -->
+            <!-- Asset Browser Panel -->
             <div id="asset-browser" class="editor-panel">
                 <div class="panel-header">
                     <span class="panel-title">Asset Browser</span>
                     <div class="panel-header-buttons">
                         <button id="add-text-button" title="Add New Text Object">T+</button>
-                        <!-- ヘルプボタンは、ここにJavaScriptによって動的に追加されます -->
+                        <!-- Help button is dynamically added here by JavaScript -->
                     </div>
                 </div>
                 <div id="asset-tabs" class="panel-tabs">
-                    <!-- EditorUIがここにタブボタンを動的に生成します -->
+                    <!-- Asset category tabs are dynamically generated here -->
                 </div>
                 <div id="asset-list" class="panel-content">
-                    <!-- EditorUIがここにアセットリストを動的に生成します -->
+                    <!-- Asset items are dynamically generated here -->
                 </div>
                 <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
             </div>
 
-            <!-- プロパティ編集パネル -->
+            <!-- Property Editor Panel -->
             <div id="editor-panel" class="editor-panel">
                 <div id="editor-title" class="panel-header">Properties</div>
                 <div id="editor-props" class="panel-content">
-                    <!-- オブジェクトを選択すると、ここにプロパティが表示されます -->
+                    <!-- Object properties will be displayed here -->
                 </div>
             </div>
 
         </div> <!-- /#editor-sidebar -->
-    </div> <!-- /#editor-main-view -->
 
 
-    <!-- =====【オーバーレイ要素群】メインレイアウトとは独立して表示されるUI ===== -->
-    <!-- ここにある要素は、メインレイアウトの上に重ねて表示される（モーダル、固定パネルなど） -->
-    <div id="editor-root">
-
-        <!-- (A) 画面左下のコントロール群 -->
+        <!-- (B) Overlay Controls: カメラ操作やモード切替など -->
         <div id="overlay-controls">
             <div id="camera-controls">
                 <button id="camera-zoom-in" title="Zoom In">+</button>
@@ -82,12 +86,13 @@
                 </label>
                 <span id="mode-label">Select Mode</span>
             </div>
-        </div>
+        </div> <!-- /#overlay-controls -->
 
-        <!-- (B) 画面下のタイルマップエディタパネル -->
+
+        <!-- (C) Bottom Panel: タイルマップエディタ -->
         <div id="bottom-panel">
             <div id="tilemap-editor-panel">
-                <!-- ツール選択エリア (左側) -->
+                <!-- Tool Selection Area -->
                 <div id="tools-panel" class="bottom-panel-section">
                     <div class="panel-section-header">Tools</div>
                     <div class="panel-section-content">
@@ -96,27 +101,26 @@
                         <button class="tool-button" title="Fill (F)"><img src="editor_icons/fill.svg" alt="Fill"></button>
                     </div>
                 </div>
-
-                <!-- レイヤー管理エリア (中央) -->
+                <!-- Layer Management Area -->
                 <div id="layers-panel" class="bottom-panel-section">
                     <div class="panel-section-header">Layers</div>
                     <div class="panel-section-content">
-                        <!-- JavaScriptで動的にレイヤーリストを生成します -->
+                        <!-- Layer list is dynamically generated here -->
                     </div>
                 </div>
-
-                <!-- タイルセット表示エリア (右側) -->
+                <!-- Tileset Display Area -->
                 <div id="tileset-panel" class="bottom-panel-section">
                     <div class="panel-section-header">Tileset</div>
                     <div id="tileset-preview" class="panel-section-content">
-                        <!-- JavaScriptでタイルセット画像と選択ハイライトを表示します -->
+                        <!-- Tileset image and selection highlight are displayed here -->
                     </div>
                 </div>
             </div>
-        </div>
+        </div> <!-- /#bottom-panel -->
 
-        <!-- (C) 全画面を覆うモーダルウィンドウ群 -->
-        <!-- アニメーションエディタ・モーダル -->
+
+        <!-- (D) Modal Windows -->
+        <!-- Animation Editor Modal -->
         <div id="anim-editor-overlay" class="modal-overlay">
             <div class="modal-window">
                 <div class="modal-header">
@@ -126,8 +130,7 @@
                 <div id="animation-editor-content" class="modal-content"></div>
             </div>
         </div>
-
-        <!-- イベントエディタ・モーダル -->
+        <!-- Event Editor Modal -->
         <div id="event-editor-overlay" class="modal-overlay">
             <div class="modal-window">
                 <div class="modal-header">
@@ -139,8 +142,7 @@
                 <div id="event-editor-help-panel" class="modal-sub-panel"></div>
             </div>
         </div>
-
-        <!-- ヘルプ・モーダル -->
+        <!-- Help Modal -->
         <div id="help-modal-overlay" class="modal-overlay">
             <div class="modal-window">
                 <div class="modal-header">
@@ -153,7 +155,10 @@
 
     </div> <!-- /#editor-root -->
 
-    <!-- JSのエントリーポイント -->
+
+    <!-- ====================================================================== -->
+    <!--  3. JavaScript Entry Point                                             -->
+    <!-- ====================================================================== -->
     <script type="module" src="src/main.js"></script>
 
 </body>
