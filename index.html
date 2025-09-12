@@ -111,7 +111,47 @@
                 <div id="help-modal-content" class="modal-content"></div>
             </div>
         </div>
-        
+        <div id="bottom-panel">
+            <div id="tilemap-editor-panel">
+
+                <!-- ツール選択エリア (左側) -->
+                <div id="tools-panel" class="bottom-panel-section">
+                    <div class="panel-section-header">Tools</div>
+                    <div class="panel-section-content">
+                        <button class="tool-button active" title="Brush (B)"><img src="editor_icons/brush.svg" alt="Brush"></button>
+                        <button class="tool-button" title="Eraser (E)"><img src="editor_icons/eraser.svg" alt="Eraser"></button>
+                        <button class="tool-button" title="Fill (F)"><img src="editor_icons/fill.svg" alt="Fill"></button>
+                    </div>
+                </div>
+
+                <!-- レイヤー管理エリア (中央) -->
+                <div id="layers-panel" class="bottom-panel-section">
+                    <div class="panel-section-header">Layers</div>
+                    <div class="panel-section-content">
+                        <!-- JavaScriptで動的にレイヤーリストを生成します -->
+                        <div class="layer-item">
+                            <span>👁️</span>
+                            <span>🔒</span>
+                            <span class="layer-name">Gameplay</span>
+                        </div>
+                        <div class="layer-item">
+                            <span>👁️</span>
+                            <span>🔓</span>
+                            <span class="layer-name">Background</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- タイルセット表示エリア (右側) -->
+                <div id="tileset-panel" class="bottom-panel-section">
+                    <div class="panel-section-header">Tileset</div>
+                    <div id="tileset-preview" class="panel-section-content">
+                        <!-- JavaScriptでタイルセット画像と選択ハイライトを表示します -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div> <!-- ★★★ #editor-root はここで正しく閉じられます ★★★ -->
 
     <!-- JSのエントリーポイント -->

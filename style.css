@@ -448,3 +448,107 @@ body.modal-open #editor-root {
     pointer-events: all; /* ウィンドウ内の全ての要素(ボタン含む)がイベントを受け取る */
 }
 
+/* ==========================================================================
+   BOTTOM PANEL STYLES (for Tilemap Editor)
+   ========================================================================== */
+
+#bottom-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #252526; /* サイドバーと同じ背景色 */
+    border-top: 1px solid #3c3c3c;
+    z-index: 9995; /* サイドバーやオーバーレイよりは下、ゲームよりは上 */
+    display: none; /* 通常は非表示 */
+}
+
+/* ★★★ 将来的に、タイルマップ編集モードの時だけ表示するようにJSで制御 ★★★ */
+body.tilemap-mode #bottom-panel {
+    display: block;
+}
+
+
+#tilemap-editor-panel {
+    display: flex;
+    justify-content: space-between;
+    height: 200px; /* パネルの高さ */
+    padding: 10px;
+    gap: 10px;
+}
+
+.bottom-panel-section {
+    background-color: #1e1e1e;
+    border: 1px solid #3c3c3c;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-section-header {
+    padding: 5px 10px;
+    background-color: #3c3c3c;
+    font-weight: bold;
+    font-size: 13px;
+    user-select: none;
+}
+
+.panel-section-content {
+    padding: 5px;
+    flex-grow: 1;
+    overflow: auto; /* コンテンツがはみ出たらスクロール */
+}
+
+/* --- 個別セクションのスタイル --- */
+
+/* ツールパネル */
+#tools-panel {
+    flex-basis: 80px; /* 幅を固定 */
+    flex-shrink: 0;
+}
+#tools-panel .panel-section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.tool-button {
+    width: 100%;
+    height: 40px;
+    background-color: #555;
+    border: 1px solid #777;
+    border-radius: 3px;
+    cursor: pointer;
+}
+.tool-button:hover { background-color: #6a6a6a; }
+.tool-button.active {
+    background-color: #0e639c; /* 選択中のツールの色 */
+    border-color: #1177bb;
+}
+.tool-button img { width: 24px; height: 24px; }
+
+/* レイヤーパネル */
+#layers-panel {
+    flex-basis: 200px;
+    flex-shrink: 0;
+}
+.layer-item {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+.layer-item:hover { background-color: #3c3c3c; }
+.layer-item .layer-name { flex-grow: 1; }
+
+/* タイルセットパネル */
+#tileset-panel {
+    flex-grow: 1; /* 残りの幅を全て使う */
+}
+
+#tileset-preview {
+    position: relative; /* 選択範囲ハイライトの基準にする */
+    background-color: #111;
+}
