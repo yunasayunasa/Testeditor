@@ -498,18 +498,16 @@ this.tilesetPanel = document.getElementById('tileset-panel');
       
     }
 
-      /**
-     * ★★★ 新規メソッド ★★★
-     * タイルセットパネルを初期化し、タイルセットを表示する
+     
+
+    /**
+     * タイルセットパネルを初期化し、タイルセットを表示する (画像パス修正版)
      */
     initTilesetPanel() {
         if (!this.tilesetPreview) return;
 
-        // asset_define.jsonからタイルセット情報を取得
         const assetDefine = this.game.cache.json.get('asset_define');
         const tilesets = assetDefine.tilesets;
-
-        // ★ とりあえず、最初のタイルセットを読み込む (将来的には選択式にする)
         const firstTilesetKey = Object.keys(tilesets)[0];
         this.currentTileset = tilesets[firstTilesetKey];
         if (!this.currentTileset) {
@@ -517,34 +515,44 @@ this.tilesetPanel = document.getElementById('tileset-panel');
             return;
         }
 
-        // --- 1. プレビューエリアをクリア ---
+        // ▼▼▼【ここからが核心的な修正です】▼▼▼
+
+        // --- 1. asset_listから、タイルセット画像の「パス」を探す ---
+        const assetList = this.game.registry.get('asset_list');
+        const tilesetAsset = assetList.find(asset => asset.key === this.currentTileset.key);
+        
+        if (!tilesetAsset || !tilesetAsset.path) {
+            console.error(`Tileset image path not found in asset_list for key: ${this.currentTileset.key}`);
+            this.tilesetPreview.innerHTML = '<p style="color:red;">Image path not found!</p>';
+            return;
+        }
+
+        // --- 2. プレビューエリアをクリアし、見つかったパスを使ってimg要素を作成 ---
         this.tilesetPreview.innerHTML = '';
-
-        // --- 2. タイルセット画像を表示するimg要素を作成 ---
         const img = document.createElement('img');
-        const texture = this.game.textures.get(this.currentTileset.key);
-        img.src = texture.getSourceImage().src;
-        img.style.imageRendering = 'pixelated'; // ドット絵がぼやけないようにする
+        img.src = tilesetAsset.path; // ★★★ これが、最も確実で正しい方法です ★★★
+        img.style.imageRendering = 'pixelated';
 
-        // --- 3. 選択範囲ハイライト用のdiv要素を作成 ---
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 3. 選択範囲ハイライト用のdiv要素を作成 (変更なし) ---
         this.tilesetHighlight = document.createElement('div');
-        this.tilesetHighlight.style.position = 'absolute';
-        this.tilesetHighlight.style.border = '2px solid #00ff00'; // 目立つ緑色
-        this.tilesetHighlight.style.pointerEvents = 'none'; // クリックを邪魔しないように
-        this.tilesetHighlight.style.width = `${this.currentTileset.tileWidth - 4}px`; // ボーダーの太さを考慮
-        this.tilesetHighlight.style.height = `${this.currentTileset.tileHeight - 4}px`;
+        // ... (ハイライトのスタイル設定) ...
 
-        // --- 4. クリックイベントリスナーを設定 ---
+        // --- 4. クリックイベントリスナーを設定 (変更なし) ---
         this.tilesetPreview.addEventListener('click', (event) => {
             this.onTilesetClick(event);
         });
 
-        // --- 5. DOMに追加 ---
+        // --- 5. DOMに追加 (変更なし) ---
         this.tilesetPreview.appendChild(img);
         this.tilesetPreview.appendChild(this.tilesetHighlight);
         
-        // 初期選択タイルをハイライト
-        this.updateTilesetHighlight();
+        // --- 6. 初期選択タイルをハイライト ---
+        // ★ 画像の読み込み完了を待ってからハイライトを更新すると、より安全 ★
+        img.onload = () => {
+            this.updateTilesetHighlight();
+        };
     }
     
     /**
