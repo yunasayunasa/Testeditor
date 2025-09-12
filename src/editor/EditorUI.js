@@ -11,6 +11,7 @@ export default class EditorUI {
  this.selectedAssetType = null; // ★ 選択中のアセットタイプも保持
         this.currentAssetTab = 'image'; // ★ 現在のアクティブなタブ
         const currentURL = window.location.href;
+          this.currentEditorMode = 'select'; // ★ 'select' or 'tilemap'
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
 
         // --- 1. DOM要素の参照をまとめて取得 ---
@@ -30,6 +31,8 @@ export default class EditorUI {
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
         this.assetTabContainer = document.getElementById('asset-tabs');
+        this.selectModeBtn = document.getElementById('select-mode-btn');
+        this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
 
         // --- 2. プロパティの初期化 ---
         this.currentMode = 'select';
@@ -97,6 +100,37 @@ export default class EditorUI {
         // --- ヘルプモーダル ---
         const helpModalCloseBtn = document.getElementById('help-modal-close-btn');
         replaceListener(helpModalCloseBtn, 'click', () => this.closeHelpModal());
+         // ▼▼▼【新しいモード切替ボタンのリスナーを追加】▼▼▼
+        if (this.selectModeBtn) {
+            this.selectModeBtn.addEventListener('click', () => this.setEditorMode('select'));
+        }
+        if (this.tilemapModeBtn) {
+            this.tilemapModeBtn.addEventListener('click', () => this.setEditorMode('tilemap'));
+        }
+    }
+      /**
+     * ★★★ 新規メソッド ★★★
+     * エディタの主モード（Select or Tilemap）を切り替える
+     * @param {string} mode - 'select' または 'tilemap'
+     */
+    setEditorMode(mode) {
+        if (this.currentEditorMode === mode) return; // 同じモードなら何もしない
+        this.currentEditorMode = mode;
+        console.log(`[EditorUI] Editor mode changed to: ${mode}`);
+
+        // --- Bodyのクラスを制御して、UIの表示/非表示を切り替える ---
+        if (mode === 'tilemap') {
+            document.body.classList.add('tilemap-mode');
+            this.tilemapModeBtn.classList.add('active');
+            this.selectModeBtn.classList.remove('active');
+        } else { // 'select' mode
+            document.body.classList.remove('tilemap-mode');
+            this.selectModeBtn.classList.add('active');
+            this.tilemapModeBtn.classList.remove('active');
+        }
+
+        // ★ 将来的には、ここでPhaser側の入力ハンドラも切り替える
+        // (例: Tilemapモードではオブジェクトをドラッグできないようにする)
     }
        /**
      * ★★★ 新規メソッド ★★★

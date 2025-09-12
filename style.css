@@ -251,11 +251,23 @@ border-color: #555;
     align-items: center;
     gap: 10px;
     background-color: rgba(40, 40, 40, 0.8);
-    padding: 8px 12px;
-    border-radius: 20px;
+    padding: 5px; /* 少しpaddingを調整 */
+    border-radius: 5px; /* 角丸にする */
     color: white;
     font-size: 14px;
     user-select: none;
+}
+.mode-button {
+    padding: 5px 15px;
+    border: 1px solid #333;
+    background-color: #555;
+    color: #ccc;
+    cursor: pointer;
+}
+
+.mode-button.active {
+    background-color: #0e639c;
+    color: white;
 }
 .mode-switch {
     position: relative;
