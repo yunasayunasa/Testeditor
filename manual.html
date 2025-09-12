@@ -243,30 +243,40 @@ Actions: [anim_stop]
 <hr>
 
 <h2>[tween]</h2>
-<p>オブジェクトのプロパティを、滑らかに変化させるアニメーション（トゥイーン）を再生します。このタグは処理に時間がかかるため、<code>ActionInterpreter</code>はアニメーションが完了するまで次のタグの実行を待ちます。</p>
+<p>
+    オブジェクトのプロパティを、滑らかに変化させるアニメーション（トゥイーン）を再生します。
+    オブジェクトの移動、フェードイン/アウト、拡大縮小、回転など、あらゆる演出の基本となります。
+    このタグは、無限ループでない限り、アニメーションが完了するまで次のアクションの実行を待ちます。
+</p>
 
 <h4>パラメータ:</h4>
 <ul>
+    <li>
+        <strong>target</strong> (任意): アクションの対象を指定します。デフォルトは<code>self</code>。
+    </li>
     <li>
         <strong>property</strong> (必須): 変化させたいプロパティ名。
         <br>例: <code>x</code>, <code>y</code>, <code>scale</code>, <code>scaleX</code>, <code>scaleY</code>, <code>angle</code>, <code>alpha</code>
     </li>
     <li>
-        <strong>to</strong> (必須): 目標となる値。<code>"+=100"</code>や<code>"-=50"</code>といった相対値も指定可能です。
+        <strong>to</strong> (必須): 目標となる値。<code>"+=100"</code>や<code>"-=50"</code>といった、現在の値からの相対値も指定可能です。
     </li>
     <li>
         <strong>time</strong> (任意): アニメーション時間（ミリ秒）。デフォルトは<code>1000</code> (1秒)。
     </li>
     <li>
         <strong>ease</strong> (任意): 動きの緩急。デフォルトは<code>Linear</code> (等速)。
-        <br>例: <code>Sine.easeIn</code>, <code>Bounce.easeOut</code>, <code>Elastic.easeOut</code>
+        <br>例: <code>Sine.easeInOut</code>, <code>Bounce.easeOut</code>, <code>Elastic.easeOut</code>
     </li>
     <li>
-        <strong>yoyo</strong> (任意): <code>true</code>にすると、アニメーションが終点に達した後、始点まで逆再生します。心臓の鼓動のような表現に使えます。
+        <strong>loop</strong> (任意): アニメーションを繰り返す回数を指定します。<code>-1</code>を指定すると<strong>無限ループ</strong>になります。無限ループの場合、このタグは待機せずに即座に次のアクションへ進みます。
+    </li>
+    <li>
+        <strong>yoyo</strong> (任意): <code>true</code>にすると、アニメーションが終点に達した後、始点まで逆再生します。<code>loop</code>と組み合わせることで、点滅や浮遊のような表現が可能になります。
     </li>
 </ul>
 
-<p><strong>使用例:</strong></p>
+<p><strong>基本的な使用例:</strong></p>
 <pre><code>; 1秒かけて右に200ピクセル移動
 [tween property=x to="+=200" time=1000]
 
@@ -275,6 +285,15 @@ Actions: [anim_stop]
 
 ; 0.3秒かけて1.5倍に拡大する
 [tween property=scale to=1.5 time=300]
+</code></pre>
+
+<p><strong>無限ループの使用例 (テキストやUI向け):</strong></p>
+<pre><code>
+; 「Tap to Start」テキストをゆっくりと点滅させ続ける
+[tween target=start_text property=alpha to=0.2 time=1500 ease=Sine.easeInOut yoyo=true loop=-1]
+
+; 「！」マークを上下にフワフワと動かし続ける
+[tween target=interact_mark property=y to="+=10" time=1000 ease=Sine.easeInOut yoyo=true loop=-1]
 </code></pre>
 
 <hr>
