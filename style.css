@@ -33,26 +33,9 @@ body {
 /* ==========================================================================
    DEBUG MODE STYLES
    ========================================================================== */
-body.debug-mode {
-    display: flex;
-    height: 100vh; /* ビューポートの高さに固定 */
-    overflow: hidden; /* スクロールバーを完全に消す */
-    flex-direction: column; /* ★ レイアウトの主軸を「縦」に変更 */
-}
 
-body.debug-mode #game-container {
-    position: relative;
-    /* width/heightはPhaserが設定するので不要な場合が多い */
-    /* width: 1280px; */
-    /* height: 720px; */
-    margin: auto; /* ★ 上下にマージンを取るように変更 */
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-    flex-shrink: 0;
-     z-index: 10; 
-    /* ▼▼▼【ここからが核心的な修正です】▼▼▼ */
-    flex-grow: 1; /* ★ 利用可能なスペースを全て使うように設定 */
-    transition: height 0.3s ease-in-out; /* ★ 高さ変更をアニメーションさせる */
-}
+
+
 
 /* ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
    ★★★ タイルマップモード時のレイアウト変更 ★★★
@@ -64,20 +47,9 @@ body.tilemap-mode #game-container {
 
 
 
-/* --- サイドバー --- */
-/* ★ flex-direction: row を持つ親を作る */
-#main-content {
-    display: flex;
-    flex-direction: row;
-    flex-grow: 1; /* ★ 利用可能な高さを全て使う */
-    overflow: hidden; /* ★ これが重要 */
-}
 
-#editor-sidebar {
-    /* ... (既存のスタイルはほぼ変更なし) ... */
-    height: 100%; /* ★ 親の高さに追従するように変更 */
-    /* calc(100vh - 20px) は不要になる */
-}
+
+
 
 .editor-panel {
     background-color: #1e1e1e;
