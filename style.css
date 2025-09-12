@@ -1,6 +1,6 @@
 /* ==========================================================================
    Odyssey Engine - Main Stylesheet
-   Version: 2.1 (Final Layout Fix for ScaleManager)
+   Version: 2.2 (L-Shape Layout Final)
    ========================================================================== */
 
 /* --- 基本設定 --- */
@@ -11,15 +11,17 @@ html, body {
     height: 100%;
     overflow: hidden;
     background-color: #1e1e1e;
+    box-sizing: border-box; /* ★ bodyにpaddingを設定するための準備 */
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #d4d4d4;
+    position: relative; /* ★ game-containerの基準点にする */
 }
 
 /* --- ゲームコンテナのスタイル --- */
-/* ★ 変更点: positionを追加し、デバッグモードでの制御の基準にする */
+/* Phaserはこのコンテナのサイズに合わせて内部のcanvasを調整する */
 #game-container {
     position: absolute;
     top: 0;
@@ -42,27 +44,24 @@ body.debug-mode {
     background-color: #3d3d3d;
 }
 
-body.debug-mode #editor-root {
-    display: block;
-}
-
-/* ▼▼▼【ここが今回の修正の核心】▼▼▼ */
-/* デバッグモードの時、ゲームコンテナ自体のサイズと位置を調整する */
-body.debug-mode #game-container {
-    /* サイドバーの幅(320px)だけ右にずらす */
-    left: 320px;
-    /* サイドバーの幅の分だけ、コンテナの幅を狭める */
-    width: calc(100% - 320px);
+/* ▼▼▼【 L字レイアウトの核心 】▼▼▼ */
+/* デバッグモードの時、bodyの右側にpaddingを設定し、サイドバー用の領域を確保する */
+body.debug-mode {
+    padding-right: 340px; /* サイドバーの幅(320px) + 余白(20px) */
 }
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
 
+body.debug-mode #editor-root {
+    display: block;
+}
+
 /* --- 右サイドバー --- */
 #editor-sidebar {
-    position: fixed;
+    position: fixed; /* 画面の右側に固定 */
     top: 0;
-    left: 0; /* ★ 変更点: left: 0 に変更 */
-    width: 320px;
+    right: 0; /* ★ 右側に戻す */
+    width: 340px; /* paddingを含めた幅 */
     height: 100vh;
     padding: 10px;
     box-sizing: border-box;
@@ -73,11 +72,11 @@ body.debug-mode #game-container {
     z-index: 9990;
 }
 
+
 /* (以下、前回のCSSと同じ内容です) */
 /* ==========================================================================
    以降のスタイル
    ========================================================================== */
-
 .editor-panel { background-color: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 5px; display: flex; flex-direction: column; overflow: hidden; }
 #asset-browser { flex: 1; }
 #editor-panel { flex: 1; }
