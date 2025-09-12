@@ -11,7 +11,7 @@
      "next_arrow": "assets/images/next_arrow.png",
     "roger_normal": "assets/images/roger_normal.png",
    
-"tileset_terrain": "images/tileset_terrain.png" 
+"tileset_terrain": "assets/images/tileset_terrain.png" 
       
   },
    "spritesheets": {
