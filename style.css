@@ -33,7 +33,10 @@ body {
 /* ==========================================================================
    DEBUG MODE STYLES
    ========================================================================== */
-
+body.debug-mode {
+    display: flex;
+    background-color: #3d3d3d;
+}
 
 body.debug-mode #game-container {
     position: relative;
