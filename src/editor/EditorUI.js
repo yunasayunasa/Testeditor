@@ -119,18 +119,15 @@ export default class EditorUI {
         console.log(`[EditorUI] Editor mode changed to: ${mode}`);
 
         // --- Bodyのクラスを制御して、UIの表示/非表示を切り替える ---
-        if (mode === 'tilemap') {
+           if (mode === 'tilemap') {
             document.body.classList.add('tilemap-mode');
             this.tilemapModeBtn.classList.add('active');
             this.selectModeBtn.classList.remove('active');
-        } else { // 'select' mode
+        } else {
             document.body.classList.remove('tilemap-mode');
             this.selectModeBtn.classList.add('active');
             this.tilemapModeBtn.classList.remove('active');
         }
-
-        // ★ 将来的には、ここでPhaser側の入力ハンドラも切り替える
-        // (例: Tilemapモードではオブジェクトをドラッグできないようにする)
     }
        /**
      * ★★★ 新規メソッド ★★★
