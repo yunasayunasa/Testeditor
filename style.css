@@ -1,6 +1,6 @@
 /* ==========================================================================
    Odyssey Engine - Main Stylesheet
-   Version: 1.2 (IDE Layout Fix)
+   Version: 1.3 (Layout & Centering Fix)
    ========================================================================== */
 
 /* --- 基本設定 & フォント --- */
@@ -10,24 +10,25 @@ body {
     background-color: #1e1e1e;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #d4d4d4;
-    overflow: hidden; /* ★ ゲーム/エディタではスクロールを禁止 */
+    overflow: hidden;
 }
 
-/* --- 通常時のゲームコンテナ --- */
+/* --- レイアウトコンテナの基本設定 --- */
+
+/* ★ 修正点: 通常モードでゲームコンテナを中央に表示するスタイルを復活 */
 #game-container {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* ★ 通常時は中央揃え */
+    transform: translate(-50%, -50%);
 }
 
-/* #editor-rootは基本的に非表示。JSでdebug-mode時に表示切替 */
+/* editor関連のUIは、JSがbodyにdebug-modeクラスを付与するまで非表示 */
+#editor-main-view,
 #editor-root {
     display: none;
 }
-#editor-main-view {
-    display: none; /* 通常時は非表示 */
-}
+
 
 /* ==========================================================================
    DEBUG MODE STYLES
@@ -36,47 +37,49 @@ body.debug-mode {
     background-color: #3d3d3d;
 }
 
-/* ▼▼▼【ここが最重要変更箇所】▼▼▼ */
-/* メインレイアウトコンテナ（ゲーム画面 + サイドバー） */
+/* --- メインレイアウトコンテナ（ゲーム画面 + サイドバー） --- */
 body.debug-mode #editor-main-view {
-    display: flex; /* ★ レイアウトの主役をこのコンテナに移譲 */
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: 20px;
     padding: 20px;
     width: 100vw;
     height: 100vh;
-    box-sizing: border-box; /* paddingを含めて100%にする */
+    box-sizing: border-box; /* ★ 重要: paddingを幅と高さの内側に含める */
 }
 
-/* debug-mode時のgame-containerはflexの子として振る舞う */
+/* --- debug-mode時のgame-containerのスタイル --- */
+/* 通常モードのabsoluteによる中央揃えを上書きする */
 body.debug-mode #game-container {
     position: relative; /* absoluteを解除 */
     top: auto;
     left: auto;
     transform: none; /* 中央揃えを解除 */
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-    flex-shrink: 0; /* サイドバーに押されて縮まないようにする */
+    flex-shrink: 0;
 }
-/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
-
 
 /* --- 右サイドバー --- */
 body.debug-mode #editor-sidebar {
-    display: flex;
+    display: flex; /* ★ debug-mode時にのみ有効になるようにセレクタを修正 */
     flex-direction: column;
     width: 320px;
     min-width: 300px;
     gap: 10px;
-    height: 100%; /* ★ 親コンテナ(main-view)の高さ一杯に広がる */
+    height: 100%; /* 親コンテナ(main-view)の高さ一杯に広がる */
     background-color: #252526;
-    flex-shrink: 0; /* ゲーム画面に押されて縮まないようにする */
+    flex-shrink: 0;
 }
 
-/* debug-mode時にはeditor-rootを表示する（ただしレイアウトには影響しない） */
+/* debug-mode時にはeditor関連のUIを表示する */
 body.debug-mode #editor-root {
     display: block;
 }
+
+/* ==========================================================================
+   以下、変更なしのスタイル
+   ========================================================================== */
 
 /* --- パネル共通スタイル --- */
 .editor-panel {
@@ -240,8 +243,8 @@ body.debug-mode #editor-root {
 /* --- 画面左下のオーバーレイコントロール --- */
 #overlay-controls {
     position: absolute;
-    bottom: 10px;
-    left: 30px; /* main-viewのpaddingに合わせる */
+    bottom: 20px; /* main-viewのpaddingに合わせる */
+    left: 20px;   /* main-viewのpaddingに合わせる */
     z-index: 10000;
     display: flex;
     flex-direction: column;
@@ -344,7 +347,6 @@ input:checked + .slider:before { transform: translateX(26px); }
     padding: 10px;
     gap: 10px;
 }
-/* ... (以降のボトムパネル内スタイルは変更なし) ... */
 .bottom-panel-section{background-color:#1e1e1e;border:1px solid #3c3c3c;border-radius:5px;display:flex;flex-direction:column;overflow:hidden}.panel-section-header{padding:5px 10px;background-color:#3c3c3c;font-weight:700;font-size:13px;user-select:none}.panel-section-content{padding:5px;flex-grow:1;overflow:auto}#tools-panel{flex-basis:80px;flex-shrink:0}#tools-panel .panel-section-content{display:flex;flex-direction:column;gap:5px}.tool-button{width:100%;height:40px;background-color:#555;border:1px solid #777;border-radius:3px;cursor:pointer}.tool-button:hover{background-color:#6a6a6a}.tool-button.active{background-color:#0e639c;border-color:#1177bb}.tool-button img{width:24px;height:24px}#layers-panel{flex-basis:200px;flex-shrink:0}.layer-item{display:flex;align-items:center;padding:5px;gap:10px;cursor:pointer;user-select:none}.layer-item:hover{background-color:#3c3c3c}.layer-item .layer-name{flex-grow:1}
 
 
