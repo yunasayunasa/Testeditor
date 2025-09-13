@@ -197,23 +197,31 @@ this.safeCreateUI(this.createExportPrefabButton);
         }
     }
  /**
-     * ★★★ メソッド名と内容を修正 ★★★
-     * 汎用的な「範囲配置ツール」UIセクションを生成する
+     * ★★★ 最終代替案 ★★★
+     * 汎用的な「範囲配置ツール」UIセクションを生成する。
+     * クリックではなく、ドラッグ操作の起点(mousedown)をトリガーにする。
      */
-    createArrayToolSection() { // 旧: createTileObjectSection
+    createArrayToolSection() {
         const title = document.createElement('h4');
-        title.innerText = 'Array Tool'; // タイトルを変更
+        title.innerText = 'Array Tool';
         title.style.margin = '10px 0 5px 0';
         
         const button = document.createElement('button');
-        button.innerText = 'Start Range Fill';
+        button.innerText = 'Drag to Fill Range'; // ボタンのテキストを変更
         button.style.backgroundColor = '#2a9d8f';
-        button.onclick = () => {
+        
+        // ▼▼▼【ここが修正箇所】▼▼▼
+        // 'onclick' から 'onmousedown' に変更
+        button.onmousedown = (event) => {
+            // イベントのデフォルト動作（ドラッグ選択など）をキャンセル
+            event.preventDefault();
+
             if (this.editorUI) {
-                // EditorUIには、選択されたオブジェクトをそのまま渡す
-                this.editorUI.startRangeFillMode(this.selectedObject);
+                // EditorUIに、ドラッグ操作の開始を通知
+                this.editorUI.startRangeFillDrag(this.selectedObject);
             }
         };
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         this.editorPropsContainer.append(title, button);
     }

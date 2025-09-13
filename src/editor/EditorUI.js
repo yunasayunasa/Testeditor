@@ -18,7 +18,7 @@ export default class EditorUI {
         this.selectedTileIndex = 0;
         this.tilesetHighlight = null;
         this.tileMarker = null;
-this.rangeFillSourceObject = null;
+
         // --- DOM要素の参照 ---
         this.getDomElements();
 
@@ -180,29 +180,6 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
             console.error(`[EditorUI] The active scene '${scene.scene.key}' does not have the 'addTileAsObject' method.`);
         }
     }
-     /**
-     * ★★★ 修正版 ★★★
-     * 範囲描画モードを開始する
-     * @param {Phaser.GameObjects.GameObject} sourceObject - 描画の元となるオブジェクト
-     */
-    startRangeFillMode(sourceObject) {
-        this.rangeFillSourceObject = sourceObject;
-        console.log(`[EditorUI] Range fill mode started. Source object: '${sourceObject.name}'.`);
-        alert('範囲配置モードを開始しました。\nマップ上の終点にしたい場所をクリックしてください。');
-        this.game.canvas.style.cursor = 'crosshair';
-    }
-
-    /**
-     * ★★★ 修正版 ★★★
-     * 範囲描画モードを終了・リセットする
-     */
-    endRangeFillMode() {
-        // ★ 始点オブジェクトは、fillRangeメソッド側で破棄するかどうかを決定するので、ここでは何もしない
-        this.rangeFillSourceObject = null;
-        this.game.canvas.style.cursor = 'default';
-        console.log("[EditorUI] Range fill mode ended.");
-    }
-    
     /**
      * ★★★ 新規メソッド ★★★
      * Phaserのポインターイベントを捌くための統合ハンドラ
@@ -240,38 +217,75 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
             return;
         }
 
-          // --- もし「終点待ち」モードなら、範囲描画を実行 ---
-        if (this.rangeFillSourceObject) {
-            console.log(`%c -> Action: Executing range fill.`, 'color: orange;');
-            pointer.event.stopImmediatePropagation();
-            const scene = this.getActiveGameScene();
-            
-            // ★ メソッド名を fillTileRange から、より汎用的な fillObjectRange に変更
-            if (!scene || typeof scene.fillObjectRange !== 'function') {
-                this.endRangeFillMode();
-                return;
-            }
-
-            const worldX = pointer.worldX;
-            const worldY = pointer.worldY;
-            
-            // ★ 新しいメソッドを呼び出す
-            scene.fillObjectRange(this.rangeFillSourceObject, { x: worldX, y: worldY });
-
-            // 処理が完了したのでモードを終了
-            this.endRangeFillMode();
+        if (this.currentEditorMode !== 'tilemap') {
             return;
         }
-       if (this.currentEditorMode === 'tilemap') {
-            // (この部分は削除しても良いが、単一タイル配置のために残しても良い)
-        } else {
-            // Selectモードの処理
+        
+        const scene = this.getActiveGameScene();
+        if (!scene || !this.currentTileset) return;
+
+        const worldX = pointer.worldX;
+        const worldY = pointer.worldY;
+
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+
+        const tileX = Math.floor(worldX / tileWidth);
+        const tileY = Math.floor(worldY / tileHeight);
+        
+        console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
+
+        if (typeof scene.placeTile === 'function') {
+            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
         }
     }
-    
 
    // --- タイルマップ専用リスナーの管理 ---
-    
+     /**
+     * ★★★ 最終代替案 ★★★
+     * 範囲描画のドラッグ操作を開始する
+     * @param {Phaser.GameObjects.GameObject} sourceObject - 描画の元となるオブジェクト
+     */
+    startRangeFillDrag(sourceObject) {
+        this.rangeFillSourceObject = sourceObject;
+        console.log(`[EditorUI | Drag] Range fill drag started. Source: '${sourceObject.name}'.`);
+        
+        // ユーザーにフィードバック
+        this.game.canvas.style.cursor = 'crosshair';
+
+        // --- 'mouseup' イベントを一度だけリッスンするリスナーを window に登録 ---
+        const onMouseUp = (event) => {
+            console.log(`[EditorUI | Drag] Mouse up detected. Executing fill.`);
+            
+            // --- 処理の実行 ---
+            const scene = this.getActiveGameScene();
+            if (scene && typeof scene.fillObjectRange === 'function') {
+                
+                // マウスを離した位置を終点として座標を計算
+                const canvasRect = this.game.canvas.getBoundingClientRect();
+                const canvasX = event.clientX - canvasRect.left;
+                const canvasY = event.clientY - canvasRect.top;
+                
+                const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+                
+                // シーンのメソッドを呼び出す
+                scene.fillObjectRange(this.rangeFillSourceObject, { x: worldPoint.x, y: worldPoint.y });
+            }
+            
+            // --- 後片付け ---
+            this.game.canvas.style.cursor = 'default';
+            this.rangeFillSourceObject = null; // 状態をリセット
+            
+            // ★重要：一度使ったリスナーは必ず解除する
+            window.removeEventListener('mouseup', onMouseUp, true);
+        };
+
+        // ★ キャプチャフェーズでリッスンすることで、他のUI要素の上で離しても反応できるようにする
+        window.addEventListener('mouseup', onMouseUp, true);
+    }
+
+    // startRangeFillMode, endRangeFillMode は不要になるので削除してOKです。
+
    /**
      * ★★★ 修正版 ★★★
      * タイルマップモード専用のDOMイベントリスナーを有効化する。
@@ -748,4 +762,3 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
 
 
 }
-
