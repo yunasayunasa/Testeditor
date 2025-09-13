@@ -105,13 +105,19 @@ export default class EditorUI {
     }
     // --- モード切替と、それに応じたリスナーのON/OFF ---
 
+     /**
+     * ★★★ 修正版 ★★★
+     * エディタの主モードを切り替える。Pluginへの通知は不要。
+     */
     setEditorMode(mode) {
         if (this.currentEditorMode === mode) return;
         this.currentEditorMode = mode;
         console.log(`[EditorUI] Editor mode changed to: ${mode}`);
 
-        // Pluginに通知してPhaserの入力を制御
-        this.plugin.onEditorModeChanged(mode);
+        // ▼ Pluginへの通知を削除
+        // if (this.plugin) {
+        //     this.plugin.onEditorModeChanged(mode);
+        // }
 
         if (mode === 'tilemap') {
             document.body.classList.add('tilemap-mode');
@@ -119,58 +125,75 @@ export default class EditorUI {
             this.selectModeBtn.classList.remove('active');
             this.initTilesetPanel();
             this.createTileMarker();
-            this.activateTilemapListeners(); // タイルマップリスナーをON
+            this.activateTilemapListeners(); // リスナーを有効化
         } else { // 'select' mode
             document.body.classList.remove('tilemap-mode');
             this.selectModeBtn.classList.add('active');
             this.tilemapModeBtn.classList.remove('active');
             this.destroyTileMarker();
-            this.deactivateTilemapListeners(); // タイルマップリスナーをOFF
+            this.deactivateTilemapListeners(); // リスナーを無効化
         }
     }
+
    // --- タイルマップ専用リスナーの管理 ---
     
+   /**
+     * ★★★ 修正版 ★★★
+     * タイルマップモード専用のDOMイベントリスナーを有効化する。
+     * bind(this) を使わず、後で解除できるように参照を保持する。
+     */
     activateTilemapListeners() {
         this.deactivateTilemapListeners(); // 念のためクリア
+
         const canvas = this.game.canvas;
-        canvas.addEventListener('pointermove', this.handleTilemapPointerMove.bind(this));
-        canvas.addEventListener('pointerdown', this.handleTilemapPointerDown.bind(this));
+        
+        // リスナー関数への参照をプロパティとして保持
+        this._boundPointerMove = this.handleTilemapPointerMove.bind(this);
+        this._boundPointerDown = this.handleTilemapPointerDown.bind(this);
+
+        canvas.addEventListener('pointermove', this._boundPointerMove);
+        canvas.addEventListener('pointerdown', this._boundPointerDown, true); // ★ キャプチャフェーズで実行
     }
     
+    /**
+     * ★★★ 修正版 ★★★
+     * タイルマップモード専用のDOMイベントリスナーを無効化する。
+     * 保持していた参照を使って、確実に解除する。
+     */
     deactivateTilemapListeners() {
         const canvas = this.game.canvas;
-        canvas.removeEventListener('pointermove', this.handleTilemapPointerMove.bind(this));
-        canvas.removeEventListener('pointerdown', this.handleTilemapPointerDown.bind(this));
-    }
-
-    handleTilemapPointerMove(event) {
-        if (!this.tileMarker) return;
-        const scene = this.getActiveGameScene();
-        if (!scene) return;
-        
-        const canvasRect = this.game.canvas.getBoundingClientRect();
-        const canvasX = event.clientX - canvasRect.left;
-        const canvasY = event.clientY - canvasRect.top;
-        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-        
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
-        
-        this.tileMarker.setPosition(snappedX, snappedY);
+        if (this._boundPointerMove) {
+            canvas.removeEventListener('pointermove', this._boundPointerMove);
+        }
+        if (this._boundPointerDown) {
+            canvas.removeEventListener('pointerdown', this._boundPointerDown, true); // ★ キャプチャフェーズで実行
+        }
     }
     
+    /**
+     * ★★★ 修正版 ★★★
+     * タイルマップモードでのポインターダウン処理。座標計算を最終FIX。
+     */
     handleTilemapPointerDown(event) {
-        event.stopPropagation(); // Phaserのイベントと競合しないように
+        // タイルマップモードでなければ何もしない (二重ガード)
+        if (this.currentEditorMode !== 'tilemap') return;
+
+        // ★★★ このイベントがPhaserに伝わる前に処理を完了させ、伝播を完全に止める
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
         
+        // --- 座標計算の最終FIX ---
         const canvasRect = this.game.canvas.getBoundingClientRect();
-        const canvasX = event.clientX - canvasRect.left;
-        const canvasY = event.clientY - canvasRect.top;
+        const coords = this.getClientCoordinates(event);
         
-        if (canvasX < 0 || canvasY < 0 || canvasX > canvasRect.width || canvasY > canvasRect.height) return;
+        // Phaserのスケールマネージャが持つスケール値を考慮する
+        const scale = this.game.scale;
+        const canvasX = (coords.x - canvasRect.left) * scale.width / canvasRect.width;
+        const canvasY = (coords.y - canvasRect.top) * scale.height / canvasRect.height;
         
         const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
         const tileWidth = this.currentTileset.tileWidth;
@@ -179,6 +202,28 @@ export default class EditorUI {
         const tileY = Math.floor(worldPoint.y / tileHeight);
         
         scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
+    }
+
+    // handleTilemapPointerMoveも同様に座標計算を修正
+    handleTilemapPointerMove(event) {
+        if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
+        const scene = this.getActiveGameScene();
+        if (!scene) return;
+        
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const coords = this.getClientCoordinates(event);
+        
+        const scale = this.game.scale;
+        const canvasX = (coords.x - canvasRect.left) * scale.width / canvasRect.width;
+        const canvasY = (coords.y - canvasRect.top) * scale.height / canvasRect.height;
+
+        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
+        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
+        
+        this.tileMarker.setPosition(snappedX, snappedY);
     }
     createTileMarker() {
         const scene = this.getActiveGameScene();

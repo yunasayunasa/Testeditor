@@ -49,30 +49,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         console.warn("[EditorPlugin] Debug mode activated.");
     }
-      /**
-     * ★★★ 新規メソッド ★★★
-     * EditorUIからエディタのモードが変更されたときに呼び出される
-     * @param {string} mode - 新しいモード ('select' or 'tilemap')
-     */
-    onEditorModeChanged(mode) {
-        console.log(`[EditorPlugin] Mode changed to '${mode}'. Updating input systems.`);
-        
-        const scene = this.getActiveGameScene();
-        if (!scene) {
-            console.warn("[EditorPlugin] Could not find an active game scene to manage input for.");
-            return;
-        }
-
-        if (mode === 'tilemap') {
-            // タイルマップモードの時は、Phaserのシーン入力を無効化
-            scene.input.enabled = false;
-            console.log(`[EditorPlugin] Phaser input for scene '${scene.scene.key}' DISABLED.`);
-        } else {
-            // 選択モードの時は、Phaserのシーン入力を有効化
-            scene.input.enabled = true;
-            console.log(`[EditorPlugin] Phaser input for scene '${scene.scene.key}' ENABLED.`);
-        }
-    }
+   
 
     getActiveGameScene() { // ★ EditorUIから移動・統合
         const scenes = this.pluginManager.game.scene.getScenes(true);
@@ -919,11 +896,12 @@ createComponentSection() {
         row.append(labelEl, select);
         container.appendChild(row);
     }
-
-    /**
+ /**
+     * ★★★ 修正版 ★★★
      * ゲームオブジェクトをエディタで編集可能にする。
+     * タイルマップモードでは選択できないようにガードを追加する。
      */
-     makeEditable(gameObject, scene) {
+    makeEditable(gameObject, scene) {
         if (!this.isEnabled) return;
         const sceneKey = scene.scene.key;
         if (!this.editableObjects.has(sceneKey)) {
@@ -931,33 +909,27 @@ createComponentSection() {
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
-        // --- setInteractiveは一度だけ呼び出すのが安全 ---
         if (!gameObject.input) {
             gameObject.setInteractive();
-            // ★ setDraggableはシーンの入力マネージャに対して行う
-            scene.input.setDraggable(gameObject);
         }
+        
+        // setDraggableは一度だけで良い
+        scene.input.setDraggable(gameObject);
 
-        // --- 既存のリスナーを一度クリアして、多重登録を防ぐ ---
-        gameObject.off('pointerdown');
-        gameObject.off('drag');
-        gameObject.off('pointerover');
-        gameObject.off('pointerout');
+        gameObject.off('pointerdown'); // 念のためクリア
 
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            // ▼▼▼【ここを修正】▼▼▼
-            // プレイモード中は、オブジェクト選択を無効化する
-            if (this.editorUI && this.editorUI.currentMode === 'select') {
-                this.selectedObject = gameObject;
-                this.updatePropertyPanel();
-                
-                // ★★★ 重要 ★★★
-                // このオブジェクトがクリックされた、という事実を他のリスナーに伝えないようにする。
-                // これにより、例えばオブジェクトの後ろにある別のオブジェクトが
-                // 同時に選択されてしまう、などの意図しない動作を防ぐ。
-                event.stopPropagation();
+            // ▼▼▼【ここが重要】▼▼▼
+            // タイルマップモードの時は、オブジェクト選択を無効化する
+            if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
+                return; // 何もせず終了
             }
-            // ▲▲▲【修正ここまで】▲▲▲
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+            // 選択モードの時だけ、以下の処理が実行される
+            this.selectedObject = gameObject;
+            this.updatePropertyPanel();
+            event.stopPropagation();
         });
 
        gameObject.on('drag', (pointer, dragX, dragY) => {
