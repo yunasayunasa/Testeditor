@@ -1119,21 +1119,57 @@ createComponentSection() {
         // ▼▼▼【ここからが追加修正箇所】▼▼▼
         // --------------------------------------------------------------------
         // --- drag ---
+         // ▼▼▼ グループドラッグのロジックをここに追加 ▼▼▼
+        gameObject.off('dragstart');
+        gameObject.on('dragstart', (pointer) => {
+            // もし複数選択中なら、各オブジェクトの初期位置を記憶
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                this.selectedObjects.forEach(obj => {
+                    obj.setData('dragStartX', obj.x);
+                    obj.setData('dragStartY', obj.y);
+                });
+            }
+        });
+
+        gameObject.off('drag');
         gameObject.on('drag', (pointer, dragX, dragY) => {
-            // pointerdownと同様に、タイルマップモードではドラッグを無効化する
-            if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
-                return;
+            // --- もし複数選択中なら、グループ全体を動かす ---
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                const dragDeltaX = dragX - gameObject.getData('dragStartX');
+                const dragDeltaY = dragY - gameObject.getData('dragStartY');
+
+                this.selectedObjects.forEach(obj => {
+                    // 各オブジェクトを、それぞれの開始位置からの差分で移動
+                    const newX = obj.getData('dragStartX') + dragDeltaX;
+                    const newY = obj.getData('dragStartY') + dragDeltaY;
+                    obj.setPosition(newX, newY);
+                    if (obj.body) {
+                        Phaser.Physics.Matter.Matter.Body.setPosition(obj.body, { x: newX, y: newY });
+                    }
+                });
+
+            } else {
+                // --- 単体選択中のドラッグ（これまで通り） ---
+                gameObject.setPosition(dragX, dragY);
+                if (gameObject.body) {
+                    Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
+                }
             }
 
-            // 選択モードの時だけ、以下の処理が実行される
-            gameObject.setPosition(dragX, dragY);
-            if (gameObject.body) {
-                Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
-            }
-            if (this.selectedObject === gameObject) {
+            // ドラッグ中は負荷が高いので、プロパティパネルの更新はしない
+        });
+
+        gameObject.off('dragend');
+        gameObject.on('dragend', (pointer) => {
+            // ドラッグが終わったタイミングでUIを更新
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                this.selectMultipleObjects(this.selectedObjects); // 複数選択UIを再表示
+            } else {
                 this.updatePropertyPanel();
             }
         });
+    
+
         
         gameObject.on('pointerover', () => {
              if (this.editorUI && this.editorUI.currentMode === 'select') {
@@ -1172,26 +1208,58 @@ createComponentSection() {
      * グループ選択のロジック。
      * 複数選択状態を管理する。
      */
-    selectMultipleObjects(gameObjects) {
-        // 既存の選択を解除
-        this.deselectMultipleObjects();
+   selectMultipleObjects(gameObjects) {
+        this.deselectAll();
+        this.selectedObjects = gameObjects;
+        this.selectedObject = null;
         
-        // 新しく複数選択状態を設定
-        this.selectedObjects = gameObjects; // ★ 複数形
-        this.selectedObject = null; // ★ 単数形はnullに
-        
-        console.log(`${gameObjects.length} objects selected as a group.`);
-        
-        // ★ 複数選択されたオブジェクトすべてに、選択中であることを示す
         gameObjects.forEach(obj => {
-            if(typeof obj.setTint === 'function') obj.setTint(0x00ffff); // 水色など
+            if(typeof obj.setTint === 'function') obj.setTint(0x00ffff);
         });
         
-        // ★★★ 将来的に、複数オブジェクトのプロパティを同時に編集するUIをここに実装する ★★★
-        // 今はとりあえず、プロパティパネルを「複数選択中」と表示するだけにする
         this.editorTitle.innerText = `${gameObjects.length} objects selected`;
-        this.editorPropsContainer.innerHTML = '<p>Multi-selection editing is not yet implemented.</p>';
-        // ここに「グループ全体を削除」ボタンなどを追加できる
+        this.editorPropsContainer.innerHTML = ''; // クリア
+
+        // ▼▼▼ ここからがグループ操作UIの実装 ▼▼▼
+
+        // --- グループ一括削除ボタン ---
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'Delete Selected Group';
+        deleteButton.style.backgroundColor = '#e65151';
+        deleteButton.onclick = () => {
+            if (confirm(`本当に選択中の ${gameObjects.length} 個のオブジェクトをすべて削除しますか？`)) {
+                // 配列のコピーに対してループをかける（元の配列を変更するため）
+                [...this.selectedObjects].forEach(obj => {
+                    const sceneKey = obj.scene.scene.key;
+                    if (this.editableObjects.has(sceneKey)) {
+                        this.editableObjects.get(sceneKey).delete(obj);
+                    }
+                    obj.destroy();
+                });
+                this.deselectAll(); // 選択を解除してUIを更新
+            }
+        };
+        this.editorPropsContainer.appendChild(deleteButton);
+        
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+        // --- （上級）グループのプロパティ一括変更 ---
+        // 例：グループ全体のアルファ（透明度）を変更
+        const alphaRow = document.createElement('div');
+        const alphaLabel = document.createElement('label');
+        alphaLabel.innerText = 'Alpha (All):';
+        const alphaInput = document.createElement('input');
+        alphaInput.type = 'range';
+        alphaInput.min = 0;
+        alphaInput.max = 1;
+        alphaInput.step = 0.01;
+        alphaInput.value = gameObjects[0] ? gameObjects[0].alpha : 1; // 最初のオブジェクトの値を代表として使う
+        alphaInput.oninput = (e) => {
+            const newAlpha = parseFloat(e.target.value);
+            this.selectedObjects.forEach(obj => obj.setAlpha(newAlpha));
+        };
+        alphaRow.append(alphaLabel, alphaInput);
+        this.editorPropsContainer.appendChild(alphaRow);
     }
 
     /**
