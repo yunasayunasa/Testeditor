@@ -648,62 +648,115 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
    // in BaseGameScene.js
 
-    // in BaseGameScene.js
-
-    // in BaseGameScene.js
-
    // in BaseGameScene.js
 
     /**
-     * ★★★ 原点回帰・最終FIX版 ★★★
-     * PreloadSceneでspritesheetとして正しくロードされたタイルセットを、
-     * 通常のImageオブジェクトとして配置し、正しい物理ボディを与える。
+     * ★★★ 新規・最終実装 ★★★
+     * 始点オブジェクトを元に、終点までの矩形範囲をオブジェクトで塗りつぶす。
+     * @param {Phaser.GameObjects.GameObject} sourceObject - 塗りつぶしの元となるブラシオブジェクト
+     * @param {{x: number, y: number}} endPoint - クリックされた終点のワールド座標
      */
-    addTileAsObject(tileIndex, tilesetKey) {
-        console.log(`[BaseGameScene] Final Fix (Preload OK): Adding tile index ${tileIndex}.`);
+    fillObjectRange(sourceObject, endPoint) {
+        if (!sourceObject || !sourceObject.scene) {
+            console.error('[BaseGameScene] Source object is invalid.');
+            return;
+        }
 
-        // asset_define.json からタイルサイズを取得
-        const assetDefine = this.cache.json.get('asset_define');
-        const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
-        if (!tilesetInfo) return null;
+        // --- 1. グリッドサイズの決定 ---
+        // ブラシオブジェクトの表示サイズをグリッドの1マスのサイズとする
+        const gridWidth = sourceObject.displayWidth;
+        const gridHeight = sourceObject.displayHeight;
 
-        const tileWidth = tilesetInfo.tileWidth;
-        const tileHeight = tilesetInfo.tileHeight;
+        // --- 2. 始点と終点のグリッド座標を計算 ---
+        const startGridX = Math.round(sourceObject.x / gridWidth);
+        const startGridY = Math.round(sourceObject.y / gridHeight);
+        const endGridX = Math.round(endPoint.x / gridWidth);
+        const endGridY = Math.round(endPoint.y / gridHeight);
 
-        // シーン中央に配置
-        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+        // --- 3. ループ範囲を決定 ---
+        const fromX = Math.min(startGridX, endGridX);
+        const toX = Math.max(startGridX, endGridX);
+        const fromY = Math.min(startGridY, endGridY);
+        const toY = Math.max(startGridY, endGridY);
+
+        console.log(`[BaseGameScene] Filling range from grid (${fromX}, ${fromY}) to (${toX}, ${toY})`);
+
+        // --- 4. 複製元のレイアウト情報を作成 ---
+        // sourceObjectから、新しいオブジェクトを作るために必要な情報を抽出する
+        const sourceLayout = this.extractLayoutFromObject(sourceObject);
         
-        // --- 1. this.add.image を使い、フレーム番号(tileIndex)を指定してオブジェクトを生成 ---
-        // PreloadSceneでspritesheetとしてロード済みなので、PhaserはこのtileIndexを正しく解釈し、
-        // 32x32の正しい見た目のタイルを生成してくれる。
-        const tileObject = this.add.image(centerX, centerY, tilesetKey, tileIndex);
-        
-        // --- 2. 名前やデータを設定 ---
-        const uniqueId = Phaser.Math.RND.uuid();
-        tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
-        tileObject.setData('isTileObject', true);
-        tileObject.setData('tileIndex', tileIndex);
-        tileObject.setData('tilesetKey', tilesetKey);
-
-        // --- 3. 物理ボディを追加・設定 ---
-        // この時点で tileObject の表示サイズは既に 32x32 になっているので、
-        // 見た目通りの正しいサイズの物理ボディが生成される。
-        this.matter.add.gameObject(tileObject, {
-            shape: {
-                type: 'rectangle',
-                width: tileWidth,
-                height: tileHeight
+        // --- 5. 矩形範囲をループして、オブジェクトを配置 ---
+        for (let gx = fromX; gx <= toX; gx++) {
+            for (let gy = fromY; gy <= toY; gy++) {
+                
+                // 新しいオブジェクト用のレイアウトを作成
+                const newLayout = { ...sourceLayout }; // 基本情報をコピー
+                
+                // 新しい位置と名前を設定
+                newLayout.x = gx * gridWidth;
+                newLayout.y = gy * gridHeight;
+                const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
+                newLayout.name = `${sourceLayout.name}_${gx}_${gy}_${uniqueId}`;
+                
+                // 新しいオブジェクトを生成してシーンに追加
+                const newGameObject = this.createObjectFromLayout(newLayout);
+                if (newGameObject) {
+                    this.applyProperties(newGameObject, newLayout);
+                }
             }
-        });
+        }
 
-        // --- 4. 編集可能にする ---
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(tileObject, this);
+        // --- 6. ブラシとして使った始点オブジェクトを破棄 ---
+        sourceObject.destroy();
+    }
+    
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 既存のGameObjectから、複製に使えるようなプレーンなレイアウトオブジェクトを抽出する。
+     * @param {Phaser.GameObjects.GameObject} gameObject - 抽出元のオブジェクト
+     * @returns {object} 抽出されたレイアウト情報
+     */
+    extractLayoutFromObject(gameObject) {
+        const layout = {
+            name: gameObject.name,
+            type: gameObject.type.charAt(0).toUpperCase() + gameObject.type.slice(1), // 'Image', 'Sprite', 'Text'
+            
+            // Transform
+            scaleX: gameObject.scaleX,
+            scaleY: gameObject.scaleY,
+            angle: gameObject.angle,
+            alpha: gameObject.alpha,
+            depth: gameObject.depth,
+
+            // Data
+            group: gameObject.getData('group'),
+            components: gameObject.getData('components'),
+            // ... 他にコピーしたいgetData()の値があればここに追加 ...
+        };
+
+        // タイプに応じたプロパティを追加
+        if (gameObject instanceof Phaser.GameObjects.Text) {
+            layout.text = gameObject.text;
+            layout.style = gameObject.style.toJSON();
+        } else {
+            layout.texture = gameObject.texture.key;
+            // スプライトの場合、現在のフレームを保持
+            if (gameObject instanceof Phaser.GameObjects.Sprite) {
+                layout.frame = gameObject.frame.name;
+            }
         }
         
-        return tileObject;
+        // 物理ボディ情報もコピー
+        if (gameObject.body) {
+            layout.physics = {
+                isStatic: gameObject.body.isStatic,
+                isSensor: gameObject.body.isSensor,
+                shape: gameObject.getData('shape') || 'rectangle',
+                // ... 他の物理プロパティも ...
+            };
+        }
+        
+        return layout;
     }
     shutdown() {
         super.shutdown();
