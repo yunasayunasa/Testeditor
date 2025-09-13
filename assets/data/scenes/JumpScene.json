@@ -22,81 +22,6 @@
       }
     },
     {
-      "name": "walk_2",
-      "type": "Sprite",
-      "texture": "walk",
-      "x": 294,
-      "y": 250,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "group": "player",
-      "events": [
-        {
-          "trigger": "onDirectionChange",
-          "actions": "[set_flip_x value=true]",
-          "condition": "direction === 'left'"
-        },
-        {
-          "trigger": "onDirectionChange",
-          "actions": "[set_flip_x value=false]",
-          "condition": "direction === 'right'"
-        },
-        {
-          "trigger": "onStateChange",
-          "actions": "[anim_play name=歩き]",
-          "condition": "state === 'walk'"
-        },
-        {
-          "trigger": "onStateChange",
-          "actions": "[anim_stop]",
-          "condition": "state === 'idle'"
-        },
-        {
-          "trigger": "onStateChange",
-          "actions": "[anim_frame name=歩き frame=0]",
-          "condition": "state === 'idle'"
-        },
-        {
-          "trigger": "onStomp",
-          "targetGroup": "enemy",
-          "actions": "[destroy target=other][apply_force y=-0.05]"
-        },
-        {
-          "trigger": "onHit",
-          "targetGroup": "enemy",
-          "actions": "[reload_scene]"
-        }
-      ],
-      "components": [
-        {
-          "type": "PlayerController",
-          "params": {
-            "moveSpeed": 7.5
-          }
-        },
-        {
-          "type": "Interactor",
-          "params": {}
-        },
-        {
-          "type": "Scrollable",
-          "params": {}
-        }
-      ],
-      "physics": {
-        "isStatic": false,
-        "isSensor": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0
-      }
-    },
-    {
       "name": "cg01_1",
       "type": "Image",
       "texture": "cg01",
@@ -162,7 +87,7 @@
     {
       "name": "item_shield_1",
       "type": "Image",
-      "texture": "item_shield",
+      "texture": "__MISSING",
       "x": 647,
       "y": 169,
       "depth": 0,
@@ -237,6 +162,310 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 0.1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_3_1",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 2975,
+      "y": 406,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_3_2",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 2889,
+      "y": 635,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_4_1",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 2991,
+      "y": 521,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_4_2",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 3017,
+      "y": 636,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_5_1",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 3169,
+      "y": 642,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": -90,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_5_2",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 3278,
+      "y": 635,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_6_1",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 3482,
+      "y": 635,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 180,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0
+      }
+    },
+    {
+      "name": "walk_2_6_2",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 3380,
+      "y": 635,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": -180,
+      "alpha": 1,
+      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
         "restitution": 0
       }
     }
