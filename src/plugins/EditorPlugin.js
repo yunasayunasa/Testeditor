@@ -908,7 +908,7 @@ createComponentSection() {
     /**
      * ゲームオブジェクトをエディタで編集可能にする。
      */
-    makeEditable(gameObject, scene) {
+     makeEditable(gameObject, scene) {
         if (!this.isEnabled) return;
         const sceneKey = scene.scene.key;
         if (!this.editableObjects.has(sceneKey)) {
@@ -916,33 +916,45 @@ createComponentSection() {
         }
         this.editableObjects.get(sceneKey).add(gameObject);
 
+        // --- setInteractiveは一度だけ呼び出すのが安全 ---
         if (!gameObject.input) {
             gameObject.setInteractive();
+            // ★ setDraggableはシーンの入力マネージャに対して行う
             scene.input.setDraggable(gameObject);
         }
 
+        // --- 既存のリスナーを一度クリアして、多重登録を防ぐ ---
         gameObject.off('pointerdown');
         gameObject.off('drag');
         gameObject.off('pointerover');
         gameObject.off('pointerout');
 
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
+            // ▼▼▼【ここを修正】▼▼▼
+            // プレイモード中は、オブジェクト選択を無効化する
             if (this.editorUI && this.editorUI.currentMode === 'select') {
                 this.selectedObject = gameObject;
                 this.updatePropertyPanel();
+                
+                // ★★★ 重要 ★★★
+                // このオブジェクトがクリックされた、という事実を他のリスナーに伝えないようにする。
+                // これにより、例えばオブジェクトの後ろにある別のオブジェクトが
+                // 同時に選択されてしまう、などの意図しない動作を防ぐ。
                 event.stopPropagation();
             }
+            // ▲▲▲【修正ここまで】▲▲▲
         });
 
        gameObject.on('drag', (pointer, dragX, dragY) => {
             if (this.editorUI?.currentMode === 'select') {
-                // ★ setPositionは物理エンジンに影響を与えない
                 gameObject.setPosition(dragX, dragY);
-                // ★ ドラッグ中は物理ボディの位置も強制的に合わせる
                 if (gameObject.body) {
                     Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
                 }
-                if (this.selectedObject === gameObject) this.updatePropertyPanel();
+                if (this.selectedObject === gameObject) {
+                     // 連続更新を防ぐため、少し遅延させるか、軽量な更新処理を検討する
+                    this.updatePropertyPanel();
+                }
             }
         });
         

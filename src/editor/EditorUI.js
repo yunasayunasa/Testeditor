@@ -355,12 +355,36 @@ export default class EditorUI {
     }
 
     handlePointerDown(pointer) {
-        if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) return;
+        // ▼▼▼【ここからが修正の核心です】▼▼▼
+
+        // --- ガード節 1: UIパネル上でのクリックは、ゲーム内イベントとして処理しない ---
+        // 'editor-panel' または 'asset-browser' の要素、あるいはその子孫要素の上でクリックされたかを確認
+        if (pointer.target && (
+            pointer.target.closest('#editor-panel') ||
+            pointer.target.closest('#asset-browser') ||
+            pointer.target.closest('#camera-controls')
+        )) {
+            // UI上の操作なので、ゲームワールドへのイベント伝播はここで止める
+            return;
+        }
+
+        // --- ガード節 2: タイルマップモードで、かつ左クリックでない場合は何もしない ---
+        if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) {
+            // 選択モードや、右クリックの場合は、オブジェクト自身のイベントハンドラに処理を任せる
+            return;
+        }
+
+        // --- これ以降は、タイルマップモードでゲーム画面を左クリックした場合のみ実行される ---
+        
+        // ▲▲▲【修正ここまで】▲▲▲
+        
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
+        
         const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
         const tileX = Math.floor(worldPoint.x / this.currentTileset.tileWidth);
         const tileY = Math.floor(worldPoint.y / this.currentTileset.tileHeight);
+        
         if (typeof scene.placeTile === 'function') {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
         }
