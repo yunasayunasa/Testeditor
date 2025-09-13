@@ -151,7 +151,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             
             // --- これ以降、selectedObjectは「存在する」と仮定してUIを構築 ---
             this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
-            
+            this.safeCreateUI(this.createArrayToolSection); // メソッド名を変更
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
             // --- 各UIセクションを、それぞれ個別のtry/catchで囲んで防御 ---
             this.safeCreateUI(this.createNameInput);
             this.safeCreateUI(this.createGroupInput);
@@ -195,7 +196,28 @@ this.safeCreateUI(this.createExportPrefabButton);
             this._isUpdatingPanel = false;
         }
     }
-
+ /**
+     * ★★★ メソッド名と内容を修正 ★★★
+     * 汎用的な「範囲配置ツール」UIセクションを生成する
+     */
+    createArrayToolSection() { // 旧: createTileObjectSection
+        const title = document.createElement('h4');
+        title.innerText = 'Array Tool'; // タイトルを変更
+        title.style.margin = '10px 0 5px 0';
+        
+        const button = document.createElement('button');
+        button.innerText = 'Start Range Fill';
+        button.style.backgroundColor = '#2a9d8f';
+        button.onclick = () => {
+            if (this.editorUI) {
+                // EditorUIには、選択されたオブジェクトをそのまま渡す
+                this.editorUI.startRangeFillMode(this.selectedObject);
+            }
+        };
+        
+        this.editorPropsContainer.append(title, button);
+    }
+  
     /**
      * UI生成関数を安全に実行するためのラッパー関数。
      * @param {function} createUIFunction - UIを生成する関数 (thisを束縛するためアロー関数を推奨)

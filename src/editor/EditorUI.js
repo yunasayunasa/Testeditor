@@ -18,7 +18,7 @@ export default class EditorUI {
         this.selectedTileIndex = 0;
         this.tilesetHighlight = null;
         this.tileMarker = null;
-
+this.rangeFillSourceObject = null;
         // --- DOM要素の参照 ---
         this.getDomElements();
 
@@ -180,6 +180,29 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
             console.error(`[EditorUI] The active scene '${scene.scene.key}' does not have the 'addTileAsObject' method.`);
         }
     }
+     /**
+     * ★★★ 修正版 ★★★
+     * 範囲描画モードを開始する
+     * @param {Phaser.GameObjects.GameObject} sourceObject - 描画の元となるオブジェクト
+     */
+    startRangeFillMode(sourceObject) {
+        this.rangeFillSourceObject = sourceObject;
+        console.log(`[EditorUI] Range fill mode started. Source object: '${sourceObject.name}'.`);
+        alert('範囲配置モードを開始しました。\nマップ上の終点にしたい場所をクリックしてください。');
+        this.game.canvas.style.cursor = 'crosshair';
+    }
+
+    /**
+     * ★★★ 修正版 ★★★
+     * 範囲描画モードを終了・リセットする
+     */
+    endRangeFillMode() {
+        // ★ 始点オブジェクトは、fillRangeメソッド側で破棄するかどうかを決定するので、ここでは何もしない
+        this.rangeFillSourceObject = null;
+        this.game.canvas.style.cursor = 'default';
+        console.log("[EditorUI] Range fill mode ended.");
+    }
+    
     /**
      * ★★★ 新規メソッド ★★★
      * Phaserのポインターイベントを捌くための統合ハンドラ
@@ -217,28 +240,35 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
             return;
         }
 
-        if (this.currentEditorMode !== 'tilemap') {
+          // --- もし「終点待ち」モードなら、範囲描画を実行 ---
+        if (this.rangeFillSourceObject) {
+            console.log(`%c -> Action: Executing range fill.`, 'color: orange;');
+            pointer.event.stopImmediatePropagation();
+            const scene = this.getActiveGameScene();
+            
+            // ★ メソッド名を fillTileRange から、より汎用的な fillObjectRange に変更
+            if (!scene || typeof scene.fillObjectRange !== 'function') {
+                this.endRangeFillMode();
+                return;
+            }
+
+            const worldX = pointer.worldX;
+            const worldY = pointer.worldY;
+            
+            // ★ 新しいメソッドを呼び出す
+            scene.fillObjectRange(this.rangeFillSourceObject, { x: worldX, y: worldY });
+
+            // 処理が完了したのでモードを終了
+            this.endRangeFillMode();
             return;
         }
-        
-        const scene = this.getActiveGameScene();
-        if (!scene || !this.currentTileset) return;
-
-        const worldX = pointer.worldX;
-        const worldY = pointer.worldY;
-
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-
-        const tileX = Math.floor(worldX / tileWidth);
-        const tileY = Math.floor(worldY / tileHeight);
-        
-        console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
-
-        if (typeof scene.placeTile === 'function') {
-            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
+       if (this.currentEditorMode === 'tilemap') {
+            // (この部分は削除しても良いが、単一タイル配置のために残しても良い)
+        } else {
+            // Selectモードの処理
         }
     }
+    
 
    // --- タイルマップ専用リスナーの管理 ---
     
