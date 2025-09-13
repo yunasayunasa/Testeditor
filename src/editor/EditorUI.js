@@ -318,81 +318,99 @@ export default class EditorUI {
         img.onload = () => { this.updateTilesetHighlight(); };
     }
     
+    // in src/editor/EditorUI.js
+
+// ... (他のメソッドはそのまま) ...
+
+    /**
+     * ★★★ 修正版 ★★★
+     * タイルセットパネルがクリックされた際の処理。
+     * CSSのスケーリングとpaddingを考慮した、正確なタイルインデックスを計算する。
+     */
     onTilesetClick(event) {
         if (!this.currentTileset || !this.tilesetPreview) return;
         
-        // ▼▼▼【ここからが修正箇所です】▼▼▼
-
         const imgElement = this.tilesetPreview.querySelector('img');
         if (!imgElement) return;
 
-        // --- 1. 画像要素の表示上の寸法と、クリックされた位置を取得 ---
+        // 1. 画像要素の、画面上での位置と寸法を取得
         const rect = imgElement.getBoundingClientRect();
+
+        // 2. クリックされた位置を、画像要素の左上からの相対座標に変換
         const clickX = event.clientX - rect.left;
         const clickY = event.clientY - rect.top;
 
-        // --- 2. クリック位置を、画像の表示サイズに対する「比率」に変換 ---
-        const ratioX = clickX / rect.width;
-        const ratioY = clickY / rect.height;
-
-        // --- 3. 画像本来の（オリジナルの）解像度を取得 ---
+        // 3. 画像の「本来の」解像度（元画像のピクセル数）を取得
         const texture = this.game.textures.get(this.currentTileset.key);
         const naturalWidth = texture.getSourceImage().width;
-        const naturalHeight = texture.getSourceImage().height;
 
-        // --- 4. 比率を使って、本来の解像度上での座標を計算 ---
-        const naturalX = ratioX * naturalWidth;
-        const naturalY = ratioY * naturalHeight;
+        // 4. 表示上の幅と本来の幅から、現在のスケール（縮尺）を計算
+        const scale = naturalWidth / rect.width;
 
-        // --- 5. 本来の解像度とタイルサイズを使って、正しいタイルインデックスを算出 ---
+        // 5. スケールを考慮して、元画像上でのピクセル座標を特定
+        const naturalX = clickX * scale;
+        const naturalY = clickY * scale;
+
+        // 6. 正しいピクセル座標から、タイルインデックスを算出
         const tileX = Math.floor(naturalX / this.currentTileset.tileWidth);
         const tileY = Math.floor(naturalY / this.currentTileset.tileHeight);
         const tilesPerRow = naturalWidth / this.currentTileset.tileWidth;
         
         this.selectedTileIndex = tileY * tilesPerRow + tileX;
         
-        // ▲▲▲【修正ここまで】▲▲▲
-
         this.updateTilesetHighlight();
     }
     
-    
+    /**
+     * ★★★ 修正版 ★★★
+     * タイルセットの選択ハイライトの位置を更新する。
+     */
     updateTilesetHighlight() {
         if (!this.tilesetHighlight || !this.currentTileset || !this.tilesetPreview) return;
         
-        // ▼▼▼【こちらも同様のロジックで修正】▼▼▼
         const imgElement = this.tilesetPreview.querySelector('img');
         if (!imgElement) return;
 
-        // --- 1. 画像の本来の解像度と表示上の解像度を取得 ---
+        // onTilesetClickとほぼ同じロジックでスケールを計算
+        const rect = imgElement.getBoundingClientRect();
         const texture = this.game.textures.get(this.currentTileset.key);
         const naturalWidth = texture.getSourceImage().width;
-        const displayWidth = imgElement.getBoundingClientRect().width;
+        const scale = rect.width / naturalWidth; // こちらは逆の計算
 
-        // --- 2. スケール（縮尺）を計算 ---
-        const scale = displayWidth / naturalWidth;
-
-        // --- 3. 正しいタイルインデックスから、本来の解像度での位置を計算 ---
+        // 選択中のタイルの位置を計算
         const tilesPerRow = naturalWidth / this.currentTileset.tileWidth;
         const tileX = this.selectedTileIndex % tilesPerRow;
         const tileY = Math.floor(this.selectedTileIndex / tilesPerRow);
         
-        // --- 4. スケールを適用して、表示上の正しい位置とサイズを算出 ---
+        // スケールを適用して、表示上の正しい位置とサイズを算出
         this.tilesetHighlight.style.left = `${tileX * this.currentTileset.tileWidth * scale}px`;
         this.tilesetHighlight.style.top = `${tileY * this.currentTileset.tileHeight * scale}px`;
         this.tilesetHighlight.style.width = `${this.currentTileset.tileWidth * scale - 4}px`; // -4はボーダー幅
         this.tilesetHighlight.style.height = `${this.currentTileset.tileHeight * scale - 4}px`;
         
-        // ▲▲▲【修正ここまで】▲▲▲
-
         this.updateTileMarkerFrame();
     }
 
+    /**
+     * ★★★ 修正版 ★★★
+     * マウス移動時の処理。タイルマーカーの位置を正しく更新する。
+     */
     handlePointerMove(pointer) {
         if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
         const scene = this.getActiveGameScene();
         if (!scene) return;
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+        
+        // 1. Phaserの<canvas>要素の、画面上での位置と寸法を取得
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+
+        // 2. マウスポインターの画面座標から、canvasの左上からの相対座標を計算
+        const canvasX = pointer.event.clientX - canvasRect.left;
+        const canvasY = pointer.event.clientY - canvasRect.top;
+
+        // 3. 計算した相対座標を、カメラを使ってワールド座標に変換
+        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+
+        // 4. ワールド座標をグリッドにスナップさせる (ここは変更なし)
         const tileWidth = this.currentTileset.tileWidth;
         const tileHeight = this.currentTileset.tileHeight;
         const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
@@ -400,35 +418,29 @@ export default class EditorUI {
         this.tileMarker.setPosition(snappedX, snappedY);
     }
 
+    /**
+     * ★★★ 修正版 ★★★
+     * マウスクリック時の処理。CSSレイアウトを考慮してタイルを正しく配置する。
+     */
     handlePointerDown(pointer) {
-        // ▼▼▼【ここからが修正の核心です】▼▼▼
-
-        // --- ガード節 1: UIパネル上でのクリックは、ゲーム内イベントとして処理しない ---
-        // 'editor-panel' または 'asset-browser' の要素、あるいはその子孫要素の上でクリックされたかを確認
-        if (pointer.target && (
-            pointer.target.closest('#editor-panel') ||
-            pointer.target.closest('#asset-browser') ||
-            pointer.target.closest('#camera-controls')
-        )) {
-            // UI上の操作なので、ゲームワールドへのイベント伝播はここで止める
+        // 前回の修正によるガード節は、非常に重要なのでそのまま残す
+        if (pointer.target && (pointer.target.closest('#editor-sidebar') || pointer.target.closest('#overlay-controls') || pointer.target.closest('#bottom-panel'))) {
             return;
         }
-
-        // --- ガード節 2: タイルマップモードで、かつ左クリックでない場合は何もしない ---
         if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) {
-            // 選択モードや、右クリックの場合は、オブジェクト自身のイベントハンドラに処理を任せる
             return;
         }
 
-        // --- これ以降は、タイルマップモードでゲーム画面を左クリックした場合のみ実行される ---
-        
-        // ▲▲▲【修正ここまで】▲▲▲
-        
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
-        
-         const worldPointX = pointer.worldX;
-        const worldPointY = pointer.worldY;
+
+        // handlePointerMoveと全く同じロジックで、正しいワールド座標を取得
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const canvasX = pointer.event.clientX - canvasRect.left;
+        const canvasY = pointer.event.clientY - canvasRect.top;
+        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+
+        // ワールド座標からタイル座標を計算
         const tileX = Math.floor(worldPoint.x / this.currentTileset.tileWidth);
         const tileY = Math.floor(worldPoint.y / this.currentTileset.tileHeight);
         
@@ -436,6 +448,8 @@ export default class EditorUI {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
         }
     }
+
+// ... (他のメソッドはそのまま) ...
 
 
        /**
