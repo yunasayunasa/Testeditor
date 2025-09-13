@@ -287,37 +287,6 @@ export default class EditorUI {
 
     
 
-    initTilesetPanel() {
-        if (!this.tilesetPreview) return;
-        const assetDefine = this.game.cache.json.get('asset_define');
-        const tilesets = assetDefine.tilesets;
-        const firstTilesetKey = Object.keys(tilesets)[0];
-        this.currentTileset = tilesets[firstTilesetKey];
-        if (!this.currentTileset) { console.error("No tilesets defined."); return; }
-
-        const assetList = this.game.registry.get('asset_list');
-        const tilesetAsset = assetList.find(asset => asset.key === this.currentTileset.key);
-        if (!tilesetAsset || !tilesetAsset.path) { console.error("Tileset image path not found."); return; }
-
-        this.tilesetPreview.innerHTML = '';
-        const img = document.createElement('img');
-        img.src = tilesetAsset.path;
-        img.style.imageRendering = 'pixelated';
-
-        this.tilesetHighlight = document.createElement('div');
-        this.tilesetHighlight.style.position = 'absolute';
-        this.tilesetHighlight.style.border = '2px solid #00ff00';
-        this.tilesetHighlight.style.pointerEvents = 'none';
-        this.tilesetHighlight.style.width = `${this.currentTileset.tileWidth - 4}px`;
-        this.tilesetHighlight.style.height = `${this.currentTileset.tileHeight - 4}px`;
-        
-        this.tilesetPreview.addEventListener('click', (event) => this.onTilesetClick(event));
-        this.tilesetPreview.appendChild(img);
-        this.tilesetPreview.appendChild(this.tilesetHighlight);
-        
-        img.onload = () => { this.updateTilesetHighlight(); };
-    }
-    
     // in src/editor/EditorUI.js
 
 // ... (他のメソッドはそのまま) ...
@@ -338,118 +307,161 @@ export default class EditorUI {
         return { x: event.clientX, y: event.clientY };
     }
 
+   // in src/editor/EditorUI.js
+
+// ... (constructorはそのまま) ...
+// constructor内で this.currentTileset = null; を初期化していることを確認してください。
+
+// ... (getClientCoordinates ヘルパーはそのまま) ...
+
     /**
-     * ★★★ 修正版 Ver.3 ★★★
-     * タイルセットパネルがクリックされた際の処理。
-     * 正常に「選択したタイル」のインデックスを更新する。
+     * ★★★ 最終修正版 ★★★
+     * タイルセットパネルを初期化する。asset_define.json から情報を取得し、
+     * this.currentTileset に完全な定義オブジェクトを格納する。
+     */
+    initTilesetPanel() {
+        if (!this.tilesetPreview) return;
+        const assetDefine = this.game.cache.json.get('asset_define');
+        if (!assetDefine || !assetDefine.tilesets) {
+            console.error("asset_define.json or its tilesets definition is missing.");
+            return;
+        }
+
+        const tilesets = assetDefine.tilesets;
+        const firstTilesetId = Object.keys(tilesets)[0];
+        if (!firstTilesetId) {
+            console.error("No tilesets are defined in asset_define.json.");
+            return;
+        }
+
+        // --- 修正点：タイルセットの完全な定義オブジェクトを保存 ---
+        this.currentTileset = tilesets[firstTilesetId];
+        // idをkeyとして追加しておく（元データにkeyがないため）
+        this.currentTileset.id = firstTilesetId;
+
+        console.log("[EditorUI] Initializing tileset panel with:", this.currentTileset);
+
+        const assetList = this.game.registry.get('asset_list');
+        // keyを使ってアセットリストから画像パスを探す
+        const tilesetAsset = assetList.find(asset => asset.key === this.currentTileset.key);
+        if (!tilesetAsset || !tilesetAsset.path) {
+            console.error(`Tileset image path for key '${this.currentTileset.key}' not found in asset_list.`);
+            return;
+        }
+
+        this.tilesetPreview.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = tilesetAsset.path;
+        // CSSでのスケーリングを無効化し、計算のズレを防ぐ
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        img.style.maxWidth = '100%';
+
+        this.tilesetHighlight = document.createElement('div');
+        this.tilesetHighlight.style.position = 'absolute';
+        this.tilesetHighlight.style.border = '2px solid #00ff00';
+        this.tilesetHighlight.style.pointerEvents = 'none';
+        this.tilesetHighlight.style.boxSizing = 'border-box'; // borderがサイズの内側に描画されるように
+        
+        this.tilesetPreview.addEventListener('click', (event) => this.onTilesetClick(event));
+        this.tilesetPreview.appendChild(img);
+        this.tilesetPreview.appendChild(this.tilesetHighlight);
+        
+        // 画像がロードされてからハイライトを更新
+        img.onload = () => { this.updateTilesetHighlight(); };
+    }
+
+    /**
+     * ★★★ 最終修正版 ★★★
+     * onTilesetClick: this.currentTileset の情報を全面的に利用する。
      */
     onTilesetClick(event) {
-        // イベントの伝播をここで止めて、handlePointerDownが誤作動しないようにする
-        event.stopPropagation(); 
-
-        if (!this.currentTileset || !this.tilesetPreview) return;
+        event.stopPropagation();
+        if (!this.currentTileset) return;
         
         const imgElement = this.tilesetPreview.querySelector('img');
         if (!imgElement) return;
 
         const rect = imgElement.getBoundingClientRect();
-        // 新しいヘルパーメソッドを使って座標を取得
         const coords = this.getClientCoordinates(event);
         const clickX = coords.x - rect.left;
         const clickY = coords.y - rect.top;
 
         const texture = this.game.textures.get(this.currentTileset.key);
         const naturalWidth = texture.getSourceImage().width;
-        const scale = naturalWidth / rect.width;
-        const naturalX = clickX * scale;
-        const naturalY = clickY * scale;
+        
+        const scale = rect.width / naturalWidth;
 
-        const tileX = Math.floor(naturalX / this.currentTileset.tileWidth);
-        const tileY = Math.floor(naturalY / this.currentTileset.tileHeight);
-        const tilesPerRow = naturalWidth / this.currentTileset.tileWidth;
+        // タイルサイズも this.currentTileset から取得
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+
+        // クリックされた位置を、スケールを考慮して元画像上の座標に変換
+        const naturalX = clickX / scale;
+        const naturalY = clickY / scale;
+
+        const tileX = Math.floor(naturalX / tileWidth);
+        const tileY = Math.floor(naturalY / tileHeight);
+        const tilesPerRow = Math.floor(naturalWidth / tileWidth);
         
         this.selectedTileIndex = tileY * tilesPerRow + tileX;
         
-        console.log(`[EditorUI] Tile selected. Index: ${this.selectedTileIndex}`); // デバッグ用ログ
-        
+        console.log(`[EditorUI] Tile selected. Index: ${this.selectedTileIndex}`);
         this.updateTilesetHighlight();
     }
     
     /**
-     * ★★★ 修正版 ★★★
-     * タイルセットの選択ハイライトの位置を更新する。
+     * ★★★ 最終修正版 ★★★
+     * updateTilesetHighlight: こちらも this.currentTileset を参照。
      */
     updateTilesetHighlight() {
-        if (!this.tilesetHighlight || !this.currentTileset || !this.tilesetPreview) return;
+        if (!this.tilesetHighlight || !this.currentTileset) return;
         
         const imgElement = this.tilesetPreview.querySelector('img');
         if (!imgElement) return;
 
-        // onTilesetClickとほぼ同じロジックでスケールを計算
         const rect = imgElement.getBoundingClientRect();
         const texture = this.game.textures.get(this.currentTileset.key);
         const naturalWidth = texture.getSourceImage().width;
-        const scale = rect.width / naturalWidth; // こちらは逆の計算
-
-        // 選択中のタイルの位置を計算
-        const tilesPerRow = naturalWidth / this.currentTileset.tileWidth;
+        
+        const scale = rect.width / naturalWidth;
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+        
+        const tilesPerRow = Math.floor(naturalWidth / tileWidth);
         const tileX = this.selectedTileIndex % tilesPerRow;
         const tileY = Math.floor(this.selectedTileIndex / tilesPerRow);
         
-        // スケールを適用して、表示上の正しい位置とサイズを算出
-        this.tilesetHighlight.style.left = `${tileX * this.currentTileset.tileWidth * scale}px`;
-        this.tilesetHighlight.style.top = `${tileY * this.currentTileset.tileHeight * scale}px`;
-        this.tilesetHighlight.style.width = `${this.currentTileset.tileWidth * scale - 4}px`; // -4はボーダー幅
-        this.tilesetHighlight.style.height = `${this.currentTileset.tileHeight * scale - 4}px`;
+        this.tilesetHighlight.style.left = `${tileX * tileWidth * scale}px`;
+        this.tilesetHighlight.style.top = `${tileY * tileHeight * scale}px`;
+        this.tilesetHighlight.style.width = `${tileWidth * scale}px`;
+        this.tilesetHighlight.style.height = `${tileHeight * scale}px`;
         
         this.updateTileMarkerFrame();
     }
 
-   /**
-     * ★★★ 修正版 Ver.3 ★★★
-     * マウス/タッチ移動時の処理。
-     */
-    handlePointerMove(pointer) {
-        if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
-        const scene = this.getActiveGameScene();
-        if (!scene) return;
-        
-        const canvasRect = this.game.canvas.getBoundingClientRect();
-        // pointer.eventはPhaserが正規化したイベントオブジェクト
-        const coords = this.getClientCoordinates(pointer.event); 
-        const canvasX = coords.x - canvasRect.left;
-        const canvasY = coords.y - canvasRect.top;
-
-        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
-        this.tileMarker.setPosition(snappedX, snappedY);
-    }
 
     /**
-     * ★★★ 修正版 Ver.3 ★★★
-     * マウス/タッチ開始時の処理。タイル配置を行う。
+     * ★★★ 最終修正版 ★★★
+     * handlePointerDown: 配置時にも this.currentTileset を参照する。
      */
     handlePointerDown(pointer) {
-        // --- ガード節1：UI上での操作は完全に無視する ---
-        // pointer.targetはクリックされたDOM要素を指すので、これで判定するのが最も確実
-        if (pointer.target !== this.game.canvas) {
-             console.log("[EditorUI] Clicked on UI, ignoring for tile placement.");
+        const clickedElement = pointer.event.target;
+        if (clickedElement.closest('#editor-sidebar') || clickedElement.closest('#overlay-controls') || clickedElement.closest('#bottom-panel')) {
             return;
         }
-
-        // --- ガード節2：タイルマップモードでなければ何もしない ---
         if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) {
             return;
         }
         
-        console.log(`[EditorUI] Placing tile... Index: ${this.selectedTileIndex}`); // デバッグ用ログ
-
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
+
+        // --- タイルサイズを asset_define から取得 ---
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+        
+        console.log(`[EditorUI] Canvas clicked. Placing tile index ${this.selectedTileIndex} (size: ${tileWidth}x${tileHeight})`);
 
         const canvasRect = this.game.canvas.getBoundingClientRect();
         const coords = this.getClientCoordinates(pointer.event);
@@ -457,16 +469,35 @@ export default class EditorUI {
         const canvasY = coords.y - canvasRect.top;
         const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
 
-        const tileX = Math.floor(worldPoint.x / this.currentTileset.tileWidth);
-        const tileY = Math.floor(worldPoint.y / this.currentTileset.tileHeight);
+        const tileX = Math.floor(worldPoint.x / tileWidth);
+        const tileY = Math.floor(worldPoint.y / tileHeight);
         
         if (typeof scene.placeTile === 'function') {
-            // ここで、現在選択されているツールに応じて処理を分岐させる（ステップ3の内容）
-            // 今はまずブラシツールを固定で実装
+            // ★★★ タイルセットの「アセットキー」を渡す
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
         }
     }
+    
+    // handlePointerMoveも同様に修正
+    handlePointerMove(pointer) {
+        if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
+        const scene = this.getActiveGameScene();
+        if (!scene || !this.currentTileset) return; // currentTilesetのチェックを追加
+        
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const coords = this.getClientCoordinates(pointer.event); 
+        const canvasX = coords.x - canvasRect.left;
+        const canvasY = coords.y - canvasRect.top;
+        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
 
+        // --- タイルサイズを asset_define から取得 ---
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+
+        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
+        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
+        this.tileMarker.setPosition(snappedX, snappedY);
+    }
        /**
      * ★★★ 新規メソッド：ゲーム内時間の「ポーズ/再開」を制御するボタンを生成する ★★★
      */
