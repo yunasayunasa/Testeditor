@@ -246,42 +246,58 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
      * 範囲描画のドラッグ操作を開始する
      * @param {Phaser.GameObjects.GameObject} sourceObject - 描画の元となるオブジェクト
      */
+   // in EditorUI.js
+
+    /**
+     * ★★★ 最終FIX版 ★★★
+     * 範囲描画のドラッグ操作を開始する。
+     * ブラウザのデフォルトのドラッグ動作を完全に抑制する。
+     */
     startRangeFillDrag(sourceObject) {
         this.rangeFillSourceObject = sourceObject;
-        console.log(`[EditorUI | Drag] Range fill drag started. Source: '${sourceObject.name}'.`);
+        console.log(`[EditorUI | Final Fix] Range fill drag started.`);
         
-        // ユーザーにフィードバック
         this.game.canvas.style.cursor = 'crosshair';
 
-        // --- 'mouseup' イベントを一度だけリッスンするリスナーを window に登録 ---
+        // ▼▼▼【ここからが修正箇所】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- ドラッグ中のデフォルト動作をキャンセルするリスナー ---
+        const onDragMove = (event) => {
+            // マウスが動いている間、常にデフォルト動作（画像ドラッグ、テキスト選択など）を抑制する
+            event.preventDefault();
+        };
+
+        // --- マウスボタンが離された時の処理 ---
         const onMouseUp = (event) => {
-            console.log(`[EditorUI | Drag] Mouse up detected. Executing fill.`);
+            console.log(`[EditorUI | Final Fix] Mouse up detected. Executing fill.`);
             
             // --- 処理の実行 ---
             const scene = this.getActiveGameScene();
             if (scene && typeof scene.fillObjectRange === 'function') {
-                
-                // マウスを離した位置を終点として座標を計算
                 const canvasRect = this.game.canvas.getBoundingClientRect();
                 const canvasX = event.clientX - canvasRect.left;
                 const canvasY = event.clientY - canvasRect.top;
-                
                 const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-                
-                // シーンのメソッドを呼び出す
                 scene.fillObjectRange(this.rangeFillSourceObject, { x: worldPoint.x, y: worldPoint.y });
             }
             
             // --- 後片付け ---
             this.game.canvas.style.cursor = 'default';
-            this.rangeFillSourceObject = null; // 状態をリセット
+            this.rangeFillSourceObject = null;
             
-            // ★重要：一度使ったリスナーは必ず解除する
-            window.removeEventListener('mouseup', onMouseUp, true);
+            // ★重要：登録したリスナーは、必ず両方とも解除する
+            window.removeEventListener('pointermove', onDragMove, true);
+            window.removeEventListener('pointerup', onMouseUp, true);
         };
 
-        // ★ キャプチャフェーズでリッスンすることで、他のUI要素の上で離しても反応できるようにする
-        window.addEventListener('mouseup', onMouseUp, true);
+        // --- リスナーを登録 ---
+        // ★ capture: true を指定することで、他の要素にイベントが奪われる前に処理する
+        window.addEventListener('pointermove', onDragMove, true);
+        window.addEventListener('pointerup', onMouseUp, true);
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
     // startRangeFillMode, endRangeFillMode は不要になるので削除してOKです。
