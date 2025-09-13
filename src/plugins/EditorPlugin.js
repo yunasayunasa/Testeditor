@@ -1202,7 +1202,23 @@ createComponentSection() {
         // 例: gameObject.setTint(0x00ff00);
         this.updatePropertyPanel();
     }
-
+ /**
+     * すべての選択状態を解除する
+     */
+    deselectAll() {
+        if (this.selectedObject && typeof this.selectedObject.clearTint === 'function') {
+            this.selectedObject.clearTint();
+        }
+        this.selectedObject = null;
+        
+        if (this.selectedObjects && this.selectedObjects.length > 0) {
+            this.selectedObjects.forEach(obj => {
+                if (typeof obj.clearTint === 'function') obj.clearTint();
+            });
+        }
+        this.selectedObjects = [];
+        this.updatePropertyPanel();
+    }
     /**
      * ★★★ 修正・拡張版 ★★★
      * グループ選択のロジック。
