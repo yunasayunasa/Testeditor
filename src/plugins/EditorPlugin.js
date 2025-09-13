@@ -543,8 +543,6 @@ createTransformInputs() {
 }
 // in EditorPlugin.js
 
-  // in EditorPlugin.js
-
     /**
      * ★★★ 最終FIXの修正版 ★★★
      * スケール変更に応じて、物理ボディを安全に再生成する。
