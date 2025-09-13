@@ -540,7 +540,7 @@ createTransformInputs() {
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && this.selectedObject) {
             this.selectedObject.setScale(val);
-            this.rebuildPhysicsBodyOnScaleChange();
+         //   this.rebuildPhysicsBodyOnScaleChange();
         }
     });
     scaleRow.append(scaleLabel, scaleInput);
@@ -580,7 +580,7 @@ createTransformInputs() {
      * スケール変更に応じて、物理ボディを安全に再生成する。
      * ターゲットがContainerの場合の処理を正しく記述する。
      */
-    rebuildPhysicsBodyOnScaleChange() {
+ /*   rebuildPhysicsBodyOnScaleChange() {
         const target = this.selectedObject;
         if (!target || !target.body) return;
 
@@ -637,7 +637,7 @@ createTransformInputs() {
         
         // UIを更新
         this.updatePropertyPanel();
-    }
+    }*/
     createDepthInput() {
         const row = document.createElement('div');
         const label = document.createElement('label');

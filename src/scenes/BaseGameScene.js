@@ -672,10 +672,17 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * ★★★ 究極の最終FIX版・改5 ★★★
      * Containerに直接子オブジェクトを追加し、原点を補正する。
      */
+   // in BaseGameScene.js
+
+    /**
+     * ★★★ これが最後のコードです ★★★
+     * 物理演算される親コンテナを作成し、その中に見た目と当たり判定を格納する
+     */
     fillObjectRange(sourceObject, endPoint) {
         if (!sourceObject || !sourceObject.scene) return;
+        const editor = this.plugins.get('EditorPlugin');
 
-        // --- 1. グリッドとループ範囲の計算 (変更なし) ---
+        // --- 1. 計算 (変更なし) ---
         const gridWidth = sourceObject.displayWidth;
         const gridHeight = sourceObject.displayHeight;
         const startGridX = Math.round(sourceObject.x / gridWidth);
@@ -686,71 +693,63 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const toX = Math.max(startGridX, endGridX);
         const fromY = Math.min(startGridY, endGridY);
         const toY = Math.max(startGridY, endGridY);
-
-        // --- 2. 複製元レイアウトの作成 (変更なし) ---
         const sourceLayout = this.extractLayoutFromObject(sourceObject);
-        delete sourceLayout.physics; // 子オブジェクトは物理ボディを持たない
+        delete sourceLayout.physics;
 
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-
-          // --- 3. 全体をまとめるための、親となる「Container」を作成 ---
-        // その位置は、描画範囲の中心に設定する
+        // --- 2. ジオメトリ計算 ---
         const containerWidth = (toX - fromX + 1) * gridWidth;
         const containerHeight = (toY - fromY + 1) * gridHeight;
         const containerCenterX = (fromX * gridWidth) + containerWidth / 2;
         const containerCenterY = (fromY * gridHeight) + containerHeight / 2;
-        const parentContainer = this.add.container(containerCenterX, containerCenterY);
 
-        // --- 4. 当たり判定と物理ボディを担当する、透明な「Zone」を作成 ---
-        // Zoneの位置は、親コンテナの中心(0,0)になる
-        const hitZone = this.add.zone(0, 0, containerWidth, containerHeight);
-        
-        // --- 5. Zoneを親コンテナに追加 ---
-        parentContainer.add(hitZone);
+        // ▼▼▼【ここからが最後の構造です】▼▼▼
+        // --------------------------------------------------------------------
 
-        // --- 6. 矩形範囲をループして、見た目用の「子オブジェクト」を配置 ---
+        // --- 3. 見た目と当たり判定を格納する、物理演算されない「内側コンテナ」を作成 ---
+        const innerContainer = this.add.container(0, 0);
+
+        // --- 4. 内側コンテナの中に、当たり判定用のZoneを配置 ---
+        // 原点を中心に設定することで、コンテナの中心で当たり判定が行われる
+        const hitZone = this.add.zone(0, 0, containerWidth, containerHeight).setOrigin(0.5, 0.5);
+        innerContainer.add(hitZone);
+
+        // --- 5. 内側コンテナの中に、見た目用のオブジェクトを配置 ---
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
-                // 親コンテナの中心からの相対位置を計算
                 const relativeX = (gx * gridWidth + gridWidth / 2) - containerCenterX;
                 const relativeY = (gy * gridHeight + gridHeight / 2) - containerCenterY;
                 
-                let newChildObject = this.createObjectFromLayout({...sourceLayout, x: relativeX, y: relativeY});
-                this.applyProperties(newChildObject, {...sourceLayout, x: relativeX, y: relativeY});
-                  // ▼▼▼【これが最後の、たった一行の修正です】▼▼▼
-                // 子オブジェクトのインタラクティブ（入力）を無効化する
-                newChildObject.disableInteractive();
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                // ★ 作成したオブジェクトを、親コンテナに「追加」する
-                parentContainer.add(newChildObject);
+                let child = this.createObjectFromLayout({...sourceLayout, x: relativeX, y: relativeY});
+                this.applyProperties(child, {...sourceLayout, x: relativeX, y: relativeY});
+                child.disableInteractive();
+                innerContainer.add(child);
             }
         }
         
-        // --- 7. 親コンテナに物理ボディとインタラクティブを設定 ---
-        // ★ 物理ボディは、親コンテナに対して設定する
-        this.matter.add.gameObject(parentContainer, {
-            shape: { type: 'rectangle', width: containerWidth, height: containerHeight }
-        });
+        // --- 6. 物理演算を担当する、見た目を持たない「外側ボディ」を作成 ---
+        // これがMatter.jsの世界に存在する、ただの「箱」
+        const outerBody = this.matter.add.rectangle(containerCenterX, containerCenterY, containerWidth, containerHeight);
         
-        // ★ インタラクティブエリアは、中のhitZoneを参照させる
-        parentContainer.setInteractive(hitZone, Phaser.Geom.Rectangle.Contains);
+        // --- 7. 「外側ボディ」に、「内側コンテナ」をくっつける ---
+        // これにより、物理演算でボディが動くと、コンテナも追従する
+        this.matter.add.constraint(outerBody, innerContainer, 0, 1);
         
-        // --- 8. 親コンテナをエディタで編集可能にする ---
+        // ★★★ 「外側ボディ」自身を編集可能にする ★★★
+        outerBody.gameObject = innerContainer; // ボディからコンテナを参照できるように
         const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-        parentContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(parentContainer, this);
-        }
+        outerBody.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
 
+        if (editor && editor.isEnabled) {
+            // ★★★ ここは未実装の領域です。Matter.Bodyを直接編集する機能が必要です ★★★
+            // しかし、まずは生成がうまくいくことを確認します。
+            console.log("Group created. Manual editing of Matter.Body is not yet supported.");
+        }
+        
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        // --- 9. ブラシを破棄 ---
         sourceObject.destroy();
     }
-    
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * 既存のGameObjectから、複製に使えるようなプレーンなレイアウトオブジェクトを抽出する。
