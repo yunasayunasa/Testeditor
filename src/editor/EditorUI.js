@@ -1,5 +1,3 @@
-// src/editor/EditorUI.js (バグ修正・ロジック整理 最終確定版)
-
 export default class EditorUI {
     constructor(game, editorPlugin) {
         this.game = game;
@@ -12,7 +10,7 @@ export default class EditorUI {
         this.selectedAssetKey = null;
         this.selectedAssetType = null;
         this.objectCounters = {};
-        this.currentEditorMode = 'select';
+        this.currentEditorMode = 'select'; // 初期モード
         this.currentAssetTab = 'image';
         
         // --- タイルマップエディタ用プロパティ ---
@@ -21,7 +19,23 @@ export default class EditorUI {
         this.tilesetHighlight = null;
         this.tileMarker = null;
 
-        // --- DOM要素の参照をまとめて取得 ---
+        // --- DOM要素の参照 ---
+        this.getDomElements();
+
+     
+// --- UIの初期セットアップ ---
+        if (this.editorPanel) this.editorPanel.style.display = 'flex';
+        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
+        
+        this.initializeEventListeners();
+        this.populateAssetBrowser();
+    }
+ // in EditorUI.js
+    
+    // --- ヘルパーメソッド群 ---
+
+    getDomElements() {
+          // --- DOM要素の参照をまとめて取得 ---
         this.editorPanel = document.getElementById('editor-panel');
         this.assetBrowserPanel = document.getElementById('asset-browser');
         this.assetListContainer = document.getElementById('asset-list');
@@ -42,113 +56,62 @@ export default class EditorUI {
         this.helpModalContent = document.getElementById('help-modal-content');
         this.tilesetPanel = document.getElementById('tileset-panel');
         this.tilesetPreview = document.getElementById('tileset-preview');
+    }
 
-        // --- UIの初期セットアップを一度だけ実行 ---
-        if (this.editorPanel) this.editorPanel.style.display = 'flex';
-        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
+
+    getClientCoordinates(event) {
+        if (event.touches && event.touches.length > 0) {
+            return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        }
+        return { x: event.clientX, y: event.clientY };
+    }
+
+    getActiveGameScene() {
+        if (this.plugin && typeof this.plugin.getActiveGameScene === 'function') {
+            const scene = this.plugin.getActiveGameScene();
+            if (scene) return scene;
+        }
+        // フォールバック
+        const scenes = this.game.scene.getScenes(true);
+        for (let i = scenes.length - 1; i >= 0; i--) {
+            const scene = scenes[i];
+            if (scene.scene.key.toLowerCase().includes('scene')) {
+                return scene;
+            }
+        }
+        return null;
+    }
+    // --- イベントリスナー初期化 ---
+
+    initializeEventListeners() {
+        // --- UIボタンのリスナー ---
+        document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
+        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
+        document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
+        document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
         
+        // カメラコントロール
+        this.setupPanButton(document.getElementById('camera-pan-up'), 0, -10);
+        this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
+        this.setupPanButton(document.getElementById('camera-pan-left'), -10, 0);
+        this.setupPanButton(document.getElementById('camera-pan-right'), 10, 0);
+        document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
+        document.getElementById('camera-zoom-out')?.addEventListener('click', () => this.plugin.zoomCamera(-0.2));
+        document.getElementById('camera-reset')?.addEventListener('click', () => this.plugin.resetCamera());
+
+        // その他UI
         this.createPauseToggle();
         this.createHelpButton();
-        this.initializeEventListeners();
-        this.populateAssetBrowser();
     }
- // in EditorUI.js
+    // --- モード切替と、それに応じたリスナーのON/OFF ---
 
-    /**
-     * ★★★ 真の最終解決版 ★★★
-     * イベントリスナーの登録対象を<canvas>に限定し、Phaserの入力システムと共存させる。
-     */
-    initializeEventListeners() {
-        // --- 既存のDOM要素のイベントリスナーは、ここにある想定（変更なし） ---
-        const replaceListener = (element, event, handler) => {
-            if (!element) return;
-            const newElement = element.cloneNode(true);
-            element.parentNode.replaceChild(newElement, element);
-            newElement.addEventListener(event, handler);
-            return newElement;
-        };
-        
-        // (カメラコントロール、モード切替ボタン、アセット追加ボタンなどのリスナーはそのまま)
-        // ...
-
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- 1. Phaserの<canvas>要素を取得 ---
-        const canvas = this.game.canvas;
-
-        // --- 2. <canvas>上でマウス（タッチ）が移動した時のイベント ---
-        canvas.addEventListener('pointermove', (event) => {
-            if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
-            
-            const scene = this.getActiveGameScene();
-            if (!scene) return;
-
-            // クライアント座標とcanvasの位置から、canvas内の相対座標を計算
-            const canvasRect = canvas.getBoundingClientRect();
-            const canvasX = event.clientX - canvasRect.left;
-            const canvasY = event.clientY - canvasRect.top;
-
-            // Phaserのカメラを使ってワールド座標に変換
-            const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-
-            const tileWidth = this.currentTileset.tileWidth;
-            const tileHeight = this.currentTileset.tileHeight;
-
-            const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-            const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
-            
-            this.tileMarker.setPosition(snappedX, snappedY);
-        });
-
-        // --- 3. <canvas>上でマウス（タッチ）がクリックされた時のイベント ---
-        canvas.addEventListener('pointerdown', (event) => {
-            // タイルマップモードでなければ、タイル配置処理は行わない
-            if (this.currentEditorMode !== 'tilemap') {
-                return;
-            }
-
-            // ★★★ イベントの伝播を止めることで、Phaserのオブジェクト選択が誤作動するのを防ぐ
-            event.stopPropagation();
-
-            const scene = this.getActiveGameScene();
-            if (!scene || !this.currentTileset) return;
-
-            // pointermove と同じロジックで正確な座標を計算
-            const canvasRect = canvas.getBoundingClientRect();
-            const canvasX = event.clientX - canvasRect.left;
-            const canvasY = event.clientY - canvasRect.top;
-
-            const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-            
-            const tileWidth = this.currentTileset.tileWidth;
-            const tileHeight = this.currentTileset.tileHeight;
-
-            const tileX = Math.floor(worldPoint.x / tileWidth);
-            const tileY = Math.floor(worldPoint.y / tileHeight);
-            
-            console.log(`[EditorUI | Canvas Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
-
-            if (typeof scene.placeTile === 'function') {
-                scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
-            }
-        });
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-    }
-
-    // 以下のメソッドは不要なので、クラスから削除してください
-    // handlePointerDown() { ... }
-    // handlePointerMove() { ... }
-    // startListeningToGameInput() { ... }
-  
-    /**
-     * エディタの主モード（Select or Tilemap）を切り替える
-     */
     setEditorMode(mode) {
         if (this.currentEditorMode === mode) return;
         this.currentEditorMode = mode;
         console.log(`[EditorUI] Editor mode changed to: ${mode}`);
+
+        // Pluginに通知してPhaserの入力を制御
+        this.plugin.onEditorModeChanged(mode);
 
         if (mode === 'tilemap') {
             document.body.classList.add('tilemap-mode');
@@ -156,17 +119,67 @@ export default class EditorUI {
             this.selectModeBtn.classList.remove('active');
             this.initTilesetPanel();
             this.createTileMarker();
+            this.activateTilemapListeners(); // タイルマップリスナーをON
         } else { // 'select' mode
             document.body.classList.remove('tilemap-mode');
             this.selectModeBtn.classList.add('active');
             this.tilemapModeBtn.classList.remove('active');
             this.destroyTileMarker();
+            this.deactivateTilemapListeners(); // タイルマップリスナーをOFF
         }
     }
+   // --- タイルマップ専用リスナーの管理 ---
+    
+    activateTilemapListeners() {
+        this.deactivateTilemapListeners(); // 念のためクリア
+        const canvas = this.game.canvas;
+        canvas.addEventListener('pointermove', this.handleTilemapPointerMove.bind(this));
+        canvas.addEventListener('pointerdown', this.handleTilemapPointerDown.bind(this));
+    }
+    
+    deactivateTilemapListeners() {
+        const canvas = this.game.canvas;
+        canvas.removeEventListener('pointermove', this.handleTilemapPointerMove.bind(this));
+        canvas.removeEventListener('pointerdown', this.handleTilemapPointerDown.bind(this));
+    }
 
-    // --- ここから下のメソッド群は、前回の提案から変更ありません ---
-    // (あなたのコードにあった重複やロジックの衝突を解消し、整理したものです)
-
+    handleTilemapPointerMove(event) {
+        if (!this.tileMarker) return;
+        const scene = this.getActiveGameScene();
+        if (!scene) return;
+        
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const canvasX = event.clientX - canvasRect.left;
+        const canvasY = event.clientY - canvasRect.top;
+        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+        
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
+        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
+        
+        this.tileMarker.setPosition(snappedX, snappedY);
+    }
+    
+    handleTilemapPointerDown(event) {
+        event.stopPropagation(); // Phaserのイベントと競合しないように
+        const scene = this.getActiveGameScene();
+        if (!scene || !this.currentTileset) return;
+        
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const canvasX = event.clientX - canvasRect.left;
+        const canvasY = event.clientY - canvasRect.top;
+        
+        if (canvasX < 0 || canvasY < 0 || canvasX > canvasRect.width || canvasY > canvasRect.height) return;
+        
+        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+        const tileX = Math.floor(worldPoint.x / tileWidth);
+        const tileY = Math.floor(worldPoint.y / tileHeight);
+        
+        scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
+    }
     createTileMarker() {
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
@@ -203,20 +216,7 @@ export default class EditorUI {
         }
     }
 
-    getActiveGameScene() {
-        if (this.plugin && typeof this.plugin.getActiveGameScene === 'function') {
-            const scene = this.plugin.getActiveGameScene();
-            if (scene) return scene;
-        }
-        const scenes = this.game.scene.getScenes(true);
-        for (let i = scenes.length - 1; i >= 0; i--) {
-            const scene = scenes[i];
-            if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
-                return scene;
-            }
-        }
-        return null;
-    }
+    
 
     populateAssetBrowser() {
         const assetList = this.game.registry.get('asset_list');
@@ -317,33 +317,7 @@ export default class EditorUI {
 
     
 
-    // in src/editor/EditorUI.js
-
-// ... (他のメソッドはそのまま) ...
-
-      /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * マウスイベントとタッチイベントから、ブラウザウィンドウ基準のクライアント座標を取得する。
-     * これにより、デバイス間の差異を吸収する。
-     * @param {Event} event - DOMイベントオブジェクト
-     * @returns {{x: number, y: number}} クライアント座標
-     */
-    getClientCoordinates(event) {
-        if (event.touches && event.touches.length > 0) {
-            // タッチイベントの場合
-            return { x: event.touches[0].clientX, y: event.touches[0].clientY };
-        }
-        // マウスイベントの場合
-        return { x: event.clientX, y: event.clientY };
-    }
-
-   // in src/editor/EditorUI.js
-
-// ... (constructorはそのまま) ...
-// constructor内で this.currentTileset = null; を初期化していることを確認してください。
-
-// ... (getClientCoordinates ヘルパーはそのまま) ...
-
+    
     /**
      * ★★★ 最終修正版 ★★★
      * タイルセットパネルを初期化する。asset_define.json から情報を取得し、

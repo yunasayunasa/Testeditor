@@ -51,24 +51,39 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
       /**
      * ★★★ 新規メソッド ★★★
-     * Phaserのプラグインライフサイクルメソッド。
-     * すべてのシーンの `create` が完了した後に一度だけ呼ばれる。
-     * ここでUIに入力イベントのリスンを開始させるのが最も安全。
+     * EditorUIからエディタのモードが変更されたときに呼び出される
+     * @param {string} mode - 新しいモード ('select' or 'tilemap')
      */
-    start() {
-        if (!this.isEnabled) {
+    onEditorModeChanged(mode) {
+        console.log(`[EditorPlugin] Mode changed to '${mode}'. Updating input systems.`);
+        
+        const scene = this.getActiveGameScene();
+        if (!scene) {
+            console.warn("[EditorPlugin] Could not find an active game scene to manage input for.");
             return;
         }
 
-        console.log("[EditorPlugin] Plugin started. Notifying UI to attach input listeners.");
-        
-        // UIコントローラーがセットされていれば、リスナー登録を指示
-        if (this.editorUI && typeof this.editorUI.startListeningToGameInput === 'function') {
-            this.editorUI.startListeningToGameInput();
+        if (mode === 'tilemap') {
+            // タイルマップモードの時は、Phaserのシーン入力を無効化
+            scene.input.enabled = false;
+            console.log(`[EditorPlugin] Phaser input for scene '${scene.scene.key}' DISABLED.`);
         } else {
-            // この警告は、万が一の連携ミスを発見するために役立ちます
-            console.warn("[EditorPlugin] EditorUI is not set or lacks startListeningToGameInput method at start().");
+            // 選択モードの時は、Phaserのシーン入力を有効化
+            scene.input.enabled = true;
+            console.log(`[EditorPlugin] Phaser input for scene '${scene.scene.key}' ENABLED.`);
         }
+    }
+
+    getActiveGameScene() { // ★ EditorUIから移動・統合
+        const scenes = this.pluginManager.game.scene.getScenes(true);
+        for (const scene of scenes) {
+            const key = scene.scene.key;
+            // UISceneやSystemSceneを除外する条件をより堅牢に
+            if (scene.sys.isActive() && key !== 'UIScene' && key !== 'SystemScene' && key !== 'PreloadScene') {
+                return scene;
+            }
+        }
+        return null;
     }
     setUI(editorUI) {
         this.editorUI = editorUI;

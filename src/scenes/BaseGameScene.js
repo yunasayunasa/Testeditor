@@ -648,6 +648,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
 
      
+
 /**
      * ★★★ 修正版 ★★★
      * 指定されたグリッド座標にタイルを配置し、エディタで編集可能にする
@@ -657,10 +658,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         
         const assetDefine = this.cache.json.get('asset_define');
         const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
-        if (!tilesetInfo) {
-            console.error(`[BaseGameScene] Tileset info for key '${tilesetKey}' not found.`);
-            return;
-        }
+        if (!tilesetInfo) return;
 
         const tileWidth = tilesetInfo.tileWidth;
         const tileHeight = tilesetInfo.tileHeight;
@@ -671,33 +669,21 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const tile = this.add.image(worldX, worldY, tilesetKey);
         
         const texture = this.textures.get(tilesetKey);
-        // ★★★ tilesPerRowの計算を整数に丸める
         const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
         const cropX = (tileIndex % tilesPerRow) * tileWidth;
         const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
         tile.setCrop(cropX, cropY, tileWidth, tileHeight);
 
-        // ▼▼▼【ここからが追加箇所】▼▼▼
-        // --------------------------------------------------------------------
         // --- エディタで編集可能にするための処理 ---
-        // 1. 一意な名前を付ける (座標を名前に含める)
-        tile.name = `tile_${tilesetKey}_${tileX}_${tileY}`;
-
-        // 2. EditorPluginに登録して、選択・移動できるようにする
+        tile.name = `tile_${tileX}_${tileY}`;
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(tile, this);
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        const key = `${tileX},${tileY}`;
-        this.tilemapData[key] = {
-            index: tileIndex,
-            tileset: tilesetKey
-        };
-
+        this.tilemapData[`${tileX},${tileY}`] = { index: tileIndex, tileset: tilesetKey };
         console.log(`Placed tile '${tile.name}' successfully.`);
+    
     }
 
     shutdown() {
