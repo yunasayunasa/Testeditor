@@ -1130,30 +1130,39 @@ createComponentSection() {
 
         gameObject.off('drag');
         gameObject.on('drag', (pointer, dragX, dragY) => {
+            
+            // ▼▼▼【ここからが修正の核心です】▼▼▼
+            // --- ポインターの移動差分を取得 ---
+            const dx = pointer.x - pointer.prevPosition.x;
+            const dy = pointer.y - pointer.prevPosition.y;
+
+            // --- カメラのズームを考慮して、移動量を補正 ---
+            const camera = this.getActiveGameCamera();
+            const zoom = camera ? camera.zoom : 1;
+            const moveX = dx / zoom;
+            const moveY = dy / zoom;
+
             // --- もし複数選択中なら、グループ全体を動かす ---
             if (this.selectedObjects && this.selectedObjects.length > 0) {
-                const dragDeltaX = dragX - gameObject.getData('dragStartX');
-                const dragDeltaY = dragY - gameObject.getData('dragStartY');
-
                 this.selectedObjects.forEach(obj => {
-                    // 各オブジェクトを、それぞれの開始位置からの差分で移動
-                    const newX = obj.getData('dragStartX') + dragDeltaX;
-                    const newY = obj.getData('dragStartY') + dragDeltaY;
-                    obj.setPosition(newX, newY);
+                    obj.x += moveX;
+                    obj.y += moveY;
                     if (obj.body) {
-                        Phaser.Physics.Matter.Matter.Body.setPosition(obj.body, { x: newX, y: newY });
+                        // ボディの位置も差分で更新する
+                        Phaser.Physics.Matter.Matter.Body.translate(obj.body, { x: moveX, y: moveY });
                     }
                 });
-
             } else {
-                // --- 単体選択中のドラッグ（これまで通り） ---
-                gameObject.setPosition(dragX, dragY);
+                // --- 単体選択中のドラッグ ---
+                gameObject.x += moveX;
+                gameObject.y += moveY;
                 if (gameObject.body) {
-                    Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
+                    Phaser.Physics.Matter.Matter.Body.translate(gameObject.body, { x: moveX, y: moveY });
                 }
             }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            // ドラッグ中は負荷が高いので、プロパティパネルの更新はしない
+            // ドラッグ中はUIを更新しない
         });
 
         gameObject.off('dragend');

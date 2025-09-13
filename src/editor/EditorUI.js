@@ -89,7 +89,7 @@ export default class EditorUI {
         document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
         document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
-        
+        replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
         // カメラコントロール
         this.setupPanButton(document.getElementById('camera-pan-up'), 0, -10);
         this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
