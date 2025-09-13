@@ -31,7 +31,21 @@ export default class EditorUI {
         this.populateAssetBrowser();
     }
  // in EditorUI.js
-    
+        /**
+     * ★★★ 新規メソッド ★★★
+     * 要素の既存イベントリスナーを全て破棄し、新しいリスナーを安全に登録する
+     * @param {HTMLElement} element - 対象のDOM要素
+     * @param {string} event - 'click'などのイベント名
+     * @param {function} handler - 登録するコールバック関数
+     * @returns {HTMLElement} 新しく生成された要素への参照
+     */
+    replaceListener(element, event, handler) {
+        if (!element) return null;
+        const newElement = element.cloneNode(true);
+        element.parentNode.replaceChild(newElement, element);
+        newElement.addEventListener(event, handler);
+        return newElement;
+    }
     // --- ヘルパーメソッド群 ---
 
     getDomElements() {
@@ -95,17 +109,22 @@ export default class EditorUI {
         this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
         this.setupPanButton(document.getElementById('camera-pan-left'), -10, 0);
         this.setupPanButton(document.getElementById('camera-pan-right'), 10, 0);
-        document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
-        document.getElementById('camera-zoom-out')?.addEventListener('click', () => this.plugin.zoomCamera(-0.2));
-        document.getElementById('camera-reset')?.addEventListener('click', () => this.plugin.resetCamera());
+         if (this.cameraControls) this.cameraControls.style.display = 'flex';
+        // ▼▼▼【呼び出し方を this.replaceListener に変更】▼▼▼
+        this.zoomInBtn = this.replaceListener(this.zoomInBtn, 'click', () => this.plugin.zoomCamera(0.2));
+        this.zoomOutBtn = this.replaceListener(this.zoomOutBtn, 'click', () => this.plugin.zoomCamera(-0.2));
+        this.resetBtn = this.replaceListener(this.resetBtn, 'click', () => this.plugin.resetCamera());
+
 document.getElementById('add-tile-button')?.addEventListener('click', () => this.onAddTileButtonClicked());
         // その他UI
         this.createPauseToggle();
         this.createHelpButton();
-           replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
+             // --- アセットブラウザボタン ---
+        this.replaceListener(document.getElementById('add-asset-button'), 'click', () => this.onAddButtonClicked());
+        this.replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
         
-        // ▼▼▼【この一行を追加してください】▼▼▼
-        replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
+        // --- ヘルプモーダル ---
+        this.replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
     }
     // --- モード切替と、それに応じたリスナーのON/OFF ---
 
@@ -730,8 +749,7 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
      */
     // in src/editor/EditorUI.js
 
-    createHelpButton() {
-        // ★ 移設先：新しいボタン用コンテナ
+   createHelpButton() {
         const buttonContainer = document.querySelector('#asset-browser .panel-header-buttons');
         
         if (buttonContainer) {
@@ -739,12 +757,12 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
             helpButton.innerText = '?';
             helpButton.title = 'Open Help Manual';
             
-            // ★ スタイルはCSSで管理するので、JavaScriptでの設定は不要
-
-            helpButton.addEventListener('click', () => this.openHelpModal());
-            
-            // ★ コンテナの末尾に追加
+            // ▼▼▼【ここも this.replaceListener を使うように修正】▼▼▼
+            // helpButton.addEventListener('click', () => this.openHelpModal());
+            // 上記の代わりに、以下のようにする
             buttonContainer.appendChild(helpButton);
+            this.replaceListener(helpButton, 'click', () => this.openHelpModal());
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         } else {
             console.warn('[EditorUI] Asset browser button container not found for help button placement.');
