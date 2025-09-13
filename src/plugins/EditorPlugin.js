@@ -916,32 +916,38 @@ createComponentSection() {
         // setDraggableは一度だけで良い
         scene.input.setDraggable(gameObject);
 
-        gameObject.off('pointerdown'); // 念のためクリア
+        // --- 既存リスナーをクリア ---
+        gameObject.off('pointerdown');
+        gameObject.off('drag');
+        gameObject.off('pointerover');
+        gameObject.off('pointerout');
 
+        // --- pointerdown (変更なし) ---
         gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            // ▼▼▼【ここが重要】▼▼▼
-            // タイルマップモードの時は、オブジェクト選択を無効化する
             if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
-                return; // 何もせず終了
+                return; 
             }
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-            // 選択モードの時だけ、以下の処理が実行される
             this.selectedObject = gameObject;
             this.updatePropertyPanel();
             event.stopPropagation();
         });
+        
+        // ▼▼▼【ここからが追加修正箇所】▼▼▼
+        // --------------------------------------------------------------------
+        // --- drag ---
+        gameObject.on('drag', (pointer, dragX, dragY) => {
+            // pointerdownと同様に、タイルマップモードではドラッグを無効化する
+            if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
+                return;
+            }
 
-       gameObject.on('drag', (pointer, dragX, dragY) => {
-            if (this.editorUI?.currentMode === 'select') {
-                gameObject.setPosition(dragX, dragY);
-                if (gameObject.body) {
-                    Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
-                }
-                if (this.selectedObject === gameObject) {
-                     // 連続更新を防ぐため、少し遅延させるか、軽量な更新処理を検討する
-                    this.updatePropertyPanel();
-                }
+            // 選択モードの時だけ、以下の処理が実行される
+            gameObject.setPosition(dragX, dragY);
+            if (gameObject.body) {
+                Phaser.Physics.Matter.Matter.Body.setPosition(gameObject.body, { x: dragX, y: dragY });
+            }
+            if (this.selectedObject === gameObject) {
+                this.updatePropertyPanel();
             }
         });
         

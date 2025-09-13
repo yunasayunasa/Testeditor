@@ -649,33 +649,37 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
      
 
+
 /**
-     * ★★★ 修正版 ★★★
-     * 指定されたグリッド座標にタイルを配置し、エディタで編集可能にする
+     * ★★★ 最終FIX版 ★★★
+     * タイル配置時に、正しいサイズの物理ボディを設定する（オプション）
      */
-    placeTile(tileX, tileY, tileIndex, tilesetKey) {
-        console.log(`[BaseGameScene] Attempting to place tile ${tileIndex} at (${tileX}, ${tileY})`);
-        
-        const assetDefine = this.cache.json.get('asset_define');
-        const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
-        if (!tilesetInfo) return;
-
-        const tileWidth = tilesetInfo.tileWidth;
-        const tileHeight = tilesetInfo.tileHeight;
-
-        const worldX = tileX * tileWidth + tileWidth / 2;
-        const worldY = tileY * tileHeight + tileHeight / 2;
-        
+    placeTile(tileX, tileY, tileIndex, tilesetKey, addPhysics = false) { // addPhysicsフラグを追加
+        // ... (前半のタイル情報取得、座標計算、イメージ追加、setCropは変更なし) ...
         const tile = this.add.image(worldX, worldY, tilesetKey);
-        
-        const texture = this.textures.get(tilesetKey);
-        const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
-        const cropX = (tileIndex % tilesPerRow) * tileWidth;
-        const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
-        tile.setCrop(cropX, cropY, tileWidth, tileHeight);
+        // ... (setCropの処理) ...
 
-        // --- エディタで編集可能にするための処理 ---
         tile.name = `tile_${tileX}_${tileY}`;
+        
+        // ▼▼▼【ここからが物理ボディの修正】▼▼▼
+        // --------------------------------------------------------------------
+        if (addPhysics) {
+            // 1. まずMatterワールドにGameObjectとして追加
+            this.matter.add.gameObject(tile);
+            
+            // 2. setBodyメソッドを使って、正しいサイズの長方形ボディを設定
+            tile.setBody({
+                type: 'rectangle',
+                width: tileWidth,  // 500ではなく、32を指定
+                height: tileHeight // 500ではなく、32を指定
+            }, {
+                isStatic: true // 地面タイルなどは静的にする
+            });
+            console.log(`[BaseGameScene] Physics body added to tile '${tile.name}' with size ${tileWidth}x${tileHeight}`);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(tile, this);
