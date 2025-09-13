@@ -656,20 +656,23 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * @param {Phaser.GameObjects.GameObject} sourceObject - 塗りつぶしの元となるブラシオブジェクト
      * @param {{x: number, y: number}} endPoint - クリックされた終点のワールド座標
      */
-    fillObjectRange(sourceObject, endPoint) {
-        if (!sourceObject || !sourceObject.scene) {
-            console.error('[BaseGameScene] Source object is invalid.');
-            return;
-        }
+   // in BaseGameScene.js
 
-        // --- 1. グリッドサイズの決定 ---
-        // ブラシオブジェクトの表示サイズをグリッドの1マスのサイズとする
+    /**
+     * ★★★ 最終完成版 ★★★
+     * 始点オブジェクトを元に、終点までの矩形範囲をオブジェクトで塗りつぶす。
+     * 生成されたオブジェクトは一つのコンテナにまとめて、操作しやすくする。
+     */
+    fillObjectRange(sourceObject, endPoint) {
+        if (!sourceObject || !sourceObject.scene) return;
+
+        // --- 1. グリッドサイズと始点グリッド座標を決定 ---
         const gridWidth = sourceObject.displayWidth;
         const gridHeight = sourceObject.displayHeight;
-
-        // --- 2. 始点と終点のグリッド座標を計算 ---
         const startGridX = Math.round(sourceObject.x / gridWidth);
         const startGridY = Math.round(sourceObject.y / gridHeight);
+
+        // --- 2. 終点グリッド座標を計算 ---
         const endGridX = Math.round(endPoint.x / gridWidth);
         const endGridY = Math.round(endPoint.y / gridHeight);
 
@@ -679,36 +682,65 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const fromY = Math.min(startGridY, endGridY);
         const toY = Math.max(startGridY, endGridY);
 
-        console.log(`[BaseGameScene] Filling range from grid (${fromX}, ${fromY}) to (${toX}, ${toY})`);
-
         // --- 4. 複製元のレイアウト情報を作成 ---
-        // sourceObjectから、新しいオブジェクトを作るために必要な情報を抽出する
         const sourceLayout = this.extractLayoutFromObject(sourceObject);
         
-        // --- 5. 矩形範囲をループして、オブジェクトを配置 ---
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- 5. 新しいオブジェクトをまとめるためのコンテナを作成 ---
+        // コンテナの初期位置は(0,0)にしておく
+        const newContainer = this.add.container(0, 0);
+        const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
+        newContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
+        newContainer.setData('isFillGroup', true); // グループであることを示すフラグ
+
+        // --- 6. 矩形範囲をループして、オブジェクトを「コンテナの中に」配置 ---
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
                 
                 // 新しいオブジェクト用のレイアウトを作成
-                const newLayout = { ...sourceLayout }; // 基本情報をコピー
+                const newLayout = { ...sourceLayout };
                 
-                // 新しい位置と名前を設定
+                // ★★★ 座標計算の修正 ★★★
+                // グリッド座標からワールド座標を計算し、それをレイアウトに設定
                 newLayout.x = gx * gridWidth;
                 newLayout.y = gy * gridHeight;
-                const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-                newLayout.name = `${sourceLayout.name}_${gx}_${gy}_${uniqueId}`;
                 
-                // 新しいオブジェクトを生成してシーンに追加
-                const newGameObject = this.createObjectFromLayout(newLayout);
-                if (newGameObject) {
-                    this.applyProperties(newGameObject, newLayout);
+                // ★ applyProperties は使わず、手動でオブジェクトを生成・設定する
+                const newChildObject = this.createObjectFromLayout(newLayout);
+                if (newChildObject) {
+                    // 基本的なプロパティを設定
+                    newChildObject.setPosition(newLayout.x, newLayout.y);
+                    newChildObject.setScale(newLayout.scaleX, newLayout.scaleY);
+                    newChildObject.setAngle(newLayout.angle);
+                    // ... (他のプロパティも必要なら設定) ...
+                    
+                    // ★ 作成したオブジェクトを、シーンではなくコンテナに追加
+                    newContainer.add(newChildObject);
                 }
             }
         }
+        
+        // --- 7. コンテナ全体のサイズとインタラクティブを設定 ---
+        // コンテナのサイズは、中身のオブジェクトのバウンディングボックスから計算
+        const bounds = newContainer.getBounds();
+        newContainer.setSize(bounds.width, bounds.height);
+        
+        // ★ コンテナ自体をエディタで編集可能にする
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            editor.makeEditable(newContainer, this);
+        }
 
-        // --- 6. ブラシとして使った始点オブジェクトを破棄 ---
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 8. ブラシとして使った始点オブジェクトを破棄 ---
         sourceObject.destroy();
     }
+
+    // extractLayoutFromObject メソッドは変更の必要はありません。
     
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
