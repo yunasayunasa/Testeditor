@@ -596,25 +596,45 @@ rebuildPhysicsBodyOnScaleChange() {
         row.append(label, input);
         this.editorPropsContainer.appendChild(row);
     }
+ /**
+     * ★★★ 最終FIX版 ★★★
+     * 物理ボディを付与するボタンを生成する。
+     * 現在のスケールを考慮した正しいサイズでボディを作成する。
+     */
+    createAddBodyButton() {
+        const addButton = document.createElement('button');
+        addButton.innerText = '物理ボディ 付与';
+        addButton.onclick = () => {
+            const target = this.selectedObject;
+            if (target && !target.body) { // 二重付与を防止
 
-    /**
- * 物理ボディを付与するボタンを生成する。
- */
-/**
- * 物理ボディを付与するボタンを生成する。
- */
-createAddBodyButton() {
-    const addButton = document.createElement('button');
-    addButton.innerText = '物理ボディ 付与';
-    addButton.onclick = () => {
-        if (this.selectedObject && !this.selectedObject.body) { // 二重付与を防止
-            this.selectedObject.scene.matter.add.gameObject(this.selectedObject, { isStatic: false });
-            this.selectedObject.setData('shape', 'rectangle');
-            setTimeout(() => this.updatePropertyPanel(), 0);
-        }
-    };
-    this.editorPropsContainer.appendChild(addButton);
-}
+                // ▼▼▼【ここが核心の修正です】▼▼▼
+                // --------------------------------------------------------------------
+                // --- 1. 見た目上の正しい幅と高さを計算 ---
+                // テクスチャ本来の幅 x 現在のスケール値
+                const bodyWidth = target.width * target.scaleX;
+                const bodyHeight = target.height * target.scaleY;
+                
+                // --- 2. 計算したサイズで物理ボディをシーンに追加 ---
+                // matter.add.gameObject を使うのが最も確実
+                target.scene.matter.add.gameObject(target, {
+                    shape: {
+                        type: 'rectangle',
+                        width: bodyWidth,
+                        height: bodyHeight
+                    }
+                });
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+                target.setData('shape', 'rectangle');
+                
+                // UIを即時更新して、物理プロパティパネルを表示させる
+                this.updatePropertyPanel();
+            }
+        };
+        this.editorPropsContainer.appendChild(addButton);
+    }
 
   
   
