@@ -2,7 +2,7 @@
 
 import ConfigManager from '../core/ConfigManager.js';
 import StateManager from '../core/StateManager.js';
-
+import { uiRegistry } from '../ui/index.js'; // ★ UI定義をインポート
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PreloadScene', active: true });
