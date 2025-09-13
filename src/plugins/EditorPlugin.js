@@ -1258,7 +1258,7 @@ if (gameObject.body) {
             return;
         }
 
-      //  this.pluginManager.game.input.enabled = false;
+        this.pluginManager.game.input.enabled = false;
         const contentArea = document.getElementById('animation-editor-content');
         contentArea.innerHTML = '';
 
@@ -1289,7 +1289,7 @@ if (gameObject.body) {
     closeAnimationEditor() {
         if (!this.animEditorOverlay) return;
         this.animEditorOverlay.style.display = 'none';
-      //  this.pluginManager.game.input.enabled = true;
+        this.pluginManager.game.input.enabled = true;
     }
 
     createAnimationCreationForm() {
@@ -1440,7 +1440,7 @@ if (gameObject.body) {
             alert('先にイベントを編集するオブジェクトを選択してください。');
             return;
         }
-     //   this.pluginManager.game.input.enabled = false;
+        this.pluginManager.game.input.enabled = false;
         const titleElement = document.getElementById('event-editor-title');
         if (titleElement) titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
         
@@ -1453,7 +1453,7 @@ if (gameObject.body) {
     closeEventEditor() {
         if (!this.eventEditorOverlay) return;
         this.eventEditorOverlay.style.display = 'none';
-      //  this.pluginManager.game.input.enabled = true;
+        this.pluginManager.game.input.enabled = true;
     }
     
     /**
