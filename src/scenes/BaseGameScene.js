@@ -718,7 +718,10 @@ evaluateConditionAndRun(gameObject, eventData, context) {
                 
                 let newChildObject = this.createObjectFromLayout({...sourceLayout, x: relativeX, y: relativeY});
                 this.applyProperties(newChildObject, {...sourceLayout, x: relativeX, y: relativeY});
-                
+                  // ▼▼▼【これが最後の、たった一行の修正です】▼▼▼
+                // 子オブジェクトのインタラクティブ（入力）を無効化する
+                newChildObject.disableInteractive();
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 // ★ 作成したオブジェクトを、親コンテナに「追加」する
                 parentContainer.add(newChildObject);
             }
