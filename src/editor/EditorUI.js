@@ -98,7 +98,7 @@ export default class EditorUI {
         document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
         document.getElementById('camera-zoom-out')?.addEventListener('click', () => this.plugin.zoomCamera(-0.2));
         document.getElementById('camera-reset')?.addEventListener('click', () => this.plugin.resetCamera());
-
+document.getElementById('add-tile-button')?.addEventListener('click', () => this.onAddTileButtonClicked());
         // その他UI
         this.createPauseToggle();
         this.createHelpButton();
@@ -154,7 +154,32 @@ export default class EditorUI {
         this.game.input.on('pointermove', this.onPointerMove, this);
         this.game.input.on('pointerdown', this.onPointerDown, this);
     }
-
+ // ▼▼▼ この新しいメソッドをクラス内に追加 ▼▼▼
+    /**
+     * 「Add Selected Tile」ボタンがクリックされたときの処理
+     */
+    onAddTileButtonClicked() {
+        const scene = this.getActiveGameScene();
+        
+        // ガード節: シーンが存在しない、またはタイルが選択されていない場合は何もしない
+        if (!scene || this.selectedTileIndex < 0 || !this.currentTileset) {
+            console.warn("[EditorUI] Cannot add tile: No active scene, tile index, or tileset selected.");
+            return;
+        }
+        
+        // BaseGameSceneに実装する新しいメソッドを呼び出す
+        if (typeof scene.addTileAsObject === 'function') {
+            const newTileObject = scene.addTileAsObject(this.selectedTileIndex, this.currentTileset.key);
+            
+            // 追加された新しいタイルオブジェクトをすぐに選択状態にする
+            if (newTileObject && this.plugin) {
+                this.plugin.selectedObject = newTileObject;
+                this.plugin.updatePropertyPanel();
+            }
+        } else {
+            console.error(`[EditorUI] The active scene '${scene.scene.key}' does not have the 'addTileAsObject' method.`);
+        }
+    }
     /**
      * ★★★ 新規メソッド ★★★
      * Phaserのポインターイベントを捌くための統合ハンドラ

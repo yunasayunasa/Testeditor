@@ -646,49 +646,57 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         return newGameObject;
     }
 
-
-     
-
-
-/**
-     * ★★★ 最終FIX版 ★★★
-     * タイル配置時に、正しいサイズの物理ボディを設定する（オプション）
+  /**
+     * 指定されたタイルを、単一の編集可能なGameObjectとしてシーンに追加する。
+     * @param {number} tileIndex - 配置するタイルのインデックス
+     * @param {string} tilesetKey - 使用するタイルセットのアセットキー
+     * @returns {Phaser.GameObjects.Image | null} 生成されたタイルオブジェクト
      */
-    placeTile(tileX, tileY, tileIndex, tilesetKey, addPhysics = false) { // addPhysicsフラグを追加
-        // ... (前半のタイル情報取得、座標計算、イメージ追加、setCropは変更なし) ...
-        const tile = this.add.image(worldX, worldY, tilesetKey);
-        // ... (setCropの処理) ...
+    addTileAsObject(tileIndex, tilesetKey) {
+        console.log(`[BaseGameScene] Adding tile index ${tileIndex} from ${tilesetKey} as an object.`);
 
-        tile.name = `tile_${tileX}_${tileY}`;
-        
-        // ▼▼▼【ここからが物理ボディの修正】▼▼▼
-        // --------------------------------------------------------------------
-        if (addPhysics) {
-            // 1. まずMatterワールドにGameObjectとして追加
-            this.matter.add.gameObject(tile);
-            
-            // 2. setBodyメソッドを使って、正しいサイズの長方形ボディを設定
-            tile.setBody({
-                type: 'rectangle',
-                width: tileWidth,  // 500ではなく、32を指定
-                height: tileHeight // 500ではなく、32を指定
-            }, {
-                isStatic: true // 地面タイルなどは静的にする
-            });
-            console.log(`[BaseGameScene] Physics body added to tile '${tile.name}' with size ${tileWidth}x${tileHeight}`);
+        const assetDefine = this.cache.json.get('asset_define');
+        const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
+        if (!tilesetInfo) {
+            console.error(`[BaseGameScene] Tileset info for key '${tilesetKey}' not found.`);
+            return null;
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        const tileWidth = tilesetInfo.tileWidth;
+        const tileHeight = tilesetInfo.tileHeight;
+
+        // シーンの中央座標を計算
+        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+
+        // 1. Imageオブジェクトを生成
+        const tileObject = this.add.image(centerX, centerY, tilesetKey);
+        
+        // 2. setCropを使って正しいタイル画像に切り抜く
+        const texture = this.textures.get(tilesetKey);
+        const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
+        const cropX = (tileIndex % tilesPerRow) * tileWidth;
+        const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
+        tileObject.setCrop(cropX, cropY, tileWidth, tileHeight);
+
+        // 3. 表示サイズを実際のタイルサイズに合わせる (重要！)
+        tileObject.setDisplaySize(tileWidth, tileHeight);
+
+        // 4. 一意な名前を付けて、エディタで編集可能にする
+        const uniqueId = Phaser.Math.RND.uuid(); // ランダムなIDを生成
+        tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
+        tileObject.setData('isTileObject', true); // これがタイルから作られたオブジェクトであることを示すフラグ
+        tileObject.setData('tileIndex', tileIndex);
+        tileObject.setData('tilesetKey', tilesetKey);
 
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
-            editor.makeEditable(tile, this);
+            editor.makeEditable(tileObject, this);
         }
-        
-        this.tilemapData[`${tileX},${tileY}`] = { index: tileIndex, tileset: tilesetKey };
-        console.log(`Placed tile '${tile.name}' successfully.`);
-    
+
+        return tileObject;
     }
+
 
     shutdown() {
         super.shutdown();
