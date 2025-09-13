@@ -22,8 +22,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         // UI更新処理の無限再帰呼び出しを防ぐためのフラグ
         this._isUpdatingPanel = false;
-
-        
     }
 
     init() {
@@ -48,9 +46,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
-// Phaser入力イベント
-        this.game.input.on('pointermove', this.handlePointerMove, this);
-        this.game.input.on('pointerdown', this.handlePointerDown, this);
+
         console.warn("[EditorPlugin] Debug mode activated.");
     }
      
@@ -1573,43 +1569,5 @@ if (gameObject.body) {
             this.populateEventEditor(); // ★ UIを再描画して変更を確定させる
         }
     }
-      handlePointerMove(pointer) {
-        // ★ EditorUIのモードを参照して、処理を分岐
-        if (!this.editorUI || this.editorUI.currentEditorMode !== 'tilemap') return;
-        
-        const tileMarker = this.editorUI.tileMarker;
-        const currentTileset = this.editorUI.currentTileset;
-        if (!tileMarker || !currentTileset) return;
-        
-        const scene = this.getActiveGameScene();
-        if (!scene) return;
-        
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const tileWidth = currentTileset.tileWidth;
-        const tileHeight = currentTileset.tileHeight;
-        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
-        
-        tileMarker.setPosition(snappedX, snappedY);
-    }
-
-    handlePointerDown(pointer) {
-        // ★ EditorUIのモードを参照して、処理を分岐
-        if (!this.editorUI || this.editorUI.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) return;
-        
-        const currentTileset = this.editorUI.currentTileset;
-        const selectedTileIndex = this.editorUI.selectedTileIndex;
-        if (!currentTileset) return;
-        
-        const scene = this.getActiveGameScene();
-        if (!scene) return;
-
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const tileX = Math.floor(worldPoint.x / currentTileset.tileWidth);
-        const tileY = Math.floor(worldPoint.y / currentTileset.tileHeight);
-        
-        if (typeof scene.placeTile === 'function') {
-            scene.placeTile(tileX, tileY, selectedTileIndex, currentTileset.key);
-        }
-    }
+    
 }

@@ -2,7 +2,7 @@
 
 import ConfigManager from '../core/ConfigManager.js';
 import StateManager from '../core/StateManager.js';
-import { uiRegistry } from '../ui/index.js'; // ★ UI定義をインポート
+
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PreloadScene', active: true });
@@ -31,7 +31,7 @@ export default class PreloadScene extends Phaser.Scene {
         // --- 3. コアマネージャーの初期化 ---
         this.registry.set('configManager', new ConfigManager());
         this.registry.set('stateManager', new StateManager());
-this.registry.set('uiRegistry', uiRegistry); // ★ uiRegistryを登録
+
         const assetDefine = this.cache.json.get('asset_define');
         
         // --- 4. asset_define.json に基づいてロードキューを構築 ---
