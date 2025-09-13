@@ -652,13 +652,17 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
     // in BaseGameScene.js
 
+   // in BaseGameScene.js
+
     /**
-     * ★★★ 究極の最終FIX版 ★★★
-     * this.matter.add.sprite() を使い、物理と見た目を完璧に同期させる。
+     * ★★★ 原点回帰・最終FIX版 ★★★
+     * PreloadSceneでspritesheetとして正しくロードされたタイルセットを、
+     * 通常のImageオブジェクトとして配置し、正しい物理ボディを与える。
      */
     addTileAsObject(tileIndex, tilesetKey) {
-        console.log(`[BaseGameScene] Ultimate Fix: Adding tile index ${tileIndex}.`);
+        console.log(`[BaseGameScene] Final Fix (Preload OK): Adding tile index ${tileIndex}.`);
 
+        // asset_define.json からタイルサイズを取得
         const assetDefine = this.cache.json.get('asset_define');
         const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
         if (!tilesetInfo) return null;
@@ -666,16 +670,26 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const tileWidth = tilesetInfo.tileWidth;
         const tileHeight = tilesetInfo.tileHeight;
 
+        // シーン中央に配置
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
         
-        // --- 1. this.matter.add.sprite() を使ってオブジェクトを生成 ---
-        // このメソッドは、物理ボディを持つ特別なSpriteオブジェクトを返す。
-        // 第4引数にフレーム番号を直接指定できる。
-        const tileObject = this.matter.add.sprite(centerX, centerY, tilesetKey, tileIndex, {
+        // --- 1. this.add.image を使い、フレーム番号(tileIndex)を指定してオブジェクトを生成 ---
+        // PreloadSceneでspritesheetとしてロード済みなので、PhaserはこのtileIndexを正しく解釈し、
+        // 32x32の正しい見た目のタイルを生成してくれる。
+        const tileObject = this.add.image(centerX, centerY, tilesetKey, tileIndex);
+        
+        // --- 2. 名前やデータを設定 ---
+        const uniqueId = Phaser.Math.RND.uuid();
+        tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
+        tileObject.setData('isTileObject', true);
+        tileObject.setData('tileIndex', tileIndex);
+        tileObject.setData('tilesetKey', tilesetKey);
+
+        // --- 3. 物理ボディを追加・設定 ---
+        // この時点で tileObject の表示サイズは既に 32x32 になっているので、
+        // 見た目通りの正しいサイズの物理ボディが生成される。
+        this.matter.add.gameObject(tileObject, {
             shape: {
                 type: 'rectangle',
                 width: tileWidth,
@@ -683,23 +697,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         });
 
-        // --- 2. 表示サイズをタイルサイズに合わせる ---
-        // matter.spriteはテクスチャ全体のサイズで表示されることがあるため、明示的に指定する。
-        tileObject.setDisplaySize(tileWidth, tileHeight);
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // --- 3. 名前やデータを設定し、編集可能にする ---
-        const uniqueId = Phaser.Math.RND.uuid();
-        tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
-        tileObject.setData('isTileObject', true);
-        tileObject.setData('tileIndex', tileIndex);
-        tileObject.setData('tilesetKey', tilesetKey);
-        
-        // ★ setCropは不要。matter.spriteがフレーム番号(tileIndex)を元に自動でやってくれる。
-        // ★ 物理ボディは生成時に完璧に設定済み。
-
+        // --- 4. 編集可能にする ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(tileObject, this);
