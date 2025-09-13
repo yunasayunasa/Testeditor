@@ -440,63 +440,71 @@ export default class EditorUI {
         this.updateTileMarkerFrame();
     }
 
+    // in EditorUI.js
+
+// onTilesetClick と updateTilesetHighlight は、整数インデックスが計算できているので、
+// Ver.4 のままで問題ありません。ハイライトのズレは、これから修正する handlePointerMove で解決します。
+
     /**
-     * ★★★ 最終修正版 ★★★
-     * handlePointerDown: ガード節を一時的にコメントアウトして、クリックが通るようにする
+     * ★★★ 最終解決版 Ver.2 ★★★
+     * handlePointerDown: Phaserのポインター座標を直接利用する
      */
     handlePointerDown(pointer) {
-        /*
-        // ▼▼▼【一時的にこのガード節を無効化】▼▼▼
+        // UI上のクリックをガードする処理は必須
         const clickedElement = pointer.event.target;
         if (clickedElement.closest('#editor-sidebar') || clickedElement.closest('#overlay-controls') || clickedElement.closest('#bottom-panel')) {
             return;
         }
-        */
 
         if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) {
             return;
         }
         
-        console.log(`[EditorUI] Canvas clicked. Placing tile...`);
-
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
 
+        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 複雑な計算をすべてやめ、Phaserが提供するワールド座標を直接使う ---
+        // pointer.worldX と pointer.worldY は、カメラのスクロールとズームを
+        // すでに考慮済みの、正確なワールド座標です。
+        const worldX = pointer.worldX;
+        const worldY = pointer.worldY;
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         const tileWidth = this.currentTileset.tileWidth;
         const tileHeight = this.currentTileset.tileHeight;
-        
-        const canvasRect = this.game.canvas.getBoundingClientRect();
-        const coords = this.getClientCoordinates(pointer.event);
-        const canvasX = coords.x - canvasRect.left;
-        const canvasY = coords.y - canvasRect.top;
-        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
 
-        const tileX = Math.floor(worldPoint.x / tileWidth);
-        const tileY = Math.floor(worldPoint.y / tileHeight);
+        const tileX = Math.floor(worldX / tileWidth);
+        const tileY = Math.floor(worldY / tileHeight);
         
+        console.log(`[EditorUI] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY}) from world coords (${worldX}, ${worldY})`);
+
         if (typeof scene.placeTile === 'function') {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
         }
     }
-    
-    // handlePointerMoveも同様に修正
+
+    /**
+     * ★★★ 最終解決版 Ver.2 ★★★
+     * handlePointerMove: こちらも同様に、Phaserの座標を直接利用する
+     */
     handlePointerMove(pointer) {
         if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
         const scene = this.getActiveGameScene();
-        if (!scene || !this.currentTileset) return; // currentTilesetのチェックを追加
+        if (!scene || !this.currentTileset) return;
         
-        const canvasRect = this.game.canvas.getBoundingClientRect();
-        const coords = this.getClientCoordinates(pointer.event); 
-        const canvasX = coords.x - canvasRect.left;
-        const canvasY = coords.y - canvasRect.top;
-        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
+        // handlePointerDown と全く同じロジックでワールド座標を取得
+        const worldX = pointer.worldX;
+        const worldY = pointer.worldY;
 
-        // --- タイルサイズを asset_define から取得 ---
         const tileWidth = this.currentTileset.tileWidth;
         const tileHeight = this.currentTileset.tileHeight;
 
-        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
+        const snappedX = Math.floor(worldX / tileWidth) * tileWidth + tileWidth / 2;
+        const snappedY = Math.floor(worldY / tileHeight) * tileHeight + tileHeight / 2;
+        
         this.tileMarker.setPosition(snappedX, snappedY);
     }
        /**
