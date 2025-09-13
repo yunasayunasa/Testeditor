@@ -151,8 +151,8 @@ export default class EditorUI {
 
         // --- 新しいリスナーを登録 ---
         console.log("[EditorUI] Attaching Phaser global input listeners.");
-        this.game.input.on('pointermove', this.onPointerMove, this);
-        this.game.input.on('pointerdown', this.onPointerDown, this);
+        this.game.input.topOnly_on('pointermove', this.onPointerMove, this);
+        this.game.input.topOnly_on('pointerdown', this.onPointerDown, this);
     }
 
     /**
@@ -180,25 +180,25 @@ export default class EditorUI {
     }
     
     /**
-     * ★★★ 新規メソッド ★★★
-     * Phaserのポインターイベントを捌くための統合ハンドラ
-     * @param {Phaser.Input.Pointer} pointer 
+     * ★★★ 最終FIX ★★★
+     * onPointerDown: UI上でのクリック判定をより厳密にする
      */
     onPointerDown(pointer) {
-        // UI上でのクリックなら、Phaser側で処理させない
-        if (pointer.event.target.closest('#editor-sidebar') || 
-            pointer.event.target.closest('#overlay-controls') || 
-            pointer.event.target.closest('#bottom-panel')) {
+        // --- ガード節1: UI要素の上であれば、タイル配置もオブジェクト選択も行わない ---
+        if (pointer.event.target.closest('#editor-root')) {
             return;
         }
 
+        // --- ガード節2: タイルマップモードでなければ、タイル配置は行わない ---
         if (this.currentEditorMode !== 'tilemap') {
             return;
         }
         
+        // これ以降は、「タイルマップモード」で「ゲーム画面」がクリックされた場合のみ実行される
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
 
+        // ... (以降の座標計算とplaceTile呼び出しは変更なし) ...
         const worldX = pointer.worldX;
         const worldY = pointer.worldY;
 
@@ -208,12 +208,13 @@ export default class EditorUI {
         const tileX = Math.floor(worldX / tileWidth);
         const tileY = Math.floor(worldY / tileHeight);
         
-        console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
+        console.log(`[EditorUI | High Priority] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
 
         if (typeof scene.placeTile === 'function') {
-            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
+            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
         }
     }
+
 
    // --- タイルマップ専用リスナーの管理 ---
     
