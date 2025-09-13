@@ -666,77 +666,92 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      */
    // in BaseGameScene.js
 
-    /**
-     * ★★★ 究極の最終FIX版・改3 ★★★
-     * 透明なZoneを親として、その中に子オブジェクトを配置する。
-     */
-    // in BaseGameScene.js
+   // in BaseGameScene.js
 
     /**
-     * ★★★ 究極の最終FIX版・改4 (変数定義修正) ★★★
-     * 透明なZoneを親として、その中に子オブジェクトを配置する。
+     * ★★★ 究極の最終FIX版・改5 ★★★
+     * Containerに直接子オブジェクトを追加し、原点を補正する。
      */
     fillObjectRange(sourceObject, endPoint) {
         if (!sourceObject || !sourceObject.scene) return;
 
-        // --- 1. グリッドサイズと始点/終点グリッド座標を計算 ---
+        // --- 1. グリッドとループ範囲の計算 (変更なし) ---
         const gridWidth = sourceObject.displayWidth;
         const gridHeight = sourceObject.displayHeight;
-        
-        // ▼▼▼【不足していた変数定義】▼▼▼
         const startGridX = Math.round(sourceObject.x / gridWidth);
         const startGridY = Math.round(sourceObject.y / gridHeight);
         const endGridX = Math.round(endPoint.x / gridWidth);
         const endGridY = Math.round(endPoint.y / gridHeight);
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // --- 2. 複製元レイアウトの作成 ---
-        const sourceLayout = this.extractLayoutFromObject(sourceObject);
-        
-        // --- 3. 描画範囲全体のバウンディングボックスを計算 ---
         const fromX = Math.min(startGridX, endGridX);
         const toX = Math.max(startGridX, endGridX);
         const fromY = Math.min(startGridY, endGridY);
         const toY = Math.max(startGridY, endGridY);
 
-        const containerWidth = (toX - fromX + 1) * gridWidth;
-        const containerHeight = (toY - fromY + 1) * gridHeight;
-        const containerCenterX = (fromX * gridWidth) + containerWidth / 2;
-        const containerCenterY = (fromY * gridHeight) + containerHeight / 2;
+        // --- 2. 複製元レイアウトの作成 (変更なし) ---
+        const sourceLayout = this.extractLayoutFromObject(sourceObject);
+        delete sourceLayout.physics; // 子オブジェクトは物理ボディを持たない
 
-        // --- 4. 「Zone」を親オブジェクトとして、範囲の中心に作成 ---
-        const parentZone = this.add.zone(containerCenterX, containerCenterY, containerWidth, containerHeight);
-        
-        // --- 5. Zoneに物理ボディを設定 ---
-        this.matter.add.gameObject(parentZone, {
-            shape: { type: 'rectangle', width: containerWidth, height: containerHeight }
-        });
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
 
-        // --- 6. 矩形範囲をループして、見た目用の「子オブジェクト」を配置 ---
+        // --- 3. コンテナを作成し、その「左上」のワールド座標に配置 ---
+        const containerX = fromX * gridWidth;
+        const containerY = fromY * gridHeight;
+        const newContainer = this.add.container(containerX, containerY);
+
+        // --- 4. 矩形範囲をループして、オブジェクトを「コンテナ内の相対座標」で配置 ---
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
-                const newLayout = { ...sourceLayout };
-                delete newLayout.physics; 
                 
-                const worldX = gx * gridWidth + gridWidth / 2;
-                const worldY = gy * gridHeight + gridHeight / 2;
-
-                const newChildObject = this.createObjectFromLayout(newLayout);
+                // コンテナの左上からの相対位置を計算
+                const relativeX = (gx * gridWidth) - containerX + (gridWidth / 2);
+                const relativeY = (gy * gridHeight) - containerY + (gridHeight / 2);
+                
+                // ★ createObjectFromLayout は使わず、直接シーンに追加する
+                let newChildObject;
+                if (sourceLayout.type === 'Text') {
+                    newChildObject = this.make.text({ style: sourceLayout.style }, false); // add: false でシーンに追加しない
+                    newChildObject.setText(sourceLayout.text);
+                } else {
+                    newChildObject = this.make.image({ key: sourceLayout.texture }, false);
+                }
+                
                 if (newChildObject) {
-                    this.applyProperties(newChildObject, { ...newLayout, x: worldX, y: worldY });
-                    if (newChildObject.input) newChildObject.input.enabled = false;
+                    newChildObject.setPosition(relativeX, relativeY);
+                    newChildObject.setScale(sourceLayout.scaleX, sourceLayout.scaleY);
+                    
+                    // ★ 作成したオブジェクトを、シーンではなくコンテナに「追加」する
+                    newContainer.add(newChildObject);
                 }
             }
         }
         
-        // --- 7. 親であるZoneをエディタで編集可能にする ---
+        // --- 5. コンテナ全体のサイズと当たり判定エリアを設定 ---
+        const containerWidth = (toX - fromX + 1) * gridWidth;
+        const containerHeight = (toY - fromY + 1) * gridHeight;
+        newContainer.setSize(containerWidth, containerHeight);
+        newContainer.setInteractive(); // ★ シンプルにインタラクティブ化
+
+        // --- 6. コンテナに物理ボディを設定 ---
+        // ★ setBody ではなく、コンテナ用の setExistingBody を使う
+        const body = this.matter.add.rectangle(
+            containerX + containerWidth / 2, // ボディの中心X
+            containerY + containerHeight / 2, // ボディの中心Y
+            containerWidth, 
+            containerHeight
+        );
+        newContainer.setExistingBody(body);
+        
+        // --- 7. コンテナをエディタで編集可能にする ---
         const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-        parentZone.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
+        newContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
-            parentZone.setInteractive(); 
-            editor.makeEditable(parentZone, this);
+            editor.makeEditable(newContainer, this);
         }
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         // --- 8. ブラシを破棄 ---
         sourceObject.destroy();
