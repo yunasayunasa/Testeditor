@@ -470,20 +470,57 @@ console.log('%c[EditorPlugin] Reconstructing with layout:', 'color: cyan;', layo
         this.editorPropsContainer.appendChild(row);
     }
 
+   // in EditorPlugin.js
+
+    /**
+     * ★★★ 拡張版 ★★★
+     * グループの入力欄に、「グループから離脱/選択オブジェクトをグループ化」ボタンを追加する
+     */
     createGroupInput() {
+        const target = this.selectedObject;
+        const currentGroup = target.getData('group') || '';
+        
         const row = document.createElement('div');
+        row.style.flexWrap = 'wrap'; // ボタンがはみ出たら改行
+
         const label = document.createElement('label');
         label.innerText = 'Group: ';
+
+        // --- グループID入力欄 ---
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'e.g., player, floor';
-        input.value = this.selectedObject.getData('group') || '';
+        input.placeholder = 'e.g., floor, enemies';
+        input.value = currentGroup;
         input.addEventListener('input', (e) => {
             if (this.selectedObject) {
                 this.selectedObject.setData('group', e.target.value);
             }
         });
+
         row.append(label, input);
+
+        // --- グループ操作ボタン ---
+        // 1. もしオブジェクトがグループに所属しているなら、「離脱」ボタンを表示
+        if (currentGroup) {
+            const leaveButton = document.createElement('button');
+            leaveButton.innerText = 'Leave Group';
+            leaveButton.title = `Leave group '${currentGroup}'`;
+            leaveButton.style.flexGrow = '1'; // 幅を合わせる
+            leaveButton.onclick = () => {
+                if (confirm(`'${target.name}'をグループ'${currentGroup}'から離脱させますか？`)) {
+                    target.setData('group', ''); // groupデータを空にするだけ
+                    this.updatePropertyPanel(); // UIを更新
+                }
+            };
+            row.appendChild(leaveButton);
+        }
+
+        // ★ 将来の機能：複数選択したオブジェクトを新しいグループにするボタンもここに追加できる
+        // if (this.selectedObjects.length > 1) {
+        //     const groupButton = document.createElement('button');
+        //     // ...
+        // }
+
         this.editorPropsContainer.appendChild(row);
     }
 
@@ -1033,15 +1070,51 @@ createComponentSection() {
         gameObject.off('pointerover');
         gameObject.off('pointerout');
 
-        // --- pointerdown (変更なし) ---
-        gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
-                return; 
+        
+        // ▼▼▼【ここからがダブルタップ検知のロジックです】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- タップ情報を記録するための変数をGameObjectに持たせる ---
+        gameObject.setData('lastTap', 0);
+
+        gameObject.on('pointerdown', (pointer) => {
+            const now = Date.now();
+            const lastTap = gameObject.getData('lastTap');
+            const diff = now - lastTap;
+            
+            gameObject.setData('lastTap', now);
+
+            // --- 300ミリ秒以内に再度タップされたら「ダブルタップ」とみなす ---
+            if (diff < 300) {
+                // ダブルタップの処理
+                const groupId = gameObject.getData('group');
+                if (groupId) {
+                    // グループIDがあれば、グループ選択を実行
+                    console.log(`[EditorPlugin] Double tap detected. Selecting group: ${groupId}`);
+                    const sceneObjects = this.editableObjects.get(scene.scene.key) || [];
+                    const groupObjects = Array.from(sceneObjects).filter(obj => obj.getData('group') === groupId);
+                    this.selectMultipleObjects(groupObjects);
+                } else {
+                    // グループがなければ、通常の単体選択として扱う
+                    this.selectSingleObject(gameObject);
+                }
+
+            } else {
+                // シングルタップの処理
+                // （少し待ってから選択を実行することで、ダブルタップと区別する）
+                setTimeout(() => {
+                    // 300ミリ秒後に、まだタップ情報が更新されていなければ（つまり、ダブルタップの一部でなければ）
+                    // シングルタップとして確定する
+                    if (gameObject.getData('lastTap') === now) {
+                        this.selectSingleObject(gameObject);
+                    }
+                }, 300);
             }
-            this.selectedObject = gameObject;
-            this.updatePropertyPanel();
-            event.stopPropagation();
         });
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         
         // ▼▼▼【ここからが追加修正箇所】▼▼▼
         // --------------------------------------------------------------------
@@ -1079,7 +1152,60 @@ createComponentSection() {
         });
     }
     
-    
+     /**
+     * ★★★ 修正版 ★★★
+     * 単体選択のロジック。
+     * 複数選択状態を解除する処理を追加。
+     */
+    selectSingleObject(gameObject) {
+        // もし複数選択中だったら、それを解除する
+        this.deselectMultipleObjects();
+
+        this.selectedObject = gameObject;
+        // ★ オブジェクトに選択中であることを示す視覚的なフィードバックを追加すると、より良くなる
+        // 例: gameObject.setTint(0x00ff00);
+        this.updatePropertyPanel();
+    }
+
+    /**
+     * ★★★ 修正・拡張版 ★★★
+     * グループ選択のロジック。
+     * 複数選択状態を管理する。
+     */
+    selectMultipleObjects(gameObjects) {
+        // 既存の選択を解除
+        this.deselectMultipleObjects();
+        
+        // 新しく複数選択状態を設定
+        this.selectedObjects = gameObjects; // ★ 複数形
+        this.selectedObject = null; // ★ 単数形はnullに
+        
+        console.log(`${gameObjects.length} objects selected as a group.`);
+        
+        // ★ 複数選択されたオブジェクトすべてに、選択中であることを示す
+        gameObjects.forEach(obj => {
+            if(typeof obj.setTint === 'function') obj.setTint(0x00ffff); // 水色など
+        });
+        
+        // ★★★ 将来的に、複数オブジェクトのプロパティを同時に編集するUIをここに実装する ★★★
+        // 今はとりあえず、プロパティパネルを「複数選択中」と表示するだけにする
+        this.editorTitle.innerText = `${gameObjects.length} objects selected`;
+        this.editorPropsContainer.innerHTML = '<p>Multi-selection editing is not yet implemented.</p>';
+        // ここに「グループ全体を削除」ボタンなどを追加できる
+    }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * すべての複数選択を解除する
+     */
+    deselectMultipleObjects() {
+        if (this.selectedObjects && this.selectedObjects.length > 0) {
+            this.selectedObjects.forEach(obj => {
+                if(typeof obj.clearTint === 'function') obj.clearTint();
+            });
+        }
+        this.selectedObjects = [];
+    }
    /**
      * 現在のシーンレイアウトをJSON形式でエクスポートする。
      * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★

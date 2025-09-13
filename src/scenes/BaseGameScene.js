@@ -691,65 +691,40 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const sourceLayout = this.extractLayoutFromObject(sourceObject);
         delete sourceLayout.physics; // 子オブジェクトは物理ボディを持たない
 
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-
-          // --- 3. 全体をまとめるための、親となる「Container」を作成 ---
-        // その位置は、描画範囲の中心に設定する
-        const containerWidth = (toX - fromX + 1) * gridWidth;
-        const containerHeight = (toY - fromY + 1) * gridHeight;
-        const containerCenterX = (fromX * gridWidth) + containerWidth / 2;
-        const containerCenterY = (fromY * gridHeight) + containerHeight / 2;
-        const parentContainer = this.add.container(containerCenterX, containerCenterY);
-
-        // --- 4. 当たり判定と物理ボディを担当する、透明な「Zone」を作成 ---
-        // Zoneの位置は、親コンテナの中心(0,0)になる
-        const hitZone = this.add.zone(0, 0, containerWidth, containerHeight);
+        // --- 3. このグループのための一意なIDを生成 ---
+        const groupId = `fill_group_${Phaser.Math.RND.uuid()}`;
+        console.log(`[BaseGameScene | Final Design] Creating new group with ID: ${groupId}`);
         
-        // --- 5. Zoneを親コンテナに追加 ---
-        parentContainer.add(hitZone);
-
-        // --- 6. 矩形範囲をループして、見た目用の「子オブジェクト」を配置 ---
+        // --- 4. 矩形範囲をループして、オブジェクトを配置 ---
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
-                // 親コンテナの中心からの相対位置を計算
-                const relativeX = (gx * gridWidth + gridWidth / 2) - containerCenterX;
-                const relativeY = (gy * gridHeight + gridHeight / 2) - containerCenterY;
                 
-                let newChildObject = this.createObjectFromLayout({...sourceLayout, x: relativeX, y: relativeY});
-                this.applyProperties(newChildObject, {...sourceLayout, x: relativeX, y: relativeY});
-                  // ▼▼▼【これが最後の、たった一行の修正です】▼▼▼
-                // 子オブジェクトのインタラクティブ（入力）を無効化する
-                newChildObject.disableInteractive();
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                // ★ 作成したオブジェクトを、親コンテナに「追加」する
-                parentContainer.add(newChildObject);
+                const newLayout = { ...sourceLayout };
+                
+                newLayout.x = gx * gridWidth + gridWidth / 2;
+                newLayout.y = gy * gridHeight + gridHeight / 2;
+                newLayout.name = `${sourceLayout.name}_${gx}_${gy}`;
+                
+                // ★★★ すべてのオブジェクトに、同じグループIDをデータとして設定 ★★★
+                newLayout.group = groupId;
+
+                // ★★★ 物理ボディも、各オブジェクトが個別に持つ ★★★
+                if (newLayout.physics) {
+                    newLayout.physics.width = sourceLayout.displayWidth; // スケールを考慮したサイズ
+                    newLayout.physics.height = sourceLayout.displayHeight;
+                }
+                
+                const newGameObject = this.createObjectFromLayout(newLayout);
+                if (newGameObject) {
+                    this.applyProperties(newGameObject, newLayout);
+                }
             }
         }
-        
-        // --- 7. 親コンテナに物理ボディとインタラクティブを設定 ---
-        // ★ 物理ボディは、親コンテナに対して設定する
-        this.matter.add.gameObject(parentContainer, {
-            shape: { type: 'rectangle', width: containerWidth, height: containerHeight }
-        });
-        
-        // ★ インタラクティブエリアは、中のhitZoneを参照させる
-        parentContainer.setInteractive(hitZone, Phaser.Geom.Rectangle.Contains);
-        
-        // --- 8. 親コンテナをエディタで編集可能にする ---
-        const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-        parentContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(parentContainer, this);
-        }
 
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
-        // --- 9. ブラシを破棄 ---
+        // --- 5. ブラシを破棄 ---
         sourceObject.destroy();
     }
+
     
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
@@ -774,7 +749,8 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             components: gameObject.getData('components'),
             // ... 他にコピーしたいgetData()の値があればここに追加 ...
         };
-
+layout.displayWidth = gameObject.displayWidth;
+        layout.displayHeight = gameObject.displayHeight;
         // タイプに応じたプロパティを追加
         if (gameObject instanceof Phaser.GameObjects.Text) {
             layout.text = gameObject.text;

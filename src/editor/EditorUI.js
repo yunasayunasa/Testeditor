@@ -238,6 +238,13 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
         if (typeof scene.placeTile === 'function') {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
         }
+        setTimeout(() => {
+            // オブジェクトのpointerdownが先に処理されるのを待つ
+            if (!this.plugin.selectedObject && (!this.plugin.selectedObjects || this.plugin.selectedObjects.length === 0)) {
+                this.plugin.deselectAll();
+            }
+        }, 0);
+    
     }
 
    // --- タイルマップ専用リスナーの管理 ---
