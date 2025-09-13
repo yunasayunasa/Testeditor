@@ -319,26 +319,72 @@ export default class EditorUI {
     }
     
     onTilesetClick(event) {
-        if (!this.currentTileset) return;
-        const rect = this.tilesetPreview.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const tileX = Math.floor(x / this.currentTileset.tileWidth);
-        const tileY = Math.floor(y / this.currentTileset.tileHeight);
+        if (!this.currentTileset || !this.tilesetPreview) return;
+        
+        // ▼▼▼【ここからが修正箇所です】▼▼▼
+
+        const imgElement = this.tilesetPreview.querySelector('img');
+        if (!imgElement) return;
+
+        // --- 1. 画像要素の表示上の寸法と、クリックされた位置を取得 ---
+        const rect = imgElement.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        // --- 2. クリック位置を、画像の表示サイズに対する「比率」に変換 ---
+        const ratioX = clickX / rect.width;
+        const ratioY = clickY / rect.height;
+
+        // --- 3. 画像本来の（オリジナルの）解像度を取得 ---
         const texture = this.game.textures.get(this.currentTileset.key);
-        const tilesPerRow = texture.getSourceImage().width / this.currentTileset.tileWidth;
+        const naturalWidth = texture.getSourceImage().width;
+        const naturalHeight = texture.getSourceImage().height;
+
+        // --- 4. 比率を使って、本来の解像度上での座標を計算 ---
+        const naturalX = ratioX * naturalWidth;
+        const naturalY = ratioY * naturalHeight;
+
+        // --- 5. 本来の解像度とタイルサイズを使って、正しいタイルインデックスを算出 ---
+        const tileX = Math.floor(naturalX / this.currentTileset.tileWidth);
+        const tileY = Math.floor(naturalY / this.currentTileset.tileHeight);
+        const tilesPerRow = naturalWidth / this.currentTileset.tileWidth;
+        
         this.selectedTileIndex = tileY * tilesPerRow + tileX;
+        
+        // ▲▲▲【修正ここまで】▲▲▲
+
         this.updateTilesetHighlight();
     }
     
+    
     updateTilesetHighlight() {
-        if (!this.tilesetHighlight || !this.currentTileset) return;
+        if (!this.tilesetHighlight || !this.currentTileset || !this.tilesetPreview) return;
+        
+        // ▼▼▼【こちらも同様のロジックで修正】▼▼▼
+        const imgElement = this.tilesetPreview.querySelector('img');
+        if (!imgElement) return;
+
+        // --- 1. 画像の本来の解像度と表示上の解像度を取得 ---
         const texture = this.game.textures.get(this.currentTileset.key);
-        const tilesPerRow = texture.getSourceImage().width / this.currentTileset.tileWidth;
+        const naturalWidth = texture.getSourceImage().width;
+        const displayWidth = imgElement.getBoundingClientRect().width;
+
+        // --- 2. スケール（縮尺）を計算 ---
+        const scale = displayWidth / naturalWidth;
+
+        // --- 3. 正しいタイルインデックスから、本来の解像度での位置を計算 ---
+        const tilesPerRow = naturalWidth / this.currentTileset.tileWidth;
         const tileX = this.selectedTileIndex % tilesPerRow;
         const tileY = Math.floor(this.selectedTileIndex / tilesPerRow);
-        this.tilesetHighlight.style.left = `${tileX * this.currentTileset.tileWidth}px`;
-        this.tilesetHighlight.style.top = `${tileY * this.currentTileset.tileHeight}px`;
+        
+        // --- 4. スケールを適用して、表示上の正しい位置とサイズを算出 ---
+        this.tilesetHighlight.style.left = `${tileX * this.currentTileset.tileWidth * scale}px`;
+        this.tilesetHighlight.style.top = `${tileY * this.currentTileset.tileHeight * scale}px`;
+        this.tilesetHighlight.style.width = `${this.currentTileset.tileWidth * scale - 4}px`; // -4はボーダー幅
+        this.tilesetHighlight.style.height = `${this.currentTileset.tileHeight * scale - 4}px`;
+        
+        // ▲▲▲【修正ここまで】▲▲▲
+
         this.updateTileMarkerFrame();
     }
 
@@ -381,7 +427,8 @@ export default class EditorUI {
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
         
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
+         const worldPointX = pointer.worldX;
+        const worldPointY = pointer.worldY;
         const tileX = Math.floor(worldPoint.x / this.currentTileset.tileWidth);
         const tileY = Math.floor(worldPoint.y / this.currentTileset.tileHeight);
         
