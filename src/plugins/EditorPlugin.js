@@ -573,10 +573,12 @@ createTransformInputs() {
 }
 // in EditorPlugin.js
 
+    // in EditorPlugin.js
+
     /**
-     * ★★★ 最終FIXの修正版 ★★★
+     * ★★★ 最後のFIX版 ★★★
      * スケール変更に応じて、物理ボディを安全に再生成する。
-     * createAddBodyButtonと全く同じ計算方法に統一する。
+     * ターゲットがContainerの場合の処理を正しく記述する。
      */
     rebuildPhysicsBodyOnScaleChange() {
         const target = this.selectedObject;
@@ -596,24 +598,39 @@ createTransformInputs() {
         // --- 2. 既存のボディをワールドから削除 ---
         target.scene.matter.world.remove(target.body);
 
-        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
-        // --- 3. 見た目上の正しい幅と高さを手動で計算 ---
-        const bodyWidth = target.width * target.scaleX;
-        const bodyHeight = target.height * target.scaleY;
+        
+        // --- 3. ターゲットがContainerか、それ以外かで処理を分岐 ---
+        if (target instanceof Phaser.GameObjects.Container) {
+            
+            // --- Containerの場合 ---
+            // コンテナのサイズと新しいスケールから、物理ボディの寸法を計算
+            const bodyWidth = target.width * target.scaleX;
+            const bodyHeight = target.height * target.scaleY;
 
-        // --- 4. 計算したサイズで、新しいボディを再設定 ---
-        if (shape === 'circle') {
-            // 円の場合は、幅と高さの平均を直径とする
-            const radius = (bodyWidth + bodyHeight) / 4;
-            target.setCircle(radius, oldBodyOptions);
-        } else { // rectangle
-            // 長方形の場合は、計算した幅と高さでボディを再設定
-            target.setBody({
-                type: 'rectangle',
-                width: bodyWidth,
-                height: bodyHeight
-            }, oldBodyOptions);
+            // 新しい寸法の物理ボディを「独立して」作成
+            const newBody = target.scene.matter.bodies.rectangle(0, 0, bodyWidth, bodyHeight, oldBodyOptions);
+            
+            // setExistingBodyを使って、コンテナに新しいボディを合体させる
+            target.setExistingBody(newBody);
+
+        } else { // Image, Spriteなどの場合
+
+            // --- 通常のGameObjectの場合 ---
+            const bodyWidth = target.width * target.scaleX;
+            const bodyHeight = target.height * target.scaleY;
+
+            if (shape === 'circle') {
+                const radius = (bodyWidth + bodyHeight) / 4;
+                target.setCircle(radius, oldBodyOptions);
+            } else { // rectangle
+                target.setBody({
+                    type: 'rectangle',
+                    width: bodyWidth,
+                    height: bodyHeight
+                }, oldBodyOptions);
+            }
         }
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
