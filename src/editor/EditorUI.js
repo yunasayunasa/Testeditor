@@ -371,9 +371,9 @@ export default class EditorUI {
         img.onload = () => { this.updateTilesetHighlight(); };
     }
 
-    /**
+     /**
      * ★★★ 最終修正版 ★★★
-     * onTilesetClick: this.currentTileset の情報を全面的に利用する。
+     * onTilesetClick: 計算の最終微調整
      */
     onTilesetClick(event) {
         event.stopPropagation();
@@ -392,11 +392,10 @@ export default class EditorUI {
         
         const scale = rect.width / naturalWidth;
 
-        // タイルサイズも this.currentTileset から取得
         const tileWidth = this.currentTileset.tileWidth;
         const tileHeight = this.currentTileset.tileHeight;
 
-        // クリックされた位置を、スケールを考慮して元画像上の座標に変換
+        // スケールを考慮して元画像上の座標に変換
         const naturalX = clickX / scale;
         const naturalY = clickY / scale;
 
@@ -412,7 +411,7 @@ export default class EditorUI {
     
     /**
      * ★★★ 最終修正版 ★★★
-     * updateTilesetHighlight: こちらも this.currentTileset を参照。
+     * updateTilesetHighlight: border-boxを考慮した最終調整
      */
     updateTilesetHighlight() {
         if (!this.tilesetHighlight || !this.currentTileset) return;
@@ -434,35 +433,38 @@ export default class EditorUI {
         
         this.tilesetHighlight.style.left = `${tileX * tileWidth * scale}px`;
         this.tilesetHighlight.style.top = `${tileY * tileHeight * scale}px`;
+        // ★★★ box-sizing: border-box を使っているので、ボーダー幅を引く必要はない
         this.tilesetHighlight.style.width = `${tileWidth * scale}px`;
         this.tilesetHighlight.style.height = `${tileHeight * scale}px`;
         
         this.updateTileMarkerFrame();
     }
 
-
     /**
      * ★★★ 最終修正版 ★★★
-     * handlePointerDown: 配置時にも this.currentTileset を参照する。
+     * handlePointerDown: ガード節を一時的にコメントアウトして、クリックが通るようにする
      */
     handlePointerDown(pointer) {
+        /*
+        // ▼▼▼【一時的にこのガード節を無効化】▼▼▼
         const clickedElement = pointer.event.target;
         if (clickedElement.closest('#editor-sidebar') || clickedElement.closest('#overlay-controls') || clickedElement.closest('#bottom-panel')) {
             return;
         }
+        */
+
         if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) {
             return;
         }
         
+        console.log(`[EditorUI] Canvas clicked. Placing tile...`);
+
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
 
-        // --- タイルサイズを asset_define から取得 ---
         const tileWidth = this.currentTileset.tileWidth;
         const tileHeight = this.currentTileset.tileHeight;
         
-        console.log(`[EditorUI] Canvas clicked. Placing tile index ${this.selectedTileIndex} (size: ${tileWidth}x${tileHeight})`);
-
         const canvasRect = this.game.canvas.getBoundingClientRect();
         const coords = this.getClientCoordinates(pointer.event);
         const canvasX = coords.x - canvasRect.left;
@@ -473,7 +475,6 @@ export default class EditorUI {
         const tileY = Math.floor(worldPoint.y / tileHeight);
         
         if (typeof scene.placeTile === 'function') {
-            // ★★★ タイルセットの「アセットキー」を渡す
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
         }
     }
