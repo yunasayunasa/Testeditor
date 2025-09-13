@@ -1259,25 +1259,87 @@ createComponentSection() {
         
         this.editorPropsContainer.appendChild(document.createElement('hr'));
 
-        // --- （上級）グループのプロパティ一括変更 ---
-        // 例：グループ全体のアルファ（透明度）を変更
-        const alphaRow = document.createElement('div');
-        const alphaLabel = document.createElement('label');
-        alphaLabel.innerText = 'Alpha (All):';
-        const alphaInput = document.createElement('input');
-        alphaInput.type = 'range';
-        alphaInput.min = 0;
-        alphaInput.max = 1;
-        alphaInput.step = 0.01;
-        alphaInput.value = gameObjects[0] ? gameObjects[0].alpha : 1; // 最初のオブジェクトの値を代表として使う
-        alphaInput.oninput = (e) => {
-            const newAlpha = parseFloat(e.target.value);
-            this.selectedObjects.forEach(obj => obj.setAlpha(newAlpha));
-        };
-        alphaRow.append(alphaLabel, alphaInput);
-        this.editorPropsContainer.appendChild(alphaRow);
-    }
+       const physicsTitle = document.createElement('h4');
+        physicsTitle.innerText = '一括 物理ボディ設定';
+        this.editorPropsContainer.appendChild(physicsTitle);
 
+        // --- ボディ付与/削除ボタン ---
+        // グループ内にボディを持っていないオブジェクトが一つでもあれば「付与」ボタンを表示
+        const needsBody = gameObjects.some(obj => !obj.body); 
+        if (needsBody) {
+            const addBodyButton = document.createElement('button');
+            addBodyButton.innerText = 'グループに物理ボディを付与';
+            addBodyButton.onclick = () => {
+                this.applyPhysicsToGroup({ addBody: true });
+            };
+            this.editorPropsContainer.appendChild(addBodyButton);
+        } else {
+            const removeBodyButton = document.createElement('button');
+            removeBodyButton.innerText = 'グループの物理ボディを削除';
+            removeBodyButton.style.backgroundColor = '#e65151';
+            removeBodyButton.onclick = () => {
+                this.applyPhysicsToGroup({ removeBody: true });
+            };
+            this.editorPropsContainer.appendChild(removeBodyButton);
+        }
+
+        // グループの全てのオブジェクトがボディを持っている場合のみ、プロパティ変更UIを表示
+        if (!needsBody) {
+            // --- 静的ボディ一括設定 ---
+            const staticButton = document.createElement('button');
+            staticButton.innerText = 'すべて静的ボディに設定';
+            staticButton.onclick = () => {
+                this.applyPhysicsToGroup({ isStatic: true });
+            };
+            const dynamicButton = document.createElement('button');
+            dynamicButton.innerText = 'すべて動的ボディに設定';
+            dynamicButton.onclick = () => {
+                this.applyPhysicsToGroup({ isStatic: false });
+            };
+            this.editorPropsContainer.append(staticButton, dynamicButton);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    }
+   /**
+     * ★★★ 新規・最終ヘルパーメソッド ★★★
+     * 選択中のグループ（複数オブジェクト）に対して、物理プロパティを一括で適用する
+     * @param {{addBody?: boolean, removeBody?: boolean, isStatic?: boolean}} options 適用する設定
+     */
+    applyPhysicsToGroup(options) {
+        if (!this.selectedObjects || this.selectedObjects.length === 0) return;
+
+        console.log(`[EditorPlugin] Applying physics to group:`, options);
+
+        // 選択中のすべてのオブジェクトに対してループ処理
+        this.selectedObjects.forEach(target => {
+            const scene = target.scene;
+            if (!scene) return;
+
+            // --- ボディ付与 ---
+            if (options.addBody && !target.body) {
+                const bodyWidth = target.width * target.scaleX;
+                const bodyHeight = target.height * target.scaleY;
+                scene.matter.add.gameObject(target, {
+                    shape: { type: 'rectangle', width: bodyWidth, height: bodyHeight }
+                });
+            }
+
+            // --- ボディ削除 ---
+            if (options.removeBody && target.body) {
+                scene.matter.world.remove(target.body);
+            }
+
+            // --- 静的/動的の切り替え ---
+            // (ボディが存在する場合のみ実行)
+            if (options.isStatic !== undefined && target.body) {
+                target.setStatic(options.isStatic);
+            }
+        });
+
+        // 処理が終わったら、UIを最新の状態に更新
+        this.selectMultipleObjects(this.selectedObjects);
+    }
     /**
      * ★★★ 新規メソッド ★★★
      * すべての複数選択を解除する
