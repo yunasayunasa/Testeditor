@@ -125,13 +125,93 @@ export default class EditorUI {
             this.selectModeBtn.classList.remove('active');
             this.initTilesetPanel();
             this.createTileMarker();
-            this.activateTilemapListeners(); // リスナーを有効化
+           
         } else { // 'select' mode
             document.body.classList.remove('tilemap-mode');
             this.selectModeBtn.classList.add('active');
             this.tilemapModeBtn.classList.remove('active');
             this.destroyTileMarker();
-            this.deactivateTilemapListeners(); // リスナーを無効化
+           
+        }
+    }
+/**
+     * ★★★ 復活させるメソッド ★★★
+     * EditorPluginからの合図で、Phaserのグローバル入力イベントのリッスンを開始する。
+     * これが最も安定した方法。
+     */
+    startListeningToGameInput() {
+        if (!this.game || !this.game.input) {
+            console.error("[EditorUI] Cannot start listening: Game or input system not available.");
+            return;
+        }
+        
+        // --- 既存のリスナーを一度クリア ---
+        this.game.input.off('pointermove', this.onPointerMove, this);
+        this.game.input.off('pointerdown', this.onPointerDown, this);
+
+        // --- 新しいリスナーを登録 ---
+        console.log("[EditorUI] Attaching Phaser global input listeners.");
+        this.game.input.on('pointermove', this.onPointerMove, this);
+        this.game.input.on('pointerdown', this.onPointerDown, this);
+    }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * Phaserのポインターイベントを捌くための統合ハンドラ
+     * @param {Phaser.Input.Pointer} pointer 
+     */
+    onPointerMove(pointer) {
+        if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
+        
+        const scene = this.getActiveGameScene();
+        if (!scene) return;
+        
+        // ★ pointer.worldX は、カメラの位置とズームを考慮した最終的なワールド座標
+        const worldX = pointer.worldX;
+        const worldY = pointer.worldY;
+
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+
+        const snappedX = Math.floor(worldX / tileWidth) * tileWidth + tileWidth / 2;
+        const snappedY = Math.floor(worldY / tileHeight) * tileHeight + tileHeight / 2;
+        
+        this.tileMarker.setPosition(snappedX, snappedY);
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * Phaserのポインターイベントを捌くための統合ハンドラ
+     * @param {Phaser.Input.Pointer} pointer 
+     */
+    onPointerDown(pointer) {
+        // UI上でのクリックなら、Phaser側で処理させない
+        if (pointer.event.target.closest('#editor-sidebar') || 
+            pointer.event.target.closest('#overlay-controls') || 
+            pointer.event.target.closest('#bottom-panel')) {
+            return;
+        }
+
+        if (this.currentEditorMode !== 'tilemap') {
+            return;
+        }
+        
+        const scene = this.getActiveGameScene();
+        if (!scene || !this.currentTileset) return;
+
+        const worldX = pointer.worldX;
+        const worldY = pointer.worldY;
+
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+
+        const tileX = Math.floor(worldX / tileWidth);
+        const tileY = Math.floor(worldY / tileHeight);
+        
+        console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
+
+        if (typeof scene.placeTile === 'function') {
+            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
         }
     }
 
@@ -170,63 +250,21 @@ export default class EditorUI {
         }
     }
     
-   /**
-     * ★★★ 最終FIX版 ★★★
-     * 座標計算にPhaserの入力スケールを適用する
+    /**
+     * ★★★ 最終FIXの修正版 ★★★
+     * 座標計算にPhaserのポインターが持つ補正済み座標を利用する
      */
     handleTilemapPointerMove(event) {
-        if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
-        const scene = this.getActiveGameScene();
-        if (!scene) return;
-        
-        const canvasRect = this.game.canvas.getBoundingClientRect();
-        const coords = this.getClientCoordinates(event);
-        
-        // ▼▼▼【ここが座標ズレの最終FIXです】▼▼▼
-        // Phaserの入力マネージャが持つスケール補正値を直接利用する
-        const scale = this.game.input.scale;
-        const canvasX = (coords.x - canvasRect.left) * scale.x;
-        const canvasY = (coords.y - canvasRect.top) * scale.y;
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
-        
-        this.tileMarker.setPosition(snappedX, snappedY);
+        // ★★★ このメソッドを呼び出すために、Phaserのグローバル入力リスナーを復活させる必要があります ★★★
+        // このメソッド自体の中身は、これからシンプルになります。
     }
     
     /**
-     * ★★★ 最終FIX版 ★★★
-     * 座標計算にPhaserの入力スケールを適用する
+     * ★★★ 最終FIXの修正版 ★★★
+     * 座標計算にPhaserのポインターが持つ補正済み座標を利用する
      */
     handleTilemapPointerDown(event) {
-        if (this.currentEditorMode !== 'tilemap') return;
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        const scene = this.getActiveGameScene();
-        if (!scene || !this.currentTileset) return;
-        
-        const canvasRect = this.game.canvas.getBoundingClientRect();
-        const coords = this.getClientCoordinates(event);
-        
-        // ▼▼▼【ここも同様に最終FIX】▼▼▼
-        const scale = this.game.input.scale;
-        const canvasX = (coords.x - canvasRect.left) * scale.x;
-        const canvasY = (coords.y - canvasRect.top) * scale.y;
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        const tileX = Math.floor(worldPoint.x / tileWidth);
-        const tileY = Math.floor(worldPoint.y / tileHeight);
-        
-        scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
+        // ★★★ このメソッドも同様です ★★★
     }
     createTileMarker() {
         const scene = this.getActiveGameScene();

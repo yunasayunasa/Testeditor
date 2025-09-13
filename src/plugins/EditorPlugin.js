@@ -50,7 +50,20 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         console.warn("[EditorPlugin] Debug mode activated.");
     }
    
-
+ /**
+     * ★★★ 復活させるメソッド ★★★
+     * すべてのシーンの `create` が完了した後に一度だけ呼ばれる。
+     * このタイミングでUIにPhaserのイベントリスンを開始させるのが最も安全。
+     */
+    start() {
+        if (!this.isEnabled) {
+            return;
+        }
+        
+        if (this.editorUI && typeof this.editorUI.startListeningToGameInput === 'function') {
+            this.editorUI.startListeningToGameInput();
+        }
+    }
     getActiveGameScene() { // ★ EditorUIから移動・統合
         const scenes = this.pluginManager.game.scene.getScenes(true);
         for (const scene of scenes) {
