@@ -683,7 +683,10 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         
         // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
-        
+        const fromX = Math.min(startGridX, endGridX); // この行を追加
+        const toX = Math.max(startGridX, endGridX);     // この行を追加
+        const fromY = Math.min(startGridY, endGridY); // この行を追加
+        const toY = Math.max(startGridY, endGridY);     // この行を追加
         // --- 3. 描画範囲全体のバウンディングボックスを計算 ---
         const containerWidth = (toX - fromX + 1) * gridWidth;
         const containerHeight = (toY - fromY + 1) * gridHeight;
