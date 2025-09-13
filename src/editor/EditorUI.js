@@ -96,9 +96,7 @@ export default class EditorUI {
         // ヘルプモーダル
         replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
 
-        // Phaser入力イベント
-        this.game.input.on('pointermove', this.handlePointerMove, this);
-        this.game.input.on('pointerdown', this.handlePointerDown, this);
+        
     }
     
     /**
@@ -331,29 +329,7 @@ export default class EditorUI {
         this.updateTileMarkerFrame();
     }
 
-    handlePointerMove(pointer) {
-        if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
-        const scene = this.getActiveGameScene();
-        if (!scene) return;
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        const snappedX = Math.floor(worldPoint.x / tileWidth) * tileWidth + tileWidth / 2;
-        const snappedY = Math.floor(worldPoint.y / tileHeight) * tileHeight + tileHeight / 2;
-        this.tileMarker.setPosition(snappedX, snappedY);
-    }
-
-    handlePointerDown(pointer) {
-        if (this.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) return;
-        const scene = this.getActiveGameScene();
-        if (!scene || !this.currentTileset) return;
-        const worldPoint = scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-        const tileX = Math.floor(worldPoint.x / this.currentTileset.tileWidth);
-        const tileY = Math.floor(worldPoint.y / this.currentTileset.tileHeight);
-        if (typeof scene.placeTile === 'function') {
-            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
-        }
-    }
+    h
 
 
        /**
