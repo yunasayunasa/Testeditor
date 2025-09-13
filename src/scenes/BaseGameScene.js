@@ -650,12 +650,14 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
     // in BaseGameScene.js
 
+    // in BaseGameScene.js
+
     /**
-     * ★★★ 最後のシンプル修正版 ★★★
-     * 呼び出し順序を正すことで、物理ボディの問題を解決する。
+     * ★★★ 究極の最終FIX版 ★★★
+     * this.matter.add.sprite() を使い、物理と見た目を完璧に同期させる。
      */
     addTileAsObject(tileIndex, tilesetKey) {
-        console.log(`[BaseGameScene] Simple Fix: Adding tile index ${tileIndex}.`);
+        console.log(`[BaseGameScene] Ultimate Fix: Adding tile index ${tileIndex}.`);
 
         const assetDefine = this.cache.json.get('asset_define');
         const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
@@ -667,50 +669,44 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
 
-        // 1. まずは普通にImageオブジェクトを作る
-        const tileObject = this.add.image(centerX, centerY, tilesetKey);
-        
-        // 2. 見た目を設定する
-        const texture = this.textures.get(tilesetKey);
-        const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
-        const cropX = (tileIndex % tilesPerRow) * tileWidth;
-        const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
-        tileObject.setCrop(cropX, cropY, tileWidth, tileHeight);
-        tileObject.setDisplaySize(tileWidth, tileHeight);
-
-        // 3. 名前やデータを設定する
-        const uniqueId = Phaser.Math.RND.uuid();
-        tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
-        tileObject.setData('isTileObject', true);
-        tileObject.setData('tileIndex', tileIndex);
-        tileObject.setData('tilesetKey', tilesetKey);
-
-        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
         
-        // --- 4. 「先に」物理ボディを追加・設定する ---
-        this.matter.add.gameObject(tileObject, {
+        // --- 1. this.matter.add.sprite() を使ってオブジェクトを生成 ---
+        // このメソッドは、物理ボディを持つ特別なSpriteオブジェクトを返す。
+        // 第4引数にフレーム番号を直接指定できる。
+        const tileObject = this.matter.add.sprite(centerX, centerY, tilesetKey, tileIndex, {
             shape: {
                 type: 'rectangle',
                 width: tileWidth,
                 height: tileHeight
             }
         });
+
+        // --- 2. 表示サイズをタイルサイズに合わせる ---
+        // matter.spriteはテクスチャ全体のサイズで表示されることがあるため、明示的に指定する。
+        tileObject.setDisplaySize(tileWidth, tileHeight);
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 3. 名前やデータを設定し、編集可能にする ---
+        const uniqueId = Phaser.Math.RND.uuid();
+        tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
+        tileObject.setData('isTileObject', true);
+        tileObject.setData('tileIndex', tileIndex);
+        tileObject.setData('tilesetKey', tilesetKey);
         
-        // --- 5. 「後から」エディタで編集可能にする ---
-        // この時点でtileObjectは既に正しいサイズのボディを持っているので、
-        // makeEditableが巨大なボディを自動生成することはない。
+        // ★ setCropは不要。matter.spriteがフレーム番号(tileIndex)を元に自動でやってくれる。
+        // ★ 物理ボディは生成時に完璧に設定済み。
+
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(tileObject, this);
         }
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         return tileObject;
     }
-
     shutdown() {
         super.shutdown();
     }
