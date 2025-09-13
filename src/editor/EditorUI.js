@@ -96,11 +96,22 @@ export default class EditorUI {
         // ヘルプモーダル
         replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
 
-        // Phaser入力イベント
+       
+    }
+    /**
+     * ★★★ 新規メソッド ★★★
+     * EditorPluginからの合図で、Phaserのグローバル入力イベントのリッスンを開始する。
+     * これにより、入力システムが利用可能になってからリスナーが登録されることを保証する。
+     */
+    startListeningToGameInput() {
+        if (!this.game || !this.game.input) {
+            console.error("[EditorUI] Cannot start listening: Game or input system not available.");
+            return;
+        }
+        console.log("[EditorUI] Attaching Phaser global input listeners.");
         this.game.input.on('pointermove', this.handlePointerMove, this);
         this.game.input.on('pointerdown', this.handlePointerDown, this);
     }
-    
     /**
      * エディタの主モード（Select or Tilemap）を切り替える
      */

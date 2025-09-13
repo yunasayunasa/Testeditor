@@ -49,7 +49,27 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         console.warn("[EditorPlugin] Debug mode activated.");
     }
-     
+      /**
+     * ★★★ 新規メソッド ★★★
+     * Phaserのプラグインライフサイクルメソッド。
+     * すべてのシーンの `create` が完了した後に一度だけ呼ばれる。
+     * ここでUIに入力イベントのリスンを開始させるのが最も安全。
+     */
+    start() {
+        if (!this.isEnabled) {
+            return;
+        }
+
+        console.log("[EditorPlugin] Plugin started. Notifying UI to attach input listeners.");
+        
+        // UIコントローラーがセットされていれば、リスナー登録を指示
+        if (this.editorUI && typeof this.editorUI.startListeningToGameInput === 'function') {
+            this.editorUI.startListeningToGameInput();
+        } else {
+            // この警告は、万が一の連携ミスを発見するために役立ちます
+            console.warn("[EditorPlugin] EditorUI is not set or lacks startListeningToGameInput method at start().");
+        }
+    }
     setUI(editorUI) {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
