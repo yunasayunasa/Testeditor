@@ -141,6 +141,8 @@ export default class EditorUI {
      */
     startListeningToGameInput() {
         if (!this.game || !this.game.input) {
+                // ★★★ ログ爆弾 4 ★★★
+        console.log(`%c[LOG BOMB 4] Attaching HIGH PRIORITY global listeners.`, 'color: #FF6347; font-weight: bold;');
             console.error("[EditorUI] Cannot start listening: Game or input system not available.");
             return;
         }
@@ -162,7 +164,10 @@ export default class EditorUI {
      */
     onPointerMove(pointer) {
         if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
-        
+         // ★★★ ログ爆弾 5 ★★★
+        // 大量に出るので、必要な時だけコメントを外す
+        // console.log(`%c[LOG BOMB 5] GLOBAL POINTER MOVE. worldX: ${pointer.worldX}, worldY: ${pointer.worldY}`, 'color: #FF6347');
+
         const scene = this.getActiveGameScene();
         if (!scene) return;
         
@@ -184,38 +189,39 @@ export default class EditorUI {
      * onPointerDown: UI上でのクリック判定をより厳密にする
      */
     onPointerDown(pointer) {
-        // --- ガード節1: UI要素の上であれば、タイル配置もオブジェクト選択も行わない ---
+        // ★★★ ログ爆弾 6 ★★★
+        console.log(`%c[LOG BOMB 6] GLOBAL POINTER DOWN event received.`, 'color: #FF6347; font-weight: bold;');
+        
         if (pointer.event.target.closest('#editor-root')) {
+            // ★★★ ログ爆弾 7 ★★★
+            console.log(`%c[LOG BOMB 7] Click on UI detected. Aborting.`, 'color: #FFD700;');
             return;
         }
 
-        // --- ガード節2: タイルマップモードでなければ、タイル配置は行わない ---
         if (this.currentEditorMode !== 'tilemap') {
+            // ★★★ ログ爆弾 8 ★★★
+            console.log(`%c[LOG BOMB 8] Not in tilemap mode. Aborting.`, 'color: #FFD700;');
             return;
         }
         
-        // これ以降は、「タイルマップモード」で「ゲーム画面」がクリックされた場合のみ実行される
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
 
-        // ... (以降の座標計算とplaceTile呼び出しは変更なし) ...
         const worldX = pointer.worldX;
         const worldY = pointer.worldY;
 
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-
-        const tileX = Math.floor(worldX / tileWidth);
-        const tileY = Math.floor(worldY / tileHeight);
+        const tileX = Math.floor(worldX / this.currentTileset.tileWidth);
+        const tileY = Math.floor(worldY / this.currentTileset.tileHeight);
         
-        console.log(`[EditorUI | High Priority] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
+        // ★★★ ログ爆弾 9 ★★★
+        console.log(`%c[LOG BOMB 9] Calculated positions for placement:
+            - Pointer World Coords: (${worldX.toFixed(2)}, ${worldY.toFixed(2)})
+            - Target Grid Coords: (${tileX}, ${tileY})`, 'color: #32CD32;');
 
         if (typeof scene.placeTile === 'function') {
-            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
+            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true);
         }
     }
-
-
    // --- タイルマップ専用リスナーの管理 ---
     
    /**
