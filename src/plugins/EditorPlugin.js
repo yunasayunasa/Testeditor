@@ -510,6 +510,7 @@ createTransformInputs() {
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && this.selectedObject) {
             this.selectedObject.setScale(val);
+            this.rebuildPhysicsBodyOnScaleChange();
         }
     });
     scaleRow.append(scaleLabel, scaleInput);
@@ -532,6 +533,7 @@ createTransformInputs() {
             const val = parseFloat(e.target.value);
             if (!isNaN(val) && this.selectedObject) {
                 if (key === 'angle') this.selectedObject.setAngle(val);
+                
                 else if (key === 'alpha') this.selectedObject.setAlpha(val);
             }
         });
@@ -540,6 +542,43 @@ createTransformInputs() {
     });
 }
 
+rebuildPhysicsBodyOnScaleChange() {
+    const target = this.selectedObject;
+    if (!target || !target.body) {
+        // ターゲットがないか、そもそも物理ボディがなければ何もしない
+        return;
+    }
+
+    console.log(`[EditorPlugin] Rebuilding physics body for '${target.name}' due to scale change.`);
+
+    // --- 1. 既存のボディから、形状やisStaticなどの重要なプロパティを記憶 ---
+    const oldBodyOptions = {
+        isStatic: target.body.isStatic,
+        isSensor: target.body.isSensor,
+        // ... (friction, restitutionなど、保持したい他のプロパティもここに追加)
+    };
+    const shape = target.getData('shape') || 'rectangle';
+
+    // --- 2. 既存のボディを一度ワールドから削除 ---
+    this.selectedObject.scene.matter.world.remove(target.body);
+
+    // --- 3. 新しいスケールを反映したサイズで、新しいボディを再設定 ---
+    if (shape === 'circle') {
+        // 円の場合は、スケールの平均値から半径を再計算
+        const radius = (target.width * target.scaleX) / 2;
+        target.setCircle(radius, oldBodyOptions);
+    } else {
+        // 長方形の場合は、単純に新しいボディをセットするだけでOK
+        // Matter.jsは自動で現在のスケールを考慮してくれる
+        target.setBody({
+            type: 'rectangle',
+            // ★ width/heightは指定不要。Phaserが自動計算してくれる。
+        }, oldBodyOptions);
+    }
+    
+    // UIを更新して、変更を反映
+    this.updatePropertyPanel();
+}
     createDepthInput() {
         const row = document.createElement('div');
         const label = document.createElement('label');
