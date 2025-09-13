@@ -1077,34 +1077,31 @@ createComponentSection() {
         // --- タップ情報を記録するための変数をGameObjectに持たせる ---
         gameObject.setData('lastTap', 0);
 
-        gameObject.on('pointerdown', (pointer) => {
+       gameObject.on('pointerdown', (pointer) => {
             const now = Date.now();
             const lastTap = gameObject.getData('lastTap');
             const diff = now - lastTap;
             
             gameObject.setData('lastTap', now);
 
-            // --- 300ミリ秒以内に再度タップされたら「ダブルタップ」とみなす ---
-            if (diff < 300) {
-                // ダブルタップの処理
+            if (diff < 300) { // ダブルタップの処理
                 const groupId = gameObject.getData('group');
-                if (groupId) {
-                    // グループIDがあれば、グループ選択を実行
-                    console.log(`[EditorPlugin] Double tap detected. Selecting group: ${groupId}`);
-                    const sceneObjects = this.editableObjects.get(scene.scene.key) || [];
-                    const groupObjects = Array.from(sceneObjects).filter(obj => obj.getData('group') === groupId);
+                
+                // ▼▼▼【ここからが修正箇所です】▼▼▼
+                if (groupId && typeof scene.getObjectsByGroup === 'function') {
+                    // ★ BaseGameSceneの新しいメソッドを呼び出して、グループメンバーを取得
+                    const groupObjects = scene.getObjectsByGroup(groupId);
+                    
+                    console.log(`[EditorPlugin] Double tap detected. Selecting ${groupObjects.length} objects in group: ${groupId}`);
                     this.selectMultipleObjects(groupObjects);
                 } else {
-                    // グループがなければ、通常の単体選択として扱う
+                    // グループがない場合は、通常通りシングルオブジェクトを選択
                     this.selectSingleObject(gameObject);
                 }
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            } else {
-                // シングルタップの処理
-                // （少し待ってから選択を実行することで、ダブルタップと区別する）
+            } else { // シングルタップの処理
                 setTimeout(() => {
-                    // 300ミリ秒後に、まだタップ情報が更新されていなければ（つまり、ダブルタップの一部でなければ）
-                    // シングルタップとして確定する
                     if (gameObject.getData('lastTap') === now) {
                         this.selectSingleObject(gameObject);
                     }

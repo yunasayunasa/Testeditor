@@ -724,7 +724,20 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         // --- 5. ブラシを破棄 ---
         sourceObject.destroy();
     }
+// in src/scenes/BaseGameScene.js
 
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 指定されたグループIDに所属する、全てのGameObjectの配列を返す
+     * @param {string} groupId - 検索するグループID
+     * @returns {Array<Phaser.GameObjects.GameObject>}
+     */
+    getObjectsByGroup(groupId) {
+        if (!groupId) return [];
+        // シーンの表示リスト(this.children.list)から、
+        // getData('group')がgroupIdと一致するオブジェクトを全て絞り込んで返す
+        return this.children.list.filter(obj => obj.getData('group') === groupId);
+    }
     
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
