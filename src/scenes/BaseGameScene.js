@@ -694,66 +694,57 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
 
-        // --- 3. コンテナを作成し、その「左上」のワールド座標に配置 ---
-        const containerX = fromX * gridWidth;
-        const containerY = fromY * gridHeight;
-        const newContainer = this.add.container(containerX, containerY);
+          // --- 3. 全体をまとめるための、親となる「Container」を作成 ---
+        // その位置は、描画範囲の中心に設定する
+        const containerWidth = (toX - fromX + 1) * gridWidth;
+        const containerHeight = (toY - fromY + 1) * gridHeight;
+        const containerCenterX = (fromX * gridWidth) + containerWidth / 2;
+        const containerCenterY = (fromY * gridHeight) + containerHeight / 2;
+        const parentContainer = this.add.container(containerCenterX, containerCenterY);
 
-        // --- 4. 矩形範囲をループして、オブジェクトを「コンテナ内の相対座標」で配置 ---
+        // --- 4. 当たり判定と物理ボディを担当する、透明な「Zone」を作成 ---
+        // Zoneの位置は、親コンテナの中心(0,0)になる
+        const hitZone = this.add.zone(0, 0, containerWidth, containerHeight);
+        
+        // --- 5. Zoneを親コンテナに追加 ---
+        parentContainer.add(hitZone);
+
+        // --- 6. 矩形範囲をループして、見た目用の「子オブジェクト」を配置 ---
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
+                // 親コンテナの中心からの相対位置を計算
+                const relativeX = (gx * gridWidth + gridWidth / 2) - containerCenterX;
+                const relativeY = (gy * gridHeight + gridHeight / 2) - containerCenterY;
                 
-                // コンテナの左上からの相対位置を計算
-                const relativeX = (gx * gridWidth) - containerX + (gridWidth / 2);
-                const relativeY = (gy * gridHeight) - containerY + (gridHeight / 2);
+                let newChildObject = this.createObjectFromLayout({...sourceLayout, x: relativeX, y: relativeY});
+                this.applyProperties(newChildObject, {...sourceLayout, x: relativeX, y: relativeY});
                 
-                // ★ createObjectFromLayout は使わず、直接シーンに追加する
-                let newChildObject;
-                if (sourceLayout.type === 'Text') {
-                    newChildObject = this.make.text({ style: sourceLayout.style }, false); // add: false でシーンに追加しない
-                    newChildObject.setText(sourceLayout.text);
-                } else {
-                    newChildObject = this.make.image({ key: sourceLayout.texture }, false);
-                }
-                
-                if (newChildObject) {
-                    newChildObject.setPosition(relativeX, relativeY);
-                    newChildObject.setScale(sourceLayout.scaleX, sourceLayout.scaleY);
-                    
-                    // ★ 作成したオブジェクトを、シーンではなくコンテナに「追加」する
-                    newContainer.add(newChildObject);
-                }
+                // ★ 作成したオブジェクトを、親コンテナに「追加」する
+                parentContainer.add(newChildObject);
             }
         }
         
-        // --- 5. コンテナ全体のサイズと当たり判定エリアを設定 ---
-        const containerWidth = (toX - fromX + 1) * gridWidth;
-        const containerHeight = (toY - fromY + 1) * gridHeight;
-        newContainer.setSize(containerWidth, containerHeight);
-        newContainer.setInteractive(); // ★ シンプルにインタラクティブ化
-
-        // --- 6. コンテナに物理ボディを設定 ---
-        // ★ setBody ではなく、コンテナ用の setExistingBody を使う
-        const body = this.matter.add.rectangle(
-            containerX + containerWidth / 2, // ボディの中心X
-            containerY + containerHeight / 2, // ボディの中心Y
-            containerWidth, 
-            containerHeight
-        );
-        newContainer.setExistingBody(body);
+        // --- 7. 親コンテナに物理ボディとインタラクティブを設定 ---
+        // ★ 物理ボディは、親コンテナに対して設定する
+        this.matter.add.gameObject(parentContainer, {
+            shape: { type: 'rectangle', width: containerWidth, height: containerHeight }
+        });
         
-        // --- 7. コンテナをエディタで編集可能にする ---
+        // ★ インタラクティブエリアは、中のhitZoneを参照させる
+        parentContainer.setInteractive(hitZone, Phaser.Geom.Rectangle.Contains);
+        
+        // --- 8. 親コンテナをエディタで編集可能にする ---
         const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-        newContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
+        parentContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
-            editor.makeEditable(newContainer, this);
+            editor.makeEditable(parentContainer, this);
         }
 
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        // --- 8. ブラシを破棄 ---
+        // --- 9. ブラシを破棄 ---
         sourceObject.destroy();
     }
     
