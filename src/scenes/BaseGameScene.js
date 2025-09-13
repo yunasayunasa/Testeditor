@@ -658,76 +658,80 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      */
    // in BaseGameScene.js
 
+  // in BaseGameScene.js
+
     /**
-     * ★★★ 最終完成版 ★★★
-     * 始点オブジェクトを元に、終点までの矩形範囲をオブジェクトで塗りつぶす。
-     * 生成されたオブジェクトは一つのコンテナにまとめて、操作しやすくする。
+     * ★★★ 最終完成版・改 ★★★
+     * 座標計算の基準点を修正し、コンテナに正しい入力エリアを設定する。
      */
     fillObjectRange(sourceObject, endPoint) {
         if (!sourceObject || !sourceObject.scene) return;
 
-        // --- 1. グリッドサイズと始点グリッド座標を決定 ---
+        // --- 1. グリッドサイズと始点/終点グリッド座標を計算 (変更なし) ---
         const gridWidth = sourceObject.displayWidth;
         const gridHeight = sourceObject.displayHeight;
         const startGridX = Math.round(sourceObject.x / gridWidth);
         const startGridY = Math.round(sourceObject.y / gridHeight);
-
-        // --- 2. 終点グリッド座標を計算 ---
         const endGridX = Math.round(endPoint.x / gridWidth);
         const endGridY = Math.round(endPoint.y / gridHeight);
-
-        // --- 3. ループ範囲を決定 ---
         const fromX = Math.min(startGridX, endGridX);
         const toX = Math.max(startGridX, endGridX);
         const fromY = Math.min(startGridY, endGridY);
         const toY = Math.max(startGridY, endGridY);
-
-        // --- 4. 複製元のレイアウト情報を作成 ---
+        
+        // --- 2. 複製元のレイアウト情報を作成 (変更なし) ---
         const sourceLayout = this.extractLayoutFromObject(sourceObject);
         
         // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
-        
-        // --- 5. 新しいオブジェクトをまとめるためのコンテナを作成 ---
-        // コンテナの初期位置は(0,0)にしておく
-        const newContainer = this.add.container(0, 0);
-        const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-        newContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
-        newContainer.setData('isFillGroup', true); // グループであることを示すフラグ
 
-        // --- 6. 矩形範囲をループして、オブジェクトを「コンテナの中に」配置 ---
+        // --- 3. コンテナを作成し、その「左上のアンカーポイント」のワールド座標を計算 ---
+        const containerX = fromX * gridWidth;
+        const containerY = fromY * gridHeight;
+        const newContainer = this.add.container(containerX, containerY);
+
+        // --- 4. 矩形範囲をループして、オブジェクトを「コンテナ内の相対座標」で配置 ---
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
-                
-                // 新しいオブジェクト用のレイアウトを作成
                 const newLayout = { ...sourceLayout };
                 
                 // ★★★ 座標計算の修正 ★★★
-                // グリッド座標からワールド座標を計算し、それをレイアウトに設定
-                newLayout.x = gx * gridWidth;
-                newLayout.y = gy * gridHeight;
+                // コンテナの左上からの相対位置を計算する
+                const relativeX = (gx * gridWidth) - containerX;
+                const relativeY = (gy * gridHeight) - containerY;
                 
-                // ★ applyProperties は使わず、手動でオブジェクトを生成・設定する
                 const newChildObject = this.createObjectFromLayout(newLayout);
                 if (newChildObject) {
-                    // 基本的なプロパティを設定
-                    newChildObject.setPosition(newLayout.x, newLayout.y);
+                    newChildObject.setPosition(relativeX, relativeY);
                     newChildObject.setScale(newLayout.scaleX, newLayout.scaleY);
-                    newChildObject.setAngle(newLayout.angle);
-                    // ... (他のプロパティも必要なら設定) ...
                     
-                    // ★ 作成したオブジェクトを、シーンではなくコンテナに追加
+                    // ★ コンテナ内のオブジェクトの原点を左上に設定すると、より正確に配置される
+                    if (typeof newChildObject.setOrigin === 'function') {
+                        newChildObject.setOrigin(0, 0);
+                    }
+                    
                     newContainer.add(newChildObject);
                 }
             }
         }
         
-        // --- 7. コンテナ全体のサイズとインタラクティブを設定 ---
-        // コンテナのサイズは、中身のオブジェクトのバウンディングボックスから計算
+        // --- 5. コンテナ全体のサイズを計算し、インタラクティブな「当たり判定エリア」を設定 ---
         const bounds = newContainer.getBounds();
-        newContainer.setSize(bounds.width, bounds.height);
-        
-        // ★ コンテナ自体をエディタで編集可能にする
+        // ★ getBoundsはワールド座標を返すので、コンテナのサイズは単純に幅と高さになる
+        const containerWidth = bounds.width;
+        const containerHeight = bounds.height;
+        newContainer.setSize(containerWidth, containerHeight);
+
+        // ★★★ インタラクティブ設定の修正 ★★★
+        // setInteractiveに、当たり判定となる矩形(hitArea)を渡す
+        newContainer.setInteractive(
+            new Phaser.Geom.Rectangle(0, 0, containerWidth, containerHeight),
+            Phaser.Geom.Rectangle.Contains
+        );
+
+        // --- 6. 最後に、コンテナをエディタで編集可能にする ---
+        const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
+        newContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(newContainer, this);
@@ -736,10 +740,11 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- 8. ブラシとして使った始点オブジェクトを破棄 ---
+        // --- 7. ブラシとして使った始点オブジェクトを破棄 (変更なし) ---
         sourceObject.destroy();
     }
 
+    // extractLayoutFromObject メソッドは変更の必要はありません。
     // extractLayoutFromObject メソッドは変更の必要はありません。
     
     /**
