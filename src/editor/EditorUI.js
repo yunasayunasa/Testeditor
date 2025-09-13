@@ -189,6 +189,7 @@ export default class EditorUI {
      * onPointerDown: UI上でのクリック判定をより厳密にする
      */
     onPointerDown(pointer) {
+        console.log(`%c[INPUT STATUS CHECK] game.input.enabled: ${this.game.input.enabled}`, 'background: #222; color: #bada55');
         // ★★★ ログ爆弾 6 ★★★
         console.log(`%c[LOG BOMB 6] GLOBAL POINTER DOWN event received.`, 'color: #FF6347; font-weight: bold;');
         
