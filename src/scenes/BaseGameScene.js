@@ -13,6 +13,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.actionInterpreter = null;
         this.keyPressEvents = new Map();
         this.layoutDataKey = null;
+        this.tilemapData = {}; // ★ タイルマップデータを保持するオブジェクト
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -643,6 +644,48 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         this.applyProperties(newGameObject, newObjectLayout);
         
         return newGameObject;
+    }
+
+
+      /**
+     * ★★★ 新規メソッド ★★★
+     * 指定されたグリッド座標にタイルを配置する
+     * @param {number} tileX - タイルのX座標 (グリッド)
+     * @param {number} tileY - タイルのY座標 (グリッド)
+     * @param {number} tileIndex - 配置するタイルのインデックス
+     * @param {string} tilesetKey - 使用するタイルセットのアセットキー
+     */
+    placeTile(tileX, tileY, tileIndex, tilesetKey) {
+        const assetDefine = this.cache.json.get('asset_define');
+        // ★ asset_define.jsonから、キーに一致するタイルセット情報を探す
+        const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
+        if (!tilesetInfo) return;
+
+        const tileWidth = tilesetInfo.tileWidth;
+        const tileHeight = tilesetInfo.tileHeight;
+
+        // ワールド座標を計算
+        const worldX = tileX * tileWidth + tileWidth / 2;
+        const worldY = tileY * tileHeight + tileHeight / 2;
+        
+        // ★ とりあえず、PhaserのImageオブジェクトとしてタイルを配置する
+        const tile = this.add.image(worldX, worldY, tilesetKey);
+        
+        // setCropを使って、タイルセット画像から正しいタイルを切り出す
+        const texture = this.textures.get(tilesetKey);
+        const tilesPerRow = texture.getSourceImage().width / tileWidth;
+        const cropX = (tileIndex % tilesPerRow) * tileWidth;
+        const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
+        tile.setCrop(cropX, cropY, tileWidth, tileHeight);
+
+        // ★ タイルマップデータを更新（将来の保存/ロード、物理ボディ生成のため）
+        const key = `${tileX},${tileY}`;
+        this.tilemapData[key] = {
+            index: tileIndex,
+            tileset: tilesetKey
+        };
+
+        console.log(`Placed tile ${tileIndex} at (${tileX}, ${tileY})`);
     }
 
     shutdown() {
