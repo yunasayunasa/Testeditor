@@ -46,11 +46,24 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
- this.pluginManager.game.input.on('pointermove', this.handlePointerMove, this);
-        this.pluginManager.game.input.on('pointerdown', this.handlePointerDown, this);
+ this.pluginManager.game.events.on('scene-start', this.onSceneStart, this)
         console.warn("[EditorPlugin] Debug mode activated.");
     }
-     
+      /**
+     * ★★★ 新規メソッド ★★★
+     * 新しいシーンが開始されるたびに呼び出される
+     */
+    onSceneStart(scene) {
+        // ★ SystemSceneが開始され、かつEditorUIが準備できている場合
+        if (scene.scene.key === 'SystemScene' && this.editorUI) {
+            // このタイミングなら、PreloadSceneの仕事は確実に終わっている
+            console.log("[EditorPlugin] SystemScene started. Triggering EditorUI build.");
+            this.editorUI.build();
+
+            // 一度実行したら、もうこのリスナーは不要なので解除する
+            this.pluginManager.game.events.off('scene-start', this.onSceneStart, this);
+        }
+    }
     setUI(editorUI) {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★

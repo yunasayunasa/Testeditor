@@ -50,9 +50,16 @@ export default class EditorUI {
         this.createPauseToggle();
         this.createHelpButton();
         this.initializeEventListeners();
+       
+    }
+  /**
+     * ★★★ 新規メソッド ★★★
+     * SystemSceneから呼び出され、registryデータを使ったUI構築を開始する
+     */
+    build() {
+        console.log("[EditorUI] build() called. Populating asset browser...");
         this.populateAssetBrowser();
     }
-
     /**
      * 全てのUI要素にイベントリスナーを設定する
      */
@@ -522,5 +529,4 @@ export default class EditorUI {
 
 
 }
-
 
