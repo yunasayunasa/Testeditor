@@ -541,44 +541,56 @@ createTransformInputs() {
         this.editorPropsContainer.appendChild(row);
     });
 }
+// in EditorPlugin.js
 
-rebuildPhysicsBodyOnScaleChange() {
-    const target = this.selectedObject;
-    if (!target || !target.body) {
-        // ターゲットがないか、そもそも物理ボディがなければ何もしない
-        return;
+    /**
+     * ★★★ 最終FIXの修正版 ★★★
+     * スケール変更に応じて、物理ボディを安全に再生成する。
+     * createAddBodyButtonと全く同じ計算方法に統一する。
+     */
+    rebuildPhysicsBodyOnScaleChange() {
+        const target = this.selectedObject;
+        if (!target || !target.body) return;
+
+        console.log(`[EditorPlugin | Final Fix] Rebuilding physics body for '${target.name}'.`);
+
+        // --- 1. 既存のボディからプロパティを記憶 ---
+        const oldBodyOptions = {
+            isStatic: target.body.isStatic,
+            isSensor: target.body.isSensor,
+            friction: target.body.friction,
+            restitution: target.body.restitution
+        };
+        const shape = target.getData('shape') || 'rectangle';
+
+        // --- 2. 既存のボディをワールドから削除 ---
+        target.scene.matter.world.remove(target.body);
+
+        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 3. 見た目上の正しい幅と高さを手動で計算 ---
+        const bodyWidth = target.width * target.scaleX;
+        const bodyHeight = target.height * target.scaleY;
+
+        // --- 4. 計算したサイズで、新しいボディを再設定 ---
+        if (shape === 'circle') {
+            // 円の場合は、幅と高さの平均を直径とする
+            const radius = (bodyWidth + bodyHeight) / 4;
+            target.setCircle(radius, oldBodyOptions);
+        } else { // rectangle
+            // 長方形の場合は、計算した幅と高さでボディを再設定
+            target.setBody({
+                type: 'rectangle',
+                width: bodyWidth,
+                height: bodyHeight
+            }, oldBodyOptions);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // UIを更新
+        this.updatePropertyPanel();
     }
-
-    console.log(`[EditorPlugin] Rebuilding physics body for '${target.name}' due to scale change.`);
-
-    // --- 1. 既存のボディから、形状やisStaticなどの重要なプロパティを記憶 ---
-    const oldBodyOptions = {
-        isStatic: target.body.isStatic,
-        isSensor: target.body.isSensor,
-        // ... (friction, restitutionなど、保持したい他のプロパティもここに追加)
-    };
-    const shape = target.getData('shape') || 'rectangle';
-
-    // --- 2. 既存のボディを一度ワールドから削除 ---
-    this.selectedObject.scene.matter.world.remove(target.body);
-
-    // --- 3. 新しいスケールを反映したサイズで、新しいボディを再設定 ---
-    if (shape === 'circle') {
-        // 円の場合は、スケールの平均値から半径を再計算
-        const radius = (target.width * target.scaleX) / 2;
-        target.setCircle(radius, oldBodyOptions);
-    } else {
-        // 長方形の場合は、単純に新しいボディをセットするだけでOK
-        // Matter.jsは自動で現在のスケールを考慮してくれる
-        target.setBody({
-            type: 'rectangle',
-            // ★ width/heightは指定不要。Phaserが自動計算してくれる。
-        }, oldBodyOptions);
-    }
-    
-    // UIを更新して、変更を反映
-    this.updatePropertyPanel();
-}
     createDepthInput() {
         const row = document.createElement('div');
         const label = document.createElement('label');
@@ -596,45 +608,25 @@ rebuildPhysicsBodyOnScaleChange() {
         row.append(label, input);
         this.editorPropsContainer.appendChild(row);
     }
- /**
-     * ★★★ 最終FIX版 ★★★
-     * 物理ボディを付与するボタンを生成する。
-     * 現在のスケールを考慮した正しいサイズでボディを作成する。
-     */
-    createAddBodyButton() {
-        const addButton = document.createElement('button');
-        addButton.innerText = '物理ボディ 付与';
-        addButton.onclick = () => {
-            const target = this.selectedObject;
-            if (target && !target.body) { // 二重付与を防止
 
-                // ▼▼▼【ここが核心の修正です】▼▼▼
-                // --------------------------------------------------------------------
-                // --- 1. 見た目上の正しい幅と高さを計算 ---
-                // テクスチャ本来の幅 x 現在のスケール値
-                const bodyWidth = target.width * target.scaleX;
-                const bodyHeight = target.height * target.scaleY;
-                
-                // --- 2. 計算したサイズで物理ボディをシーンに追加 ---
-                // matter.add.gameObject を使うのが最も確実
-                target.scene.matter.add.gameObject(target, {
-                    shape: {
-                        type: 'rectangle',
-                        width: bodyWidth,
-                        height: bodyHeight
-                    }
-                });
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-                target.setData('shape', 'rectangle');
-                
-                // UIを即時更新して、物理プロパティパネルを表示させる
-                this.updatePropertyPanel();
-            }
-        };
-        this.editorPropsContainer.appendChild(addButton);
-    }
+    /**
+ * 物理ボディを付与するボタンを生成する。
+ */
+/**
+ * 物理ボディを付与するボタンを生成する。
+ */
+createAddBodyButton() {
+    const addButton = document.createElement('button');
+    addButton.innerText = '物理ボディ 付与';
+    addButton.onclick = () => {
+        if (this.selectedObject && !this.selectedObject.body) { // 二重付与を防止
+            this.selectedObject.scene.matter.add.gameObject(this.selectedObject, { isStatic: false });
+            this.selectedObject.setData('shape', 'rectangle');
+            setTimeout(() => this.updatePropertyPanel(), 0);
+        }
+    };
+    this.editorPropsContainer.appendChild(addButton);
+}
 
   
   
