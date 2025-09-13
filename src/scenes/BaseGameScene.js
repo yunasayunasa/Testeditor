@@ -646,23 +646,21 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         return newGameObject;
     }
 
-     /**
-     * ★★★ 修正版 ★★★
-     * 指定されたタイルを、単一の編集可能なGameObjectとしてシーンに追加する。
-     * 正しいサイズの物理ボディを設定する処理を追加。
+   // in BaseGameScene.js
+
+    /**
+     * ★★★ 真の最終FIX版 ★★★
+     * 指定されたタイルを、正しい物理ボディを持つ単一のGameObjectとしてシーンに追加する。
      * @param {number} tileIndex - 配置するタイルのインデックス
      * @param {string} tilesetKey - 使用するタイルセットのアセットキー
      * @returns {Phaser.GameObjects.Image | null} 生成されたタイルオブジェクト
      */
     addTileAsObject(tileIndex, tilesetKey) {
-        console.log(`[BaseGameScene] Adding tile index ${tileIndex} from ${tilesetKey} as an object.`);
+        console.log(`[BaseGameScene] Final Fix: Adding tile index ${tileIndex} as object.`);
 
         const assetDefine = this.cache.json.get('asset_define');
         const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
-        if (!tilesetInfo) {
-            console.error(`[BaseGameScene] Tileset info for key '${tilesetKey}' not found.`);
-            return null;
-        }
+        if (!tilesetInfo) return null;
 
         const tileWidth = tilesetInfo.tileWidth;
         const tileHeight = tilesetInfo.tileHeight;
@@ -670,40 +668,52 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
 
-        const tileObject = this.add.image(centerX, centerY, tilesetKey);
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
         
+        // --- 1. まず「物理ボディ」を先に作る ---
+        // matter.image ではなく、matter.add.rectangle を使い、物理的な「箱」をシーンに追加する。
+        // この時点では、まだテクスチャは設定しない。
+        const bodyContainer = this.matter.add.rectangle(centerX, centerY, tileWidth, tileHeight, {
+            isStatic: false // 始点タイルは動かせた方が良いので isStatic: false
+        });
+
+        // --- 2. 次に「見た目」のオブジェクトを作る ---
+        // このImageオブジェクトは、物理演算とは直接関係ない「皮」の役割を果たす。
+        const visualTile = this.add.image(0, 0, tilesetKey);
+
+        // --- 3. 見た目にクロップとサイズ設定を適用 ---
         const texture = this.textures.get(tilesetKey);
         const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
         const cropX = (tileIndex % tilesPerRow) * tileWidth;
         const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
-        tileObject.setCrop(cropX, cropY, tileWidth, tileHeight);
-        tileObject.setDisplaySize(tileWidth, tileHeight);
+        visualTile.setCrop(cropX, cropY, tileWidth, tileHeight);
+        visualTile.setDisplaySize(tileWidth, tileHeight);
 
+        // --- 4. 「物理ボディ」と「見た目」を一つのコンテナにまとめる ---
+        // これにより、物理ボディ（bodyContainer）を動かすと、見た目（visualTile）も一緒に追従する。
+        // これがPhaserで推奨される、複雑な物理オブジェクトの作り方。
+        const tileObject = this.add.container(centerX, centerY, [visualTile]);
+        
+        // --- 5. 作成したコンテナに、Matter.jsのボディをセットする ---
+        tileObject.setExistingBody(bodyContainer);
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 6. 最後に、コンテナに対して名前やデータを設定し、編集可能にする ---
         const uniqueId = Phaser.Math.RND.uuid();
         tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
         tileObject.setData('isTileObject', true);
         tileObject.setData('tileIndex', tileIndex);
         tileObject.setData('tilesetKey', tilesetKey);
+        tileObject.setSize(tileWidth, tileHeight); // コンテナ自身のサイズも設定
 
-        // ▼▼▼【ここからが物理ボディの修正】▼▼▼
-        // --------------------------------------------------------------------
-        // --- 1. MatterワールドにGameObjectとして明示的に追加 ---
-        this.matter.add.gameObject(tileObject);
-
-        // --- 2. setBodyメソッドを使って、クロップ後の正しいサイズで物理ボディを再設定 ---
-        tileObject.setBody({
-            type: 'rectangle',
-            width: tileWidth,  // タイルセット全体ではなく、タイルの幅
-            height: tileHeight // タイルセット全体ではなく、タイルの高さ
-        });
-
-        // --- 3. その後で、エディタで編集可能にする ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
+            // コンテナをインタラクティブにする
             editor.makeEditable(tileObject, this);
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         return tileObject;
     }
