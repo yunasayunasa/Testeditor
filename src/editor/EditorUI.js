@@ -89,7 +89,7 @@ export default class EditorUI {
         document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
         document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
-        replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
+        
         // カメラコントロール
         this.setupPanButton(document.getElementById('camera-pan-up'), 0, -10);
         this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
@@ -102,6 +102,10 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
         // その他UI
         this.createPauseToggle();
         this.createHelpButton();
+           replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
+        
+        // ▼▼▼【この一行を追加してください】▼▼▼
+        replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
     }
     // --- モード切替と、それに応じたリスナーのON/OFF ---
 
