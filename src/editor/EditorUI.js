@@ -52,50 +52,44 @@ export default class EditorUI {
         this.initializeEventListeners();
         this.populateAssetBrowser();
     }
- /**
-     * ★★★ 最終アプローチ ★★★
-     * 全てのイベントリスナーをここで初期化する。
-     * Phaserの入力システムへの依存を完全に断ち切る。
+ // in EditorUI.js
+
+    /**
+     * ★★★ 真の最終解決版 ★★★
+     * イベントリスナーの登録対象を<canvas>に限定し、Phaserの入力システムと共存させる。
      */
     initializeEventListeners() {
-        // --- DOM要素のイベントリスナー（変更なし） ---
-        // (カメラコントロールや各種ボタンのリスナー設定はそのまま)
+        // --- 既存のDOM要素のイベントリスナーは、ここにある想定（変更なし） ---
+        const replaceListener = (element, event, handler) => {
+            if (!element) return;
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+            newElement.addEventListener(event, handler);
+            return newElement;
+        };
+        
+        // (カメラコントロール、モード切替ボタン、アセット追加ボタンなどのリスナーはそのまま)
         // ...
 
         // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
-        // --- Phaserの入力リスナーを完全に削除 ---
-        // this.game.input.on('pointermove', this.handlePointerMove, this);
-        // this.game.input.on('pointerdown', this.handlePointerDown, this);
-        // ↑ この2行は、startListeningToGameInput() に移動済みのはずなので、そこからも削除してください。
-        // EditorUI.js 内に this.game.input.on(...) が存在しない状態にします。
+        
+        // --- 1. Phaserの<canvas>要素を取得 ---
+        const canvas = this.game.canvas;
 
-        // --- 代わりに、Web標準のDOMイベントリスナーをアタッチ ---
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) {
-            console.error("CRITICAL: #game-container not found in DOM.");
-            return;
-        }
-
-        // --- 1. マウス（またはタッチ）移動イベント ---
-        window.addEventListener('pointermove', (event) => {
+        // --- 2. <canvas>上でマウス（タッチ）が移動した時のイベント ---
+        canvas.addEventListener('pointermove', (event) => {
             if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
             
             const scene = this.getActiveGameScene();
             if (!scene) return;
-            
-            // アセットブラウザ方式で、DOMから直接座標を計算
-            const canvasRect = this.game.canvas.getBoundingClientRect();
+
+            // クライアント座標とcanvasの位置から、canvas内の相対座標を計算
+            const canvasRect = canvas.getBoundingClientRect();
             const canvasX = event.clientX - canvasRect.left;
             const canvasY = event.clientY - canvasRect.top;
 
-            // 計算した座標がキャンバスの範囲内かチェック
-            if (canvasX < 0 || canvasY < 0 || canvasX > canvasRect.width || canvasY > canvasRect.height) {
-                this.tileMarker.setVisible(false); // 範囲外ならマーカーを隠す
-                return;
-            }
-            this.tileMarker.setVisible(true);
-
+            // Phaserのカメラを使ってワールド座標に変換
             const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
 
             const tileWidth = this.currentTileset.tileWidth;
@@ -107,29 +101,23 @@ export default class EditorUI {
             this.tileMarker.setPosition(snappedX, snappedY);
         });
 
-        // --- 2. マウス（またはタッチ）クリックイベント ---
-        window.addEventListener('pointerdown', (event) => {
-            // UI上のクリックはこれまで通りガード
-            if (event.target.closest('#editor-sidebar') || event.target.closest('#overlay-controls') || event.target.closest('#bottom-panel')) {
-                return;
-            }
-
+        // --- 3. <canvas>上でマウス（タッチ）がクリックされた時のイベント ---
+        canvas.addEventListener('pointerdown', (event) => {
+            // タイルマップモードでなければ、タイル配置処理は行わない
             if (this.currentEditorMode !== 'tilemap') {
                 return;
             }
 
+            // ★★★ イベントの伝播を止めることで、Phaserのオブジェクト選択が誤作動するのを防ぐ
+            event.stopPropagation();
+
             const scene = this.getActiveGameScene();
             if (!scene || !this.currentTileset) return;
 
-            // pointermove と同じロジックで座標を計算
-            const canvasRect = this.game.canvas.getBoundingClientRect();
+            // pointermove と同じロジックで正確な座標を計算
+            const canvasRect = canvas.getBoundingClientRect();
             const canvasX = event.clientX - canvasRect.left;
             const canvasY = event.clientY - canvasRect.top;
-
-            // クリックがキャンバスの範囲外なら何もしない
-            if (canvasX < 0 || canvasY < 0 || canvasX > canvasRect.width || canvasY > canvasRect.height) {
-                return;
-            }
 
             const worldPoint = scene.cameras.main.getWorldPoint(canvasX, canvasY);
             
@@ -139,7 +127,7 @@ export default class EditorUI {
             const tileX = Math.floor(worldPoint.x / tileWidth);
             const tileY = Math.floor(worldPoint.y / tileHeight);
             
-            console.log(`[EditorUI | DOM Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
+            console.log(`[EditorUI | Canvas Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
 
             if (typeof scene.placeTile === 'function') {
                 scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key);
@@ -149,7 +137,7 @@ export default class EditorUI {
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
-    // 以下のメソッドは不要になるため、クラスから削除してください
+    // 以下のメソッドは不要なので、クラスから削除してください
     // handlePointerDown() { ... }
     // handlePointerMove() { ... }
     // startListeningToGameInput() { ... }
