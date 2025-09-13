@@ -648,15 +648,14 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
    // in BaseGameScene.js
 
+    // in BaseGameScene.js
+
     /**
-     * ★★★ 真の最終FIX版 ★★★
-     * 指定されたタイルを、正しい物理ボディを持つ単一のGameObjectとしてシーンに追加する。
-     * @param {number} tileIndex - 配置するタイルのインデックス
-     * @param {string} tilesetKey - 使用するタイルセットのアセットキー
-     * @returns {Phaser.GameObjects.Image | null} 生成されたタイルオブジェクト
+     * ★★★ 最後のシンプル修正版 ★★★
+     * 呼び出し順序を正すことで、物理ボディの問題を解決する。
      */
     addTileAsObject(tileIndex, tilesetKey) {
-        console.log(`[BaseGameScene] Final Fix: Adding tile index ${tileIndex} as object.`);
+        console.log(`[BaseGameScene] Simple Fix: Adding tile index ${tileIndex}.`);
 
         const assetDefine = this.cache.json.get('asset_define');
         const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
@@ -668,56 +667,49 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
 
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
+        // 1. まずは普通にImageオブジェクトを作る
+        const tileObject = this.add.image(centerX, centerY, tilesetKey);
         
-        // --- 1. まず「物理ボディ」を先に作る ---
-        // matter.image ではなく、matter.add.rectangle を使い、物理的な「箱」をシーンに追加する。
-        // この時点では、まだテクスチャは設定しない。
-        const bodyContainer = this.matter.add.rectangle(centerX, centerY, tileWidth, tileHeight, {
-            isStatic: false // 始点タイルは動かせた方が良いので isStatic: false
-        });
-
-        // --- 2. 次に「見た目」のオブジェクトを作る ---
-        // このImageオブジェクトは、物理演算とは直接関係ない「皮」の役割を果たす。
-        const visualTile = this.add.image(0, 0, tilesetKey);
-
-        // --- 3. 見た目にクロップとサイズ設定を適用 ---
+        // 2. 見た目を設定する
         const texture = this.textures.get(tilesetKey);
         const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
         const cropX = (tileIndex % tilesPerRow) * tileWidth;
         const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
-        visualTile.setCrop(cropX, cropY, tileWidth, tileHeight);
-        visualTile.setDisplaySize(tileWidth, tileHeight);
+        tileObject.setCrop(cropX, cropY, tileWidth, tileHeight);
+        tileObject.setDisplaySize(tileWidth, tileHeight);
 
-        // --- 4. 「物理ボディ」と「見た目」を一つのコンテナにまとめる ---
-        // これにより、物理ボディ（bodyContainer）を動かすと、見た目（visualTile）も一緒に追従する。
-        // これがPhaserで推奨される、複雑な物理オブジェクトの作り方。
-        const tileObject = this.add.container(centerX, centerY, [visualTile]);
-        
-        // --- 5. 作成したコンテナに、Matter.jsのボディをセットする ---
-        tileObject.setExistingBody(bodyContainer);
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // --- 6. 最後に、コンテナに対して名前やデータを設定し、編集可能にする ---
+        // 3. 名前やデータを設定する
         const uniqueId = Phaser.Math.RND.uuid();
         tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
         tileObject.setData('isTileObject', true);
         tileObject.setData('tileIndex', tileIndex);
         tileObject.setData('tilesetKey', tilesetKey);
-        tileObject.setSize(tileWidth, tileHeight); // コンテナ自身のサイズも設定
 
+        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- 4. 「先に」物理ボディを追加・設定する ---
+        this.matter.add.gameObject(tileObject, {
+            shape: {
+                type: 'rectangle',
+                width: tileWidth,
+                height: tileHeight
+            }
+        });
+        
+        // --- 5. 「後から」エディタで編集可能にする ---
+        // この時点でtileObjectは既に正しいサイズのボディを持っているので、
+        // makeEditableが巨大なボディを自動生成することはない。
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
-            // コンテナをインタラクティブにする
             editor.makeEditable(tileObject, this);
         }
 
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
         return tileObject;
     }
-
 
     shutdown() {
         super.shutdown();
