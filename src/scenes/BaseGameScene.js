@@ -646,8 +646,10 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         return newGameObject;
     }
 
-  /**
+     /**
+     * ★★★ 修正版 ★★★
      * 指定されたタイルを、単一の編集可能なGameObjectとしてシーンに追加する。
+     * 正しいサイズの物理ボディを設定する処理を追加。
      * @param {number} tileIndex - 配置するタイルのインデックス
      * @param {string} tilesetKey - 使用するタイルセットのアセットキー
      * @returns {Phaser.GameObjects.Image | null} 生成されたタイルオブジェクト
@@ -665,34 +667,43 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         const tileWidth = tilesetInfo.tileWidth;
         const tileHeight = tilesetInfo.tileHeight;
 
-        // シーンの中央座標を計算
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
 
-        // 1. Imageオブジェクトを生成
         const tileObject = this.add.image(centerX, centerY, tilesetKey);
         
-        // 2. setCropを使って正しいタイル画像に切り抜く
         const texture = this.textures.get(tilesetKey);
         const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
         const cropX = (tileIndex % tilesPerRow) * tileWidth;
         const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
         tileObject.setCrop(cropX, cropY, tileWidth, tileHeight);
-
-        // 3. 表示サイズを実際のタイルサイズに合わせる (重要！)
         tileObject.setDisplaySize(tileWidth, tileHeight);
 
-        // 4. 一意な名前を付けて、エディタで編集可能にする
-        const uniqueId = Phaser.Math.RND.uuid(); // ランダムなIDを生成
+        const uniqueId = Phaser.Math.RND.uuid();
         tileObject.name = `tile_${tilesetKey}_${tileIndex}_${uniqueId.substr(0, 4)}`;
-        tileObject.setData('isTileObject', true); // これがタイルから作られたオブジェクトであることを示すフラグ
+        tileObject.setData('isTileObject', true);
         tileObject.setData('tileIndex', tileIndex);
         tileObject.setData('tilesetKey', tilesetKey);
 
+        // ▼▼▼【ここからが物理ボディの修正】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 1. MatterワールドにGameObjectとして明示的に追加 ---
+        this.matter.add.gameObject(tileObject);
+
+        // --- 2. setBodyメソッドを使って、クロップ後の正しいサイズで物理ボディを再設定 ---
+        tileObject.setBody({
+            type: 'rectangle',
+            width: tileWidth,  // タイルセット全体ではなく、タイルの幅
+            height: tileHeight // タイルセット全体ではなく、タイルの高さ
+        });
+
+        // --- 3. その後で、エディタで編集可能にする ---
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(tileObject, this);
         }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         return tileObject;
     }
