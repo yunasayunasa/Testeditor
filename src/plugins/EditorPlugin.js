@@ -46,7 +46,8 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
-
+ this.pluginManager.game.input.on('pointermove', this.handlePointerMove, this);
+        this.pluginManager.game.input.on('pointerdown', this.handlePointerDown, this);
         console.warn("[EditorPlugin] Debug mode activated.");
     }
      
@@ -1569,5 +1570,41 @@ if (gameObject.body) {
             this.populateEventEditor(); // ★ UIを再描画して変更を確定させる
         }
     }
-    
+       /**
+     * 現在アクティブな、編集対象のゲームシーンを返す
+     */
+    getActiveGameScene() {
+        if (this.selectedObject && this.selectedObject.scene) {
+            return this.selectedObject.scene;
+        }
+        const scenes = this.pluginManager.game.scene.getScenes(true);
+        for (const scene of scenes) {
+            if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
+                return scene;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * マウス/ポインターが移動した時の処理
+     */
+    handlePointerMove(pointer) {
+        // EditorUIが存在し、タイルマップモードの場合のみ処理
+        if (!this.editorUI || this.editorUI.currentEditorMode !== 'tilemap') return;
+        
+        // EditorUIが持つプロパティやメソッドを呼び出す
+        this.editorUI.updateTileMarkerPosition(pointer);
+    }
+
+    /**
+     * マウス/ポインターがクリックされた時の処理
+     */
+    handlePointerDown(pointer) {
+        // EditorUIが存在し、タイルマップモードで、左クリックの場合のみ処理
+        if (!this.editorUI || this.editorUI.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) return;
+        
+        // EditorUIが持つプロパティやメソッドを呼び出す
+        this.editorUI.placeTileAtPointer(pointer);
+    }
 }
