@@ -1301,15 +1301,15 @@ createComponentSection() {
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-   /**
-     * ★★★ 新規・最終ヘルパーメソッド ★★★
-     * 選択中のグループ（複数オブジェクト）に対して、物理プロパティを一括で適用する
-     * @param {{addBody?: boolean, removeBody?: boolean, isStatic?: boolean}} options 適用する設定
+    /**
+     * ★★★ 最終仕上げ版 ★★★
+     * 選択中のグループに対して、物理プロパティを一括で適用する。
+     * @param {{addBody?: boolean, removeBody?: boolean, isStatic?: boolean}} options
      */
     applyPhysicsToGroup(options) {
         if (!this.selectedObjects || this.selectedObjects.length === 0) return;
 
-        console.log(`[EditorPlugin] Applying physics to group:`, options);
+        console.log(`[EditorPlugin | Final Touch] Applying physics to group:`, options);
 
         // 選択中のすべてのオブジェクトに対してループ処理
         this.selectedObjects.forEach(target => {
@@ -1321,7 +1321,10 @@ createComponentSection() {
                 const bodyWidth = target.width * target.scaleX;
                 const bodyHeight = target.height * target.scaleY;
                 scene.matter.add.gameObject(target, {
-                    shape: { type: 'rectangle', width: bodyWidth, height: bodyHeight }
+                    shape: { type: 'rectangle', width: bodyWidth, height: bodyHeight },
+                    // ▼▼▼【ここが修正点１】▼▼▼
+                    // デフォルトで isStatic: true を設定
+                    isStatic: true
                 });
             }
 
@@ -1331,14 +1334,24 @@ createComponentSection() {
             }
 
             // --- 静的/動的の切り替え ---
-            // (ボディが存在する場合のみ実行)
             if (options.isStatic !== undefined && target.body) {
                 target.setStatic(options.isStatic);
             }
         });
 
-        // 処理が終わったら、UIを最新の状態に更新
-        this.selectMultipleObjects(this.selectedObjects);
+        // ▼▼▼【ここが修正点２】▼▼▼
+        // --------------------------------------------------------------------
+        // --- UIを即時更新するために、少し遅延させてから再描画を呼び出す ---
+        // これにより、ボディの削除が完了した「後」の最新の状態でUIが再構築される
+        setTimeout(() => {
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                this.selectMultipleObjects(this.selectedObjects);
+            } else {
+                this.deselectAll(); // もし何らかの理由で選択が解除されていた場合
+            }
+        }, 0);
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
     /**
      * ★★★ 新規メソッド ★★★
