@@ -46,35 +46,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
- 
+
         console.warn("[EditorPlugin] Debug mode activated.");
     }
-       /**
-     * ★★★ 新規メソッド ★★★
-     * SystemSceneから呼び出され、全てのイベントリスナーの監視を開始する
-     */
-    startListening() {
-        if (!this.isEnabled) return;
-        console.log("[EditorPlugin] Starting global input listeners...");
-        this.pluginManager.game.input.on('pointermove', this.handlePointerMove, this);
-        this.pluginManager.game.input.on('pointerdown', this.handlePointerDown, this);
-        this.pluginManager.game.input.on('pointerup', this.handlePointerUp, this); // ドラッグ終了のため追加
-    }
-      /**
-     * ★★★ 新規メソッド ★★★
-     * 新しいシーンが開始されるたびに呼び出される
-     */
-    onSceneStart(scene) {
-        // ★ SystemSceneが開始され、かつEditorUIが準備できている場合
-        if (scene.scene.key === 'SystemScene' && this.editorUI) {
-            // このタイミングなら、PreloadSceneの仕事は確実に終わっている
-            console.log("[EditorPlugin] SystemScene started. Triggering EditorUI build.");
-            this.editorUI.build();
-
-            // 一度実行したら、もうこのリスナーは不要なので解除する
-            this.pluginManager.game.events.off('scene-start', this.onSceneStart, this);
-        }
-    }
+     
     setUI(editorUI) {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
@@ -1594,44 +1569,5 @@ if (gameObject.body) {
             this.populateEventEditor(); // ★ UIを再描画して変更を確定させる
         }
     }
-       /**
-     * 現在アクティブな、編集対象のゲームシーンを返す
-     */
-    getActiveGameScene() {
-        if (this.selectedObject && this.selectedObject.scene) {
-            return this.selectedObject.scene;
-        }
-        const scenes = this.pluginManager.game.scene.getScenes(true);
-        for (const scene of scenes) {
-            if (scene.scene.key !== 'UIScene' && scene.scene.key !== 'SystemScene' && scene.scene.key !== 'GameScene') {
-                return scene;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * マウス/ポインターが移動した時の処理
-     */
-    handlePointerMove(pointer) {
-        // EditorUIが存在し、タイルマップモードの場合のみ処理
-        if (!this.editorUI || this.editorUI.currentEditorMode !== 'tilemap') return;
-        
-        // EditorUIが持つプロパティやメソッドを呼び出す
-        this.editorUI.updateTileMarkerPosition(pointer);
-    }
-
-    /**
-     * マウス/ポインターがクリックされた時の処理
-     */
-    handlePointerDown(pointer) {
-        // EditorUIが存在し、タイルマップモードで、左クリックの場合のみ処理
-        if (!this.editorUI || this.editorUI.currentEditorMode !== 'tilemap' || !pointer.leftButtonDown()) return;
-        
-        // EditorUIが持つプロパティやメソッドを呼び出す
-        this.editorUI.placeTileAtPointer(pointer);
-    }
-    handlePointerUp(pointer) {
-        // ドラッグ状態をリセットするなどの処理をここに追加可能
-    }
+    
 }
