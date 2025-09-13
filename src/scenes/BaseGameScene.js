@@ -670,55 +670,60 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * ★★★ 究極の最終FIX版・改3 ★★★
      * 透明なZoneを親として、その中に子オブジェクトを配置する。
      */
+    // in BaseGameScene.js
+
+    /**
+     * ★★★ 究極の最終FIX版・改4 (変数定義修正) ★★★
+     * 透明なZoneを親として、その中に子オブジェクトを配置する。
+     */
     fillObjectRange(sourceObject, endPoint) {
         if (!sourceObject || !sourceObject.scene) return;
 
-        // --- 1. グリッドとループ範囲の計算 (変更なし) ---
+        // --- 1. グリッドサイズと始点/終点グリッド座標を計算 ---
         const gridWidth = sourceObject.displayWidth;
         const gridHeight = sourceObject.displayHeight;
-        // ... (startGridX, endGridX, fromX, toXなどの計算はそのまま) ...
+        
+        // ▼▼▼【不足していた変数定義】▼▼▼
+        const startGridX = Math.round(sourceObject.x / gridWidth);
+        const startGridY = Math.round(sourceObject.y / gridHeight);
+        const endGridX = Math.round(endPoint.x / gridWidth);
+        const endGridY = Math.round(endPoint.y / gridHeight);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- 2. 複製元レイアウトの作成 (変更なし) ---
+        // --- 2. 複製元レイアウトの作成 ---
         const sourceLayout = this.extractLayoutFromObject(sourceObject);
         
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        const fromX = Math.min(startGridX, endGridX); // この行を追加
-        const toX = Math.max(startGridX, endGridX);     // この行を追加
-        const fromY = Math.min(startGridY, endGridY); // この行を追加
-        const toY = Math.max(startGridY, endGridY);     // この行を追加
         // --- 3. 描画範囲全体のバウンディングボックスを計算 ---
+        const fromX = Math.min(startGridX, endGridX);
+        const toX = Math.max(startGridX, endGridX);
+        const fromY = Math.min(startGridY, endGridY);
+        const toY = Math.max(startGridY, endGridY);
+
         const containerWidth = (toX - fromX + 1) * gridWidth;
         const containerHeight = (toY - fromY + 1) * gridHeight;
         const containerCenterX = (fromX * gridWidth) + containerWidth / 2;
         const containerCenterY = (fromY * gridHeight) + containerHeight / 2;
 
         // --- 4. 「Zone」を親オブジェクトとして、範囲の中心に作成 ---
-        // Zoneは透明だが、サイズとインタラクティブエリアを持つことができる。
         const parentZone = this.add.zone(containerCenterX, containerCenterY, containerWidth, containerHeight);
         
         // --- 5. Zoneに物理ボディを設定 ---
-        // これで、見た目の範囲と物理ボディが一致する。
         this.matter.add.gameObject(parentZone, {
             shape: { type: 'rectangle', width: containerWidth, height: containerHeight }
         });
-        // 物理ボディの原点は自動で中心になるので、手動での調整は不要。
 
         // --- 6. 矩形範囲をループして、見た目用の「子オブジェクト」を配置 ---
-        // 子オブジェクトは物理ボディを持たない、ただの見た目とする。
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
                 const newLayout = { ...sourceLayout };
-                // ★ 物理ボディは親が持つので、子には不要
                 delete newLayout.physics; 
                 
-                const worldX = gx * gridWidth + gridWidth / 2; // 各タイルの中心座標
+                const worldX = gx * gridWidth + gridWidth / 2;
                 const worldY = gy * gridHeight + gridHeight / 2;
 
                 const newChildObject = this.createObjectFromLayout(newLayout);
                 if (newChildObject) {
                     this.applyProperties(newChildObject, { ...newLayout, x: worldX, y: worldY });
-                    // 子オブジェクトはインタラクティブにする必要はない
                     if (newChildObject.input) newChildObject.input.enabled = false;
                 }
             }
@@ -729,15 +734,11 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         parentZone.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
-            // Zone自体をインタラクティブにする
             parentZone.setInteractive(); 
             editor.makeEditable(parentZone, this);
         }
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        // --- 8. ブラシを破棄 (変更なし) ---
+        // --- 8. ブラシを破棄 ---
         sourceObject.destroy();
     }
     
