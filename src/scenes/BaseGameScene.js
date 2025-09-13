@@ -664,97 +664,79 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * ★★★ 最終完成版・改 ★★★
      * 座標計算の基準点を修正し、コンテナに正しい入力エリアを設定する。
      */
+   // in BaseGameScene.js
+
+    /**
+     * ★★★ 究極の最終FIX版・改3 ★★★
+     * 透明なZoneを親として、その中に子オブジェクトを配置する。
+     */
     fillObjectRange(sourceObject, endPoint) {
         if (!sourceObject || !sourceObject.scene) return;
 
-        // --- 1. グリッドサイズと始点/終点グリッド座標を計算 (変更なし) ---
+        // --- 1. グリッドとループ範囲の計算 (変更なし) ---
         const gridWidth = sourceObject.displayWidth;
         const gridHeight = sourceObject.displayHeight;
-        const startGridX = Math.round(sourceObject.x / gridWidth);
-        const startGridY = Math.round(sourceObject.y / gridHeight);
-        const endGridX = Math.round(endPoint.x / gridWidth);
-        const endGridY = Math.round(endPoint.y / gridHeight);
-        const fromX = Math.min(startGridX, endGridX);
-        const toX = Math.max(startGridX, endGridX);
-        const fromY = Math.min(startGridY, endGridY);
-        const toY = Math.max(startGridY, endGridY);
-        
-        // --- 2. 複製元のレイアウト情報を作成 (変更なし) ---
+        // ... (startGridX, endGridX, fromX, toXなどの計算はそのまま) ...
+
+        // --- 2. 複製元レイアウトの作成 (変更なし) ---
         const sourceLayout = this.extractLayoutFromObject(sourceObject);
         
         // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
+        
+        // --- 3. 描画範囲全体のバウンディングボックスを計算 ---
+        const containerWidth = (toX - fromX + 1) * gridWidth;
+        const containerHeight = (toY - fromY + 1) * gridHeight;
+        const containerCenterX = (fromX * gridWidth) + containerWidth / 2;
+        const containerCenterY = (fromY * gridHeight) + containerHeight / 2;
 
-        // --- 3. コンテナを作成し、その「左上のアンカーポイント」のワールド座標を計算 ---
-        const containerX = fromX * gridWidth;
-        const containerY = fromY * gridHeight;
-        const newContainer = this.add.container(containerX, containerY);
+        // --- 4. 「Zone」を親オブジェクトとして、範囲の中心に作成 ---
+        // Zoneは透明だが、サイズとインタラクティブエリアを持つことができる。
+        const parentZone = this.add.zone(containerCenterX, containerCenterY, containerWidth, containerHeight);
+        
+        // --- 5. Zoneに物理ボディを設定 ---
+        // これで、見た目の範囲と物理ボディが一致する。
+        this.matter.add.gameObject(parentZone, {
+            shape: { type: 'rectangle', width: containerWidth, height: containerHeight }
+        });
+        // 物理ボディの原点は自動で中心になるので、手動での調整は不要。
 
-        // --- 4. 矩形範囲をループして、オブジェクトを「コンテナ内の相対座標」で配置 ---
+        // --- 6. 矩形範囲をループして、見た目用の「子オブジェクト」を配置 ---
+        // 子オブジェクトは物理ボディを持たない、ただの見た目とする。
         for (let gx = fromX; gx <= toX; gx++) {
             for (let gy = fromY; gy <= toY; gy++) {
                 const newLayout = { ...sourceLayout };
+                // ★ 物理ボディは親が持つので、子には不要
+                delete newLayout.physics; 
                 
-                // ★★★ 座標計算の修正 ★★★
-                // コンテナの左上からの相対位置を計算する
-                const relativeX = (gx * gridWidth) - containerX;
-                const relativeY = (gy * gridHeight) - containerY;
-                
+                const worldX = gx * gridWidth + gridWidth / 2; // 各タイルの中心座標
+                const worldY = gy * gridHeight + gridHeight / 2;
+
                 const newChildObject = this.createObjectFromLayout(newLayout);
                 if (newChildObject) {
-                    newChildObject.setPosition(relativeX, relativeY);
-                    newChildObject.setScale(newLayout.scaleX, newLayout.scaleY);
-                    
-                    // ★ コンテナ内のオブジェクトの原点を左上に設定すると、より正確に配置される
-                    if (typeof newChildObject.setOrigin === 'function') {
-                        newChildObject.setOrigin(0, 0);
-                    }
-                    
-                    newContainer.add(newChildObject);
+                    this.applyProperties(newChildObject, { ...newLayout, x: worldX, y: worldY });
+                    // 子オブジェクトはインタラクティブにする必要はない
+                    if (newChildObject.input) newChildObject.input.enabled = false;
                 }
             }
         }
         
-         // --- 5. コンテナ全体のサイズを計算 ---
-        const bounds = newContainer.getBounds();
-        const containerWidth = bounds.width;
-        const containerHeight = bounds.height;
-        newContainer.setSize(containerWidth, containerHeight);
-
-        // --- 6. コンテナの原点を、その寸法の中心に設定 ---
-        // これにより、コンテナの「へそ」が真ん中になる。
-        newContainer.setOrigin(0.5, 0.5);
-        
-        // --- 7. コンテナの位置を、バウンディングボックスの中心に再設定 ---
-        // 原点を中心にずらした分、見た目の位置がズレるので、それを補正する。
-        Phaser.Display.Align.In.Center(newContainer, this.add.zone(bounds.centerX, bounds.centerY, 1, 1));
-        
-        // --- 8. インタラクティブな「当たり判定エリア」を設定 ---
-        // 原点を中心にしたので、当たり判定エリアのx,yも中心からの相対位置にする。
-        newContainer.setInteractive(
-            new Phaser.Geom.Rectangle( -containerWidth / 2, -containerHeight / 2, containerWidth, containerHeight),
-            Phaser.Geom.Rectangle.Contains
-        );
-
-        // --- 9. 最後に、コンテナをエディタで編集可能にし、物理ボディを追加 ---
-        // (物理ボディも、コンテナの中心を基準に生成されるようになる)
-        this.matter.add.gameObject(newContainer); // ★ コンテナ自体に物理ボディを追加
-
+        // --- 7. 親であるZoneをエディタで編集可能にする ---
         const uniqueId = Phaser.Math.RND.uuid().substr(0, 4);
-        newContainer.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
+        parentZone.name = `fill_group_${sourceLayout.name}_${uniqueId}`;
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
-            editor.makeEditable(newContainer, this);
+            // Zone自体をインタラクティブにする
+            parentZone.setInteractive(); 
+            editor.makeEditable(parentZone, this);
         }
 
-        // -----------------------------
-
-        // --- 7. ブラシとして使った始点オブジェクトを破棄 (変更なし) ---
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // --- 8. ブラシを破棄 (変更なし) ---
         sourceObject.destroy();
     }
-
-    // extractLayoutFromObject メソッドは変更の必要はありません。
-    // extractLayoutFromObject メソッドは変更の必要はありません。
     
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
