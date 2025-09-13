@@ -50,7 +50,17 @@ export default class EditorUI {
         this.createPauseToggle();
         this.createHelpButton();
         this.initializeEventListeners();
+        
+    }
+
+       /**
+     * ★★★ 新規メソッド ★★★
+     * SystemSceneから呼び出され、registryに依存するUIの構築を開始する
+     */
+    buildUI() {
+        console.log("[EditorUI] Building UI with registry data...");
         this.populateAssetBrowser();
+        // 将来的に、registryに依存する他のUI初期化があれば、ここに追加
     }
 
     /**
