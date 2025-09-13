@@ -647,77 +647,48 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     }
 
 
-     // in BaseGameScene.js
+     
 
-    /**
-     * ★★★ ログ爆弾設置・完全版 ★★★
-     * 指定されたグリッド座標にタイルを配置する
-     * @param {number} tileX - タイルのX座標 (グリッド)
-     * @param {number} tileY - タイルのY座標 (グリッド)
-     * @param {number} tileIndex - 配置するタイルのインデックス
-     * @param {string} tilesetKey - 使用するタイルセットのアセットキー
-     * @param {boolean} addPhysics - 物理ボディを追加するかどうかのフラグ
+
+/**
+     * ★★★ 最終FIX版 ★★★
+     * タイル配置時に、正しいサイズの物理ボディを設定する（オプション）
      */
-    placeTile(tileX, tileY, tileIndex, tilesetKey, addPhysics = false) {
-        
-        // ★★★ ログ爆弾 10 ★★★
-        console.log(`%c[LOG BOMB 10] placeTile method in Scene EXECUTED with args:
-            - Grid Coords: (${tileX}, ${tileY})
-            - Tile Index: ${tileIndex}
-            - Tileset Key: ${tilesetKey}`, 'color: #1E90FF; font-weight: bold;');
-
-        const assetDefine = this.cache.json.get('asset_define');
-        const tilesetInfo = Object.values(assetDefine.tilesets).find(ts => ts.key === tilesetKey);
-        if (!tilesetInfo) {
-            console.error(`[BaseGameScene] Tileset info for key '${tilesetKey}' not found.`);
-            return;
-        }
-
-        const tileWidth = tilesetInfo.tileWidth;
-        const tileHeight = tilesetInfo.tileHeight;
-
-        // ワールド座標を計算
-        const worldX = tileX * tileWidth + tileWidth / 2;
-        const worldY = tileY * tileHeight + tileHeight / 2;
-        
+    placeTile(tileX, tileY, tileIndex, tilesetKey, addPhysics = false) { // addPhysicsフラグを追加
+        // ... (前半のタイル情報取得、座標計算、イメージ追加、setCropは変更なし) ...
         const tile = this.add.image(worldX, worldY, tilesetKey);
-        
-        // setCropを使って、タイルセット画像から正しいタイルを切り出す
-        const texture = this.textures.get(tilesetKey);
-        const tilesPerRow = Math.floor(texture.getSourceImage().width / tileWidth);
-        const cropX = (tileIndex % tilesPerRow) * tileWidth;
-        const cropY = Math.floor(tileIndex / tilesPerRow) * tileHeight;
-        tile.setCrop(cropX, cropY, tileWidth, tileHeight);
+        // ... (setCropの処理) ...
 
         tile.name = `tile_${tileX}_${tileY}`;
         
+        // ▼▼▼【ここからが物理ボディの修正】▼▼▼
+        // --------------------------------------------------------------------
         if (addPhysics) {
+            // 1. まずMatterワールドにGameObjectとして追加
             this.matter.add.gameObject(tile);
             
+            // 2. setBodyメソッドを使って、正しいサイズの長方形ボディを設定
             tile.setBody({
                 type: 'rectangle',
-                width: tileWidth,
-                height: tileHeight
+                width: tileWidth,  // 500ではなく、32を指定
+                height: tileHeight // 500ではなく、32を指定
             }, {
-                isStatic: true
+                isStatic: true // 地面タイルなどは静的にする
             });
-            console.log(`%c[BaseGameScene] Physics body added to tile '${tile.name}' with size ${tileWidth}x${tileHeight}`, 'color: #1E90FF;');
+            console.log(`[BaseGameScene] Physics body added to tile '${tile.name}' with size ${tileWidth}x${tileHeight}`);
         }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(tile, this);
         }
         
-        const key = `${tileX},${tileY}`;
-        this.tilemapData[key] = {
-            index: tileIndex,
-            tileset: tilesetKey
-        };
-
-        console.log(`%c[BaseGameScene] Placed tile '${tile.name}' successfully.`, 'color: #1E90FF;');
+        this.tilemapData[`${tileX},${tileY}`] = { index: tileIndex, tileset: tilesetKey };
+        console.log(`Placed tile '${tile.name}' successfully.`);
+    
     }
-
 
     shutdown() {
         super.shutdown();

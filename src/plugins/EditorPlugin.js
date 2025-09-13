@@ -927,14 +927,16 @@ createComponentSection() {
         }
         
         // setDraggableは一度だけで良い
-        // ★★★ ログ爆弾 1 ★★★
-        console.log(`%c[LOG BOMB 1] MakeEditable for '${gameObject.name}'`, 'color: #8A2BE2; font-weight: bold;');
+        scene.input.setDraggable(gameObject);
 
+        // --- 既存リスナーをクリア ---
         gameObject.off('pointerdown');
-        gameObject.on('pointerdown', (pointer, localX, localY, event) => {
-            // ★★★ ログ爆弾 2 ★★★
-            console.log(`%c[LOG BOMB 2] OBJECT POINTER DOWN on '${gameObject.name}'. Current mode: ${this.editorUI?.currentEditorMode}`, 'color: #8A2BE2');
+        gameObject.off('drag');
+        gameObject.off('pointerover');
+        gameObject.off('pointerout');
 
+        // --- pointerdown (変更なし) ---
+        gameObject.on('pointerdown', (pointer, localX, localY, event) => {
             if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
                 return; 
             }
@@ -947,9 +949,6 @@ createComponentSection() {
         // --------------------------------------------------------------------
         // --- drag ---
         gameObject.on('drag', (pointer, dragX, dragY) => {
-                  // ★★★ ログ爆弾 3 ★★★
-             // console.log(`%c[LOG BOMB 3] DRAG event on '${gameObject.name}'`, 'color: #8A2BE2'); // 大量に出るので最初はコメントアウト
-
             // pointerdownと同様に、タイルマップモードではドラッグを無効化する
             if (this.editorUI && this.editorUI.currentEditorMode === 'tilemap') {
                 return;

@@ -141,8 +141,6 @@ export default class EditorUI {
      */
     startListeningToGameInput() {
         if (!this.game || !this.game.input) {
-                // ★★★ ログ爆弾 4 ★★★
-        console.log(`%c[LOG BOMB 4] Attaching HIGH PRIORITY global listeners.`, 'color: #FF6347; font-weight: bold;');
             console.error("[EditorUI] Cannot start listening: Game or input system not available.");
             return;
         }
@@ -153,8 +151,8 @@ export default class EditorUI {
 
         // --- 新しいリスナーを登録 ---
         console.log("[EditorUI] Attaching Phaser global input listeners.");
-        this.game.input.topOnly_on('pointermove', this.onPointerMove, this);
-        this.game.input.topOnly_on('pointerdown', this.onPointerDown, this);
+        this.game.input.on('pointermove', this.onPointerMove, this);
+        this.game.input.on('pointerdown', this.onPointerDown, this);
     }
 
     /**
@@ -164,10 +162,7 @@ export default class EditorUI {
      */
     onPointerMove(pointer) {
         if (this.currentEditorMode !== 'tilemap' || !this.tileMarker) return;
-         // ★★★ ログ爆弾 5 ★★★
-        // 大量に出るので、必要な時だけコメントを外す
-        // console.log(`%c[LOG BOMB 5] GLOBAL POINTER MOVE. worldX: ${pointer.worldX}, worldY: ${pointer.worldY}`, 'color: #FF6347');
-
+        
         const scene = this.getActiveGameScene();
         if (!scene) return;
         
@@ -185,22 +180,19 @@ export default class EditorUI {
     }
     
     /**
-     * ★★★ 最終FIX ★★★
-     * onPointerDown: UI上でのクリック判定をより厳密にする
+     * ★★★ 新規メソッド ★★★
+     * Phaserのポインターイベントを捌くための統合ハンドラ
+     * @param {Phaser.Input.Pointer} pointer 
      */
     onPointerDown(pointer) {
-        // ★★★ ログ爆弾 6 ★★★
-        console.log(`%c[LOG BOMB 6] GLOBAL POINTER DOWN event received.`, 'color: #FF6347; font-weight: bold;');
-        
-        if (pointer.event.target.closest('#editor-root')) {
-            // ★★★ ログ爆弾 7 ★★★
-            console.log(`%c[LOG BOMB 7] Click on UI detected. Aborting.`, 'color: #FFD700;');
+        // UI上でのクリックなら、Phaser側で処理させない
+        if (pointer.event.target.closest('#editor-sidebar') || 
+            pointer.event.target.closest('#overlay-controls') || 
+            pointer.event.target.closest('#bottom-panel')) {
             return;
         }
 
         if (this.currentEditorMode !== 'tilemap') {
-            // ★★★ ログ爆弾 8 ★★★
-            console.log(`%c[LOG BOMB 8] Not in tilemap mode. Aborting.`, 'color: #FFD700;');
             return;
         }
         
@@ -210,18 +202,19 @@ export default class EditorUI {
         const worldX = pointer.worldX;
         const worldY = pointer.worldY;
 
-        const tileX = Math.floor(worldX / this.currentTileset.tileWidth);
-        const tileY = Math.floor(worldY / this.currentTileset.tileHeight);
+        const tileWidth = this.currentTileset.tileWidth;
+        const tileHeight = this.currentTileset.tileHeight;
+
+        const tileX = Math.floor(worldX / tileWidth);
+        const tileY = Math.floor(worldY / tileHeight);
         
-        // ★★★ ログ爆弾 9 ★★★
-        console.log(`%c[LOG BOMB 9] Calculated positions for placement:
-            - Pointer World Coords: (${worldX.toFixed(2)}, ${worldY.toFixed(2)})
-            - Target Grid Coords: (${tileX}, ${tileY})`, 'color: #32CD32;');
+        console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
 
         if (typeof scene.placeTile === 'function') {
-            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true);
+            scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
         }
     }
+
    // --- タイルマップ専用リスナーの管理 ---
     
    /**
