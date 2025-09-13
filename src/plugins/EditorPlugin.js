@@ -46,8 +46,19 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         if (this.eventEditorCloseBtn) {
             this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
         }
- this.pluginManager.game.events.on('scene-start', this.onSceneStart, this)
+ 
         console.warn("[EditorPlugin] Debug mode activated.");
+    }
+       /**
+     * ★★★ 新規メソッド ★★★
+     * SystemSceneから呼び出され、全てのイベントリスナーの監視を開始する
+     */
+    startListening() {
+        if (!this.isEnabled) return;
+        console.log("[EditorPlugin] Starting global input listeners...");
+        this.pluginManager.game.input.on('pointermove', this.handlePointerMove, this);
+        this.pluginManager.game.input.on('pointerdown', this.handlePointerDown, this);
+        this.pluginManager.game.input.on('pointerup', this.handlePointerUp, this); // ドラッグ終了のため追加
     }
       /**
      * ★★★ 新規メソッド ★★★
@@ -1619,5 +1630,8 @@ if (gameObject.body) {
         
         // EditorUIが持つプロパティやメソッドを呼び出す
         this.editorUI.placeTileAtPointer(pointer);
+    }
+    handlePointerUp(pointer) {
+        // ドラッグ状態をリセットするなどの処理をここに追加可能
     }
 }

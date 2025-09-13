@@ -52,13 +52,21 @@ export default class EditorUI {
         this.initializeEventListeners();
        
     }
-  /**
-     * ★★★ 新規メソッド ★★★
-     * SystemSceneから呼び出され、registryデータを使ったUI構築を開始する
+   /**
+     * SystemSceneから呼び出され、全てのUIの構築とリスナー設定を行う
      */
     build() {
-        console.log("[EditorUI] build() called. Populating asset browser...");
-        this.populateAssetBrowser();
+        console.log("[EditorUI] build() called. Initializing UI and listeners...");
+
+        // --- UIの表示 ---
+        if (this.editorPanel) this.editorPanel.style.display = 'flex';
+        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
+        
+        // --- UI要素の生成とリスナー設定 ---
+        this.createPauseToggle();
+        this.createHelpButton();
+        this.initializeEventListeners(); // ★ DOMリスナーはここで設定
+        this.populateAssetBrowser();     // ★ registryに依存するUIもここで構築
     }
     /**
      * 全てのUI要素にイベントリスナーを設定する

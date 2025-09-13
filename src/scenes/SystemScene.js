@@ -99,7 +99,37 @@ export default class SystemScene extends Phaser.Scene {
             this.isTimeStopped = false;
         });
         // --- 3. エディタ関連の初期化 ---
-        this.initializeEditor();
+          const currentURL = window.location.href;
+    const isDebugMode = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
+
+    if (isDebugMode) {
+        console.log("[SystemScene] Debug mode detected. Initializing Editor...");
+        document.body.classList.add('debug-mode');
+        
+        // 1. プラグインを取得
+        const editorPlugin = this.plugins.get('EditorPlugin');
+        
+        if (editorPlugin && editorPlugin.isEnabled) {
+             // 2. UIをインスタンス化し、プラグインに参照を渡す
+             this.editorUI = new EditorUI(this.game, editorPlugin);
+             editorPlugin.setUI(this.editorUI);
+
+             // 3. 全てのシーンの準備が整うのを待つ
+             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+             // ★★★ これが、全てを解決する、最後の鍵です ★★★
+             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+             this.events.once('transition-complete', (sceneKey) => {
+                 // 最初のシーン(GameScene)への遷移が完了した瞬間に実行
+                 if (sceneKey === 'GameScene') {
+                     console.log("[SystemScene] Initial transition complete. Finalizing editor setup.");
+                     // 4. UIに構築を命令
+                     this.editorUI.build();
+                     // 5. プラグインに監視開始を命令
+                     editorPlugin.startListening();
+                 }
+             });
+        }
+    }
          
         // --- 4. 初期ゲームの起動 ---
         if (this.initialGameData) {
