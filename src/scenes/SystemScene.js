@@ -222,27 +222,25 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
      * ★★★ 新規メソッド ★★★
      * GameSceneからの[jump]など、シンプルな遷移を処理する
      */
+   /**
+     * ★★★ 究極の最終FIX版・改6 ★★★
+     * ゲームシーン間の遷移を処理する
+     */
     _handleSimpleTransition(data) {
         if (this.isProcessingTransition) return;
+        this.isProcessingTransition = true;
 
-        console.log(`[SystemScene] シンプルな遷移リクエスト: ${data.from} -> ${data.to}`);
+        console.log(`[SystemScene] Simple transition from ${data.from} to ${data.to}`);
+        
+        // --- UISceneを非表示にする ---
+        this.scene.setVisible('UIScene', false);
 
-        // 古いシーンを停止
-        if (this.scene.isActive(data.from)) {
-            this.scene.stop(data.from);
-        }
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene) {
-            // ★ ゲームシーンに遷移するときは、UIScene自体を非表示にするのがシンプル
-            uiScene.scene.setVisible(false);
-        }
-        //
-
-        // 監視付きで新しいシーンを起動（フェードなし）
-        // ★★★ 以前からある、信頼性の高いメソッドを再利用 ★★★
+        // --- 古いシーンを停止 ---
+        this.scene.stop(data.from);
+        
+        // --- 新しいシーンを起動・監視 ---
         this._startAndMonitorScene(data.to, data.params);
     }
-
 
     /**
      * シーン遷移を開始する (フェードなし・シンプル版)
@@ -415,11 +413,16 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
             this.scene.stop(sceneKey);
         }
 
-        // 単一シーンの完了を待つ
-        this.scenesToWaitFor.add(sceneKey);
-        this.onAllScenesReadyCallback = () => {
+        const completionEvent = (sceneKey === 'GameScene')
+            ? 'gameScene-load-complete'
+            : 'scene-ready'; // JumpSceneなどは'scene-ready'を発行する
+
+        const targetScene = this.scene.get(sceneKey);
+        
+        // ★★★ 完了報告を待つのは、イベント方式に戻すのが最も確実 ★★★
+        targetScene.events.once(completionEvent, () => {
             this._onTransitionComplete(sceneKey);
-        };
+        });
         
         this.scene.run(sceneKey, params);
     }

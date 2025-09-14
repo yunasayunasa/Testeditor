@@ -174,39 +174,27 @@ registerUiElement(name, element, params) {
     }
    // in UIScene.js
 
-   /**
-     * ★★★ 究極の最終FIX版 ★★★
-     * シーン遷移時に、各UI要素の表示/非表示を安全に切り替える
-     * @param {string} toSceneKey - 遷移先のシーンキー
+      /**
+     * ★★★ 究極の最終FIX版・改6 ★★★
+     * uiRegistryにscenes定義を持つUI要素の表示/非表示だけを制御する
      */
     onSceneTransition(toSceneKey) {
-        console.log(`[UIScene | Final Fix] Transitioning UI for scene: ${toSceneKey}`);
+        console.log(`[UIScene | Final Fix 2] Transitioning UI for scene: ${toSceneKey}`);
         
-        // --- 自身の表示/非表示を管理 ---
-        const shouldBeVisible = (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene');
-        this.scene.setVisible(shouldBeVisible);
+        // --- UIScene自体の表示/非表示は、SystemSceneが責任を持つ方がシンプル
+        // SystemScene側で、this.scene.setVisible(true/false) を呼ぶようにする
         
-        if (!this.uiRegistry) {
-            console.error("[UIScene] onSceneTransition cannot run because uiRegistry is missing.");
-            return;
-        }
+        if (!this.uiRegistry) return;
 
-        // --- どのUIを表示するかのロジック ---
         for (const [key, element] of this.uiElements.entries()) {
             const definition = this.uiRegistry[key];
 
-            // ▼▼▼【ここが最後の、そして最も重要な修正です】▼▼▼
-            // --------------------------------------------------------------------
-            // --- definition が存在し、かつ definition.scenes が配列であることを確認 ---
+            // ★★★ scenes プロパティを持つ definition のみを対象とする ★★★
             if (definition && Array.isArray(definition.scenes)) {
-                // scenes 配列に、遷移先のシーンキーが含まれていれば表示
                 element.setVisible(definition.scenes.includes(toSceneKey));
-            } else {
-                // scenes の定義がないUI要素は、デフォルトで非表示にするのが安全
-                element.setVisible(false);
             }
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            // ★★★ scenes 定義を持たない要素（message_windowなど）には、何もしない ★★★
+            // これにより、手動での表示/非表示制御が上書きされるのを防ぐ
         }
     }
 // src/scenes/UIScene.js
