@@ -537,6 +537,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         console.log("[BaseGameScene] All collision and overlap listeners activated.");
 
         if (this.onSetupComplete) { this.onSetupComplete(); }
+         console.log(`[BaseGameScene | ${this.scene.key}] All setup is complete. Emitting scene-ready.`);
         this.events.emit('scene-ready');
     }
 
