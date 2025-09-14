@@ -35,10 +35,10 @@ export default class JumpScene extends BaseGameScene {
          this.initSceneWithData();
       const uiScene = this.scene.get('UIScene');
 
-        // --- 2. ゲーム開始時には、メッセージウィンドウは不要なので非表示にする ---
+    /*    // --- 2. ゲーム開始時には、メッセージウィンドウは不要なので非表示にする ---
         if (uiScene) {
             uiScene.setElementVisible('message_window', false);
-        }
+        }*/
      // --------------------------------------------------------------------
         // --- デバッグモードでない時だけ、ジョイスティックを生成する ---
         const isDebug = new URLSearchParams(window.location.search).has('debug');
