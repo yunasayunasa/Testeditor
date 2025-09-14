@@ -22,7 +22,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         // UI更新処理の無限再帰呼び出しを防ぐためのフラグ
         this._isUpdatingPanel = false;
+
+        this.layerStates = []; // ★ レイヤーの状態を保持
     }
+   
 
     init() {
         // デバッグモードでなければ即時終了
@@ -79,6 +82,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
         // ★★★ イベントリスナーの登録は、ここで行わない ★★★
+    }
+
+    updateLayerStates(layers) {
+        this.layerStates = layers;
     }
 
     panCamera(dx, dy) {
@@ -1078,6 +1085,13 @@ createComponentSection() {
         gameObject.setData('lastTap', 0);
 
        gameObject.on('pointerdown', (pointer) => {
+            // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
+            const layerName = gameObject.getData('layer');
+            const layer = this.layerStates.find(l => l.name === layerName);
+            if (layer && layer.locked) {
+                console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
+                return; // レイヤーがロックされていれば、選択処理を中断
+            }
             const now = Date.now();
             const lastTap = gameObject.getData('lastTap');
             const diff = now - lastTap;
@@ -1119,6 +1133,15 @@ createComponentSection() {
          // ▼▼▼ グループドラッグのロジックをここに追加 ▼▼▼
         gameObject.off('dragstart');
         gameObject.on('dragstart', (pointer) => {
+              // ▼▼▼【ここにもロック状態チェックを追加】▼▼▼
+            const layerName = gameObject.getData('layer');
+            const layer = this.layerStates.find(l => l.name === layerName);
+            if (layer && layer.locked) {
+                // ドラッグを開始させない
+                gameObject.input.draggable = false;
+                return;
+            }
+            gameObject.input.draggable = true;
             // もし複数選択中なら、各オブジェクトの初期位置を記憶
             if (this.selectedObjects && this.selectedObjects.length > 0) {
                 this.selectedObjects.forEach(obj => {

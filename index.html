@@ -36,7 +36,17 @@
 
         <!-- (A) Right Sidebar: アセットブラウザとプロパティパネル -->
         <div id="editor-sidebar">
-
+<div id="layers-panel" class="editor-panel">
+        <div class="panel-header">
+            <span>Layers</span>
+            <div class="panel-header-buttons">
+                <button id="add-layer-btn" title="Add New Layer">+</button>
+            </div>
+        </div>
+        <div id="layer-list" class="panel-content">
+            <!-- EditorUIがここにレイヤーリストを動的に生成します -->
+        </div>
+    </div>
             <!-- Asset Browser Panel -->
             <div id="asset-browser" class="editor-panel">
                 <div class="panel-header">
@@ -108,14 +118,14 @@
                         < Layer list is dynamically generated here 
                     </div>
                 </div>--->
-          <!---     Tileset Display Area--->
+          <!---     Tileset Display Area---
                 <div id="tileset-panel" class="bottom-panel-section">
                     <div class="panel-section-header">Tileset</div>
                     <div id="tileset-preview" class="panel-section-content">
-                    <!---   Tileset image and selection highlight are displayed here -->
+                    <!---   Tileset image and selection highlight are displayed here --
                     </div>
                     <button id="add-tile-button" class="panel-footer-button">タイルを追加</button>
-                </div>
+                </div>-->
             </div>
         </div>  
 

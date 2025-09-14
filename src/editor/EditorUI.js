@@ -10,7 +10,7 @@ export default class EditorUI {
         this.selectedAssetKey = null;
         this.selectedAssetType = null;
         this.objectCounters = {};
-        this.currentEditorMode = 'select'; // 初期モード
+        this.currentEditorMode = 'select';
         this.currentAssetTab = 'image';
         
         // --- タイルマップエディタ用プロパティ ---
@@ -22,34 +22,22 @@ export default class EditorUI {
         // --- DOM要素の参照 ---
         this.getDomElements();
 
-     
-// --- UIの初期セットアップ ---
+        // --- UIの初期表示設定 ---
         if (this.editorPanel) this.editorPanel.style.display = 'flex';
         if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
         
+        // --- UI要素の生成とリスナー設定 ---
+        this.createPauseToggle();
+        this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
     }
- // in EditorUI.js
-        /**
-     * ★★★ 新規メソッド ★★★
-     * 要素の既存イベントリスナーを全て破棄し、新しいリスナーを安全に登録する
-     * @param {HTMLElement} element - 対象のDOM要素
-     * @param {string} event - 'click'などのイベント名
-     * @param {function} handler - 登録するコールバック関数
-     * @returns {HTMLElement} 新しく生成された要素への参照
-     */
-    replaceListener(element, event, handler) {
-        if (!element) return null;
-        const newElement = element.cloneNode(true);
-        element.parentNode.replaceChild(newElement, element);
-        newElement.addEventListener(event, handler);
-        return newElement;
-    }
-    // --- ヘルパーメソッド群 ---
+    
+    // =================================================================
+    // ヘルパーメソッド群
+    // =================================================================
 
     getDomElements() {
-          // --- DOM要素の参照をまとめて取得 ---
         this.editorPanel = document.getElementById('editor-panel');
         this.assetBrowserPanel = document.getElementById('asset-browser');
         this.assetListContainer = document.getElementById('asset-list');
@@ -68,93 +56,75 @@ export default class EditorUI {
         this.modeLabel = document.getElementById('mode-label');
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
-        this.tilesetPanel = document.getElementById('tileset-panel');
-        this.tilesetPreview = document.getElementById('tileset-preview');
+       
     }
 
-
-    getClientCoordinates(event) {
-        if (event.touches && event.touches.length > 0) {
-            return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+    replaceListener(element, event, handler) {
+        if (!element) return null;
+        const newElement = element.cloneNode(true);
+        if (element.parentNode) {
+            element.parentNode.replaceChild(newElement, element);
         }
-        return { x: event.clientX, y: event.clientY };
+        newElement.addEventListener(event, handler);
+        return newElement;
     }
 
     getActiveGameScene() {
-        if (this.plugin && typeof this.plugin.getActiveGameScene === 'function') {
-            const scene = this.plugin.getActiveGameScene();
-            if (scene) return scene;
-        }
-        // フォールバック
-        const scenes = this.game.scene.getScenes(true);
-        for (let i = scenes.length - 1; i >= 0; i--) {
-            const scene = scenes[i];
-            if (scene.scene.key.toLowerCase().includes('scene')) {
-                return scene;
-            }
-        }
-        return null;
+        return this.plugin?.getActiveGameScene();
     }
-    // --- イベントリスナー初期化 ---
+
+    // =================================================================
+    // イベントリスナー初期化
+    // =================================================================
 
     initializeEventListeners() {
         // --- UIボタンのリスナー ---
-        document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
-        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
-        document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
-        document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
+        this.replaceListener(document.getElementById('add-asset-button'), 'click', () => this.onAddButtonClicked());
+        this.replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
+        this.selectModeBtn = this.replaceListener(this.selectModeBtn, 'click', () => this.setEditorMode('select'));
+        this.tilemapModeBtn = this.replaceListener(this.tilemapModeBtn, 'click', () => this.setEditorMode('tilemap'));
         
         // カメラコントロール
-        this.setupPanButton(document.getElementById('camera-pan-up'), 0, -10);
-        this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
-        this.setupPanButton(document.getElementById('camera-pan-left'), -10, 0);
-        this.setupPanButton(document.getElementById('camera-pan-right'), 10, 0);
-         if (this.cameraControls) this.cameraControls.style.display = 'flex';
-        // ▼▼▼【呼び出し方を this.replaceListener に変更】▼▼▼
+        if (this.cameraControls) this.cameraControls.style.display = 'flex';
         this.zoomInBtn = this.replaceListener(this.zoomInBtn, 'click', () => this.plugin.zoomCamera(0.2));
         this.zoomOutBtn = this.replaceListener(this.zoomOutBtn, 'click', () => this.plugin.zoomCamera(-0.2));
         this.resetBtn = this.replaceListener(this.resetBtn, 'click', () => this.plugin.resetCamera());
+        this.setupPanButton(this.panUpBtn, 0, -10);
+        this.setupPanButton(this.panDownBtn, 0, 10);
+        this.setupPanButton(this.panLeftBtn, -10, 0);
+        this.setupPanButton(this.panRightBtn, 10, 0);
 
-document.getElementById('add-tile-button')?.addEventListener('click', () => this.onAddTileButtonClicked());
-        // その他UI
-        this.createPauseToggle();
-        this.createHelpButton();
-             // --- アセットブラウザボタン ---
-        this.replaceListener(document.getElementById('add-asset-button'), 'click', () => this.onAddButtonClicked());
-        this.replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
+        // プレイモード切替
+        if (this.modeToggle) {
+            this.modeToggle.addEventListener('change', (event) => {
+                this.plugin.currentMode = event.target.checked ? 'play' : 'select';
+                if (this.modeLabel) this.modeLabel.textContent = event.target.checked ? 'Play Mode' : 'Select Mode';
+            });
+        }
         
-        // --- ヘルプモーダル ---
+        // ヘルプモーダル閉じるボタン
         this.replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
     }
-    // --- モード切替と、それに応じたリスナーのON/OFF ---
 
-     /**
-     * ★★★ 修正版 ★★★
-     * エディタの主モードを切り替える。Pluginへの通知は不要。
-     */
+    // =================================================================
+    // UI構築・更新メソッド群
+    // =================================================================
+    
     setEditorMode(mode) {
         if (this.currentEditorMode === mode) return;
         this.currentEditorMode = mode;
-        console.log(`[EditorUI] Editor mode changed to: ${mode}`);
-
-        // ▼ Pluginへの通知を削除
-        // if (this.plugin) {
-        //     this.plugin.onEditorModeChanged(mode);
-        // }
-
+        
         if (mode === 'tilemap') {
             document.body.classList.add('tilemap-mode');
             this.tilemapModeBtn.classList.add('active');
             this.selectModeBtn.classList.remove('active');
             this.initTilesetPanel();
             this.createTileMarker();
-           
         } else { // 'select' mode
             document.body.classList.remove('tilemap-mode');
             this.selectModeBtn.classList.add('active');
             this.tilemapModeBtn.classList.remove('active');
             this.destroyTileMarker();
-           
         }
     }
 /**
@@ -332,91 +302,7 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
 
     // startRangeFillMode, endRangeFillMode は不要になるので削除してOKです。
 
-   /**
-     * ★★★ 修正版 ★★★
-     * タイルマップモード専用のDOMイベントリスナーを有効化する。
-     * bind(this) を使わず、後で解除できるように参照を保持する。
-     */
-    activateTilemapListeners() {
-        this.deactivateTilemapListeners(); // 念のためクリア
-
-        const canvas = this.game.canvas;
-        
-        // リスナー関数への参照をプロパティとして保持
-        this._boundPointerMove = this.handleTilemapPointerMove.bind(this);
-        this._boundPointerDown = this.handleTilemapPointerDown.bind(this);
-
-        canvas.addEventListener('pointermove', this._boundPointerMove);
-        canvas.addEventListener('pointerdown', this._boundPointerDown, true); // ★ キャプチャフェーズで実行
-    }
-    
-    /**
-     * ★★★ 修正版 ★★★
-     * タイルマップモード専用のDOMイベントリスナーを無効化する。
-     * 保持していた参照を使って、確実に解除する。
-     */
-    deactivateTilemapListeners() {
-        const canvas = this.game.canvas;
-        if (this._boundPointerMove) {
-            canvas.removeEventListener('pointermove', this._boundPointerMove);
-        }
-        if (this._boundPointerDown) {
-            canvas.removeEventListener('pointerdown', this._boundPointerDown, true); // ★ キャプチャフェーズで実行
-        }
-    }
-    
-    /**
-     * ★★★ 最終FIXの修正版 ★★★
-     * 座標計算にPhaserのポインターが持つ補正済み座標を利用する
-     */
-    handleTilemapPointerMove(event) {
-        // ★★★ このメソッドを呼び出すために、Phaserのグローバル入力リスナーを復活させる必要があります ★★★
-        // このメソッド自体の中身は、これからシンプルになります。
-    }
-    
-    /**
-     * ★★★ 最終FIXの修正版 ★★★
-     * 座標計算にPhaserのポインターが持つ補正済み座標を利用する
-     */
-    handleTilemapPointerDown(event) {
-        // ★★★ このメソッドも同様です ★★★
-    }
-    createTileMarker() {
-        const scene = this.getActiveGameScene();
-        if (!scene || !this.currentTileset) return;
-        this.tileMarker = scene.add.image(0, 0, this.currentTileset.key).setAlpha(0.5).setDepth(9999);
-        this.updateTileMarkerFrame();
-    }
-    
-    destroyTileMarker() {
-        if (this.tileMarker) {
-            this.tileMarker.destroy();
-            this.tileMarker = null;
-        }
-    }
-
-    updateTileMarkerFrame() {
-        if (!this.tileMarker || !this.currentTileset) return;
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        const texture = this.game.textures.get(this.currentTileset.key);
-        const tilesPerRow = texture.getSourceImage().width / tileWidth;
-        const tileX = this.selectedTileIndex % tilesPerRow;
-        const tileY = Math.floor(this.selectedTileIndex / tilesPerRow);
-        this.tileMarker.setCrop(tileX * tileWidth, tileY * tileHeight, tileWidth, tileHeight);
-    }
-
-    onAddTextClicked() {
-        const targetScene = this.getActiveGameScene();
-        if (!targetScene || typeof targetScene.addTextObjectFromEditor !== 'function') return;
-        const newName = `text_${Date.now()}`;
-        const newObject = targetScene.addTextObjectFromEditor(newName);
-        if (newObject && this.plugin) {
-            this.plugin.selectedObject = newObject;
-            this.plugin.updatePropertyPanel();
-        }
-    }
-
+  
     
 
     populateAssetBrowser() {
@@ -505,9 +391,11 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
         
         let newObject = null;
         if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
-            if (typeof targetScene.addObjectFromEditor === 'function') newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName);
+            if (typeof targetScene.addObjectFromEditor === 'function') newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+    
         } else if (this.selectedAssetType === 'prefab') {
-            if (typeof targetScene.addPrefabFromEditor === 'function') newObject = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName);
+            if (typeof targetScene.addPrefabFromEditor === 'function') newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+    
         }
         
         if (newObject && this.plugin) {
@@ -519,138 +407,7 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
     
 
     
-    /**
-     * ★★★ 最終修正版 ★★★
-     * タイルセットパネルを初期化する。asset_define.json から情報を取得し、
-     * this.currentTileset に完全な定義オブジェクトを格納する。
-     */
-    initTilesetPanel() {
-        if (!this.tilesetPreview) return;
-        const assetDefine = this.game.cache.json.get('asset_define');
-        if (!assetDefine || !assetDefine.tilesets) {
-            console.error("asset_define.json or its tilesets definition is missing.");
-            return;
-        }
-
-        const tilesets = assetDefine.tilesets;
-        const firstTilesetId = Object.keys(tilesets)[0];
-        if (!firstTilesetId) {
-            console.error("No tilesets are defined in asset_define.json.");
-            return;
-        }
-
-        // --- 修正点：タイルセットの完全な定義オブジェクトを保存 ---
-        this.currentTileset = tilesets[firstTilesetId];
-        // idをkeyとして追加しておく（元データにkeyがないため）
-        this.currentTileset.id = firstTilesetId;
-
-        console.log("[EditorUI] Initializing tileset panel with:", this.currentTileset);
-
-        const assetList = this.game.registry.get('asset_list');
-        // keyを使ってアセットリストから画像パスを探す
-        const tilesetAsset = assetList.find(asset => asset.key === this.currentTileset.key);
-        if (!tilesetAsset || !tilesetAsset.path) {
-            console.error(`Tileset image path for key '${this.currentTileset.key}' not found in asset_list.`);
-            return;
-        }
-
-        this.tilesetPreview.innerHTML = '';
-        const img = document.createElement('img');
-        img.src = tilesetAsset.path;
-        // CSSでのスケーリングを無効化し、計算のズレを防ぐ
-        img.style.width = 'auto';
-        img.style.height = 'auto';
-        img.style.maxWidth = '100%';
-
-        this.tilesetHighlight = document.createElement('div');
-        this.tilesetHighlight.style.position = 'absolute';
-        this.tilesetHighlight.style.border = '2px solid #00ff00';
-        this.tilesetHighlight.style.pointerEvents = 'none';
-        this.tilesetHighlight.style.boxSizing = 'border-box'; // borderがサイズの内側に描画されるように
-        
-        this.tilesetPreview.addEventListener('click', (event) => this.onTilesetClick(event));
-        this.tilesetPreview.appendChild(img);
-        this.tilesetPreview.appendChild(this.tilesetHighlight);
-        
-        // 画像がロードされてからハイライトを更新
-        img.onload = () => { this.updateTilesetHighlight(); };
-    }
-
-     /**
-     * ★★★ 最終修正版 ★★★
-     * onTilesetClick: 計算の最終微調整
-     */
-    onTilesetClick(event) {
-        event.stopPropagation();
-        if (!this.currentTileset) return;
-        
-        const imgElement = this.tilesetPreview.querySelector('img');
-        if (!imgElement) return;
-
-        const rect = imgElement.getBoundingClientRect();
-        const coords = this.getClientCoordinates(event);
-        const clickX = coords.x - rect.left;
-        const clickY = coords.y - rect.top;
-
-        const texture = this.game.textures.get(this.currentTileset.key);
-        const naturalWidth = texture.getSourceImage().width;
-        
-        const scale = rect.width / naturalWidth;
-
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-
-        // スケールを考慮して元画像上の座標に変換
-        const naturalX = clickX / scale;
-        const naturalY = clickY / scale;
-
-        const tileX = Math.floor(naturalX / tileWidth);
-        const tileY = Math.floor(naturalY / tileHeight);
-        const tilesPerRow = Math.floor(naturalWidth / tileWidth);
-        
-        this.selectedTileIndex = tileY * tilesPerRow + tileX;
-        
-        console.log(`[EditorUI] Tile selected. Index: ${this.selectedTileIndex}`);
-        this.updateTilesetHighlight();
-    }
-    
-    /**
-     * ★★★ 最終修正版 ★★★
-     * updateTilesetHighlight: border-boxを考慮した最終調整
-     */
-    updateTilesetHighlight() {
-        if (!this.tilesetHighlight || !this.currentTileset) return;
-        
-        const imgElement = this.tilesetPreview.querySelector('img');
-        if (!imgElement) return;
-
-        const rect = imgElement.getBoundingClientRect();
-        const texture = this.game.textures.get(this.currentTileset.key);
-        const naturalWidth = texture.getSourceImage().width;
-        
-        const scale = rect.width / naturalWidth;
-        const tileWidth = this.currentTileset.tileWidth;
-        const tileHeight = this.currentTileset.tileHeight;
-        
-        const tilesPerRow = Math.floor(naturalWidth / tileWidth);
-        const tileX = this.selectedTileIndex % tilesPerRow;
-        const tileY = Math.floor(this.selectedTileIndex / tilesPerRow);
-        
-        this.tilesetHighlight.style.left = `${tileX * tileWidth * scale}px`;
-        this.tilesetHighlight.style.top = `${tileY * tileHeight * scale}px`;
-        // ★★★ box-sizing: border-box を使っているので、ボーダー幅を引く必要はない
-        this.tilesetHighlight.style.width = `${tileWidth * scale}px`;
-        this.tilesetHighlight.style.height = `${tileHeight * scale}px`;
-        
-        this.updateTileMarkerFrame();
-    }
-
-    // in EditorUI.js
-
-// onTilesetClick と updateTilesetHighlight は、整数インデックスが計算できているので、
-// Ver.4 のままで問題ありません。ハイライトのズレは、これから修正する handlePointerMove で解決します。
-
-   
+  
        /**
      * ★★★ 新規メソッド：ゲーム内時間の「ポーズ/再開」を制御するボタンを生成する ★★★
      */
@@ -803,7 +560,99 @@ document.getElementById('add-tile-button')?.addEventListener('click', () => this
     }
 
      
+    /**
+     * ★★★ レイヤーメソッド群 ★★★
+     */
+    
+    // --- レイヤーパネルの構築と更新 ---
+    buildLayerPanel() {
+        if (!this.layerListContainer) return;
+        this.layerListContainer.innerHTML = ''; // 一旦クリア
 
+        this.layers.forEach(layer => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'layer-item';
+            if (layer.name === this.activeLayerName) {
+                itemDiv.classList.add('active');
+            }
+            // レイヤー名部分をクリックしたらアクティブにする
+            itemDiv.addEventListener('click', () => this.setActiveLayer(layer.name));
+
+            // --- 表示/非表示ボタン (👁️) ---
+            const visibilityBtn = document.createElement('button');
+            visibilityBtn.className = 'layer-control';
+            visibilityBtn.innerHTML = layer.visible ? '👁️' : '—';
+            if (!layer.visible) visibilityBtn.classList.add('hidden');
+            visibilityBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 親のクリックイベントを発火させない
+                this.toggleLayerVisibility(layer.name);
+            });
+
+            // --- ロック/アンロックボタン (🔒) ---
+            const lockBtn = document.createElement('button');
+            lockBtn.className = 'layer-control';
+            lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
+            if (layer.locked) lockBtn.classList.add('locked');
+            lockBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleLayerLock(layer.name);
+            });
+
+            // --- レイヤー名 ---
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'layer-name';
+            nameSpan.innerText = layer.name;
+
+            itemDiv.append(visibilityBtn, lockBtn, nameSpan);
+            this.layerListContainer.appendChild(itemDiv);
+        });
+        
+        // ★ レイヤー状態の変更を、EditorPluginに通知する
+        this.plugin.updateLayerStates(this.layers);
+    }
+
+    setActiveLayer(layerName) {
+        // ロックされているレイヤーはアクティブにできない
+        const layer = this.layers.find(l => l.name === layerName);
+        if (layer && layer.locked) {
+            console.log(`Layer '${layerName}' is locked and cannot be set as active.`);
+            return;
+        }
+        
+        this.activeLayerName = layerName;
+        console.log(`Active layer set to: ${this.activeLayerName}`);
+        this.buildLayerPanel(); // UIを再描画してハイライトを更新
+    }
+
+    toggleLayerVisibility(layerName) {
+        const layer = this.layers.find(l => l.name === layerName);
+        if (layer) {
+            layer.visible = !layer.visible;
+            this.buildLayerPanel();
+            // TODO: シーン内のオブジェクトの表示/非表示を実際に切り替える
+        }
+    }
+
+    toggleLayerLock(layerName) {
+        const layer = this.layers.find(l => l.name === layerName);
+        if (layer) {
+            layer.locked = !layer.locked;
+            // もしロックされたレイヤーがアクティブだったら、アクティブを解除
+            if (layer.locked && this.activeLayerName === layerName) {
+                this.activeLayerName = null;
+            }
+            this.buildLayerPanel();
+        }
+    }
+    
+    addNewLayer() {
+        const newLayerName = prompt("Enter new layer name:", `New Layer ${this.layers.length + 1}`);
+        if (newLayerName && !this.layers.some(l => l.name === newLayerName)) {
+            this.layers.unshift({ name: newLayerName, visible: true, locked: false }); // 配列の先頭に追加
+            this.buildLayerPanel();
+        }
+    }
+//レイヤー系ここまで
 
 
 }

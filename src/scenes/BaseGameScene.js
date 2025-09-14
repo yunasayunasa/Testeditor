@@ -112,8 +112,10 @@ this.matter.world.on('beforeupdate', (event) => {
             style: {
                 fontSize: '32px',
                 fill: '#ffffff',
-            }
+            },
+            layer: layerName // ★ レイヤー情報を渡す
         };
+        
 
         const newGameObject = this.createObjectFromLayout(layout);
         this.applyProperties(newGameObject, layout);
@@ -227,7 +229,9 @@ applyProperties(gameObject, layout) {
     // --- 1. 基本プロパティ ---
     gameObject.name = data.name || 'untitled';
     if (data.group) gameObject.setData('group', data.group);
-
+   if (layout.layer) {
+            gameObject.setData('layer', layout.layer);
+        }
     // テキストオブジェクト以外の場合のみテクスチャを設定
     if (data.type !== 'Text' && data.texture) {
         gameObject.setTexture(data.texture);
@@ -600,10 +604,17 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     }
 
     // addObjectFromEditor, handleKeyPressEvents, shutdown は変更なし
-    addObjectFromEditor(assetKey, newName) {
+    addObjectFromEditor(assetKey, newName, layerName) {
         console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
         return null;
+        this.applyProperties(newObject, {
+            name: newName,
+            x: Math.round(centerX), 
+            y: Math.round(centerY),
+            layer: layerName // ★ レイヤー情報を渡す
+        });
     }
+    
 
     handleKeyPressEvents() {
         if (!this.input.keyboard.enabled) return;

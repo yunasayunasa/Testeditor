@@ -78,8 +78,52 @@ body.debug-mode #game-container {
    以降のスタイル
    ========================================================================== */
 .editor-panel { background-color: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 5px; display: flex; flex-direction: column; overflow: hidden; }
-#asset-browser { flex: 1; }
-#editor-panel { flex: 1; }
+#asset-browser { flex-grow: 1; } /* ★ flexの比率を調整 */
+#editor-panel { flex-grow: 1; }
+#layers-panel { flex-basis: 180px; flex-shrink: 0; } /* ★ レイヤーパネルの高さを固定 */
+* --- レイヤーパネルの中身 --- */
+#layer-list {
+    padding: 5px; /* 少し余白を詰める */
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 3px;
+    border: 1px solid transparent; /* 非アクティブ時のボーダー */
+}
+
+.layer-item.active {
+    background-color: #094771; /* アクティブなレイヤーの背景色 */
+    border-color: #0e639c;
+}
+
+.layer-item:not(.active):hover {
+    background-color: #3c3c3c;
+}
+
+.layer-name {
+    flex-grow: 1;
+    margin: 0 8px;
+    font-size: 14px;
+}
+
+.layer-control {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px;
+}
+.layer-control.locked,
+.layer-control.hidden {
+    color: #666; /* ロック/非表示状態の色 */
+}
 .panel-header { padding: 8px 12px; background-color: #3c3c3c; border-bottom: 1px solid #1e1e1e; font-weight: bold; display: flex; align-items: center; justify-content: space-between; user-select: none; }
 .panel-header-buttons { display: flex; align-items: center; gap: 8px; }
 .panel-header-buttons button { padding: 2px 8px; border-radius: 4px; border: 1px solid #555; background-color: #444; color: #eee; cursor: pointer; font-size: 1em; }
