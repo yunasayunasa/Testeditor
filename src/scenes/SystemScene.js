@@ -14,6 +14,8 @@ export default class SystemScene extends Phaser.Scene {
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
         this.onSceneReadyCallback = null; 
+        this.scenesToWaitFor = new Set();
+        this.onAllScenesReadyCallback = null;
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
     get isTimeStopped() {
@@ -168,27 +170,46 @@ _startInitialGame(initialData) {
     
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-   const uiScene = this.scene.get('UIScene');
+        console.log("[SystemScene] Starting initial game sequence...");
+        
+        // --- 1. これから起動する「待つべきシーン」をリストアップ ---
+        this.scenesToWaitFor.add('UIScene');
+        this.scenesToWaitFor.add('GameScene');
 
-        uiScene.events.once('scene-ready', () => {
-            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-            this._startAndMonitorScene('GameScene', {
-                charaDefs: this.globalCharaDefs,
-                startScenario: initialData.startScenario,
-            });
-        });
+        // --- 2. 「すべてのシーン」の準備が完了した時の処理を予約 ---
+        this.onAllScenesReadyCallback = () => {
+            // このコールバックは、UISceneとGameSceneの両方がreportSceneReadyを呼んだ後に実行される
+            this._onTransitionComplete('GameScene');
+        };
+
+        // --- 3. 起動と入力無効化 ---
+        this.isProcessingTransition = true;
+        this.game.input.enabled = false;
+        console.log(`[SystemScene] Global input disabled. Waiting for [${Array.from(this.scenesToWaitFor).join(', ')}]...`);
+
+        // --- 4. シーンを（ほぼ）同時に起動 ---
         this.scene.run('UIScene');
+        this.scene.run('GameScene', {
+            charaDefs: this.globalCharaDefs,
+            startScenario: initialData.startScenario,
+        });
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-      /**
-     * ★★★ 新規メソッド ★★★
+   /**
      * 他のシーンから「準備完了」の報告を受け取るための公式な窓口
      * @param {string} sceneKey - 報告元のシーンキー
      */
     reportSceneReady(sceneKey) {
-        console.log(`[SystemScene] Received readiness report from '${sceneKey}'.`);
-        if (this.onSceneReadyCallback) {
-            this.onSceneReadyCallback(sceneKey);
-            this.onSceneReadyCallback = null; // 一度使ったらクリア
+        console.log(`[SystemScene] Readiness report received from: ${sceneKey}`);
+        this.scenesToWaitFor.delete(sceneKey); // 待機リストから削除
+
+        // 待機リストが空になったら、コールバックを実行
+        if (this.scenesToWaitFor.size === 0 && this.onAllScenesReadyCallback) {
+            console.log(`[SystemScene] All scenes are ready!`);
+            this.onAllScenesReadyCallback();
+            this.onAllScenesReadyCallback = null;
         }
     }
 
@@ -382,43 +403,34 @@ _startInitialGame(initialData) {
         }
     }
 
- /**
-     * ★★★ 究極の最終FIX版 ★★★
-     * 新しいシーンを起動し、コールバックを使って完了を待つ
-     */
+    // _startAndMonitorScene は、単一シーンの遷移で使うので、
+    // 以前のコールバック方式に戻すのが安全です。
     _startAndMonitorScene(sceneKey, params) {
         if (this.isProcessingTransition) return;
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
-        console.log(`[SystemScene] Starting scene '${sceneKey}'. Global input disabled.`);
         
         if (this.scene.isActive(sceneKey)) {
             this.scene.stop(sceneKey);
         }
 
-        // ▼▼▼【ここが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        // --- 1. イベントリスナーの代わりに、コールバックを設定する ---
-        this.onSceneReadyCallback = (readySceneKey) => {
-            // 待っていたシーンから報告が来たことを確認
-            if (readySceneKey === sceneKey) {
-                this._onTransitionComplete(sceneKey);
-            }
+        // 単一シーンの完了を待つ
+        this.scenesToWaitFor.add(sceneKey);
+        this.onAllScenesReadyCallback = () => {
+            this._onTransitionComplete(sceneKey);
         };
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        // --- 2. シーンを起動 ---
         this.scene.run(sceneKey, params);
     }
     /**
      * シーン遷移が完全に完了したときの処理
      * @param {string} sceneKey - 完了したシーンのキー
      */
+     // _onTransitionComplete は変更なしでOK
     _onTransitionComplete(sceneKey) {
         this.isProcessingTransition = false;
         this.game.input.enabled = true;
-        console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。ゲーム全体の入力を再有効化。`);
+        console.log(`[SystemScene] Transition to '${sceneKey}' is complete. Global input enabled.`);
         this.events.emit('transition-complete', sceneKey);
     }
      /**
