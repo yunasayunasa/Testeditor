@@ -174,6 +174,21 @@ registerUiElement(name, element, params) {
             }
         }
     }
+     /**
+     * ★★★ 新規追加 ★★★
+     * 指定されたUI要素のdepth値を外部から設定するための公式な窓口
+     * @param {string} key - 'message_window' などのuiElementsのキー
+     * @param {number} depth - 新しいdepth値
+     */
+    setElementDepth(key, depth) {
+        const element = this.uiElements.get(key);
+        if (element) {
+            element.setDepth(depth);
+            console.log(`[UIScene] Element '${key}' depth set to ${depth}`);
+        } else {
+            console.warn(`[UIScene] setElementDepth: Element with key '${key}' not found.`);
+        }
+    }
     
 // src/scenes/UIScene.js
 

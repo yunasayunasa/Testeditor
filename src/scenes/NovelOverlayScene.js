@@ -64,10 +64,16 @@ export default class NovelOverlayScene extends Phaser.Scene {
         
         // --- 2. レイヤーの生成 ---
         const OVERLAY_BASE_DEPTH = 10000; // ★ 他のシーンより圧倒的に大きな値にする
-        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
-        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
-        // メッセージウィンドウの深度も、念のためここで再設定
-        messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
+        // --- 2. UIの準備 ---
+    // (A) まず、UISceneのルールブックに従ってUIを表示させる
+    this.scene.get('SystemScene').events.emit('transition-complete', this.scene.key);
+    
+    // (B) 次に、UISceneに対して「メッセージウィンドウだけ特別扱いして」と命令する
+    this.uiScene.setElementDepth('message_window', OVERLAY_BASE_DEPTH + 20);
+
+    // --- 3. レイヤーの生成 ---
+    this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
+    this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
 
         // --- 3. ScenarioManagerの生成 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
@@ -182,7 +188,12 @@ export default class NovelOverlayScene extends Phaser.Scene {
     }
 shutdown() {
         console.log("[NovelOverlayScene] shutdown されました。");
-
+  // --- shutdownの最後に、特別扱いをやめさせる ---
+    // ★★★ 念のため、depthを元のデフォルト値に戻すよう依頼する ★★★
+    // uiRegistryからデフォルト値を取得する
+    const uiRegistry = this.registry.get('uiRegistry');
+    const defaultDepth = uiRegistry?.message_window?.params?.depth || 10; // デフォルト値がなければ10など
+    this.uiScene.setElementDepth('message_window', defaultDepth);
         // ★★★ 解決策 (B): createで行ったことを、すべて元に戻す ★★★
 
         // --- 1. イベントリスナーを確実に解除 ---
