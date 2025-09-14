@@ -1,53 +1,75 @@
 /* ==========================================================================
-Odyssey Engine - Main Stylesheet
-Version: 3.0 (L-Shape Layout Final)
-========================================================================== */
+   Odyssey Engine - Main Stylesheet
+   Version: 2.3 (Direct Container Resizing Final)
+   ========================================================================== */
 
 /* --- 基本設定 --- */
 html, body {
-margin: 0; padding: 0;
-width: 100%; height: 100%;
-overflow: hidden; 
-background-color: #3d3d3d; 
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #1e1e1e;
 }
 
 body {
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-color: #d4d4d4;
-}
-
-#app-container {
-width: 100%;
-height: 100%;
-display: flex;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #d4d4d4;
+    position: relative;
 }
 
 /* --- ゲームコンテナのスタイル --- */
+/* 通常モードでは画面全体を覆う。Phaserはこの中で中央揃えを行う */
 #game-container {
-flex-grow: 1; 
-height: 100%;
-position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 /* --- エディタUIのルート --- */
 #editor-root {
-display: none; 
+    display: none;
 }
+
+
+/* ==========================================================================
+   DEBUG MODE STYLES
+   ========================================================================== */
+
+body.debug-mode {
+    background-color: #3d3d3d;
+}
+
 body.debug-mode #editor-root {
-display: contents;
+    display: block;
 }
+
+/* ▼▼▼【 L字レイアウトの最終FIX 】▼▼▼ */
+/* デバッグモードの時、#game-containerの幅を直接変更して、
+   サイドバーが表示されるスペースを空ける */
+body.debug-mode #game-container {
+    width: calc(100% - 340px); /* サイドバーの幅(340px)だけ狭くする */
+}
+/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+
 
 /* --- 右サイドバー --- */
 #editor-sidebar {
-width: 340px;
-height: 100%;
-background-color: #252526;
-display: flex;
-flex-direction: column;
-padding: 10px;
-gap: 10px;
-box-sizing: border-box;
-flex-shrink: 0; 
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 340px;
+    height: 100vh;
+    padding: 10px;
+    box-sizing: border-box;
+    background-color: #252526;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9990;
 }
 
 
@@ -56,9 +78,9 @@ flex-shrink: 0;
    以降のスタイル
    ========================================================================== */
 .editor-panel { background-color: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 5px; display: flex; flex-direction: column; overflow: hidden; }
-#asset-browser { flex: 1; }
-#editor-panel { flex: 1; }
-#layers-panel { flex: 1; }
+#asset-browser { flex-grow: 1; } /* ★ flexの比率を調整 */
+#editor-panel { flex-grow: 1; }
+#layers-panel { flex-basis: 180px; flex-shrink: 0; } /* ★ レイヤーパネルの高さを固定 */
 * --- レイヤーパネルの中身 --- */
 #layer-list {
     padding: 5px; /* 少し余白を詰める */
