@@ -60,7 +60,25 @@ export default class NovelOverlayScene extends Phaser.Scene {
         const messageWindow = this.uiScene.uiElements.get('message_window');
         if (!messageWindow) { return; }
         messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
+ console.log(`%c[LOG BOMB A] UIScene found:`, 'color: cyan', this.uiScene);
+        
+        const messageWindow = this.uiScene.uiElements.get('message_window');
+        
+        console.log(`%c[LOG BOMB B] Message window found:`, 'color: cyan', messageWindow);
 
+        if (messageWindow) {
+            console.log(`%c[LOG BOMB C] Message window properties:
+                - visible: ${messageWindow.visible}
+                - alpha: ${messageWindow.alpha}
+                - depth: ${messageWindow.depth}`, 'color: cyan');
+            
+            // ★★★ 強制的に表示させてみる ★★★
+            messageWindow.setVisible(true);
+            messageWindow.setAlpha(1);
+
+        } else {
+            console.error("%c[LOG BOMB FAILED] Could not get 'message_window' from UIScene!", 'color: red; font-weight: bold;');
+        }
         // 4. ScenarioManagerに、新しく作った`this` (NovelOverlayScene) を渡す
         //    (これにより、manager.scene.layerが正しく参照される)
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
