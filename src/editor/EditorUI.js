@@ -71,12 +71,18 @@ export default class EditorUI {
        this.layerListContainer = document.getElementById('layer-list');
     }
 
-    replaceListener(element, event, handler) {
-        if (!element) return null;
-        const newElement = element.cloneNode(true);
-        if (element.parentNode) {
-            element.parentNode.replaceChild(newElement, element);
+   replaceListener(element, event, handler) {
+        if (!element) return null; // elementがnullなら何もしない
+        // ▼ elementがDOMツリーに属しているか確認 ▼
+        if (!element.parentNode) {
+            // console.warn("replaceListener: Element is not in the DOM.", element);
+            // DOMにない要素に直接リスナーを追加する
+            element.addEventListener(event, handler);
+
+            return element;
         }
+        const newElement = element.cloneNode(true);
+        element.parentNode.replaceChild(newElement, element);
         newElement.addEventListener(event, handler);
         return newElement;
     }
@@ -605,70 +611,75 @@ export default class EditorUI {
      */
     
     // --- レイヤーパネルの構築と更新 ---
-       buildLayerPanel() {
-        if (!this.layerListContainer) return;
-        this.layerListContainer.innerHTML = '';
+    
+    /**
+     * ★★★ 最終FIX版 ★★★
+     * レイヤーパネルの構築と更新。
+     * イベントリスナーの登録を、安全な replaceListener 方式に統一する。
+     */
+    buildLayerPanel() {
+        const layerListContainer = document.getElementById('layer-list');
+        if (!layerListContainer) return;
+        layerListContainer.innerHTML = '';
 
         this.layers.forEach(layer => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'layer-item';
             
-            // プラグインで選択中のレイヤーを基準にハイライト
             if (this.plugin.selectedLayer && layer.name === this.plugin.selectedLayer.name) {
                 itemDiv.classList.add('active');
-            } 
-            // ★ アクティブレイヤー（オブジェクトが追加されるレイヤー）には別の印を付けると分かりやすい
-            else if (layer.name === this.activeLayerName) {
-                // 例: itemDiv.style.borderLeft = '3px solid #4CAF50';
             }
             
-            // レイヤー名部分をクリックしたら、プラグインに選択を通知
-            itemDiv.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.plugin.selectLayer(layer);
-            });
-
-            // --- 表示/非表示ボタン ---
+            // --- 表示/非表示ボタン (👁️) ---
             const visibilityBtn = document.createElement('button');
             visibilityBtn.className = 'layer-control';
             visibilityBtn.innerHTML = layer.visible ? '👁️' : '—';
-            visibilityBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggleLayerVisibility(layer.name);
-            });
-
-            // --- ロック/アンロックボタン ---
+            
+            // --- ロック/アンロックボタン (🔒) ---
             const lockBtn = document.createElement('button');
             lockBtn.className = 'layer-control';
             lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
-            lockBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggleLayerLock(layer.name);
-            });
             
-            // --- アクティブ化ボタン (例: ラジオボタン風) ---
+            // --- アクティブ化インジケータ ---
             const activeIndicator = document.createElement('div');
-            activeIndicator.style.width = '16px';
-            activeIndicator.style.height = '16px';
-            activeIndicator.style.border = '1px solid #888';
-            activeIndicator.style.borderRadius = '50%';
-            activeIndicator.style.cursor = 'pointer';
+            // ... (インジケータのスタイル設定はそのまま)
             if(layer.name === this.activeLayerName) {
                 activeIndicator.style.backgroundColor = '#4CAF50';
             }
-            activeIndicator.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.setActiveLayer(layer.name);
-            });
 
+            // --- レイヤー名 ---
             const nameSpan = document.createElement('span');
             nameSpan.className = 'layer-name';
             nameSpan.innerText = layer.name;
 
+            // --- 要素をDOMに追加 ---
             itemDiv.append(activeIndicator, visibilityBtn, lockBtn, nameSpan);
-            this.layerListContainer.appendChild(itemDiv);
+            layerListContainer.appendChild(itemDiv);
+
+            // ▼▼▼【ここからが核心の修正です】▼▼▼
+            // --------------------------------------------------------------------
+            // --- DOMに追加した後で、replaceListenerを使ってイベントを登録 ---
+            this.replaceListener(itemDiv, 'click', (e) => {
+                e.stopPropagation();
+                this.plugin.selectLayer(layer);
+            });
+            this.replaceListener(visibilityBtn, 'click', (e) => {
+                e.stopPropagation();
+                this.toggleLayerVisibility(layer.name);
+            });
+            this.replaceListener(lockBtn, 'click', (e) => {
+                e.stopPropagation();
+                this.toggleLayerLock(layer.name);
+            });
+            this.replaceListener(activeIndicator, 'click', (e) => {
+                e.stopPropagation();
+                this.setActiveLayer(layer.name);
+            });
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         });
     }
+
 
     setActiveLayer(layerName) {
         const layer = this.layers.find(l => l.name === layerName);
