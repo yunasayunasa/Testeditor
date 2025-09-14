@@ -1,0 +1,11 @@
+{
+    "categories": {
+        "default": 1,
+        "player": 2,
+        "enemy": 4,
+        "wall": 8,
+        "player_bullet": 16,
+        "enemy_bullet": 32,
+        "item": 64
+    }
+}

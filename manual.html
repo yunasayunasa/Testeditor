@@ -555,50 +555,34 @@ Actions: [set_flip_x value=false]
     <li><strong>time:</strong> フェードアウトにかける時間をミリ秒で指定します。(デフォルト: <code>0</code> 即時停止)</li>
 </ul>
 <hr>
-
 <h3><pre>[set_collision target=... category=... mask=...]</pre></h3>
 <p>
-    <strong>機能:</strong> オブジェクトの物理的な衝突ルールを動的に変更します。<br>
-    Matter.jsのカテゴリ（自分は誰か）とマスク（誰と衝突するか）を設定します。
+    <strong>機能:</strong> オブジェクトの物理的な衝突ルールを、<strong>名前</strong>で動的に変更します。
 </p>
 <p>
-    値は<strong>2進数</strong>の文字列で指定するのが推奨されます。(例: <code>"0b0010"</code>)
+    カテゴリ名やマスク名は、<code>physics_define.json</code>で定義したものを使用します。
 </p>
-<p><strong>カテゴリの例:</strong></p>
-<ul>
-    <li><code>CATEGORY_PLAYER = "0b0001"</code> (1)</li>
-    <li><code>CATEGORY_ENEMY = "0b0010"</code> (2)</li>
-    <li><code>CATEGORY_WALL = "0b0100"</code> (4)</li>
-    <li><code>CATEGORY_PLAYER_BULLET = "0b1000"</code> (8)</li>
-</ul>
-<p><strong>マスクの例:</strong> (衝突させたいカテゴリのビットを立てる)</p>
-<ul>
-    <li>プレイヤーのマスク: <code>"0b0110"</code> (敵と壁に当たる)</li>
-    <li>プレイヤーの弾のマスク: <code>"0b0110"</code> (敵と壁に当たる)</li>
-    <li>敵のマスク: <code>"0b1101"</code> (プレイヤー、壁、プレイヤーの弾に当たる)</li>
-</ul>
 <p>
     <strong>パラメータ:</strong>
 </p>
 <ul>
     <li><strong>target (必須):</strong> 対象オブジェクトの名前。</li>
-    <li><strong>category:</strong> このオブジェクトが所属するカテゴリ。</li>
-    <li><strong>mask:</strong> このオブジェクトが衝突する相手のカテゴリのビットマスク。</li>
+    <li><strong>category:</strong> このオブジェクトが所属するカテゴリ名を指定します。(例: <code>player</code>)</li>
+    <li><strong>mask:</strong> このオブジェクトが衝突する相手のカテゴリ名を、<strong>カンマ区切り</strong>で指定します。(例: <code>"enemy, wall"</code>)</li>
 </ul>
 <p>
     <strong>使用例:</strong>
 </p>
 <pre>
 <code>
-; プレイヤーを3秒間、壁をすり抜けるゴースト状態にする
-[set_collision target=player mask="0b0010"] ; 敵にだけ当たる
+; プレイヤーを3秒間、アイテムだけを拾えるゴースト状態にする
+[set_collision target=player mask="item"]
 [wait time=3000]
-; 元の衝突ルールに戻す
-[set_collision target=player mask="0b0110"]
+; 元のルール（敵と壁に当たる）に戻す
+[set_collision target=player mask="enemy, wall"]
 </code>
 </pre>
 <hr>
-
 <h3><pre>[spawn_object prefab=... at=... props=...]</pre></h3>
 <p>
     <strong>機能:</strong> 指定したプレハブから、新しいオブジェクトをシーンに生成（スポーン）します。

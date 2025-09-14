@@ -978,8 +978,78 @@ createMatterPropertiesUI(gameObject) {
             this.updatePropertyPanel();
         }
     });
-}
+    this.editorPropsContainer.appendChild(document.createElement('hr'));
+        const collisionTitle = document.createElement('h5');
+        collisionTitle.innerText = 'Collision Rules';
+        this.editorPropsContainer.appendChild(collisionTitle);
 
+        // --- 物理定義を取得 ---
+        const physicsDefine = this.game.registry.get('physics_define');
+        if (!physicsDefine || !physicsDefine.categories) {
+            this.editorPropsContainer.innerHTML += "<p>Error: physics_define.json not found.</p>";
+            return;
+        }
+        const categories = physicsDefine.categories;
+        
+        // --- 1. カテゴリ設定 (自分は誰か) ---
+        const categoryRow = document.createElement('div');
+        categoryRow.innerHTML = `<label>Category:</label>`;
+        const categorySelect = document.createElement('select');
+        for (const name in categories) {
+            const option = document.createElement('option');
+            option.value = categories[name]; // 値は 1, 2, 4...
+            option.innerText = name;
+            if (body.collisionFilter.category === categories[name]) {
+                option.selected = true;
+            }
+            categorySelect.appendChild(option);
+        }
+        categorySelect.onchange = (e) => {
+            gameObject.setCollisionCategory(parseInt(e.target.value));
+            // UIも更新
+            setTimeout(() => this.updatePropertyPanel(), 0);
+        };
+        categoryRow.appendChild(categorySelect);
+        this.editorPropsContainer.appendChild(categoryRow);
+
+        // --- 2. マスク設定 (誰と衝突するか) ---
+        const maskRow = document.createElement('div');
+        maskRow.innerHTML = `<label style="align-self: flex-start;">Collides With:</label>`;
+        const maskContainer = document.createElement('div');
+        maskContainer.style.flexDirection = 'column';
+        maskContainer.style.alignItems = 'flex-start';
+        for (const name in categories) {
+            const checkboxLabel = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.dataset.categoryValue = categories[name];
+            
+            if (body.collisionFilter.mask & categories[name]) {
+                checkbox.checked = true;
+            }
+            
+            checkbox.onchange = () => this.updateCollisionMask(gameObject);
+            
+            checkboxLabel.append(checkbox, ` ${name}`);
+            maskContainer.appendChild(checkboxLabel);
+        }
+        maskRow.appendChild(maskContainer);
+        this.editorPropsContainer.appendChild(maskRow);
+    }
+
+ /**
+     * チェックボックスの状態から、新しい衝突マスクを計算して適用する
+     */
+    updateCollisionMask(gameObject) {
+        let newMask = 0;
+        const checkboxes = this.editorPropsContainer.querySelectorAll('input[type="checkbox"][data-category-value]');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                newMask |= parseInt(checkbox.dataset.categoryValue);
+            }
+        });
+        gameObject.setCollidesWith(newMask);
+    }
 
     
     createAnimationSection() {
@@ -1688,6 +1758,10 @@ if (gameObject.body) {
         shape: gameObject.getData('shape') || 'rectangle', 
         friction: parseFloat(body.friction.toFixed(2)),
         restitution: parseFloat(body.restitution.toFixed(2)),
+        collisionFilter: {
+            category: body.collisionFilter.category,
+            mask: body.collisionFilter.mask
+        }
     };
 }
                 

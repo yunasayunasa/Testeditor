@@ -22,6 +22,8 @@ export default class PreloadScene extends Phaser.Scene {
         // --- 2. 最初に asset_define.json のみロード ---
         this.load.json('asset_define', 'assets/asset_define.json');
         //this.load.script('ui_definitions', 'src/ui/index.js');
+        this.load.json('physics_define', 'assets/data/physics_define.json');
+
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     }
 
@@ -31,7 +33,7 @@ export default class PreloadScene extends Phaser.Scene {
         // --- 3. コアマネージャーの初期化 ---
         this.registry.set('configManager', new ConfigManager());
         this.registry.set('stateManager', new StateManager());
-
+this.registry.set('physics_define', this.cache.json.get('physics_define'));
         const assetDefine = this.cache.json.get('asset_define');
         
         // --- 4. asset_define.json に基づいてロードキューを構築 ---

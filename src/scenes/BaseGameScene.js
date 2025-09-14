@@ -279,11 +279,25 @@ applyProperties(gameObject, layout) {
     if (data.physics) {
         const phys = data.physics;
         
-        // ▼▼▼【ここがテキスト物理の最終修正です】▼▼▼
+             const bodyOptions = {
+            isStatic: phys.isStatic,
+            isSensor: phys.isSensor
+            // (ここに、frictionやrestitutionなど、JSONから読み込みたい他の基本物理プロパティを追加できます)
+        };
         
-        // ★★★ 1. オブジェクトをMatter Worldに追加する ★★★
-        // これにより、gameObjectはsetExistingBodyなどのMatter用メソッドを使えるようになる
-        this.matter.add.gameObject(gameObject);
+        // --- 5b. 保存された衝突フィルター情報があれば、オプションに追加 ---
+        if (phys.collisionFilter) {
+            bodyOptions.collisionFilter = {
+                category: phys.collisionFilter.category,
+                mask: phys.collisionFilter.mask
+            };
+        }
+
+        // --- 5c. 組み立てたオプションを使って、gameObjectをmatterワールドに追加 ---
+        // ★★★ あなたの既存のロジック `this.matter.add.gameObject(gameObject);` を、
+        // ★★★ この新しい、オプション付きの呼び出しに置き換えます。
+        this.matter.add.gameObject(gameObject, bodyOptions);
+        
         
         // ★★★ 2. オブジェクトがテキストの場合、ボディを再構築する ★★★
         if (gameObject instanceof Phaser.GameObjects.Text) {

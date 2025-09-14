@@ -2,40 +2,42 @@
 
 /**
  * [set_collision] タグハンドラ
- * オブジェクトの衝突カテゴリとマスクを動的に設定する
+ * オブジェクトの衝突カテゴリとマスクを「名前」で設定する
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
  * @param {object} params - タグのパラメータ
  */
 export default function setCollisionHandler(interpreter, params) {
     const targetId = params.target;
-    if (!targetId) {
-        console.warn('[set_collision] "target" parameter is missing.');
-        return;
-    }
+    if (!targetId) return;
 
     const targetObject = interpreter.findTarget(targetId);
-    if (!targetObject || !targetObject.body) {
-        console.warn(`[set_collision] Target object '${targetId}' not found or has no physics body.`);
-        return;
-    }
+    if (!targetObject || !targetObject.body) return;
+
+    // --- 物理定義を取得 ---
+    const physicsDefine = interpreter.scene.registry.get('physics_define');
+    if (!physicsDefine || !physicsDefine.categories) return;
+    const categories = physicsDefine.categories;
 
     // --- カテゴリの設定 ---
-    if (params.category !== undefined) {
-        // 文字列で "0b0010" のように指定された2進数リテラルを、数値に変換
-        const category = parseInt(params.category, 2);
-        if (!isNaN(category)) {
-            targetObject.setCollisionCategory(category);
-            console.log(`[set_collision] Set category of '${targetId}' to ${params.category} (${category})`);
+    if (params.category) {
+        const categoryName = params.category;
+        if (categories[categoryName]) {
+            targetObject.setCollisionCategory(categories[categoryName]);
         }
     }
 
     // --- マスクの設定 ---
-    if (params.mask !== undefined) {
-        const mask = parseInt(params.mask, 2);
-        if (!isNaN(mask)) {
-            // setCollidesWith は、衝突するカテゴリの「ビットマスク」を受け取る
-            targetObject.setCollidesWith(mask);
-            console.log(`[set_collision] Set collision mask of '${targetId}' to ${params.mask} (${mask})`);
-        }
+    if (params.mask) {
+        let newMask = 0;
+        // "enemy,wall" のようなカンマ区切りの文字列を配列に変換
+        const maskNames = params.mask.split(',').map(s => s.trim());
+        
+        maskNames.forEach(name => {
+            if (categories[name]) {
+                newMask |= categories[name];
+            }
+        });
+        
+        targetObject.setCollidesWith(newMask);
     }
 }
