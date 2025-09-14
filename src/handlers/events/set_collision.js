@@ -10,9 +10,6 @@ export default function setCollisionHandler(interpreter, params, targetObject) {
     // ターゲットは既に解決済みなので、ここで探す必要はない
     if (!targetObject || !targetObject.body) return;
     
-    const targetObject = interpreter.findTarget(targetId);
-    if (!targetObject || !targetObject.body) return;
-
     // --- 物理定義を取得 ---
     const physicsDefine = interpreter.scene.registry.get('physics_define');
     if (!physicsDefine || !physicsDefine.categories) return;
