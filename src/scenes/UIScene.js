@@ -38,6 +38,7 @@ export default class UIScene extends Phaser.Scene {
         } catch (err) {
             console.error("UIScene: create failed.", err);
         }
+        
     }
 
 // ... (他のメソッドやimportは変更なし) ...

@@ -2,19 +2,52 @@ import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
-
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
         this.globalCharaDefs = null;
         this.isProcessingTransition = false;
         this.initialGameData = null;
-        
-        // ★ 状態管理プロパティをシンプル化
+        this.novelBgmKey = null; // BGMキーの保持
+        this.editorUI = null; // EditorUIへの参照を保持
+         this._isTimeStopped = false;
+          this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
+        this.transitionData = null;
+        this.onSceneReadyCallback = null; 
         this.scenesToWaitFor = new Set();
         this.onAllScenesReadyCallback = null;
     }
+// ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
+    get isTimeStopped() {
+        return this._isTimeStopped;
+    }
 
+    set isTimeStopped(value) {
+        if (this._isTimeStopped === value) return; // 状態が変わらないなら何もしない
+        this._isTimeStopped = value;
+
+        // --- 状態が変化した瞬間に、全てのシーンに影響を及ぼす ---
+        this.broadcastTimeScale();
+    }
+
+    /**
+     * ★★★ 新規メソッド：アクティブな全シーンに、タイムスケールを伝播させる ★★★
+     */
+    broadcastTimeScale() {
+        const newTimeScale = this._isTimeStopped ? 0 : 1;
+             // ★★★ ログ爆弾 No.5 ★★★
+        console.log(`%c[LOG BOMB 5] broadcastTimeScale: Broadcasting new timeScale: ${newTimeScale}`, 'color: red; font-size: 1.2em; font-weight: bold;');
+        // 現在アクティブな全てのシーンをループ
+        for (const scene of this.game.scene.getScenes(true)) {
+            // そのシーンが matter.world を持っているか（物理シーンか）を確認
+            if (scene.matter && scene.matter.world) {
+                // ★★★ これが、物理の世界の時間を止める、魔法の呪文だ ★★★
+                scene.matter.world.engine.timing.timeScale = newTimeScale;
+                
+                console.log(`[SystemScene] Time scale of scene '${scene.scene.key}' set to ${newTimeScale}`);
+            }
+        }
+    }
     init(data) {
         if (data && data.initialGameData) {
             this.initialGameData = data.initialGameData;
@@ -22,17 +55,52 @@ export default class SystemScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("SystemScene: Setup started.");
+          console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
+        try {
+            console.log('this:', this);
+            console.log('this.scene:', this.scene);
+            console.log('this.scene.manager:', this.scene.manager);
+            console.log('this.scene.manager.events:', this.scene.manager.events);
+        } catch (e) {
+            console.error('!!! LOG BOMB FAILED !!!', e);
+        }
+        console.log('--- END OF LOG BOMB ---');
         
-        // --- 1. コアサービスの初期化 ---
-        this.registry.set('soundManager', new SoundManager(this.game));
+        console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
+       // --- 1. コアサービスの初期化 ---
+        const soundManager = new SoundManager(this.game);
+        this.registry.set('soundManager', soundManager);
+        this.input.once('pointerdown', () => soundManager.resumeContext(), this);
+        console.log("SystemScene: SoundManagerを登録しました。");
+
         // --- 2. イベントリスナーの設定 ---
-        this.events.on('request-simple-transition', this._handleSimpleTransition, this);
+          this.events.on('request-scene-transition', this._startTransition, this);
+           this.events.on('request-simple-transition', this._handleSimpleTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
-        
+          this.events.on('request-subscene', this._handleRequestSubScene, this);
+         this.events.on('request-gamemode-toggle', (mode) => {
+            const gameScene = this.scene.get('GameScene');
+            if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
+                const currentMode = gameScene.scenarioManager.mode;
+                const newMode = currentMode === mode ? 'normal' : mode;
+                gameScene.scenarioManager.setMode(newMode);
+                console.log(`モード変更: ${currentMode} -> ${newMode}`);
+            }
+        });
+         this.events.on('request-scene-resume', (sceneKey) => {
+            const targetScene = this.scene.get(sceneKey);
+            if (targetScene && targetScene.scene.isPaused()) {
+                targetScene.scene.resume();
+                console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
+            }
+        });
+     // ★★★ 時間を再開させるための、公式な命令を追加 ★★★
+        this.events.on('request-time-resume', () => {
+            this.isTimeStopped = false;
+        });
         // --- 3. エディタ関連の初期化 ---
         this.initializeEditor();
          
@@ -40,6 +108,7 @@ export default class SystemScene extends Phaser.Scene {
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
         }
+        
     }
 
     /**
@@ -47,23 +116,25 @@ export default class SystemScene extends Phaser.Scene {
      * @param {Array<object>} scenesToRun - 起動するシーンの情報の配列 e.g., [{ key: 'MyScene', params: {} }]
      * @param {string} finalSceneKey - 完了後にフォーカスするシーンのキー
      */
+  /**
+     * ★★★ 統一されたシーン起動シーケンス ★★★
+     * @param {Array<object>} scenesToRun - 起動するシーンの情報配列
+     * @param {string} finalSceneKey - 完了後にフォーカスするシーンのキー
+     */
     _startSceneSequence(scenesToRun, finalSceneKey) {
         if (this.isProcessingTransition) return;
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
 
-        // --- 1. 待機リストを作成 ---
         this.scenesToWaitFor.clear();
         scenesToRun.forEach(s => this.scenesToWaitFor.add(s.key));
         console.log(`[SystemScene] Input disabled. Waiting for [${scenesToRun.map(s=>s.key).join(', ')}]...`);
 
-        // --- 2. 完了処理を予約 ---
         this.onAllScenesReadyCallback = () => {
             this.scene.get('UIScene').onSceneTransition(finalSceneKey);
             this._onTransitionComplete(finalSceneKey);
         };
         
-        // --- 3. シーンをすべて起動 ---
         scenesToRun.forEach(s => {
             if (this.scene.isActive(s.key)) this.scene.stop(s.key);
             this.scene.run(s.key, s.params);
@@ -97,13 +168,11 @@ export default class SystemScene extends Phaser.Scene {
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
 
-  _startInitialGame(initialData) {
-        // --- 事前準備 ---
+   _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
         if (!this.scene.get('UIScene')) this.scene.add('UIScene', UIScene, false, { physics: { matter: { enable: false } } });
         if (!this.scene.get('GameScene')) this.scene.add('GameScene', GameScene, false);
         
-        // --- シーンシーケンスを起動 ---
         this._startSceneSequence([
             { key: 'UIScene', params: {} },
             { key: 'GameScene', params: {
@@ -113,8 +182,10 @@ export default class SystemScene extends Phaser.Scene {
         ], 'GameScene');
     }
 
+
     /**
      * ★★★ 新規・公式な完了報告受付メソッド ★★★
+     * 他のシーンから「準備完了」の報告を受け取るための公式な窓口
      */
     reportSceneReady(sceneKey) {
         console.log(`%c[SystemScene] << REPORT RECEIVED from [${sceneKey}] >>`, 'color: #ff00ff;');
@@ -143,11 +214,10 @@ export default class SystemScene extends Phaser.Scene {
      * ★★★ 究極の最終FIX版 ★★★
      * GameSceneからの[jump]など、シンプルな遷移を処理する
      */
-   _handleSimpleTransition(data) {
-        // --- 古いシーンを停止 ---
+  _handleSimpleTransition(data) {
         if (this.scene.isActive(data.from)) this.scene.stop(data.from);
-
-        // --- シーンシーケンスを起動 ---
+        
+        // ★★★ 単一シーンの起動も、同じシーケンスメソッドを使う ★★★
         this._startSceneSequence([
             { key: data.to, params: data.params }
         ], data.to);
@@ -316,7 +386,8 @@ export default class SystemScene extends Phaser.Scene {
         // --- 2. 起動する ---
         this.scene.run(sceneKey, params);
     }
-     _onTransitionComplete(sceneKey) {
+  
+    _onTransitionComplete(sceneKey) {
         this.isProcessingTransition = false;
         this.game.input.enabled = true;
         console.log(`%c[SystemScene] Transition to '${sceneKey}' is COMPLETE. Global input enabled.`, 'font-weight: bold; color: lightgreen;');

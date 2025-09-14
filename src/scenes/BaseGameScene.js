@@ -538,7 +538,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
         if (this.onSetupComplete) { this.onSetupComplete(); }
          console.log(`[BaseGameScene | ${this.scene.key}] All setup is complete. Emitting scene-ready.`);
-        this.events.emit('scene-ready');
+          this.scene.get('SystemScene').reportSceneReady(this.scene.key); 
     }
 
     /**
