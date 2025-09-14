@@ -2,52 +2,19 @@ import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
+
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
         this.globalCharaDefs = null;
         this.isProcessingTransition = false;
         this.initialGameData = null;
-        this.novelBgmKey = null; // BGMキーの保持
-        this.editorUI = null; // EditorUIへの参照を保持
-         this._isTimeStopped = false;
-          this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
-        this.transitionData = null;
-        this.onSceneReadyCallback = null; 
+        
+        // ★ 状態管理プロパティをシンプル化
         this.scenesToWaitFor = new Set();
         this.onAllScenesReadyCallback = null;
     }
-// ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
-    get isTimeStopped() {
-        return this._isTimeStopped;
-    }
 
-    set isTimeStopped(value) {
-        if (this._isTimeStopped === value) return; // 状態が変わらないなら何もしない
-        this._isTimeStopped = value;
-
-        // --- 状態が変化した瞬間に、全てのシーンに影響を及ぼす ---
-        this.broadcastTimeScale();
-    }
-
-    /**
-     * ★★★ 新規メソッド：アクティブな全シーンに、タイムスケールを伝播させる ★★★
-     */
-    broadcastTimeScale() {
-        const newTimeScale = this._isTimeStopped ? 0 : 1;
-             // ★★★ ログ爆弾 No.5 ★★★
-        console.log(`%c[LOG BOMB 5] broadcastTimeScale: Broadcasting new timeScale: ${newTimeScale}`, 'color: red; font-size: 1.2em; font-weight: bold;');
-        // 現在アクティブな全てのシーンをループ
-        for (const scene of this.game.scene.getScenes(true)) {
-            // そのシーンが matter.world を持っているか（物理シーンか）を確認
-            if (scene.matter && scene.matter.world) {
-                // ★★★ これが、物理の世界の時間を止める、魔法の呪文だ ★★★
-                scene.matter.world.engine.timing.timeScale = newTimeScale;
-                
-                console.log(`[SystemScene] Time scale of scene '${scene.scene.key}' set to ${newTimeScale}`);
-            }
-        }
-    }
     init(data) {
         if (data && data.initialGameData) {
             this.initialGameData = data.initialGameData;
@@ -55,52 +22,17 @@ export default class SystemScene extends Phaser.Scene {
     }
 
     create() {
-          console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
-        try {
-            console.log('this:', this);
-            console.log('this.scene:', this.scene);
-            console.log('this.scene.manager:', this.scene.manager);
-            console.log('this.scene.manager.events:', this.scene.manager.events);
-        } catch (e) {
-            console.error('!!! LOG BOMB FAILED !!!', e);
-        }
-        console.log('--- END OF LOG BOMB ---');
+        console.log("SystemScene: Setup started.");
         
-        console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
+        // --- 1. コアサービスの初期化 ---
+        this.registry.set('soundManager', new SoundManager(this.game));
         
-       // --- 1. コアサービスの初期化 ---
-        const soundManager = new SoundManager(this.game);
-        this.registry.set('soundManager', soundManager);
-        this.input.once('pointerdown', () => soundManager.resumeContext(), this);
-        console.log("SystemScene: SoundManagerを登録しました。");
-
         // --- 2. イベントリスナーの設定 ---
-          this.events.on('request-scene-transition', this._startTransition, this);
-           this.events.on('request-simple-transition', this._handleSimpleTransition, this);
+        this.events.on('request-simple-transition', this._handleSimpleTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
-          this.events.on('request-subscene', this._handleRequestSubScene, this);
-         this.events.on('request-gamemode-toggle', (mode) => {
-            const gameScene = this.scene.get('GameScene');
-            if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
-                const currentMode = gameScene.scenarioManager.mode;
-                const newMode = currentMode === mode ? 'normal' : mode;
-                gameScene.scenarioManager.setMode(newMode);
-                console.log(`モード変更: ${currentMode} -> ${newMode}`);
-            }
-        });
-         this.events.on('request-scene-resume', (sceneKey) => {
-            const targetScene = this.scene.get(sceneKey);
-            if (targetScene && targetScene.scene.isPaused()) {
-                targetScene.scene.resume();
-                console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
-            }
-        });
-     // ★★★ 時間を再開させるための、公式な命令を追加 ★★★
-        this.events.on('request-time-resume', () => {
-            this.isTimeStopped = false;
-        });
+        
         // --- 3. エディタ関連の初期化 ---
         this.initializeEditor();
          
@@ -108,7 +40,6 @@ export default class SystemScene extends Phaser.Scene {
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
         }
-        
     }
 
     /**
