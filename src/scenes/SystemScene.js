@@ -261,13 +261,17 @@ export default class SystemScene extends Phaser.Scene {
             this.events.emit('transition-complete', data.to);
         });
 
-        // 古いシーンを停止
+            // 古いシーンを停止
         if (this.scene.isActive(data.from)) {
             this.scene.stop(data.from);
         }
+        
+        // ★★★ このブロックを完全に削除する ★★★
+        /*
         if (this.scene.isActive('UIScene')) {
             this.scene.get('UIScene').setVisible(false);
         }
+        */
         
         // 新しいシーンを開始
         this.scene.run(data.to, sceneParams);
