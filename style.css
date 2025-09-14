@@ -70,6 +70,7 @@ body.debug-mode #game-container {
     flex-direction: column;
     gap: 10px;
     z-index: 9990;
+    overflow-y: auto;
 }
 
 
@@ -77,10 +78,10 @@ body.debug-mode #game-container {
 /* ==========================================================================
    以降のスタイル
    ========================================================================== */
-.editor-panel { background-color: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 5px; display: flex; flex-direction: column; overflow: hidden; }
-#asset-browser { flex-grow: 1; } /* ★ flexの比率を調整 */
-#editor-panel { flex-grow: 1; }
-#layers-panel { flex-basis: 180px; flex-shrink: 0; } /* ★ レイヤーパネルの高さを固定 */
+.editor-panel { background-color: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 5px; display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+#asset-browser { flex: 1; } /* ★ flexの比率を調整 */
+#editor-panel { flex: 1; }
+#layers-panel { flex-basis: 180px; } /* ★ レイヤーパネルの高さを固定 */
 * --- レイヤーパネルの中身 --- */
 #layer-list {
     padding: 5px; /* 少し余白を詰める */
