@@ -62,24 +62,22 @@ export default class NovelOverlayScene extends Phaser.Scene {
         // これには messageWindow.y を正しい位置に戻す処理も含まれる。
         this.scene.get('SystemScene').events.emit('transition-complete', this.scene.key);
         
-        // --- 2. レイヤーの生成 ---
-        const OVERLAY_BASE_DEPTH = 10000; // ★ 他のシーンより圧倒的に大きな値にする
-        // --- 2. UIの準備 ---
-    // (A) まず、UISceneのルールブックに従ってUIを表示させる
-    this.scene.get('SystemScene').events.emit('transition-complete', this.scene.key);
-    
-    // (B) 次に、UISceneに対して「メッセージウィンドウだけ特別扱いして」と命令する
-    this.uiScene.setElementDepth('message_window', OVERLAY_BASE_DEPTH + 20);
-   // ▼▼▼ ログ爆弾 No.2 ▼▼▼
-    console.log(`%c[LOG BOMB 2] NovelOverlayScene.create: 'message_window' のdepthを ${OVERLAY_BASE_DEPTH + 20} に設定しようと試みます。`, 'color: orange; font-size: 1.2em;');
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+      // --- 2. UIの準備 ---
+    this.uiScene.showMessageWindow(); // 座標を戻す
+
+    const OVERLAY_BASE_DEPTH = 10000;
+
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ これが最後の修正です ★★★
+    // (A) メッセージウィンドウをUISceneから「借りて」、このシーンの子にする
+    this.add.existing(messageWindow);
+    // (B) このシーンの中で、depthを再設定する
+    messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
     // --- 3. レイヤーの生成 ---
     this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
     this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
- // ▼▼▼ ログ爆弾 No.3 ▼▼▼
- console.log(`%c[LOG BOMB 3] NovelOverlayScene.create: キャラクターレイヤーのdepthは ${this.layer.character.depth} です。`, 'color: cyan; font-size: 1.2em;');
-        // --- 3. ScenarioManagerの生成 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
         // --- 4. タグハンドラの登録 ---
@@ -205,7 +203,13 @@ shutdown() {
             this.input.off('pointerdown', this.onClickHandler);
             this.onClickHandler = null;
         }
-
+const messageWindow = this.uiScene.uiElements.get('message_window');
+    if (messageWindow) {
+        // (A) このシーンから取り除く
+        this.children.remove(messageWindow);
+        // (B) UISceneに返却する
+        this.uiScene.add.existing(messageWindow);
+    }
         // --- 2. ScenarioManagerを停止・破棄 ---
         if (this.scenarioManager) {
             this.scenarioManager.stop();
