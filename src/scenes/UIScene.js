@@ -180,37 +180,43 @@ registerUiElement(name, element, params) {
      * uiRegistryにscenes定義を持つUI要素の表示/非表示だけを制御する
      */
    // in UIScene.js
-onSceneTransition(toSceneKey) {
-        // ▼▼▼【ここからが最終解決策です】▼▼▼
-        // --------------------------------------------------------------------
-        // --- ★★★ 緊急脱出ロジック ★★★ ---
-        // もしNovelOverlaySceneがアクティブなら、このメソッドは何もしない。
-        // UIの表示制御は、すべてNovelOverlayScene自身に委ねる。
+// src/scenes/UIScene.js
+
+    onSceneTransition(toSceneKey) {
+        // --- ★★★ 緊急脱出ロジック (これは残します) ★★★ ---
         if (this.scene.isActive('NovelOverlayScene')) {
-            console.log(`[UIScene.onSceneTransition] NovelOverlayScene is active. Aborting UI changes.`);
-            return; // これ以降の処理をすべて中断
+            console.log(`[UIScene.onSceneTransition] NovelOverlayScene is active. Aborting automatic UI changes.`);
+            return;
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        console.log(`[UIScene | Final Fix] Transitioning UI for scene: ${toSceneKey}`);
-        
-        if (!this.uiRegistry) return;
+        console.log(`[UIScene] Transitioning UI based on groups for scene: ${toSceneKey}`);
 
-        // --- UIScene自体の表示/非表示は、SystemSceneではなく、ここで管理する ---
-        const shouldBeVisible = (toSceneKey === 'GameScene' /* || toSceneKey === 'NovelOverlayScene' */); // NovelOverlaySceneの条件は不要になる
-        this.scene.setVisible(shouldBeVisible);
+        // 1. sceneUiVisibilityから、遷移先のシーンで表示すべき「グループのリスト」を取得
+        //    sceneUiVisibilityは、別途インポートしておく必要があります。
+        //    import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
+        const visibleGroups = sceneUiVisibility[toSceneKey] || [];
+        console.log(`[UIScene] Groups to display: [${visibleGroups.join(', ')}]`);
 
-        // --- 各UI要素の表示/非表示を切り替える ---
-        // (これ以降のロジックは変更不要です)
+        // 2. 관리하는 모든 UI 요소를 순회 (管理下の全UI要素をループ)
         for (const [key, element] of this.uiElements.entries()) {
             const definition = this.uiRegistry[key];
-            
-            if (definition && Array.isArray(definition.scenes)) {
-                element.setVisible(definition.scenes.includes(toSceneKey));
-            } else {
-                // scenes定義を持たない要素（メッセージウィンドウなど）は、ここでは何もしない
-            }
+            if (!definition || !definition.groups) continue; // グループ定義がなければ何もしない
+
+            // 3. このUI要素が、表示すべきグループのいずれかに属しているか判定
+            const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+
+            // 4. 表示状態を更新
+            element.setVisible(shouldBeVisible);
+        }
+
+        // --- message_windowの座標をリセットする特別な処理 ---
+        const messageWindow = this.uiElements.get('message_window');
+        if (messageWindow && messageWindow.visible) {
+            // もしmessage_windowが表示されるべきシーンなら、念のため座標を正しい位置に戻す
+            this.showMessageWindow();
+        } else if (messageWindow && !messageWindow.visible) {
+            // もしmessage_windowが非表示にされるべきシーンなら、念のため座標を画面外に移動させる
+            this.hideMessageWindow();
         }
     }
 // src/scenes/UIScene.js
