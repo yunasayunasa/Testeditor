@@ -1389,11 +1389,16 @@ createComponentSection() {
         this.updatePropertyPanel(); // UI更新を呼び出すだけ
     }
 
-    createMultiSelectUI() {
-       this.editorTitle.innerText = `${gameObjects.length} objects selected`;
-        this.editorPropsContainer.innerHTML = ''; // クリア
+   // in EditorPlugin.js
 
-        // ▼▼▼ ここからがグループ操作UIの実装 ▼▼▼
+    /**
+     * ★★★ 新規追加 ★★★
+     * 複数オブジェクト選択時のプロパティパネルUIを構築する。
+     * 以前 selectMultipleObjects メソッド内にあったロジックを、ここに移動させたもの。
+     */
+    createMultiSelectUI() {
+        if (!this.selectedObjects || this.selectedObjects.length === 0) return;
+        const gameObjects = this.selectedObjects;
 
         // --- グループ一括削除ボタン ---
         const deleteButton = document.createElement('button');
@@ -1401,7 +1406,6 @@ createComponentSection() {
         deleteButton.style.backgroundColor = '#e65151';
         deleteButton.onclick = () => {
             if (confirm(`本当に選択中の ${gameObjects.length} 個のオブジェクトをすべて削除しますか？`)) {
-                // 配列のコピーに対してループをかける（元の配列を変更するため）
                 [...this.selectedObjects].forEach(obj => {
                     const sceneKey = obj.scene.scene.key;
                     if (this.editableObjects.has(sceneKey)) {
@@ -1409,19 +1413,17 @@ createComponentSection() {
                     }
                     obj.destroy();
                 });
-                this.deselectAll(); // 選択を解除してUIを更新
+                this.deselectAll();
             }
         };
         this.editorPropsContainer.appendChild(deleteButton);
-        
         this.editorPropsContainer.appendChild(document.createElement('hr'));
 
-       const physicsTitle = document.createElement('h4');
+        // --- 一括物理ボディ設定 ---
+        const physicsTitle = document.createElement('h4');
         physicsTitle.innerText = '一括 物理ボディ設定';
         this.editorPropsContainer.appendChild(physicsTitle);
 
-        // --- ボディ付与/削除ボタン ---
-        // グループ内にボディを持っていないオブジェクトが一つでもあれば「付与」ボタンを表示
         const needsBody = gameObjects.some(obj => !obj.body); 
         if (needsBody) {
             const addBodyButton = document.createElement('button');
@@ -1440,9 +1442,7 @@ createComponentSection() {
             this.editorPropsContainer.appendChild(removeBodyButton);
         }
 
-        // グループの全てのオブジェクトがボディを持っている場合のみ、プロパティ変更UIを表示
         if (!needsBody) {
-            // --- 静的ボディ一括設定 ---
             const staticButton = document.createElement('button');
             staticButton.innerText = 'すべて静的ボディに設定';
             staticButton.onclick = () => {
@@ -1455,6 +1455,25 @@ createComponentSection() {
             };
             this.editorPropsContainer.append(staticButton, dynamicButton);
         }
+
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+        // --- （参考）グループのプロパティ一括変更 ---
+        const alphaRow = document.createElement('div');
+        const alphaLabel = document.createElement('label');
+        alphaLabel.innerText = 'Alpha (All):';
+        const alphaInput = document.createElement('input');
+        alphaInput.type = 'range';
+        alphaInput.min = 0;
+        alphaInput.max = 1;
+        alphaInput.step = 0.01;
+        alphaInput.value = gameObjects[0] ? gameObjects[0].alpha : 1;
+        alphaInput.oninput = (e) => {
+            const newAlpha = parseFloat(e.target.value);
+            this.selectedObjects.forEach(obj => obj.setAlpha(newAlpha));
+        };
+        alphaRow.append(alphaLabel, alphaInput);
+        this.editorPropsContainer.appendChild(alphaRow);
     }
  
     /**
