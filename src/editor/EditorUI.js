@@ -576,12 +576,16 @@ this.buildLayerPanel();
         this.layers.forEach(layer => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'layer-item';
-            if (layer.name === this.activeLayerName) {
+
+               if (this.plugin.selectedLayer && layer.name === this.plugin.selectedLayer.name) {
                 itemDiv.classList.add('active');
             }
-            // レイヤー名部分をクリックしたらアクティブにする
-            itemDiv.addEventListener('click', () => this.setActiveLayer(layer.name));
-
+            
+            // --- レイヤー名部分をクリックしたら、プラグインに選択を通知 ---
+            itemDiv.addEventListener('click', () => {
+                // EditorUIは自身の状態を変えず、Pluginに命令するだけ
+                this.plugin.selectLayer(layer);
+            });
             // --- 表示/非表示ボタン (👁️) ---
             const visibilityBtn = document.createElement('button');
             visibilityBtn.className = 'layer-control';
@@ -615,25 +619,15 @@ this.buildLayerPanel();
         this.plugin.updateLayerStates(this.layers);
     }
 
-    setActiveLayer(layerName) {
-        // ロックされているレイヤーはアクティブにできない
-        const layer = this.layers.find(l => l.name === layerName);
-        if (layer && layer.locked) {
-            console.log(`Layer '${layerName}' is locked and cannot be set as active.`);
-            return;
-        }
-        
-        this.activeLayerName = layerName;
-        console.log(`Active layer set to: ${this.activeLayerName}`);
-        this.buildLayerPanel(); // UIを再描画してハイライトを更新
-    }
+  
 
-    toggleLayerVisibility(layerName) {
+    ttoggleLayerVisibility(layerName) {
         const layer = this.layers.find(l => l.name === layerName);
         if (layer) {
             layer.visible = !layer.visible;
-            this.buildLayerPanel();
-            // TODO: シーン内のオブジェクトの表示/非表示を実際に切り替える
+            this.buildLayerPanel(); // UI更新
+            this.plugin.updateLayerStates(this.layers); // 状態を通知
+            this.plugin.applyLayerStatesToScene(); // シーンに反映
         }
     }
 
@@ -641,11 +635,8 @@ this.buildLayerPanel();
         const layer = this.layers.find(l => l.name === layerName);
         if (layer) {
             layer.locked = !layer.locked;
-            // もしロックされたレイヤーがアクティブだったら、アクティブを解除
-            if (layer.locked && this.activeLayerName === layerName) {
-                this.activeLayerName = null;
-            }
-            this.buildLayerPanel();
+            this.buildLayerPanel(); // UI更新
+            this.plugin.updateLayerStates(this.layers); // 状態を通知
         }
     }
     

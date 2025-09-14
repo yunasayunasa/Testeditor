@@ -24,6 +24,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this._isUpdatingPanel = false;
 
         this.layerStates = []; // ★ レイヤーの状態を保持
+        this.selectedLayer = null;
     }
    
 
@@ -149,12 +150,32 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // --- UIクリア ---
             this.editorPropsContainer.innerHTML = '';
 
-            // --- 選択オブジェクトがない場合のUI ---
-            if (!this.selectedObject) {
-                this.editorTitle.innerText = 'No Object Selected';
-                this._isUpdatingPanel = false;
-                return;
-            }
+               // --------------------------------------------------------------------
+        // --- ケース1：オブジェクトが選択されている場合 ---
+        if (this.selectedObject) {
+            this.editorTitle.innerText = `Editing Object: ${this.selectedObject.name}`;
+            // (既存のオブジェクトプロパティUI生成ロジックをここに)
+            this.safeCreateUI(this.createNameInput);
+            this.safeCreateUI(this.createLayerSelect); // ★ レイヤー選択UIを追加
+            // ...
+            this._isUpdatingPanel = false;
+            return;
+        }
+        
+        // --- ケース2：レイヤーが選択されている場合 ---
+        if (this.selectedLayer) {
+            this.editorTitle.innerText = `Editing Layer: ${this.selectedLayer.name}`;
+            this.safeCreateUI(this.createLayerPropertiesUI); // ★ レイヤー用UIを生成
+            this._isUpdatingPanel = false;
+            return;
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // --- どちらも選択されていない場合 ---
+        this.editorTitle.innerText = 'No Object Selected';
+        this._isUpdatingPanel = false;
+    
             
             // --- これ以降、selectedObjectは「存在する」と仮定してUIを構築 ---
             this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
@@ -203,6 +224,104 @@ this.safeCreateUI(this.createExportPrefabButton);
             this._isUpdatingPanel = false;
         }
     }
+
+
+    //---レイヤー系
+     /**
+     * ★★★ 新規メソッド ★★★
+     * レイヤーを選択する
+     * @param {object} layerObject - 選択されたレイヤーのデータオブジェクト
+     */
+    selectLayer(layerObject) {
+        console.log(`[EditorPlugin] Layer selected:`, layerObject);
+        // 他の選択をすべて解除
+        this.deselectAll();
+        
+        this.selectedLayer = layerObject;
+        
+        // UIを更新
+        this.updatePropertyPanel();
+        this.editorUI.buildLayerPanel(); // レイヤーパネルのハイライトを更新
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * レイヤープロパティ編集用のUIを生成する
+     */
+    createLayerPropertiesUI() {
+        const layer = this.selectedLayer;
+        // (ここに、レイヤー名変更や、表示/ロックのトグルなど、レイヤー自体のプロパティを編集するUIを作る)
+        const nameRow = document.createElement('div');
+        const nameLabel = document.createElement('label');
+        nameLabel.innerText = 'Name:';
+        const nameInput = document.createElement('input');
+        nameInput.value = layer.name;
+        nameInput.onchange = (e) => {
+            // TODO: レイヤー名変更ロジック
+            layer.name = e.target.value;
+            this.editorUI.buildLayerPanel(); // 名前を即時反映
+        };
+        nameRow.append(nameLabel, nameInput);
+        this.editorPropsContainer.appendChild(nameRow);
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * オブジェクトが所属するレイヤーを選択するためのUI（ドロップダウン）を生成する
+     */
+    createLayerSelect() {
+        const target = this.selectedObject;
+        const currentLayerName = target.getData('layer');
+
+        const row = document.createElement('div');
+        const label = document.createElement('label');
+        label.innerText = 'Layer:';
+        
+        const select = document.createElement('select');
+        this.layerStates.forEach(layer => {
+            const option = document.createElement('option');
+            option.value = layer.name;
+            option.innerText = layer.name;
+            if (layer.name === currentLayerName) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        select.onchange = (e) => {
+            const newLayerName = e.target.value;
+            target.setData('layer', newLayerName);
+            this.applyLayerStatesToScene(); // 深度などを再計算させる
+        };
+        
+        row.append(label, select);
+        this.editorPropsContainer.appendChild(row);
+    }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 現在のレイヤー状態（表示/非表示など）をシーンのGameObjectに適用する
+     */
+    applyLayerStatesToScene() {
+        const scene = this.getActiveGameScene();
+        if (!scene) return;
+
+        // editableObjects を走査して、各オブジェクトの表示状態を更新
+        const allObjects = this.editableObjects.get(scene.scene.key);
+        if (!allObjects) return;
+
+        for (const gameObject of allObjects) {
+            const layerName = gameObject.getData('layer');
+            const layer = this.layerStates.find(l => l.name === layerName);
+            if (layer) {
+                gameObject.setVisible(layer.visible);
+            }
+        }
+    }
+    //---レイヤー系ここまで
+
+
+
  /**
      * ★★★ 最終代替案 ★★★
      * 汎用的な「範囲配置ツール」UIセクションを生成する。
@@ -1245,6 +1364,9 @@ createComponentSection() {
                 if (typeof obj.clearTint === 'function') obj.clearTint();
             });
         }
+        this.selectedLayer = null;
+        this.updatePropertyPanel();
+        if (this.editorUI) this.editorUI.buildLayerPanel();
         this.selectedObjects = [];
         this.updatePropertyPanel();
     }
