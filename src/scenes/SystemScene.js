@@ -105,6 +105,7 @@ export default class SystemScene extends Phaser.Scene {
         if (this.initialGameData) {
             this._startInitialGame(this.initialGameData);
         }
+        
     }
 
     initializeEditor() {
@@ -126,6 +127,7 @@ export default class SystemScene extends Phaser.Scene {
             if (editorPlugin && editorPlugin.isEnabled) {
                  this.editorUI = new EditorUI(this.game, editorPlugin);
                  editorPlugin.setUI(this.editorUI);
+                 this.editorUI.start(); 
             }
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }

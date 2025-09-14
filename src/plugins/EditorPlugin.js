@@ -25,7 +25,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         this.layerStates = []; // ★ レイヤーの状態を保持
         this.selectedLayer = null;
-        this.plugin.updateLayerStates(this.layers);
+       
     }
    
 
@@ -66,6 +66,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // ★ UIの準備ができたことを通知し、レイヤーパネルを初期構築させる
             this.editorUI.onPluginReady(); 
             this.editorUI.startListeningToGameInput();
+              // 1. プラグインに初期レイヤー状態を通知
+        this.plugin.updateLayerStates(this.layers);
+        
+        // 2. レイヤーパネルを初めて構築
+        this.buildLayerPanel();
         }
     }
     getActiveGameScene() { // ★ EditorUIから移動・統合
