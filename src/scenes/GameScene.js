@@ -70,16 +70,17 @@ export default class GameScene extends Phaser.Scene {
         this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
 
         // ★★★ 4. performLoadもawaitで待つように変更 ★★★
-        if (this.loadSlot !== undefined) {
+         if (this.loadSlot !== undefined) {
+            // ★ performLoadが完了したら、_finalizeSetup を呼ぶだけ
             await this.performLoad(this.loadSlot, this.returnParams);
-            this._finalizeSetup(); // awaitの後に実行
-        } else {
-            console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
-            this.stateManager.f = {};
-            await this.scenarioManager.loadScenario(this.startScenario); // loadScenarioも非同期の可能性があるのでawait
             this._finalizeSetup();
-            this.performSave(0);
-            this.time.delayedCall(10, () => this.scenarioManager.next());
+        } else {
+            // ★ 新規ゲーム開始時も、_finalizeSetup を呼ぶだけ
+            console.log("[GameScene] 新規ゲーム開始のため...");
+            this.stateManager.f = {};
+            await this.scenarioManager.loadScenario(this.startScenario);
+//            this.performSave(0); // ★ セーブは最初のクリック後などが望ましい
+            this._finalizeSetup();
         }
     }
 
@@ -87,8 +88,18 @@ export default class GameScene extends Phaser.Scene {
     _finalizeSetup() {
         this.isSceneFullyReady = true;
         this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
-              this.scene.get('SystemScene').reportSceneReady(this.scene.key);
-        console.log("GameScene: 準備完了。SystemSceneに直接通知しました。");
+        
+        // ★★★ 完了報告と、シナリオ開始の号砲を、必ずここで鳴らす ★★★
+        this.scene.get('SystemScene').reportSceneReady(this.scene.key);
+        
+        // ★ ロード後の待機状態でない場合のみ、自動で最初の行へ進む
+        if (!this.scenarioManager.isWaitingClick && !this.scenarioManager.isWaitingChoice) {
+            this.time.delayedCall(10, () => {
+                if(this.scenarioManager) this.scenarioManager.next();
+            });
+        }
+        
+        console.log("GameScene: 準備完了。SystemSceneに通知し、シナリオ実行を準備します。");
     }
 
      /**
@@ -230,13 +241,11 @@ export default class GameScene extends Phaser.Scene {
             await rebuildScene(this, loadedState, this.restoredBgmKey);
             
             this.events.emit('force-hud-update');
+  // ★★★ next() の呼び出しを、ここでは行わない ★★★
+            // isWaitingClick状態の復元はrebuildSceneが行うので、
+            // _finalizeSetupが呼ばれれば、ユーザーはクリック可能になる
+            console.log("ロード完了: 状態を復元しました。");
 
-            if (loadedState.scenario.isWaitingClick || loadedState.scenario.isWaitingChoice) {
-                console.log("ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
-            } else {
-                console.log("ロード完了: 次の行からシナリオを再開します。");
-                this.time.delayedCall(10, () => this.scenarioManager.next());
-            }
         } catch (e) {
             console.error(`ロード処理でエラーが発生しました。`, e);
         }
