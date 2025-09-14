@@ -2,7 +2,7 @@
 /**
  * [stop_bgm] タグハンドラ
  */
-export default function stopBgmHandler(interpreter, params) {
+export default function stopBgmHandler(interpreter, params, target) {
     const time = parseInt(params.time, 10) || 0; // フェードアウト時間
     
     const soundManager = interpreter.scene.registry.get('soundManager');

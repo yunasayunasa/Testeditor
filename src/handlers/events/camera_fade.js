@@ -7,7 +7,7 @@
  * @param {object} params - タグのパラメータ
  * @returns {Promise<void>}
  */
-export default function cameraFadeHandler(interpreter, params) {
+export default function cameraFadeHandler(interpreter, params, target) {
     const time = parseInt(params.time, 10) || 1000; // デフォルト1秒
     const type = params.type || 'out'; // 'in' or 'out'
     

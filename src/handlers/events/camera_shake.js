@@ -7,7 +7,7 @@
  * @param {object} params - タグのパラメータ
  * @returns {Promise<void>}
  */
-export default async function cameraShakeHandler(interpreter, params) {
+export default async function cameraShakeHandler(interpreter, params, target) {
     const time = parseInt(params.time, 10) || 500; // デフォルト500ms
     const power = parseFloat(params.power) || 0.01; // デフォルトは弱い揺れ
 

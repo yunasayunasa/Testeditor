@@ -7,7 +7,7 @@
  * @param {object} params - タグのパラメータ
  * @returns {Promise<void>}
  */
-export default function waitHandler(interpreter, params) {
+export default function waitHandler(interpreter, params, target) {
     const time = parseInt(params.time, 10);
 
     // timeが有効な数値でなければ、即座に終了

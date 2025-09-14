@@ -5,7 +5,7 @@
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
  * @param {object} params - タグのパラメータ
  */
-export default function returnNovelHandler(interpreter, params) {
+export default function returnNovelHandler(interpreter, params, target) {
     // インタプリタが保持しているシーンへの参照を使う
     const scene = interpreter.scene;
     if (!scene) return;

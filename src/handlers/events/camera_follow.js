@@ -6,7 +6,7 @@
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
  * @param {object} params - タグのパラメータ
  */
-export default function cameraFollowHandler(interpreter, params) {
+export default function cameraFollowHandler(interpreter, params, target) {
     const targetId = params.target;
     if (!targetId) {
         console.warn('[camera_follow] "target" parameter is missing.');

@@ -4,7 +4,7 @@
  * [body_velocity x=... y=...] タグの処理
  * 対象オブジェクトの物理ボディの速度（Velocity）を設定する
  */
-export function handleVelocity(interpreter, target, params) {
+export function handleVelocity(interpreter, params, target) {
     if (target && target.body) {
         // XとY、どちらか一方だけの指定も可能にする
         const x = params.x !== undefined ? Number(params.x) : target.body.velocity.x;

@@ -1,6 +1,6 @@
 // src/actions/play_sound.js
 
-export default async function play_sound(interpreter, target, params) {
+export default async function play_sound(interpreter, params, target) {
     const soundKey = params.key;
     if (!soundKey) {
         console.warn('[play_sound] Missing required parameter: "key".');

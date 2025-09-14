@@ -3,7 +3,7 @@
 // Resumes the master clock of the engine.
 //
 
-export default async function timeResume(interpreter, target, params) {
+export default async function timeResume(interpreter, params, target) {
     const systemScene = interpreter.scene.game.scene.getScene('SystemScene');
     if (systemScene) {
         systemScene.isTimeStopped = false;

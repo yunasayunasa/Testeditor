@@ -1,6 +1,6 @@
 // time_stop.js
 
-export default async function timeStop(interpreter, target, params) {
+export default async function timeStop(interpreter, params, target) {
     const systemScene = interpreter.scene.game.scene.getScene('SystemScene');
     if (systemScene) {
         

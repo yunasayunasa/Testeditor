@@ -6,7 +6,7 @@
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
  * @param {object} params - タグのパラメータ
  */
-export default function setDataHandler(interpreter, params) {
+export default function setDataHandler(interpreter, params, target) {
     const name = params.name;
     let value = params.value;
 

@@ -3,7 +3,7 @@
  * [anim_frame name=... frame=...] アクションタグ
  * 対象オブジェクトを指定されたアニメーションの特定フレームで静止させる。
  */
-export default async function animFrame(interpreter, target, params) {
+export default async function animFrame(interpreter, params, target) {
     if (!target || typeof target.setFrame === 'undefined') {
         console.warn(`[anim_frame] Target '${target.name}' cannot set a frame.`);
         return;

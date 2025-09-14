@@ -3,7 +3,7 @@
 
 // StateManagerをインポートする必要はありません。シーンから取得します。
 
-export default async function evalExpression(interpreter, target, params) {
+export default async function evalExpression(interpreter, params, target) {
     if (!params.exp) {
         console.warn('[eval tag] Missing required parameter: exp');
         return;

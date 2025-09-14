@@ -6,7 +6,7 @@
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
  * @param {object} params - タグのパラメータ
  */
-export default function spawnObjectHandler(interpreter, params) {
+export default function spawnObjectHandler(interpreter, params, target) {
     const prefabKey = params.prefab;
     if (!prefabKey) return;
 

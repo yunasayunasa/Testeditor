@@ -2,7 +2,7 @@
 /**
  * [play_bgm] タグハンドラ
  */
-export default function playBgmHandler(interpreter, params) {
+export default function playBgmHandler(interpreter, params, target) {
     const key = params.key;
     if (!key) return;
     

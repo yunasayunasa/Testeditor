@@ -1,6 +1,6 @@
 // src/actions/apply_force.js
 
-export default async function apply_force(interpreter, target, params) {
+export default async function apply_force(interpreter, params, target) {
     // 1. ターゲットに物理ボディがなければ、警告を出して終了
     if (!target || !target.body) {
         console.warn(`[apply_force] Target '${target.name}' has no physics body.`);
