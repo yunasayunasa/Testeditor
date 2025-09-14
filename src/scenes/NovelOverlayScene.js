@@ -54,8 +54,8 @@ create() {
         }
 
         // --- 2. UIの準備 ---
-        this.uiScene.setElementVisible('message_window', true);
-        this.children.add(this.messageWindow); // ★ ウィンドウをこのシーンの管理下に置く
+       this.uiScene.setElementVisible('message_window', true);
+     //   this.children.add(this.messageWindow); // ★ ウィンドウをこのシーンの管理下に置く
 
         // --- 3. レイヤーとScenarioManagerの生成 ---
         const OVERLAY_BASE_DEPTH = 1000;
@@ -194,16 +194,13 @@ create() {
             this.scenarioManager = null;
         }
 
-        // --- 3. このシーンに追加したすべての子オブジェクトを破棄 ---
-        // (メッセージウィンドウはUISceneに戻すので、先によけておく)
-        if (this.messageWindow) {
-            this.children.remove(this.messageWindow);
-        }
+       // --- 3. このシーンに追加したすべての子オブジェクトを破棄 ---
+        // ★ message_window はもうこのシーンの子ではないので、特別な処理は不要
         this.children.removeAll(true); // キャラクターレイヤーなどを破棄
 
-        // --- 4. メッセージウィンドウをUISceneに戻し、非表示にする ---
-        if (this.uiScene && this.messageWindow) {
-            this.uiScene.add.existing(this.messageWindow);
+        // --- 4. メッセージウィンドウを非表示にする ---
+        // ★ 所有権はUISceneにあるので、単純に非表示命令を出すだけでOK
+        if (this.uiScene) {
             this.uiScene.setElementVisible('message_window', false);
         }
         
