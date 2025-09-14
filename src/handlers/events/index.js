@@ -18,7 +18,8 @@ import spawn_object from './spawn_object.js';
 import interact_add from './interact_add.js';
 import interact_remove from './interact_remove.js';
 import transition_scene from './transition_scene.js';
-
+import waitHandler from './wait.js'; // ★ wait.js からインポート
+import cameraShakeHandler from './camera_shake.js';
 
 //*******************++++++++++++++++++++++ */
 // ActionInterpreterが使う、イベントタグのカタログ
@@ -41,6 +42,7 @@ export const eventTagHandlers = {
 'interact_add':interact_add,
 'interact_remove': interact_remove,
  'transition_scene': transition_scene,
-
+'wait': waitHandler, // ★ タグ名を 'wait' に
+    'camera_shake': cameraShakeHandler,
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };

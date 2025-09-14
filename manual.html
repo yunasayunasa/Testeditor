@@ -16,9 +16,7 @@
 Trigger: onReady
 Actions: [time_stop]
 </code></pre>
-
-<hr>
-
+丶
 <h2>[time_resume]</h2>
 <p><code>[time_stop]</code>によって停止されたゲーム全体の時間を再開させます。通常、UIボタン（例：「イベント開始」ボタン）が押された際の<code>onClick</code>イベントと連携して使用されます。</p>
 <p><strong>パラメータ:</strong> なし</p>
@@ -28,6 +26,34 @@ Actions: [time_stop]
 Trigger: onClick
 Actions: [time_resume][destroy target=self]
 </code></pre>
+
+<hr>
+
+<h3><pre>[wait time=...]</pre></h3>
+<p>
+    <strong>機能:</strong> アクションの実行を、指定された時間だけ一時停止します。<br>
+    これにより、演出に「タメ」や「間」を作ることができます。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li>
+        <strong>time (必須):</strong> 待機する時間をミリ秒単位で指定します。(例: <code>1000</code>で1秒)
+    </li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; 敵にダメージを与える
+[anim_play target=enemy anim=damage]
+; 0.5秒待ってから、ヒットエフェクトを出す
+[wait time=500]
+[spawn_object prefab=hit_effect at=target]
+</code>
+</pre>
 
 <hr>
 
@@ -447,3 +473,33 @@ Trigger: onDirectionChange
 Condition: direction === 'right'
 Actions: [set_flip_x value=false]
 </code></pre>
+
+<hr>
+
+<h3><pre>[camera_shake power=... time=...]</pre></h3>
+<p>
+    <strong>機能:</strong> 画面（メインカメラ）を揺らします。<br>
+    攻撃のヒット時や、爆発、地震などの演出に最適です。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li>
+        <strong>time:</strong> 揺れが続く時間をミリ秒単位で指定します。 (デフォルト: <code>500</code>)
+    </li>
+    <li>
+        <strong>power:</strong> 揺れの強さを指定します。<code>0.01</code>(弱い)〜<code>0.1</code>(激しい)程度の値が推奨されます。 (デフォルト: <code>0.01</code>)
+    </li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; プレイヤーが地面に激突
+[apply_force target=player y=10]
+; 強い揺れを0.3秒間発生させる
+[camera_shake power=0.05 time=300]
+</code>
+</pre>
