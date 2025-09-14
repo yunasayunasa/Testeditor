@@ -82,90 +82,68 @@ export default class EditorUI {
     // =================================================================
 // in EditorUI.js
 
-    /**
-     * ★★★ 復活・修正版 ★★★
-     * 要素にイベントリスナーを安全に設定するヘルパー。
-     * 要素がDOMに存在しない場合も考慮する。
+   
+  /**
+     * ★★★ 最終FIX版 ★★★
+     * すべてのイベントリスナーを、標準のaddEventListenerで一度だけ登録する
      */
-    replaceListener(element, event, handler) {
-        if (!element) {
-            console.warn("replaceListener: Target element is null.");
-            return null;
-        }
-
-        // --- 古いリスナーを確実に剥がすための、より強力な方法 ---
-        // 1. 要素を複製する
-        const newElement = element.cloneNode(true);
-        // 2. 新しい要素にイベントリスナーを設定する
-        newElement.addEventListener(event, handler);
-        // 3. もし元の要素がDOMにあれば、新しい要素と入れ替える
-        if (element.parentNode) {
-            element.parentNode.replaceChild(newElement, element);
-        }
-        
-        return newElement;
-    }
-
     initializeEventListeners() {
         // --- UIボタンのリスナー ---
-        this.replaceListener(document.getElementById('add-asset-button'), 'click', () => this.onAddButtonClicked());
-        this.replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
-        this.selectModeBtn = this.replaceListener(this.selectModeBtn, 'click', () => this.setEditorMode('select'));
-        //レイヤー関係
-        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
+        document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
+        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked()); // ★ 登録はここに一本化
+        document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
+        document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
+        document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
         
-          // --- レイヤーリスト全体に、一つのクリックリスナーを登録 ---
+        // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
             layerListContainer.addEventListener('click', (event) => {
                 const target = event.target;
-                
-                // クリックされた要素の最も近い親である .layer-item を探す
                 const layerItem = target.closest('.layer-item');
-                if (!layerItem) return; // レイヤーアイテムの外側なら何もしない
-
-                // layer-item が持つデータ属性から、レイヤー名を取得
+                if (!layerItem) return;
                 const layerName = layerItem.dataset.layerName;
                 if (!layerName) return;
 
-                // --- どのボタンがクリックされたかを、クラス名で判別 ---
                 if (target.classList.contains('layer-visibility-btn')) {
                     this.toggleLayerVisibility(layerName);
-                }
-                else if (target.classList.contains('layer-lock-btn')) {
+                } else if (target.classList.contains('layer-lock-btn')) {
                     this.toggleLayerLock(layerName);
-                }
-                else if (target.classList.contains('layer-active-indicator')) {
+                } else if (target.classList.contains('layer-active-indicator')) {
                     this.setActiveLayer(layerName);
-                }
-                else {
-                    // ボタン以外（レイヤー名の部分など）がクリックされたら、レイヤーを選択
+                } else {
                     this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
                 }
             });
         }
-        // カメラコントロール
-        if (this.cameraControls) this.cameraControls.style.display = 'flex';
-        this.zoomInBtn = this.replaceListener(this.zoomInBtn, 'click', () => this.plugin.zoomCamera(0.2));
-        this.zoomOutBtn = this.replaceListener(this.zoomOutBtn, 'click', () => this.plugin.zoomCamera(-0.2));
-        this.resetBtn = this.replaceListener(this.resetBtn, 'click', () => this.plugin.resetCamera());
-        this.setupPanButton(this.panUpBtn, 0, -10);
-        this.setupPanButton(this.panDownBtn, 0, 10);
-        this.setupPanButton(this.panLeftBtn, -10, 0);
-        this.setupPanButton(this.panRightBtn, 10, 0);
 
-        // プレイモード切替
-        if (this.modeToggle) {
-            this.modeToggle.addEventListener('change', (event) => {
+        // --- カメラコントロール ---
+        document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
+        document.getElementById('camera-zoom-out')?.addEventListener('click', () => this.plugin.zoomCamera(-0.2));
+        document.getElementById('camera-reset')?.addEventListener('click', () => this.plugin.resetCamera());
+        this.setupPanButton(document.getElementById('camera-pan-up'), 0, -10);
+        this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
+        this.setupPanButton(document.getElementById('camera-pan-left'), -10, 0);
+        this.setupPanButton(document.getElementById('camera-pan-right'), 10, 0);
+
+        // --- プレイモード切替 ---
+        const modeToggle = document.getElementById('mode-toggle-checkbox');
+        if (modeToggle) {
+            modeToggle.addEventListener('change', (event) => {
                 this.plugin.currentMode = event.target.checked ? 'play' : 'select';
-                if (this.modeLabel) this.modeLabel.textContent = event.target.checked ? 'Play Mode' : 'Select Mode';
+                document.getElementById('mode-label').textContent = event.target.checked ? 'Play Mode' : 'Select Mode';
             });
         }
         
-        // ヘルプモーダル閉じるボタン
-        this.replaceListener(document.getElementById('help-modal-close-btn'), 'click', () => this.closeHelpModal());
+        // --- ヘルプモーダル ---
+        document.getElementById('help-modal-close-btn')?.addEventListener('click', () => this.closeHelpModal());
+        // createHelpButton内でリスナーを設定
+        this.createHelpButton();
+        
+        // ★ createPauseToggleもリスナーを設定するので、ここで呼ぶ
+        this.createPauseToggle();
     }
-
+    
     // =================================================================
     // UI構築・更新メソッド群
     // =================================================================
@@ -590,23 +568,14 @@ export default class EditorUI {
      */
     // in src/editor/EditorUI.js
 
-   createHelpButton() {
+     createHelpButton() {
         const buttonContainer = document.querySelector('#asset-browser .panel-header-buttons');
-        
         if (buttonContainer) {
             const helpButton = document.createElement('button');
             helpButton.innerText = '?';
             helpButton.title = 'Open Help Manual';
-            
-            // ▼▼▼【ここも this.replaceListener を使うように修正】▼▼▼
-            // helpButton.addEventListener('click', () => this.openHelpModal());
-            // 上記の代わりに、以下のようにする
+            helpButton.addEventListener('click', () => this.openHelpModal());
             buttonContainer.appendChild(helpButton);
-            this.replaceListener(helpButton, 'click', () => this.openHelpModal());
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        } else {
-            console.warn('[EditorUI] Asset browser button container not found for help button placement.');
         }
     }
     // ★★★ 新規メソッド：ヘルプモーダルを開く ★★★
