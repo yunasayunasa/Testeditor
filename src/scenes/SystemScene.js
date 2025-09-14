@@ -167,20 +167,36 @@ _startInitialGame(initialData) {
     
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    const uiScene = this.scene.get('UIScene');
+     const uiScene = this.scene.get('UIScene');
 
-    uiScene.events.once('scene-ready', () => {
-        console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-        
-        this._startAndMonitorScene('GameScene', {
-            charaDefs: this.globalCharaDefs,
-            startScenario: initialData.startScenario,
+        // ★★★ 核心の修正 ★★★
+        // GameSceneの起動と監視を、UISceneの準備完了を待ってから行う
+        uiScene.events.once('scene-ready', () => {
+            console.log("[SystemScene] UIScene is ready. Now starting and monitoring GameScene.");
+
+            // --- GameSceneの完了を待つリスナーを先に登録 ---
+            const gameScene = this.scene.get('GameScene');
+            gameScene.events.once('gameScene-load-complete', () => {
+                // GameSceneの準備が本当に完了したら、遷移完了処理を行う
+                this._onTransitionComplete('GameScene');
+            });
+            
+            // --- リスナー登録後に、GameSceneを起動 ---
+            console.log("[SystemScene] Running GameScene now.");
+            this.scene.run('GameScene', {
+                charaDefs: this.globalCharaDefs,
+                startScenario: initialData.startScenario,
+            });
+
+            // ★ SystemScene側で、起動と同時にグローバルな入力を無効化
+            this.isProcessingTransition = true;
+            this.game.input.enabled = false;
+            console.log(`[SystemScene] Global input disabled while GameScene is loading.`);
         });
-    });
 
-    console.log("[SystemScene] Running UIScene now.");
-    this.scene.run('UIScene');
-}
+        console.log("[SystemScene] Running UIScene now.");
+        this.scene.run('UIScene');
+    }
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
      * @param {object} data - { from: string, to: string, params: object, fade: object }
@@ -376,10 +392,11 @@ _startInitialGame(initialData) {
      * @param {string} sceneKey - 起動するシーンのキー
      * @param {object} params - シーンに渡すデータ
      */
-    _startAndMonitorScene(sceneKey, params) {
-        if (this.isProcessingTransition && sceneKey !== 'GameScene') { // GameSceneの初回起動は例外
-            console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${sceneKey})が、無視されました。`);
-            return;
+     _startAndMonitorScene(sceneKey, params) {
+        // GameSceneの初回起動は _startInitialGame が担当するので、ここでは何もしない
+        if (sceneKey === 'GameScene' && !this.scene.isActive(sceneKey)) {
+             console.warn("[SystemScene] _startAndMonitorScene was called for initial GameScene launch. This is now handled by _startInitialGame.");
+             return;
         }
 
         this.isProcessingTransition = true;
