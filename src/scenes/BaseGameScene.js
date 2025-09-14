@@ -225,46 +225,52 @@ buildSceneFromLayout(layoutData) {
     }
         
 
+
 /**
- * 単体のオブジェクトにプロパティを適用し、シーンに追加する (センサー対応・最終確定版)
- * @param {Phaser.GameObjects.GameObject} gameObject - 生成されたGameObjectインスタンス
- * @param {object} layout - このオブジェクトのレイアウトデータ
- * @returns {Phaser.GameObjects.GameObject} プロパティ適用済みのGameObject
+ * ★★★ 最終FIX版 ★★★
+ * 単体のオブジェクトにプロパティを適用し、シーンに追加する。
+ * レイヤーの表示状態を確実に反映させる。
  */
 applyProperties(gameObject, layout) {
     const data = layout || {};
     console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
 
-    // --- 1. 基本プロパティ ---
+    // --- 1. 基本データの設定 ---
     gameObject.name = data.name || 'untitled';
     if (data.group) gameObject.setData('group', data.group);
-   if (layout.layer) {
-            gameObject.setData('layer', layout.layer);
-        }
-    // テキストオブジェクト以外の場合のみテクスチャを設定
+    if (data.layer) gameObject.setData('layer', data.layer);
+
+    // --- 2. シーンへの追加 ---
+    this.add.existing(gameObject);
+    
+    // --- 3. 見た目に関するプロパティ設定 ---
     if (data.type !== 'Text' && data.texture) {
         gameObject.setTexture(data.texture);
     }
-const editor = this.plugins.get('EditorPlugin');
-        if (layout.layer && editor) {
-            gameObject.setData('layer', layout.layer);
-            // エディタが保持する最新のレイヤー状態を取得
-            const layerState = editor.layerStates.find(l => l.name === layout.layer);
-            if (layerState) {
-                gameObject.setVisible(layerState.visible);
-            }
-        }
-    // --- 2. シーンへの追加 ---
-    this.add.existing(gameObject);
-
-    // --- 3. Transformプロパティ ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
-    if (data.visible !== undefined) gameObject.setVisible(data.visible);
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
-
+    
+    // ▼▼▼【ここからが核心の修正です】▼▼▼
+    // --------------------------------------------------------------------
+    // --- 4. 表示状態の決定（優先順位： レイヤー > JSON > デフォルト） ---
+    const editor = this.plugins.get('EditorPlugin');
+    const layerName = data.layer;
+    
+    // ケース1：所属レイヤーが存在する場合
+    if (layerName && editor) {
+        const layerState = editor.layerStates.find(l => l.name === layerName);
+        if (layerState) {
+            // レイヤーの表示設定を最優先で適用する
+            gameObject.setVisible(layerState.visible);
+        }
+    } 
+    // ケース2：レイヤーはないが、JSONにvisibleの指定がある場合
+    else if (data.visible !== undefined) {
+        gameObject.setVisible(data.visible);
+    }
     // --- 4. 物理ボディの生成と設定 ---
    // --- 4. 物理ボディの生成と設定 ---
     if (data.physics) {
