@@ -42,12 +42,12 @@ export default class EditorUI {
     // ヘルパーメソッド群
     // =================================================================
    /**
-     * ★★★ 新規メソッド ★★★
      * EditorPluginの準備が完了したときに呼ばれる
      */
     onPluginReady() {
-        // このタイミングで、プラグインの状態を反映したUIを初めて構築する
-        this.buildLayerPanel();
+        this.buildLayerPanel(); // ★ ここで初めてレイヤーパネルを構築
+        // EditorPluginに初期レイヤー状態を渡す
+        this.plugin.updateLayerStates(this.layers);
     }
     getDomElements() {
         this.editorPanel = document.getElementById('editor-panel');
@@ -68,7 +68,7 @@ export default class EditorUI {
         this.modeLabel = document.getElementById('mode-label');
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
-       
+       this.layerListContainer = document.getElementById('layer-list');
     }
 
     replaceListener(element, event, handler) {
@@ -94,7 +94,11 @@ export default class EditorUI {
         this.replaceListener(document.getElementById('add-asset-button'), 'click', () => this.onAddButtonClicked());
         this.replaceListener(document.getElementById('add-text-button'), 'click', () => this.onAddTextClicked());
         this.selectModeBtn = this.replaceListener(this.selectModeBtn, 'click', () => this.setEditorMode('select'));
-        this.tilemapModeBtn = this.replaceListener(this.tilemapModeBtn, 'click', () => this.setEditorMode('tilemap'));
+        //レイヤー関係
+        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
+        
+        // ▼▼▼ レイヤー追加ボタンのリスナーを追加 ▼▼▼
+        document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
         
         // カメラコントロール
         if (this.cameraControls) this.cameraControls.style.display = 'flex';
@@ -231,13 +235,21 @@ export default class EditorUI {
     
     }
 
-   // --- タイルマップ専用リスナーの管理 ---
-     /**
-     * ★★★ 最終代替案 ★★★
-     * 範囲描画のドラッグ操作を開始する
-     * @param {Phaser.GameObjects.GameObject} sourceObject - 描画の元となるオブジェクト
+   /**
+     * テキスト追加ボタンがクリックされたときの処理
      */
-   // in EditorUI.js
+    onAddTextClicked() {
+        const targetScene = this.getActiveGameScene();
+        if (!targetScene || typeof targetScene.addTextObjectFromEditor !== 'function') return;
+        
+        const newName = `text_${Date.now()}`;
+        // ★ アクティブなレイヤー名を渡す
+        const newObject = targetScene.addTextObjectFromEditor(newName, this.activeLayerName);
+        
+        if (newObject && this.plugin) {
+            this.plugin.selectSingleObject(newObject);
+        }
+    }
 
     /**
      * ★★★ 最終FIX版 ★★★
@@ -371,30 +383,50 @@ export default class EditorUI {
         }
     }
 
-    onAddButtonClicked() {
-        if (!this.selectedAssetKey) { alert('Please select an asset from the browser first.'); return; }
-        const targetScene = this.getActiveGameScene();
-        if (!targetScene) { alert("Could not find a suitable target scene."); return; }
+   // in EditorUI.js
 
-        if (!this.objectCounters[this.selectedAssetKey]) this.objectCounters[this.selectedAssetKey] = 1;
-        else this.objectCounters[this.selectedAssetKey]++;
+    /**
+     * アセットブラウザの「Add Selected Asset」ボタンがクリックされたときの処理。
+     * アクティブなレイヤー名をシーンに渡す。
+     */
+    onAddButtonClicked() {
+        if (!this.selectedAssetKey) {
+            alert('Please select an asset from the browser first.');
+            return;
+        }
+        
+        const targetScene = this.getActiveGameScene();
+        if (!targetScene) {
+            alert("Could not find a suitable target scene.");
+            return;
+        }
+
+        // オブジェクト名の重複を避けるためのカウンター
+        if (!this.objectCounters[this.selectedAssetKey]) {
+            this.objectCounters[this.selectedAssetKey] = 1;
+        } else {
+            this.objectCounters[this.selectedAssetKey]++;
+        }
         const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
         
         let newObject = null;
+        
+        // アセットのタイプに応じて、シーンの異なるメソッドを呼び出す
         if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
-           if (typeof targetScene.addObjectFromEditor === 'function') {
-            newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-        }
+            if (typeof targetScene.addObjectFromEditor === 'function') {
+                // ★ アクティブなレイヤーの名前 (this.activeLayerName) を第3引数として渡す
+                newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+            }
         } else if (this.selectedAssetType === 'prefab') {
-            if (typeof targetScene.addPrefabFromEditor === 'function') newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-    if (typeof targetScene.addObjectFromEditor === 'function') {
-            newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-        }
+            if (typeof targetScene.addPrefabFromEditor === 'function') {
+                // ★ プレハブ追加メソッドにも、同様にレイヤー名を渡す
+                newObject = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+            }
         }
         
+        // 新しく生成されたオブジェクトをエディタで選択状態にする
         if (newObject && this.plugin) {
-            this.plugin.selectedObject = newObject;
-            this.plugin.updatePropertyPanel();
+            this.plugin.selectSingleObject(newObject);
         }
     }
 
@@ -559,65 +591,87 @@ export default class EditorUI {
      */
     
     // --- レイヤーパネルの構築と更新 ---
-    buildLayerPanel() {
+       buildLayerPanel() {
         if (!this.layerListContainer) return;
-        this.layerListContainer.innerHTML = ''; // 一旦クリア
+        this.layerListContainer.innerHTML = '';
 
         this.layers.forEach(layer => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'layer-item';
-
-               if (this.plugin.selectedLayer && layer.name === this.plugin.selectedLayer.name) {
+            
+            // プラグインで選択中のレイヤーを基準にハイライト
+            if (this.plugin.selectedLayer && layer.name === this.plugin.selectedLayer.name) {
                 itemDiv.classList.add('active');
+            } 
+            // ★ アクティブレイヤー（オブジェクトが追加されるレイヤー）には別の印を付けると分かりやすい
+            else if (layer.name === this.activeLayerName) {
+                // 例: itemDiv.style.borderLeft = '3px solid #4CAF50';
             }
             
-            // --- レイヤー名部分をクリックしたら、プラグインに選択を通知 ---
-            itemDiv.addEventListener('click', () => {
-                // EditorUIは自身の状態を変えず、Pluginに命令するだけ
+            // レイヤー名部分をクリックしたら、プラグインに選択を通知
+            itemDiv.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.plugin.selectLayer(layer);
             });
-            // --- 表示/非表示ボタン (👁️) ---
+
+            // --- 表示/非表示ボタン ---
             const visibilityBtn = document.createElement('button');
             visibilityBtn.className = 'layer-control';
             visibilityBtn.innerHTML = layer.visible ? '👁️' : '—';
-            if (!layer.visible) visibilityBtn.classList.add('hidden');
             visibilityBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // 親のクリックイベントを発火させない
+                e.stopPropagation();
                 this.toggleLayerVisibility(layer.name);
             });
 
-            // --- ロック/アンロックボタン (🔒) ---
+            // --- ロック/アンロックボタン ---
             const lockBtn = document.createElement('button');
             lockBtn.className = 'layer-control';
             lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
-            if (layer.locked) lockBtn.classList.add('locked');
             lockBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggleLayerLock(layer.name);
             });
+            
+            // --- アクティブ化ボタン (例: ラジオボタン風) ---
+            const activeIndicator = document.createElement('div');
+            activeIndicator.style.width = '16px';
+            activeIndicator.style.height = '16px';
+            activeIndicator.style.border = '1px solid #888';
+            activeIndicator.style.borderRadius = '50%';
+            activeIndicator.style.cursor = 'pointer';
+            if(layer.name === this.activeLayerName) {
+                activeIndicator.style.backgroundColor = '#4CAF50';
+            }
+            activeIndicator.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setActiveLayer(layer.name);
+            });
 
-            // --- レイヤー名 ---
             const nameSpan = document.createElement('span');
             nameSpan.className = 'layer-name';
             nameSpan.innerText = layer.name;
 
-            itemDiv.append(visibilityBtn, lockBtn, nameSpan);
+            itemDiv.append(activeIndicator, visibilityBtn, lockBtn, nameSpan);
             this.layerListContainer.appendChild(itemDiv);
         });
-        
-        // ★ レイヤー状態の変更を、EditorPluginに通知する
-        this.plugin.updateLayerStates(this.layers);
     }
 
-  
+    setActiveLayer(layerName) {
+        const layer = this.layers.find(l => l.name === layerName);
+        if (layer && layer.locked) return; // ロック中はアクティブ化不可
+        
+        this.activeLayerName = layerName;
+        console.log(`Active layer set to: ${this.activeLayerName}`);
+        this.buildLayerPanel();
+    }
 
-    ttoggleLayerVisibility(layerName) {
+    toggleLayerVisibility(layerName) {
         const layer = this.layers.find(l => l.name === layerName);
         if (layer) {
             layer.visible = !layer.visible;
-            this.buildLayerPanel(); // UI更新
-            this.plugin.updateLayerStates(this.layers); // 状態を通知
-            this.plugin.applyLayerStatesToScene(); // シーンに反映
+            this.buildLayerPanel();
+            this.plugin.updateLayerStates(this.layers);
+            this.plugin.applyLayerStatesToScene();
         }
     }
 
@@ -625,16 +679,22 @@ export default class EditorUI {
         const layer = this.layers.find(l => l.name === layerName);
         if (layer) {
             layer.locked = !layer.locked;
-            this.buildLayerPanel(); // UI更新
-            this.plugin.updateLayerStates(this.layers); // 状態を通知
+            if (layer.locked && this.activeLayerName === layerName) {
+                // ロックしたレイヤーがアクティブだったら、別のアクティブ可能なレイヤーを探す
+                const fallbackLayer = this.layers.find(l => !l.locked);
+                this.activeLayerName = fallbackLayer ? fallbackLayer.name : null;
+            }
+            this.buildLayerPanel();
+            this.plugin.updateLayerStates(this.layers);
         }
     }
     
     addNewLayer() {
-        const newLayerName = prompt("Enter new layer name:", `New Layer ${this.layers.length + 1}`);
+        const newLayerName = prompt("Enter new layer name:", `Layer ${this.layers.length + 1}`);
         if (newLayerName && !this.layers.some(l => l.name === newLayerName)) {
-            this.layers.unshift({ name: newLayerName, visible: true, locked: false }); // 配列の先頭に追加
+            this.layers.unshift({ name: newLayerName, visible: true, locked: false });
             this.buildLayerPanel();
+            this.plugin.updateLayerStates(this.layers);
         }
     }
 //レイヤー系ここまで
