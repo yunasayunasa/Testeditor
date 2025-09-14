@@ -494,6 +494,20 @@ Actions: [anim_stop]
 ; アイテム取得音がループ再生される (特殊な演出)
 [play_sound key=item_get_loop loop=true]
 </code></pre>
+<h3><pre>[stop_sound key=...]</pre></h3>
+<p><strong>機能:</strong> <code>[play_sound]</code>でループ再生した効果音を停止します。</p>
+<ul>
+    <li><strong>key (必須):</strong> 停止したい効果音のアセットキー。</li>
+</ul>
+<pre><code>
+; 警告音を鳴らし始める
+[play_sound key=alarm_sound loop=true]
+; ...何らかの処理...
+; 警告音を止める
+[stop_sound key=alarm_sound]
+</code></pre>
+<hr>
+
 <!-- ====================================================== -->
 <h2>カスタムイベントトリガー (エディタ)</h2>
 <p>PlayerControllerのような特定のコンポーネントが、自身の状態変化を知らせるために発行する、独自のイベントです。これにより、オブジェクトの内部状態とアニメーションやサウンドを、エディタだけで簡単に関連付けることができます。</p>

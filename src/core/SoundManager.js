@@ -12,6 +12,8 @@ export default class SoundManager {
 
         this.configManager.on('change:bgmVolume', this.onBgmVolumeChange, this);
         this.game.events.once(Phaser.Core.Events.DESTROY, this.destroy, this);
+
+        this.activeSe = new Map(); // 再生中の効果音（特にループするもの）を管理
     }
 
     // AudioContextを安全に再開
@@ -101,38 +103,63 @@ export default class SoundManager {
 
    // in src/core/SoundManager.js
 
-    /**
-     * 効果音を再生する (個別音量指定対応・Promise対応版)
+     /**
+     * 効果音を再生する (ループ対応・停止可能なバージョン)
      * @param {string} key - 再生するSEのアセットキー
-     * @param {object} [config] - 追加の設定 (volume, loopなど)
-     * @returns {Promise<Phaser.Sound.BaseSound>} 再生完了時に解決されるPromise
+     * @param {object} [config] - 追加の設定 (loop, volumeなど)
+     * @returns {Promise<void>} ループしないSEの再生完了時に解決されるPromise
      */
     playSe(key, config = {}) {
         return new Promise(resolve => {
             this.resumeContext();
             
-            // 1. グローバルSE音量を基本音量とする
+            // --- もし同じキーのループ音が既に鳴っていたら、一旦止めてから再生 ---
+            if (config.loop && this.activeSe.has(key)) {
+                this.stopSe(key);
+            }
+            
             const baseVolume = this.configManager.getValue('seVolume');
-
-            // 2. configで個別のvolumeが指定されていれば、それをグローバル音量に乗算する
-            //    例: グローバル=0.8, 個別=0.5 -> 最終音量=0.4
-            const finalVolume = (config.volume !== undefined)
-                ? baseVolume * config.volume
-                : baseVolume;
-
-            // 3. 最終的な設定オブジェクトを作成
+            const finalVolume = (config.volume !== undefined) ? baseVolume * config.volume : baseVolume;
             const finalConfig = { ...config, volume: finalVolume };
 
             const se = this.sound.add(key, finalConfig);
-            
-            se.once('complete', (sound) => {
-                resolve(sound);
-                sound.destroy(); // 再生完了後にサウンドオブジェクトを破棄してメモリを解放
-            });
-            
             se.play();
+            
+            // ▼▼▼【ここからが核心の修正です】▼▼▼
+            // --------------------------------------------------------------------
+            if (config.loop) {
+                // --- ループする場合 ---
+                // 停止できるように、Mapに参照を保存
+                this.activeSe.set(key, se);
+                // ループ音は「再生を開始した」時点で完了とみなし、即座にresolve
+                resolve(); 
+            } else {
+                // --- ループしない場合（これまで通り） ---
+                se.once('complete', (sound) => {
+                    sound.destroy();
+                    resolve();
+                });
+            }
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         });
     }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 指定されたキーの効果音を停止する
+     * @param {string} key - 停止する効果音のアセットキー
+     */
+    stopSe(key) {
+        if (this.activeSe.has(key)) {
+            const sound = this.activeSe.get(key);
+            sound.stop();
+            sound.destroy(); // 停止したらオブジェクトを破棄
+            this.activeSe.delete(key); // Mapから参照を削除
+            console.log(`[SoundManager] Stopped and removed looping SE: ${key}`);
+        }
+    }
+
     getCurrentBgmKey() {
         // isPlayingのチェックは、シーン遷移直後などに不安定になることがあるため、
         // プロパティの存在だけで判断する方が安定する
