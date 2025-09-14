@@ -28,7 +28,7 @@ import setCollisionHandler from './set_collision.js';
 import setDataHandler from './set_data.js';
 import returnNovelHandler from './return_novel.js';
 import stopSoundHandler from './stop_sound.js';
-
+import runScenarioHandler from './run_scenario.js'; /
 
 
 
@@ -63,7 +63,7 @@ export const eventTagHandlers = {
     'set_data': setDataHandler,
    'return_novel': returnNovelHandler,
 'stop_sound': stopSoundHandler,
-
+'run_scenario': runScenarioHandler, 
 
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
