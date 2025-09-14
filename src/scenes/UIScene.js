@@ -15,7 +15,7 @@ export default class UIScene extends Phaser.Scene {
       async create() {
         console.log("UIScene: Data-Driven Initialization Started");
         this.scene.bringToTop();
-
+ this.events.emit('scene-creation-started');
         try {
             // ステップ1: UIの構築を待つ
             const layoutData = this.cache.json.get(this.scene.key);

@@ -167,18 +167,32 @@ _startInitialGame(initialData) {
     
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-     const uiScene = this.scene.get('UIScene');
+    const uiScene = this.scene.get('UIScene');
+        const gameScene = this.scene.get('GameScene');
 
-        uiScene.events.once('scene-ready', () => {
-            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-            
-            // ★★★ あなたの元の、そして正しかったロジックに戻します ★★★
-            this._startAndMonitorScene('GameScene', {
+        // ★★★ 究極の最終FIX版・改２ ★★★
+        
+        // --- 1. GameSceneの「準備完了」を待つ予約を入れる ---
+        gameScene.events.once('gameScene-load-complete', () => {
+            this._onTransitionComplete('GameScene');
+        });
+
+        // --- 2. UISceneが「準備を開始した」という合図を待つ ---
+        uiScene.events.once('scene-creation-started', () => {
+            console.log("[SystemScene] UIScene has started creation. Now running GameScene.");
+
+            // --- 3. UISceneの準備と並行して、GameSceneの起動を開始する ---
+            this.scene.run('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
+
+            this.isProcessingTransition = true;
+            this.game.input.enabled = false;
         });
 
+        // --- 4. 最後に、UISceneの起動をトリガーする ---
+        // このrunが呼ばれると、すぐにUISceneのcreateが始まり、'scene-creation-started'が発行される
         console.log("[SystemScene] Running UIScene now.");
         this.scene.run('UIScene');
     }
