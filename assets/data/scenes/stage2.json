@@ -173,7 +173,7 @@
       "events": [
         {
           "trigger": "onOverlap_Start",
-          "actions": "[destroy target=self]",
+          "actions": "[return_novel]",
           "targetGroup": "player"
         },
         {
