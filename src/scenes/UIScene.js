@@ -180,28 +180,36 @@ registerUiElement(name, element, params) {
      * uiRegistryにscenes定義を持つUI要素の表示/非表示だけを制御する
      */
    // in UIScene.js
+onSceneTransition(toSceneKey) {
+        // ▼▼▼【ここからが最終解決策です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- ★★★ 緊急脱出ロジック ★★★ ---
+        // もしNovelOverlaySceneがアクティブなら、このメソッドは何もしない。
+        // UIの表示制御は、すべてNovelOverlayScene自身に委ねる。
+        if (this.scene.isActive('NovelOverlayScene')) {
+            console.log(`[UIScene.onSceneTransition] NovelOverlayScene is active. Aborting UI changes.`);
+            return; // これ以降の処理をすべて中断
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    onSceneTransition(toSceneKey) {
         console.log(`[UIScene | Final Fix] Transitioning UI for scene: ${toSceneKey}`);
         
         if (!this.uiRegistry) return;
 
         // --- UIScene自体の表示/非表示は、SystemSceneではなく、ここで管理する ---
-        // ★ GameSceneまたはNovelOverlaySceneの場合のみ、UIScene全体を表示する
-        const shouldBeVisible = (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene');
+        const shouldBeVisible = (toSceneKey === 'GameScene' /* || toSceneKey === 'NovelOverlayScene' */); // NovelOverlaySceneの条件は不要になる
         this.scene.setVisible(shouldBeVisible);
 
         // --- 各UI要素の表示/非表示を切り替える ---
+        // (これ以降のロジックは変更不要です)
         for (const [key, element] of this.uiElements.entries()) {
             const definition = this.uiRegistry[key];
             
-            // ★ scenes定義を持つ要素のみを制御対象とする
             if (definition && Array.isArray(definition.scenes)) {
-                // ★ 遷移先がGameSceneでもJumpSceneでも、そのシーンがリストに含まれていれば表示
                 element.setVisible(definition.scenes.includes(toSceneKey));
             } else {
-                // ★ scenes定義を持たない要素（メッセージウィンドウなど）は、ここでは何もしない
-                // これにより、GameScene/NovelOverlaySceneでの手動制御が上書きされるのを防ぐ
+                // scenes定義を持たない要素（メッセージウィンドウなど）は、ここでは何もしない
             }
         }
     }
