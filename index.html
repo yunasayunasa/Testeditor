@@ -24,6 +24,7 @@
     <!-- PhaserのScaleManagerが、この要素内に<canvas>を生成し、         -->
     <!-- その位置とサイズを自動的に管理します。                               -->
     <!-- 通常モードでは画面中央に、デバッグモードではCSSの補助で配置されます。    -->
+     <div id="app-container"></div>
     <div id="game-container"></div>
 
 
@@ -37,16 +38,14 @@
         <!-- (A) Right Sidebar: アセットブラウザとプロパティパネル -->
         <div id="editor-sidebar">
 <div id="layers-panel" class="editor-panel">
-        <div class="panel-header">
-            <span>Layers</span>
-            <div class="panel-header-buttons">
-                <button id="add-layer-btn" title="Add New Layer">+</button>
+                <div class="panel-header">
+                    <span>Layers</span>
+                    <div class="panel-header-buttons">
+                        <button id="add-layer-btn" title="Add New Layer">+</button>
+                    </div>
+                </div>
+                <div id="layer-list" class="panel-content"></div>
             </div>
-        </div>
-        <div id="layer-list" class="panel-content">
-            <!-- EditorUIがここにレイヤーリストを動的に生成します -->
-        </div>
-    </div>
             <!-- Asset Browser Panel -->
             <div id="asset-browser" class="editor-panel">
                 <div class="panel-header">
