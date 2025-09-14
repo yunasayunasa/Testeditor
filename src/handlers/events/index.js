@@ -28,7 +28,7 @@ import setCollisionHandler from './set_collision.js';
 import setDataHandler from './set_data.js';
 import returnNovelHandler from './return_novel.js';
 import stopSoundHandler from './stop_sound.js';
-import runScenarioHandler from './run_scenario.js'; /
+import runScenarioHandler from './run_scenario.js'; 
 
 
 
