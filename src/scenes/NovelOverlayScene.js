@@ -54,7 +54,8 @@ export default class NovelOverlayScene extends Phaser.Scene {
         // 2. GameSceneと全く同じ構造で、かつ高いdepth値を持つレイヤーを生成
         this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
         this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
-        this.choiceInputBlocker = this.add.rectangle(/*...*/).setDepth(OVERLAY_BASE_DEPTH + 25);
+        this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
+            .setInteractive().setVisible(false).setDepth(25);
         
         // 3. UISceneからmessageWindowを取得し、そのdepthも引き上げる
         const messageWindow = this.uiScene.uiElements.get('message_window');
