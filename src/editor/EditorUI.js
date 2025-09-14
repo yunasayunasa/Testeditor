@@ -239,6 +239,7 @@ export default class EditorUI {
      * テキスト追加ボタンがクリックされたときの処理
      */
     onAddTextClicked() {
+        console.count('onAddTextClicked called');
         const targetScene = this.getActiveGameScene();
         if (!targetScene || typeof targetScene.addTextObjectFromEditor !== 'function') return;
         
@@ -696,6 +697,61 @@ export default class EditorUI {
             this.buildLayerPanel();
             this.plugin.updateLayerStates(this.layers);
         }
+    }
+    // in EditorUI.js
+    deleteLayer(layerName) {
+        const layer = this.layers.find(l => l.name === layerName);
+        // デフォルトのレイヤーなど、消せないレイヤーの条件（今はなし）
+        if (!layer) return;
+
+        if (confirm(`本当にレイヤー '${layerName}' を削除しますか？\nこのレイヤー上のすべてのオブジェクトも削除されます！`)) {
+            // 1. シーンから該当レイヤーのオブジェクトをすべて削除
+            const scene = this.getActiveGameScene();
+            if (scene) {
+                const allObjects = [...this.plugin.editableObjects.get(scene.scene.key)];
+                allObjects.forEach(obj => {
+                    if (obj.getData('layer') === layerName) {
+                        obj.destroy();
+                    }
+                });
+            }
+
+            // 2. this.layers 配列から削除
+            this.layers = this.layers.filter(l => l.name !== layerName);
+            
+            // 3. 選択状態を解除
+            this.plugin.deselectAll(); // これが updatePropertyPanel と buildLayerPanel を呼ぶ
+        }
+    }
+     /**
+     * ★★★ 新規メソッド ★★★
+     * シーンのJSONデータから読み込んだレイヤー構成で、UIの状態を上書きする
+     * @param {Array<object>} layersData - 保存されていたレイヤー情報の配列
+     */
+    setLayers(layersData) {
+        if (!layersData || layersData.length === 0) {
+            // もしJSONにlayersがなければ、デフォルトのレイヤー構成を使う
+            this.layers = [
+                { name: 'Gameplay', visible: true, locked: false },
+                // ... 他のデフォルトレイヤー
+            ];
+        } else {
+            // JSONのデータで上書き
+            this.layers = layersData;
+        }
+
+        // アクティブレイヤーがもし存在しない名前になっていたら、安全なものにフォールバック
+        const activeLayerExists = this.layers.some(l => l.name === this.activeLayerName);
+        if (!activeLayerExists) {
+            const firstUnlockedLayer = this.layers.find(l => !l.locked);
+            this.activeLayerName = firstUnlockedLayer ? firstUnlockedLayer.name : (this.layers[0] ? this.layers[0].name : null);
+        }
+        
+        // 最新の状態をプラグインに通知
+        this.plugin.updateLayerStates(this.layers);
+        
+        // UIを再描画
+        this.buildLayerPanel();
     }
 //レイヤー系ここまで
 

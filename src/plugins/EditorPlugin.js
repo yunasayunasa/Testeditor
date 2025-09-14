@@ -25,6 +25,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         this.layerStates = []; // ★ レイヤーの状態を保持
         this.selectedLayer = null;
+        this.plugin.updateLayerStates(this.layers);
     }
    
 
@@ -274,7 +275,19 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         };
         nameRow.append(nameLabel, nameInput);
         this.editorPropsContainer.appendChild(nameRow);
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+        
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'Delete Layer';
+        deleteButton.style.backgroundColor = '#e65151';
+        deleteButton.onclick = () => {
+            if (this.editorUI) {
+                this.editorUI.deleteLayer(this.selectedLayer.name);
+            }
+        };
+        this.editorPropsContainer.appendChild(deleteButton);
     }
+
     
     /**
      * ★★★ 新規メソッド ★★★
@@ -1582,10 +1595,11 @@ createComponentSection() {
         
         // sceneLayoutDataは最終的にシリアライズされる純粋なオブジェクト
         const sceneLayoutData = {
+            layers: [], // ★ レイヤー情報用の配列を追加
             objects: [],
             animations: []
         };
-        
+        sceneLayoutData.layers = this.layerStates;
         if (this.editableObjects.has(sceneKey)) {
             // 破壊されたオブジェクトを除外
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
@@ -1608,7 +1622,10 @@ createComponentSection() {
                     angle: Math.round(gameObject.angle),
                     alpha: parseFloat(gameObject.alpha.toFixed(2)),
                 };
-                
+                const layerName = gameObject.getData('layer');
+                if (layerName) {
+                    objData.layer = layerName;
+                }
                 // --- 2. getData()で取得したデータは、通常プレーンなので安全に追加できる ---
                 const group = gameObject.getData('group');
                 if (group) objData.group = group;

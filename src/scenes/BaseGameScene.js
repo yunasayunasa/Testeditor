@@ -137,7 +137,14 @@ buildSceneFromLayout(layoutData) {
         this.finalizeSetup([]); // 空のリストを渡して、シーンを正常に完了させる
         return;
     }
-
+    // --- 1. レイヤー情報の復元 ---
+        const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
+        if (editorUI && layoutData.layers) {
+            console.log("[BaseGameScene] Found layer data. Restoring layers.");
+            
+            // EditorUIに、保存されていたレイヤー構成を渡して上書きさせる
+            editorUI.setLayers(layoutData.layers); 
+        }
     
 
     // --- 1. アニメーションの登録 (変更なし) ---
@@ -238,7 +245,15 @@ applyProperties(gameObject, layout) {
     if (data.type !== 'Text' && data.texture) {
         gameObject.setTexture(data.texture);
     }
-
+const editor = this.plugins.get('EditorPlugin');
+        if (layout.layer && editor) {
+            gameObject.setData('layer', layout.layer);
+            // エディタが保持する最新のレイヤー状態を取得
+            const layerState = editor.layerStates.find(l => l.name === layout.layer);
+            if (layerState) {
+                gameObject.setVisible(layerState.visible);
+            }
+        }
     // --- 2. シーンへの追加 ---
     this.add.existing(gameObject);
 
