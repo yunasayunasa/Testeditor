@@ -30,24 +30,18 @@ export default class GameScene extends Phaser.Scene {
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
 
-        // ★★★ 2. UISceneの準備が完了するまで待機する処理を追加 ★★★
+            // ▼▼▼【このブロックを完全に削除してください】▼▼▼
+        /*
         this.uiScene = this.scene.get('UIScene');
-        // UISceneが'scene-ready'イベントを発行するのを待つ
         await new Promise(resolve => {
-            if (this.uiScene.scene.isActive()) {
-                // UISceneが既に準備完了している場合
-                if (this.uiScene.uiElements.size > 0) {
-                    resolve();
-                } else {
-                    // まだ準備中の場合、一度だけイベントを待つ
-                    this.uiScene.events.once('scene-ready', resolve);
-                }
-            } else {
-                // UISceneがアクティブでない異常系ケース（念のため）
-                resolve();
-            }
+            // ... (UISceneを待つ処理すべて)
         });
         console.log("GameScene: UISceneの準備完了を確認しました。");
+        */
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // ★★★ 代わりに、単純に参照を取得するだけにする ★★★
+        this.uiScene = this.scene.get('UIScene');
 
 
         this.layer.background = this.add.container(0, 0).setDepth(0);
