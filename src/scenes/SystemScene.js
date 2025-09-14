@@ -226,19 +226,20 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
      * ★★★ 究極の最終FIX版・改6 ★★★
      * ゲームシーン間の遷移を処理する
      */
+    /**
+     * ★★★ 究極の最終FIX版 ★★★
+     * GameSceneからの[jump]など、シンプルな遷移を処理する
+     */
     _handleSimpleTransition(data) {
         if (this.isProcessingTransition) return;
-        this.isProcessingTransition = true;
-
-        console.log(`[SystemScene] Simple transition from ${data.from} to ${data.to}`);
         
-        // --- UISceneを非表示にする ---
-        this.scene.setVisible('UIScene', false);
+        console.log(`[SystemScene | Final Fix] Simple transition from ${data.from} to ${data.to}`);
 
         // --- 古いシーンを停止 ---
         this.scene.stop(data.from);
         
         // --- 新しいシーンを起動・監視 ---
+        // ★ _startInitialGame と同じ、最も安全な方法に統一
         this._startAndMonitorScene(data.to, data.params);
     }
 
@@ -404,26 +405,27 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
 
     // _startAndMonitorScene は、単一シーンの遷移で使うので、
     // 以前のコールバック方式に戻すのが安全です。
+     /**
+     * ★★★ 究極の最終FIX版 ★★★
+     * 新しい「単一」シーンを起動し、完了まで監視するコアメソッド
+     */
     _startAndMonitorScene(sceneKey, params) {
         if (this.isProcessingTransition) return;
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
-        
-        if (this.scene.isActive(sceneKey)) {
-            this.scene.stop(sceneKey);
-        }
+        console.log(`[SystemScene | Final Fix] Starting scene '${sceneKey}'. Global input disabled.`);
 
-        const completionEvent = (sceneKey === 'GameScene')
-            ? 'gameScene-load-complete'
-            : 'scene-ready'; // JumpSceneなどは'scene-ready'を発行する
+        // --- 1. 完了報告を待つためのコールバックを設定 ---
+        // ★ イベントではなく、コールバック方式に戻すのが最も確実
+        this.onSceneReadyCallback = (readySceneKey) => {
+            if (readySceneKey === sceneKey) {
+                // ★ 遷移が完了した「後」に、UIの状態を更新する
+                this.scene.get('UIScene').onSceneTransition(sceneKey);
+                this._onTransitionComplete(sceneKey);
+            }
+        };
 
-        const targetScene = this.scene.get(sceneKey);
-        
-        // ★★★ 完了報告を待つのは、イベント方式に戻すのが最も確実 ★★★
-        targetScene.events.once(completionEvent, () => {
-            this._onTransitionComplete(sceneKey);
-        });
-        
+        // --- 2. 起動する ---
         this.scene.run(sceneKey, params);
     }
     /**

@@ -178,23 +178,30 @@ registerUiElement(name, element, params) {
      * ★★★ 究極の最終FIX版・改6 ★★★
      * uiRegistryにscenes定義を持つUI要素の表示/非表示だけを制御する
      */
+   // in UIScene.js
+
     onSceneTransition(toSceneKey) {
-        console.log(`[UIScene | Final Fix 2] Transitioning UI for scene: ${toSceneKey}`);
-        
-        // --- UIScene自体の表示/非表示は、SystemSceneが責任を持つ方がシンプル
-        // SystemScene側で、this.scene.setVisible(true/false) を呼ぶようにする
+        console.log(`[UIScene | Final Fix] Transitioning UI for scene: ${toSceneKey}`);
         
         if (!this.uiRegistry) return;
 
+        // --- UIScene自体の表示/非表示は、SystemSceneではなく、ここで管理する ---
+        // ★ GameSceneまたはNovelOverlaySceneの場合のみ、UIScene全体を表示する
+        const shouldBeVisible = (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene');
+        this.scene.setVisible(shouldBeVisible);
+
+        // --- 各UI要素の表示/非表示を切り替える ---
         for (const [key, element] of this.uiElements.entries()) {
             const definition = this.uiRegistry[key];
-
-            // ★★★ scenes プロパティを持つ definition のみを対象とする ★★★
+            
+            // ★ scenes定義を持つ要素のみを制御対象とする
             if (definition && Array.isArray(definition.scenes)) {
+                // ★ 遷移先がGameSceneでもJumpSceneでも、そのシーンがリストに含まれていれば表示
                 element.setVisible(definition.scenes.includes(toSceneKey));
+            } else {
+                // ★ scenes定義を持たない要素（メッセージウィンドウなど）は、ここでは何もしない
+                // これにより、GameScene/NovelOverlaySceneでの手動制御が上書きされるのを防ぐ
             }
-            // ★★★ scenes 定義を持たない要素（message_windowなど）には、何もしない ★★★
-            // これにより、手動での表示/非表示制御が上書きされるのを防ぐ
         }
     }
 // src/scenes/UIScene.js
