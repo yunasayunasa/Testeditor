@@ -198,9 +198,12 @@ _startInitialGame(initialData) {
         if (this.scene.isActive(data.from)) {
             this.scene.stop(data.from);
         }
-        if (this.scene.isActive('UIScene')) {
-            this.scene.get('UIScene').setVisible(false);
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            // ★ ゲームシーンに遷移するときは、UIScene自体を非表示にするのがシンプル
+            uiScene.scene.setVisible(false);
         }
+        //
 
         // 監視付きで新しいシーンを起動（フェードなし）
         // ★★★ 以前からある、信頼性の高いメソッドを再利用 ★★★
@@ -275,10 +278,10 @@ _startInitialGame(initialData) {
             this.scene.stop(fromSceneKey);
         }
         
-        // UISceneの表示を戻す
-        const uiScene = this.scene.get('UIScene');
+       const uiScene = this.scene.get('UIScene');
         if (uiScene) {
-            uiScene.onSceneTransition('GameScene'); // UIの表示グループをGameScene用に切り替え
+            // ★ ここでも onSceneTransition を呼ぶだけ
+            uiScene.onSceneTransition('GameScene');
         }
 
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
@@ -349,13 +352,11 @@ _startInitialGame(initialData) {
         // ▼▼▼【ここからが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
         // --- UIの状態を、オーバーレイ表示前の状態に戻す ---
-        const uiScene = this.scene.get('UIScene');
+         const uiScene = this.scene.get('UIScene');
         if (uiScene) {
-            console.log("[SystemScene] Resetting UI for game scene.");
-            // メッセージウィンドウを非表示にする
-            uiScene.setElementVisible('message_window', false);
-            // その他のUI（ジャンプボタンなど）を、戻り先のシーンに合わせて表示する
-            uiScene.onSceneTransition(data.returnTo);
+            // ★ stop() や sleep() は絶対に呼ばない
+            // ★ onSceneTransition で、戻り先のシーンに必要なUIだけを表示させる
+            uiScene.onSceneTransition(data.returnTo); 
         }
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲

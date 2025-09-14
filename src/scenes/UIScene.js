@@ -177,13 +177,26 @@ registerUiElement(name, element, params) {
             console.log(`[UIScene] Element '${key}' visibility set to ${visible}`);
         }
     }
-    onSceneTransition(newSceneKey) {
-        const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-        for (const [name, uiElement] of this.uiElements.entries()) {
-            const definition = uiRegistry[name];
-            if (definition) {
-                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-                uiElement.setVisible(shouldBeVisible);
+   // in UIScene.js
+
+    onSceneTransition(toSceneKey) {
+        console.log(`[UIScene] Transitioning UI for scene: ${toSceneKey}`);
+        
+        // ★★★ 自身の表示/非表示を管理 ★★★
+        if (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene') {
+            this.scene.setVisible(true);
+        } else {
+            // JumpSceneなどのゲームシーンでは、UIScene自体は不要
+            this.scene.setVisible(false);
+        }
+
+        // --- どのUIを表示するかのロジック (uiRegistryを使う) ---
+        for (const [key, element] of this.uiElements.entries()) {
+            const definition = this.uiRegistry[key];
+            if (definition && definition.scenes.includes(toSceneKey)) {
+                element.setVisible(true);
+            } else {
+                element.setVisible(false);
             }
         }
     }
