@@ -188,7 +188,7 @@
       "events": [
         {
           "trigger": "onOverlap_Start",
-          "actions": "[run_scenario file=overlaytest.ks]",
+          "actions": "[run_scenario file=overlay_test.ks]",
           "targetGroup": "player"
         }
       ],

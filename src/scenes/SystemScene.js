@@ -331,9 +331,12 @@ _startInitialGame(initialData) {
         });
     }
 
+   // in SystemScene.js
+
     /**
-     * オーバーレイ終了のリクエストを処理 (入力制御オプション付き)
-     * @param {object} data - { from: 'NovelOverlayScene', returnTo: string, inputWasBlocked: boolean }
+     * ★★★ 最終FIX版 ★★★
+     * オーバーレイ終了のリクエストを処理する。
+     * どのシーンに戻るかに関わらず、UIの状態をリセットする。
      */
     _handleEndOverlay(data) {
         console.log(`[SystemScene] オーバーレイ終了リクエストを受信 (return to: ${data.returnTo})`);
@@ -343,6 +346,20 @@ _startInitialGame(initialData) {
             this.scene.stop(data.from); 
         }
 
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- UIの状態を、オーバーレイ表示前の状態に戻す ---
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            console.log("[SystemScene] Resetting UI for game scene.");
+            // メッセージウィンドウを非表示にする
+            uiScene.setElementVisible('message_window', false);
+            // その他のUI（ジャンプボタンなど）を、戻り先のシーンに合わせて表示する
+            uiScene.onSceneTransition(data.returnTo);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         // 入力をブロック「していた」場合のみ、再度有効化する
         if (data.inputWasBlocked) {
             const returnScene = this.scene.get(data.returnTo);
@@ -350,8 +367,6 @@ _startInitialGame(initialData) {
                 returnScene.input.enabled = true; 
                 console.log(`[SystemScene] シーン[${data.returnTo}]の入力を再有効化しました。`);
             }
-        } else {
-             console.log(`[SystemScene] シーン[${data.returnTo}]の入力はもともと有効だったので、何もしません。`);
         }
     }
 

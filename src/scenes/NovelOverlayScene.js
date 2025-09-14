@@ -64,6 +64,10 @@ export default class NovelOverlayScene extends Phaser.Scene {
         }
         // 3. UISceneからmessageWindowを取得し、そのdepthも引き上げる
         const messageWindow = this.uiScene.uiElements.get('message_window');
+        this.uiScene.children.remove(messageWindow);
+
+        // --- 2. メッセージウィンドウを、このNovelOverlaySceneに所属させる ---
+        this.add.existing(messageWindow);
         if (!messageWindow) { return; }
         messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
  console.log(`%c[LOG BOMB A] UIScene found:`, 'color: cyan', this.uiScene);
@@ -195,13 +199,13 @@ export default class NovelOverlayScene extends Phaser.Scene {
 
     shutdown() {
         console.log("[NovelOverlayScene] shutdown されました。");
-        if (this.scenarioManager) { this.scenarioManager.stop(); }
-        if (this.input) { this.input.off('pointerdown'); }
+        const messageWindow = this.uiScene.uiElements.get('message_window');
+       
 
         // ★ UISceneの表示を、戻り先のシーンに合わせて更新するよう依頼
         if (this.uiScene) { this.uiScene.onSceneTransition(this.returnTo); }
 if (this.uiScene) {
-            const messageWindow = this.uiScene.uiElements.get('message_window');
+            
             if (messageWindow) {
                 messageWindow.setVisible(false);
             }
