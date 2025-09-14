@@ -94,12 +94,16 @@ this.matter.world.on('beforeupdate', (event) => {
 
     this.buildSceneFromLayout(layoutData);
 }
-  /**
-     * エディタからの要求に応じて、新しいテキストオブジェクトを生成する
+ BaseGameScene.js
+
+    /**
+     * ★★★ 修正版 ★★★
+     * エディタからの要求に応じて、新しいテキストオブジェクトを生成する。
      * @param {string} newName - 新しいオブジェクトに付ける一意な名前
+     * @param {string} layerName - オブジェクトが所属するレイヤー名
      * @returns {Phaser.GameObjects.Text} 生成されたテキストオブジェクト
      */
-    addTextObjectFromEditor(newName) {
+    addTextObjectFromEditor(newName, layerName) { // ← ★ 引数を追加
         const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
         const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
         
@@ -113,14 +117,12 @@ this.matter.world.on('beforeupdate', (event) => {
                 fontSize: '32px',
                 fill: '#ffffff',
             },
-            layer: layerName // ★ レイヤー情報を渡す
+            layer: layerName // ★ 受け取ったlayerNameをlayoutオブジェクトに設定
         };
-        
 
         const newGameObject = this.createObjectFromLayout(layout);
         this.applyProperties(newGameObject, layout);
         
-        // ★ EditorUI側で選択状態にするので、ここではオブジェクトを返すだけで良い
         return newGameObject;
     }
     

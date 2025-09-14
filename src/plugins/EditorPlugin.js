@@ -84,8 +84,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         // ★★★ イベントリスナーの登録は、ここで行わない ★★★
     }
 
+ /**
+     * ★★★ 修正版 ★★★
+     * UIから渡された最新のレイヤー状態を保存し、シーンに即時反映させる
+     */
     updateLayerStates(layers) {
         this.layerStates = layers;
+        this.applyLayerStatesToScene(); // ★ 状態が更新されたら、すぐに適用処理を呼び出す
     }
 
     panCamera(dx, dy) {
@@ -308,23 +313,42 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * ★★★ 新規メソッド ★★★
      * 現在のレイヤー状態（表示/非表示など）をシーンのGameObjectに適用する
      */
+    /**
+     * ★★★ 修正版 ★★★
+     * 現在のレイヤー状態（表示/非表示など）をシーンのGameObjectに適用する
+     */
     applyLayerStatesToScene() {
         const scene = this.getActiveGameScene();
         if (!scene) return;
+        console.log("[EditorPlugin] Applying layer states to all scene objects...");
 
-        // editableObjects を走査して、各オブジェクトの表示状態を更新
+        // editableObjects はシーンごとのMapなので、現在のシーンのSetを取得
         const allObjects = this.editableObjects.get(scene.scene.key);
         if (!allObjects) return;
 
         for (const gameObject of allObjects) {
-            const layerName = gameObject.getData('layer');
-            const layer = this.layerStates.find(l => l.name === layerName);
+            const objectLayerName = gameObject.getData('layer');
+            const layer = this.layerStates.find(l => l.name === objectLayerName);
+            
             if (layer) {
+                // --- 1. 表示/非表示を適用 ---
                 gameObject.setVisible(layer.visible);
+                
+                // --- 2. ロック状態を適用（入力の有効/無効を切り替える） ---
+                if (gameObject.input) { // inputコンポーネントがあるか確認
+                    gameObject.input.enabled = !layer.locked;
+                }
+            } else {
+                // どのレイヤーにも所属していないオブジェクトは、常に表示・操作可能にする
+                gameObject.setVisible(true);
+                if (gameObject.input) {
+                    gameObject.input.enabled = true;
+                }
             }
         }
     }
     //---レイヤー系ここまで
+//レイヤー
 
 
 
@@ -1211,11 +1235,12 @@ createComponentSection() {
 
        gameObject.on('pointerdown', (pointer) => {
             // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
-            const layerName = gameObject.getData('layer');
+          const layerName = gameObject.getData('layer');
             const layer = this.layerStates.find(l => l.name === layerName);
+            // レイヤーがロックされている場合は、選択もダブルタップも一切させない
             if (layer && layer.locked) {
                 console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
-                return; // レイヤーがロックされていれば、選択処理を中断
+                return; 
             }
             const now = Date.now();
             const lastTap = gameObject.getData('lastTap');
@@ -1259,14 +1284,15 @@ createComponentSection() {
         gameObject.off('dragstart');
         gameObject.on('dragstart', (pointer) => {
               // ▼▼▼【ここにもロック状態チェックを追加】▼▼▼
+             // ▼▼▼【ここにも同様のガード節を追加】▼▼▼
             const layerName = gameObject.getData('layer');
             const layer = this.layerStates.find(l => l.name === layerName);
             if (layer && layer.locked) {
-                // ドラッグを開始させない
-                gameObject.input.draggable = false;
+                // ドラッグ不可にするおまじない
+                if(gameObject.input) gameObject.input.draggable = false;
                 return;
             }
-            gameObject.input.draggable = true;
+            if(gameObject.input) gameObject.input.draggable = true;
             // もし複数選択中なら、各オブジェクトの初期位置を記憶
             if (this.selectedObjects && this.selectedObjects.length > 0) {
                 this.selectedObjects.forEach(obj => {
