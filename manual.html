@@ -503,3 +503,55 @@ Actions: [set_flip_x value=false]
 [camera_shake power=0.05 time=300]
 </code>
 </pre>
+
+<hr>
+
+<h3><pre>[camera_fade type=... time=... color=...]</pre></h3>
+<p>
+    <strong>機能:</strong> 画面を指定した色で覆ったり、元に戻したりします（フェードイン/アウト）。
+</p>
+<ul>
+    <li><strong>type (必須):</strong> <code>in</code> (フェードイン) または <code>out</code> (フェードアウト) を指定します。</li>
+    <li><strong>time:</strong> フェードにかける時間をミリ秒で指定します。(デフォルト: <code>1000</code>)</li>
+    <li><strong>color:</strong> フェードに使う色を16進数で指定します。(デフォルト: <code>0x000000</code> 黒)</li>
+</ul>
+<pre><code>
+; 画面をゆっくりと黒に
+[camera_fade type=out time=2000]
+[wait time=2000]
+; 黒からゆっくりと元の画面に
+[camera_fade type=in time=2000]
+</code></pre>
+
+<hr>
+<h3><pre>[camera_follow target=...]</pre></h3>
+<p>
+    <strong>機能:</strong> カメラが追いかける対象のオブジェクトを設定します。
+</p>
+<ul>
+    <li><strong>target (必須):</strong> 追従させたいオブジェクトの<strong>名前</strong>を指定します。<code>none</code>を指定すると追従を解除します。</li>
+</ul>
+<pre><code>
+; イベント開始！ボスに注目！
+[camera_follow target=boss_enemy]
+[wait time=3000]
+; 再びプレイヤーを追いかける
+[camera_follow target=player]
+</code></pre>
+<hr>
+<!-- manual_play_bgm.html -->
+<h3><pre>[play_bgm key=... loop=...]</pre></h3>
+<p><strong>機能:</strong> BGMを再生します。既に別のBGMが再生中の場合は、自動でクロスフェードします。</p>
+<ul>
+    <li><strong>key (必須):</strong> 再生するBGMのアセットキー。</li>
+    <li><strong>loop:</strong> <code>true</code> (デフォルト) または <code>false</code> を指定。</li>
+</ul></code></pre>
+
+<hr>
+<!-- manual_stop_bgm.html -->
+<h3><pre>[stop_bgm time=...]</pre></h3>
+<p><strong>機能:</strong> 現在再生中のBGMを停止します。</p>
+<ul>
+    <li><strong>time:</strong> フェードアウトにかける時間をミリ秒で指定します。(デフォルト: <code>0</code> 即時停止)</li>
+</ul>
+<hr>

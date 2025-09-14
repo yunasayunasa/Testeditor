@@ -20,6 +20,16 @@ import interact_remove from './interact_remove.js';
 import transition_scene from './transition_scene.js';
 import waitHandler from './wait.js'; // ★ wait.js からインポート
 import cameraShakeHandler from './camera_shake.js';
+import cameraFadeHandler from './camera_fade.js'; // ★ 追加
+import cameraFollowHandler from './camera_follow.js'; // ★ 追加
+import playBgmHandler from './play_bgm.js'; // ★ 追加
+import stopBgmHandler from './stop_bgm.js'; // ★ 追加
+
+
+
+
+
+
 
 //*******************++++++++++++++++++++++ */
 // ActionInterpreterが使う、イベントタグのカタログ
@@ -44,5 +54,14 @@ export const eventTagHandlers = {
  'transition_scene': transition_scene,
 'wait': waitHandler, // ★ タグ名を 'wait' に
     'camera_shake': cameraShakeHandler,
+'camera_fade': cameraFadeHandler, // ★ 追加
+'camera_follow': cameraFollowHandler, // ★ 追加
+'play_bgm': playBgmHandler, // ★ 追加
+    'stop_bgm': stopBgmHandler, // ★ 追加
+
+
+
+
+
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
