@@ -33,14 +33,22 @@ export default class EditorUI {
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
-this.buildLayerPanel(); 
-       
+
+        
+
     }
     
     // =================================================================
     // ヘルパーメソッド群
     // =================================================================
-
+   /**
+     * ★★★ 新規メソッド ★★★
+     * EditorPluginの準備が完了したときに呼ばれる
+     */
+    onPluginReady() {
+        // このタイミングで、プラグインの状態を反映したUIを初めて構築する
+        this.buildLayerPanel();
+    }
     getDomElements() {
         this.editorPanel = document.getElementById('editor-panel');
         this.assetBrowserPanel = document.getElementById('asset-browser');
@@ -152,31 +160,10 @@ this.buildLayerPanel();
         this.game.input.on('pointerdown', this.onPointerDown, this);
     }
  // ▼▼▼ この新しいメソッドをクラス内に追加 ▼▼▼
-    /**
-     * 「Add Selected Tile」ボタンがクリックされたときの処理
-     */
-    onAddTileButtonClicked() {
-        const scene = this.getActiveGameScene();
-        
-        // ガード節: シーンが存在しない、またはタイルが選択されていない場合は何もしない
-        if (!scene || this.selectedTileIndex < 0 || !this.currentTileset) {
-            console.warn("[EditorUI] Cannot add tile: No active scene, tile index, or tileset selected.");
-            return;
-        }
-        
-        // BaseGameSceneに実装する新しいメソッドを呼び出す
-        if (typeof scene.addTileAsObject === 'function') {
-            const newTileObject = scene.addTileAsObject(this.selectedTileIndex, this.currentTileset.key);
-            
-            // 追加された新しいタイルオブジェクトをすぐに選択状態にする
-            if (newTileObject && this.plugin) {
-                this.plugin.selectedObject = newTileObject;
-                this.plugin.updatePropertyPanel();
-            }
-        } else {
-            console.error(`[EditorUI] The active scene '${scene.scene.key}' does not have the 'addTileAsObject' method.`);
-        }
-    }
+  
+ 
+ 
+ 
     /**
      * ★★★ 新規メソッド ★★★
      * Phaserのポインターイベントを捌くための統合ハンドラ
@@ -395,11 +382,14 @@ this.buildLayerPanel();
         
         let newObject = null;
         if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
-            if (typeof targetScene.addObjectFromEditor === 'function') newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-    
+           if (typeof targetScene.addObjectFromEditor === 'function') {
+            newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+        }
         } else if (this.selectedAssetType === 'prefab') {
             if (typeof targetScene.addPrefabFromEditor === 'function') newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-    
+    if (typeof targetScene.addObjectFromEditor === 'function') {
+            newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+        }
         }
         
         if (newObject && this.plugin) {
