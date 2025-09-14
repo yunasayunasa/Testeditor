@@ -62,7 +62,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
  console.log(`%c[LOG BOMB A] UIScene found:`, 'color: cyan', this.uiScene);
         
-        const messageWindow = this.uiScene.uiElements.get('message_window');
+       
         
         console.log(`%c[LOG BOMB B] Message window found:`, 'color: cyan', messageWindow);
 
