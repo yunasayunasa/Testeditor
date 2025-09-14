@@ -248,24 +248,46 @@ Actions: [interact_remove target=self][set_visible target=interact_mark value=fa
 </code></pre>
 
 <hr>
-
-<h2>[spawn_object]</h2>
-<p>あらかじめ定義された「プレハブ（設計図）」に基づいて、新しいオブジェクトをシーンに出現させます。弾の発射、アイテムのドロップ、敵の出現など、動的なゲームプレイの核となるタグです。</p>
-<p>プレハブは、<code>assets/data/prefabs/</code>フォルダ内に、単一のオブジェクト定義を持つJSONファイルとして作成します。</p>
-<h4>パラメータ:</h4>
+<h3><pre>[spawn_object prefab=... at=... props=...]</pre></h3>
+<p>
+    <strong>機能:</strong> 指定したプレハブから、新しいオブジェクトをシーンに生成（スポーン）します。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
 <ul>
-    <li><strong>prefab</strong> (必須): 出現させたいプレハブのキー（JSONファイル名から拡張子を除いたもの）。</li>
-    <li><strong>name</strong> (任意): 出現するオブジェクトに固有の名前を付けたい場合に指定します。指定しない場合、<code>prefab名_タイムスタンプ</code>という名前が自動で付きます。</li>
-    <li><strong>offsetX, offsetY</strong> (任意): タグを実行したオブジェクトの位置を基準とした、出現位置のオフセット（ずれ）を指定します。</li>
+    <li><strong>prefab (必須):</strong> スポーンするプレハブのアセットキー。</li>
+    <li>
+        <strong>at:</strong> スポーンする位置。以下のいずれかを指定できます。(デフォルト: <code>self</code>)
+        <ul>
+            <li><code>self</code>: このアクションを実行しているオブジェクトの位置。</li>
+            <li><code>other</code>: 衝突イベントの相手など、イベントのターゲットとなったオブジェクトの位置。</li>
+            <li><code>pointer</code>: 現在のマウスカーソルまたはタッチ位置。</li>
+            <li><code>center</code>: カメラが表示している画面の中央。</li>
+            <li><code>"x,y"</code>: ワールド座標を直接指定 (例: <code>"400,300"</code>)。</li>
+            <li><em>オブジェクト名</em>: シーンに存在する特定のオブジェクトの名前。</li>
+        </ul>
+    </li>
+    <li>
+        <strong>props:</strong> プレハブのプロパティを上書きするためのJSON形式の文字列。
+    </li>
 </ul>
-<p><strong>使用例:</strong></p>
-<pre><code>; 敵を倒した時に、その場に"coin"プレハブのオブジェクトを出現させる
-[spawn_object prefab=coin]
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; プレイヤーがクリックした場所に、爆発エフェクトを出す
+[spawn_object prefab=explosion_effect at=pointer]
 
-; プレイヤーの右手側(X座標+50)から、"bullet"プレハブの弾を発射する
-[spawn_object prefab=bullet offsetX=50]
-</code></pre>
+; 画面中央に、ボスキャラを登場させる
+[spawn_object prefab=boss_character at=center]
 
+; ステージの決まった位置(1200, 500)に隠しアイテムを出現させる
+[spawn_object prefab=secret_sword at="1200,500"]
+</code>
+</pre>
+<hr>
 <hr>
 
 <h2>[set_flip_x]</h2>
