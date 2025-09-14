@@ -3,14 +3,11 @@
 /**
  * [overlay_end] タグ - オーバーレイシーンの強制終了とUIのリセット
  * 
- * NovelOverlaySceneを強制的にシャットダウンし、呼び出し元のシーンへUIを復元する。
- * このタグは、非同期処理の競合を避けるため、すべての終了処理を明示的に実行する。
- * 
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
  */
-export default async function handleOverlayEnd(interpreter) {
-    // interpreterから、現在実行中のシーン(NovelOverlayScene)のインスタンスを取得
-    const overlayScene = interpreter.scene;
+export default async function handleOverlayEnd(manager) {
+    // managerから、現在実行中のシーン(NovelOverlayScene)のインスタンスを取得
+    const overlayScene = manager.scene;
 
     console.log(`%c[overlay_end] Force shutdown sequence initiated for ${overlayScene.scene.key}`, "color: red; font-weight: bold;");
 
@@ -20,14 +17,14 @@ export default async function handleOverlayEnd(interpreter) {
     
     if (!systemScene || !uiScene) {
         console.error("[overlay_end] Critical error: SystemScene or UIScene not found.");
+        manager.stop(); // 念のためシナリオを止める
         return;
     }
 
     // --- Step 2: シナリオエンジンのループを完全に停止させる ---
-    interpreter.stop();
+    manager.stop();
 
     // --- Step 3: NovelOverlaySceneのshutdownメソッドを明示的に呼び出す ---
-    // これにより、イベントリスナーの解除やタイマーの破棄などを確実に行う
     if (typeof overlayScene.shutdown === 'function') {
         console.log(`[overlay_end] Explicitly calling shutdown() for ${overlayScene.scene.key}`);
         // ★★★ あなたが指摘した「明示的なシャットダウン」の実行 ★★★
@@ -35,7 +32,6 @@ export default async function handleOverlayEnd(interpreter) {
     }
 
     // --- Step 4: UIの状態を、呼び出し元のシーンの状態に強制的に戻す ---
-    // shutdown()内で'end-overlay'が発行され、SystemSceneがこれを行うが、念のためここでも実行する
     console.log(`[overlay_end] Requesting UI transition back to ${overlayScene.returnTo}`);
     uiScene.onSceneTransition(overlayScene.returnTo);
 

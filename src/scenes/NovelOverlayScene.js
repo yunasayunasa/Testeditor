@@ -182,38 +182,45 @@ create() {
      * ★★★ 最終FIX版 ★★★
      * create で行ったことを、すべて元に戻す
      */
-    shutdown() {
-        console.log("%c[NovelOverlayScene] SHUTDOWN START", "color: orange; font-weight: bold;");
+   // src/scenes/NovelOverlayScene.js
 
-        // --- 1. イベントリスナーを解除 ---
-        if (this.onClickHandler) {
-            this.input.off('pointerdown', this.onClickHandler);
-            this.onClickHandler = null;
-        }
+shutdown() {
+    console.log("%c[NovelOverlayScene] SHUTDOWN START", "color: orange; font-weight: bold;");
 
-        // --- 2. ScenarioManagerを停止・破棄 ---
-        if (this.scenarioManager) {
-            this.scenarioManager.stop();
-            this.scenarioManager = null;
-        }
-
-       // --- 3. このシーンに追加したすべての子オブジェクトを破棄 ---
-        // ★ message_window はもうこのシーンの子ではないので、特別な処理は不要
-        this.children.removeAll(true); // キャラクターレイヤーなどを破棄
-
-       
-        // --- 5. プロパティをリセット ---
-        this.isSceneFullyReady = false;
-        this.layer = {};
-        this.characters = {};
-        
-        // --- 6. SystemSceneに終了を通知 ---
-        this.scene.get('SystemScene').events.emit('end-overlay', {
-            from: this.scene.key,
-            returnTo: this.returnTo,
-            inputWasBlocked: this.inputWasBlocked
-        });
-        
-        console.log("%c[NovelOverlayScene] SHUTDOWN COMPLETE", "color: orange; font-weight: bold;");
+    // --- 1. イベントリスナーを解除 ---
+    if (this.onClickHandler) {
+        this.input.off('pointerdown', this.onClickHandler);
+        this.onClickHandler = null;
     }
-}
+
+    // --- 2. ScenarioManagerを停止・破棄 ---
+    if (this.scenarioManager) {
+        this.scenarioManager.stop();
+        this.scenarioManager = null;
+    }
+
+    // --- 3. このシーンに追加したすべての子オブジェクトを破棄 ---
+    this.children.removeAll(true);
+
+    // --- 4. メッセージウィンドウを非表示にする（念のため） ---
+    if (this.uiScene) {
+        this.uiScene.hideMessageWindow();
+    }
+    
+    // --- 5. プロパティをリセット ---
+    this.isSceneFullyReady = false;
+    this.layer = {};
+    this.characters = {};
+    
+    // ★★★ このイベント発行は削除します ★★★
+    // なぜなら、このshutdownを呼び出す[overlay_end]が、すべての後処理を行うからです。
+    /*
+    this.scene.get('SystemScene').events.emit('end-overlay', {
+        from: this.scene.key,
+        returnTo: this.returnTo,
+        inputWasBlocked: this.inputWasBlocked
+    });
+    */
+    
+    console.log("%c[NovelOverlayScene] SHUTDOWN COMPLETE", "color: orange; font-weight: bold;");
+}}
