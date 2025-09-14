@@ -1,4 +1,21 @@
 {
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
       "name": "cg01_1",
@@ -18,7 +35,11 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
@@ -39,7 +60,11 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
@@ -60,7 +85,11 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
@@ -81,7 +110,11 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
@@ -119,7 +152,11 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 0.1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
@@ -151,7 +188,7 @@
       "events": [
         {
           "trigger": "onOverlap_Start",
-          "actions": "[destroy]",
+          "actions": "[run_scenario file=overlaytest.ks]",
           "targetGroup": "player"
         }
       ],
@@ -162,15 +199,19 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 0.1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_3_1",
       "type": "Sprite",
       "texture": "walk",
-      "x": 2975,
-      "y": 406,
+      "x": 764,
+      "y": 19,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -200,15 +241,19 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_3_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 2889,
-      "y": 635,
+      "x": 678,
+      "y": 248,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -238,15 +283,19 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_4_1",
       "type": "Sprite",
       "texture": "walk",
-      "x": 2991,
-      "y": 521,
+      "x": 780,
+      "y": 134,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -276,15 +325,19 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_4_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 3017,
-      "y": 636,
+      "x": 806,
+      "y": 249,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -314,53 +367,19 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_5_1",
       "type": "Sprite",
       "texture": "walk",
-      "x": 3169,
-      "y": 642,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": -90,
-      "alpha": 1,
-      "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
-      "components": [
-        {
-          "type": "PlayerController",
-          "params": {
-            "moveSpeed": 7.5
-          }
-        },
-        {
-          "type": "Interactor",
-          "params": {}
-        },
-        {
-          "type": "Scrollable",
-          "params": {}
-        }
-      ],
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 1,
-        "restitution": 0
-      }
-    },
-    {
-      "name": "walk_2_5_2",
-      "type": "Sprite",
-      "texture": "walk",
-      "x": 3278,
-      "y": 635,
+      "x": 958,
+      "y": 255,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -390,19 +409,65 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
+    },
+    {
+      "name": "walk_2_5_2",
+      "type": "Sprite",
+      "texture": "walk",
+      "x": 1067,
+      "y": 417,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "player",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 7.5
+          }
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        }
+      ],
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_6_1",
       "type": "Sprite",
       "texture": "walk",
-      "x": 3482,
-      "y": 635,
+      "x": 1271,
+      "y": 248,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 180,
+      "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
       "components": [
@@ -428,19 +493,23 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     },
     {
       "name": "walk_2_6_2",
       "type": "Sprite",
       "texture": "walk",
-      "x": 3380,
-      "y": 635,
+      "x": 1169,
+      "y": 248,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": -180,
+      "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
       "components": [
@@ -466,7 +535,11 @@
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
-        "restitution": 0
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
       }
     }
   ],
