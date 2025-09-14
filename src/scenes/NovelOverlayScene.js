@@ -78,8 +78,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
     this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
     this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
  // ▼▼▼ ログ爆弾 No.3 ▼▼▼
-    console.log(`%c[LOG BOMB 3] NovelOverlayScene.create: キャラクターレイヤーのdepthは ${charaLayer.depth} です。`, 'color: cyan; font-size: 1.2em;');
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+ console.log(`%c[LOG BOMB 3] NovelOverlayScene.create: キャラクターレイヤーのdepthは ${this.layer.character.depth} です。`, 'color: cyan; font-size: 1.2em;');
         // --- 3. ScenarioManagerの生成 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
