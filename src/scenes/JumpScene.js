@@ -53,26 +53,18 @@ export default class JumpScene extends BaseGameScene {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
         // デバッグ以外では空でも良い
     }
-    addObjectFromEditor(assetKey, newName) {
-        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-        
-        // SpritesheetかImageかを判定するロジックはEditorUI側に持たせた方が良いかもしれないが、
-        // ここでも機能はする
+       /**
+     * ★★★ 修正版 ★★★
+     * JumpSceneに特有のロジック（SpriteかImageかの判定）だけを行い、
+     * 残りの共通処理はすべて親クラスに委譲する。
+     */
+    addObjectFromEditor(assetKey, newName, layerName) {
+        // --- JumpScene固有の処理 ---
         const isSpriteSheet = this.game.cache.json.get(assetKey + '_spritesheet') ? true : false;
+        const type = isSpriteSheet ? 'Sprite' : 'Image';
         
-        const newObject = this.createObjectFromLayout({
-            texture: assetKey,
-            type: isSpriteSheet ? 'Sprite' : 'Image'
-        });
-        
-        this.applyProperties(newObject, {
-            name: newName,
-            x: Math.round(centerX), 
-            y: Math.round(centerY)
-        });
-        
-        return newObject;
+        // --- 共通処理は親クラス(super)を呼び出す ---
+        return super._addObjectFromEditorCore({ texture: assetKey, type: type }, newName, layerName);
     }
 
      /**

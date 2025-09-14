@@ -233,6 +233,9 @@ buildSceneFromLayout(layoutData) {
  */
 applyProperties(gameObject, layout) {
     const data = layout || {};
+    if (data.layer) {
+            gameObject.setData('layer', data.layer);
+        }
     console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
 
     // --- 1. 基本データの設定 ---
@@ -626,16 +629,39 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         this.applyEventsAndEditorFunctions(targetObject, targetObject.getData('events'));
     }
 
-    // addObjectFromEditor, handleKeyPressEvents, shutdown は変更なし
-    addObjectFromEditor(assetKey, newName, layerName) {
-        console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'.`);
-        return null;
+     /**
+     * ★★★ 新規メソッド ★★★
+     * エディタからオブジェクトを追加するための、中核となるロジック。
+     * 継承先のシーンから呼び出されることを想定。
+     * @param {object} createLayout - createObjectFromLayoutに渡すための情報（例: { texture, type }）
+     * @param {string} newName - 新しいオブジェクトの名前
+     * @param {string} layerName - 所属するレイヤー名
+     * @returns {Phaser.GameObjects.GameObject}
+     */
+    _addObjectFromEditorCore(createLayout, newName, layerName) {
+        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+        
+        const newObject = this.createObjectFromLayout(createLayout);
+        
         this.applyProperties(newObject, {
             name: newName,
             x: Math.round(centerX), 
             y: Math.round(centerY),
-            layer: layerName // ★ レイヤー情報を渡す
+            layer: layerName
         });
+        
+        return newObject;
+    }
+
+    /**
+     * addObjectFromEditor のデフォルト実装。
+     * 継承先でオーバーライドされなかった場合に、警告を出すためのもの。
+     */
+    addObjectFromEditor(assetKey, newName, layerName) {
+        console.warn(`[BaseGameScene] addObjectFromEditor is not implemented in '${this.scene.key}'. Using default image implementation.`);
+        // 最低限のフォールバックとして、Imageオブジェクトを追加する
+        return this._addObjectFromEditorCore({ texture: assetKey, type: 'Image' }, newName, layerName);
     }
     
 
