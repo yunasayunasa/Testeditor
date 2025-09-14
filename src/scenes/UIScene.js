@@ -8,16 +8,23 @@ export default class UIScene extends Phaser.Scene {
         this.isPanelOpen = false;
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
-
-create() {
-       console.log(`%c[LOG BOMB E] == UIScene CREATE START ==`, 'background: #222; color: #ffa500; font-size: 1.4em;');
-        
+  create() {
+        console.log("UIScene: create started.");
         this.scene.bringToTop();
 
         try {
+            // ▼▼▼【これが最後の修正です】▼▼▼
+            // --------------------------------------------------------------------
+            // --- 1. 必要なサービスをプロパティとして保持する ---
+            this.uiRegistry = this.registry.get('uiRegistry');
+            if (!this.uiRegistry) {
+                console.error('[UIScene] CRITICAL: uiRegistry not found.');
+            }
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             const layoutData = this.cache.json.get(this.scene.key);
-            // ★ await を削除
-            this.buildUiFromLayout(layoutData); 
+            this.buildUiFromLayout(layoutData);
             console.log("UIScene: UI build complete.");
 
             const systemScene = this.scene.get('SystemScene');
@@ -25,19 +32,13 @@ create() {
                 systemScene.events.on('transition-complete', this.onSceneTransition, this);
             }
 
-            // ★ すべての同期処理が終わった最後に、イベントを発行
-            this.events.emit('scene-ready');
-           this.scene.get('SystemScene').reportSceneReady(this.scene.key); // ← これに置き換
+            this.scene.get('SystemScene').reportSceneReady(this.scene.key);
+            console.log("UIScene: emitted readiness report.");
 
         } catch (err) {
             console.error("UIScene: create failed.", err);
         }
-        console.log(`%c[LOG BOMB F] >> REPORTING READY from [UIScene] >>`, 'background: #222; color: #ff00ff; font-size: 1.2em;');
-        this.scene.get('SystemScene').reportSceneReady(this.scene.key);
-        
-        console.log(`%c[LOG BOMB G] == UIScene CREATE END ==`, 'background: #222; color: #ffa500; font-size: 1.4em;');
     }
-   // src/scenes/UIScene.js
 
 // ... (他のメソッドやimportは変更なし) ...
 
@@ -173,18 +174,19 @@ registerUiElement(name, element, params) {
     }
    // in UIScene.js
 
-    onSceneTransition(toSceneKey) {
+   onSceneTransition(toSceneKey) {
         console.log(`[UIScene] Transitioning UI for scene: ${toSceneKey}`);
         
-        // ★★★ 自身の表示/非表示を管理 ★★★
-        if (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene') {
-            this.scene.setVisible(true);
-        } else {
-            // JumpSceneなどのゲームシーンでは、UIScene自体は不要
-            this.scene.setVisible(false);
-        }
+        // --- 自身の表示/非表示を管理 ---
+        // ★ GameScene, NovelOverlayScene の時だけ表示する
+        const shouldBeVisible = (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene');
+        this.scene.setVisible(shouldBeVisible);
+        if (!shouldBeVisible) return; // 非表示なら、これ以上何もしない
 
-        // --- どのUIを表示するかのロジック (uiRegistryを使う) ---
+        // --- どのUIを表示するかのロジック ---
+        // ★ this.uiRegistry が存在することを保証
+        if (!this.uiRegistry) return;
+
         for (const [key, element] of this.uiElements.entries()) {
             const definition = this.uiRegistry[key];
             if (definition && definition.scenes.includes(toSceneKey)) {
@@ -194,7 +196,6 @@ registerUiElement(name, element, params) {
             }
         }
     }
-    
 // src/scenes/UIScene.js
 
     // ... onSceneTransition メソッドなどの後に追加 ...
