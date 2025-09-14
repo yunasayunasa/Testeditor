@@ -8,38 +8,42 @@ export default class UIScene extends Phaser.Scene {
         this.isPanelOpen = false;
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
-  create() {
-        console.log("UIScene: create started.");
+
+  // src/scenes/UIScene.js (修正後のコード)
+
+      // createメソッドは非同期である必要はない
+      async create() {
+        console.log("UIScene: Data-Driven Initialization Started");
         this.scene.bringToTop();
 
         try {
-            // ▼▼▼【これが最後の修正です】▼▼▼
-            // --------------------------------------------------------------------
-            // --- 1. 必要なサービスをプロパティとして保持する ---
-            this.uiRegistry = this.registry.get('uiRegistry');
-            if (!this.uiRegistry) {
-                console.error('[UIScene] CRITICAL: uiRegistry not found.');
-            }
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+            // ステップ1: UIの構築を待つ
             const layoutData = this.cache.json.get(this.scene.key);
-            this.buildUiFromLayout(layoutData);
+            await this.buildUiFromLayout(layoutData);
             console.log("UIScene: UI build complete.");
 
+            // ステップ2: 連携設定を行う
             const systemScene = this.scene.get('SystemScene');
             if (systemScene) {
                 systemScene.events.on('transition-complete', this.onSceneTransition, this);
+                console.log("UIScene: SystemSceneとの連携を設定しました。");
+            } else {
+                console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
 
-            this.scene.get('SystemScene').reportSceneReady(this.scene.key);
-            console.log("UIScene: emitted readiness report.");
+            // ステップ3: すべての準備が完了してから、成功を通知する
+            console.log("UIScene: Finalizing setup and emitting scene-ready.");
+            this.events.emit('scene-ready');
 
         } catch (err) {
-            console.error("UIScene: create failed.", err);
+            // どこかでエラーが起きれば、必ずここに来る
+            console.error("UIScene: create処理中にエラーが発生しました。", err);
+            // (オプション) エラーが発生したことを明確に示すために、エラーメッセージを画面に表示するなど
+            this.add.text(this.scale.width / 2, this.scale.height / 2, 'UIScene FAILED TO INITIALIZE', { color: 'red', fontSize: '32px' }).setOrigin(0.5);
         }
-        
     }
+
+   // src/scenes/UIScene.js
 
 // ... (他のメソッドやimportは変更なし) ...
 
@@ -47,7 +51,7 @@ export default class UIScene extends Phaser.Scene {
      * UIをレイアウトデータに基づいて構築する (JSONレイアウト対応・最終確定版)
      * ★★★ 以下のメソッドで、デバッグ用の buildUiFromLayout を完全に置き換えてください ★★★
      */
-    buildUiFromLayout(layoutData) {
+    async buildUiFromLayout(layoutData) {
         console.log("[UIScene] Starting UI build with FULL data-driven routine.");
 
         const uiRegistry = this.registry.get('uiRegistry');
@@ -160,65 +164,17 @@ registerUiElement(name, element, params) {
     // }
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
-/**
-     * ★★★ 新規メソッド ★★★
-     * 指定されたキーのUI要素の表示状態を切り替える
-     * @param {string} key - 'message_window' などのuiElementsのキー
-     * @param {boolean} visible - 表示するかどうか
-     */
-    setElementVisible(key, visible) {
-        const element = this.uiElements.get(key);
-        if (element) {
-            element.setVisible(visible);
-            console.log(`[UIScene] Element '${key}' visibility set to ${visible}`);
+    onSceneTransition(newSceneKey) {
+        const visibleGroups = sceneUiVisibility[newSceneKey] || [];
+        for (const [name, uiElement] of this.uiElements.entries()) {
+            const definition = uiRegistry[name];
+            if (definition) {
+                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                uiElement.setVisible(shouldBeVisible);
+            }
         }
     }
-   // in UIScene.js
-
-      /**
-     * ★★★ 究極の最終FIX版・改6 ★★★
-     * uiRegistryにscenes定義を持つUI要素の表示/非表示だけを制御する
-     */
-   // in UIScene.js
-// src/scenes/UIScene.js
-
-    onSceneTransition(toSceneKey) {
-        // --- ★★★ 緊急脱出ロジック (これは残します) ★★★ ---
-        if (this.scene.isActive('NovelOverlayScene')) {
-            console.log(`[UIScene.onSceneTransition] NovelOverlayScene is active. Aborting automatic UI changes.`);
-            return;
-        }
-
-        console.log(`[UIScene] Transitioning UI based on groups for scene: ${toSceneKey}`);
-
-        // 1. sceneUiVisibilityから、遷移先のシーンで表示すべき「グループのリスト」を取得
-        //    sceneUiVisibilityは、別途インポートしておく必要があります。
-        //    import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
-        const visibleGroups = sceneUiVisibility[toSceneKey] || [];
-        console.log(`[UIScene] Groups to display: [${visibleGroups.join(', ')}]`);
-
-        // 2. 관리하는 모든 UI 요소를 순회 (管理下の全UI要素をループ)
-        for (const [key, element] of this.uiElements.entries()) {
-            const definition = this.uiRegistry[key];
-            if (!definition || !definition.groups) continue; // グループ定義がなければ何もしない
-
-            // 3. このUI要素が、表示すべきグループのいずれかに属しているか判定
-            const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-
-            // 4. 表示状態を更新
-            element.setVisible(shouldBeVisible);
-        }
-
-        // --- message_windowの座標をリセットする特別な処理 ---
-        const messageWindow = this.uiElements.get('message_window');
-        if (messageWindow && messageWindow.visible) {
-            // もしmessage_windowが表示されるべきシーンなら、念のため座標を正しい位置に戻す
-            this.showMessageWindow();
-        } else if (messageWindow && !messageWindow.visible) {
-            // もしmessage_windowが非表示にされるべきシーンなら、念のため座標を画面外に移動させる
-            this.hideMessageWindow();
-        }
-    }
+    
 // src/scenes/UIScene.js
 
     // ... onSceneTransition メソッドなどの後に追加 ...
@@ -395,7 +351,7 @@ registerUiElement(name, element, params) {
     }
 
     showMessageWindow(time = 0) {
-      //  this.scene.bringToTop();
+        this.scene.bringToTop();
         const messageWindow = this.uiElements.get('message_window');
         const layoutData = this.cache.json.get('UIScene');
         if (messageWindow && layoutData) {
