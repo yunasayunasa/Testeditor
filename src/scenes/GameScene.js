@@ -87,8 +87,8 @@ export default class GameScene extends Phaser.Scene {
     _finalizeSetup() {
         this.isSceneFullyReady = true;
         this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
-        this.events.emit('gameScene-load-complete');
-        console.log("GameScene: 準備完了。SystemSceneに通知しました。");
+              this.scene.get('SystemScene').reportSceneReady(this.scene.key);
+        console.log("GameScene: 準備完了。SystemSceneに直接通知しました。");
     }
 
      /**

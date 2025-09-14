@@ -26,7 +26,7 @@ create() {
 
             // ★ すべての同期処理が終わった最後に、イベントを発行
             this.events.emit('scene-ready');
-            console.log("UIScene: emitted scene-ready.");
+           this.scene.get('SystemScene').reportSceneReady(this.scene.key); // ← これに置き換
 
         } catch (err) {
             console.error("UIScene: create failed.", err);

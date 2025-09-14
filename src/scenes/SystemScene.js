@@ -13,6 +13,7 @@ export default class SystemScene extends Phaser.Scene {
          this._isTimeStopped = false;
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
+        this.onSceneReadyCallback = null; 
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
     get isTimeStopped() {
@@ -167,23 +168,30 @@ _startInitialGame(initialData) {
     
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    const uiScene = this.scene.get('UIScene');
+   const uiScene = this.scene.get('UIScene');
 
-        // --- 1. UISceneの準備完了を待つ ---
         uiScene.events.once('scene-ready', () => {
             console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
-            
-            // --- 2. UISceneが完了したら、次にGameSceneを起動・監視する ---
             this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
         });
-
-        // --- 3. 最後にUISceneを起動 ---
-        console.log("[SystemScene] Running UIScene now.");
         this.scene.run('UIScene');
     }
+      /**
+     * ★★★ 新規メソッド ★★★
+     * 他のシーンから「準備完了」の報告を受け取るための公式な窓口
+     * @param {string} sceneKey - 報告元のシーンキー
+     */
+    reportSceneReady(sceneKey) {
+        console.log(`[SystemScene] Received readiness report from '${sceneKey}'.`);
+        if (this.onSceneReadyCallback) {
+            this.onSceneReadyCallback(sceneKey);
+            this.onSceneReadyCallback = null; // 一度使ったらクリア
+        }
+    }
+
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
      * @param {object} data - { from: string, to: string, params: object, fade: object }
@@ -374,43 +382,33 @@ _startInitialGame(initialData) {
         }
     }
 
-  /**
-     * ★★★ 新しいシーンを起動し、完了まで監視するコアメソッド (真・最終確定版) ★★★
-     * @param {string} sceneKey - 起動するシーンのキー
-     * @param {object} params - シーンに渡すデータ
-     */
-     /**
+ /**
      * ★★★ 究極の最終FIX版 ★★★
-     * 新しいシーンを起動し、完了まで監視するコアメソッド。
-     * GameSceneが既に存在する場合の再起動に対応。
+     * 新しいシーンを起動し、コールバックを使って完了を待つ
      */
     _startAndMonitorScene(sceneKey, params) {
-        if (this.isProcessingTransition) {
-            console.warn(`[SystemScene] Transition is already in progress. Request for '${sceneKey}' ignored.`);
-            return;
-        }
-
+        if (this.isProcessingTransition) return;
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
         console.log(`[SystemScene] Starting scene '${sceneKey}'. Global input disabled.`);
-
-        // ★★★ 既にシーンが存在する場合（ノベル復帰など）は、一度stopさせてからrunする ★★★
+        
         if (this.scene.isActive(sceneKey)) {
             this.scene.stop(sceneKey);
         }
 
-        const targetScene = this.scene.get(sceneKey);
+        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 1. イベントリスナーの代わりに、コールバックを設定する ---
+        this.onSceneReadyCallback = (readySceneKey) => {
+            // 待っていたシーンから報告が来たことを確認
+            if (readySceneKey === sceneKey) {
+                this._onTransitionComplete(sceneKey);
+            }
+        };
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        const completionEvent = (sceneKey === 'GameScene')
-            ? 'gameScene-load-complete'
-            : 'scene-ready';
-
-        // 完了イベントを一度だけリッスンする
-        targetScene.events.once(completionEvent, () => {
-            this._onTransitionComplete(sceneKey);
-        });
-
-        // リスナー登録後に、シーンをrunする（あなたの元の正しいロジック）
+        // --- 2. シーンを起動 ---
         this.scene.run(sceneKey, params);
     }
     /**
