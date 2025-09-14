@@ -9,40 +9,29 @@ export default class UIScene extends Phaser.Scene {
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
 
-  // src/scenes/UIScene.js (修正後のコード)
-
-      // createメソッドは非同期である必要はない
-      async create() {
-        console.log("UIScene: Data-Driven Initialization Started");
+create() {
+        console.log("UIScene: create started.");
         this.scene.bringToTop();
- this.events.emit('scene-creation-started');
+
         try {
-            // ステップ1: UIの構築を待つ
             const layoutData = this.cache.json.get(this.scene.key);
-            await this.buildUiFromLayout(layoutData);
+            // ★ await を削除
+            this.buildUiFromLayout(layoutData); 
             console.log("UIScene: UI build complete.");
 
-            // ステップ2: 連携設定を行う
             const systemScene = this.scene.get('SystemScene');
             if (systemScene) {
                 systemScene.events.on('transition-complete', this.onSceneTransition, this);
-                console.log("UIScene: SystemSceneとの連携を設定しました。");
-            } else {
-                console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
 
-            // ステップ3: すべての準備が完了してから、成功を通知する
-            console.log("UIScene: Finalizing setup and emitting scene-ready.");
+            // ★ すべての同期処理が終わった最後に、イベントを発行
             this.events.emit('scene-ready');
+            console.log("UIScene: emitted scene-ready.");
 
         } catch (err) {
-            // どこかでエラーが起きれば、必ずここに来る
-            console.error("UIScene: create処理中にエラーが発生しました。", err);
-            // (オプション) エラーが発生したことを明確に示すために、エラーメッセージを画面に表示するなど
-            this.add.text(this.scale.width / 2, this.scale.height / 2, 'UIScene FAILED TO INITIALIZE', { color: 'red', fontSize: '32px' }).setOrigin(0.5);
+            console.error("UIScene: create failed.", err);
         }
     }
-
    // src/scenes/UIScene.js
 
 // ... (他のメソッドやimportは変更なし) ...
@@ -51,7 +40,7 @@ export default class UIScene extends Phaser.Scene {
      * UIをレイアウトデータに基づいて構築する (JSONレイアウト対応・最終確定版)
      * ★★★ 以下のメソッドで、デバッグ用の buildUiFromLayout を完全に置き換えてください ★★★
      */
-    async buildUiFromLayout(layoutData) {
+    buildUiFromLayout(layoutData) {
         console.log("[UIScene] Starting UI build with FULL data-driven routine.");
 
         const uiRegistry = this.registry.get('uiRegistry');
