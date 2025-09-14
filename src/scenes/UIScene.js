@@ -164,6 +164,19 @@ registerUiElement(name, element, params) {
     // }
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
+/**
+     * ★★★ 新規メソッド ★★★
+     * 指定されたキーのUI要素の表示状態を切り替える
+     * @param {string} key - 'message_window' などのuiElementsのキー
+     * @param {boolean} visible - 表示するかどうか
+     */
+    setElementVisible(key, visible) {
+        const element = this.uiElements.get(key);
+        if (element) {
+            element.setVisible(visible);
+            console.log(`[UIScene] Element '${key}' visibility set to ${visible}`);
+        }
+    }
     onSceneTransition(newSceneKey) {
         const visibleGroups = sceneUiVisibility[newSceneKey] || [];
         for (const [name, uiElement] of this.uiElements.entries()) {

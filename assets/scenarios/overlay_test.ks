@@ -4,7 +4,7 @@
 [eval exp="sf.overlay_count = (sf.overlay_count || 0) + 1"]
 [chara_show name="yuna" pos="center" time=500]
 [wait time=500]
-[showwindow]
+
 yuna:「アクションシーンの上に、私が表示されていますか？」
 yuna:「背後ではPLAYERの文字が動き続けているはずです。」
 
@@ -29,7 +29,7 @@ yuna:「スコアに100ポイント加算しました。[s]」
 *common_route
 yuna:「これでテストは完了です。確認できたら、この会話を終了します。」
 [chara_hide name="yuna" time=500]
-[hidewindow time=500]
+
 [wait time=500]
 
 ; ★ 最後に必ずoverlay_endを呼んでシーンを閉じる

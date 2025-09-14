@@ -56,7 +56,12 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
         this.choiceInputBlocker = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height)
             .setInteractive().setVisible(false).setDepth(25);
-        
+        this.uiScene = this.scene.get('UIScene');
+
+        // ★★★ 「使う宣言」を追加 ★★★
+        if (this.uiScene) {
+            this.uiScene.setElementVisible('message_window', true);
+        }
         // 3. UISceneからmessageWindowを取得し、そのdepthも引き上げる
         const messageWindow = this.uiScene.uiElements.get('message_window');
         if (!messageWindow) { return; }
@@ -195,7 +200,12 @@ export default class NovelOverlayScene extends Phaser.Scene {
 
         // ★ UISceneの表示を、戻り先のシーンに合わせて更新するよう依頼
         if (this.uiScene) { this.uiScene.onSceneTransition(this.returnTo); }
-
+if (this.uiScene) {
+            const messageWindow = this.uiScene.uiElements.get('message_window');
+            if (messageWindow) {
+                messageWindow.setVisible(false);
+            }
+        }
         // ★ SystemSceneに入力制御の解除などを依頼
         this.scene.get('SystemScene').events.emit('end-overlay', {
             from: this.scene.key,
