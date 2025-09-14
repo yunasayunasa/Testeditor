@@ -125,7 +125,20 @@ export default class EditorUI {
     // =================================================================
     // UI構築・更新メソッド群
     // =================================================================
-    
+      /**
+     * ★★★ これが不足していたメソッドです ★★★
+     * SystemSceneから呼び出され、UIとプラグインの初期連携を開始する
+     */
+    start() {
+        // この時点では、this.plugin が確実に存在し、
+        // plugin側もthis.editorUIを認識していることが保証されています。
+        
+        // 1. プラグインに、EditorUIが持つ初期レイヤー状態を通知します
+        this.plugin.updateLayerStates(this.layers);
+        
+        // 2. プラグインの状態が整ったので、初めてレイヤーパネルを構築します
+        this.buildLayerPanel();
+    }
     setEditorMode(mode) {
         if (this.currentEditorMode === mode) return;
         this.currentEditorMode = mode;
