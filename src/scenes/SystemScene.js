@@ -169,29 +169,14 @@ _startInitialGame(initialData) {
 
      const uiScene = this.scene.get('UIScene');
 
-        // ★★★ 核心の修正 ★★★
-        // GameSceneの起動と監視を、UISceneの準備完了を待ってから行う
         uiScene.events.once('scene-ready', () => {
-            console.log("[SystemScene] UIScene is ready. Now starting and monitoring GameScene.");
-
-            // --- GameSceneの完了を待つリスナーを先に登録 ---
-            const gameScene = this.scene.get('GameScene');
-            gameScene.events.once('gameScene-load-complete', () => {
-                // GameSceneの準備が本当に完了したら、遷移完了処理を行う
-                this._onTransitionComplete('GameScene');
-            });
+            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
             
-            // --- リスナー登録後に、GameSceneを起動 ---
-            console.log("[SystemScene] Running GameScene now.");
-            this.scene.run('GameScene', {
+            // ★★★ あなたの元の、そして正しかったロジックに戻します ★★★
+            this._startAndMonitorScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
-
-            // ★ SystemScene側で、起動と同時にグローバルな入力を無効化
-            this.isProcessingTransition = true;
-            this.game.input.enabled = false;
-            console.log(`[SystemScene] Global input disabled while GameScene is loading.`);
         });
 
         console.log("[SystemScene] Running UIScene now.");
@@ -392,34 +377,38 @@ _startInitialGame(initialData) {
      * @param {string} sceneKey - 起動するシーンのキー
      * @param {object} params - シーンに渡すデータ
      */
-     _startAndMonitorScene(sceneKey, params) {
-        // GameSceneの初回起動は _startInitialGame が担当するので、ここでは何もしない
-        if (sceneKey === 'GameScene' && !this.scene.isActive(sceneKey)) {
-             console.warn("[SystemScene] _startAndMonitorScene was called for initial GameScene launch. This is now handled by _startInitialGame.");
-             return;
+     /**
+     * ★★★ 究極の最終FIX版 ★★★
+     * 新しいシーンを起動し、完了まで監視するコアメソッド。
+     * GameSceneが既に存在する場合の再起動に対応。
+     */
+    _startAndMonitorScene(sceneKey, params) {
+        if (this.isProcessingTransition) {
+            console.warn(`[SystemScene] Transition is already in progress. Request for '${sceneKey}' ignored.`);
+            return;
         }
 
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
-        console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。ゲーム全体の入力を無効化。`);
+        console.log(`[SystemScene] Starting scene '${sceneKey}'. Global input disabled.`);
 
-        this.tweens.killAll();
-        console.log("[SystemScene] すべての既存Tweenを強制終了しました。");
+        // ★★★ 既にシーンが存在する場合（ノベル復帰など）は、一度stopさせてからrunする ★★★
+        if (this.scene.isActive(sceneKey)) {
+            this.scene.stop(sceneKey);
+        }
 
         const targetScene = this.scene.get(sceneKey);
         
-        // 完了イベントを決定
         const completionEvent = (sceneKey === 'GameScene')
             ? 'gameScene-load-complete'
             : 'scene-ready';
 
-        // ★★★ 核心: 完了イベントを一度だけリッスンする ★★★
+        // 完了イベントを一度だけリッスンする
         targetScene.events.once(completionEvent, () => {
             this._onTransitionComplete(sceneKey);
         });
 
-        // リスナーを登録した後に、シーンの起動/再開を行う
-        // launchではなくrunを使うことで、すでに存在するシーンでも確実に実行される
+        // リスナー登録後に、シーンをrunする（あなたの元の正しいロジック）
         this.scene.run(sceneKey, params);
     }
     /**
