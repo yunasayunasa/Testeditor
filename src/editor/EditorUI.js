@@ -71,21 +71,7 @@ export default class EditorUI {
        this.layerListContainer = document.getElementById('layer-list');
     }
 
-   replaceListener(element, event, handler) {
-        if (!element) return null; // elementがnullなら何もしない
-        // ▼ elementがDOMツリーに属しているか確認 ▼
-        if (!element.parentNode) {
-            // console.warn("replaceListener: Element is not in the DOM.", element);
-            // DOMにない要素に直接リスナーを追加する
-            element.addEventListener(event, handler);
-
-            return element;
-        }
-        const newElement = element.cloneNode(true);
-        element.parentNode.replaceChild(newElement, element);
-        newElement.addEventListener(event, handler);
-        return newElement;
-    }
+  
 
     getActiveGameScene() {
         return this.plugin?.getActiveGameScene();
@@ -103,9 +89,36 @@ export default class EditorUI {
         //レイヤー関係
         document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
         
-        // ▼▼▼ レイヤー追加ボタンのリスナーを追加 ▼▼▼
-        document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
-        
+          // --- レイヤーリスト全体に、一つのクリックリスナーを登録 ---
+        const layerListContainer = document.getElementById('layer-list');
+        if (layerListContainer) {
+            layerListContainer.addEventListener('click', (event) => {
+                const target = event.target;
+                
+                // クリックされた要素の最も近い親である .layer-item を探す
+                const layerItem = target.closest('.layer-item');
+                if (!layerItem) return; // レイヤーアイテムの外側なら何もしない
+
+                // layer-item が持つデータ属性から、レイヤー名を取得
+                const layerName = layerItem.dataset.layerName;
+                if (!layerName) return;
+
+                // --- どのボタンがクリックされたかを、クラス名で判別 ---
+                if (target.classList.contains('layer-visibility-btn')) {
+                    this.toggleLayerVisibility(layerName);
+                }
+                else if (target.classList.contains('layer-lock-btn')) {
+                    this.toggleLayerLock(layerName);
+                }
+                else if (target.classList.contains('layer-active-indicator')) {
+                    this.setActiveLayer(layerName);
+                }
+                else {
+                    // ボタン以外（レイヤー名の部分など）がクリックされたら、レイヤーを選択
+                    this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
+                }
+            });
+        }
         // カメラコントロール
         if (this.cameraControls) this.cameraControls.style.display = 'flex';
         this.zoomInBtn = this.replaceListener(this.zoomInBtn, 'click', () => this.plugin.zoomCamera(0.2));
@@ -612,10 +625,10 @@ export default class EditorUI {
     
     // --- レイヤーパネルの構築と更新 ---
     
-    /**
-     * ★★★ 最終FIX版 ★★★
+     /**
+     * ★★★ イベント委譲版 ★★★
      * レイヤーパネルの構築と更新。
-     * イベントリスナーの登録を、安全な replaceListener 方式に統一する。
+     * 各ボタンに識別のためのデータ属性やクラス名を設定する。
      */
     buildLayerPanel() {
         const layerListContainer = document.getElementById('layer-list');
@@ -625,58 +638,38 @@ export default class EditorUI {
         this.layers.forEach(layer => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'layer-item';
-            
+            itemDiv.dataset.layerName = layer.name; // ★ 識別のためのデータ属性
+
             if (this.plugin.selectedLayer && layer.name === this.plugin.selectedLayer.name) {
                 itemDiv.classList.add('active');
             }
-            
-            // --- 表示/非表示ボタン (👁️) ---
-            const visibilityBtn = document.createElement('button');
-            visibilityBtn.className = 'layer-control';
-            visibilityBtn.innerHTML = layer.visible ? '👁️' : '—';
-            
-            // --- ロック/アンロックボタン (🔒) ---
-            const lockBtn = document.createElement('button');
-            lockBtn.className = 'layer-control';
-            lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
-            
+
             // --- アクティブ化インジケータ ---
             const activeIndicator = document.createElement('div');
-            // ... (インジケータのスタイル設定はそのまま)
+            activeIndicator.className = 'layer-active-indicator'; // ★ 識別のためのクラス名
+            // (スタイル設定はCSSで行うのが望ましい)
             if(layer.name === this.activeLayerName) {
-                activeIndicator.style.backgroundColor = '#4CAF50';
+                activeIndicator.classList.add('active');
             }
+            
+            // --- 表示/非表示ボタン ---
+            const visibilityBtn = document.createElement('button');
+            visibilityBtn.className = 'layer-control layer-visibility-btn'; // ★ 識別のためのクラス名
+            visibilityBtn.innerHTML = layer.visible ? '👁️' : '—';
+            
+            // --- ロック/アンロックボタン ---
+            const lockBtn = document.createElement('button');
+            lockBtn.className = 'layer-control layer-lock-btn'; // ★ 識別のためのクラス名
+            lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
 
-            // --- レイヤー名 ---
             const nameSpan = document.createElement('span');
             nameSpan.className = 'layer-name';
             nameSpan.innerText = layer.name;
 
-            // --- 要素をDOMに追加 ---
             itemDiv.append(activeIndicator, visibilityBtn, lockBtn, nameSpan);
             layerListContainer.appendChild(itemDiv);
-
-            // ▼▼▼【ここからが核心の修正です】▼▼▼
-            // --------------------------------------------------------------------
-            // --- DOMに追加した後で、replaceListenerを使ってイベントを登録 ---
-            this.replaceListener(itemDiv, 'click', (e) => {
-                e.stopPropagation();
-                this.plugin.selectLayer(layer);
-            });
-            this.replaceListener(visibilityBtn, 'click', (e) => {
-                e.stopPropagation();
-                this.toggleLayerVisibility(layer.name);
-            });
-            this.replaceListener(lockBtn, 'click', (e) => {
-                e.stopPropagation();
-                this.toggleLayerLock(layer.name);
-            });
-            this.replaceListener(activeIndicator, 'click', (e) => {
-                e.stopPropagation();
-                this.setActiveLayer(layer.name);
-            });
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            
+            // ★★★ ここでのイベントリスナー登録はすべて不要になる ★★★
         });
     }
 
@@ -729,16 +722,21 @@ export default class EditorUI {
         if (!layer) return;
 
         if (confirm(`本当にレイヤー '${layerName}' を削除しますか？\nこのレイヤー上のすべてのオブジェクトも削除されます！`)) {
-            // 1. シーンから該当レイヤーのオブジェクトをすべて削除
-            const scene = this.getActiveGameScene();
-            if (scene) {
-                const allObjects = [...this.plugin.editableObjects.get(scene.scene.key)];
-                allObjects.forEach(obj => {
-                    if (obj.getData('layer') === layerName) {
-                        obj.destroy();
-                    }
+             // 1. シーンから該当レイヤーのオブジェクトをすべて削除
+        const scene = this.getActiveGameScene();
+        if (scene) {
+            // ★ editableObjects は Map<string, Set> なので、まずSetを取得
+            const sceneObjects = this.plugin.editableObjects.get(scene.scene.key);
+            if (sceneObjects) {
+                // ★ SetをArrayに変換してからループ
+                const objectsToDelete = Array.from(sceneObjects).filter(obj => obj.getData('layer') === layerName);
+                
+                objectsToDelete.forEach(obj => {
+                    sceneObjects.delete(obj); // Setからも削除
+                    obj.destroy();
                 });
             }
+        }
 
             // 2. this.layers 配列から削除
             this.layers = this.layers.filter(l => l.name !== layerName);
