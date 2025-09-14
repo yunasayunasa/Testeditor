@@ -111,6 +111,33 @@ export default class SystemScene extends Phaser.Scene {
         
     }
 
+    /**
+     * ★★★ 統一されたシーン起動シーケンス ★★★
+     * @param {Array<object>} scenesToRun - 起動するシーンの情報の配列 e.g., [{ key: 'MyScene', params: {} }]
+     * @param {string} finalSceneKey - 完了後にフォーカスするシーンのキー
+     */
+    _startSceneSequence(scenesToRun, finalSceneKey) {
+        if (this.isProcessingTransition) return;
+        this.isProcessingTransition = true;
+        this.game.input.enabled = false;
+
+        // --- 1. 待機リストを作成 ---
+        this.scenesToWaitFor.clear();
+        scenesToRun.forEach(s => this.scenesToWaitFor.add(s.key));
+        console.log(`[SystemScene] Input disabled. Waiting for [${scenesToRun.map(s=>s.key).join(', ')}]...`);
+
+        // --- 2. 完了処理を予約 ---
+        this.onAllScenesReadyCallback = () => {
+            this.scene.get('UIScene').onSceneTransition(finalSceneKey);
+            this._onTransitionComplete(finalSceneKey);
+        };
+        
+        // --- 3. シーンをすべて起動 ---
+        scenesToRun.forEach(s => {
+            if (this.scene.isActive(s.key)) this.scene.stop(s.key);
+            this.scene.run(s.key, s.params);
+        });
+    }
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
@@ -139,80 +166,35 @@ export default class SystemScene extends Phaser.Scene {
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
 
-_startInitialGame(initialData) {
-    this.globalCharaDefs = initialData.charaDefs;
-    console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
-
-    // ▼▼▼【ここからが修正箇所です】▼▼▼
-
-    // --- UIScene専用の設定オブジェクトを定義 ---
-    const uiSceneConfig = {
-        physics: {
-            matter: {
-                enable: false // UISceneではMatter.jsを無効化する
-            }
-        }
-    };
-
-    // main.jsで登録されていないので、ここで必ず追加する
-    if (!this.scene.get('UIScene')) {
-        // ★第4引数に、専用の設定オブジェクトを渡す★
-        this.scene.add('UIScene', UIScene, false, uiSceneConfig);
-        console.log("[SystemScene] UISceneを「物理演算無効」で動的に追加しました。");
+  _startInitialGame(initialData) {
+        // --- 事前準備 ---
+        this.globalCharaDefs = initialData.charaDefs;
+        if (!this.scene.get('UIScene')) this.scene.add('UIScene', UIScene, false, { physics: { matter: { enable: false } } });
+        if (!this.scene.get('GameScene')) this.scene.add('GameScene', GameScene, false);
+        
+        // --- シーンシーケンスを起動 ---
+        this._startSceneSequence([
+            { key: 'UIScene', params: {} },
+            { key: 'GameScene', params: {
+                charaDefs: this.globalCharaDefs,
+                startScenario: initialData.startScenario
+            }}
+        ], 'GameScene');
     }
 
-    if (!this.scene.get('GameScene')) {
-        // GameSceneはデフォルトの物理設定(matter: enable=true)を使いたいので、
-        // 設定オブジェクトは渡さない（あるいは空の{}を渡す）
-        this.scene.add('GameScene', GameScene, false);
-        console.log("[SystemScene] GameSceneを動的に追加しました。");
-    }
-    
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: #222; color: #ffff00; font-size: 1.4em;');
-        
-        console.log("[SystemScene] Starting initial game sequence...");
-        
-        // --- 1. これから起動する「待つべきシーン」をリストアップ ---
-        this.scenesToWaitFor.add('UIScene');
-        this.scenesToWaitFor.add('GameScene');
-
-        // --- 2. 「すべてのシーン」の準備が完了した時の処理を予約 ---
-        this.onAllScenesReadyCallback = () => {
-            // このコールバックは、UISceneとGameSceneの両方がreportSceneReadyを呼んだ後に実行される
-            this._onTransitionComplete('GameScene');
-        };
-
-        // --- 3. 起動と入力無効化 ---
-        this.isProcessingTransition = true;
-        this.game.input.enabled = false;
-         // ★★★ ログ爆弾 C ★★★
-        console.log(`%c[LOG BOMB C] >> COMMAND: RUN 'UIScene' >>`, 'background: #222; color: #00ffff; font-size: 1.2em;');
-        this.scene.run('UIScene');
-        
-        // ★★★ ログ爆弾 D ★★★
-        console.log(`%c[LOG BOMB D] >> COMMAND: RUN 'GameScene' >>`, 'background: #222; color: #00ffff; font-size: 1.2em;');
-        this.scene.run('GameScene', {
-            charaDefs: this.globalCharaDefs,
-            startScenario: initialData.startScenario,
-        });
-    }
-   /**
-     * 他のシーンから「準備完了」の報告を受け取るための公式な窓口
-     * @param {string} sceneKey - 報告元のシーンキー
+    /**
+     * ★★★ 新規・公式な完了報告受付メソッド ★★★
      */
     reportSceneReady(sceneKey) {
-           console.log(`%c[LOG BOMB A] << REPORT RECEIVED from [${sceneKey}] >>`, 'background: #222; color: #ff00ff; font-size: 1.2em;');
-        console.log(`[SystemScene] Readiness report received from: ${sceneKey}`);
-        this.scenesToWaitFor.delete(sceneKey); // 待機リストから削除
+        console.log(`%c[SystemScene] << REPORT RECEIVED from [${sceneKey}] >>`, 'color: #ff00ff;');
+        this.scenesToWaitFor.delete(sceneKey);
 
-        // 待機リストが空になったら、コールバックを実行
         if (this.scenesToWaitFor.size === 0 && this.onAllScenesReadyCallback) {
-            console.log(`[SystemScene] All scenes are ready!`);
             this.onAllScenesReadyCallback();
             this.onAllScenesReadyCallback = null;
         }
     }
+
 
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
@@ -230,17 +212,14 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
      * ★★★ 究極の最終FIX版 ★★★
      * GameSceneからの[jump]など、シンプルな遷移を処理する
      */
-    _handleSimpleTransition(data) {
-        if (this.isProcessingTransition) return;
-        
-        console.log(`[SystemScene | Final Fix] Simple transition from ${data.from} to ${data.to}`);
-
+   _handleSimpleTransition(data) {
         // --- 古いシーンを停止 ---
-        this.scene.stop(data.from);
-        
-        // --- 新しいシーンを起動・監視 ---
-        // ★ _startInitialGame と同じ、最も安全な方法に統一
-        this._startAndMonitorScene(data.to, data.params);
+        if (this.scene.isActive(data.from)) this.scene.stop(data.from);
+
+        // --- シーンシーケンスを起動 ---
+        this._startSceneSequence([
+            { key: data.to, params: data.params }
+        ], data.to);
     }
 
     /**
@@ -298,43 +277,21 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
      * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
      * @param {object} data - { from: string, params: object }
      */
-    _handleReturnToNovel(data) {
+     _handleReturnToNovel(data) {
         const fromSceneKey = data.from;
-        console.log(`[SystemScene] ノベル復帰リクエストを受信 (from: ${fromSceneKey})`);
-
-        // 現在のGameSceneとサブシーンを停止させる
-        if (this.scene.isActive('GameScene')) {
-            this.scene.stop('GameScene');
-        }
-        if (this.scene.isActive(fromSceneKey)) {
-            this.scene.stop(fromSceneKey);
-        }
+        if (this.scene.isActive(fromSceneKey)) this.scene.stop(fromSceneKey);
         
-       const uiScene = this.scene.get('UIScene');
-        if (uiScene) {
-            // ★ ここでも onSceneTransition を呼ぶだけ
-            uiScene.onSceneTransition('GameScene');
-        }
-
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが全てを解決する、唯一の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        console.log("[SystemScene] GameSceneを「ロードモード」で再起動します。");
-        // GameSceneを起動する際に、どのスロットからロードするかを`init`データで渡す
-        this.scene.launch('GameScene', {
-            loadSlot: 0, // ★ オートセーブスロット(0)からロードするように指示
-            charaDefs: this.globalCharaDefs,
-            resumedFrom: fromSceneKey,
-            returnParams: data.params
-        });
-
-        // ★★★ _startAndMonitorSceneは使わない ★★★
-        // なぜなら、新しいGameSceneの起動と完了監視は、launchによって
-        // Phaserのシーンマネージャーが自動的に行ってくれるため。
-        // そして、GameSceneのcreateがloadSlotを元に正しくperformLoadを呼び出す。
+        // --- シーンシーケンスを起動 ---
+        this._startSceneSequence([
+            { key: 'UIScene', params: {} }, // UISceneも再起動シーケンスに含めるのが安全
+            { key: 'GameScene', params: {
+                loadSlot: 0,
+                charaDefs: this.globalCharaDefs,
+                resumedFrom: fromSceneKey,
+                returnParams: data.params
+            }}
+        ], 'GameScene');
     }
-
    // src/scenes/SystemScene.js
 
     /**
@@ -428,17 +385,13 @@ console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: 
         // --- 2. 起動する ---
         this.scene.run(sceneKey, params);
     }
-    /**
-     * シーン遷移が完全に完了したときの処理
-     * @param {string} sceneKey - 完了したシーンのキー
-     */
-     // _onTransitionComplete は変更なしでOK
-    _onTransitionComplete(sceneKey) {
+     _onTransitionComplete(sceneKey) {
         this.isProcessingTransition = false;
         this.game.input.enabled = true;
-        console.log(`[SystemScene] Transition to '${sceneKey}' is complete. Global input enabled.`);
+        console.log(`%c[SystemScene] Transition to '${sceneKey}' is COMPLETE. Global input enabled.`, 'font-weight: bold; color: lightgreen;');
         this.events.emit('transition-complete', sceneKey);
     }
+    
      /**
      * セーブ/ロード画面などのサブシーン起動リクエストを処理する
      * @param {object} data - { targetScene: string, launchData: object }
