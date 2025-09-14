@@ -24,7 +24,7 @@ export default class GameScene extends Phaser.Scene {
     preload() { this.load.text('test', 'assets/test.ks'); }
 
  async create(data) {
-        console.log("GameScene: create処理を開始します。");
+        console.log(`%c[LOG BOMB H] == GameScene CREATE START ==`, 'background: #222; color: #90ee90; font-size: 1.4em;');
         this.cameras.main.setBackgroundColor('#000000');
         
         this.soundManager = this.registry.get('soundManager');
@@ -83,17 +83,15 @@ export default class GameScene extends Phaser.Scene {
         this.isSceneFullyReady = true;
         this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
         
-        // ★★★ 完了報告と、シナリオ開始の号砲を、必ずここで鳴らす ★★★
+        // ★★★ ログ爆弾 I ★★★
+        console.log(`%c[LOG BOMB I] >> REPORTING READY from [GameScene] >>`, 'background: #222; color: #ff00ff; font-size: 1.2em;');
         this.scene.get('SystemScene').reportSceneReady(this.scene.key);
         
-        // ★ ロード後の待機状態でない場合のみ、自動で最初の行へ進む
         if (!this.scenarioManager.isWaitingClick && !this.scenarioManager.isWaitingChoice) {
             this.time.delayedCall(10, () => {
                 if(this.scenarioManager) this.scenarioManager.next();
             });
         }
-        
-        console.log("GameScene: 準備完了。SystemSceneに通知し、シナリオ実行を準備します。");
     }
 
      /**

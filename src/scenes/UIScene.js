@@ -10,7 +10,8 @@ export default class UIScene extends Phaser.Scene {
     }
 
 create() {
-        console.log("UIScene: create started.");
+       console.log(`%c[LOG BOMB E] == UIScene CREATE START ==`, 'background: #222; color: #ffa500; font-size: 1.4em;');
+        
         this.scene.bringToTop();
 
         try {
@@ -31,6 +32,10 @@ create() {
         } catch (err) {
             console.error("UIScene: create failed.", err);
         }
+        console.log(`%c[LOG BOMB F] >> REPORTING READY from [UIScene] >>`, 'background: #222; color: #ff00ff; font-size: 1.2em;');
+        this.scene.get('SystemScene').reportSceneReady(this.scene.key);
+        
+        console.log(`%c[LOG BOMB G] == UIScene CREATE END ==`, 'background: #222; color: #ffa500; font-size: 1.4em;');
     }
    // src/scenes/UIScene.js
 

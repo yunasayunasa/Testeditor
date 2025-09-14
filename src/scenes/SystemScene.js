@@ -169,7 +169,8 @@ _startInitialGame(initialData) {
     }
     
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+console.log(`%c[LOG BOMB B] == STARTING INITIAL GAME SEQUENCE ==`, 'background: #222; color: #ffff00; font-size: 1.4em;');
+        
         console.log("[SystemScene] Starting initial game sequence...");
         
         // --- 1. これから起動する「待つべきシーン」をリストアップ ---
@@ -185,23 +186,23 @@ _startInitialGame(initialData) {
         // --- 3. 起動と入力無効化 ---
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
-        console.log(`[SystemScene] Global input disabled. Waiting for [${Array.from(this.scenesToWaitFor).join(', ')}]...`);
-
-        // --- 4. シーンを（ほぼ）同時に起動 ---
+         // ★★★ ログ爆弾 C ★★★
+        console.log(`%c[LOG BOMB C] >> COMMAND: RUN 'UIScene' >>`, 'background: #222; color: #00ffff; font-size: 1.2em;');
         this.scene.run('UIScene');
+        
+        // ★★★ ログ爆弾 D ★★★
+        console.log(`%c[LOG BOMB D] >> COMMAND: RUN 'GameScene' >>`, 'background: #222; color: #00ffff; font-size: 1.2em;');
         this.scene.run('GameScene', {
             charaDefs: this.globalCharaDefs,
             startScenario: initialData.startScenario,
         });
-        
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
    /**
      * 他のシーンから「準備完了」の報告を受け取るための公式な窓口
      * @param {string} sceneKey - 報告元のシーンキー
      */
     reportSceneReady(sceneKey) {
+           console.log(`%c[LOG BOMB A] << REPORT RECEIVED from [${sceneKey}] >>`, 'background: #222; color: #ff00ff; font-size: 1.2em;');
         console.log(`[SystemScene] Readiness report received from: ${sceneKey}`);
         this.scenesToWaitFor.delete(sceneKey); // 待機リストから削除
 
