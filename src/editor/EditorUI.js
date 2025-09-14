@@ -80,6 +80,31 @@ export default class EditorUI {
     // =================================================================
     // イベントリスナー初期化
     // =================================================================
+// in EditorUI.js
+
+    /**
+     * ★★★ 復活・修正版 ★★★
+     * 要素にイベントリスナーを安全に設定するヘルパー。
+     * 要素がDOMに存在しない場合も考慮する。
+     */
+    replaceListener(element, event, handler) {
+        if (!element) {
+            console.warn("replaceListener: Target element is null.");
+            return null;
+        }
+
+        // --- 古いリスナーを確実に剥がすための、より強力な方法 ---
+        // 1. 要素を複製する
+        const newElement = element.cloneNode(true);
+        // 2. 新しい要素にイベントリスナーを設定する
+        newElement.addEventListener(event, handler);
+        // 3. もし元の要素がDOMにあれば、新しい要素と入れ替える
+        if (element.parentNode) {
+            element.parentNode.replaceChild(newElement, element);
+        }
+        
+        return newElement;
+    }
 
     initializeEventListeners() {
         // --- UIボタンのリスナー ---
