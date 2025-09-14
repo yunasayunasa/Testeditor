@@ -13,11 +13,13 @@ export default class EditorUI {
         this.currentEditorMode = 'select';
         this.currentAssetTab = 'image';
         
-        // --- タイルマップエディタ用プロパティ ---
-        this.currentTileset = null;
-        this.selectedTileIndex = 0;
-        this.tilesetHighlight = null;
-        this.tileMarker = null;
+         //レイヤープロパティ
+        this.layers = [
+        { name: 'Foreground', visible: true, locked: false },
+        { name: 'Gameplay', visible: true, locked: false },
+        { name: 'Background', visible: true, locked: false },
+    ];
+    this.activeLayerName = 'Gameplay';
 
         // --- DOM要素の参照 ---
         this.getDomElements();
@@ -31,6 +33,8 @@ export default class EditorUI {
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
+this.buildLayerPanel(); 
+       
     }
     
     // =================================================================
