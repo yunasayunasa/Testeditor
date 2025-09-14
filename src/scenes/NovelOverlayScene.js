@@ -56,7 +56,8 @@ create() {
             // --- 2. UIの準備 ---
         // ★★★ 変更箇所 ★★★
         // setElementVisibleでは座標が戻らないため、座標もリセットするshowMessageWindowを呼ぶ
-        this.uiScene.showMessageWindow();
+      this.scene.get('SystemScene').events.emit('transition-complete', this.scene.key);
+   
         // this.uiScene.setElementVisible('message_window', true); // ← この行は削除
         // this.children.add(this.messageWindow); // ← この行も削除したまま
         // --- 3. レイヤーとScenarioManagerの生成 ---
@@ -200,12 +201,7 @@ create() {
         // ★ message_window はもうこのシーンの子ではないので、特別な処理は不要
         this.children.removeAll(true); // キャラクターレイヤーなどを破棄
 
-         // --- 4. メッセージウィンドウを非表示にする ---
-        if (this.uiScene) {
-            // ★★★ 変更箇所 ★★★
-            // setElementVisible(false)の代わりに、座標を画面外に移動させるhideMessageWindowを呼ぶ
-            this.uiScene.hideMessageWindow();
-        }
+       
         // --- 5. プロパティをリセット ---
         this.isSceneFullyReady = false;
         this.layer = {};

@@ -41,5 +41,6 @@ export const sceneUiVisibility = {
     'JumpScene': ['controls', 'action',], // 'hud' 'menu' はないのでHUDやメニューは出ない
     'BattleScene': ['hud', 'battle'],
      'ActionScene': ['menu', 'game'],
-    'TitleScene': []
+    'TitleScene': [],
+     'NovelOverlayScene': ['game'], // ★★★ この行を追加 ★★★
 };
