@@ -17,13 +17,15 @@ export default class ActionInterpreter {
      * @param {string} actionsString - アクション文字列
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
+ // in ActionInterpreter.js run()
+
   async run(source, actionsString, collidedTarget = null) {
-     if (!source || !source.scene || !source.scene.scene.isActive()) {
-        // シーンがアクティブでない（シャットダウン中など）場合は、アクションを実行しない
+    if (!source || !source.scene || !source.scene.scene.isActive()) {
         return;
     }
-    this.currentSource = source;
-    this.currentTarget = collidedTarget;
+    this.scene = source.scene; // ★ 実行時のシーンをプロパティとして保持
+    this.gameObject = source; // ★ self もプロパティとして保持
+    this.targetObject = collidedTarget; // ★ other もプロパティとして保持
 
     const tags = actionsString.match(/\[(.*?)\]/g) || [];
 
@@ -31,36 +33,20 @@ export default class ActionInterpreter {
         try {
             const { tagName, params } = this.parseTag(tagString);
             
-            // ▼▼▼ ターゲット解決ロジックで、source.sceneを使うように変更 ▼▼▼
-            const currentScene = source.scene;
-            if (!currentScene) {
-                console.warn(`[ActionInterpreter] Source object has no valid scene.`);
-                continue;
-            }
-            
-            let finalTarget = source;
-            if (params.target) {
-                if (params.target === 'self') {
-                    finalTarget = source;
-                } else if (params.target === 'other' && collidedTarget) {
-                    finalTarget = collidedTarget;
-                } else {
-                    // ★★★ this.sceneではなく、currentSceneから探す ★★★
-                    finalTarget = currentScene.children.getByName(params.target);
-                }
-            }
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            // ★ findTarget ヘルパーメソッドを新設して、ターゲット解決を任せる
+            const finalTarget = this.findTarget(params.target);
 
             if (!finalTarget) {
-                console.warn(`[ActionInterpreter] Target not found: '${params.target}'`);
+                console.warn(`[ActionInterpreter] Target not found: '${params.target}' for tag [${tagName}]`);
                 continue;
             }
             
             const handler = this.tagHandlers[tagName];
             if (handler) {
-                // ▼▼▼ ハンドラに渡す第一引数を、ActionInterpreter自身(this)から、
-                //     現在のシーンインスタンス(currentScene)に変更する ▼▼▼
-                await handler(currentScene, finalTarget, params);
+                // ▼▼▼【ここが核心の修正です】▼▼▼
+                // ハンドラには、シーンではなく、ActionInterpreterのインスタンス自身(this)を渡す。
+                // これにより、ハンドラは interpreter.scene や interpreter.gameObject を参照できる。
+                await handler(this, params, finalTarget);
             } else {
                 console.warn(`[ActionInterpreter] Unknown action tag: ${tagName}`);
             }
@@ -68,10 +54,24 @@ export default class ActionInterpreter {
             console.error(`[ActionInterpreter] Error running action: ${tagString}`, error);
         }
     }
-    
-    this.currentSource = null;
-    this.currentTarget = null;
 }
+
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ターゲット文字列から、実際のGameObjectを見つけ出す
+     * @param {string} targetId - "self", "other", またはオブジェクト名
+     * @returns {Phaser.GameObjects.GameObject | null}
+     */
+    findTarget(targetId) {
+        if (!targetId || targetId === 'self') {
+            return this.gameObject; // self
+        }
+        if (targetId === 'other') {
+            return this.targetObject; // other
+        }
+        // それ以外は、シーンから名前で検索
+        return this.scene.children.getByName(targetId);
+    }
 
     /**
      

@@ -2,14 +2,14 @@
 
 /**
  * [set_collision] タグハンドラ
- * オブジェクトの衝突カテゴリとマスクを「名前」で設定する
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
  * @param {object} params - タグのパラメータ
+ * @param {Phaser.GameObjects.GameObject} targetObject - 適用対象のオブジェクト
  */
-export default function setCollisionHandler(interpreter, params) {
-    const targetId = params.target;
-    if (!targetId) return;
-
+export default function setCollisionHandler(interpreter, params, targetObject) {
+    // ターゲットは既に解決済みなので、ここで探す必要はない
+    if (!targetObject || !targetObject.body) return;
+    
     const targetObject = interpreter.findTarget(targetId);
     if (!targetObject || !targetObject.body) return;
 

@@ -1,16 +1,16 @@
 // /src/handlers/events/return_novel.js
 
 /**
- * ★★★ 最終FIX版 ★★★
  * [return_novel] タグハンドラ
- * 既存のSystemScene._handleReturnToNovelが期待するデータ形式でイベントを発行する
  * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ (e.g., params="{ key: 'value' }")
+ * @param {object} params - タグのパラメータ
  */
 export default function returnNovelHandler(interpreter, params) {
+    // インタプリタが保持しているシーンへの参照を使う
     const scene = interpreter.scene;
-    const fromSceneKey = scene.scene.key;
+    if (!scene) return;
 
+    const fromSceneKey = scene.scene.key;
     console.log(`[return_novel] Requesting return to novel from '${fromSceneKey}'`);
 
     // --- SystemSceneが期待するデータオブジェクトを作成 ---
