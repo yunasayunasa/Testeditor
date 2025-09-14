@@ -94,7 +94,7 @@ this.matter.world.on('beforeupdate', (event) => {
 
     this.buildSceneFromLayout(layoutData);
 }
- BaseGameScene.js
+ 
 
     /**
      * ★★★ 修正版 ★★★
