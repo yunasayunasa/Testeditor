@@ -97,14 +97,21 @@ export default class NovelOverlayScene extends Phaser.Scene {
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
         this.scenarioManager.registerTag('overlay_end', handleOverlayEnd); // 専用タグを追加
            
-        // --- 6. シナリオを開始 ---
-        this.scenarioManager.loadScenario(this.startScenario);
-        this._finalizeSetup();
+         // --- 6. シナリオを開始 ---
+        this.scenarioManager.loadScenario(this.startScenario, this.startLabel).then(() => {
+            // ★ loadScenarioが終わってから、最初のnextを呼ぶ
+            this._finalizeSetup();
+        });
     }
 
-    _finalizeSetup() {
+   _finalizeSetup() {
         this.isSceneFullyReady = true;
-        this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
+
+        // ▼▼▼ リスナー登録を、後で解除できるように参照を保持する ▼▼▼
+        this.onClickHandler = () => { if (this.scenarioManager) this.scenarioManager.onClick(); };
+        this.input.on('pointerdown', this.onClickHandler);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         this.time.delayedCall(10, () => this.scenarioManager.next());
         console.log("[NovelOverlayScene] create 完了");
     }
@@ -197,20 +204,43 @@ export default class NovelOverlayScene extends Phaser.Scene {
         }
     }
 
+     /**
+     * ★★★ 最終FIX版 ★★★
+     * シーン終了時に、createで生成したものをすべて破棄・リセットする
+     */
     shutdown() {
         console.log("[NovelOverlayScene] shutdown されました。");
-        const messageWindow = this.uiScene.uiElements.get('message_window');
-       
 
-        // ★ UISceneの表示を、戻り先のシーンに合わせて更新するよう依頼
-        if (this.uiScene) { this.uiScene.onSceneTransition(this.returnTo); }
-if (this.uiScene) {
-            
-            if (messageWindow) {
-                messageWindow.setVisible(false);
+        // --- 1. 登録したイベントリスナーを解除 ---
+        if (this.onClickHandler) {
+            this.input.off('pointerdown', this.onClickHandler);
+            this.onClickHandler = null;
+        }
+
+        // --- 2. ScenarioManagerを停止・破棄 ---
+        if (this.scenarioManager) {
+            this.scenarioManager.stop();
+            this.scenarioManager = null; // ★ 参照を完全に破棄
+        }
+
+        // --- 3. このシーンに追加したすべての子オブジェクト（キャラクターレイヤーなど）を破棄 ---
+        // これにより、2回目のcreateで新しいレイヤーが作られる
+        this.children.removeAll(true); // ★ trueで子要素もdestroy
+
+        // --- 4. メッセージウィンドウをUISceneに戻す ---
+        const messageWindow = this.uiScene.uiElements.get('message_window');
+        if (messageWindow) {
+            // ★ 親が既に破棄されている可能性があるので、add.existingの前にシーンの所属を確認
+            if (messageWindow.scene !== this.uiScene) {
+                 this.uiScene.add.existing(messageWindow);
             }
         }
-        // ★ SystemSceneに入力制御の解除などを依頼
+        
+        // --- 5. プロパティを初期値に戻す ---
+        this.isSceneFullyReady = false;
+        this.characters = {}; // キャラクター参照もリセット
+        
+        // --- 6. SystemSceneに終了を通知 (変更なし) ---
         this.scene.get('SystemScene').events.emit('end-overlay', {
             from: this.scene.key,
             returnTo: this.returnTo,
