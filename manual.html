@@ -555,3 +555,153 @@ Actions: [set_flip_x value=false]
     <li><strong>time:</strong> フェードアウトにかける時間をミリ秒で指定します。(デフォルト: <code>0</code> 即時停止)</li>
 </ul>
 <hr>
+
+<h3><pre>[set_collision target=... category=... mask=...]</pre></h3>
+<p>
+    <strong>機能:</strong> オブジェクトの物理的な衝突ルールを動的に変更します。<br>
+    Matter.jsのカテゴリ（自分は誰か）とマスク（誰と衝突するか）を設定します。
+</p>
+<p>
+    値は<strong>2進数</strong>の文字列で指定するのが推奨されます。(例: <code>"0b0010"</code>)
+</p>
+<p><strong>カテゴリの例:</strong></p>
+<ul>
+    <li><code>CATEGORY_PLAYER = "0b0001"</code> (1)</li>
+    <li><code>CATEGORY_ENEMY = "0b0010"</code> (2)</li>
+    <li><code>CATEGORY_WALL = "0b0100"</code> (4)</li>
+    <li><code>CATEGORY_PLAYER_BULLET = "0b1000"</code> (8)</li>
+</ul>
+<p><strong>マスクの例:</strong> (衝突させたいカテゴリのビットを立てる)</p>
+<ul>
+    <li>プレイヤーのマスク: <code>"0b0110"</code> (敵と壁に当たる)</li>
+    <li>プレイヤーの弾のマスク: <code>"0b0110"</code> (敵と壁に当たる)</li>
+    <li>敵のマスク: <code>"0b1101"</code> (プレイヤー、壁、プレイヤーの弾に当たる)</li>
+</ul>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li><strong>target (必須):</strong> 対象オブジェクトの名前。</li>
+    <li><strong>category:</strong> このオブジェクトが所属するカテゴリ。</li>
+    <li><strong>mask:</strong> このオブジェクトが衝突する相手のカテゴリのビットマスク。</li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; プレイヤーを3秒間、壁をすり抜けるゴースト状態にする
+[set_collision target=player mask="0b0010"] ; 敵にだけ当たる
+[wait time=3000]
+; 元の衝突ルールに戻す
+[set_collision target=player mask="0b0110"]
+</code>
+</pre>
+<hr>
+
+<h3><pre>[spawn_object prefab=... at=... props=...]</pre></h3>
+<p>
+    <strong>機能:</strong> 指定したプレハブから、新しいオブジェクトをシーンに生成（スポーン）します。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li><strong>prefab (必須):</strong> スポーンするプレハブのアセットキー。</li>
+    <li><strong>at:</strong> スポーンする位置。<code>self</code> (自分自身), <code>other</code> (衝突相手など), <code>pointer</code> (マウス/タッチ位置), またはオブジェクトの名前を指定できます。(デフォルト: <code>self</code>)</li>
+    <li>
+        <strong>props (【強化】):</strong> プレハブのプロパティを上書きするための<strong>JSON形式の文字列</strong>。ネストしたプロパティ（物理ボディの速度など）も変更できます。
+    </li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; プレイヤーの位置に、デフォルトの弾をスポーン
+[spawn_object prefab=bullet at=player]
+
+; プレイヤーの位置に、上書きした「高速な赤い弾」をスポーン
+[spawn_object prefab=bullet at=player props='{
+    "tint": "0xff0000",
+    "physics": {
+        "velocity": { "y": -800 }
+    }
+}']
+</code>
+</pre>
+<hr>
+<h3><pre>[set_data name=... value=...]</pre></h3>
+<p>
+    <strong>機能:</strong> <code>[eval]</code>タグの安全な代替として、ゲーム変数(<code>f.</code>)の値を設定します。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li><strong>name (必須):</strong> 設定するゲーム変数の名前。(<code>f.</code>は不要)</li>
+    <li><strong>value (必須):</strong> 設定する値。
+        <ul>
+            <li><code>"true"</code>, <code>"false"</code> は自動的に真偽値になります。</li>
+            <li><code>"123"</code>, <code>"5.5"</code> は自動的に数値になります。</li>
+            <li><code>"f.score + 100"</code> のように、既存のゲーム変数を使った計算式も指定できます。</li>
+            <li>上記以外は、文字列として扱われます。</li>
+        </ul>
+    </li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; イベントフラグを立てる
+[set_data name=talked_to_npc value=true]
+
+; スコアを100点加算する
+[set_data name=score value="f.score + 100"]
+
+; プレイヤーのHPを10減らす
+[set_data name=player_hp value="f.player_hp - 10"]
+
+; アイテム名をセットする
+[set_data name=last_item value="薬草"]
+</code>
+</pre>
+<hr>
+<!-- manual_return_novel.html -->
+<h3><pre>[return_novel params=...]</pre></h3>
+<p>
+    <strong>機能:</strong> 現在実行中のゲームシーンを終了し、中断していたノベルパートに復帰します。<br>
+    ゲームシーン中で変更された変数(<code>f.</code>)は、すべて自動的に引き継がれます。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li>
+        <strong>params (任意):</strong> 復帰後のノベルパートに渡したい追加の変数を、<strong>JSON形式の文字列</strong>で指定できます。渡された変数は、復帰後のシナリオで一時変数(<code>tf.</code>)として参照できます。(例: <code>tf.cleared_stage = 'stage1'</code>)
+    </li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; ボスを倒した後のイベント
+[set_data name=boss_defeated value=true]
+; どのステージをクリアしたかの情報を付けて、物語に戻る
+[return_novel params='{ "cleared_stage": "stage1" }']
+</code>
+</pre>
+<p>
+    復帰後の<code>GameScene</code>のシナリオ側:
+</p>
+<pre>
+<code>
+*on_resume_from_jump_scene
+[if exp="tf.cleared_stage === 'stage1'"]
+  yuna:「ステージ1をクリアしたのね！おめでとう！」
+[endif]
+</code>
+</pre>
+<hr>

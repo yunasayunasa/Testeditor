@@ -24,8 +24,9 @@ import cameraFadeHandler from './camera_fade.js'; // ★ 追加
 import cameraFollowHandler from './camera_follow.js'; // ★ 追加
 import playBgmHandler from './play_bgm.js'; // ★ 追加
 import stopBgmHandler from './stop_bgm.js'; // ★ 追加
-
-
+import setCollisionHandler from './set_collision.js';
+import setDataHandler from './set_data.js';
+import returnNovelHandler from './return_novel.js';
 
 
 
@@ -58,8 +59,9 @@ export const eventTagHandlers = {
 'camera_follow': cameraFollowHandler, // ★ 追加
 'play_bgm': playBgmHandler, // ★ 追加
     'stop_bgm': stopBgmHandler, // ★ 追加
-
-
+'set_collision': setCollisionHandler,
+    'set_data': setDataHandler,
+   'return_novel': returnNovelHandler,
 
 
 
