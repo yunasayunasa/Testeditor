@@ -174,26 +174,39 @@ registerUiElement(name, element, params) {
     }
    // in UIScene.js
 
-   onSceneTransition(toSceneKey) {
-        console.log(`[UIScene] Transitioning UI for scene: ${toSceneKey}`);
+   /**
+     * ★★★ 究極の最終FIX版 ★★★
+     * シーン遷移時に、各UI要素の表示/非表示を安全に切り替える
+     * @param {string} toSceneKey - 遷移先のシーンキー
+     */
+    onSceneTransition(toSceneKey) {
+        console.log(`[UIScene | Final Fix] Transitioning UI for scene: ${toSceneKey}`);
         
         // --- 自身の表示/非表示を管理 ---
-        // ★ GameScene, NovelOverlayScene の時だけ表示する
         const shouldBeVisible = (toSceneKey === 'GameScene' || toSceneKey === 'NovelOverlayScene');
         this.scene.setVisible(shouldBeVisible);
-        if (!shouldBeVisible) return; // 非表示なら、これ以上何もしない
+        
+        if (!this.uiRegistry) {
+            console.error("[UIScene] onSceneTransition cannot run because uiRegistry is missing.");
+            return;
+        }
 
         // --- どのUIを表示するかのロジック ---
-        // ★ this.uiRegistry が存在することを保証
-        if (!this.uiRegistry) return;
-
         for (const [key, element] of this.uiElements.entries()) {
             const definition = this.uiRegistry[key];
-            if (definition && definition.scenes.includes(toSceneKey)) {
-                element.setVisible(true);
+
+            // ▼▼▼【ここが最後の、そして最も重要な修正です】▼▼▼
+            // --------------------------------------------------------------------
+            // --- definition が存在し、かつ definition.scenes が配列であることを確認 ---
+            if (definition && Array.isArray(definition.scenes)) {
+                // scenes 配列に、遷移先のシーンキーが含まれていれば表示
+                element.setVisible(definition.scenes.includes(toSceneKey));
             } else {
+                // scenes の定義がないUI要素は、デフォルトで非表示にするのが安全
                 element.setVisible(false);
             }
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     }
 // src/scenes/UIScene.js
