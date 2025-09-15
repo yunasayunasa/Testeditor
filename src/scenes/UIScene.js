@@ -81,7 +81,23 @@ export default class UIScene extends Phaser.Scene {
                     console.warn(`[UIScene] UI object in JSON is missing both 'registryKey' and 'name'. Skipping.`, layout);
                     continue;
                 }
-
+   // ★★★ もしregistryKeyが'Text'なら、特別処理に分岐 ★★★
+                if (registryKey === 'Text') {
+                    // layoutからテキストとスタイル情報を取得
+                    const text = layout.text || '';
+                    const style = layout.style || { fontSize: '32px', fill: '#fff' };
+                    
+                    // Phaserの標準テキストオブジェクトを生成
+                    const textObject = this.add.text(0, 0, text, style);
+                    
+                    // 共通の登録処理を呼び出す
+                    this.registerUiElement(layout.name, textObject, layout);
+                    
+                    console.log(`[UIScene] Successfully created standard Text object '${layout.name}'.`);
+                    
+                    // このオブジェクトの処理は完了したので、ループの次の回へ
+                    continue; 
+                }
                 const definition = uiRegistry[registryKey];
                 if (!definition || !definition.component) {
                     console.warn(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry. Skipping '${layout.name}'.`);
