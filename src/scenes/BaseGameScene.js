@@ -692,43 +692,16 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     }
 
     
-    /**
-     * ★★★ 新規メソッド ★★★
-     * エディタからの要求に応じて、プレハブをシーンにインスタンス化する
-     * @param {string} prefabKey - 生成するプレハブのキー
-     * @param {string} newName - 新しいオブジェクトに付ける一意な名前
-     * @returns {Phaser.GameObjects.GameObject | null} 生成されたオブジェクト
-     */
-    addPrefabFromEditor(prefabKey, newName) {
-        const prefabData = this.cache.json.get(prefabKey);
-        if (!prefabData) {
-            console.error(`[BaseGameScene] Prefab data for key '${prefabKey}' not found.`);
-            return null;
-        }
-
-        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-
-        const newObjectLayout = { ...prefabData };
-        newObjectLayout.name = newName;
-        newObjectLayout.x = Math.round(centerX);
-        newObjectLayout.y = Math.round(centerY);
-
-        const newGameObject = this.createObjectFromLayout(newObjectLayout);
-        this.applyProperties(newGameObject, newObjectLayout);
-        
-        return newGameObject;
-    }
-
-   // in BaseGameScene.js
+    // in BaseGameScene.js
 
     /**
-     * ★★★ 新規・最終実装 ★★★
-     * グループプレハブを読み込み、複数のオブジェクトを一度にシーンへ再構築する
-     * @param {string} prefabKey - 読み込むグループプレハブのアセットキー
-     * @param {string} newGroupName - （任意）このグループに付ける新しい名前
-     * @param {string} layerName - オブジェクト群が所属するレイヤー名
-     * @returns {Array<Phaser.GameObjects.GameObject>} 生成されたGameObjectの配列
+     * ★★★ 最終FIX版 ★★★
+     * エディタからの要求に応じて、プレハブをシーンにインスタンス化する。
+     * 単一プレハブとグループプレハブの両方に対応する。
+     * @param {string} prefabKey - 読み込むプレハブのアセットキー
+     * @param {string} newName - 新しいオブジェクトに付ける名前（グループの場合はグループ名になる）
+     * @param {string} layerName - オブジェクト（群）が所属するレイヤー名
+     * @returns {Phaser.GameObjects.GameObject | Array<Phaser.GameObjects.GameObject> | null} 生成されたオブジェクトまたはその配列
      */
     addPrefabFromEditor(prefabKey, newName, layerName) {
         const prefabData = this.cache.json.get(prefabKey);
@@ -737,6 +710,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             return null;
         }
 
+        // --- スポーン位置は、カメラの中央とする ---
         const spawnPos = {
             x: this.cameras.main.scrollX + this.cameras.main.width / 2,
             y: this.cameras.main.scrollY + this.cameras.main.height / 2
@@ -745,17 +719,19 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         // --- プレハブのタイプによって処理を分岐 ---
         if (prefabData.type === 'GroupPrefab') {
             
+            // ===========================================
             // --- グループプレハブの場合 ---
-            console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabName}'`);
+            // ===========================================
+            console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabKey}'`);
             
             // 新しいグループのための一意なIDを生成
-            const newGroupId = `group_${prefabName}_${Phaser.Math.RND.uuid().substr(0,4)}`;
+            const newGroupId = `group_${prefabName || prefabKey}_${Phaser.Math.RND.uuid().substr(0,4)}`;
             
             const createdObjects = [];
             prefabData.objects.forEach(childLayout => {
                 const newLayout = { ...childLayout };
 
-                // 保存された相対座標に、スポーン位置を加算してワールド座標を計算
+                // 保存された「中心からの相対座標」に、「スポーン位置」を足して、最終的なワールド座標を計算
                 newLayout.x = spawnPos.x + (childLayout.x || 0);
                 newLayout.y = spawnPos.y + (childLayout.y || 0);
                 
@@ -770,12 +746,14 @@ evaluateConditionAndRun(gameObject, eventData, context) {
                 }
             });
             
-            // ★ グループ全体を選択しやすくするために、最初のオブジェクトを返すなどの工夫も可能
-            return createdObjects.length > 0 ? createdObjects[0] : null;
+            // ★ グループ全体を選択しやすくするために、生成されたオブジェクトの配列を返す
+            return createdObjects;
 
         } else {
             
+            // ===========================================
             // --- 単一オブジェクトのプレハブの場合 (既存のロジック) ---
+            // ===========================================
             const newObjectLayout = { ...prefabData };
             newObjectLayout.name = newName;
             newObjectLayout.x = spawnPos.x;
