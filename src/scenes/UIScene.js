@@ -75,9 +75,10 @@ export default class UIScene extends Phaser.Scene {
             try {
                 // --- Step 2: 各オブジェクトの `registryKey` を使って、uiRegistryから「設計図」を探す ---
                 //    (例: `registryKey: 'player_hp_bar'`)
-                const registryKey = layout.registryKey;
+               const registryKey = layout.registryKey || layout.name;
+                
                 if (!registryKey) {
-                    console.warn(`[UIScene] UI object '${layout.name}' in JSON is missing a 'registryKey'. Skipping.`);
+                    console.warn(`[UIScene] UI object in JSON is missing both 'registryKey' and 'name'. Skipping.`, layout);
                     continue;
                 }
 
