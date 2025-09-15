@@ -277,61 +277,88 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
     // 動的UI系
 
+     /**
+     * ★★★ 完成版 ★★★
+     * UIテキスト専用のプロパティ編集UIを生成する。
+     * 文章、フォントサイズ、色を編集できるようにする。
+     */
+    createUITextPropertiesUI() {
+        const target = this.selectedObject;
+
+        // --- 表示テキスト ---
+        const textRow = document.createElement('div');
+        textRow.innerHTML = `<label>テキスト:</label>`;
+        const textInput = document.createElement('textarea');
+        textInput.value = target.text;
+        textInput.addEventListener('input', (e) => {
+            target.setText(e.target.value);
+            // ★ テキストが変わるとサイズが変わるので、当たり判定も更新
+            this.updateHitArea(target); 
+        });
+        textRow.appendChild(textInput);
+        this.editorPropsContainer.appendChild(textRow);
+
+        // --- フォントサイズ ---
+        const sizeRow = document.createElement('div');
+        sizeRow.innerHTML = `<label>フォントサイズ:</label>`;
+        const sizeInput = document.createElement('input');
+        sizeInput.type = 'number';
+        sizeInput.value = parseInt(target.style.fontSize);
+        sizeInput.addEventListener('input', (e) => {
+            target.setFontSize(parseInt(e.target.value) || 32);
+            this.updateHitArea(target);
+        });
+        sizeRow.appendChild(sizeInput);
+        this.editorPropsContainer.appendChild(sizeRow);
+        
+        // --- 色 ---
+        const colorRow = document.createElement('div');
+        colorRow.innerHTML = `<label>色:</label>`;
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = target.style.color;
+        colorInput.addEventListener('input', (e) => {
+            target.setColor(e.target.value);
+        });
+        colorRow.appendChild(colorInput);
+        this.editorPropsContainer.appendChild(colorRow);
+    }
+
     /**
-     * ★★★ 新規追加 ★★★
-     * UIボタン専用のプロパティ編集UIを生成する
+     * ★★★ 完成版 ★★★
+     * UIボタン専用のプロパティ編集UIを生成する。
+     * ラベルテキストを編集できるようにする。
      */
     createUIButtonPropertiesUI() {
         const target = this.selectedObject;
-        if (target.text && typeof target.setText === 'function') {
+
+        // ボタンクラスがテキスト部分を 'textObject' というプロパティで持っていると仮定
+        if (target.textObject && typeof target.setText === 'function') {
             const labelRow = document.createElement('div');
             labelRow.innerHTML = `<label>ラベル:</label>`;
             const labelInput = document.createElement('input');
             labelInput.type = 'text';
-            labelInput.value = target.text.text;
+            labelInput.value = target.textObject.text; // コンテナ内のTextオブジェクトのtextプロパティ
             labelInput.addEventListener('input', (e) => {
                 target.setText(e.target.value);
+                this.updateHitArea(target);
             });
             labelRow.appendChild(labelInput);
             this.editorPropsContainer.appendChild(labelRow);
         }
+        
+        // ★ 将来的に、ここで「クリックされた時に実行するアクション」を編集するUIを追加する
+        // (イベントエディタを呼び出すボタンなど)
     }
-
+    
     /**
-     * ★★★ 新規追加 ★★★
-     * UIバー専用のプロパティ編集UIを生成する
+     * ★★★ 新規ヘルパー ★★★
+     * オブジェクトのサイズ変更に伴い、インタラクティブエリアを更新する
      */
-    createUIBarPropertiesUI() {
-        const target = this.selectedObject;
-        const updateBar = () => { /* ... (前回の提案と同じ) ... */ };
-
-        // --- 監視する変数 (現在値) ---
-        const watchRow = document.createElement('div');
-        watchRow.innerHTML = `<label>監視する変数(現在値):</label>`;
-        const watchInput = document.createElement('input');
-        watchInput.type = 'text';
-        watchInput.placeholder = '例: player_hp';
-        watchInput.value = target.watchVariable || '';
-        watchInput.addEventListener('change', (e) => {
-            target.watchVariable = e.target.value;
-            updateBar();
-        });
-        watchRow.appendChild(watchInput);
-        this.editorPropsContainer.appendChild(watchRow);
-
-        // --- 監視する変数 (最大値) ---
-        const maxRow = document.createElement('div');
-        maxRow.innerHTML = `<label>監視する変数(最大値):</label>`;
-        const maxInput = document.createElement('input');
-        maxInput.type = 'text';
-        maxInput.placeholder = '例: player_max_hp';
-        maxInput.value = target.maxVariable || '';
-        maxInput.addEventListener('change', (e) => {
-            target.maxVariable = e.target.value;
-            updateBar();
-        });
-        maxRow.appendChild(maxInput);
-        this.editorPropsContainer.appendChild(maxRow);
+    updateHitArea(target) {
+        // setSizeで更新し、setInteractiveで当たり判定を再設定
+        target.setSize(target.width, target.height);
+        target.setInteractive(); 
     }
 
     //---レイヤー系
