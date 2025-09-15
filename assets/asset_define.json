@@ -39,7 +39,7 @@
 "//": "--- ここからが新しいカテゴリです ---",
  "prefabs": [
         { "key": "coin", "path": "data/prefabs/coin.json" },
-        { "key": "prefab", "path": "data/prefabs/prefabtest.json" }
+        { "key": "my_unit_01", "path": "data/prefabs/my_unit_01.json" }
     ],
 
   "file_lists": {
