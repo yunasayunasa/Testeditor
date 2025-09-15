@@ -1879,8 +1879,9 @@ createComponentSection() {
             alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
             return;
         }
-
-        const sceneKey = this.selectedObject.scene.scene.key;
+  const scene = this.selectedObject.scene; // ★ 対象シーンを先に取得
+        const sceneKey = scene.scene.key;
+     
         
         // sceneLayoutDataは最終的にシリアライズされる純粋なオブジェクト
         const sceneLayoutData = {
@@ -1895,7 +1896,12 @@ createComponentSection() {
 
             for (const gameObject of liveObjects) {
                 if (!gameObject.name) continue;
-
+  if (typeof scene.extractLayoutFromObject === 'function') {
+                    const objData = scene.extractLayoutFromObject(gameObject);
+                    sceneLayoutData.objects.push(objData);
+                } else {
+                    console.warn(`Scene '${sceneKey}' does not have an extractLayoutFromObject method. Skipping '${gameObject.name}'.`);
+                }
                 // --- 1. 必要なプロパティだけを抽出した、新しいプレーンなオブジェクトを作成 ---
                 const objData = {
                     name: gameObject.name,
@@ -1988,7 +1994,7 @@ if (gameObject.body) {
         }
         
         // --- 4. アニメーションデータも同様に、必要なプロパティだけを抽出する ---
-        const scene = this.game.scene.getScene(sceneKey);
+      
         if (scene && scene.anims) {
             sceneLayoutData.animations = scene.anims.anims.getArray()
                 .filter(anim => {
