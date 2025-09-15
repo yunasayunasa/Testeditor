@@ -490,6 +490,30 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
 
         return textObject;
     }
+
+    // in UIScene.js
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 指定されたグループに属する、すべてのUI要素の表示/非表示を切り替える
+     * @param {string} groupName - 'hud', 'controls' などのグループ名
+     * @param {boolean} visible - 表示するかどうか
+     */
+    setGroupVisible(groupName, visible) {
+        console.log(`[UIScene] Setting visibility of group '${groupName}' to ${visible}`);
+        
+        if (!this.uiRegistry) return;
+
+        // すべての管理下にあるUI要素をループ
+        for (const [key, uiElement] of this.uiElements.entries()) {
+            const definition = this.uiRegistry[key];
+            
+            // その要素の定義に 'groups' があり、指定されたグループ名を含んでいるかチェック
+            if (definition && Array.isArray(definition.groups) && definition.groups.includes(groupName)) {
+                uiElement.setVisible(visible);
+            }
+        }
+    }
     
      shutdown() {
         const systemScene = this.scene.get('SystemScene');

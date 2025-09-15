@@ -875,3 +875,32 @@ Actions: [set_flip_x value=false]
 </code>
 </pre>
 <hr>
+<h3><pre>[set_ui_visible group=... visible=...]</pre></h3>
+<p>
+    <strong>機能:</strong> 指定されたグループに属するUI要素（HUDなど）の表示/非表示を、まとめて切り替えます。
+</p>
+<p>
+    グループ名は、<code>uiRegistry</code>で定義された<code>groups</code>配列に基づきます。
+</p>
+<p>
+    <strong>パラメータ:</strong>
+</p>
+<ul>
+    <li><strong>group (必須):</strong> 対象となるUIグループ名。(例: <code>hud</code>, <code>controls</code>)</li>
+    <li><strong>visible (必須):</strong> <code>true</code>（表示）または <code>false</code>（非表示）を指定します。</li>
+</ul>
+<p>
+    <strong>使用例:</strong>
+</p>
+<pre>
+<code>
+; ボス登場演出の開始
+[set_ui_visible group=hud visible=false]
+[camera_shake power=0.05 time=2000]
+[spawn_object prefab=boss at=center]
+[wait time=1000]
+; 戦闘開始と共にHUDを再表示
+[set_ui_visible group=hud visible=true]
+</code>
+</pre>
+<hr>

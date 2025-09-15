@@ -29,7 +29,7 @@ import setDataHandler from './set_data.js';
 import returnNovelHandler from './return_novel.js';
 import stopSoundHandler from './stop_sound.js';
 import runScenarioHandler from './run_scenario.js'; 
-
+import setUiVisibleHandler from './set_ui_visible.js';
 
 
 //*******************++++++++++++++++++++++ */
@@ -64,6 +64,6 @@ export const eventTagHandlers = {
    'return_novel': returnNovelHandler,
 'stop_sound': stopSoundHandler,
 'run_scenario': runScenarioHandler, 
-
+ 'set_ui_visible': setUiVisibleHandler,
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
