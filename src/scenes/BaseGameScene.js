@@ -693,49 +693,39 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
     
     // in BaseGameScene.js
+// in BaseGameScene.js
 
     /**
-     * ★★★ 最終FIX版 ★★★
+     * ★★★ 最終FIX版 (変数名修正) ★★★
      * エディタからの要求に応じて、プレハブをシーンにインスタンス化する。
      * 単一プレハブとグループプレハブの両方に対応する。
-     * @param {string} prefabKey - 読み込むプレハブのアセットキー
-     * @param {string} newName - 新しいオブジェクトに付ける名前（グループの場合はグループ名になる）
-     * @param {string} layerName - オブジェクト（群）が所属するレイヤー名
-     * @returns {Phaser.GameObjects.GameObject | Array<Phaser.GameObjects.GameObject> | null} 生成されたオブジェクトまたはその配列
      */
-    addPrefabFromEditor(prefabKey, newName, layerName) {
+    addPrefabFromEditor(prefabKey, newName, layerName) { // ← newName を受け取る
         const prefabData = this.cache.json.get(prefabKey);
         if (!prefabData) {
             console.error(`[BaseGameScene] Prefab data for key '${prefabKey}' not found.`);
             return null;
         }
 
-        // --- スポーン位置は、カメラの中央とする ---
         const spawnPos = {
             x: this.cameras.main.scrollX + this.cameras.main.width / 2,
             y: this.cameras.main.scrollY + this.cameras.main.height / 2
         };
 
-        // --- プレハブのタイプによって処理を分岐 ---
         if (prefabData.type === 'GroupPrefab') {
             
-            // ===========================================
-            // --- グループプレハブの場合 ---
-            // ===========================================
             console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabKey}'`);
             
-            // 新しいグループのための一意なIDを生成
-            const newGroupId = `group_${prefabName || prefabKey}_${Phaser.Math.RND.uuid().substr(0,4)}`;
-            
+            // ▼▼▼【ここが修正箇所です】▼▼▼
+            // prefabName ではなく、引数で渡された newName を使う
+            const newGroupId = `group_${newName}_${Phaser.Math.RND.uuid().substr(0,4)}`;
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             const createdObjects = [];
             prefabData.objects.forEach(childLayout => {
                 const newLayout = { ...childLayout };
-
-                // 保存された「中心からの相対座標」に、「スポーン位置」を足して、最終的なワールド座標を計算
                 newLayout.x = spawnPos.x + (childLayout.x || 0);
                 newLayout.y = spawnPos.y + (childLayout.y || 0);
-                
-                // すべての子オブジェクトに、新しい共通のグループIDとレイヤーを設定
                 newLayout.group = newGroupId;
                 newLayout.layer = layerName;
 
@@ -746,14 +736,10 @@ evaluateConditionAndRun(gameObject, eventData, context) {
                 }
             });
             
-            // ★ グループ全体を選択しやすくするために、生成されたオブジェクトの配列を返す
             return createdObjects;
 
         } else {
             
-            // ===========================================
-            // --- 単一オブジェクトのプレハブの場合 (既存のロジック) ---
-            // ===========================================
             const newObjectLayout = { ...prefabData };
             newObjectLayout.name = newName;
             newObjectLayout.x = spawnPos.x;
@@ -766,7 +752,6 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             return newGameObject;
         }
     }
-
     /**
      * ★★★ 新規・最終実装 ★★★
      * 始点オブジェクトを元に、終点までの矩形範囲をオブジェクトで塗りつぶす。
