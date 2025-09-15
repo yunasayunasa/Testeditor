@@ -90,7 +90,28 @@ export default class UIScene extends Phaser.Scene {
                 console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
             }
         }
-
+    // --- ステージ2：エディタで自由に追加されたUIを復元 ---
+        for (const layout of layoutObjects) {
+            // ★ uiRegistryにない、かつ まだ生成されていないオブジェクトだけを対象
+            if (!uiRegistry[layout.name] && !this.uiElements.has(layout.name)) {
+                try {
+                    console.log(`[UIScene] Restoring custom UI element: '${layout.name}'`);
+                    
+                    // ▼▼▼【ここが修正箇所です】▼▼▼
+                    // ★★★ UIScene自身が持つ、新しいヘルパーメソッドを呼び出す ★★★
+                    const newUiElement = this.createUiFromLayout(layout);
+                    
+                    if (newUiElement) {
+                        // ★ 登録処理は、既存のregisterUiElementに任せるのが安全
+                        this.registerUiElement(layout.name, newUiElement, layout);
+                    }
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                } catch(e) {
+                    console.error(`[UIScene] FAILED to restore custom UI element '${layout.name}'.`, e);
+                }
+            }
+        }
+        
         
          const startButton = this.uiElements.get('start_button');
     if (startButton) {
@@ -242,32 +263,41 @@ registerUiElement(name, element, params) {
 
     
      
-   
+   // in UIScene.js
+
+    // ★★★ GameSceneからコピーした applyProperties は、複雑すぎるので削除します ★★★
+    // applyProperties(gameObject, layout) { ... } // ← これを削除
 
     /**
-     * ★★★ GameSceneからコピー ★★★
-     * オブジェクトにプロパティを適用する
+     * ★★★ 新規メソッド ★★★
+     * JSONのレイアウト情報だけを元に、基本的なUIオブジェクトを生成する。
+     * @param {object} layout - JSONから読み込んだ単一のオブジェクト定義
+     * @returns {Phaser.GameObjects.GameObject | null}
      */
-    applyProperties(gameObject, layout) {
-        gameObject.name = layout.name;
-        gameObject.setPosition(layout.x, layout.y);
-        gameObject.setScale(layout.scaleX, layout.scaleY);
-        gameObject.setAngle(layout.angle);
-        gameObject.setAlpha(layout.alpha);
+    createUiFromLayout(layout) {
+        if (!layout.type) return null;
+
+        // --- タイプに応じて、適切なオブジェクトを生成して返す ---
+        if (layout.type === 'Text') {
+            return this.add.text(0, 0, layout.text, layout.style);
+        }
         
-        // コンテナの場合、当たり判定のサイズもJSONから設定
-        if (gameObject instanceof Phaser.GameObjects.Container) {
-            if (layout.width && layout.height) {
-                gameObject.setSize(layout.width, layout.height);
+        // ★ ここに、ButtonやBarの復元ロジックを追加していく
+        // 例: Buttonクラスが 'label' をパラメータとして受け取る場合
+        if (layout.type === 'Button') { 
+            // uiRegistryからButtonクラスの定義を探す必要がある
+            const uiRegistry = this.registry.get('uiRegistry');
+            // 'button'というキーを汎用ボタンと仮定
+            const definition = Object.values(uiRegistry).find(def => def.component.name === 'Button');
+            if (definition) {
+                const ButtonClass = definition.component;
+                return new ButtonClass(this, { label: layout.label });
             }
         }
-
-        gameObject.setInteractive(); // ★ ここでインタラクティブにする
         
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor) {
-            editor.makeEditable(gameObject, this);
-        }
+        // ... 他のUIタイプの復元ロジック ...
+
+        return null;
     }
   
    /**
