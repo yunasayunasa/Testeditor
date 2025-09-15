@@ -132,7 +132,8 @@ body.debug-mode #game-container {
 .panel-content { padding: 10px; flex-grow: 1; overflow-y: auto; }
 .panel-footer-button { width: 100%; padding: 10px; background-color: #0e639c; color: white; border: none; cursor: pointer; font-size: 14px; border-top: 1px solid #3c3c3c; }
 .panel-footer-button:hover { background-color: #1177bb; }
-.panel-tabs { display: flex; background-color: #252526; border-bottom: 1px solid #3c3c3c; padding: 5px 5px 0 5px; gap: 5px; }
+.panel-tabs { display: flex; background-color: #252526; border-bottom: 1px solid #3c3c3c; padding: 5px 5px 0 5px; gap: 5px;overflow-x: auto; /* 横方向にはみ出たら、スクロールバーを出す */
+    flex-shrink: 0;   /* 親要素が縮んでも、このタブコンテナ自体は縮まないようにする */ }
 .asset-tab { padding: 8px 12px; border: 1px solid #3c3c3c; border-bottom: none; background-color: #1e1e1e; color: #888; cursor: pointer; border-radius: 4px 4px 0 0; user-select: none; }
 .asset-tab.active { background-color: #2b2b2b; color: #eee; border-color: #555; }
 .asset-item { display: flex; align-items: center; padding: 5px; border-bottom: 1px solid #3c3c3c; cursor: pointer; user-select: none; }
