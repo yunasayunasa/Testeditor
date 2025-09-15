@@ -90,34 +90,7 @@ export default class UIScene extends Phaser.Scene {
                 console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
             }
         }
-     
-        // --- 2. エディタで自由に追加されたUIを復元 ---
-        // ★★★ BaseGameSceneの「インスタンス」を一度だけ取得 ★★★
-        const baseGameScene = this.scene.get('JumpScene') || this.scene.get('GameScene'); // アクティブなゲームシーンを探す
 
-        if (baseGameScene) {
-            for (const layout of layoutObjects) {
-                if (!uiRegistry[layout.name] && !this.uiElements.has(layout.name)) {
-                    try {
-                        console.log(`[UIScene] Restoring custom UI element: '${layout.name}'`);
-                        
-                        // ★★★ BaseGameSceneのメソッドを、コンテキストを「UIScene」に束縛して呼び出す ★★★
-                        // これにより、BaseGameSceneの「能力」を、UISceneの中で安全に使うことができる
-                        const newUiElement = baseGameScene.createObjectFromLayout.call(this, layout);
-                        
-                        if (newUiElement) {
-                            // registerUiElementはUIScene自身が持っているので、そのまま呼び出す
-                            this.registerUiElement(layout.name, newUiElement, layout);
-                        }
-
-                    } catch(e) {
-                        console.error(`[UIScene] FAILED to restore custom UI element '${layout.name}'.`, e);
-                    }
-                }
-            }
-        }
-        
-        // --------------------------------------------------------------------
         
          const startButton = this.uiElements.get('start_button');
     if (startButton) {
