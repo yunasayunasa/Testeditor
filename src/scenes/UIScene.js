@@ -390,6 +390,9 @@ registerUiElement(name, element, params) {
      * @returns {Phaser.GameObjects.GameObject | null} 生成されたUIオブジェクト
      */
     addUiComponentFromEditor(componentType, newName) {
+          if (componentType === 'Text') {
+            return this.addTextUiFromEditor(newName);
+        }
         const uiRegistry = this.registry.get('uiRegistry');
         const stateManager = this.registry.get('stateManager');
         if (!uiRegistry || !stateManager) return null;
@@ -427,6 +430,25 @@ registerUiElement(name, element, params) {
         console.log(`[UIScene] UI Component '${newName}' of type '${componentType}' added to scene.`);
 
         return newUiElement;
+    }
+     /**
+     * ★★★ 新規メソッド ★★★
+     * エディタから、新しいテキストUIオブジェクトを生成する
+     */
+    addTextUiFromEditor(newName) {
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+        
+        // BaseGameSceneのロジックを参考に、Phaserの標準Textオブジェクトを生成
+        const textObject = this.add.text(centerX, centerY, 'New Text', { 
+            fontSize: '32px', 
+            fill: '#ffffff' 
+        }).setOrigin(0.5);
+
+        // registerUiElement を使って、共通のセットアップを行う
+        this.registerUiElement(newName, textObject, { name: newName, x: centerX, y: centerY });
+
+        return textObject;
     }
      shutdown() {
         const systemScene = this.scene.get('SystemScene');

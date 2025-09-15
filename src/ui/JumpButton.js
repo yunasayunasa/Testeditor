@@ -26,7 +26,7 @@ export default class JumpButton extends Container {
             .fillCircle(0, 0, radius)
             .setVisible(false);
 
-        const label = new Text(scene, 0, 0, 'JUMP', { 
+        const label = new Text(scene, 0, 0, 'A', { 
             fontSize: '32px', fontStyle: 'bold', color: '#111111', align: 'center' 
         }).setOrigin(0.5);
         

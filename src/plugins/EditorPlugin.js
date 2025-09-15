@@ -10,7 +10,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editableObjects = new Map();
         this.isEnabled = false;
         this.editorUI = null;
-        
+        this.currentMode = 'select'; 
         // DOM要素の参照
         this.editorPanel = null;
         this.editorTitle = null;
