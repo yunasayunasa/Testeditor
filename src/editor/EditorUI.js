@@ -369,7 +369,13 @@ export default class EditorUI {
 
         this.assetListContainer.innerHTML = '';
         const displayableAssets = assetList.filter(asset => {
-            if (this.currentAssetTab === 'image') return asset.type === 'image' || asset.type === 'spritesheet';
+            if (this.currentAssetTab === 'image') {
+                return asset.type === 'image' || asset.type === 'spritesheet';
+            }
+            if (this.currentAssetTab === 'prefab') {
+                // ★ typeが'prefab'または'GroupPrefab'のものを表示
+                return asset.type === 'prefab' || asset.type === 'GroupPrefab'; 
+            }
             return asset.type === this.currentAssetTab;
         });
 
@@ -415,6 +421,13 @@ export default class EditorUI {
                 badge.style.borderRadius = '3px';
                 itemDiv.appendChild(badge);
             }
+            if (asset.type === 'GroupPrefab') {
+                const badge = document.createElement('span');
+                badge.innerText = 'Group';
+                // (バッジのスタイル設定)
+                itemDiv.appendChild(badge);
+            }
+
             this.assetListContainer.appendChild(itemDiv);
         }
     }
@@ -453,9 +466,8 @@ export default class EditorUI {
                 // ★ アクティブなレイヤーの名前 (this.activeLayerName) を第3引数として渡す
                 newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
             }
-        } else if (this.selectedAssetType === 'prefab') {
+        } else  if (this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') {
             if (typeof targetScene.addPrefabFromEditor === 'function') {
-                // ★ プレハブ追加メソッドにも、同様にレイヤー名を渡す
                 newObject = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
             }
         }

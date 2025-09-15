@@ -722,7 +722,72 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
    // in BaseGameScene.js
 
-   // in BaseGameScene.js
+    /**
+     * ★★★ 新規・最終実装 ★★★
+     * グループプレハブを読み込み、複数のオブジェクトを一度にシーンへ再構築する
+     * @param {string} prefabKey - 読み込むグループプレハブのアセットキー
+     * @param {string} newGroupName - （任意）このグループに付ける新しい名前
+     * @param {string} layerName - オブジェクト群が所属するレイヤー名
+     * @returns {Array<Phaser.GameObjects.GameObject>} 生成されたGameObjectの配列
+     */
+    addPrefabFromEditor(prefabKey, newName, layerName) {
+        const prefabData = this.cache.json.get(prefabKey);
+        if (!prefabData) {
+            console.error(`[BaseGameScene] Prefab data for key '${prefabKey}' not found.`);
+            return null;
+        }
+
+        const spawnPos = {
+            x: this.cameras.main.scrollX + this.cameras.main.width / 2,
+            y: this.cameras.main.scrollY + this.cameras.main.height / 2
+        };
+
+        // --- プレハブのタイプによって処理を分岐 ---
+        if (prefabData.type === 'GroupPrefab') {
+            
+            // --- グループプレハブの場合 ---
+            console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabName}'`);
+            
+            // 新しいグループのための一意なIDを生成
+            const newGroupId = `group_${prefabName}_${Phaser.Math.RND.uuid().substr(0,4)}`;
+            
+            const createdObjects = [];
+            prefabData.objects.forEach(childLayout => {
+                const newLayout = { ...childLayout };
+
+                // 保存された相対座標に、スポーン位置を加算してワールド座標を計算
+                newLayout.x = spawnPos.x + (childLayout.x || 0);
+                newLayout.y = spawnPos.y + (childLayout.y || 0);
+                
+                // すべての子オブジェクトに、新しい共通のグループIDとレイヤーを設定
+                newLayout.group = newGroupId;
+                newLayout.layer = layerName;
+
+                const newGameObject = this.createObjectFromLayout(newLayout);
+                if (newGameObject) {
+                    this.applyProperties(newGameObject, newLayout);
+                    createdObjects.push(newGameObject);
+                }
+            });
+            
+            // ★ グループ全体を選択しやすくするために、最初のオブジェクトを返すなどの工夫も可能
+            return createdObjects.length > 0 ? createdObjects[0] : null;
+
+        } else {
+            
+            // --- 単一オブジェクトのプレハブの場合 (既存のロジック) ---
+            const newObjectLayout = { ...prefabData };
+            newObjectLayout.name = newName;
+            newObjectLayout.x = spawnPos.x;
+            newObjectLayout.y = spawnPos.y;
+            newObjectLayout.layer = layerName;
+
+            const newGameObject = this.createObjectFromLayout(newObjectLayout);
+            this.applyProperties(newGameObject, newObjectLayout);
+            
+            return newGameObject;
+        }
+    }
 
     /**
      * ★★★ 新規・最終実装 ★★★

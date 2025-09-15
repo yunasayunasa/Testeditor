@@ -85,13 +85,12 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
             }
         }
         
-        // ▼▼▼【ここからがプレハブ読み込み処理です】▼▼▼
-        if (Array.isArray(assetDefine.prefabs)) {
+         if (Array.isArray(assetDefine.prefabs)) {
             for (const prefabInfo of assetDefine.prefabs) {
                 if (prefabInfo.key && prefabInfo.path) {
-                    // PhaserのJSONローダーを使って、キーとパスを指定して読み込みキューに追加
-                    this.load.json(prefabInfo.key, 'assets/' + prefabInfo.path);
-                    console.log(`[PreloadScene] Queued: prefab - key='${prefabInfo.key}', path='assets/${prefabInfo.path}'`);
+                    // ★★★ JSONではなく、一時的なキーで「テキスト」としてロード ★★★
+                    this.load.text(`${prefabInfo.key}_prefab_text`, `assets/${prefabInfo.path}`);
+                    console.log(`[PreloadScene] Queued as text: prefab - key='${prefabInfo.key}', path='assets/${prefabInfo.path}'`);
                 }
             }
         }
@@ -172,15 +171,40 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
             }
         }
  // --- 3. 'prefabs' セクションから情報を取得 ---
-        if (Array.isArray(assetDefine.prefabs)) {
+      if (Array.isArray(assetDefine.prefabs)) {
             for (const prefabInfo of assetDefine.prefabs) {
-                if (prefabInfo.key) {
-                    assetList.push({
-                        key: prefabInfo.key,
-                        type: 'prefab', // ★ タイプを'prefab'として識別
-                        path: null // ★ プレビュー画像はないのでnull
-                    });
+                if (!prefabInfo.key) continue;
+
+                // --- 1. テキストとしてロードしたJSON文字列を取得 ---
+                const textKey = `${prefabInfo.key}_prefab_text`;
+                const jsonText = this.cache.text.get(textKey);
+
+                let prefabType = 'prefab'; // デフォルトタイプ
+                
+                if (jsonText) {
+                    try {
+                        // --- 2. 文字列をパースして中身を確認 ---
+                        const prefabData = JSON.parse(jsonText);
+                        
+                        // ★ typeプロパティで判定し、タイプを上書き
+                        if (prefabData.type === 'GroupPrefab') {
+                            prefabType = 'GroupPrefab';
+                        }
+                        
+                        // ★ パースしたJSONデータを、本来のキーでJSONキャッシュに保存し直す
+                        this.cache.json.add(prefabInfo.key, prefabData);
+
+                    } catch (e) {
+                        console.error(`Failed to parse prefab JSON for key: ${prefabInfo.key}`, e);
+                    }
                 }
+
+                // --- 3. 判定結果を assetList に追加 ---
+                assetList.push({
+                    key: prefabInfo.key,
+                    type: prefabType, // ★ 'prefab' または 'GroupPrefab' が入る
+                    path: null 
+                });
             }
         }
         // --- 3. 他のタイプのアセットも、必要であればここに追加 ---
