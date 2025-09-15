@@ -381,6 +381,53 @@ registerUiElement(name, element, params) {
             }
         }
     }
+
+     /**
+     * ★★★ 新規・最重要メソッド ★★★
+     * エディタからの要求に応じて、新しいUIコンポーネントを生成・追加する
+     * @param {string} componentType - 'Text', 'Button', 'Bar' など
+     * @param {string} newName - 新しいUIオブジェクトに付ける名前
+     * @returns {Phaser.GameObjects.GameObject | null} 生成されたUIオブジェクト
+     */
+    addUiComponentFromEditor(componentType, newName) {
+        const uiRegistry = this.registry.get('uiRegistry');
+        const stateManager = this.registry.get('stateManager');
+        if (!uiRegistry || !stateManager) return null;
+
+        // --- 1. 生成するUIコンポーネントの「設計図」を探す ---
+        // uiRegistryのキーと、componentTypeを小文字にしたものが一致すると仮定
+        // (例: 'Button' -> 'button')
+        const registryKey = Object.keys(uiRegistry).find(key => key.includes(componentType.toLowerCase()));
+        const definition = registryKey ? uiRegistry[registryKey] : null;
+
+        if (!definition || !definition.component) {
+            console.error(`[UIScene] UI definition for '${componentType}' not found in uiRegistry.`);
+            return null;
+        }
+
+        // --- 2. デフォルトのパラメータを準備 ---
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+        const params = {
+            ...definition.params, // レジストリのデフォルトparams
+            x: centerX,
+            y: centerY,
+            name: newName,
+            stateManager: stateManager
+        };
+
+        // --- 3. クラスから新しいインスタンスを生成 ---
+        const UiComponentClass = definition.component;
+        const newUiElement = new UiComponentClass(this, params);
+
+        // --- 4. シーンに登録し、編集可能にする ---
+        // ★ 既存の registerUiElement メソッドを再利用
+        this.registerUiElement(newName, newUiElement, params);
+        
+        console.log(`[UIScene] UI Component '${newName}' of type '${componentType}' added to scene.`);
+
+        return newUiElement;
+    }
      shutdown() {
         const systemScene = this.scene.get('SystemScene');
         if (systemScene) {

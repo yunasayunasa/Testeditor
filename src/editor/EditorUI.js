@@ -499,9 +499,32 @@ export default class EditorUI {
         } else {
             this.objectCounters[this.selectedAssetKey]++;
         }
-        const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
+       
         
-        let newObjectOrObjects = null; // ★ 変数名を、単数・複数の両方を示唆するものに変更
+        
+          let newObject = null;
+        const newName = `${this.selectedAssetKey.toLowerCase()}_${Date.now()}`;
+
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- ケース1：UIコンポーネントを追加する場合 ---
+        if (this.selectedAssetType === 'ui') {
+            const uiScene = this.game.scene.getScene('UIScene');
+            if (uiScene && typeof uiScene.addUiComponentFromEditor === 'function') {
+                console.log(`[EditorUI] Requesting UIScene to add UI component: ${this.selectedAssetKey}`);
+                // ★ UISceneの新しいメソッドを呼び出す
+                newObject = uiScene.addUiComponentFromEditor(this.selectedAssetKey, newName);
+            }
+        } 
+        
+        // --- ケース2：通常のアセットを追加する場合 (既存のロジック) ---
+        else {
+            const targetScene = this.getActiveGameScene();
+            if (!targetScene) {
+                alert("対象のゲームシーンが見つかりませんでした。");
+                return;
+            }
         
         // アセットのタイプに応じて、シーンのメソッドを呼び出す
         if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
@@ -534,7 +557,7 @@ export default class EditorUI {
             // --------------------------------------------------------------------
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
-    }
+    }}
     
 
     
