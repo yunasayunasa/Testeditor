@@ -1457,12 +1457,10 @@ createComponentSection() {
 
 // in EditorPlugin.js
 
-    // in EditorPlugin.js
-
-    /**
-     * ★★★ 修正版 ★★★
+      /**
+     * ★★★ 最終FIX版 ★★★
      * 複数選択されたオブジェクト（グループ）を、一つのプレハブとして書き出す。
-     * Phaser 3.60の正しい方法でバウンディングボックスを計算する。
+     * アクティブなシーンのヘルパーメソッドを正しく呼び出す。
      */
     exportGroupToPrefab() {
         if (!this.selectedObjects || this.selectedObjects.length < 1) {
@@ -1473,22 +1471,24 @@ createComponentSection() {
         const prefabName = prompt("このグループプレハブの名前を入力してください:", "my_unit_01");
         if (!prefabName) return;
 
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // ▼▼▼【ここが核心の修正です】▼▼▼
         // --------------------------------------------------------------------
-
-        // --- 1. Phaser 3.60の方法で、グループ全体のバウンディングボックスを計算 ---
-        // まず、一時的なコンテナを作成し、選択中のオブジェクトをすべてその中に入れる
-        const tempContainer = this.selectedObjects[0].scene.add.container(0, 0);
-        tempContainer.add(this.selectedObjects);
-        // getBounds()で、コンテナ全体のサイズと位置を取得
-        const bounds = tempContainer.getBounds();
-        // 計算が終わったら、一時的なコンテナはすぐに破棄
-        tempContainer.destroy();
-
+        // --- 0. 現在アクティブなゲームシーンへの参照を取得 ---
+        const activeScene = this.getActiveGameScene();
+        if (!activeScene || typeof activeScene.extractLayoutFromObject !== 'function') {
+            alert("エラー: レイアウト情報を抽出できるアクティブなシーンが見つかりません。");
+            return;
+        }
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
-        // --- 2. グループの中心点を計算 (変更なし) ---
+
+        // --- 1. バウンディングボックスの計算 (前回の修正のまま) ---
+        const tempContainer = activeScene.add.container(0, 0);
+        tempContainer.add(this.selectedObjects);
+        const bounds = tempContainer.getBounds();
+        tempContainer.destroy();
+
+        // --- 2. 中中心点の計算 (変更なし) ---
         const centerX = bounds.centerX;
         const centerY = bounds.centerY;
 
@@ -1498,11 +1498,15 @@ createComponentSection() {
             objects: []
         };
         
-        // --- 3. 各オブジェクトの情報を、中心点からの相対座標で保存 (変更なし) ---
+        // --- 3. 各オブジェクトの情報を、相対座標で保存 ---
         this.selectedObjects.forEach(gameObject => {
-            const layout = gameObject.scene.extractLayoutFromObject(gameObject);
+            // ▼▼▼【ここも修正】▼▼▼
+            // activeScene の extractLayoutFromObject を呼び出す
+            const layout = activeScene.extractLayoutFromObject(gameObject);
+            
             layout.x = Math.round(gameObject.x - centerX);
             layout.y = Math.round(gameObject.y - centerY);
+            
             prefabData.objects.push(layout);
         });
 
