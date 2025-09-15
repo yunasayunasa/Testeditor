@@ -47,49 +47,68 @@ export default class UIScene extends Phaser.Scene {
 
 // ... (他のメソッドやimportは変更なし) ...
 
-    /**
-     * UIをレイアウトデータに基づいて構築する (JSONレイアウト対応・最終確定版)
-     * ★★★ 以下のメソッドで、デバッグ用の buildUiFromLayout を完全に置き換えてください ★★★
-     */
+   // src/scenes/UIScene.js
+
     async buildUiFromLayout(layoutData) {
-        console.log("[UIScene] Starting UI build with FULL data-driven routine.");
+        console.log("[UIScene] Starting UI build with JSON-FIRST routine.");
 
         const uiRegistry = this.registry.get('uiRegistry');
-        if (!uiRegistry) {
-            console.error('[UIScene] CRITICAL: uiRegistry not found in game registry.');
+        const stateManager = this.registry.get('stateManager');
+        if (!uiRegistry || !stateManager) {
+            console.error('[UIScene] CRITICAL: uiRegistry or stateManager not found.');
             return;
         }
 
-        const stateManager = this.registry.get('stateManager');
+        // --- ガード節: レイアウトデータ、またはその中のobjects配列がなければ何もしない ---
+        if (!layoutData || !layoutData.objects) {
+            console.warn('[UIScene] Layout data or objects array not found. Skipping UI build.');
+            return;
+        }
+        
+        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★★★ これが、エディタで追加したUIを生成するための新しいロジックです ★★★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        // uiRegistryの全てのキーをループ処理する
-        for (const name in uiRegistry) {
+        // --- Step 1: JSONファイルに定義されているオブジェクトをすべてループする ---
+        for (const layout of layoutData.objects) {
             try {
-                const definition = uiRegistry[name];
-                
-                // 1. JSONレイアウトから、このUI要素に対応する定義を探す (なければ空オブジェクト)
-                const layout = (layoutData && layoutData.objects) 
-                    ? layoutData.objects.find(obj => obj.name === name) || {}
-                    : {};
-                
-                // 2. registryの定義と、JSONの定義をマージする (JSONが優先される)
-                const params = { ...definition.params, ...layout, name, stateManager };
-
-                // 3. main.jsで前処理された 'component' プロパティを使ってクラスを取得
-                const UiComponentClass = definition.component;
-
-                if (UiComponentClass) {
-                    const uiElement = new UiComponentClass(this, params);
-                    // 4. マージ済みの最終的なparamsを使って、UI要素を登録・設定する
-                    this.registerUiElement(name, uiElement, params);
-                    console.log(`[UIScene] Successfully created and configured '${name}'.`);
-                } else {
-                    console.warn(`[UIScene] UI definition for '${name}' is missing a 'component' class.`);
+                // --- Step 2: 各オブジェクトの `registryKey` を使って、uiRegistryから「設計図」を探す ---
+                //    (例: `registryKey: 'player_hp_bar'`)
+                const registryKey = layout.registryKey;
+                if (!registryKey) {
+                    console.warn(`[UIScene] UI object '${layout.name}' in JSON is missing a 'registryKey'. Skipping.`);
+                    continue;
                 }
+
+                const definition = uiRegistry[registryKey];
+                if (!definition || !definition.component) {
+                    console.warn(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry. Skipping '${layout.name}'.`);
+                    continue;
+                }
+
+                // --- Step 3: registryのデフォルトパラメータと、JSONのレイアウト情報をマージする ---
+                // (JSONの値が常に優先される)
+                const params = { 
+                    ...definition.params, 
+                    ...layout, 
+                    name: layout.name, // nameはJSONのものを正とする
+                    stateManager 
+                };
+
+                // --- Step 4: クラスを取得し、インスタンスを生成する ---
+                const UiComponentClass = definition.component;
+                const uiElement = new UiComponentClass(this, params);
+
+                // --- Step 5: シーンに登録し、編集可能にする ---
+                this.registerUiElement(layout.name, uiElement, params);
+                console.log(`[UIScene] Successfully created and configured '${layout.name}' from registry key '${registryKey}'.`);
+
             } catch (e) {
-                console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
+                console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
             }
         }
+     
 
         
          const startButton = this.uiElements.get('start_button');
@@ -428,7 +447,7 @@ registerUiElement(name, element, params) {
 
         // --- 4. シーンに登録し、編集可能にする ---
         this.registerUiElement(newName, newUiElement, params);
-        
+        newUiElement.setData('registryKey', registryKey);
         console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
 
         return newUiElement;
@@ -448,7 +467,7 @@ registerUiElement(name, element, params) {
             fontSize: '32px', 
             fill: '#ffffff' 
         }).setOrigin(0.5);
-
+textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを記憶させる
         // registerUiElement を使って、共通のセットアップを行う
         this.registerUiElement(newName, textObject, { name: newName, x: centerX, y: centerY });
 

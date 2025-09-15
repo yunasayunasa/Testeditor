@@ -1868,11 +1868,11 @@ createComponentSection() {
         }
         this.selectedObjects = [];
     }
-   /**
+  // src/plugins/EditorPlugin.js
+
+    /**
      * 現在のシーンレイアウトをJSON形式でエクスポートする。
-     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-     * ★★★ これが循環参照エラーを解決する最終的な修正です ★★★
-     * ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+     * UISceneとBaseGameSceneの両方に対応した、最終確定版。
      */
     exportLayoutToJson() {
         if (!this.selectedObject || !this.selectedObject.scene) {
@@ -1880,25 +1880,23 @@ createComponentSection() {
             return;
         }
 
-        const sceneKey = this.selectedObject.scene.scene.key;
+        const scene = this.selectedObject.scene;
+        const sceneKey = scene.scene.key;
         
-        // sceneLayoutDataは最終的にシリアライズされる純粋なオブジェクト
         const sceneLayoutData = {
-            layers: [], // ★ レイヤー情報用の配列を追加
+            layers: this.layerStates,
             objects: [],
-            animations: []
+            animations: [] // animationsは常に配列として初期化
         };
-        sceneLayoutData.layers = this.layerStates;
+
         if (this.editableObjects.has(sceneKey)) {
-            // 破壊されたオブジェクトを除外
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
-      for (const gameObject of liveObjects) {
+            
+            for (const gameObject of liveObjects) {
                 if (!gameObject.name) continue;
 
-                // --- 1. 基本的なプロパティを抽出 ---
                 const objData = {
                     name: gameObject.name,
-                    // ★ コンストラクタ名を使う方が、より堅牢
                     type: gameObject.constructor.name,
                     x: Math.round(gameObject.x),
                     y: Math.round(gameObject.y),
@@ -1914,66 +1912,57 @@ createComponentSection() {
                     animation_data: gameObject.getData('animation_data')
                 };
 
-                // ▼▼▼【ここが、エラーを解決する唯一の修正です】▼▼▼
-                // --------------------------------------------------------------------
-                
-                // --- 2. オブジェクトの種類に応じた、固有のプロパティを追加 ---
-                // ★ gameObjectが'texture'プロパティを持っているか、まず確認
+                // ★★★ もし、エクスポート対象がUISceneのオブジェクトなら、registryKeyを追加 ★★★
+                if (sceneKey === 'UIScene') {
+                    objData.registryKey = gameObject.getData('registryKey');
+                }
+
+                // --- 固有プロパティの抽出 ---
                 if (gameObject.texture && gameObject.texture.key) {
                     objData.texture = gameObject.texture.key;
                 }
-                
-                // ★ gameObjectが'text'プロパティを持っているか、まず確認
                 if (typeof gameObject.text === 'string') {
                     objData.text = gameObject.text;
                 }
-                
-                // ★ gameObjectが'style'プロパティを持っているか、まず確認
                 if (gameObject.style) {
                     objData.style = gameObject.style.toJSON();
                 }
-
-                // ★ UIコンポーネントの独自プロパティも安全に追加
                 if (gameObject.watchVariable) {
                     objData.watchVariable = gameObject.watchVariable;
                     objData.maxVariable = gameObject.maxVariable;
                 }
-                if (gameObject.textObject) { // 汎用ボタンの場合
+                if (gameObject.textObject) {
                     objData.label = gameObject.textObject.text;
                 }
                 
-                // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
-                    // --- 物理ボディのプロパティ ---
-         // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
-if (gameObject.body) {
-    const body = gameObject.body;
-    objData.physics = {
-        isStatic: body.isStatic,
-        isSensor: body.isSensor,
-        // ▼▼▼【ここが修正点です】▼▼▼
-        // 信頼できない body.ignoreGravity を参照するのをやめ、
-        // 自分で設定した信頼できる getData('ignoreGravity') を書き出す。
-        ignoreGravity: gameObject.getData('ignoreGravity') === true,
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        gravityScale: body.gravityScale.y, // y軸の値だけで十分
-        shape: gameObject.getData('shape') || 'rectangle', 
-        friction: parseFloat(body.friction.toFixed(2)),
-        restitution: parseFloat(body.restitution.toFixed(2)),
-        collisionFilter: {
-            category: body.collisionFilter.category,
-            mask: body.collisionFilter.mask
-        }
-    };
-}
+                // --- 物理ボディの抽出 ---
+                if (gameObject.body) {
+                    const body = gameObject.body;
+                    objData.physics = {
+                        isStatic: body.isStatic,
+                        isSensor: body.isSensor,
+                        ignoreGravity: gameObject.getData('ignoreGravity') === true,
+                        gravityScale: body.gravityScale.y,
+                        shape: gameObject.getData('shape') || 'rectangle', 
+                        friction: parseFloat(body.friction.toFixed(2)),
+                        restitution: parseFloat(body.restitution.toFixed(2)),
+                        collisionFilter: {
+                            category: body.collisionFilter.category,
+                            mask: body.collisionFilter.mask
+                        }
+                    };
+                }
                 
                 sceneLayoutData.objects.push(objData);
-            }
+
+            } // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+              // ★★★ ここが、forループの正しい閉じ括弧です ★★★
+              // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
         
-        // --- 4. アニメーションデータも同様に、必要なプロパティだけを抽出する ---
-        const scene = this.game.scene.getScene(sceneKey);
-        if (scene && scene.anims) {
+        // --- 4. アニメーションデータの抽出 (forループの外) ---
+        if (sceneKey !== 'UIScene' && scene.anims) {
+            // (この部分はあなたの元のコードのままで完璧です)
             sceneLayoutData.animations = scene.anims.anims.getArray()
                 .filter(anim => {
                     if (!anim.frames[0]) return false;
@@ -1981,12 +1970,9 @@ if (gameObject.body) {
                     if (!sceneObjects) return false;
                     return Array.from(sceneObjects).some(go => go.texture && go.texture.key === anim.frames[0].textureKey);
                 })
-                    // ----------------------------------------
-                
-                         .map(anim => ({ // animオブジェクトそのものではなく、新しいプレーンなオブジェクトを返す
+                .map(anim => ({
                     key: anim.key,
                     texture: anim.frames[0].textureKey,
-                    // framesの定義も、Phaserオブジェクトへの参照を含まないようにする
                     frames: { 
                         start: anim.frames[0].frame.name, 
                         end: anim.frames[anim.frames.length - 1].frame.name 
@@ -1994,9 +1980,12 @@ if (gameObject.body) {
                     frameRate: anim.frameRate,
                     repeat: anim.repeat
                 }));
+        } else {
+            // UISceneの場合はanimationsプロパティを削除してJSONを綺麗にする
+            delete sceneLayoutData.animations;
         }
 
-        // --- 5. 安全なオブジェクトをJSONに変換 ---
+        // --- 5. JSONに変換して出力 (forループの外) ---
         try {
             const jsonString = JSON.stringify(sceneLayoutData, null, 2);
             console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
@@ -2005,15 +1994,10 @@ if (gameObject.body) {
                 alert(`Layout for ${sceneKey} copied to clipboard!`);
             });
         } catch (error) {
-            console.error("[EditorPlugin] FAILED to stringify layout data. This should not happen with the new structure.", error);
+            console.error("[EditorPlugin] FAILED to stringify layout data.", error);
             alert("Failed to export layout. Check the console for a critical error.");
         }
     }
-
-// in src/plugins/EditorPlugin.js
-
-    // ... (既存の exportLayoutToJson メソッド) ...
-
 
     /**
      * ★★★ 新規メソッド ★★★
