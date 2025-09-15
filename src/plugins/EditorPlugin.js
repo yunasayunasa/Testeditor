@@ -1979,8 +1979,10 @@ if (gameObject.body) {
                     if (!anim.frames[0]) return false;
                     const sceneObjects = this.editableObjects.get(sceneKey);
                     if (!sceneObjects) return false;
-                    return Array.from(sceneObjects).some(go => go.texture.key === anim.frames[0].textureKey);
+                    return Array.from(sceneObjects).some(go => go.texture && go.texture.key === anim.frames[0].textureKey);
                 })
+                    // ----------------------------------------
+                
                          .map(anim => ({ // animオブジェクトそのものではなく、新しいプレーンなオブジェクトを返す
                     key: anim.key,
                     texture: anim.frames[0].textureKey,
