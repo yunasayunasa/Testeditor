@@ -5,11 +5,6 @@ export const uiRegistry = {
     'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } },
     'enemy_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'enemy' } },
 
-    'jump_button': { 
-        path: './ui/JumpButton.js', 
-        groups: ['controls', 'action'],
-        params: { group: 'jump_button' }
-    },
  'start_button': {
        component: Button, // ★ 作成した汎用Buttonクラスを指定
         path: './ui/Button.js', // ★ パスも忘れずに
@@ -17,6 +12,11 @@ export const uiRegistry = {
         params: { label: 'Menu' } // ★ labelでテキストを指定
     },
 
+    'jump_button': { 
+        path: './ui/JumpButton.js', 
+        groups: ['controls', 'action'],
+        params: { group: 'jump_button' }
+    },
     'message_window': { path: './ui/MessageWindow.js', groups: ['game'] },
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
