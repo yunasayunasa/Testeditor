@@ -118,34 +118,52 @@ export default class UIScene extends Phaser.Scene {
         });
     }
 }
- /**
-     * ★★★ BaseGameSceneから、このメソッドをコピーしてきてください ★★★
-     * レイアウト定義に基づいてゲームオブジェクトを生成する
+  
+    /**
+     * レイアウト定義に基づいてゲームオブジェクトを生成する (テキストオブジェクト対応版)
+     * @param {object} layout - 単一オブジェクトのレイアウト定義。
+     * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト。
      */
     createObjectFromLayout(layout) {
-        if (layout.type === 'Text') {
+        // ▼▼▼【ここからが修正箇所です】▼▼▼
+        
+        // --- ケース1: タイプが 'Text' の場合 ---
+           if (layout.type === 'Text') {
             const text = layout.text || '';
+            
+            // ★★★ スタイルオブジェクトをそのまま渡せる ★★★
             const style = layout.style || { fontSize: '32px', fill: '#fff' };
+            
             const textObject = new Phaser.GameObjects.Text(this, 0, 0, text, style);
-            if (style.shadow && style.shadow.color) { /* ... 影の設定 ... */ }
+
+            // ★★★ 影のスタイルは、個別のメソッドで設定する必要がある ★★★
+            if (style.shadow && style.shadow.color) {
+                textObject.setShadow(
+                    style.shadow.offsetX,
+                    style.shadow.offsetY,
+                    style.shadow.color,
+                    style.shadow.blur || 0,
+                    style.shadow.stroke,
+                    style.shadow.fill
+                );
+            }
             return textObject;
         }
-        // ★ 将来的に、汎用Buttonなどを追加する場合は、ここに else if を追加
-        // else if (layout.type === 'Button') { ... }
+
+        // --- ケース2: タイプが 'Sprite' の場合 (変更なし) ---
+        if (layout.type === 'Sprite') {
+            const textureKey = layout.texture || '__DEFAULT';
+            return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
+        }
+
+        // --- ケース3: デフォルト (Image) の場合 (変更なし) ---
+        const textureKey = layout.texture || '__DEFAULT';
+        return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
         
-        // デフォルトはImage（もし使うなら）
-        // const textureKey = layout.texture || '__DEFAULT';
-        // return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-// ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
-    /**
-     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
-     * (setSize/setInteractiveを安全に呼び出す最終確定版)
-     */
-    /**
-     * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
-     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
-     */
+        
+
    
 /**
  * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
