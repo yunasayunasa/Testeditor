@@ -175,43 +175,79 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 this.editorTitle.innerText = `${this.selectedObjects.length} objects selected`;
                 this.safeCreateUI(this.createMultiSelectUI); // 専用UIを生成
             } 
-            // ================================================================
+                  // ================================================================
             // --- ケース2：単体オブジェクト選択中 ---
             // ================================================================
             else if (this.selectedObject) {
-                this.editorTitle.innerText = `Editing: ${this.selectedObject.name}`;
+                this.editorTitle.innerText = `編集中: ${this.selectedObject.name}`;
                 
-                // --- 表示するUIセクションを順番に生成 ---
+                // --- 共通UIセクション ---
                 this.safeCreateUI(this.createArrayToolSection);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
-                
                 this.safeCreateUI(this.createNameInput);
-                this.safeCreateUI(this.createLayerSelect); // レイヤー選択を追加
+                this.safeCreateUI(this.createLayerSelect);
                 this.safeCreateUI(this.createGroupInput);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 
-                if (this.selectedObject instanceof Phaser.GameObjects.Text) {
-                    this.safeCreateUI(this.createTextPropertiesUI);
+                // ▼▼▼【ここからが核心の修正です】▼▼▼
+                // --------------------------------------------------------------------
+                
+                // --- uiRegistry を使って、オブジェクトの種類に応じたUIを動的に生成 ---
+                const uiRegistry = this.game.registry.get('uiRegistry');
+                const objectType = this.selectedObject.constructor;
+                
+                let isUiComponent = false; // UIコンポーネントかどうかを判定するフラグ
+                if (uiRegistry) {
+                    for (const key in uiRegistry) {
+                        const definition = uiRegistry[key];
+                        if (definition.component === objectType) {
+                            isUiComponent = true; // UIコンポーネントであることが確定
+                            
+                            // キーの文字列で判定して、専用UIを呼び出す
+                            if (key.includes('text') || key.includes('message_window')) {
+                                this.safeCreateUI(this.createUITextPropertiesUI);
+                            } else if (key.includes('button')) {
+                                this.safeCreateUI(this.createUIButtonPropertiesUI);
+                            } else if (key.includes('bar')) {
+                                this.safeCreateUI(this.createUIBarPropertiesUI);
+                            }
+                            break; // 一致するものが見つかったらループを抜ける
+                        }
+                    }
                 }
-                
-                this.safeCreateUI(this.createTransformInputs);
-                this.safeCreateUI(this.createDepthInput);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                
-                this.safeCreateUI(this.createPhysicsSection);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                
-                if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
-                    this.safeCreateUI(this.createAnimationSection);
-                    this.editorPropsContainer.appendChild(document.createElement('hr'));
-                }
-                
-                this.safeCreateUI(this.createEventSection);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                
-                this.safeCreateUI(this.createComponentSection);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
 
+                // ★ Phaser標準のTextオブジェクトにも対応
+                if (this.selectedObject instanceof Phaser.GameObjects.Text) {
+                     this.safeCreateUI(this.createTextPropertiesUI);
+                     isUiComponent = true; // これもUIコンポーネントの一種とみなす
+                }
+                
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+                // --- UIコンポーネントでない場合のみ、ゲームオブジェクト用のUIを表示 ---
+                if (!isUiComponent) {
+                    this.safeCreateUI(this.createTransformInputs);
+                    this.safeCreateUI(this.createDepthInput);
+                    this.editorPropsContainer.appendChild(document.createElement('hr'));
+                    this.safeCreateUI(this.createPhysicsSection);
+                    this.editorPropsContainer.appendChild(document.createElement('hr'));
+                    if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
+                        this.safeCreateUI(this.createAnimationSection);
+                        this.editorPropsContainer.appendChild(document.createElement('hr'));
+                    }
+                    this.safeCreateUI(this.createEventSection);
+                    this.editorPropsContainer.appendChild(document.createElement('hr'));
+                    this.safeCreateUI(this.createComponentSection);
+                } else {
+                    // UIコンポーネントの場合も、座標やスケールは編集できた方が便利
+                    this.safeCreateUI(this.createTransformInputs);
+                    this.safeCreateUI(this.createDepthInput);
+                }
+
+                this.editorPropsContainer.appendChild(document.createElement('hr'));
+                
+                // --- 共通フッター ---
                 this.safeCreateUI(this.createExportButton);
                 this.safeCreateUI(this.createExportPrefabButton);
                 this.safeCreateUI(this.createDeleteObjectButton);
@@ -237,6 +273,65 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // --- 最後に必ずフラグを戻す ---
             this._isUpdatingPanel = false;
         }
+    }
+
+    // 動的UI系
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * UIボタン専用のプロパティ編集UIを生成する
+     */
+    createUIButtonPropertiesUI() {
+        const target = this.selectedObject;
+        if (target.text && typeof target.setText === 'function') {
+            const labelRow = document.createElement('div');
+            labelRow.innerHTML = `<label>ラベル:</label>`;
+            const labelInput = document.createElement('input');
+            labelInput.type = 'text';
+            labelInput.value = target.text.text;
+            labelInput.addEventListener('input', (e) => {
+                target.setText(e.target.value);
+            });
+            labelRow.appendChild(labelInput);
+            this.editorPropsContainer.appendChild(labelRow);
+        }
+    }
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * UIバー専用のプロパティ編集UIを生成する
+     */
+    createUIBarPropertiesUI() {
+        const target = this.selectedObject;
+        const updateBar = () => { /* ... (前回の提案と同じ) ... */ };
+
+        // --- 監視する変数 (現在値) ---
+        const watchRow = document.createElement('div');
+        watchRow.innerHTML = `<label>監視する変数(現在値):</label>`;
+        const watchInput = document.createElement('input');
+        watchInput.type = 'text';
+        watchInput.placeholder = '例: player_hp';
+        watchInput.value = target.watchVariable || '';
+        watchInput.addEventListener('change', (e) => {
+            target.watchVariable = e.target.value;
+            updateBar();
+        });
+        watchRow.appendChild(watchInput);
+        this.editorPropsContainer.appendChild(watchRow);
+
+        // --- 監視する変数 (最大値) ---
+        const maxRow = document.createElement('div');
+        maxRow.innerHTML = `<label>監視する変数(最大値):</label>`;
+        const maxInput = document.createElement('input');
+        maxInput.type = 'text';
+        maxInput.placeholder = '例: player_max_hp';
+        maxInput.value = target.maxVariable || '';
+        maxInput.addEventListener('change', (e) => {
+            target.maxVariable = e.target.value;
+            updateBar();
+        });
+        maxRow.appendChild(maxInput);
+        this.editorPropsContainer.appendChild(maxRow);
     }
 
     //---レイヤー系
