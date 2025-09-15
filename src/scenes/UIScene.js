@@ -383,36 +383,37 @@ registerUiElement(name, element, params) {
     }
 
      /**
-     * ★★★ 新規・最重要メソッド ★★★
+     * ★★★ 最終FIX版 ★★★
      * エディタからの要求に応じて、新しいUIコンポーネントを生成・追加する
-     * @param {string} componentType - 'Text', 'Button', 'Bar' など
+     * @param {string} registryKey - uiRegistryのキー ('menu_button', 'player_hp_bar'など)
      * @param {string} newName - 新しいUIオブジェクトに付ける名前
-     * @returns {Phaser.GameObjects.GameObject | null} 生成されたUIオブジェクト
      */
-    addUiComponentFromEditor(componentType, newName) {
-          if (componentType === 'Text') {
+    addUiComponentFromEditor(registryKey, newName) {
+        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // テキストの場合は、これまで通り専用メソッドを呼び出す
+        if (registryKey === 'Text') {
             return this.addTextUiFromEditor(newName);
         }
+
         const uiRegistry = this.registry.get('uiRegistry');
         const stateManager = this.registry.get('stateManager');
         if (!uiRegistry || !stateManager) return null;
 
-        // --- 1. 生成するUIコンポーネントの「設計図」を探す ---
-        // uiRegistryのキーと、componentTypeを小文字にしたものが一致すると仮定
-        // (例: 'Button' -> 'button')
-        const registryKey = Object.keys(uiRegistry).find(key => key.includes(componentType.toLowerCase()));
-        const definition = registryKey ? uiRegistry[registryKey] : null;
+        // --- 1. 指定されたキーで、uiRegistryから「設計図」を直接取得 ---
+        const definition = uiRegistry[registryKey];
 
         if (!definition || !definition.component) {
-            console.error(`[UIScene] UI definition for '${componentType}' not found in uiRegistry.`);
+            console.error(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry.`);
             return null;
         }
 
         // --- 2. デフォルトのパラメータを準備 ---
         const centerX = this.scale.width / 2;
         const centerY = this.scale.height / 2;
+        // ★★★ definition.params を最優先で使う ★★★
         const params = {
-            ...definition.params, // レジストリのデフォルトparams
+            ...definition.params,
             x: centerX,
             y: centerY,
             name: newName,
@@ -424,12 +425,13 @@ registerUiElement(name, element, params) {
         const newUiElement = new UiComponentClass(this, params);
 
         // --- 4. シーンに登録し、編集可能にする ---
-        // ★ 既存の registerUiElement メソッドを再利用
         this.registerUiElement(newName, newUiElement, params);
         
-        console.log(`[UIScene] UI Component '${newName}' of type '${componentType}' added to scene.`);
+        console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
 
         return newUiElement;
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
      /**
      * ★★★ 新規メソッド ★★★

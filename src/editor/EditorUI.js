@@ -14,11 +14,14 @@ export default class EditorUI {
         this.currentAssetTab = 'image';
         
          //レイヤープロパティ
-        this.layers = [
-        { name: 'Foreground', visible: true, locked: false },
-        { name: 'Gameplay', visible: true, locked: false },
-        { name: 'Background', visible: true, locked: false },
-    ];
+      this.uiComponentList = [
+            // { key: 'Text', name: 'テキスト' }, // Textは専用メソッドで処理するので不要
+            { key: 'menu_button', name: '汎用ボタン', type: 'Button' },
+            { key: 'player_hp_bar', name: 'HPバー', type: 'Bar' },
+            // ★ 新しいUIを追加する際は、ここに一行追加するだけ
+            // { key: 'some_new_ui', name: '新しいUI', type: 'SpecialUI' },
+        ];
+    }
     this.activeLayerName = 'Gameplay';
 
     this.uiComponentList = [
@@ -378,7 +381,21 @@ export default class EditorUI {
           // --- UIタブが選択されている場合の、特別な表示ロジック ---
         if (this.currentAssetTab === 'ui') {
             document.getElementById('add-asset-button').innerText = 'Add UI Component'; // ボタンのテキストを変更
+ const uiToAdd = [
+                { key: 'Text', name: 'テキスト', type: 'Text' }, // テキスト追加は特別扱い
+                ...this.uiComponentList
+            ];
+            uiToAdd.forEach(component => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'asset-item';
+                itemDiv.dataset.assetKey = component.key;  // ★ 'menu_button', 'player_hp_bar' など
+                itemDiv.dataset.assetType = component.type; // ★ 'Button', 'Bar' など
 
+                itemDiv.addEventListener('click', () => {
+                    // ...
+                    this.selectedAssetKey = component.key; // ★ 選択されたキーを保存
+                    this.selectedAssetType = 'ui';
+                });
             this.uiComponentList.forEach(component => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'asset-item';
