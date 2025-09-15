@@ -87,6 +87,75 @@
 
 <hr>
 
+<hr><h2>[run_scenario]</h2>
+<p>現在のゲームシーンを停止させずに、その上から小さなノベルパートを再生します。ボス戦前の会話演出や、操作しながら表示するチュートリアルなど、ゲームプレイとシナリオを融合させるための強力な機能です。</p>
+<p>このタグで呼び出されたノベルパートは、専用の<code>[overlay_end]</code>タグで終了させる必要があります。</p>
+<h4>パラメータ:</h4>
+<ul>
+<li><strong>file</strong> (必須): 再生したいシナリオファイル名（例: <code>"tutorial.ks"</code>）。</li>
+<li><strong>block_input</strong> (任意): <code>false</code>に設定すると、背後のゲームシーンの操作をブロックせず、プレイヤーがキャラクターを動かしながらシナリオを読むことができます。デフォルトは<code>true</code>（操作はブロックされる）。</li>
+</ul>
+<p><strong>注意:</strong> このタグは、呼び出したシナリオが<code>[overlay_end]</code>で終了するまで、元のアクション（イベント）の処理を停止させます。</p>
+<p><strong>使用例:</strong></p>
+<pre><code>; "boss_intro.ks" を読み込み、プレイヤーの操作を止めて会話演出を再生
+[run_scenario file=boss_intro.ks]
+; 次のアクションは、boss_intro.ksが終了するまで実行されない
+[start_battle]
+
+; "tutorial_01.ks" を読み込み、プレイヤーが操作しながら読めるチュートリアルを表示
+[run_scenario file=tutorial_01.ks block_input=false]
+</code></pre>
+
+<hr>
+
+<h3><pre>[overlay_end]</pre></h3>
+<p><strong>機能:</strong> <code>[run_scenario]</code>で開始したオーバーレイシナリオを終了し、元のゲームシーンに戻ります。このタグは、オーバーレイ用のシナリオの最後に必ず記述してください。</p>
+<p><strong>パラメータはありません。</strong></p>
+<pre><code>
+; tutorial_01.ks の中身
+yuna:「画面左のスティックで移動できるよ！」[p]
+yuna:「右下のボタンでジャンプ！ 試してみて！」[p]
+; チュートリアルが終了したので、オーバーレイを閉じる
+[overlay_end]
+</code></pre>
+
+<hr>
+<h2>[showwindow]</h2>
+<p>メッセージウィンドウを指定された位置に表示します。オーバーレイシナリオで、チュートリアルUIのようにウィンドウを画面上部に表示したい場合などに使用します。</p>
+<h4>パラメータ:</h4>
+<ul>
+<li><strong>align</strong> (任意): ウィンドウの垂直位置を大まかに指定します。<code>top</code>, <code>center</code>, <code>bottom</code> のいずれかを指定できます。デフォルトは<code>bottom</code>。</li>
+<li><strong>margin_y</strong> (任意): <code>align</code>で上下に揃えた際の、画面の端からの余白（ピクセル数）を指定します。デフォルトは<code>20</code>。</li>
+<li><strong>x</strong> (任意): ウィンドウのX座標をピクセル単位で直接指定します。この値が指定された場合、<code>align</code>による中央揃えは無視されます。</li>
+<li><strong>y</strong> (任意): ウィンドウのY座標をピクセル単位で直接指定します。この値が指定された場合、<code>align</code>と<code>margin_y</code>は無視されます。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; ウィンドウを画面上部に、端から20pxの余白を空けて表示
+[showwindow align=top]
+; ウィンドウを画面のど真ん中に表示
+[showwindow align=center]
+
+; ウィンドウをX座標300, Y座標100のカスタム位置に表示
+[showwindow x=300 y=100]
+</code></pre>
+
+<hr>
+
+<h3><pre>[hidewindow]</pre></h3>
+<p><strong>機能:</strong> メッセージウィンドウを非表示にします（画面の外へ移動させます）。演出上、一時的にウィンドウを消したい場合に使用します。</p>
+<p><strong>パラメータはありません。</strong></p>
+<pre><code>
+; 一度ウィンドウを隠して、イベントCGに集中させる
+[hidewindow]
+[image storage=event_cg01 time=1000]
+[wait time=2000]
+; 再びウィンドウをデフォルト位置（下部）に表示する
+[showwindow]
+yuna:「……きれい。」[p]
+</code></pre>
+
+<hr>
+
 <h2>[time_stop]</h2>
 <p>ゲーム全体の時間を停止させます。物理演算、Tween、タイマーなど、時間経過に依存する全てのものが停止します。アクションステージの冒頭などに用います。</p>
 <p><strong>注意:</strong> このタグは、<code>onReady</code>トリガーと併用するのが最も安全で効果的です。これにより、シーンの全てのオブジェクトが生成された直後に時間が停止し、予期せぬ挙動を防ぎます。</p>
