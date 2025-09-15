@@ -1879,9 +1879,8 @@ createComponentSection() {
             alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
             return;
         }
-  const scene = this.selectedObject.scene; // ★ 対象シーンを先に取得
-        const sceneKey = scene.scene.key;
-     
+
+        const sceneKey = this.selectedObject.scene.scene.key;
         
         // sceneLayoutDataは最終的にシリアライズされる純粋なオブジェクト
         const sceneLayoutData = {
@@ -1893,22 +1892,14 @@ createComponentSection() {
         if (this.editableObjects.has(sceneKey)) {
             // 破壊されたオブジェクトを除外
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
-
-            for (const gameObject of liveObjects) {
+      for (const gameObject of liveObjects) {
                 if (!gameObject.name) continue;
-  if (typeof scene.extractLayoutFromObject === 'function') {
-                    const objData = scene.extractLayoutFromObject(gameObject);
-                    sceneLayoutData.objects.push(objData);
-                } else {
-                    console.warn(`Scene '${sceneKey}' does not have an extractLayoutFromObject method. Skipping '${gameObject.name}'.`);
-                }
-                // --- 1. 必要なプロパティだけを抽出した、新しいプレーンなオブジェクトを作成 ---
+
+                // --- 1. 基本的なプロパティを抽出 ---
                 const objData = {
                     name: gameObject.name,
-                    type:  (gameObject instanceof Phaser.GameObjects.Text) ? 'Text' :
-                    (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
-                  
-                    texture: gameObject.texture.key,
+                    // ★ コンストラクタ名を使う方が、より堅牢
+                    type: gameObject.constructor.name,
                     x: Math.round(gameObject.x),
                     y: Math.round(gameObject.y),
                     depth: gameObject.depth,
@@ -1916,54 +1907,41 @@ createComponentSection() {
                     scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
                     angle: Math.round(gameObject.angle),
                     alpha: parseFloat(gameObject.alpha.toFixed(2)),
+                    layer: gameObject.getData('layer'),
+                    group: gameObject.getData('group'),
+                    events: gameObject.getData('events'),
+                    components: gameObject.getData('components'),
+                    animation_data: gameObject.getData('animation_data')
                 };
-                const layerName = gameObject.getData('layer');
-                if (layerName) {
-                    objData.layer = layerName;
-                }
-                // --- 2. getData()で取得したデータは、通常プレーンなので安全に追加できる ---
-                const group = gameObject.getData('group');
-                if (group) objData.group = group;
 
-                 if (objData.type === 'Text') {
-            objData.text = gameObject.text;
-            objData.style = {
-                // --- 既存のスタイル ---
-                fontSize: gameObject.style.fontSize,
-                fill: gameObject.style.color,
-                // ▼▼▼【新しいスタイルを追加】▼▼▼
-                fontFamily: gameObject.style.fontFamily,
-                fontStyle: gameObject.style.fontStyle,
-                // 影のスタイルも保存
-                shadow: {
-                    offsetX: gameObject.style.shadowOffsetX,
-                    offsetY: gameObject.style.shadowOffsetY,
-                    color: gameObject.style.shadowColor,
-                    blur: gameObject.style.shadowBlur,
-                    stroke: gameObject.style.shadowStroke,
-                    fill: gameObject.style.shadowFill
-                }
-            };
-      
-        } else {
-        // ★★★ textureプロパティが存在するか確認してからキーを取得 ★★★
-        if (gameObject.texture && gameObject.texture.key) {
-            objData.texture = gameObject.texture.key;
-        }
-    
-            // 画像/スプライトの場合
-            objData.texture = gameObject.texture.key;
-        }
-
-                const animData = gameObject.getData('animation_data');
-                if (animData) objData.animation = animData;
+                // ▼▼▼【ここが、エラーを解決する唯一の修正です】▼▼▼
+                // --------------------------------------------------------------------
                 
-                const events = gameObject.getData('events');
-                if (events && events.length > 0) objData.events = events;
+                // --- 2. オブジェクトの種類に応じた、固有のプロパティを追加 ---
+                // ★ gameObjectが'texture'プロパティを持っているか、まず確認
+                if (gameObject.texture && gameObject.texture.key) {
+                    objData.texture = gameObject.texture.key;
+                }
                 
-                const components = gameObject.getData('components');
-                if (components && components.length > 0) objData.components = components;
+                // ★ gameObjectが'text'プロパティを持っているか、まず確認
+                if (typeof gameObject.text === 'string') {
+                    objData.text = gameObject.text;
+                }
+                
+                // ★ gameObjectが'style'プロパティを持っているか、まず確認
+                if (gameObject.style) {
+                    objData.style = gameObject.style.toJSON();
+                }
 
+                // ★ UIコンポーネントの独自プロパティも安全に追加
+                if (gameObject.watchVariable) {
+                    objData.watchVariable = gameObject.watchVariable;
+                    objData.maxVariable = gameObject.maxVariable;
+                }
+                if (gameObject.textObject) { // 汎用ボタンの場合
+                    objData.label = gameObject.textObject.text;
+                }
+                
                 // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
                     // --- 物理ボディのプロパティ ---
          // --- 3. 物理ボディも、必要なプロパティだけを抽出する ---
@@ -1994,7 +1972,7 @@ if (gameObject.body) {
         }
         
         // --- 4. アニメーションデータも同様に、必要なプロパティだけを抽出する ---
-      
+        const scene = this.game.scene.getScene(sceneKey);
         if (scene && scene.anims) {
             sceneLayoutData.animations = scene.anims.anims.getArray()
                 .filter(anim => {

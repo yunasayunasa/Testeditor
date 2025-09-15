@@ -452,6 +452,7 @@ registerUiElement(name, element, params) {
 
         return textObject;
     }
+    
      shutdown() {
         const systemScene = this.scene.get('SystemScene');
         if (systemScene) {
