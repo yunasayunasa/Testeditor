@@ -47,75 +47,59 @@ export default class UIScene extends Phaser.Scene {
 
 // ... (他のメソッドやimportは変更なし) ...
 
-   // in UIScene.js
-
+    /**
+     * UIをレイアウトデータに基づいて構築する (JSONレイアウト対応・最終確定版)
+     * ★★★ 以下のメソッドで、デバッグ用の buildUiFromLayout を完全に置き換えてください ★★★
+     */
     async buildUiFromLayout(layoutData) {
-        console.log("[UIScene | Final Fix] Starting UI build...");
+        console.log("[UIScene] Starting UI build with FULL data-driven routine.");
 
         const uiRegistry = this.registry.get('uiRegistry');
-        if (!uiRegistry) return;
-        const stateManager = this.registry.get('stateManager');
-        const layoutObjects = (layoutData && layoutData.objects) ? layoutData.objects : [];
+        if (!uiRegistry) {
+            console.error('[UIScene] CRITICAL: uiRegistry not found in game registry.');
+            return;
+        }
 
-        // ================================================================
-        // --- ステージ1：uiRegistry に定義されたUIを生成 ---
-        // ================================================================
+        const stateManager = this.registry.get('stateManager');
+
+        // uiRegistryの全てのキーをループ処理する
         for (const name in uiRegistry) {
             try {
                 const definition = uiRegistry[name];
-                const layout = layoutObjects.find(obj => obj.name === name) || {};
+                
+                // 1. JSONレイアウトから、このUI要素に対応する定義を探す (なければ空オブジェクト)
+                const layout = (layoutData && layoutData.objects) 
+                    ? layoutData.objects.find(obj => obj.name === name) || {}
+                    : {};
+                
+                // 2. registryの定義と、JSONの定義をマージする (JSONが優先される)
                 const params = { ...definition.params, ...layout, name, stateManager };
+
+                // 3. main.jsで前処理された 'component' プロパティを使ってクラスを取得
                 const UiComponentClass = definition.component;
 
                 if (UiComponentClass) {
-                    const uiElement = new UiComponent-Class(this, params);
+                    const uiElement = new UiComponentClass(this, params);
+                    // 4. マージ済みの最終的なparamsを使って、UI要素を登録・設定する
                     this.registerUiElement(name, uiElement, params);
+                    console.log(`[UIScene] Successfully created and configured '${name}'.`);
+                } else {
+                    console.warn(`[UIScene] UI definition for '${name}' is missing a 'component' class.`);
                 }
             } catch (e) {
-                console.error(`[UIScene] FAILED to create registry UI element '${name}'.`, e);
+                console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
             }
         }
-        
-        // ================================================================
-        // --- ステージ2：エディタで自由に追加されたUIを復元 ---
-        // ================================================================
-        for (const layout of layoutObjects) {
-            // ★ uiRegistryに存在しないオブジェクトだけを対象とする
-            if (!uiRegistry[layout.name]) {
-                try {
-                    console.log(`[UIScene] Restoring custom UI element: '${layout.name}'`);
-                    
-                    let newUiElement;
-                    // ★ タイプに応じて、適切なクラスやファクトリで生成
-                    if (layout.type === 'Text') {
-                        newUiElement = this.add.text(0, 0, layout.text, layout.style);
-                    } 
-                    // ★ 将来的には、ButtonやBarもここで判定
-                    // else if (layout.type === 'Button') { ... } 
-                    else {
-                        console.warn(`[UIScene] Unknown type for custom UI element: '${layout.type}'`);
-                        continue;
-                    }
-                    
-                    // 共通の登録処理を呼び出す
-                    if (newUiElement) {
-                        this.registerUiElement(layout.name, newUiElement, layout);
-                    }
-
-                } catch(e) {
-                    console.error(`[UIScene] FAILED to restore custom UI element '${layout.name}'.`, e);
-                }
-            }
-        }
-        
-        // --- 既存のstart_buttonのロジックは、この後で実行 ---
-        const startButton = this.uiElements.get('start_button');
-        if (startButton) {
-            // ... (startButtonのリスナー設定)
-        }
-        
-        console.log("[UIScene] UI build complete.");
+         const startButton = this.uiElements.get('start_button');
+    if (startButton) {
+        // start_buttonに、一度だけ実行されるクリックリスナーを設定
+       startButton.once('button_pressed', () => {
+            // ★ システムに、時間の再開を「依頼」する
+            this.scene.get('SystemScene').events.emit('request-time-resume');
+            startButton.setVisible(false);
+        });
     }
+}
 
 // ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**
