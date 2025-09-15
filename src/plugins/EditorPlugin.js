@@ -1462,6 +1462,13 @@ createComponentSection() {
      * 複数選択されたオブジェクト（グループ）を、一つのプレハブとして書き出す。
      * アクティブなシーンのヘルパーメソッドを正しく呼び出す。
      */
+    // in EditorPlugin.js
+
+    /**
+     * ★★★ 完全版 ★★★
+     * 複数選択されたオブジェクト（グループ）を、一つのプレハブとして書き出す。
+     * アクティブなシーンのヘルパーメソッドを正しく呼び出す。
+     */
     exportGroupToPrefab() {
         if (!this.selectedObjects || this.selectedObjects.length < 1) {
             alert("プレハブとして書き出すグループを、まず選択してください。");
@@ -1469,52 +1476,64 @@ createComponentSection() {
         }
 
         const prefabName = prompt("このグループプレハブの名前を入力してください:", "my_unit_01");
-        if (!prefabName) return;
+        if (!prefabName) {
+            // ユーザーがキャンセルした場合は何もしない
+            return;
+        }
 
-        // ▼▼▼【ここが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
         // --- 0. 現在アクティブなゲームシーンへの参照を取得 ---
         const activeScene = this.getActiveGameScene();
         if (!activeScene || typeof activeScene.extractLayoutFromObject !== 'function') {
             alert("エラー: レイアウト情報を抽出できるアクティブなシーンが見つかりません。");
             return;
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- 1. バウンディングボックスの計算 (前回の修正のまま) ---
+        // --- 1. Phaser 3.60の方法で、グループ全体のバウンディングボックスを計算 ---
         const tempContainer = activeScene.add.container(0, 0);
-        tempContainer.add(this.selectedObjects);
-        const bounds = tempContainer.getBounds();
-        tempContainer.destroy();
-
-        // --- 2. 中中心点の計算 (変更なし) ---
+        // ★ 選択中のオブジェクトを一時的にコンテナに追加
+        // ★ コンテナに追加すると元の親から削除されてしまう可能性があるため、座標だけを使って計算するのがより安全
+        const allBounds = this.selectedObjects.map(obj => obj.getBounds());
+        const bounds = Phaser.Geom.Rectangle.Union(...allBounds);
+        
+        // --- 2. グループの中心点を計算 ---
         const centerX = bounds.centerX;
         const centerY = bounds.centerY;
 
         const prefabData = {
             name: prefabName,
-            type: 'GroupPrefab',
+            type: 'GroupPrefab', // このプレハブがグループであることを示す特別なタイプ
             objects: []
         };
         
-        // --- 3. 各オブジェクトの情報を、相対座標で保存 ---
+        // --- 3. 各オブジェクトの情報を、中心点からの「相対座標」で保存 ---
         this.selectedObjects.forEach(gameObject => {
-            // ▼▼▼【ここも修正】▼▼▼
             // activeScene の extractLayoutFromObject を呼び出す
             const layout = activeScene.extractLayoutFromObject(gameObject);
             
+            // ワールド座標を、グループの中心からの相対座標に変換
             layout.x = Math.round(gameObject.x - centerX);
             layout.y = Math.round(gameObject.y - centerY);
             
             prefabData.objects.push(layout);
         });
 
-        // --- 4. JSONを生成して出力 (変更なし) ---
+        // --- 4. JSONを生成して出力 ---
         try {
-            // ... (JSON.stringifyとクリップボードコピーの処理)
+            const jsonString = JSON.stringify(prefabData, null, 2);
+            
+            console.log(`%c--- Group Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
+            console.log(jsonString);
+            
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert(`グループプレハブ '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' のような名前で保存してください。`);
+            }).catch(err => {
+                console.error('クリップボードへのコピーに失敗しました: ', err);
+                alert('クリップボードへのコピーに失敗しました。コンソールを確認してください。');
+            });
+
         } catch (error) {
-            // ...
+            console.error("[EditorPlugin] FAILED to stringify group prefab data.", error);
+            alert("グループプレハブの書き出しに失敗しました。コンソールを確認してください。");
         }
     }
 
