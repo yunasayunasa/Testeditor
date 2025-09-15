@@ -1,5 +1,5 @@
 // src/ui/index.js (最終修正版)
-
+import Button from './Button.js';
 export const uiRegistry = {
     'coin_hud': { path: './ui/CoinHud.js', groups: [ 'battle','hud'] },
     'player_hp_bar': { path: './ui/HpBar.js', groups: ['hud', 'battle'], params: { type: 'player' } },
