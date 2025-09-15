@@ -438,19 +438,21 @@ export default class EditorUI {
      * アセットブラウザの「Add Selected Asset」ボタンがクリックされたときの処理。
      * アクティブなレイヤー名をシーンに渡す。
      */
+  // in EditorUI.js
+
     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
-            alert('Please select an asset from the browser first.');
+            alert('アセットを選択してください。'); // 日本語化
             return;
         }
         
         const targetScene = this.getActiveGameScene();
         if (!targetScene) {
-            alert("Could not find a suitable target scene.");
+            alert("対象のシーンが見つかりませんでした。"); // 日本語化
             return;
         }
 
-        // オブジェクト名の重複を避けるためのカウンター
+        // オブジェクト名のカウンター (変更なし)
         if (!this.objectCounters[this.selectedAssetKey]) {
             this.objectCounters[this.selectedAssetKey] = 1;
         } else {
@@ -458,26 +460,40 @@ export default class EditorUI {
         }
         const newName = `${this.selectedAssetKey}_${this.objectCounters[this.selectedAssetKey]}`;
         
-        let newObject = null;
+        let newObjectOrObjects = null; // ★ 変数名を、単数・複数の両方を示唆するものに変更
         
-        // アセットのタイプに応じて、シーンの異なるメソッドを呼び出す
+        // アセットのタイプに応じて、シーンのメソッドを呼び出す
         if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
             if (typeof targetScene.addObjectFromEditor === 'function') {
-                // ★ アクティブなレイヤーの名前 (this.activeLayerName) を第3引数として渡す
-                newObject = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+                newObjectOrObjects = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
             }
-        } else  if (this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') {
+        } 
+        // ▼▼▼【ここが修正箇所です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 'GroupPrefab' も、addPrefabFromEditor を呼び出す条件に含める ---
+        else if (this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') {
             if (typeof targetScene.addPrefabFromEditor === 'function') {
-                newObject = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+                newObjectOrObjects = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
             }
         }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        // 新しく生成されたオブジェクトをエディタで選択状態にする
-        if (newObject && this.plugin) {
-            this.plugin.selectSingleObject(newObject);
+        // --- 新しく生成されたオブジェクトを選択状態にする ---
+        if (newObjectOrObjects && this.plugin) {
+            // ▼▼▼【ここも修正箇所です】▼▼▼
+            // --------------------------------------------------------------------
+            if (Array.isArray(newObjectOrObjects)) {
+                // 配列が返ってきた場合（グループプレハブ）は、複数選択
+                this.plugin.selectMultipleObjects(newObjectOrObjects);
+            } else {
+                // 単一オブジェクトが返ってきた場合は、単体選択
+                this.plugin.selectSingleObject(newObjectOrObjects);
+            }
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     }
-
     
 
     
