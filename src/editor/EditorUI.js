@@ -21,6 +21,12 @@ export default class EditorUI {
     ];
     this.activeLayerName = 'Gameplay';
 
+    this.uiComponentList = [
+            { key: 'Text', name: 'テキスト' },
+            { key: 'Button', name: 'ボタン' },
+            { key: 'Bar', name: 'バー (HP/MPなど)' },
+        ];
+
         // --- DOM要素の参照 ---
         this.getDomElements();
 
@@ -350,6 +356,7 @@ export default class EditorUI {
 
         const assetTypes = [...new Set(assetList.map(asset => (asset.type === 'spritesheet' ? 'image' : asset.type)))];
         if (!assetTypes.includes('image')) assetTypes.unshift('image');
+        if (!assetTypes.includes('ui')) assetTypes.push('ui');
 
         this.assetTabContainer.innerHTML = '';
         assetTypes.forEach(type => {
@@ -368,6 +375,40 @@ export default class EditorUI {
         });
 
         this.assetListContainer.innerHTML = '';
+          // --- UIタブが選択されている場合の、特別な表示ロジック ---
+        if (this.currentAssetTab === 'ui') {
+            document.getElementById('add-asset-button').innerText = 'Add UI Component'; // ボタンのテキストを変更
+
+            this.uiComponentList.forEach(component => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'asset-item';
+                itemDiv.dataset.assetKey = component.key; // 'Text', 'Button' etc.
+                
+                itemDiv.addEventListener('click', () => {
+                    this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
+                    itemDiv.classList.add('selected');
+                    this.selectedAssetKey = component.key;
+                    this.selectedAssetType = 'ui'; // ★ タイプを'ui'として識別
+                });
+                
+                // アイコン（絵文字で代用）
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'asset-preview';
+                iconSpan.style.fontSize = '24px';
+                if (component.key === 'Text') iconSpan.innerText = 'T';
+                if (component.key === 'Button') iconSpan.innerText = '🔘';
+                if (component.key === 'Bar') iconSpan.innerText = '📊';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.innerText = component.name;
+
+                itemDiv.append(iconSpan, nameSpan);
+                this.assetListContainer.appendChild(itemDiv);
+            });
+        } 
+        // --- それ以外のタブ（画像やプレハブ）が選択されている場合（既存のロジック） ---
+        else {
+            document.getElementById('add-asset-button').innerText = 'Add Selected Asset'; // ボタンのテキストを元に戻す
         const displayableAssets = assetList.filter(asset => {
             if (this.currentAssetTab === 'image') {
                 return asset.type === 'image' || asset.type === 'spritesheet';
@@ -430,7 +471,7 @@ export default class EditorUI {
 
             this.assetListContainer.appendChild(itemDiv);
         }
-    }
+    }}
 
    // in EditorUI.js
 
