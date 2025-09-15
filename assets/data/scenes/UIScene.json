@@ -1,65 +1,226 @@
 {
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
-      "name": "menu_button",
-      "x": 50,
-      "y": 50,
-      "depth": 10
-    },
-    {
-      "name": "bottom_panel",
-      "x": 0,
-      "y": 800, 
-      "width": 1280,
-      "height": 120,
-      "depth": 9999
-    },
-    {
       "name": "coin_hud",
-      "x": 100,
-      "y": 50,
-      "width": 150,
-      "height": 50
-    },
-    {
-      "name": "virtual_stick",
-       "group": "virtual_stick",
-      "x": 180,
-      "y": 540,
-      "width": 200,
-      "height": 200
-    },
-    {
-      "name": "message_window",
-      "group": "jump_button",
-      "x": 640,
-      "y": 600,
-      "width": 1000,
-      "height": 200,
-      "depth": 9998
-    },
-    {
-      "name": "jump_button",
-      "group": "jump_button",
-      "x": 1100,
-      "y": 540,
-      "width": 130,
-      "height": 130
-  
+      "type": "CoinHud",
+      "x": 219,
+      "y": 262,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
     },
     {
       "name": "player_hp_bar",
-      "x": 100,
-      "y": 100,
-      "width": 200,
-      "height": 25
+      "type": "HpBar",
+      "x": 296,
+      "y": 277,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
     },
     {
       "name": "enemy_hp_bar",
-      "x": 930,
-      "y": 100,
-      "width": 250,
-      "height": 25
+      "type": "HpBar",
+      "x": 874,
+      "y": 198,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "jump_button",
+      "type": "JumpButton",
+      "x": 1100,
+      "y": 540,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "jump_button"
+    },
+    {
+      "name": "message_window",
+      "type": "MessageWindow",
+      "x": 640,
+      "y": 600,
+      "depth": 9998,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "jump_button",
+      "label": "「このゲームを起動するのは、844 回目ですね。」"
+    },
+    {
+      "name": "menu_button",
+      "type": "MenuButton",
+      "x": 259,
+      "y": 101,
+      "depth": 10,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "text": "MENU",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "36px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#fff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 28.09375,
+          "descent": 8.859375,
+          "fontSize": 36.953125
+        }
+      }
+    },
+    {
+      "name": "bottom_panel",
+      "type": "BottomPanel",
+      "x": 0,
+      "y": 800,
+      "depth": 9999,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1
+    },
+    {
+      "name": "menu_button_1757946483394",
+      "type": "MenuButton",
+      "x": 1164,
+      "y": 51,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "text": "MENU",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "36px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#fff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 28.09375,
+          "descent": 8.859375,
+          "fontSize": 36.953125
+        }
+      }
+    },
+    {
+      "name": "text_1757946486598",
+      "type": "initialize",
+      "x": 708,
+      "y": 71,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24.984375,
+          "descent": 7.875,
+          "fontSize": 32.859375
+        }
+      }
     }
-  ]
+  ],
+  "animations": []
 }
