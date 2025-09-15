@@ -21,14 +21,14 @@ export default class EditorUI {
             // ★ 新しいUIを追加する際は、ここに一行追加するだけ
             // { key: 'some_new_ui', name: '新しいUI', type: 'SpecialUI' },
         ];
-    this.activeLayerName = 'Gameplay';
+   
 
-    this.uiComponentList = [
-            { key: 'Text', name: 'テキスト' },
-            { key: 'Button', name: 'ボタン' },
-            { key: 'Bar', name: 'バー (HP/MPなど)' },
+   this.layers = [
+            { name: 'Foreground', visible: true, locked: false },
+            { name: 'Gameplay', visible: true, locked: false },
+            { name: 'Background', visible: true, locked: false },
         ];
-
+ this.activeLayerName = 'Gameplay';
         // --- DOM要素の参照 ---
         this.getDomElements();
 
