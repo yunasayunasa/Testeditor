@@ -813,50 +813,72 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         return this.children.list.filter(obj => obj.getData('group') === groupId);
     }
     
+    // in BaseGameScene.js
+
     /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * 既存のGameObjectから、複製に使えるようなプレーンなレイアウトオブジェクトを抽出する。
+     * ★★★ 完全版 ★★★
+     * 既存のGameObjectから、複製や保存に使えるプレーンなレイアウトオブジェクトを抽出する。
      * @param {Phaser.GameObjects.GameObject} gameObject - 抽出元のオブジェクト
      * @returns {object} 抽出されたレイアウト情報
      */
     extractLayoutFromObject(gameObject) {
+        if (!gameObject || !gameObject.scene) {
+            return {}; // 安全のため空オブジェクトを返す
+        }
+
         const layout = {
             name: gameObject.name,
-            type: gameObject.type.charAt(0).toUpperCase() + gameObject.type.slice(1), // 'Image', 'Sprite', 'Text'
-            
-            // Transform
-            scaleX: gameObject.scaleX,
-            scaleY: gameObject.scaleY,
-            angle: gameObject.angle,
-            alpha: gameObject.alpha,
-            depth: gameObject.depth,
+            type: gameObject.constructor.name, // 'Image', 'Sprite', 'Text', 'Container' などを自動で取得
 
-            // Data
+            // --- Transform ---
+            x: Math.round(gameObject.x),
+            y: Math.round(gameObject.y),
+            scaleX: parseFloat(gameObject.scaleX.toFixed(3)),
+            scaleY: parseFloat(gameObject.scaleY.toFixed(3)),
+            angle: Math.round(gameObject.angle),
+            alpha: parseFloat(gameObject.alpha.toFixed(3)),
+            depth: gameObject.depth,
+            
+            // ★ スケールを考慮した表示サイズも保存
+            displayWidth: gameObject.displayWidth,
+            displayHeight: gameObject.displayHeight,
+
+            // --- Data ---
             group: gameObject.getData('group'),
+            layer: gameObject.getData('layer'),
             components: gameObject.getData('components'),
-            // ... 他にコピーしたいgetData()の値があればここに追加 ...
+            events: gameObject.getData('events'),
         };
-layout.displayWidth = gameObject.displayWidth;
-        layout.displayHeight = gameObject.displayHeight;
-        // タイプに応じたプロパティを追加
+
+        // --- タイプに応じた固有のプロパティを追加 ---
         if (gameObject instanceof Phaser.GameObjects.Text) {
             layout.text = gameObject.text;
             layout.style = gameObject.style.toJSON();
-        } else {
+        } 
+        else if (gameObject instanceof Phaser.GameObjects.Sprite) {
+            // Sprite と Image の両方が texture を持つ
             layout.texture = gameObject.texture.key;
-            // スプライトの場合、現在のフレームを保持
-            if (gameObject instanceof Phaser.GameObjects.Sprite) {
-                layout.frame = gameObject.frame.name;
-            }
+            // Sprite は frame も持つ
+            layout.frame = gameObject.frame.name;
+        }
+        else if (gameObject instanceof Phaser.GameObjects.Image) {
+            layout.texture = gameObject.texture.key;
         }
         
-        // 物理ボディ情報もコピー
+        // --- 物理ボディ情報もコピー ---
         if (gameObject.body) {
+            const body = gameObject.body;
             layout.physics = {
-                isStatic: gameObject.body.isStatic,
-                isSensor: gameObject.body.isSensor,
+                isStatic: body.isStatic,
+                isSensor: body.isSensor,
                 shape: gameObject.getData('shape') || 'rectangle',
-                // ... 他の物理プロパティも ...
+                ignoreGravity: gameObject.getData('ignoreGravity') === true,
+                friction: body.friction,
+                restitution: body.restitution,
+                collisionFilter: {
+                    category: body.collisionFilter.category,
+                    mask: body.collisionFilter.mask
+                }
             };
         }
         
