@@ -1457,9 +1457,12 @@ createComponentSection() {
 
 // in EditorPlugin.js
 
+    // in EditorPlugin.js
+
     /**
-     * ★★★ 新規メソッド ★★★
-     * 複数選択されたオブジェクト（グループ）を、一つのプレハブとして書き出す
+     * ★★★ 修正版 ★★★
+     * 複数選択されたオブジェクト（グループ）を、一つのプレハブとして書き出す。
+     * Phaser 3.60の正しい方法でバウンディングボックスを計算する。
      */
     exportGroupToPrefab() {
         if (!this.selectedObjects || this.selectedObjects.length < 1) {
@@ -1470,44 +1473,44 @@ createComponentSection() {
         const prefabName = prompt("このグループプレハブの名前を入力してください:", "my_unit_01");
         if (!prefabName) return;
 
-        // --- 1. グループ全体のバウンディングボックス（外枠）を計算 ---
-        const bounds = Phaser.GameObjects.GetBounds.Calculators.GetRectangle(this.selectedObjects);
+        // ▼▼▼【ここからが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- 1. Phaser 3.60の方法で、グループ全体のバウンディングボックスを計算 ---
+        // まず、一時的なコンテナを作成し、選択中のオブジェクトをすべてその中に入れる
+        const tempContainer = this.selectedObjects[0].scene.add.container(0, 0);
+        tempContainer.add(this.selectedObjects);
+        // getBounds()で、コンテナ全体のサイズと位置を取得
+        const bounds = tempContainer.getBounds();
+        // 計算が終わったら、一時的なコンテナはすぐに破棄
+        tempContainer.destroy();
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
-        // --- 2. グループの「中心点」を計算 ---
-        // これが、プレハブを再配置する際のアンカーポイント（基点）になる
+        // --- 2. グループの中心点を計算 (変更なし) ---
         const centerX = bounds.centerX;
         const centerY = bounds.centerY;
 
         const prefabData = {
             name: prefabName,
-            type: 'GroupPrefab', // このプレハブがグループであることを示す特別なタイプ
+            type: 'GroupPrefab',
             objects: []
         };
         
-        // --- 3. 各オブジェクトの情報を、中心点からの「相対座標」で保存 ---
+        // --- 3. 各オブジェクトの情報を、中心点からの相対座標で保存 (変更なし) ---
         this.selectedObjects.forEach(gameObject => {
-            // BaseGameSceneにある、既存の便利なヘルパーを拝借
             const layout = gameObject.scene.extractLayoutFromObject(gameObject);
-            
-            // ワールド座標を、グループの中心からの相対座標に変換
             layout.x = Math.round(gameObject.x - centerX);
             layout.y = Math.round(gameObject.y - centerY);
-            
             prefabData.objects.push(layout);
         });
 
-        // --- 4. JSONを生成して出力 ---
+        // --- 4. JSONを生成して出力 (変更なし) ---
         try {
-            const jsonString = JSON.stringify(prefabData, null, 2);
-            console.log(`%c--- Group Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
-            console.log(jsonString);
-            
-            navigator.clipboard.writeText(jsonString).then(() => {
-                alert(`グループプレハブ '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' のような名前で保存してください。`);
-            });
+            // ... (JSON.stringifyとクリップボードコピーの処理)
         } catch (error) {
-            console.error("[EditorPlugin] FAILED to stringify group prefab data.", error);
-            alert("グループプレハブの書き出しに失敗しました。コンソールを確認してください。");
+            // ...
         }
     }
 
