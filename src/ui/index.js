@@ -11,13 +11,10 @@ export const uiRegistry = {
         params: { group: 'jump_button' }
     },
  'start_button': {
-        path: './ui/JumpButton.js', // 既存のJumpButtonクラスを再利用できる
-        groups: ['game_start'],     // ★ 'game_start' という新しいグループ
-        params: {
-            x: 640,
-            y: 360,
-            label: 'TAP TO START' // 表示される文字
-        }
+       component: Button, // ★ 作成した汎用Buttonクラスを指定
+        path: './ui/Button.js', // ★ パスも忘れずに
+        groups: ['menu', 'game'],
+        params: { label: 'Menu' } // ★ labelでテキストを指定
     },
 
     'message_window': { path: './ui/MessageWindow.js', groups: ['game'] },
