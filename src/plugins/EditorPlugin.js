@@ -1510,6 +1510,15 @@ createComponentSection() {
         if (!this.selectedObjects || this.selectedObjects.length === 0) return;
         const gameObjects = this.selectedObjects;
 
+         // --- グループプレハブ書き出しボタン ---
+        const exportGroupButton = document.createElement('button');
+        exportGroupButton.innerText = 'Export Group as Prefab';
+        exportGroupButton.style.backgroundColor = '#4a8a4a'; // 分かりやすい色に
+        exportGroupButton.onclick = () => {
+            this.exportGroupToPrefab(); // これから実装する新しいメソッドを呼び出す
+        };
+        this.editorPropsContainer.appendChild(exportGroupButton);
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
         // --- グループ一括削除ボタン ---
         const deleteButton = document.createElement('button');
         deleteButton.innerText = 'Delete Selected Group';
