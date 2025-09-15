@@ -91,23 +91,7 @@ export default class UIScene extends Phaser.Scene {
             }
         }
 
-            // --- ステージ2：エディタで自由に追加されたUIを復元 ---
-        for (const layout of layoutObjects) {
-            // ★ uiRegistryに存在しないオブジェクトだけを対象とする
-            if (!uiRegistry[layout.name] && !this.uiElements.has(layout.name)) {
-                
-                console.log(`[UIScene] Restoring custom UI element: '${layout.name}'`);
-                
-                // ★★★ BaseGameSceneが持つ、信頼性の高いメソッドを「拝借」する ★★★
-                // createObjectFromLayout はシーンに依存しないので、どのシーンから呼び出しても安全
-                const newUiElement = this.createObjectFromLayout(layout);
-                
-                if (newUiElement) {
-                    // ★ 既存の registerUiElement を使って、安全に登録
-                    this.registerUiElement(layout.name, newUiElement, layout);
-                }
-            }
-        }
+        
          const startButton = this.uiElements.get('start_button');
     if (startButton) {
         // start_buttonに、一度だけ実行されるクリックリスナーを設定
@@ -118,52 +102,16 @@ export default class UIScene extends Phaser.Scene {
         });
     }
 }
-  
+
+// ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**
-     * レイアウト定義に基づいてゲームオブジェクトを生成する (テキストオブジェクト対応版)
-     * @param {object} layout - 単一オブジェクトのレイアウト定義。
-     * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト。
+     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
+     * (setSize/setInteractiveを安全に呼び出す最終確定版)
      */
-    createObjectFromLayout(layout) {
-        // ▼▼▼【ここからが修正箇所です】▼▼▼
-        
-        // --- ケース1: タイプが 'Text' の場合 ---
-           if (layout.type === 'Text') {
-            const text = layout.text || '';
-            
-            // ★★★ スタイルオブジェクトをそのまま渡せる ★★★
-            const style = layout.style || { fontSize: '32px', fill: '#fff' };
-            
-            const textObject = new Phaser.GameObjects.Text(this, 0, 0, text, style);
-
-            // ★★★ 影のスタイルは、個別のメソッドで設定する必要がある ★★★
-            if (style.shadow && style.shadow.color) {
-                textObject.setShadow(
-                    style.shadow.offsetX,
-                    style.shadow.offsetY,
-                    style.shadow.color,
-                    style.shadow.blur || 0,
-                    style.shadow.stroke,
-                    style.shadow.fill
-                );
-            }
-            return textObject;
-        }
-
-        // --- ケース2: タイプが 'Sprite' の場合 (変更なし) ---
-        if (layout.type === 'Sprite') {
-            const textureKey = layout.texture || '__DEFAULT';
-            return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
-        }
-
-        // --- ケース3: デフォルト (Image) の場合 (変更なし) ---
-        const textureKey = layout.texture || '__DEFAULT';
-        return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
-        
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-    }
-        
-
+    /**
+     * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
+     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
+     */
    
 /**
  * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
