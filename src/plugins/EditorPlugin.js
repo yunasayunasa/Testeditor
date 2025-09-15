@@ -1451,7 +1451,68 @@ createComponentSection() {
             }
         });
     }
-    
+    //---------/:::/
+    //グループ系
+    //-----////////
+
+// in EditorPlugin.js
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 複数選択されたオブジェクト（グループ）を、一つのプレハブとして書き出す
+     */
+    exportGroupToPrefab() {
+        if (!this.selectedObjects || this.selectedObjects.length < 1) {
+            alert("プレハブとして書き出すグループを、まず選択してください。");
+            return;
+        }
+
+        const prefabName = prompt("このグループプレハブの名前を入力してください:", "my_unit_01");
+        if (!prefabName) return;
+
+        // --- 1. グループ全体のバウンディングボックス（外枠）を計算 ---
+        const bounds = Phaser.GameObjects.GetBounds.Calculators.GetRectangle(this.selectedObjects);
+        
+        // --- 2. グループの「中心点」を計算 ---
+        // これが、プレハブを再配置する際のアンカーポイント（基点）になる
+        const centerX = bounds.centerX;
+        const centerY = bounds.centerY;
+
+        const prefabData = {
+            name: prefabName,
+            type: 'GroupPrefab', // このプレハブがグループであることを示す特別なタイプ
+            objects: []
+        };
+        
+        // --- 3. 各オブジェクトの情報を、中心点からの「相対座標」で保存 ---
+        this.selectedObjects.forEach(gameObject => {
+            // BaseGameSceneにある、既存の便利なヘルパーを拝借
+            const layout = gameObject.scene.extractLayoutFromObject(gameObject);
+            
+            // ワールド座標を、グループの中心からの相対座標に変換
+            layout.x = Math.round(gameObject.x - centerX);
+            layout.y = Math.round(gameObject.y - centerY);
+            
+            prefabData.objects.push(layout);
+        });
+
+        // --- 4. JSONを生成して出力 ---
+        try {
+            const jsonString = JSON.stringify(prefabData, null, 2);
+            console.log(`%c--- Group Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
+            console.log(jsonString);
+            
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert(`グループプレハブ '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' のような名前で保存してください。`);
+            });
+        } catch (error) {
+            console.error("[EditorPlugin] FAILED to stringify group prefab data.", error);
+            alert("グループプレハブの書き出しに失敗しました。コンソールを確認してください。");
+        }
+    }
+
+
+   
      /**
      * ★★★ 修正版 ★★★
      * 単体選択のロジック。
