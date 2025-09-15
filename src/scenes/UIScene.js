@@ -90,6 +90,24 @@ export default class UIScene extends Phaser.Scene {
                 console.error(`[UIScene] FAILED to create UI element '${name}'.`, e);
             }
         }
+
+            // --- ステージ2：エディタで自由に追加されたUIを復元 ---
+        for (const layout of layoutObjects) {
+            // ★ uiRegistryに存在しないオブジェクトだけを対象とする
+            if (!uiRegistry[layout.name] && !this.uiElements.has(layout.name)) {
+                
+                console.log(`[UIScene] Restoring custom UI element: '${layout.name}'`);
+                
+                // ★★★ BaseGameSceneが持つ、信頼性の高いメソッドを「拝借」する ★★★
+                // createObjectFromLayout はシーンに依存しないので、どのシーンから呼び出しても安全
+                const newUiElement = this.createObjectFromLayout(layout);
+                
+                if (newUiElement) {
+                    // ★ 既存の registerUiElement を使って、安全に登録
+                    this.registerUiElement(layout.name, newUiElement, layout);
+                }
+            }
+        }
          const startButton = this.uiElements.get('start_button');
     if (startButton) {
         // start_buttonに、一度だけ実行されるクリックリスナーを設定
@@ -100,7 +118,25 @@ export default class UIScene extends Phaser.Scene {
         });
     }
 }
-
+ /**
+     * ★★★ BaseGameSceneから、このメソッドをコピーしてきてください ★★★
+     * レイアウト定義に基づいてゲームオブジェクトを生成する
+     */
+    createObjectFromLayout(layout) {
+        if (layout.type === 'Text') {
+            const text = layout.text || '';
+            const style = layout.style || { fontSize: '32px', fill: '#fff' };
+            const textObject = new Phaser.GameObjects.Text(this, 0, 0, text, style);
+            if (style.shadow && style.shadow.color) { /* ... 影の設定 ... */ }
+            return textObject;
+        }
+        // ★ 将来的に、汎用Buttonなどを追加する場合は、ここに else if を追加
+        // else if (layout.type === 'Button') { ... }
+        
+        // デフォルトはImage（もし使うなら）
+        // const textureKey = layout.texture || '__DEFAULT';
+        // return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
+    }
 // ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**
      * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
