@@ -9,7 +9,7 @@ export default class Button extends Container {
         const x = params.x || scene.scale.width / 2;
         const y = params.y || scene.scale.height / 2;
         const label = params.label || 'ボタン';
-        
+           const shape = params.shape || 'rounded_rect'; // ★ 形状をパラメータで受け取る
         super(scene, x, y);
 
         // --- 2. ラベルの文字数に応じて、ボタンのサイズを動的に決定 ---
@@ -20,9 +20,18 @@ export default class Button extends Container {
 
         // --- 3. 見た目を描画 ---
         this.background = new Graphics(scene)
-            .fillStyle(0x555555, 0.8)
-            .fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+            .fillStyle(backgroundColor, 0.8);
 
+        // ★ 形状に応じて描画を切り替える
+        if (shape === 'circle') {
+            const radius = Math.max(width, height) / 2;
+            this.background.fillCircle(0, 0, radius);
+        } else { // rounded_rect
+            this.background.fillRoundedRect(-width / 2, -height / 2, width, height, 10);
+        }
+            
+          
+        
         this.textObject = new Text(scene, 0, 0, label, { 
             fontSize: '24px', 
             fontStyle: 'bold', 

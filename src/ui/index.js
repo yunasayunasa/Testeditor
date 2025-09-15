@@ -9,7 +9,7 @@ export const uiRegistry = {
        component: Button, // ★ 作成した汎用Buttonクラスを指定
         path: './ui/Button.js', // ★ パスも忘れずに
         groups: ['menu', 'game'],
-        params: { label: 'Menu' } // ★ labelでテキストを指定
+        params: { label: 'Menu',shape: 'circle' } // ★ labelでテキストを指定
     },
 
     'jump_button': { 
