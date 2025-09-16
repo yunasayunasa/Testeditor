@@ -14,13 +14,7 @@ export default class EditorUI {
         this.currentAssetTab = 'image';
         
          //レイヤープロパティ
-          this.uiComponentList = [
-            // { key: 'Text', name: 'テキスト' }, // Textは専用メソッドで処理するので不要
-            { key: 'menu_button', name: '汎用ボタン', type: 'Button' },
-            { key: 'player_hp_bar', name: 'HPバー', type: 'Bar' },
-            // ★ 新しいUIを追加する際は、ここに一行追加するだけ
-            // { key: 'some_new_ui', name: '新しいUI', type: 'SpecialUI' },
-        ];
+        
    
 
    this.layers = [
@@ -383,49 +377,48 @@ export default class EditorUI {
             // ================================================================
             // --- ケース1：UIタブが選択されている場合 ---
             // ================================================================
-            document.getElementById('add-asset-button').innerText = 'UIコンポーネントを追加'; // 日本語化
-
-            // ★★★ テキスト追加は専用ボタンがあるので、リストからは分離 ★★★
-            const uiComponentList = [
-                { key: 'Text', name: 'テキスト', type: 'Text' }, // テキスト追加は特別扱い
-                ...this.uiComponentList // constructorで定義したリスト
-            ];
-
-            uiComponentList.forEach(component => {
+            // ★ ゲームのuiRegistryから、最新の定義を直接取得する
+            const uiRegistry = this.game.registry.get('uiRegistry');
+            
+            // ★ uiRegistryの全キーをループして、UIカタログを生成する
+            for (const key in uiRegistry) {
+                const definition = uiRegistry[key];
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'asset-item';
-                // ▼▼▼【ここが修正箇所です】▼▼▼
-                itemDiv.dataset.registryKey = component.key; // ★ 'menu_button', 'player_hp_bar'などを保存
-                
-                itemDiv.addEventListener('click', () => {
+                itemDiv.dataset.registryKey = key; // ★ 'menu_button', 'generic_button'などを保存
+
+                itemDiv.addEventListener('click', (e) => {
                     this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
                     itemDiv.classList.add('selected');
-
-                    // ★★★ 選択されたキーを保存 ★★★
                     this.selectedAssetKey = itemDiv.dataset.registryKey;
-                    this.selectedAssetType = 'ui'; // タイプは'ui'で固定
+                    this.selectedAssetType = 'ui';
                 });
-                
-                // アイコン表示（あなたのロジック + 拡張）
+
+                // アイコン表示（簡易版）
                 const iconSpan = document.createElement('span');
                 iconSpan.className = 'asset-preview';
-                iconSpan.style.fontSize = '24px';
-                iconSpan.style.display = 'flex';
-                iconSpan.style.alignItems = 'center';
-                iconSpan.style.justifyContent = 'center';
-
-                if (component.type === 'Text') iconSpan.innerText = 'T';
-                else if (component.type === 'Button') iconSpan.innerText = '🔘';
-                else if (component.type === 'Bar') iconSpan.innerText = '📊';
-                else iconSpan.innerText = '🧩'; // その他のUI
+                iconSpan.innerText = '🧩';
                 
                 const nameSpan = document.createElement('span');
-                nameSpan.innerText = component.name;
+                // ★ 表示名も、registryKeyをそのまま使うのがシンプル
+                nameSpan.innerText = key;
 
                 itemDiv.append(iconSpan, nameSpan);
                 this.assetListContainer.appendChild(itemDiv);
-            });
+            }
 
+            // ★ テキスト追加ボタンは専用の処理があるので、別途生成する
+            const textItemDiv = document.createElement('div');
+            textItemDiv.className = 'asset-item';
+            textItemDiv.dataset.registryKey = 'Text'; // 特別なキー
+            textItemDiv.innerHTML = `<span class="asset-preview" style="font-size: 24px; display: flex; align-items: center; justify-content: center;">T</span><span>テキスト</span>`;
+            textItemDiv.addEventListener('click', () => {
+                this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
+                textItemDiv.classList.add('selected');
+                this.selectedAssetKey = 'Text';
+                this.selectedAssetType = 'ui';
+            });
+            this.assetListContainer.appendChild(textItemDiv);
         } else {
             // ================================================================
             // --- ケース2：それ以外のタブ（画像やプレハブ）の場合 ---

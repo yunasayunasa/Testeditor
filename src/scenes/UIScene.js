@@ -183,7 +183,7 @@ this.actionInterpreter = new ActionInterpreter(this);
                 // --- Step 4: クラスを取得し、インスタンスを生成する ---
                 const UiComponentClass = definition.component;
                 const uiElement = new UiComponentClass(this, params);
-
+uiElement.setData('registryKey', registryKey);
                 // --- Step 5: シーンに登録し、編集可能にする ---
                 this.registerUiElement(layout.name, uiElement, params);
                 console.log(`[UIScene] Successfully created and configured '${layout.name}' from registry key '${registryKey}'.`);
@@ -273,14 +273,46 @@ registerUiElement(name, element, params) {
     // }
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
+  // src/scenes/UIScene.js
+
     onSceneTransition(newSceneKey) {
+        // ★ uiRegistry と sceneUiVisibility を、最初に一度だけ取得しておく
+        const uiRegistry = this.registry.get('uiRegistry');
+        const sceneUiVisibility = this.registry.get('sceneUiVisibility'); // main.jsなどで登録されている前提
+
+        if (!uiRegistry || !sceneUiVisibility) {
+            console.error("[UIScene.onSceneTransition] uiRegistry or sceneUiVisibility is not available.");
+            return;
+        }
+
         const visibleGroups = sceneUiVisibility[newSceneKey] || [];
+        console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
+
         for (const [name, uiElement] of this.uiElements.entries()) {
-            const definition = uiRegistry[name];
-            if (definition) {
-                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-                uiElement.setVisible(shouldBeVisible);
+            // ▼▼▼【ここが最後の、そして最も重要な修正です】▼▼▼
+            // --------------------------------------------------------------------
+            
+            // ★★★ オブジェクトの'name'ではなく、データとして保存された'registryKey'を取得 ★★★
+            const registryKey = uiElement.getData('registryKey');
+
+            if (registryKey) {
+                // ★★★ registryKeyを使って、uiRegistryから正しい「設計図」を取得 ★★★
+                const definition = uiRegistry[registryKey];
+                
+                if (definition && Array.isArray(definition.groups)) {
+                    // 設計図に書かれた'groups'と、現在表示すべき'visibleGroups'を比較
+                    const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                    uiElement.setVisible(shouldBeVisible);
+                } else {
+                    // 設計図がない、またはgroupsが定義されていないUIは非表示にする
+                    uiElement.setVisible(false);
+                }
+            } else {
+                // registryKeyを持たないオブジェクト（古いデータなど）は非表示にする
+                uiElement.setVisible(false);
             }
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     }
      /**
