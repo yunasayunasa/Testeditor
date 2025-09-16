@@ -4,7 +4,7 @@ import PreloadScene from './scenes/PreloadScene.js';
 import SystemScene from './scenes/SystemScene.js'; 
 import UIScene from './scenes/UIScene.js';       
 import GameScene from './scenes/GameScene.js';
-import { uiRegistry as rawUiRegistry } from './ui/index.js'; // ★元データを別名でインポート
+import { uiRegistry as rawUiRegistry, sceneUiVisibility } from './ui/index.js'; // ★元データを別名でインポート
 import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
@@ -127,4 +127,5 @@ window.onload = async () => {
     // ★ステップ2: ゲームインスタンスができた直後に、準備したデータを登録する
     // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
     game.registry.set('uiRegistry', processedUiRegistry);
+    game.registry.set('sceneUiVisibility', sceneUiVisibility);
 };
