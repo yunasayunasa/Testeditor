@@ -1192,6 +1192,33 @@ createMatterPropertiesUI(gameObject) {
         this.editorPropsContainer.append(title, button);
     }
 
+    // src/plugins/EditorPlugin.js (createCheckboxなどのヘルパーがある場所に追加)
+
+    /**
+     * ★★★ 新規ヘルパー ★★★
+     * 汎用的なテキスト入力欄をコンテナ内に生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {string} label - 表示ラベル
+     * @param {string} initialValue - 初期値
+     * @param {function} callback - 値が変更されたときに呼ばれる関数
+     */
+    createTextInput(container, label, initialValue, callback) {
+        const row = document.createElement('div');
+        const labelEl = document.createElement('label');
+        labelEl.innerText = label + ' ';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = initialValue;
+        
+        // inputイベントは入力の度に発火。changeイベントはフォーカスが外れた時に発火。
+        input.addEventListener('change', () => {
+            callback(input.value);
+        });
+
+        row.append(labelEl, input);
+        container.appendChild(row);
+    }
+
 createComponentSection() {
     const title = document.createElement('h4');
     title.innerText = 'Components';
@@ -1241,6 +1268,8 @@ createComponentSection() {
        
 
         // --- c. パラメータ編集UIの生成 ---
+
+    //かこにコンポーネント特有の設定パラメータを追加して下さい
         if (componentDef.type === 'Scrollable') {
             // パラメータの現在値を取得 (なければデフォルト値)
             const currentSpeed = componentDef.params.speed !== undefined ? componentDef.params.speed : -5;
@@ -1269,6 +1298,40 @@ createComponentSection() {
                 }
             });
         }
+
+  // ★★★ WatchVariableComponent用のUI ★★★
+        if (componentDef.type === 'WatchVariableComponent') {
+            // パラメータの現在値を取得
+            const currentVariable = componentDef.params.variable || '';
+            
+            // 汎用ヘルパーを使って、テキスト入力欄を生成
+            this.createTextInput(containerDiv, '監視する変数 (f.)', currentVariable, (newValue) => {
+                // 1. 永続化データ (componentDef.params) を更新
+                componentDef.params.variable = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+
+                // 2. 実行中のインスタンスも更新 (もし可能なら)
+                if (this.selectedObject.components?.WatchVariableComponent) {
+                    // ここでインスタンスのプロパティを直接書き換えても良いが、
+                    // 確実なのは、コンポーネントを一度破棄して再生成すること。
+                    // 今は、永続化データの更新だけでもOK。
+                }
+            });
+        }
+        
+        // ★★★ BarDisplayComponent用のUI ★★★
+        if (componentDef.type === 'BarDisplayComponent') {
+            const currentMaxVariable = componentDef.params.maxValueVariable || '';
+            
+            this.createTextInput(containerDiv, '最大値の変数 (f.)', currentMaxVariable, (newValue) => {
+                componentDef.params.maxValueVariable = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+            });
+        }
+
+
+
+
 
         this.editorPropsContainer.appendChild(containerDiv);
     });
