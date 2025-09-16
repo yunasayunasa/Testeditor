@@ -73,7 +73,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "jump_button",
-      "label": "「このゲームを起動するのは、848 回目ですね。」"
+      "label": "「このゲームを起動するのは、829 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -134,14 +134,19 @@
     {
       "name": "menu_button_1757951288107",
       "type": "MenuButton",
-      "x": 1148,
-      "y": 83,
+      "x": 1073,
+      "y": 99,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "registryKey": "menu_button",
+      "events": [
+        {
+          "trigger": "onClick",
+          "actions": "[destroy]"
+        }
+      ],
       "text": "MENU",
       "style": {
         "fontFamily": "Courier",
@@ -186,8 +191,7 @@
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1,
-      "registryKey": "player_hp_bar"
+      "alpha": 1
     },
     {
       "name": "text_1757951296212",
@@ -199,7 +203,6 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "registryKey": "Text",
       "text": "New Text",
       "style": {
         "fontFamily": "Courier",
