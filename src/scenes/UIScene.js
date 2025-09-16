@@ -6,6 +6,7 @@ export default class UIScene extends Phaser.Scene {
         super({ key: 'UIScene', active: false });
         this.uiElements = new Map();
         this.isPanelOpen = false;
+        this.componentsToUpdate = [];
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
 
@@ -43,11 +44,75 @@ export default class UIScene extends Phaser.Scene {
         }
     }
 
-   // src/scenes/UIScene.js
+ /***
+  * 
+  * 
+  * コンポーネント系
+  * 
+  * 
+  */
 
-// ... (他のメソッドやimportは変更なし) ...
+  /**
+     * ★★★ 新規メソッド (BaseGameSceneから移植) ★★★
+     * UIオブジェクトにコンポーネントをアタッチする
+     * @param {Phaser.GameObjects.GameObject} target - アタッチ先のUIオブジェクト
+     * @param {string} componentType - コンポーネントのクラス名 (e.g., 'PlayerTrackerComponent')
+     * @param {object} [params={}] - コンポーネントに渡すパラメータ
+     */
+    addComponent(target, componentType, params = {}) {
+        // ComponentRegistry は、ゲームのどこからでもアクセスできるように
+        // registryに登録されていることを前提とします。
+        const ComponentRegistry = this.registry.get('ComponentRegistry');
+        if (!ComponentRegistry) {
+            console.error("[UIScene] ComponentRegistry not found in game registry.");
+            return;
+        }
 
-   // src/scenes/UIScene.js
+        const ComponentClass = ComponentRegistry[componentType];
+
+        if (ComponentClass) {
+            const componentInstance = new ComponentClass(this, target, params);
+
+            if (!target.components) {
+                target.components = {};
+            }
+            target.components[componentType] = componentInstance;
+
+            // ★ もしコンポーネントが update メソッドを持っていたら、更新リストに追加
+            if (typeof componentInstance.update === 'function') {
+                this.componentsToUpdate.push(componentInstance);
+            }
+
+            console.log(`[UIScene] Component '${componentType}' added to UI element '${target.name}'.`);
+        } else {
+            console.warn(`[UIScene] Attempted to add an unknown component: '${componentType}'`);
+        }
+    }
+
+    /**
+     * ★★★ 新規メソッド (Phaserのライフサイクルメソッド) ★★★
+     * 毎フレーム呼び出され、コンポーネントの更新処理を実行する
+     */
+    update(time, delta) {
+        // 更新リストに入っているすべてのコンポーネントのupdateを呼び出す
+        for (const component of this.componentsToUpdate) {
+            // オブジェクトが破棄されていたら、リストから削除する
+            if (!component.gameObject || !component.gameObject.active) {
+                this.componentsToUpdate = this.componentsToUpdate.filter(c => c !== component);
+            } else {
+                component.update(time, delta);
+            }
+        }
+    }
+/***
+ * 
+ * 
+ * 
+ * コンポーネント系ここまで
+ * 
+ * 
+ * 
+ */
 
     async buildUiFromLayout(layoutData) {
         console.log("[UIScene] Starting UI build with JSON-FIRST routine.");

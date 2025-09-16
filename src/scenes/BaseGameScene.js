@@ -13,7 +13,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.actionInterpreter = null;
         this.keyPressEvents = new Map();
         this.layoutDataKey = null;
-        this.tilemapData = {}; // ★ タイルマップデータを保持するオブジェクト
+        this.componentsToUpdate = [];
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -440,6 +440,70 @@ applyProperties(gameObject, layout) {
             editor.makeEditable(gameObject, this);
         }
     }
+
+     /**
+     * コンポーネントをGameObjectにアタッチする (動的読み込み対応版)
+     */
+    addComponent(target, componentType, params = {}) {
+        
+        // ▼▼▼【ここからが修正箇所 2/2】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 1. ComponentRegistryに、指定された名前のコンポーネントが存在するか確認 ---
+        const ComponentClass = ComponentRegistry[componentType];
+
+        if (ComponentClass) {
+            // --- 2. 存在すれば、そのクラスをインスタンス化する ---
+            const componentInstance = new ComponentClass(this, target, params);
+
+            // --- 3. GameObjectにインスタンスを格納する (以降の処理は変更なし) ---
+            if (!target.components) {
+                target.components = {};
+            }
+            target.components[componentType] = componentInstance;
+
+            const currentData = target.getData('components') || [];
+            if (!currentData.some(c => c.type === componentType)) {
+                currentData.push({ type: componentType, params: params });
+                target.setData('components', currentData);
+            }
+            console.log(`[JumpScene] Component '${componentType}' added to '${target.name}'.`);
+
+        } else {
+            // --- 4. 存在しないコンポーネントが指定された場合は、警告を出す ---
+            console.warn(`[JumpScene] Attempted to add an unknown component: '${componentType}'`);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    }
+  /**
+     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
+     */
+    update(time, delta) {
+        
+     
+
+        // --- 1. PlayerControllerのための特別な更新 ---
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+        }
+        
+        // --- 2. その他の全てのコンポーネントのための汎用的な更新ループ ---
+        for (const gameObject of this.children.list) {
+            if (gameObject.components) {
+                for (const componentName in gameObject.components) {
+                    // PlayerControllerはすでに更新したので、スキップする
+                    if (componentName === 'PlayerController') continue;
+                    
+                    const component = gameObject.components[componentName];
+                    if (component && typeof component.update === 'function') {
+                        component.update(time, delta);
+                    }
+                }
+            }
+        }
+    }
+
+
 
  
 /**

@@ -2,7 +2,7 @@
 
 import ConfigManager from '../core/ConfigManager.js';
 import StateManager from '../core/StateManager.js';
-
+import { ComponentRegistry } from '../components/index.js';
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PreloadScene', active: true });
@@ -35,7 +35,9 @@ export default class PreloadScene extends Phaser.Scene {
         this.registry.set('stateManager', new StateManager());
 this.registry.set('physics_define', this.cache.json.get('physics_define'));
         const assetDefine = this.cache.json.get('asset_define');
-        
+       
+        this.registry.set('ComponentRegistry', ComponentRegistry);
+        console.log("[PreloadScene] ComponentRegistry has been registered globally.");
         // --- 4. asset_define.json に基づいてロードキューを構築 ---
         this.buildLoadQueue(assetDefine);
 
