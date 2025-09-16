@@ -4,6 +4,8 @@
 import PlayerController from './PlayerController.js';
 import Scrollable from './Scrollable.js';
 import Interactor from './Interactor.js';
+import WatchVariableComponent from './ui/WatchVariableComponent.js';
+
 // (将来、新しいコンポーネントを追加したら、ここにもimport文を追加します)
 
 
@@ -12,6 +14,7 @@ import Interactor from './Interactor.js';
 export const ComponentRegistry = {
     PlayerController,
     Scrollable,
-    Interactor
+    Interactor,
+    WatchVariableComponent
     // (新しいコンポーネントを追加したら、ここにも名前を追加します)
 };
