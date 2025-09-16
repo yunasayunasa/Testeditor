@@ -19,40 +19,43 @@
   "objects": [
     {
       "name": "coin_hud",
-      "registryKey": "coin_hud",
+      "type": "CoinHud",
       "x": 219,
       "y": 262,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1
+      "alpha": 1,
+      "registryKey": "coin_hud"
     },
     {
       "name": "player_hp_bar",
-      "registryKey": "player_hp_bar",
+      "type": "HpBar",
       "x": 296,
       "y": 277,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1
+      "alpha": 1,
+      "registryKey": "player_hp_bar"
     },
     {
       "name": "enemy_hp_bar",
-      "registryKey": "enemy_hp_bar",
+      "type": "HpBar",
       "x": 874,
       "y": 198,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1
+      "alpha": 1,
+      "registryKey": "enemy_hp_bar"
     },
     {
       "name": "jump_button",
-      "registryKey": "jump_button",
+      "type": "JumpButton",
       "x": 1100,
       "y": 540,
       "depth": 0,
@@ -60,11 +63,12 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "jump_button"
+      "group": "jump_button",
+      "registryKey": "jump_button"
     },
     {
       "name": "message_window",
-      "registryKey": "message_window",
+      "type": "MessageWindow",
       "x": 640,
       "y": 600,
       "depth": 9998,
@@ -72,11 +76,13 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "jump_button"
+      "group": "jump_button",
+      "registryKey": "message_window",
+      "label": "「このゲームを起動するのは、856 回目ですね。」"
     },
     {
       "name": "menu_button",
-      "registryKey": "menu_button",
+      "type": "MenuButton",
       "x": 259,
       "y": 101,
       "depth": 10,
@@ -84,36 +90,59 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "label": "MENU"
+      "registryKey": "menu_button",
+      "text": "MENU",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "36px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#fff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 28.09375,
+          "descent": 8.859375,
+          "fontSize": 36.953125
+        }
+      }
     },
     {
       "name": "bottom_panel",
-      "registryKey": "bottom_panel",
+      "type": "BottomPanel",
       "x": 0,
       "y": 800,
       "depth": 9999,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1
+      "alpha": 1,
+      "registryKey": "bottom_panel"
     },
     {
-      "name": "menu_button_1758027984875",
-      "registryKey": "generic_button",
+      "name": "ボタンイベントテスト",
+      "type": "Button",
       "x": 952,
       "y": 62,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "label": "Button"
-    },
-    {
-      "name": "text_1758029512383",
-      "registryKey": "Text",
-      "x": 742,
-      "y": 108,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -122,14 +151,56 @@
       "events": [
         {
           "trigger": "onClick",
-          "actions": "[destroy]"
+          "actions": " [destroy]"
         }
       ],
+      "registryKey": "generic_button",
+      "label": "Button"
+    },
+    {
+      "name": "text_1758029512383",
+      "type": "initialize",
+      "x": 742,
+      "y": 108,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "Text",
       "text": "New Text",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
-        "fill": "#ffffff"
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24.984375,
+          "descent": 7.875,
+          "fontSize": 32.859375
+        }
       }
     }
   ]
