@@ -1,59 +1,86 @@
-// src/ui/index.js (修正案)
+// src/ui/index.js (最終確定・完成版)
 
-// ★ Buttonクラスは、ここでインポートする必要はありません。
-// ★ main.jsなどで、pathから動的にcomponentプロパティを生成するからです。
-
+/**
+ * uiRegistry
+ * 
+ * ゲーム内で使用される全ての「カスタムUIコンポーネント」の設計図を定義します。
+ * EditorUIのアセットブラウザは、このリストを元に「追加可能なUI」のカタログを動的に生成します。
+ * 
+ * - path: UIコンポーネントのクラスが定義されているJSファイルへのパス。
+ *         main.jsがこれを元に動的にimportし、'component'プロパティを自動生成します。
+ * - groups: このUIが所属するグループの配列。UIScene.onSceneTransitionが、
+ *           このグループ名とsceneUiVisibilityの定義を照合して、表示/非表示を自動で切り替えます。
+ * - watch: (オプション) このUIが監視すべきゲーム変数(f.)のキーの配列。
+ *          StateManagerでこれらの変数が変更されると、UIScene.updateHud経由で、
+ *          コンポーネント自身のupdateValue(state)メソッドが呼び出されます。
+ * - params: (オプション) このUIコンポーネントのインスタンスが生成される際に、
+ *           コンストラクタに渡されるデフォルトのパラメータ。
+ */
 export const uiRegistry = {
     'coin_hud': { 
         path: './ui/CoinHud.js', 
-        groups: ['battle','hud'],
-        // ★★★ 監視する変数を、ここに定義する ★★★
+        groups: ['hud', 'battle'],
         watch: ['coin'] 
     },
     'player_hp_bar': { 
         path: './ui/HpBar.js', 
         groups: ['hud', 'battle'],
-        watch: ['player_hp', 'player_max_hp'], // ★ 監視する変数を定義
-        params: { 
-            // ★ watch定義と重複するので、paramsからは削除するのが望ましい
-            // watchVariable: 'player_hp', 
-            // maxVariable: 'player_max_hp'
-        } 
+        watch: ['player_hp', 'player_max_hp']
     },
     'enemy_hp_bar': { 
         path: './ui/HpBar.js', 
         groups: ['hud', 'battle'],
-        watch: ['enemy_hp', 'enemy_max_hp'], // ★ 監視する変数を定義
-        params: { 
-            // watchVariable: 'enemy_hp',
-            // maxVariable: 'enemy_max_hp'
-        } 
+        watch: ['enemy_hp', 'enemy_max_hp']
     },
     
-    // ★ 'start_button'と'menu_button'は役割が重複しているので、一つに絞るか、明確に分ける
     'menu_button': {
-        path: './ui/MenuButton.js', // MenuButton.js は「パネルを開く」機能を持つ専用ボタン
+        path: './ui/MenuButton.js',
         groups: ['menu', 'game'],
         params: { label: 'MENU' }
     },
 
-    // ★★★ エディタから追加するための「汎用ボタン」を新設 ★★★
     'generic_button': {
-        path: './ui/Button.js', // Button.js は見た目だけの汎用ボタン
-        groups: ['ui_element'], // どのシーンにも属さない、汎用的なグループ
+        path: './ui/Button.js',
+        groups: ['ui_element'], // 特定のシーンに依存しない、汎用UIグループ
         params: { label: 'Button' }
     },
 
     'jump_button': { 
-        path: './ui/JumpButton.js', // JumpButton.js は「ジャンプする」機能を持つ専用ボタン
-        groups: ['controls', 'action'],
+        path: './ui/JumpButton.js',
+        groups: ['controls', 'action']
     },
 
-    'message_window': { path: './ui/MessageWindow.js', groups: ['game'] },
+    'message_window': { 
+        path: './ui/MessageWindow.js', 
+        groups: ['game']
+    },
     
-    'bottom_panel': { path: './ui/BottomPanel.js', groups: ['menu', 'game'] }
+    'bottom_panel': { 
+        path: './ui/BottomPanel.js', 
+        groups: ['menu', 'game']
+    },
+
+    // Phaser標準のTextオブジェクトを、uiRegistryで管理するための特別な定義。
+    // これにより、onSceneTransitionが他のUIと同様にグループベースで表示制御できるようになる。
+    'Text': {
+        component: Phaser.GameObjects.Text, // pathは不要。main.jsがcomponentを直接参照する。
+        groups: ['game', 'ui_element']      // テキストは'game'グループと汎用グループに所属させる。
+    }
 };
 
+
+/**
+ * sceneUiVisibility
+ * 
+ * 各シーンで、どのUI「グループ」を表示するかを定義します。
+ * SystemSceneがシーン遷移を完了した際に、この定義を元にUIScene.onSceneTransitionが呼び出され、
+ * UIの表示状態が一括で更新されます。
+ */
 export const sceneUiVisibility = {
-    // ... (この定義は完璧なので、変更は不要です) ...
+    'GameScene': ['hud', 'menu', 'game'],
+    'JumpScene': ['controls', 'action'],
+    'BattleScene': ['hud', 'battle'],
+    'ActionScene': ['menu', 'game'], // 例
+    'TitleScene': [],
+    'NovelOverlayScene': ['game'] // オーバーレイ中は'game'グループ(メッセージウィンドウなど)のみ表示
 };

@@ -304,19 +304,21 @@ onSceneTransition(newSceneKey) {
     for (const [name, uiElement] of this.uiElements.entries()) {
         const registryKey = uiElement.getData('registryKey');
 
-        if (registryKey) {
+       if (registryKey) {
+            // ▼▼▼【ここを、よりシンプルで確実なロジックに統一】▼▼▼
             const definition = uiRegistry[registryKey];
             
-            if (registryKey === 'Text') {
-                const isVisible = visibleGroups.includes('game'); // テキストは'game'グループとして扱うルール
-                uiElement.setVisible(isVisible);
-            } else if (definition && Array.isArray(definition.groups)) {
+            // ★★★ definitionが存在し、groupsプロパティが配列であることだけを確認 ★★★
+            if (definition && Array.isArray(definition.groups)) {
+                // 'Text'でも'generic_button'でも、すべてのUIがこの同じロジックで処理される
                 const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
                 uiElement.setVisible(shouldBeVisible);
             } else {
+                // 不明なものは非表示
                 uiElement.setVisible(false);
             }
         } else {
+            // keyがないものも非表示
             uiElement.setVisible(false);
         }
     }
