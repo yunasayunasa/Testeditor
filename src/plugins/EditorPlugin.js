@@ -185,6 +185,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                 this.safeCreateUI(this.createArrayToolSection);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 this.safeCreateUI(this.createNameInput);
+                
                 this.safeCreateUI(this.createLayerSelect);
                 this.safeCreateUI(this.createGroupInput);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
@@ -236,14 +237,20 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                         this.safeCreateUI(this.createAnimationSection);
                         this.editorPropsContainer.appendChild(document.createElement('hr'));
                     }
-                    this.safeCreateUI(this.createEventSection);
-                    this.editorPropsContainer.appendChild(document.createElement('hr'));
-                    this.safeCreateUI(this.createComponentSection);
-                } else {
-                    // UIコンポーネントの場合も、座標やスケールは編集できた方が便利
+                      } else {
+                    // UIコンポーネントの場合のUI (変更なし)
                     this.safeCreateUI(this.createTransformInputs);
                     this.safeCreateUI(this.createDepthInput);
                 }
+
+                // ▼▼▼【ここからが核心の修正です】▼▼▼
+                // --------------------------------------------------------------------
+                // ★★★ EventとComponentは、UIかゲームオブジェクトかに関わらず、常に表示する ★★★
+                this.editorPropsContainer.appendChild(document.createElement('hr'));
+                this.safeCreateUI(this.createEventSection);
+                this.editorPropsContainer.appendChild(document.createElement('hr'));
+                this.safeCreateUI(this.createComponentSection);
+                // --------------------------------------------------------------------
 
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 
