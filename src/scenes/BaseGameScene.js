@@ -1,4 +1,4 @@
-
+import { ComponentRegistry } from '../components/index.js';
 /**
  * データ駆動型ゲームシーンの基底クラス。
  * JSONレイアウトファイルに基づいてシーンを構築し、
@@ -449,10 +449,14 @@ applyProperties(gameObject, layout) {
         // ▼▼▼【ここからが修正箇所 2/2】▼▼▼
         // --------------------------------------------------------------------
         // --- 1. ComponentRegistryに、指定された名前のコンポーネントが存在するか確認 ---
+      
+      
         const ComponentClass = ComponentRegistry[componentType];
 
         if (ComponentClass) {
             // --- 2. 存在すれば、そのクラスをインスタンス化する ---
+           
+           
             const componentInstance = new ComponentClass(this, target, params);
 
             // --- 3. GameObjectにインスタンスを格納する (以降の処理は変更なし) ---
