@@ -73,7 +73,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "jump_button",
-      "label": "「このゲームを起動するのは、828 回目ですね。」"
+      "label": "「このゲームを起動するのは、831 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -133,7 +133,7 @@
     },
     {
       "name": "menu_button_1758027984875",
-      "type": "start_button",
+      "type": "MenuButton",
       "x": 952,
       "y": 62,
       "depth": 0,
@@ -141,19 +141,6 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "events": [
-        {
-          "trigger": "onClick",
-          "actions": "[destroy]"
-        }
-      ],
-      "components": [
-        {
-          "type": "PlayerController",
-          "params": {}
-        }
-      ],
-      "registryKey": "menu_button",
       "text": "MENU",
       "style": {
         "fontFamily": "Courier",
@@ -186,6 +173,58 @@
           "ascent": 28.09375,
           "descent": 8.859375,
           "fontSize": 36.953125
+        }
+      }
+    },
+    {
+      "name": "text_1758029512383",
+      "type": "initialize",
+      "x": 742,
+      "y": 108,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "actions": "[destroy]"
+        }
+      ],
+      "registryKey": "Text",
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24.984375,
+          "descent": 7.875,
+          "fontSize": 32.859375
         }
       }
     }
