@@ -49,7 +49,7 @@ export default class Button extends Container {
         this.on('pointerdown', () => {
             const editorPlugin = this.scene.plugins.get('EditorPlugin');
             if (!editorPlugin || !editorPlugin.isEnabled || editorPlugin.currentMode === 'play') {
-                this.emit('button_pressed', this); // 自分自身をイベントで渡す
+              this.emit('onClick', this);  // 自分自身をイベントで渡す
                 
                 this.scene.tweens.add({ targets: this, scale: 0.95, duration: 80, yoyo: true });
             }

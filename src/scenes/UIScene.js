@@ -1,5 +1,6 @@
 import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
 import { ComponentRegistry } from '../components/index.js';
+import ActionInterpreter from '../core/ActionInterpreter.js';
 export default class UIScene extends Phaser.Scene {
     
     constructor() {
@@ -7,6 +8,7 @@ export default class UIScene extends Phaser.Scene {
         this.uiElements = new Map();
         this.isPanelOpen = false;
         this.componentsToUpdate = [];
+        this.actionInterpreter = null;
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
 
@@ -31,7 +33,7 @@ export default class UIScene extends Phaser.Scene {
             } else {
                 console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
-
+this.actionInterpreter = new ActionInterpreter(this);
             // ステップ3: すべての準備が完了してから、成功を通知する
             console.log("UIScene: Finalizing setup and emitting scene-ready.");
             this.events.emit('scene-ready');
@@ -263,7 +265,7 @@ registerUiElement(name, element, params) {
     if (editor && editor.isEnabled) {
         editor.makeEditable(element, this);
     }
-    
+    this.applyUiEvents(element);
     // (任意) デバッグ用に当たり判定を可視化する
     // const debugRect = this.add.graphics().lineStyle(2, 0x00ff00).strokeRect(0, 0, width, height);
     // if (element instanceof Phaser.GameObjects.Container) {
@@ -554,6 +556,28 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
         this.registerUiElement(newName, textObject, { name: newName, x: centerX, y: centerY });
 
         return textObject;
+    }
+     /**
+     * UIオブジェクトのイベント定義に基づいて、リスナーを設定する
+     * (BaseGameSceneのapplyEventsAndEditorFunctionsを参考にしたもの)
+     * @param {Phaser.GameObjects.GameObject} uiElement
+     */
+    applyUiEvents(uiElement) {
+        const events = uiElement.getData('events') || [];
+        
+        // 既存のリスナーをクリア
+        uiElement.off('onClick');
+
+        // 新しいリスナーを設定
+        events.forEach(eventData => {
+            if (eventData.trigger === 'onClick') {
+                uiElement.on('onClick', () => {
+                    // ★ UISceneのActionInterpreterに処理を依頼
+                    this.actionInterpreter.run(uiElement, eventData.actions);
+                });
+            }
+            // ... (将来的に、onHoverなどの他のトリガーもここに追加できる)
+        });
     }
 
     // in UIScene.js
