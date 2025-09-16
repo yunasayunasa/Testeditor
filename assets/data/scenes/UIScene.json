@@ -133,7 +133,7 @@
     },
     {
       "name": "menu_button_1758027984875",
-      "type": "MenuButton",
+      "type": "start_button",
       "x": 952,
       "y": 62,
       "depth": 0,
