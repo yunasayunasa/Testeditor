@@ -156,7 +156,7 @@ this.actionInterpreter = new ActionInterpreter(this);
                     
                     // Phaserの標準テキストオブジェクトを生成
                     const textObject = this.add.text(0, 0, text, style);
-                    
+                    textObject.setData('registryKey', 'Text')
                     // 共通の登録処理を呼び出す
                     this.registerUiElement(layout.name, textObject, layout);
                     
@@ -295,26 +295,28 @@ registerUiElement(name, element, params) {
             // ★★★ オブジェクトの'name'ではなく、データとして保存された'registryKey'を取得 ★★★
             const registryKey = uiElement.getData('registryKey');
 
-            if (registryKey) {
-                // ★★★ registryKeyを使って、uiRegistryから正しい「設計図」を取得 ★★★
-                const definition = uiRegistry[registryKey];
-                
-                if (definition && Array.isArray(definition.groups)) {
-                    // 設計図に書かれた'groups'と、現在表示すべき'visibleGroups'を比較
-                    const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-                    uiElement.setVisible(shouldBeVisible);
-                } else {
-                    // 設計図がない、またはgroupsが定義されていないUIは非表示にする
-                    uiElement.setVisible(false);
-                }
+        if (registryKey) {
+            const definition = uiRegistry[registryKey];
+            
+            // ★ テキストオブジェクトはuiRegistryにないので、特別扱い
+            if (registryKey === 'Text') {
+                // テキストをどのグループに所属させるかルールを決める
+                // 例えば、常に'game'グループとして扱うなど
+                const isVisible = visibleGroups.includes('game');
+                uiElement.setVisible(isVisible);
+
+            } else if (definition && Array.isArray(definition.groups)) {
+                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                uiElement.setVisible(shouldBeVisible);
             } else {
-                // registryKeyを持たないオブジェクト（古いデータなど）は非表示にする
-                uiElement.setVisible(false);
+                uiElement.setVisible(false); // 不明なものは非表示
             }
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        } else {
+            uiElement.setVisible(false); // keyがないものも非表示
         }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
+}
      /**
      * ★★★ 新規追加 ★★★
      * 指定されたUI要素のdepth値を外部から設定するための公式な窓口
