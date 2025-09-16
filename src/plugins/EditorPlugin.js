@@ -174,104 +174,82 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             if (this.selectedObjects && this.selectedObjects.length > 0) {
                 this.editorTitle.innerText = `${this.selectedObjects.length} objects selected`;
                 this.safeCreateUI(this.createMultiSelectUI); // 専用UIを生成
-            } 
-                  // ================================================================
+            }  
+        　　 // ================================================================
             // --- ケース2：単体オブジェクト選択中 ---
             // ================================================================
             else if (this.selectedObject) {
                 this.editorTitle.innerText = `編集中: ${this.selectedObject.name}`;
                 
-                // --- 共通UIセクション ---
+                // --- Step 1: オブジェクトの種類を判定する ---
+                const uiRegistry = this.game.registry.get('uiRegistry');
+                const objectType = this.selectedObject.constructor;
+                let isUiComponent = false;
+                let registryKey = null; // どのUI定義に一致したかを保持
+
+                if (uiRegistry) {
+                    for (const key in uiRegistry) {
+                        if (uiRegistry[key].component === objectType) {
+                            isUiComponent = true;
+                            registryKey = key;
+                            break;
+                        }
+                    }
+                }
+                // Phaser標準テキストもUIコンポーネントとみなす
+                if (this.selectedObject instanceof Phaser.GameObjects.Text) {
+                    isUiComponent = true;
+                }
+
+                // --- Step 2: 判定結果に基づいて、UIを順番に生成していく ---
+
+                // --- 共通ヘッダーUI ---
                 this.safeCreateUI(this.createArrayToolSection);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 this.safeCreateUI(this.createNameInput);
-                
                 this.safeCreateUI(this.createLayerSelect);
                 this.safeCreateUI(this.createGroupInput);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 
-                // ▼▼▼【ここからが核心の修正です】▼▼▼
-                // --------------------------------------------------------------------
-                
-                // --- uiRegistry を使って、オブジェクトの種類に応じたUIを動的に生成 ---
-                const uiRegistry = this.game.registry.get('uiRegistry');
-                const objectType = this.selectedObject.constructor;
-                
-                let isUiComponent = false; // UIコンポーネントかどうかを判定するフラグ
-                if (uiRegistry) {
-                    for (const key in uiRegistry) {
-                        const definition = uiRegistry[key];
-                        if (definition.component === objectType) {
-                            isUiComponent = true; // UIコンポーネントであることが確定
-                            
-                       if (key.includes('message_window')) {
-                                this.safeCreateUI(this.createUITextPropertiesUI);
-                            } 
-                            // --- ケース2: ボタン専用UI (汎用ボタンとメニューボタンの両方に対応) ---
-                            else if (key.includes('button')) {
-                                this.safeCreateUI(this.createUIButtonPropertiesUI);
-                            } 
-                            // --- ケース3: その他のカスタムUIコンポーネント (HPバーなど) ---
-                            else {
-                                // ★★★ 未知のコンポーネントには、何もしないか、汎用UIを表示 ★★★
-                                // (クラッシュを防ぐことが最優先)
-                                console.log(`[EditorPlugin] '${key}' is a custom UI component. Displaying common properties.`);
-                            }
-                            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                            break; 
-                        }
-                    }
-                }
-
-                if (this.selectedObject instanceof Phaser.GameObjects.Text) {
-                    this.safeCreateUI(this.createTextPropertiesUI);
-                    isUiComponent = true;
-                }
-                
-                // ★★★ isUiComponentであれば、共通プロパティを表示 ★★★
+                // --- 種類別の専用UI ---
                 if (isUiComponent) {
-                    // 座標、スケール、イベントなどはすべてのUIで編集できた方が良い
-                    this.safeCreateUI(this.createTransformInputs);
-                    this.safeCreateUI(this.createDepthInput);
-                    this.editorPropsContainer.appendChild(document.createElement('hr'));
-                    this.safeCreateUI(this.createEventSection); // ★ UIにもイベントを！
-                } 
-                // ★ isUiComponentでなければ、通常のゲームオブジェクトUIを表示
-                else {
-
-                // --- UIコンポーネントでない場合のみ、ゲームオブジェクト用のUIを表示 ---
-               
-                    this.safeCreateUI(this.createTransformInputs);
-                    this.safeCreateUI(this.createDepthInput);
-                    this.editorPropsContainer.appendChild(document.createElement('hr'));
+                    // ★ UIコンポーネントの場合
+                    console.log(`[EditorPlugin] '${registryKey || 'Text'}' is a UI component. Building UI...`);
+                    
+                    if (this.selectedObject instanceof Phaser.GameObjects.Text) {
+                        this.safeCreateUI(this.createTextPropertiesUI);
+                    } else if (registryKey && registryKey.includes('button')) {
+                        this.safeCreateUI(this.createUIButtonPropertiesUI);
+                    } else if (registryKey && registryKey.includes('bar')) {
+                        this.safeCreateUI(this.createUIBarPropertiesUI);
+                    }
+                    // 他のカスタムUI用の else if をここに追加できる
+                    
+                } else {
+                    // ★ ゲームオブジェクトの場合
                     this.safeCreateUI(this.createPhysicsSection);
                     this.editorPropsContainer.appendChild(document.createElement('hr'));
                     if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
                         this.safeCreateUI(this.createAnimationSection);
                         this.editorPropsContainer.appendChild(document.createElement('hr'));
                     }
-                      } else {
-                    // UIコンポーネントの場合のUI (変更なし)
-                    this.safeCreateUI(this.createTransformInputs);
-                    this.safeCreateUI(this.createDepthInput);
                 }
 
-                // ▼▼▼【ここからが核心の修正です】▼▼▼
-                // --------------------------------------------------------------------
-                // ★★★ EventとComponentは、UIかゲームオブジェクトかに関わらず、常に表示する ★★★
+                // --- すべてのオブジェクトで共通のUI ---
+                this.safeCreateUI(this.createTransformInputs);
+                this.safeCreateUI(this.createDepthInput);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 this.safeCreateUI(this.createEventSection);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 this.safeCreateUI(this.createComponentSection);
-                // --------------------------------------------------------------------
-
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
                 
-                // --- 共通フッター ---
+                // --- 共通フッターUI ---
                 this.safeCreateUI(this.createExportButton);
                 this.safeCreateUI(this.createExportPrefabButton);
                 this.safeCreateUI(this.createDeleteObjectButton);
             } 
+        
             // ================================================================
             // --- ケース3：レイヤー選択中 ---
             // ================================================================
