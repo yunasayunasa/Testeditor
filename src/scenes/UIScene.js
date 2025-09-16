@@ -233,7 +233,9 @@ registerUiElement(name, element, params) {
             console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
         }
     if (params.group) element.setData('group', params.group);
-
+if (params.events) {
+        element.setData('events', params.events);
+    }
     // --- 当たり判定 (Hit Area) の設定 ---
     let hitArea = null;
     let hitAreaCallback = null;
