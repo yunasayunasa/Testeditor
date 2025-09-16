@@ -41,7 +41,7 @@ export const uiRegistry = {
 
     'generic_button': {
         path: './ui/Button.js',
-        groups: ['ui_element'], // 特定のシーンに依存しない、汎用UIグループ
+        groups: ['ui_element', 'action'], // 特定のシーンに依存しない、汎用UIグループ
         params: { label: 'Button' }
     },
 
