@@ -275,46 +275,50 @@ registerUiElement(name, element, params) {
 }
   // src/scenes/UIScene.js
 
-    onSceneTransition(newSceneKey) {
-        // ★ uiRegistry と sceneUiVisibility を、最初に一度だけ取得しておく
-        const uiRegistry = this.registry.get('uiRegistry');
-        const sceneUiVisibility = this.registry.get('sceneUiVisibility'); // main.jsなどで登録されている前提
+  // src/scenes/UIScene.js
 
-        if (!uiRegistry || !sceneUiVisibility) {
-            console.error("[UIScene.onSceneTransition] uiRegistry or sceneUiVisibility is not available.");
-            return;
-        }
-
-        const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-        console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
-
+onSceneTransition(newSceneKey) {
+    // ▼▼▼【ここからが、タイミング問題を解決する最終FIXです】▼▼▼
+    // --------------------------------------------------------------------
+    
+    // ★★★ メソッドが呼ばれるたびに、レジストリから最新の定義を直接取得する ★★★
+    const uiRegistry = this.registry.get('uiRegistry');
+    const sceneUiVisibility = this.registry.get('sceneUiVisibility'); 
+    
+    // ★★★ ガード節を強化 ★★★
+    if (!uiRegistry || !sceneUiVisibility) {
+        console.error(`[UIScene.onSceneTransition] CRITICAL: uiRegistry or sceneUiVisibility is not available.`);
+        // 重要なデータがないので、UIをすべて非表示にしてエラーを防ぐのが安全
         for (const [name, uiElement] of this.uiElements.entries()) {
-            // ▼▼▼【ここが最後の、そして最も重要な修正です】▼▼▼
-            // --------------------------------------------------------------------
-            
-            // ★★★ オブジェクトの'name'ではなく、データとして保存された'registryKey'を取得 ★★★
-            const registryKey = uiElement.getData('registryKey');
+            uiElement.setVisible(false);
+        }
+        return; // 処理を中断
+    }
+    
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    const visibleGroups = sceneUiVisibility[newSceneKey] || [];
+    console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
+
+    for (const [name, uiElement] of this.uiElements.entries()) {
+        const registryKey = uiElement.getData('registryKey');
 
         if (registryKey) {
             const definition = uiRegistry[registryKey];
             
-            // ★ テキストオブジェクトはuiRegistryにないので、特別扱い
             if (registryKey === 'Text') {
-                // テキストをどのグループに所属させるかルールを決める
-                // 例えば、常に'game'グループとして扱うなど
-                const isVisible = visibleGroups.includes('game');
+                const isVisible = visibleGroups.includes('game'); // テキストは'game'グループとして扱うルール
                 uiElement.setVisible(isVisible);
-
             } else if (definition && Array.isArray(definition.groups)) {
                 const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
                 uiElement.setVisible(shouldBeVisible);
             } else {
-                uiElement.setVisible(false); // 不明なものは非表示
+                uiElement.setVisible(false);
             }
         } else {
-            uiElement.setVisible(false); // keyがないものも非表示
+            uiElement.setVisible(false);
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 }
      /**
