@@ -204,30 +204,43 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                         if (definition.component === objectType) {
                             isUiComponent = true; // UIコンポーネントであることが確定
                             
-                            // キーの文字列で判定して、専用UIを呼び出す
-                            if (key.includes('text') || key.includes('message_window')) {
+                       if (key.includes('message_window')) {
                                 this.safeCreateUI(this.createUITextPropertiesUI);
-                            } else if (key.includes('button')) {
+                            } 
+                            // --- ケース2: ボタン専用UI (汎用ボタンとメニューボタンの両方に対応) ---
+                            else if (key.includes('button')) {
                                 this.safeCreateUI(this.createUIButtonPropertiesUI);
-                            } else if (key.includes('bar')) {
-                                this.safeCreateUI(this.createUIBarPropertiesUI);
+                            } 
+                            // --- ケース3: その他のカスタムUIコンポーネント (HPバーなど) ---
+                            else {
+                                // ★★★ 未知のコンポーネントには、何もしないか、汎用UIを表示 ★★★
+                                // (クラッシュを防ぐことが最優先)
+                                console.log(`[EditorPlugin] '${key}' is a custom UI component. Displaying common properties.`);
                             }
-                            break; // 一致するものが見つかったらループを抜ける
+                            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                            break; 
                         }
                     }
                 }
 
-                // ★ Phaser標準のTextオブジェクトにも対応
                 if (this.selectedObject instanceof Phaser.GameObjects.Text) {
-                     this.safeCreateUI(this.createTextPropertiesUI);
-                     isUiComponent = true; // これもUIコンポーネントの一種とみなす
+                    this.safeCreateUI(this.createTextPropertiesUI);
+                    isUiComponent = true;
                 }
                 
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                // ★★★ isUiComponentであれば、共通プロパティを表示 ★★★
+                if (isUiComponent) {
+                    // 座標、スケール、イベントなどはすべてのUIで編集できた方が良い
+                    this.safeCreateUI(this.createTransformInputs);
+                    this.safeCreateUI(this.createDepthInput);
+                    this.editorPropsContainer.appendChild(document.createElement('hr'));
+                    this.safeCreateUI(this.createEventSection); // ★ UIにもイベントを！
+                } 
+                // ★ isUiComponentでなければ、通常のゲームオブジェクトUIを表示
+                else {
 
                 // --- UIコンポーネントでない場合のみ、ゲームオブジェクト用のUIを表示 ---
-                if (!isUiComponent) {
+               
                     this.safeCreateUI(this.createTransformInputs);
                     this.safeCreateUI(this.createDepthInput);
                     this.editorPropsContainer.appendChild(document.createElement('hr'));
@@ -2478,5 +2491,45 @@ createComponentSection() {
             this.populateEventEditor(); // ★ UIを再描画して変更を確定させる
         }
     }
-    
+    // src/plugins/EditorPlugin.js (どこか分かりやすい場所に追加)
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * UIバー専用のプロパティ編集UIを生成する。
+     * 監視する変数を編集できるようにする。
+     */
+    createUIBarPropertiesUI() {
+        const target = this.selectedObject;
+
+        // --- 現在値の変数 ---
+        const currentRow = document.createElement('div');
+        currentRow.innerHTML = `<label>現在値の変数 (f.):</label>`;
+        const currentInput = document.createElement('input');
+        currentInput.type = 'text';
+        currentInput.placeholder = 'e.g., player_hp';
+        // ★★★ 永続化されたデータは、コンポーネント自身が持っていると仮定 ★★★
+        currentInput.value = target.watchVariable || '';
+        currentInput.addEventListener('input', (e) => {
+            // 実行中のインスタンスと、永続化用データの両方を更新
+            target.watchVariable = e.target.value;
+            target.setData('watchVariable', e.target.value);
+            // ★ stateManagerに接続しなおす必要があるかもしれないが、まずはデータ保存を優先
+        });
+        currentRow.appendChild(currentInput);
+        this.editorPropsContainer.appendChild(currentRow);
+        
+        // --- 最大値の変数 ---
+        const maxRow = document.createElement('div');
+        maxRow.innerHTML = `<label>最大値の変数 (f.):</label>`;
+        const maxInput = document.createElement('input');
+        maxInput.type = 'text';
+        maxInput.placeholder = 'e.g., player_max_hp';
+        maxInput.value = target.maxVariable || '';
+        maxInput.addEventListener('input', (e) => {
+            target.maxVariable = e.target.value;
+            target.setData('maxVariable', e.target.value);
+        });
+        maxRow.appendChild(maxInput);
+        this.editorPropsContainer.appendChild(maxRow);
+    }
 }

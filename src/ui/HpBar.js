@@ -1,3 +1,5 @@
+
+
 export default class HpBar extends Phaser.GameObjects.Container {
     // ★★★ 1. 依存関係を静的に自己申告する ★★★
     // プレイヤー用と敵用の両方の変数を監視対象として宣言しておく
@@ -10,7 +12,10 @@ export default class HpBar extends Phaser.GameObjects.Container {
     constructor(scene, config) {
         // ★★★ 2. コンストラクタの引数をconfigオブジェクトから受け取るように変更 ★★★
         super(scene, 0, 0); // 位置はUISceneが設定
-
+this.watchVariable = config.watchVariable; // 'player_hp'
+    this.maxVariable = config.maxVariable;   // 'player_max_hp'
+    this.setData('watchVariable', this.watchVariable);
+    this.setData('maxVariable', this.maxVariable);
         // configオブジェクトから値を取り出す
         const width = config.width || 200;
         const height = config.height || 25;

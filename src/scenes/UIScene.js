@@ -310,36 +310,29 @@ registerUiElement(name, element, params) {
      * @param {string} key - 変更された変数のキー (例: 'player_hp')
      * @param {*} value - 新しい値 (このメソッド内では直接使わないが、将来のために受け取っておく)
      */
+   // src/scenes/UIScene.js
+
     updateHud(key, value) {
-        // デバッグログ：GameSceneからの呼び出しが成功したことを確認
-        // console.log(`[UIScene.updateHud] Received update for key: ${key}`);
-
-        const uiRegistry = this.registry.get('uiRegistry'); // uiRegistryをどこかから取得する必要があるかもしれません
+        // ★ uiRegistryを、シーンのプロパティとして保持しておくと便利
+        if (!this.uiRegistry) this.uiRegistry = this.registry.get('uiRegistry');
         const stateManager = this.registry.get('stateManager');
+        if (!this.uiRegistry || !stateManager) return;
 
-        if (!uiRegistry || !stateManager) {
-            console.error('[UIScene.updateHud] uiRegistry or stateManager is not available.');
-            return;
-        }
-
-        // 変更されたキー(key)を 'watch' しているUI要素をすべて探す
         for (const [name, uiElement] of this.uiElements.entries()) {
-            const definition = uiRegistry[name];
+            // ▼▼▼【ここを元に戻す】▼▼▼
+            // registryKeyを元に、uiRegistryから定義を再取得する
+            const registryKey = uiElement.getData('registryKey') || name;
+            const definition = this.uiRegistry[registryKey];
 
-            // 1. UI定義が存在し、'watch'配列が定義されているかチェック
-            // 2. 'watch'配列に、変更があったキー(key)が含まれているかチェック
-            if (definition && definition.watch && definition.watch.includes(key)) {
+            // ★★★ registryの'watch'定義に、変更があったキー(key)が含まれているかチェック ★★★
+            if (definition && Array.isArray(definition.watch) && definition.watch.includes(key)) {
                 
-                // 更新処理をUI要素自身に丸投げする
-                // UI要素が 'updateValue' という標準メソッドを持っていることを規約とする
                 if (typeof uiElement.updateValue === 'function') {
                     // StateManagerの最新の状態(f)を丸ごと渡す
                     uiElement.updateValue(stateManager.f);
-                } else {
-                    // 'watch'しているのに更新メソッドがない場合は警告を出す
-                    console.warn(`UI Element '${name}' is watching '${key}' but does not have an updateValue() method.`);
                 }
             }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     }
 
