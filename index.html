@@ -142,14 +142,32 @@
         </div>
         <!-- Event Editor Modal -->
         <div id="event-editor-overlay" class="modal-overlay">
-            <div class="modal-window">
+            <div class="modal-window wide"> <!-- ★ wideクラスを追加して、モーダルを広くする -->
                 <div class="modal-header">
-                    <h3 id="event-editor-title">Event Editor</h3>
-                    <button id="event-editor-help-btn" class="modal-help-btn">?</button>
+                    <h3 id="event-editor-title">イベント編集</h3>
                     <button id="event-editor-close-btn" class="modal-close-btn">&times;</button>
                 </div>
-                <div id="event-editor-content" class="modal-content"></div>
-                <div id="event-editor-help-panel" class="modal-sub-panel"></div>
+                
+                <!-- ▼▼▼ ここからが、新しく追加・変更する部分です ▼▼▼ -->
+                <div id="event-editor-main-content" class="modal-content">
+                    
+                    <!-- (左側) 追加できるノードのリストなどを置くツールバー -->
+                    <div id="vsl-toolbar">
+                        <h4>ノードを追加</h4>
+                        <div id="vsl-node-list">
+                            <!-- この中身はJavaScriptで動的に生成されます -->
+                        </div>
+                    </div>
+
+                    <!-- (右側) ノードを配置する広大なキャンバス -->
+                    <div id="vsl-canvas-wrapper">
+                        <div id="vsl-canvas">
+                            <!-- ノードはJavaScriptでここに追加されます -->
+                        </div>
+                    </div>
+
+                </div>
+                <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
             </div>
         </div>
         <!-- Help Modal -->
