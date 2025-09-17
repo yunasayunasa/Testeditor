@@ -5,6 +5,7 @@ import SystemScene from './scenes/SystemScene.js';
 import UIScene from './scenes/UIScene.js';       
 import GameScene from './scenes/GameScene.js';
 import { uiRegistry as rawUiRegistry, sceneUiVisibility } from './ui/index.js'; // ★元データを別名でインポート
+import { eventTagHandlers } from './handlers/events/index.js';
 import SaveLoadScene from './scenes/SaveLoadScene.js';
 import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
@@ -128,4 +129,6 @@ window.onload = async () => {
     // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
     game.registry.set('uiRegistry', processedUiRegistry);
     game.registry.set('sceneUiVisibility', sceneUiVisibility);
+    game.registry.set('eventTagHandlers', eventTagHandlers);
+    console.log("[main.js] Event tag handlers have been registered globally.");
 };

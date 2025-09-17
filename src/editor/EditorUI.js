@@ -71,6 +71,9 @@ export default class EditorUI {
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
        this.layerListContainer = document.getElementById('layer-list');
+       this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        this.eventEditorTitle = document.getElementById('event-editor-title');
+        this.vslNodeList = document.getElementById('vsl-node-list');
     }
 
   
@@ -96,7 +99,7 @@ export default class EditorUI {
         document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
         document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
-        
+        document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
@@ -877,6 +880,64 @@ export default class EditorUI {
         this.buildLayerPanel();
     }
 //レイヤー系ここまで
+  /**
+     * ★★★ 新規メソッド ★★★
+     * イベントエディタを開き、その中身を構築する
+     * @param {Phaser.GameObjects.GameObject} selectedObject
+     */
+    openEventEditor(selectedObject) {
+        if (!this.eventEditorOverlay || !selectedObject) return;
 
+        this.editingObject = selectedObject; // 編集対象を保持
 
+        if (this.eventEditorTitle) {
+            this.eventEditorTitle.innerText = `イベント編集: ${this.editingObject.name}`;
+        }
+        
+        // ★ ツールバーとキャンバス（まだ空）を構築するメソッドを呼び出す
+        this.populateVslToolbar();
+        // this.populateVslCanvas(); // ← これは次のステップ
+
+        this.eventEditorOverlay.style.display = 'flex';
+    }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * イベントエディタを閉じる
+     */
+    closeEventEditor() {
+        if (!this.eventEditorOverlay) return;
+        this.eventEditorOverlay.style.display = 'none';
+        this.editingObject = null;
+        if(this.plugin) {
+            this.plugin.pluginManager.game.input.enabled = true;
+        }
+    }
+    
+    /**
+     * ★★★ 新規メソッド (旧 populateEventEditor の進化形) ★★★
+     * VSLツールバーのノードリストを生成する
+     */
+    populateVslToolbar() {
+        if (!this.vslNodeList) return;
+        this.vslNodeList.innerHTML = '';
+
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
+        
+        if (eventTagHandlers) {
+            for (const tagName in eventTagHandlers) {
+                const button = document.createElement('button');
+                button.className = 'node-add-button';
+                button.innerText = `[${tagName}]`;
+                
+                button.addEventListener('click', () => {
+                    console.log(`(TODO) Add node: ${tagName}`);
+                });
+                
+                this.vslNodeList.appendChild(button);
+            }
+        } else {
+            this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
+        }
+    }
 }

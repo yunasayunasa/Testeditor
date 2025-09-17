@@ -2375,19 +2375,26 @@ createComponentSection() {
         this.openAnimationEditor();
     }
 
-   openEventEditor() {
-        if (!this.eventEditorOverlay || !this.selectedObject) {
+ openEventEditor() {
+        if (!this.selectedObject) {
             alert('先にイベントを編集するオブジェクトを選択してください。');
             return;
         }
+
+        // --- 1. Phaserの入力を止める ---
         this.pluginManager.game.input.enabled = false;
-        const titleElement = document.getElementById('event-editor-title');
-        if (titleElement) titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
         
-        // ★★★ UIを生成するコアメソッドを呼び出す ★★★
-        this.populateEventEditor();
+        // ▼▼▼【ここを、このように書き換えます】▼▼▼
+        // --------------------------------------------------------------------
         
-        this.eventEditorOverlay.style.display = 'flex';
+        // --- 2. EditorUIに、UIの構築と表示を「依頼」する ---
+        //    (DOM操作やpopulateの呼び出しは、EditorUIの責任範囲)
+        if (this.editorUI) {
+            this.editorUI.openEventEditor(this.selectedObject);
+        }
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
     closeEventEditor() {
@@ -2399,7 +2406,7 @@ createComponentSection() {
     /**
      * イベントエディタのコンテンツを生成・再描画する (UI最終版)
      */
-    populateEventEditor() {
+  /*  populateEventEditor() {
         const contentArea = document.getElementById('event-editor-content');
         if (!contentArea || !this.selectedObject) return;
         
@@ -2427,7 +2434,7 @@ createComponentSection() {
             this.populateEventEditor(); // UIを再描画
         };
         contentArea.appendChild(addButton);
-    }
+    }*/
     
     // in src/plugins/EditorPlugin.js
 
