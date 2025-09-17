@@ -241,20 +241,28 @@ export default class StateManager extends Phaser.Events.EventEmitter {
      * @param {string} exp - "f.score = f.score + 10" のような代入式
      * @param {object} context - self, source, targetなど
      */
-    execute(exp, context = {}) {
+  execute(exp, context = {}) {
+        // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- 1. コンテキストから変数をすべて取り出す ---
+        const self = context.self;
+        const source = context.source;
+        const target = context.target;
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         const f = this.f;
         const sf = this.sf;
-        // ... (self, source, target の取得) ...
-
-        // ★ Lodashのようなライブラリがない場合、手動で変更を検知するのは複雑で危険。
-        // ★ 代わりに、式の中で `setF('score', f.score + 10)` のようなヘルパー関数を呼べるようにする。
-
+        
         try {
-            // `setF` と `setSF` を、式の中から呼び出せるようにヘルパーとして渡す
             const setF_helper = (key, value) => this.setF(key, value);
             const setSF_helper = (key, value) => this.setSF(key, value);
             
             console.log(`[StateManager.execute] Executing: "${exp}".`);
+            
+            // --- 2. 渡す変数と、引数リストを一致させる ---
             new Function('f', 'sf', 'self', 'source', 'target', 'Phaser', 'setF', 'setSF', `'use strict'; ${exp};`)(f, sf, self, source, target, Phaser, setF_helper, setSF_helper);
 
         } catch (e) {
