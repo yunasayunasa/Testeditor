@@ -78,7 +78,7 @@
       "alpha": 1,
       "group": "jump_button",
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、856 回目ですね。」"
+      "label": "「このゲームを起動するのは、193 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -120,9 +120,9 @@
         "wordWrapCallbackScope": null,
         "wordWrapUseAdvanced": false,
         "metrics": {
-          "ascent": 28.09375,
-          "descent": 8.859375,
-          "fontSize": 36.953125
+          "ascent": 26,
+          "descent": 7,
+          "fontSize": 33
         }
       }
     },
@@ -202,6 +202,32 @@
           "fontSize": 32.859375
         }
       }
+    },
+    {
+      "name": "player_hp_bar_1758089818569",
+      "type": "HpBar",
+      "x": 679,
+      "y": 326,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "components": [
+        {
+          "type": "WatchVariableComponent",
+          "params": {
+            "variable": "f.player_hp"
+          }
+        },
+        {
+          "type": "BarDisplayComponent",
+          "params": {
+            "maxValueVariable": "f.player_max_hp"
+          }
+        }
+      ],
+      "registryKey": "player_hp_bar"
     }
   ]
 }

@@ -36,6 +36,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         const oldValue = this.f[key];
         if (oldValue !== value) {
             this.f[key] = value;
+             console.log(`%c[LOG BOMB 1 | StateManager] 変数 '${key}' が ${oldValue} -> ${value} に変更されました。'f-changed'イベントを発行します。`, 'color: magenta; font-size: 1.2em;');
             this.emit('f-variable-changed', key, value, oldValue);
         }
     }

@@ -42,6 +42,7 @@ export default class WatchVariableComponent {
         const watchKey = this.variableToWatch.replace('f.', '');
         
         if (key === watchKey) {
+              console.log(`%c[LOG BOMB 2 | WatchVariable] '${this.gameObject.name}'が監視中の変数'${key}'の変更を検知しました！ 'onValueChanged'イベントを発行します。ペイロード: ${value}`, 'color: cyan; font-size: 1.2em;');
             // ★★★ アタッチされているGameObject自身にイベントを発行 ★★★
             this.gameObject.emit('onValueChanged', value, this.lastValue);
             this.lastValue = value;
