@@ -5,34 +5,47 @@ import StateManager from '../core/StateManager.js';
 import { ComponentRegistry } from '../components/index.js';
 import { uiRegistry as rawUiRegistry, sceneUiVisibility } from '../ui/index.js';
 import { eventTagHandlers } from '../handlers/events/index.js';
+// src/scenes/PreloadScene.js
+
+// ★★★ processUiRegistry関数を修正 ★★★
 async function processUiRegistry(registry) {
-   const processed = JSON.parse(JSON.stringify(registry));
+    const processed = JSON.parse(JSON.stringify(registry));
     
     for (const key in processed) {
         const definition = processed[key];
         
         if (definition.path) {
             try {
-                const module = await import(definition.path);
+                // ▼▼▼【ここが、すべてを解決する修正です】▼▼▼
+                // --------------------------------------------------------------------
+                // ★★★ パスの先頭が'./'で始まっていたら、それを'../'に置き換える ★★★
+                // これにより、'./ui/HpBar.js' -> '../ui/HpBar.js' となり、
+                // src/scenes/ から見て正しい相対パスになる。
+                const correctedPath = definition.path.startsWith('./') 
+                    ? `..${definition.path.substring(1)}` 
+                    : definition.path;
+
+                const module = await import(correctedPath);
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
                 const UiClass = module.default;
                 
-                // ★★★ ここからが修正の核心 ★★★
-                // 読み込んだクラスを`component`プロパティとして格納する
                 definition.component = UiClass;
-                // 不要になったpathは削除しても良い（任意）
-                // delete definition.path; 
 
                 if (UiClass && UiClass.dependencies) {
                     definition.watch = UiClass.dependencies;
-                    console.log(`[UI Registry] Processed '${key}'. Auto-configured 'watch'.`);
                 }
             } catch (e) {
-                console.error(`Failed to process UI definition for '${key}'`, e);
+                // エラーログをより詳細にする
+                console.error(`Failed to process UI definition for '${key}' with path '${definition.path}'`, e);
             }
         }
     }
     return processed;
 }
+
+// ... (PreloadSceneクラスの定義は変更なし) ...
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PreloadScene', active: true });
