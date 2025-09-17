@@ -944,20 +944,18 @@ export default class EditorUI {
             this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
         }
     }
-     /**
-     * ★★★ TODOを本実装に置き換え ★★★
-     * 選択中のオブジェクトのイベントデータに、新しいノード定義を追加する
-     * @param {string} tagName - 追加するノードのタイプ (e.g., 'destroy')
+     // src/editor/EditorUI.js
+
+    /**
+     * ★★★ 本実装に置き換え ★★★
      */
     addNodeToEventData(tagName) {
         if (!this.editingObject) return;
         
         const events = this.editingObject.getData('events');
-        // initializeEventDataが呼ばれているので、events[0]は必ず存在するはず
         if (!events || events.length === 0) return;
-        const targetEvent = events[0];
+        const targetEvent = events[0]; // とりあえず最初のイベントを対象とする
 
-        // 新しいノードのデータを作成
         const newNode = {
             id: `node_${Date.now()}`,
             type: tagName,
@@ -974,8 +972,7 @@ export default class EditorUI {
     }
 
     /**
-     * ★★★ TODOを本実装に置き換え ★★★
-     * 現在のイベントデータに基づいて、VSLキャンバスにノードを描画する
+     * ★★★ 本実装に置き換え ★★★
      */
     populateVslCanvas() {
         if (!this.vslCanvas || !this.editingObject) return;
@@ -988,16 +985,13 @@ export default class EditorUI {
         if (targetEvent.nodes) {
             targetEvent.nodes.forEach(nodeData => {
                 const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node';
+                nodeElement.className = 'vsl-node'; // CSSでスタイリング
                 nodeElement.style.left = `${nodeData.x}px`;
                 nodeElement.style.top = `${nodeData.y}px`;
                 nodeElement.dataset.nodeId = nodeData.id;
 
-                // ノードの中身（タイトル）
                 nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
                 
-                // (ドラッグ処理やパラメータ表示は、さらに次のステップ)
-
                 this.vslCanvas.appendChild(nodeElement);
             });
         }

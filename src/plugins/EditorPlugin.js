@@ -2408,44 +2408,25 @@ createComponentSection() {
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }*/
-/**
-     * ★★★ 新規メソッド (これまでの populateEventEditor の代わり) ★★★
+    /**
+     * ★★★ 新規メソッド ★★★
      * オブジェクトのイベントデータを、新しいノードベース構造に変換・初期化する
-     * @param {Phaser.GameObjects.GameObject} targetObject - 対象のオブジェクト
      */
     initializeEventData(targetObject) {
         const events = targetObject.getData('events') || [];
 
-        // まだイベントがなければ、空のonClickイベントを初期データとして作成
         if (events.length === 0) {
-            events.push({
-                trigger: 'onClick',
-                nodes: [],       // ★ ノード配列
-                connections: []  // ★ 接続配列
-            });
+            events.push({ trigger: 'onClick', nodes: [], connections: [] });
             targetObject.setData('events', events);
             return;
         }
         
-        // --- 既存データの移行処理 ---
-        // もし、古い 'actions' 文字列を持つデータがあれば、ノード構造に変換する
         events.forEach(eventData => {
-            if (eventData.actions && !eventData.nodes) {
+            if (typeof eventData.actions === 'string' && !eventData.nodes) {
                 console.log("Migrating old action string to new node structure...");
                 eventData.nodes = [];
-                // (簡易的な移行処理。将来的にはより高度なパーサーが必要)
-                // とりあえず、最初のタグだけをノードとして追加する
-                const match = eventData.actions.match(/\[(\w+)/);
-                if (match) {
-                    eventData.nodes.push({
-                        id: `node_${Date.now()}`,
-                        type: match[1],
-                        params: {}, // パラメータの移行は複雑なので今は省略
-                        x: 50,
-                        y: 50
-                    });
-                }
-                delete eventData.actions; // 古いプロパティは削除
+                // 今は、移行ロジックは空でもOK
+                delete eventData.actions;
             }
         });
         targetObject.setData('events', events);
