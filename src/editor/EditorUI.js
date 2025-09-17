@@ -133,47 +133,27 @@ export default class EditorUI {
                     this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
                 }
             });
-              // ▼▼▼【ここからが、VSLノード関連のイベント処理です】▼▼▼
-        // --------------------------------------------------------------------
-
-        // --- VSLモード切替ボタン ---
-        const selectBtn = document.getElementById('vsl-select-mode-btn');
+            const selectBtn = document.getElementById('vsl-select-mode-btn');
+        const panBtn = document.getElementById('vsl-pan-mode-btn');
+        
         if (selectBtn) {
             selectBtn.addEventListener('click', () => this.setVslMode('select'));
         }
-        const panBtn = document.getElementById('vsl-pan-mode-btn');
         if (panBtn) {
             panBtn.addEventListener('click', () => this.setVslMode('pan'));
         }
-        
-        // --- VSLキャンバス (イベント委譲の親) ---
-        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+       const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
             // ★ キャンバス上で「押し下げ」イベントが起きた時だけを監視する
-            canvasWrapper.addEventListener('pointerdown', (event) => {
-
-                // --- 1. まず、パンモードかどうかをチェック ---
-                if (this.vslMode === 'pan') {
-                    // (パンモードの処理はここに書くのが最も安全)
-                    return; 
-                }
-
-                // --- 2. 次に、ピンがクリックされたかをチェック ---
-                const pinElement = event.target.closest('[data-pin-type]');
-                if (pinElement) {
-                    event.stopPropagation(); // ノードのクリックとして扱われないようにする
-                    this.onPinClicked(pinElement);
-                    return; // これで処理は終わり
-                }
-
-                // --- 3. 最後に、ノード自体がクリックされたかをチェック ---
-                // (これはA案（数値入力）を実装する次のステップで使う)
-                // const nodeElement = event.target.closest('[data-is-node="true"]');
-                // if (nodeElement) { ... }
-            });
+            canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        const pinElement = event.target.closest('[data-pin-type]');
+                if (pinElement) {
+                    event.stopPropagation(); // ノードの選択などにイベントが伝播しないようにする
+                    this.onPinClicked(pinElement);
+                    return;
+                }
+    }
 
         // --- カメラコントロール ---
         document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
@@ -200,7 +180,7 @@ export default class EditorUI {
         
         // ★ createPauseToggleもリスナーを設定するので、ここで呼ぶ
         this.createPauseToggle();
-    }}
+    }
     
     // =================================================================
     // UI構築・更新メソッド群
