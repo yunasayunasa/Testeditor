@@ -184,6 +184,11 @@ this.actionInterpreter = new ActionInterpreter(this);
                 const UiComponentClass = definition.component;
                 const uiElement = new UiComponentClass(this, params);
 uiElement.setData('registryKey', registryKey);
+if (layout.components) {
+                layout.components.forEach(compDef => {
+                    this.addComponent(uiElement, compDef.type, compDef.params);
+                });
+            }
                 // --- Step 5: シーンに登録し、編集可能にする ---
                 this.registerUiElement(layout.name, uiElement, params);
                 console.log(`[UIScene] Successfully created and configured '${layout.name}' from registry key '${registryKey}'.`);
@@ -587,6 +592,11 @@ onSceneTransition(newSceneKey) {
             fill: '#ffffff' 
         }).setOrigin(0.5);
 textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを記憶させる
+if (layout.components) {
+                    layout.components.forEach(compDef => {
+                        this.addComponent(textObject, compDef.type, compDef.params);
+                    });
+                }
         // registerUiElement を使って、共通のセットアップを行う
         this.registerUiElement(newName, textObject, { name: newName, x: centerX, y: centerY });
 

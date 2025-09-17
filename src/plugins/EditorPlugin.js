@@ -1372,11 +1372,12 @@ createComponentSection() {
             const newComponentDef = { type: compToAdd, params: {} };
             currentComps.push(newComponentDef);
             this.selectedObject.setData('components', currentComps);
-            
+          
             const targetScene = this.selectedObject.scene;
             if (targetScene && typeof targetScene.addComponent === 'function') {
                 targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
             }
+            
             this.updatePropertyPanel();
         }
     };
