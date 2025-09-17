@@ -886,7 +886,7 @@ export default class EditorUI {
      * イベントエディタを開き、その中身を構築する
      * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
      */
-  async  openEventEditor(selectedObject) {
+    openEventEditor(selectedObject) {
         console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 開始", "color: cyan; font-weight: bold;");
         if (!this.eventEditorOverlay || !selectedObject) return;
 
@@ -903,7 +903,15 @@ export default class EditorUI {
        // this.populateVslCanvas(); // ← これは次のステップで実装しますが、呼び出しだけ書いておきます
 
         // --- モーダルを表示 ---
-        this.eventEditorOverlay.style.display = 'flex';
+           // ★★★ モーダルを表示する処理を、setTimeoutで囲む ★★★
+        // これにより、この関数の呼び出し元(EditorPlugin)の処理がすべて完了し、
+        // 現在のJavaScriptの実行スタックが空になった「後」で、
+        // モーダルの表示が実行されることが保証される。
+        setTimeout(() => {
+            this.eventEditorOverlay.style.display = 'flex';
+            console.log("%c[EditorUI] モーダル表示コマンドを、次のイベントサイクルで実行しました。", "color: green; font-weight: bold;");
+        }, 0); // 遅延は0ミリ秒でOK
+
         console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 完了 (モーダル表示完了)", "color: cyan; font-weight: bold;");
     }
 
