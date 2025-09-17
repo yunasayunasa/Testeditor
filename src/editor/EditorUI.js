@@ -1176,41 +1176,40 @@ export default class EditorUI {
         nodeElement.append(inputPin, outputPin, title, paramsContainer);
         // -------------------------------------------------------------
     }
-     /**
-     * ★★★ 新規メソッド ★★★
-     * VSLノードを選択し、プロパティパネルの更新をプラグインに依頼する
-     */
-    selectNode(nodeData) {
-        this.selectedNodeData = nodeData;
-        console.log("Selected node:", nodeData);
+   /**
+ * ★★★ 復活させるメソッド (A案仕様) ★★★
+ * VSLノードを選択し、プロパティパネルの更新をプラグインに依頼する
+ */
+selectNode(nodeData) {
+    this.selectedNodeData = nodeData;
+    console.log("Selected node:", nodeData);
 
-        // ★ EditorPluginに、プロパティパネルを「ノード編集モード」で更新するよう依頼
-        if (this.plugin) {
-            this.plugin.updatePropertyPanelForNode(nodeData);
-        }
-        
-        // (任意) 選択されたノードの見た目を変える
-        this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
-        const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
-        if (el) el.classList.add('selected');
+    // ★ EditorPluginに、プロパティパネルを「ノード編集モード」で更新するよう依頼
+    if (this.plugin) {
+        this.plugin.updatePropertyPanelForNode(nodeData);
+    }
+    
+    // 選択されたノードの見た目を変える (CSSで .vsl-node.selected を定義)
+    this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+    const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
+    if (el) el.classList.add('selected');
+}
+
+/**
+ * ★★★ 復活させるメソッド (A案仕様) ★★★
+ * VSLノードの選択を解除する
+ */
+deselectNode() {
+    if (!this.selectedNodeData) return;
+    this.selectedNodeData = null;
+
+    if (this.plugin) {
+        // ★ プロパティパネルを、通常の「オブジェクト編集モード」に戻すよう依頼
+        this.plugin.selectSingleObject(this.editingObject);
     }
 
-    /**
-     * ★★★ 新規メソッド ★★★
-     * VSLノードの選択を解除する
-     */
-    deselectNode() {
-        if (!this.selectedNodeData) return;
-        this.selectedNodeData = null;
-
-        if (this.plugin) {
-            // ★ EditorPluginに、プロパティパネルをデフォルトに戻すよう依頼
-            //    (selectSingleObjectにeditingObjectを渡せばOK)
-            this.plugin.selectSingleObject(this.editingObject);
-        }
-
-        this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
-    }
+    this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+}
   
       /**
      * ★★★ 新規メソッド ★★★

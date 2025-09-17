@@ -2653,4 +2653,87 @@ createComponentSection() {
         maxRow.appendChild(maxInput);
         this.editorPropsContainer.appendChild(maxRow);
     }
+
+// src/plugins/EditorPlugin.js
+
+    /**
+     * ★★★ 新規メソッド (A案仕様) ★★★
+     * VSLノード編集用のプロパティパネルを構築する
+     * @param {object} nodeData - 選択されたノードのデータ
+     */
+    updatePropertyPanelForNode(nodeData) {
+        if (!this.editorPropsContainer || !this.editorTitle || !this.editorUI) return;
+        
+        // --- 既存のUIをクリアし、タイトルを設定 ---
+        this.editorPropsContainer.innerHTML = '';
+        this.editorTitle.innerText = `ノード編集: [${nodeData.type}]`;
+
+        // --- 1. 座標 (X, Y) の編集UI ---
+        this.createNodePositionInputs(nodeData);
+        this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+        // --- 2. パラメータ編集UI ---
+        const paramsTitle = document.createElement('h4');
+        paramsTitle.innerText = 'パラメータ';
+        this.editorPropsContainer.appendChild(paramsTitle);
+        
+        switch (nodeData.type) {
+            case 'destroy':
+                this.createTextInput(this.editorPropsContainer, 'target', nodeData.params.target || 'self', (val) => this.updateNodeParam(nodeData, 'target', val));
+                break;
+            case 'wait':
+                this.createTextInput(this.editorPropsContainer, 'time', nodeData.params.time || '1000', (val) => this.updateNodeParam(nodeData, 'time', val));
+                break;
+            // ... 他のタグ用のUIもここに追加 ...
+            default:
+                this.editorPropsContainer.innerHTML += '<p>This node has no editable parameters.</p>';
+        }
+
+        // --- 3. 削除ボタンなど、共通のフッター ---
+        // ... (後で追加) ...
+    }
+
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノードのX/Y座標を編集する入力欄を生成する
+     */
+    createNodePositionInputs(nodeData) {
+        ['x', 'y'].forEach(key => {
+            const row = document.createElement('div');
+            const label = document.createElement('label');
+            label.innerText = `${key}:`;
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.value = Math.round(nodeData[key]);
+            
+            input.addEventListener('change', (e) => {
+                const value = parseInt(e.target.value, 10);
+                if (!isNaN(value)) {
+                    nodeData[key] = value;
+                    // ★ EditorUIに、キャンバスの再描画を依頼する
+                    if (this.editorUI) {
+                        this.editorUI.populateVslCanvas();
+                    }
+                }
+            });
+            
+            row.append(label, input);
+            this.editorPropsContainer.appendChild(row);
+        });
+    }
+    
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノードのパラメータを更新し、永続化する (updateNodeParameterの代わり)
+     */
+    updateNodeParam(nodeData, paramKey, paramValue) {
+        nodeData.params[paramKey] = paramValue;
+        
+        // ★ オブジェクト全体の`events`データを、ここで永続化する
+        //    (EditorUIから`editingObject`をもらう必要がある)
+        if (this.editorUI && this.editorUI.editingObject) {
+            const events = this.editorUI.editingObject.getData('events');
+            this.editorUI.editingObject.setData('events', events);
+        }
+    }
 }
