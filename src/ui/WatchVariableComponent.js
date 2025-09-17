@@ -25,7 +25,7 @@ export default class WatchVariableComponent {
 
         // --- StateManagerの変更イベントを購読開始 ---
         // 'f-changed' は、f変数が変更されたときに発行されるイベントだと仮定
-        this.stateManager.on('f-changed', this.listener);
+        this.stateManager.on('f-variable-changed', this.listener);
 
         // --- 初期値を取得して、一度イベントを発行する ---
         this.checkInitialValue();
