@@ -21,6 +21,11 @@ export default class EditorUI {
             offsetY: 0       // クリック位置とノード左上のY座標の差
         };
         this.selectedNodeData = null;
+        this.connectionState = {
+            isActive: false,      // 接続モード中か？
+            fromNodeId: null,     // 接続元のノードID
+            previewLine: null   // プレビュー用の線（SVG要素）
+        };
    //レイヤー
 
    this.layers = [
@@ -1005,9 +1010,8 @@ export default class EditorUI {
         // --- 4. 更新したデータを保存 ---
         this.editingObject.setData('events', events);
         
-        // ▼▼▼ ログ爆弾 No.2 (続き) ▼▼▼
-        console.log('After update:', JSON.stringify(targetEvent.nodes));
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+       
+        
         
         // --- 5. キャンバスを再描画 ---
         this.populateVslCanvas();
@@ -1046,11 +1050,15 @@ export default class EditorUI {
      * VSLキャンバスでポインターが押されたときの処理 (ドラッグ開始)
      * (initializeEventListenersから呼び出される)
      */
-    onVslCanvasPointerDown(event) {
+   onVslCanvasPointerDown(event) {
+        const pinElement = event.target.closest('[data-pin-type]');
         const nodeElement = event.target.closest('[data-is-node="true"]');
-        
-        // ★ 入力欄をクリックしたときは、ドラッグを開始しないようにする
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+
+        // --- ケース1: ピンがクリックされた場合 ---
+        if (pinElement && pinElement.dataset.pinType === 'output') {
+            event.stopPropagation(); // ノードのドラッグを防ぐ
+            const fromNodeId = nodeElement.dataset.nodeId;
+            this.startConnection(fromNodeId, event);
             return;
         }
 
@@ -1076,7 +1084,18 @@ export default class EditorUI {
             }
         }
     }
-
+/**
+     * ★★★ 新規メソッド ★★★
+     * ノード接続モードを開始する
+     */
+    startConnection(fromNodeId, event) {
+        this.connectionState.isActive = true;
+        this.connectionState.fromNodeId = fromNodeId;
+        
+        // SVGでプレビュー用の線を描画する準備
+        // (このSVGのセットアップは少し複雑なので、まずはロジックを完成させる)
+        console.log(`Connection started from node: ${fromNodeId}`);
+    }
     /**
      * ★★★ VSL完成版 - 3/3 ★★★
      * ノードのHTML要素の中身を、そのデータに基づいて構築する
@@ -1087,7 +1106,14 @@ export default class EditorUI {
 
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
-        
+         // ▼▼▼【ピンのHTMLを追加】▼▼▼
+        const inputPin = document.createElement('div');
+        inputPin.className = 'vsl-node-pin input';
+        inputPin.dataset.pinType = 'input';
+
+        const outputPin = document.createElement('div');
+        outputPin.className = 'vsl-node-pin output';
+        outputPin.dataset.pinType = 'output';
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
         
@@ -1179,6 +1205,25 @@ export default class EditorUI {
      * ポインターが離されたときの処理 (ドラッグ終了)
      */
     onVslCanvasPointerUp(event) {
+        // --- ケース1: ノード接続モード中の場合 ---
+        if (this.connectionState.isActive) {
+            const pinElement = event.target.closest('[data-pin-type="input"]');
+            
+            if (pinElement) {
+                const toNodeElement = pinElement.closest('[data-is-node="true"]');
+                const toNodeId = toNodeElement.dataset.nodeId;
+                
+                // ★ 新しい接続をデータに追加する
+                this.createConnection(this.connectionState.fromNodeId, toNodeId);
+            }
+            
+            // 接続モードを終了
+            console.log("Connection ended.");
+            this.connectionState.isActive = false;
+            this.connectionState.fromNodeId = null;
+            // (プレビュー用の線を削除する処理もここに追加)
+            return; // ドラッグ終了処理と競合しないように
+        }
         if (!this.draggedNode.element) return;
         
         // 永続化データを保存
@@ -1192,7 +1237,31 @@ export default class EditorUI {
         this.draggedNode.nodeData = null;
     }
   
-    
+      /**
+     * ★★★ 新規メソッド ★★★
+     * 新しい接続をイベントデータに追加し、永続化する
+     */
+    createConnection(fromNodeId, toNodeId) {
+        if (!this.editingObject || fromNodeId === toNodeId) return;
+
+        const events = this.editingObject.getData('events');
+        if (!events[0]) return;
+        
+        if (!events[0].connections) {
+            events[0].connections = [];
+        }
+
+        // 既に同じ接続が存在しないかチェック
+        const exists = events[0].connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
+        if (!exists) {
+            events[0].connections.push({ fromNode: fromNodeId, toNode: toNodeId });
+            this.editingObject.setData('events', events);
+            
+            console.log(`New connection created: ${fromNodeId} -> ${toNodeId}`);
+            // ★ キャンバスを再描画して、線を表示する
+            this.populateVslCanvas();
+        }
+    }
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する

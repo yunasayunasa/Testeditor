@@ -289,5 +289,30 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     border-radius: 2px;
     font-size: 12px;
 }
+/* .vsl-node のスタイルの後あたりに追加 */
+
+.vsl-node-pin {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: #777;
+    border: 1px solid #aaa;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.vsl-node-pin:hover {
+    background-color: #999;
+}
+
+.vsl-node-pin.input {
+    left: -8px; /* ピンがノードの境界線の中央にくるように調整 */
+}
+
+.vsl-node-pin.output {
+    right: -8px;
+}
 /* ------------------------------------------------------------------ */
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
