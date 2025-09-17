@@ -3,6 +3,36 @@
 import ConfigManager from '../core/ConfigManager.js';
 import StateManager from '../core/StateManager.js';
 import { ComponentRegistry } from '../components/index.js';
+import { uiRegistry as rawUiRegistry, sceneUiVisibility } from '../ui/index.js';
+import { eventTagHandlers } from '../handlers/events/index.js';
+async function processUiRegistry(registry) {
+   const processed = JSON.parse(JSON.stringify(registry));
+    
+    for (const key in processed) {
+        const definition = processed[key];
+        
+        if (definition.path) {
+            try {
+                const module = await import(definition.path);
+                const UiClass = module.default;
+                
+                // ★★★ ここからが修正の核心 ★★★
+                // 読み込んだクラスを`component`プロパティとして格納する
+                definition.component = UiClass;
+                // 不要になったpathは削除しても良い（任意）
+                // delete definition.path; 
+
+                if (UiClass && UiClass.dependencies) {
+                    definition.watch = UiClass.dependencies;
+                    console.log(`[UI Registry] Processed '${key}'. Auto-configured 'watch'.`);
+                }
+            } catch (e) {
+                console.error(`Failed to process UI definition for '${key}'`, e);
+            }
+        }
+    }
+    return processed;
+}
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super({ key: 'PreloadScene', active: true });
@@ -27,24 +57,38 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     }
 
-    create() {
+  async  create() {
         console.log("PreloadScene: create開始。アセット定義を解析します。");
         
-        // --- 3. コアマネージャーの初期化 ---
+      
+        
+        // --- 1. コアマネージャーの初期化 ---
         this.registry.set('configManager', new ConfigManager());
         this.registry.set('stateManager', new StateManager());
-this.registry.set('physics_define', this.cache.json.get('physics_define'));
-        const assetDefine = this.cache.json.get('asset_define');
-       
+        this.registry.set('physics_define', this.cache.json.get('physics_define'));
         this.registry.set('ComponentRegistry', ComponentRegistry);
-        console.log("[PreloadScene] ComponentRegistry has been registered globally.");
-        // --- 4. asset_define.json に基づいてロードキューを構築 ---
+        
+        // ▼▼▼【ここからが、新しい初期化フローです】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- 2. uiRegistryとsceneUiVisibilityを先に準備・登録 ---
+        const processedUiRegistry = await processUiRegistry(rawUiRegistry);
+        this.registry.set('uiRegistry', processedUiRegistry);
+        this.registry.set('sceneUiVisibility', sceneUiVisibility);
+        this.registry.set('eventTagHandlers', eventTagHandlers);
+        console.log("[PreloadScene] All registries have been set.");
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 3. asset_define.json に基づいてロードキューを構築 ---
+        const assetDefine = this.cache.json.get('asset_define');
         this.buildLoadQueue(assetDefine);
 
-        // --- 5. 全てのロードが完了した後の処理を定義 ---
+        // --- 4. 全てのロードが完了した後の処理を定義 ---
         this.load.once('complete', () => this.onLoadComplete(assetDefine));
         
-        // --- 6. ロードを開始 ---
+        // --- 5. ロードを開始 ---
         this.load.start();
     }
 
@@ -123,17 +167,13 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
         this.createGlobalAssetList();
         const charaDefs = this.createCharaDefs(assetDefine);
 
+        // ★★★ この時点で、すべての準備が整っている ★★★
+        
+        // SystemSceneを起動し、初期データを渡す
         this.scene.launch('SystemScene', { 
-            // initialGameData は渡すが、中身はシンプルにする
-        /*    initialGameData: {
-                charaDefs: {}, // 空のオブジェクト
-                startScenario: 'test'
-            }
-        });*/
-           
             initialGameData: {
                 charaDefs: charaDefs,
-                startScenario: 'test' // .ksは不要
+                startScenario: 'test'
             }
         });
         

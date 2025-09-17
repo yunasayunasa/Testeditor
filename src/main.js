@@ -16,8 +16,8 @@ import JumpScene from './scenes/JumpScene.js';
 import { eventTagHandlers } from './handlers/events/index.js';
 // ★★★ 新設：uiRegistryを自動処理する非同期関数 ★★★
 // pathから動的にモジュールをimportするため、asyncにする
-async function processUiRegistry(registry) {
-    const processed = JSON.parse(JSON.stringify(registry));
+/*async function processUiRegistry(registry) {
+   const processed = JSON.parse(JSON.stringify(registry));
     
     for (const key in processed) {
         const definition = processed[key];
@@ -43,7 +43,7 @@ async function processUiRegistry(registry) {
         }
     }
     return processed;
-}
+}*/
 
 
 const config = {
@@ -111,22 +111,14 @@ const config = {
     }
 };
 
-window.onload = async () => {
-   const urlParams = new URLSearchParams(window.location.search);
+window.onload = () => {
+    // ▼▼▼【ここを、このようにシンプルにします】▼▼▼
+    const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('debug')) {
         document.body.classList.add('debug-mode');
     } 
-    // ★ステップ1: 必要なデータを先に非同期で準備する
-    const processedUiRegistry = await processUiRegistry(rawUiRegistry);
-   // ★★★ 1. 処理後のuiRegistryの中身をコンソールに出力 ★★★
-    console.log("%c[main.js] Final processed uiRegistry:", "color: limegreen; font-weight: bold;", processedUiRegistry);
 
-    // Phaser Gameインスタンスを生成
+    // ★★★ Phaserを起動するだけ ★★★
     const game = new Phaser.Game(config);
-    
-    // ★ステップ2: ゲームインスタンスができた直後に、準備したデータを登録する
-    // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
-    game.registry.set('uiRegistry', processedUiRegistry);
-    game.registry.set('sceneUiVisibility', sceneUiVisibility);
-     game.registry.set('eventTagHandlers', eventTagHandlers);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 };

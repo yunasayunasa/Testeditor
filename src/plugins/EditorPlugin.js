@@ -61,32 +61,13 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * すべてのシーンの `create` が完了した後に一度だけ呼ばれる。
      * このタイミングでUIにPhaserのイベントリスンを開始させるのが最も安全。
      */
-    start() {
-        console.log("%c[TIMER BOMB B] EditorPlugin.start: 開始", "color: red;");
-        if (!this.isEnabled) return;
-
-        // ▼▼▼【ここを、このように書き換えます】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- 1. このプラグイン自身が、自分のUIを生成する ---
-        if (!this.editorUI) {
-            this.editorUI = new EditorUI(this.game, this);
-            console.log("%c[TIMER BOMB A] new EditorUI() が完了しました。", "color: red;");
-        }
-
-        // --- 2. UIの準備ができたので、連携を開始する ---
-        if (this.editorUI) {
-            this.editorUI.onPluginReady(); 
-            console.log("%c[TIMER BOMB C] EditorPlugin.start: onPluginReady() を呼び出しました。", "color: red;");
-            
-            this.editorUI.startListeningToGameInput();
-            console.log("%c[TIMER BOMB D] EditorPlugin.start: startListeningToGameInput() を呼び出しました。", "color: red;");
-        }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        console.log("%c[TIMER BOMB E] EditorPlugin.start: 完了", "color: red;");
+   start() {
+    if (!this.isEnabled) return;
+    if (this.editorUI) {
+        this.editorUI.onPluginReady();
+        this.editorUI.startListeningToGameInput();
     }
+}
     getActiveGameScene() { // ★ EditorUIから移動・統合
         const scenes = this.pluginManager.game.scene.getScenes(true);
         for (const scene of scenes) {
