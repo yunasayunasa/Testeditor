@@ -935,7 +935,7 @@ export default class EditorUI {
                 button.innerText = `[${tagName}]`;
                 
                 button.addEventListener('click', () => {
-                    console.log(`(TODO) Add node: ${tagName}`);
+                    this.addNodeToEventData(tagName);
                 });
                 
                 this.vslNodeList.appendChild(button);
