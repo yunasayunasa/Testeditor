@@ -126,6 +126,7 @@ export default class SystemScene extends Phaser.Scene {
             // pluginが有効なら、UIを初期化する
             if (editorPlugin && editorPlugin.isEnabled) {
                  this.editorUI = new EditorUI(this.game, editorPlugin);
+                  console.log("%c[TIMER BOMB A] new EditorUI() が完了しました。", "color: red;");
                  editorPlugin.setUI(this.editorUI);
                  this.editorUI.start(); 
             }

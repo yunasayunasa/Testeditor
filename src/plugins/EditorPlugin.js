@@ -61,13 +61,16 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * このタイミングでUIにPhaserのイベントリスンを開始させるのが最も安全。
      */
     start() {
+        console.log("%c[TIMER BOMB B] EditorPlugin.start: 開始", "color: red;");
         if (!this.isEnabled) return;
         if (this.editorUI) {
             // ★ UIの準備ができたことを通知し、レイヤーパネルを初期構築させる
             this.editorUI.onPluginReady(); 
+            console.log("%c[TIMER BOMB C] EditorPlugin.start: onPluginReady() を呼び出しました。", "color: red;");
             this.editorUI.startListeningToGameInput();
-            
+            console.log("%c[TIMER BOMB D] EditorPlugin.start: startListeningToGameInput() を呼び出しました。", "color: red;");
         }
+        console.log("%c[TIMER BOMB E] EditorPlugin.start: 完了", "color: red;");
     }
     getActiveGameScene() { // ★ EditorUIから移動・統合
         const scenes = this.pluginManager.game.scene.getScenes(true);
