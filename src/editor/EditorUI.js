@@ -900,7 +900,7 @@ export default class EditorUI {
         
         // --- ツールバーとキャンバスを構築 ---
         this.populateVslToolbar();
-        this.populateVslCanvas(); // ← これは次のステップで実装しますが、呼び出しだけ書いておきます
+       // this.populateVslCanvas(); // ← これは次のステップで実装しますが、呼び出しだけ書いておきます
 
         // --- モーダルを表示 ---
         this.eventEditorOverlay.style.display = 'flex';
