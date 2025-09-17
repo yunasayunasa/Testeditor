@@ -935,6 +935,7 @@ export default class EditorUI {
                 button.innerText = `[${tagName}]`;
                 
                 button.addEventListener('click', () => {
+                    console.log(`%c[LOG BOMB 1] Toolbar button clicked! Tag: ${tagName}`, 'color: orange;');
                     this.addNodeToEventData(tagName);
                 });
                 
@@ -951,7 +952,7 @@ export default class EditorUI {
      */
     addNodeToEventData(tagName) {
         if (!this.editingObject) return;
-        
+        const events_before = JSON.parse(JSON.stringify(this.editingObject.getData('events')));
         const events = this.editingObject.getData('events');
         if (!events || events.length === 0) return;
         const targetEvent = events[0]; // とりあえず最初のイベントを対象とする
@@ -966,7 +967,9 @@ export default class EditorUI {
         
         targetEvent.nodes.push(newNode);
         this.editingObject.setData('events', events);
-        
+        console.log(`%c[LOG BOMB 2] Event data updated for '${this.editingObject.name}'.`, 'color: cyan;');
+        console.log('Before:', events_before);
+        console.log('After:', this.editingObject.getData('events'));
         // ★ キャンバスを再描画して、追加したノードを表示する
         this.populateVslCanvas();
     }
@@ -979,6 +982,8 @@ export default class EditorUI {
         this.vslCanvas.innerHTML = ''; // キャンバスをクリア
 
         const events = this.editingObject.getData('events');
+        console.log(`%c[LOG BOMB 3] Populating canvas for '${this.editingObject.name}'...`, 'color: lime;');
+        console.log('Using event data:', events);
         if (!events || events.length === 0) return;
         const targetEvent = events[0];
         
