@@ -950,13 +950,33 @@ export default class EditorUI {
     /**
      * ★★★ 本実装に置き換え ★★★
      */
-    addNodeToEventData(tagName) {
-        if (!this.editingObject) return;
-        const events_before = JSON.parse(JSON.stringify(this.editingObject.getData('events')));
-        const events = this.editingObject.getData('events');
-        if (!events || events.length === 0) return;
-        const targetEvent = events[0]; // とりあえず最初のイベントを対象とする
+    // src/editor/EditorUI.js
 
+    addNodeToEventData(tagName) {
+        if (!this.editingObject) {
+            console.error("[addNodeToEventData] 'this.editingObject' is not set!");
+            return;
+        }
+        
+        // --- 1. 元のデータを安全に取得 ---
+        // ★ JSON.stringifyは使わない
+        let events = this.editingObject.getData('events');
+        
+        // --- 2. データ構造の初期化を、ここでも行う（EditorPluginの処理が失敗した場合の保険） ---
+        if (!events || !Array.isArray(events) || events.length === 0) {
+            events = [{ trigger: 'onClick', nodes: [], connections: [] }];
+        }
+        let targetEvent = events[0];
+        if (!targetEvent.nodes) {
+            targetEvent.nodes = [];
+        }
+        
+        // ▼▼▼ ログ爆弾 No.2 (改) ▼▼▼
+        console.log(`%c[LOG BOMB 2] Event data updating for '${this.editingObject.name}'...`, 'color: cyan;');
+        console.log('Before update:', JSON.stringify(targetEvent.nodes)); // ★ ノード配列だけをstringify
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 3. 新しいノードを追加 ---
         const newNode = {
             id: `node_${Date.now()}`,
             type: tagName,
@@ -964,13 +984,16 @@ export default class EditorUI {
             x: 50,
             y: 50
         };
-        
         targetEvent.nodes.push(newNode);
+
+        // --- 4. 更新したデータを保存 ---
         this.editingObject.setData('events', events);
-        console.log(`%c[LOG BOMB 2] Event data updated for '${this.editingObject.name}'.`, 'color: cyan;');
-        console.log('Before:', events_before);
-        console.log('After:', this.editingObject.getData('events'));
-        // ★ キャンバスを再描画して、追加したノードを表示する
+        
+        // ▼▼▼ ログ爆弾 No.2 (続き) ▼▼▼
+        console.log('After update:', JSON.stringify(targetEvent.nodes));
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // --- 5. キャンバスを再描画 ---
         this.populateVslCanvas();
     }
 
