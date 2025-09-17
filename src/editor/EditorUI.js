@@ -1001,6 +1001,7 @@ export default class EditorUI {
      * ★★★ 本実装に置き換え ★★★
      */
     populateVslCanvas() {
+        console.log(`%c[LOG BOMB 3] Populating canvas...`, 'color: lime;');
         if (!this.vslCanvas || !this.editingObject) return;
         this.vslCanvas.innerHTML = ''; // キャンバスをクリア
 
