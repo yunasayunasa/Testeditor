@@ -13,9 +13,14 @@ export default class EditorUI {
         this.currentEditorMode = 'select';
         this.currentAssetTab = 'image';
         
-         //レイヤープロパティ
-        
-   
+         //ノードプロパティ
+        this.draggedNode = {
+            element: null, // ドラッグ中のHTML要素
+            nodeData: null,  // 対応するデータ
+            offsetX: 0,      // クリック位置とノード左上のX座標の差
+            offsetY: 0       // クリック位置とノード左上のY座標の差
+        };
+   //レイヤー
 
    this.layers = [
             { name: 'Foreground', visible: true, locked: false },
@@ -121,7 +126,14 @@ export default class EditorUI {
                     this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
                 }
             });
+        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+        if (canvasWrapper) {
+            canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
+            // ドラッグ中の移動と、ドラッグ終了は、window全体で監視する
+            window.addEventListener('pointermove', (event) => this.onVslCanvasPointerMove(event));
+            window.addEventListener('pointerup', (event) => this.onVslCanvasPointerUp(event));
         }
+    }
 
         // --- カメラコントロール ---
         document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
@@ -1018,56 +1030,88 @@ export default class EditorUI {
                 nodeElement.className = 'vsl-node'; // CSSでスタイリング
                 nodeElement.style.left = `${nodeData.x}px`;
                 nodeElement.style.top = `${nodeData.y}px`;
-                nodeElement.dataset.nodeId = nodeData.id;
+              nodeElement.dataset.isNode = 'true';
+            nodeElement.dataset.nodeId = nodeData.id;
 
-                nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
-                nodeElement.addEventListener('mousedown', (e_down) => {
-                    // --- 1. ドラッグ開始時の準備 ---
-                    e_down.preventDefault(); // テキスト選択などを防ぐ
-                    
-                    // マウスカーソルの初期位置と、ノードの初期位置を記録
-                    const startX = e_down.clientX;
-                    const startY = e_down.clientY;
-                    const startNodeX = nodeData.x;
-                    const startNodeY = nodeData.y;
+            nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
+            
+            // ★★★ ここから mousedown イベントリスナーは削除します ★★★
 
-                    // --- 2. ドラッグ中の処理を定義 ---
-                    const onMouseMove = (e_move) => {
-                        // マウスの移動量
-                        const dx = e_move.clientX - startX;
-                        const dy = e_move.clientY - startY;
-                        
-                        // 新しいノードの位置を計算
-                        const newX = startNodeX + dx;
-                        const newY = startNodeY + dy;
+            this.vslCanvas.appendChild(nodeElement);
+        });
+    }
+}
+/**
+     * ★★★ 新規メソッド ★★★
+     * VSLキャンバスでポインターが押されたときの処理
+     */
+    onVslCanvasPointerDown(event) {
+        // クリックされた要素がノードかどうかを判定
+        const nodeElement = event.target.closest('[data-is-node="true"]');
 
-                        // ★ 見た目（HTML要素）を即座に動かす
-                        nodeElement.style.left = `${newX}px`;
-                        nodeElement.style.top = `${newY}px`;
-                        
-                        // ★ 永続化用のデータも更新する
-                        nodeData.x = newX;
-                        nodeData.y = newY;
-                    };
+        if (nodeElement) {
+            event.preventDefault(); // スクロールを防ぐ
+            
+            const nodeId = nodeElement.dataset.nodeId;
+            const events = this.editingObject.getData('events');
+            const nodeData = events[0].nodes.find(n => n.id === nodeId);
 
-                    // --- 3. ドラッグ終了時の処理を定義 ---
-                    const onMouseUp = () => {
-                        // ★ 最後に、更新された完全なイベントデータを保存する
-                        this.editingObject.setData('events', events);
-                        
-                        // ★ 使い終わったリスナーは、必ず解除する（メモリリーク防止）
-                        window.removeEventListener('mousemove', onMouseMove);
-                        window.removeEventListener('mouseup', onMouseUp);
-                    };
+            if (nodeData) {
+                this.draggedNode.element = nodeElement;
+                this.draggedNode.nodeData = nodeData;
+                
+                // ノードの左上からのオフセットを計算
+                const rect = nodeElement.getBoundingClientRect();
+                this.draggedNode.offsetX = event.clientX - rect.left;
+                this.draggedNode.offsetY = event.clientY - rect.top;
 
-                    // --- 4. ドラッグ開始！ ---
-                    // window全体でマウスの動きを監視する
-                    window.addEventListener('mousemove', onMouseMove);
-                    window.addEventListener('mouseup', onMouseUp);
-                });
-
-                this.vslCanvas.appendChild(nodeElement);
-            });
+                // ドラッグ開始を示すCSSクラスなどを付けても良い
+                nodeElement.classList.add('is-dragging');
+            }
         }
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * ポインターが移動したときの処理 (ドラッグ中)
+     */
+    onVslCanvasPointerMove(event) {
+        // ドラッグ中のノードがなければ何もしない
+        if (!this.draggedNode.element) return;
+        event.preventDefault();
+
+        // キャンバスの親要素の座標を取得
+        const parentRect = this.vslCanvas.parentElement.getBoundingClientRect();
+        
+        // 新しい座標を計算
+        // (マウスポインタの位置 - 親要素の左上座標 - クリック時のオフセット)
+        let newX = event.clientX - parentRect.left - this.draggedNode.offsetX;
+        let newY = event.clientY - parentRect.top - this.draggedNode.offsetY;
+        
+        // 見た目を更新
+        this.draggedNode.element.style.left = `${newX}px`;
+        this.draggedNode.element.style.top = `${newY}px`;
+        
+        // データを更新
+        this.draggedNode.nodeData.x = newX;
+        this.draggedNode.nodeData.y = newY;
+    }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * ポインターが離されたときの処理 (ドラッグ終了)
+     */
+    onVslCanvasPointerUp(event) {
+        if (!this.draggedNode.element) return;
+        
+        // 永続化データを保存
+        const events = this.editingObject.getData('events');
+        this.editingObject.setData('events', events);
+        
+        this.draggedNode.element.classList.remove('is-dragging');
+
+        // ドラッグ状態をリセット
+        this.draggedNode.element = null;
+        this.draggedNode.nodeData = null;
     }
 }
