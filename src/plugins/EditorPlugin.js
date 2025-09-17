@@ -2375,7 +2375,7 @@ createComponentSection() {
         this.openAnimationEditor();
     }
 
-   openEventEditor() {
+  async openEventEditor() {
     console.log("%c[LOG BOMB 1] EditorPlugin.openEventEditor: 開始", "color: orange; font-weight: bold;");
         if (!this.selectedObject) {
             alert('先にイベントを編集するオブジェクトを選択してください。');
@@ -2387,8 +2387,8 @@ createComponentSection() {
         
         // --- 2. EditorUIに、UIの構築と表示を「依頼」する ---
         if (this.editorUI) {
-            // ★★★ 選択中のオブジェクトを引数として渡す ★★★
-            this.editorUI.openEventEditor(this.selectedObject);
+            // ★★★ 選択s.edito中のオブジェクトを引数として渡す ★★★
+            await this.editorUI.openEventEditor(this.selectedObject);
         }
         console.log("%c[LOG BOMB 1] EditorPlugin.openEventEditor: 完了 (EditorUIへの依頼が終了)", "color: orange; font-weight: bold;");
     }

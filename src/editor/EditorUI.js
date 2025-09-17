@@ -886,7 +886,7 @@ export default class EditorUI {
      * イベントエディタを開き、その中身を構築する
      * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
      */
-    openEventEditor(selectedObject) {
+  async  openEventEditor(selectedObject) {
         console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 開始", "color: cyan; font-weight: bold;");
         if (!this.eventEditorOverlay || !selectedObject) return;
 
