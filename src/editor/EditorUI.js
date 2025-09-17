@@ -887,6 +887,7 @@ export default class EditorUI {
      * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
      */
     openEventEditor(selectedObject) {
+        console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 開始", "color: cyan; font-weight: bold;");
         if (!this.eventEditorOverlay || !selectedObject) return;
 
         // ★ 編集対象のオブジェクトを、プロパティとして保持する
@@ -903,6 +904,7 @@ export default class EditorUI {
 
         // --- モーダルを表示 ---
         this.eventEditorOverlay.style.display = 'flex';
+        console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 完了 (モーダル表示完了)", "color: cyan; font-weight: bold;");
     }
 
     /**
@@ -926,6 +928,7 @@ export default class EditorUI {
      * 利用可能なアクションタグから、VSLツールバーのノードリストを生成する
      */
     populateVslToolbar() {
+        console.log("%c[LOG BOMB 3] EditorUI.populateVslToolbar: 開始", "color: lime; font-weight: bold;");
         if (!this.vslNodeList) return;
 
         this.vslNodeList.innerHTML = ''; // 中身をクリア
@@ -950,6 +953,7 @@ export default class EditorUI {
         } else {
             this.vslNodeList.innerHTML = '<p>No event tags found.</p>';
         }
+        console.log("%c[LOG BOMB 3] EditorUI.populateVslToolbar: 完了", "color: lime; font-weight: bold;");
     }
 
     // ★ addNodeToEventData と populateVslCanvas は、次のステップで実装します
