@@ -1148,13 +1148,7 @@ export default class EditorUI {
         
     
             // --- ピンのクリック (接続開始) ---
-            if (pinElement) {
-                event.preventDefault(); // ★ ここでpreventDefault
-                event.stopPropagation();
-            const fromNodeId = nodeElement.dataset.nodeId;
-            this.startConnection(fromNodeId, event);
-            return;
-        }
+           
 
       }}
 /**
