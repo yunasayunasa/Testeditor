@@ -887,7 +887,9 @@ export default class EditorUI {
      */
     openEventEditor(selectedObject) {
         if (!this.eventEditorOverlay || !selectedObject) return;
-
+// ★★★ モーダルを開く前に、Phaserの入力を無効化する ★★★
+        this.game.input.enabled = false;
+        console.log("[EditorUI] Phaser input disabled for Event Editor.");
         this.editingObject = selectedObject; // 編集対象を保持
 
         if (this.eventEditorTitle) {
@@ -909,6 +911,8 @@ export default class EditorUI {
         if (!this.eventEditorOverlay) return;
         this.eventEditorOverlay.style.display = 'none';
         this.editingObject = null;
+        this.game.input.enabled = true;
+        console.log("[EditorUI] Phaser input re-enabled.");
         if(this.plugin) {
             this.plugin.pluginManager.game.input.enabled = true;
         }
