@@ -101,18 +101,17 @@ export default class EditorUI {
 // in EditorUI.js
 
    
-  /**
-     * ★★★ 最終FIX版 ★★★
-     * すべてのイベントリスナーを、標準のaddEventListenerで一度だけ登録する
-     */
+  // src/editor/EditorUI.js
+
     initializeEventListeners() {
         // --- UIボタンのリスナー ---
         document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
-        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked()); // ★ 登録はここに一本化
+        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
         document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
         document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
         document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
+
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
@@ -133,21 +132,40 @@ export default class EditorUI {
                     this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
                 }
             });
-            const selectBtn = document.getElementById('vsl-select-mode-btn');
-        const panBtn = document.getElementById('vsl-pan-mode-btn');
-        
+        } // ★★★ layerListContainerのif文は、ここで終わりです ★★★
+
+
+        // ▼▼▼【ここからが、VSLノード関連のイベント処理です】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- VSLモード切替ボタン ---
+        const selectBtn = document.getElementById('vsl-select-mode-btn');
         if (selectBtn) {
             selectBtn.addEventListener('click', () => this.setVslMode('select'));
         }
+        const panBtn = document.getElementById('vsl-pan-mode-btn');
         if (panBtn) {
             panBtn.addEventListener('click', () => this.setVslMode('pan'));
         }
-       const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+        
+        // --- VSLキャンバス (イベント委譲の親) ---
+        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
-            // ★ キャンバス上で「押し下げ」イベントが起きた時だけを監視する
-            canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
+            canvasWrapper.addEventListener('pointerdown', (event) => {
+                if (this.vslMode === 'pan') {
+                    // (パンモードの処理)
+                    return; 
+                }
+                const pinElement = event.target.closest('[data-pin-type]');
+                if (pinElement) {
+                    event.stopPropagation();
+                    this.onPinClicked(pinElement);
+                    return;
+                }
+            });
         }
-    }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         // --- カメラコントロール ---
         document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
@@ -169,13 +187,10 @@ export default class EditorUI {
         
         // --- ヘルプモーダル ---
         document.getElementById('help-modal-close-btn')?.addEventListener('click', () => this.closeHelpModal());
-        // createHelpButton内でリスナーを設定
         this.createHelpButton();
         
-        // ★ createPauseToggleもリスナーを設定するので、ここで呼ぶ
         this.createPauseToggle();
     }
-    
     // =================================================================
     // UI構築・更新メソッド群
     // =================================================================
