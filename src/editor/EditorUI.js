@@ -1075,15 +1075,17 @@ export default class EditorUI {
             this.panState.startX = canvasWrapper.scrollLeft + event.clientX;
             this.panState.startY = canvasWrapper.scrollTop + event.clientY;
             canvasWrapper.style.cursor = 'grabbing';
-        } else { // selectモードの処理
-            // (前回実装した、ノード選択/接続開始のロジックはここ)
-           
-        const pinElement = event.target.closest('[data-pin-type]');
-        const nodeElement = event.target.closest('[data-is-node="true"]');
+           } else { // selectモードの処理
+            const nodeElement = event.target.closest('[data-is-node="true"]');
+            const pinElement = event.target.closest('[data-pin-type]');
+            
+            // 入力欄のクリックは何もしない
+            if (event.target.tagName === 'INPUT') return;
 
-        // --- ケース1: ピンがクリックされた場合 ---
-        if (pinElement && pinElement.dataset.pinType === 'output') {
-            event.stopPropagation(); // ノードのドラッグを防ぐ
+            // --- ピンのクリック (接続開始) ---
+            if (pinElement) {
+                event.preventDefault(); // ★ ここでpreventDefault
+                event.stopPropagation();
             const fromNodeId = nodeElement.dataset.nodeId;
             this.startConnection(fromNodeId, event);
             return;
@@ -1218,8 +1220,11 @@ export default class EditorUI {
             canvasWrapper.scrollTop = y;
         } else { // selectモードの処理
             // (前回実装した、ノードドラッグ/線プレビューのロジックはここ)
-            if (!this.draggedNode.element) return;
-        event.preventDefault();
+            // ★★★ もし、ノードをドラッグ中、または線を接続中なら ★★★
+            if (this.draggedNode.element || this.connectionState.isActive) {
+                // ★★★ ブラウザのデフォルト動作（スクロール）を、常に抑制する ★★★
+                event.preventDefault();
+            }
 
         // キャンバスの親要素の座標を取得
         const parentRect = this.vslCanvas.parentElement.getBoundingClientRect();
