@@ -2376,18 +2376,19 @@ createComponentSection() {
     }
 
    openEventEditor() {
-        if (!this.eventEditorOverlay || !this.selectedObject) {
+        if (!this.selectedObject) {
             alert('先にイベントを編集するオブジェクトを選択してください。');
             return;
         }
+
+        // --- 1. Phaserの入力を止める（これはプラグインの責務） ---
         this.pluginManager.game.input.enabled = false;
-        const titleElement = document.getElementById('event-editor-title');
-        if (titleElement) titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
         
-        // ★★★ UIを生成するコアメソッドを呼び出す ★★★
-        this.populateEventEditor();
-        
-        this.eventEditorOverlay.style.display = 'flex';
+        // --- 2. EditorUIに、UIの構築と表示を「依頼」する ---
+        if (this.editorUI) {
+            // ★★★ 選択中のオブジェクトを引数として渡す ★★★
+            this.editorUI.openEventEditor(this.selectedObject);
+        }
     }
 
     closeEventEditor() {

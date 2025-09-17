@@ -13,7 +13,7 @@ import BattleScene from './scenes/BattleScene.js';
 import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
 import JumpScene from './scenes/JumpScene.js';
-
+import { eventTagHandlers } from './handlers/events/index.js';
 // ★★★ 新設：uiRegistryを自動処理する非同期関数 ★★★
 // pathから動的にモジュールをimportするため、asyncにする
 async function processUiRegistry(registry) {
@@ -128,4 +128,5 @@ window.onload = async () => {
     // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
     game.registry.set('uiRegistry', processedUiRegistry);
     game.registry.set('sceneUiVisibility', sceneUiVisibility);
+     game.registry.set('eventTagHandlers', eventTagHandlers);
 };
