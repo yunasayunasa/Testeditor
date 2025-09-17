@@ -99,12 +99,13 @@
       "name": "cg01_3",
       "type": "initialize",
       "x": 1603,
-      "y": 470,
+      "y": 500,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "group": "floor",
       "events": [
         {
           "trigger": "onOverlap_Start",
@@ -186,40 +187,7 @@
           "targetGroup": "player"
         }
       ],
-      "text": "New Text",
-      "style": {
-        "fontFamily": "Courier",
-        "fontSize": "32px",
-        "fontStyle": "",
-        "backgroundColor": null,
-        "color": "#ffffff",
-        "stroke": "#fff",
-        "strokeThickness": 0,
-        "shadowOffsetX": 0,
-        "shadowOffsetY": 0,
-        "shadowColor": "#000",
-        "shadowBlur": 0,
-        "shadowStroke": false,
-        "shadowFill": false,
-        "align": "left",
-        "maxLines": 0,
-        "fixedWidth": 0,
-        "fixedHeight": 0,
-        "resolution": 1,
-        "rtl": false,
-        "testString": "|MÃ‰qgy",
-        "baselineX": 1.2,
-        "baselineY": 1.4,
-        "wordWrapWidth": null,
-        "wordWrapCallback": null,
-        "wordWrapCallbackScope": null,
-        "wordWrapUseAdvanced": false,
-        "metrics": {
-          "ascent": 24,
-          "descent": 6,
-          "fontSize": 30
-        }
-      },
+      "texture": "__DEFAULT",
       "physics": {
         "isStatic": false,
         "isSensor": true,
@@ -452,39 +420,43 @@
     {
       "name": "walk_2_5_2",
       "type": "initialize",
-      "x": 1168,
-      "y": 480,
+      "x": 1420,
+      "y": 285,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
       "group": "player",
-      "events": [],
+      "events": [
+        {
+          "trigger": "onStomp",
+          "actions": "[eval exp=\"setF('player_hp', 50)\"]",
+          "targetGroup": "floor"
+        }
+      ],
       "components": [
         {
-          "type": "PlayerController",
+          "type": "WatchVariableComponent",
           "params": {
-            "moveSpeed": 7.5
+            "variable": "f.player_hp"
           }
         },
         {
-          "type": "Interactor",
-          "params": {}
-        },
-        {
-          "type": "Scrollable",
-          "params": {}
+          "type": "BarDisplayComponent",
+          "params": {
+            "maxValueVariable": "f.player_max_hp"
+          }
         }
       ],
       "texture": "walk",
       "physics": {
-        "isStatic": true,
+        "isStatic": false,
         "isSensor": false,
         "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 1,
+        "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
           "category": 1,
@@ -495,8 +467,8 @@
     {
       "name": "walk_2_6_1",
       "type": "initialize",
-      "x": 1271,
-      "y": 248,
+      "x": 761,
+      "y": 400,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -538,8 +510,8 @@
     {
       "name": "walk_2_6_2",
       "type": "initialize",
-      "x": 1169,
-      "y": 248,
+      "x": 853,
+      "y": 377,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
