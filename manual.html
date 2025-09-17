@@ -81,7 +81,84 @@
 </ul>
 
 <hr>
+  <hr>
 
+    <h1>7. UIを「生きた」ものにする：コンポーネントシステム入門</h1>
+    <p>これまでのUIは、いわば美しい「絵」でした。しかし、Odyssey Engineの真の力は、UIを単なる絵から、ゲーム世界の出来事にリアルタイムで反応する<strong>「生きた窓」</strong>へと変えることにあります。</p>
+    <p>それを実現するのが<strong>コンポーネントシステム</strong>です。</p>
+    <p>コンポーネントとは、「機能」だけを持つ、目に見えない小さな部品です。エディタ上で、UIオブジェクト（画像やテキスト）にこれらの部品を組み合わせ（アタッチし）ていくことで、プログラミングを一切することなく、HPバーやスコア表示のような動的なUIを自由に作成できます。</p>
+
+    <h3>7.1. 基本的な考え方：「器」と「神経」と「筋肉」</h3>
+    <p>動的なUIは、3種類の要素の組み合わせで考えます。</p>
+    <ol>
+        <li><strong>器 (GameObject)</strong>: 見た目そのものです。アセットブラウザから追加した画像やテキストがこれにあたります。</li>
+        <li><strong>神経 (WatchVariableComponent)</strong>: ゲーム内の変数を監視し、変化があったら「値が変わったよ！」という信号（イベント）を発信する、目に見えない部品です。</li>
+        <li><strong>筋肉/声 (DisplayComponent)</strong>: 神経からの信号を受け取り、器の見た目（幅、テキストなど）を実際に変化させる部品です。</li>
+    </ol>
+    <p>この3つをエディタで組み合わせることで、UIは命を吹き込まれます。</p>
+
+    <h3>7.2. コンポーネント・リファレンス</h3>
+    <p>プロパティパネルの「Component」セクションから、UIオブジェクトに以下のコンポーネントをアタッチできます。</p>
+
+    <h4><code>[WatchVariableComponent]</code> - 神経</h4>
+    <p>UIに、特定のゲーム変数を監視させるための、最も重要なコンポーネントです。これ単体では見た目は何も変わりませんが、他の表示系コンポーネントと連携するための「神経」として機能します。</p>
+    <p>アタッチすると、以下のパラメータを編集できます。</p>
+    <ul>
+        <li><strong>監視する変数 (f.)</strong> (必須): どのゲーム変数の変化を監視するかを指定します。必ず<code>f.</code>から始まる形式で記述してください。
+            <ul>
+                <li>例: <code>f.player_hp</code>, <code>f.score</code>, <code>f.amunition_count</code></li>
+            </ul>
+        </li>
+    </ul>
+    <p><strong>注意:</strong> 指定した変数（例: <code>f.player_hp</code>）が存在しない、または一度も値が設定されていない場合、このコンポーネントは信号を発信しません。エラーにはなりませんが、UIは変化しないのでご注意ください。</p>
+
+    <h4><code>[BarDisplayComponent]</code> - 筋肉（バー表示）</h4>
+    <p>主に画像オブジェクトにアタッチし、HPバーや経験値バーのように機能させます。神経（<code>WatchVariableComponent</code>）から「値が変わった」という信号を受け取ると、自身の横幅のスケール（<code>scaleX</code>）を、最大値に対する割合に応じて自動で変更します。</p>
+    <p><strong>前提条件:</strong> このコンポーネントを機能させるには、同じオブジェクトに<code>WatchVariableComponent</code>もアタッチしておく必要があります。</p>
+    <p>アタッチすると、以下のパラメータを編集できます。</p>
+    <ul>
+        <li><strong>最大値の変数 (f.)</strong> (必須): バーが満タン（100%）の時の値を、どのゲーム変数から取得するか指定します。
+            <ul>
+                <li>例: <code>f.player_max_hp</code>, <code>f.next_level_exp</code></li>
+            </ul>
+        </li>
+    </ul>
+
+    <h4><code>[TextDisplayComponent]</code> - 声（テキスト表示）</h4>
+    <p>テキストオブジェクトにアタッチし、スコアや残りHPなどを数値として表示させます。神経（<code>WatchVariableComponent</code>）から「値が変わった」という信号を受け取ると、自身のテキスト内容を、指定されたテンプレートに従って自動で更新します。</p>
+    <p><strong>前提条件:</strong> このコンポーネントを機能させるには、同じオブジェクトに<code>WatchVariableComponent</code>もアタッチしておく必要があります。</p>
+    <p>アタッチすると、以下のパラメータを編集できます。</p>
+    <ul>
+        <li><strong>表示テンプレート</strong> (必須): どのようにテキストを表示するかの書式を指定します。特別なキーワード<code>{value}</code>が、神経から受け取った実際の値に自動的に置き換えられます。
+            <ul>
+                <li>例: <code>SCORE: {value}</code> → SCORE: 100</li>
+                <li>例: <code>HP: {value}</code> → HP: 85</li>
+                <li>例: <code>{value} / 100</code> → 85 / 100</li>
+                <li>例: <code>{value}</code> → 85</li>
+            </ul>
+        </li>
+    </ul>
+    
+    <h3>7.3. 実践チュートリアル：動くHPバーを作ってみよう</h3>
+    <ol>
+        <li><strong>器を準備する</strong>: アセットブラウザからHPバーの「中身」の画像（例: <code>hp_bar_fill.png</code>）をシーンに追加します。名前を<code>'player_hp_bar_fill'</code>などに変更します。</li>
+        <li><strong>神経を繋ぐ</strong>:
+            <ol>
+                <li><code>player_hp_bar_fill</code>を選択し、プロパティパネルで「Add Component」をクリックし、<code>WatchVariableComponent</code>を選択します。</li>
+                <li>表示された入力欄「監視する変数 (f.)」に、<strong><code>f.player_hp</code></strong>と入力します。</li>
+            </ol>
+        </li>
+        <li><strong>筋肉を繋ぐ</strong>:
+            <ol>
+                <li>再度「Add Component」をクリックし、今度は<code>BarDisplayComponent</code>を選択します。</li>
+                <li>表示された入力欄「最大値の変数 (f.)」に、<strong><code>f.player_max_hp</code></strong>と入力します。</li>
+            </ol>
+        </li>
+        <li><strong>（任意）背景を置く</strong>: HPバーの「枠」の画像（例: <code>hp_bar_frame.png</code>）をシーンに追加し、<code>depth</code>を調整して<code>player_hp_bar_fill</code>のすぐ後ろに配置します。</li>
+        <li><strong>テストする</strong>: シナリオやイベントで<code>[eval exp="f.player_hp = 50"]</code>のようなタグを実行すると、HPバーの表示が半分になるはずです。</li>
+    </ol>
+    <p>これで完成です！<br><code>TextDisplayComponent</code>を使ったスコア表示も、全く同じ手順で作成できます。このコンポーネントシステムを使いこなせば、あなたのゲームのUIは無限の可能性を秘めることになります。</p>
+<hr>
 <h1>アクションタグ・リファレンス</h1>
 <p>イベントに応じて、オブジェクトに様々なアクションを実行させるための命令です。</p>
 
