@@ -176,3 +176,91 @@ body.tilemap-mode #overlay-controls { transform: translateY(-220px); }
 .modal-sub-panel.is-visible { display: block; }
 body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; filter: blur(2px); }
 #event-editor-content label{display:inline-block;width:auto;margin-right:5px;color:#ccc;flex-shrink:0}#event-editor-content input,#event-editor-content select,#event-editor-content textarea{flex-grow:1;background-color:#3c3c3c;border:1px solid #1e1e1e;color:#d4d4d4;padding:4px;border-radius:3px;width:auto}#event-editor-content .add-event-button{width:100%;padding:10px;margin-top:15px;background-color:#4a8a4a;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:14px}#event-editor-content .add-event-button:hover{background-color:#5cb85c}#help-modal-overlay,#event-editor-overlay,#anim-editor-overlay{z-index:10000;pointer-events:auto}#help-modal-overlay .modal-window,#event-editor-overlay .modal-window,#anim-editor-overlay .modal-window{z-index:10001;pointer-events:all}
+/* ==========================================================================
+   Visual Scripting Language (VSL) Editor Styles
+   ========================================================================== */
+
+/* --- メインコンテンツエリアを、ツールバーとキャンバスに分割 --- */
+#event-editor-main-content {
+    display: flex;
+    flex-direction: row;
+    padding: 0; /* 内側の余白は不要に */
+}
+
+/* --- (左側) ツールバー --- */
+#vsl-toolbar {
+    width: 200px;
+    padding: 10px;
+    background-color: #252526; /* サイドバーと同じ背景色 */
+    border-right: 1px solid #3c3c3c;
+    flex-shrink: 0; /* 縮まないようにする */
+    overflow-y: auto;
+}
+
+#vsl-toolbar h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#vsl-node-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.node-add-button {
+    width: 100%;
+    padding: 8px;
+    background-color: #3c3c3c;
+    border: 1px solid #555;
+    color: #d4d4d4;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.node-add-button:hover {
+    background-color: #555;
+}
+
+/* --- (右側) キャンバス --- */
+#vsl-canvas-wrapper {
+    flex-grow: 1; /* 残りのスペースをすべて使う */
+    position: relative; /* ノードを絶対位置で配置するための基準 */
+    overflow: auto; /* ノードがはみ出たらスクロールできるように */
+}
+
+#vsl-canvas {
+    position: relative;
+    width: 2000px;  /* 広大な作業スペースを確保 */
+    height: 2000px;
+    background-color: #1e1e1e;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px; /* 背景にグリッドを描画 */
+}
+
+
+/* ▼▼▼【これが、ノードの「見た目」を定義するCSSです】▼▼▼ */
+/* ------------------------------------------------------------------ */
+
+.vsl-node {
+    position: absolute; /* キャンバスの左上を基準に、x, yで位置を決める */
+    background-color: #2b2b2b;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 10px;
+    min-width: 150px; /* 最小幅 */
+    color: #d4d4d4;
+    cursor: grab; /* ドラッグできることを示すカーソル */
+    user-select: none; /* テキスト選択を無効化 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.vsl-node strong {
+    font-weight: bold;
+    color: #569cd6; /* タグ名を青っぽくする */
+}
+/* ------------------------------------------------------------------ */
+/* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
