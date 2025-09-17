@@ -79,11 +79,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         return null;
     }
-   /* setUI(editorUI) {
+   setUI(editorUI) {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
         // ★★★ イベントリスナーの登録は、ここで行わない ★★★
-    }*/
+    }
 
  /**
      * ★★★ 修正版 ★★★
