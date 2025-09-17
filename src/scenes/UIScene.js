@@ -116,98 +116,58 @@ this.actionInterpreter = new ActionInterpreter(this);
  * 
  */
 
-    async buildUiFromLayout(layoutData) {
-        console.log("[UIScene] Starting UI build with JSON-FIRST routine.");
+   // src/scenes/UIScene.js -> buildUiFromLayout()
 
-        const uiRegistry = this.registry.get('uiRegistry');
-        const stateManager = this.registry.get('stateManager');
-        if (!uiRegistry || !stateManager) {
-            console.error('[UIScene] CRITICAL: uiRegistry or stateManager not found.');
-            return;
-        }
+async buildUiFromLayout(layoutData) {
+    console.log("[UIScene] Starting UI build with FINAL routine.");
+    if (!layoutData || !layoutData.objects) return;
 
-        // --- ガード節: レイアウトデータ、またはその中のobjects配列がなければ何もしない ---
-        if (!layoutData || !layoutData.objects) {
-            console.warn('[UIScene] Layout data or objects array not found. Skipping UI build.');
-            return;
-        }
-        
-        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが、エディタで追加したUIを生成するための新しいロジックです ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    const uiRegistry = this.registry.get('uiRegistry');
+    const stateManager = this.registry.get('stateManager');
 
-        // --- Step 1: JSONファイルに定義されているオブジェクトをすべてループする ---
-        for (const layout of layoutData.objects) {
-            try {
-                // --- Step 2: 各オブジェクトの `registryKey` を使って、uiRegistryから「設計図」を探す ---
-                //    (例: `registryKey: 'player_hp_bar'`)
-               const registryKey = layout.registryKey || layout.name;
-                
-                if (!registryKey) {
-                    console.warn(`[UIScene] UI object in JSON is missing both 'registryKey' and 'name'. Skipping.`, layout);
-                    continue;
-                }
-   // ★★★ もしregistryKeyが'Text'なら、特別処理に分岐 ★★★
-                if (registryKey === 'Text') {
-                    // layoutからテキストとスタイル情報を取得
-                    const text = layout.text || '';
-                    const style = layout.style || { fontSize: '32px', fill: '#fff' };
-                    
-                    // Phaserの標準テキストオブジェクトを生成
-                    const textObject = this.add.text(0, 0, text, style);
-                    textObject.setData('registryKey', 'Text')
-                    // 共通の登録処理を呼び出す
-                    this.registerUiElement(layout.name, textObject, layout);
-                    
-                    console.log(`[UIScene] Successfully created standard Text object '${layout.name}'.`);
-                    
-                    // このオブジェクトの処理は完了したので、ループの次の回へ
-                    continue; 
-                }
+    for (const layout of layoutData.objects) {
+        try {
+            const registryKey = layout.registryKey || layout.name;
+            if (!registryKey) continue;
+
+            let uiElement = null;
+
+            // --- Step 1: オブジェクトのインスタンスを生成 ---
+            if (registryKey === 'Text') {
+                uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
+            } else {
                 const definition = uiRegistry[registryKey];
-                if (!definition || !definition.component) {
-                    console.warn(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry. Skipping '${layout.name}'.`);
-                    continue;
+                if (definition && definition.component) {
+                    const UiComponentClass = definition.component;
+                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
+                    layout.stateManager = stateManager;
+                    uiElement = new UiComponentClass(this, layout);
                 }
+            }
 
-                // --- Step 3: registryのデフォルトパラメータと、JSONのレイアウト情報をマージする ---
-                // (JSONの値が常に優先される)
-                const params = { 
-                    ...definition.params, 
-                    ...layout, 
-                    name: layout.name, // nameはJSONのものを正とする
-                    stateManager 
-                };
+            if (!uiElement) {
+                console.warn(`Could not create UI element for '${layout.name}'`);
+                continue;
+            }
 
-                // --- Step 4: クラスを取得し、インスタンスを生成する ---
-                const UiComponentClass = definition.component;
-                const uiElement = new UiComponentClass(this, params);
-uiElement.setData('registryKey', registryKey);
-if (layout.components) {
+            // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
+            uiElement.setData('registryKey', registryKey);
+
+            // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
+            if (layout.components) {
+                uiElement.setData('components', layout.components); // まず永続化データを保存
                 layout.components.forEach(compDef => {
                     this.addComponent(uiElement, compDef.type, compDef.params);
                 });
             }
-                // --- Step 5: シーンに登録し、編集可能にする ---
-                this.registerUiElement(layout.name, uiElement, params);
-                console.log(`[UIScene] Successfully created and configured '${layout.name}' from registry key '${registryKey}'.`);
 
-            } catch (e) {
-                console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
-            }
+            // --- Step 3: 共通の登録・設定処理を呼び出す ---
+            // ★ paramsではなく、JSONから読み込んだ生の`layout`を渡すのが最も確実
+            this.registerUiElement(layout.name, uiElement, layout);
+
+        } catch (e) {
+            console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
         }
-     
-
-        
-         const startButton = this.uiElements.get('start_button');
-    if (startButton) {
-        // start_buttonに、一度だけ実行されるクリックリスナーを設定
-       startButton.once('button_pressed', () => {
-            // ★ システムに、時間の再開を「依頼」する
-            this.scene.get('SystemScene').events.emit('request-time-resume');
-            startButton.setVisible(false);
-        });
     }
 }
 
@@ -592,11 +552,11 @@ onSceneTransition(newSceneKey) {
             fill: '#ffffff' 
         }).setOrigin(0.5);
 textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを記憶させる
-if (layout.components) {
-                    layout.components.forEach(compDef => {
-                        this.addComponent(textObject, compDef.type, compDef.params);
-                    });
-                }
+ if (layout.components) {
+                        layout.components.forEach(compDef => {
+                            this.addComponent(textObject, compDef.type, compDef.params);
+                        });
+                    }
         // registerUiElement を使って、共通のセットアップを行う
         this.registerUiElement(newName, textObject, { name: newName, x: centerX, y: centerY });
 
