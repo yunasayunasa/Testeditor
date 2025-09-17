@@ -1137,7 +1137,8 @@ export default class EditorUI {
                 break;
         }
 
-        nodeElement.append(title, paramsContainer);
+        nodeElement.append(inputPin, outputPin, title, paramsContainer);
+        // -------------------------------------------------------------
     }
      /**
      * ★★★ 新規メソッド ★★★
