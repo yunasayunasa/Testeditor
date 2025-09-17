@@ -1011,69 +1011,102 @@ export default class EditorUI {
         this.populateVslCanvas();
     }
 
+   // src/editor/EditorUI.js
+
     /**
-     * ★★★ 本実装に置き換え ★★★
+     * ★★★ VSL完成版 - 1/3 ★★★
+     * 現在のイベントデータに基づいて、VSLキャンバスに「ドラッグ可能な」ノードを描画する
      */
     populateVslCanvas() {
-        console.log(`%c[LOG BOMB 3] Populating canvas...`, 'color: lime;');
         if (!this.vslCanvas || !this.editingObject) return;
-        this.vslCanvas.innerHTML = ''; // キャンバスをクリア
+        this.vslCanvas.innerHTML = '';
 
         const events = this.editingObject.getData('events');
-        console.log(`%c[LOG BOMB 3] Populating canvas for '${this.editingObject.name}'...`, 'color: lime;');
-        console.log('Using event data:', events);
-        if (!events || events.length === 0) return;
-        const targetEvent = events[0];
+        if (!events || !events[0] || !events[0].nodes) return;
         
-        if (targetEvent.nodes) {
-            targetEvent.nodes.forEach(nodeData => {
-                const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node'; // CSSでスタイリング
-                nodeElement.style.left = `${nodeData.x}px`;
-                nodeElement.style.top = `${nodeData.y}px`;
-              nodeElement.dataset.isNode = 'true';
+        events[0].nodes.forEach(nodeData => {
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'vsl-node';
+            nodeElement.style.left = `${nodeData.x}px`;
+            nodeElement.style.top = `${nodeData.y}px`;
+            nodeElement.dataset.isNode = 'true';
             nodeElement.dataset.nodeId = nodeData.id;
 
-            nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
+            // ★ 描画処理は、buildNodeContentに完全に一本化する
             this.buildNodeContent(nodeElement, nodeData);
-            // ★★★ ここから mousedown イベントリスナーは削除します ★★★
-
+            
             this.vslCanvas.appendChild(nodeElement);
         });
     }
-}
-/**
-     * ★★★ 新規メソッド ★★★
-     * VSLキャンバスでポインターが押されたときの処理
+
+    /**
+     * ★★★ VSL完成版 - 2/3 ★★★
+     * VSLキャンバスでポインターが押されたときの処理 (ドラッグ開始)
+     * (initializeEventListenersから呼び出される)
      */
     onVslCanvasPointerDown(event) {
-        // クリックされた要素がノードかどうかを判定
         const nodeElement = event.target.closest('[data-is-node="true"]');
+        
+        // ★ 入力欄をクリックしたときは、ドラッグを開始しないようにする
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT') {
+            return;
+        }
 
         if (nodeElement) {
-            event.preventDefault(); // スクロールを防ぐ
+            event.preventDefault();
             
             const nodeId = nodeElement.dataset.nodeId;
             const events = this.editingObject.getData('events');
             const nodeData = events[0].nodes.find(n => n.id === nodeId);
 
             if (nodeData) {
-                this.selectNode(nodeData);
                 this.draggedNode.element = nodeElement;
                 this.draggedNode.nodeData = nodeData;
                 
-                // ノードの左上からのオフセットを計算
                 const rect = nodeElement.getBoundingClientRect();
+                const parentRect = this.vslCanvas.parentElement.getBoundingClientRect();
+                
+                // ★ 座標計算を、より正確なものに修正
                 this.draggedNode.offsetX = event.clientX - rect.left;
                 this.draggedNode.offsetY = event.clientY - rect.top;
 
-                // ドラッグ開始を示すCSSクラスなどを付けても良い
                 nodeElement.classList.add('is-dragging');
             }
-         } else {
-            // ★★★ キャンバスの何もない部分がクリックされたら、選択を解除 ★★★
-            this.deselectNode();
         }
+    }
+
+    /**
+     * ★★★ VSL完成版 - 3/3 ★★★
+     * ノードのHTML要素の中身を、そのデータに基づいて構築する
+     */
+    buildNodeContent(nodeElement, nodeData) {
+        // ★ 描画前に、必ず中身を空にする
+        nodeElement.innerHTML = '';
+
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
+        
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
+        
+        switch (nodeData.type) {
+            case 'destroy':
+                this.createNodeTextInput(paramsContainer, nodeData, 'target', 'self');
+                break;
+            case 'wait':
+                this.createNodeTextInput(paramsContainer, nodeData, 'time', '1000');
+                break;
+            case 'set_data':
+                this.createNodeTextInput(paramsContainer, nodeData, 'name', '');
+                this.createNodeTextInput(paramsContainer, nodeData, 'value', '');
+                break;
+            // ★ 新しいタグのUIを追加する場合は、ここに case を追加するだけ
+            default:
+                // パラメータがないタグの場合は、何も表示しない
+                break;
+        }
+
+        nodeElement.append(title, paramsContainer);
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -1153,39 +1186,7 @@ export default class EditorUI {
         this.draggedNode.element = null;
         this.draggedNode.nodeData = null;
     }
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * ノードのHTML要素の中身を、そのデータに基づいて構築する
-     * @param {HTMLElement} nodeElement - ノードの親div要素
-     * @param {object} nodeData - ノードのデータ
-     */
-    buildNodeContent(nodeElement, nodeData) {
-        // --- 1. タイトル部分 ---
-        const title = document.createElement('strong');
-        title.innerText = `[${nodeData.type}]`;
-        
-        // --- 2. パラメータ編集フォームのコンテナ ---
-        const paramsContainer = document.createElement('div');
-        paramsContainer.className = 'node-params';
-        
-        // --- 3. ノードのタイプに応じて、入力欄を動的に生成 ---
-        switch (nodeData.type) {
-            case 'destroy':
-                this.createNodeTextInput(paramsContainer, nodeData, 'target', 'self');
-                break;
-            case 'wait':
-                this.createNodeTextInput(paramsContainer, nodeData, 'time', '1000');
-                break;
-            case 'set_data':
-                this.createNodeTextInput(paramsContainer, nodeData, 'name', '');
-                this.createNodeTextInput(paramsContainer, nodeData, 'value', '');
-                break;
-            // ... 他のタグ用のUIもここに追加 ...
-        }
-
-        // --- 4. 生成した要素を、ノードのdivに追加 ---
-        nodeElement.append(title, paramsContainer);
-    }
+  
     
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
