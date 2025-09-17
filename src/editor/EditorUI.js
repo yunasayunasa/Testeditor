@@ -74,6 +74,7 @@ export default class EditorUI {
        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
         this.eventEditorTitle = document.getElementById('event-editor-title');
         this.vslNodeList = document.getElementById('vsl-node-list');
+        this.vslCanvas = document.getElementById('vsl-canvas')
     }
 
   
