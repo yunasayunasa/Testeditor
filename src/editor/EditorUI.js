@@ -984,19 +984,21 @@ export default class EditorUI {
         if (!targetEvent.nodes) {
             targetEvent.nodes = [];
         }
+        // --- 1. 現在のノードの数を取得 ---
+        const existingNodeCount = targetEvent.nodes.length;
         
-        // ▼▼▼ ログ爆弾 No.2 (改) ▼▼▼
-        console.log(`%c[LOG BOMB 2] Event data updating for '${this.editingObject.name}'...`, 'color: cyan;');
-        console.log('Before update:', JSON.stringify(targetEvent.nodes)); // ★ ノード配列だけをstringify
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // --- 2. ノードの数に基づいて、新しいノードのY座標を計算 ---
+        // (1個あたり40px下にずらし、初期位置は(50, 50)とする)
+        const newX = 50;
+        const newY = 50 + (existingNodeCount * 80); // ★ ノードの高さに応じて調整
 
         // --- 3. 新しいノードを追加 ---
         const newNode = {
             id: `node_${Date.now()}`,
             type: tagName,
             params: {},
-            x: 50,
-            y: 50
+           x: newX,  // ★ 計算したX座標を使う
+            y: newY   // ★ 計算したY座標を使う
         };
         targetEvent.nodes.push(newNode);
 
@@ -1099,6 +1101,9 @@ export default class EditorUI {
             case 'set_data':
                 this.createNodeTextInput(paramsContainer, nodeData, 'name', '');
                 this.createNodeTextInput(paramsContainer, nodeData, 'value', '');
+                break;
+                case 'eval':
+                this.createNodeTextInput(paramsContainer, nodeData, 'exp', '');
                 break;
             // ★ 新しいタグのUIを追加する場合は、ここに case を追加するだけ
             default:
