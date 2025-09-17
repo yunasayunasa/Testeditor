@@ -1188,12 +1188,18 @@ createMatterPropertiesUI(gameObject) {
         title.style.margin = '10px 0 5px 0';
         const button = document.createElement('button');
         button.innerText = 'イベント・エディタを開く';
-        button.onclick = () => {
-            // ★★★ イベントデータ構造を、開く「前」に初期化・移行する ★★★
-            this.initializeEventData(this.selectedObject);
-            
-            // ★ 元の openEventEditor 呼び出し
-            this.openEventEditor();
+         button.onclick = () => {
+            if (this.selectedObject) {
+                // ★ 1. まず、イベントデータ構造を初期化・移行する
+                this.initializeEventData(this.selectedObject);
+                
+                // ★ 2. 次に、EditorUIに、モーダルを開くよう依頼する
+                if (this.editorUI) {
+                    this.editorUI.openEventEditor(this.selectedObject);
+                }
+            } else {
+                alert('先にイベントを編集するオブジェクトを選択してください。');
+            }
         };
         this.editorPropsContainer.append(title, button);
     }
