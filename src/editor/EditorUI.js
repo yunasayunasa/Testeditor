@@ -1031,7 +1031,7 @@ export default class EditorUI {
      * ★★★ VSL完成版 - 1/3 ★★★
      * 現在のイベントデータに基づいて、VSLキャンバスに「ドラッグ可能な」ノードを描画する
      */
-    populateVslCanvas() {
+   populateVslCanvas() {
         if (!this.vslCanvas || !this.editingObject) return;
         this.vslCanvas.innerHTML = '';
 
@@ -1043,14 +1043,73 @@ export default class EditorUI {
             nodeElement.className = 'vsl-node';
             nodeElement.style.left = `${nodeData.x}px`;
             nodeElement.style.top = `${nodeData.y}px`;
-            nodeElement.dataset.isNode = 'true';
             nodeElement.dataset.nodeId = nodeData.id;
 
-            // ★ 描画処理は、buildNodeContentに完全に一本化する
+            // ★ 描画処理は、buildNodeContentに一本化
             this.buildNodeContent(nodeElement, nodeData);
             
             this.vslCanvas.appendChild(nodeElement);
         });
+    }
+
+    buildNodeContent(nodeElement, nodeData) {
+        nodeElement.innerHTML = '';
+
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
+        
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
+        
+        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
+        // --------------------------------------------------------------------
+
+        // ★★★ 最初に、XとYの座標入力欄を「常に」生成 ★★★
+        this.createNodePositionInput(paramsContainer, nodeData, 'x');
+        this.createNodePositionInput(paramsContainer, nodeData, 'y');
+        
+        // ★★★ その後に、各ノード固有のパラメータ入力欄を生成 ★★★
+        switch (nodeData.type) {
+            case 'destroy':
+                this.createNodeTextInput(paramsContainer, nodeData, 'target', 'self');
+                break;
+            case 'wait':
+                this.createNodeTextInput(paramsContainer, nodeData, 'time', '1000');
+                break;
+            // ... (他のタグのcase) ...
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        nodeElement.append(title, paramsContainer);
+    }
+
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノードのX/Y座標を編集する数値入力欄を生成する
+     */
+    createNodePositionInput(container, nodeData, key) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const label = document.createElement('label');
+        label.innerText = `${key}: `;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = Math.round(nodeData[key]);
+        
+        input.addEventListener('change', () => {
+            const value = parseInt(input.value, 10);
+            if (!isNaN(value)) {
+                nodeData[key] = value;
+                // ★ データを永続化し、キャンバスを再描画
+                const events = this.editingObject.getData('events');
+                this.editingObject.setData('events', events);
+                this.populateVslCanvas();
+            }
+        });
+
+        row.append(label, input);
+        container.appendChild(row);
     }
 
     /**
@@ -1132,50 +1191,7 @@ export default class EditorUI {
         // (このSVGのセットアップは少し複雑なので、まずはロジックを完成させる)
         console.log(`Connection started from node: ${fromNodeId}`);
     }
-    /**
-     * ★★★ VSL完成版 - 3/3 ★★★
-     * ノードのHTML要素の中身を、そのデータに基づいて構築する
-     */
-    buildNodeContent(nodeElement, nodeData) {
-        // ★ 描画前に、必ず中身を空にする
-        nodeElement.innerHTML = '';
-
-        const title = document.createElement('strong');
-        title.innerText = `[${nodeData.type}]`;
-         // ▼▼▼【ピンのHTMLを追加】▼▼▼
-        const inputPin = document.createElement('div');
-        inputPin.className = 'vsl-node-pin input';
-        inputPin.dataset.pinType = 'input';
-
-        const outputPin = document.createElement('div');
-        outputPin.className = 'vsl-node-pin output';
-        outputPin.dataset.pinType = 'output';
-        const paramsContainer = document.createElement('div');
-        paramsContainer.className = 'node-params';
-        
-        switch (nodeData.type) {
-            case 'destroy':
-                this.createNodeTextInput(paramsContainer, nodeData, 'target', 'self');
-                break;
-            case 'wait':
-                this.createNodeTextInput(paramsContainer, nodeData, 'time', '1000');
-                break;
-            case 'set_data':
-                this.createNodeTextInput(paramsContainer, nodeData, 'name', '');
-                this.createNodeTextInput(paramsContainer, nodeData, 'value', '');
-                break;
-                case 'eval':
-                this.createNodeTextInput(paramsContainer, nodeData, 'exp', '');
-                break;
-            // ★ 新しいタグのUIを追加する場合は、ここに case を追加するだけ
-            default:
-                // パラメータがないタグの場合は、何も表示しない
-                break;
-        }
-
-        nodeElement.append(inputPin, outputPin, title, paramsContainer);
-        // -------------------------------------------------------------
-    }
+  
    /**
  * ★★★ 復活させるメソッド (A案仕様) ★★★
  * VSLノードを選択し、プロパティパネルの更新をプラグインに依頼する
