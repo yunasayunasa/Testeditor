@@ -1329,6 +1329,21 @@ createComponentSection() {
             });
         }
 
+          // ★★★ TextDisplayComponent用のUI ★★★
+        if (componentDef.type === 'TextDisplayComponent') {
+            const currentTemplate = componentDef.params.template || '{value}';
+            
+            this.createTextInput(containerDiv, '表示テンプレート', currentTemplate, (newValue) => {
+                componentDef.params.template = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+
+                // 実行中のインスタンスも更新
+                if (this.selectedObject.components?.TextDisplayComponent) {
+                    this.selectedObject.components.TextDisplayComponent.template = newValue;
+                }
+            });
+        }
+
 
 
 
