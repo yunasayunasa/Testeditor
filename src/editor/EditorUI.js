@@ -17,10 +17,10 @@ export default class EditorUI {
        
         this.selectedNodeData = null;
         this.connectionState = {
-            isActive: false,      // 接続モード中か？
-            fromNodeId: null,     // 接続元のノードID
-            previewLine: null   // プレビュー用の線（SVG要素）
-        };
+        isActive: false,   // 接続モード中か？
+        fromNodeId: null,  // 接続元のノードID
+        fromPinElement: null // 接続元のピンのHTML要素
+    };
         this.vslMode = 'select'; // 'select' or 'pan'
         this.panState = {
             isPanning: false, // パンモード中か？
@@ -133,21 +133,47 @@ export default class EditorUI {
                     this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
                 }
             });
-            const selectBtn = document.getElementById('vsl-select-mode-btn');
-        const panBtn = document.getElementById('vsl-pan-mode-btn');
-        
+              // ▼▼▼【ここからが、VSLノード関連のイベント処理です】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- VSLモード切替ボタン ---
+        const selectBtn = document.getElementById('vsl-select-mode-btn');
         if (selectBtn) {
             selectBtn.addEventListener('click', () => this.setVslMode('select'));
         }
+        const panBtn = document.getElementById('vsl-pan-mode-btn');
         if (panBtn) {
             panBtn.addEventListener('click', () => this.setVslMode('pan'));
         }
-       const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+        
+        // --- VSLキャンバス (イベント委譲の親) ---
+        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
             // ★ キャンバス上で「押し下げ」イベントが起きた時だけを監視する
-            canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
+            canvasWrapper.addEventListener('pointerdown', (event) => {
+
+                // --- 1. まず、パンモードかどうかをチェック ---
+                if (this.vslMode === 'pan') {
+                    // (パンモードの処理はここに書くのが最も安全)
+                    return; 
+                }
+
+                // --- 2. 次に、ピンがクリックされたかをチェック ---
+                const pinElement = event.target.closest('[data-pin-type]');
+                if (pinElement) {
+                    event.stopPropagation(); // ノードのクリックとして扱われないようにする
+                    this.onPinClicked(pinElement);
+                    return; // これで処理は終わり
+                }
+
+                // --- 3. 最後に、ノード自体がクリックされたかをチェック ---
+                // (これはA案（数値入力）を実装する次のステップで使う)
+                // const nodeElement = event.target.closest('[data-is-node="true"]');
+                // if (nodeElement) { ... }
+            });
         }
-    }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         // --- カメラコントロール ---
         document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
@@ -174,7 +200,7 @@ export default class EditorUI {
         
         // ★ createPauseToggleもリスナーを設定するので、ここで呼ぶ
         this.createPauseToggle();
-    }
+    }}
     
     // =================================================================
     // UI構築・更新メソッド群
@@ -1303,6 +1329,47 @@ deselectNode() {
             panBtn.classList.remove('active');
             selectBtn.classList.add('active');
             canvasWrapper.style.cursor = 'default';
+        }
+    }
+     /**
+     * ★★★ 新規メソッド ★★★
+     * VSLノードのピンがクリックされたときの処理
+     * @param {HTMLElement} clickedPin - クリックされたピンのHTML要素
+     */
+    onPinClicked(clickedPin) {
+        const pinType = clickedPin.dataset.pinType;
+        const parentNode = clickedPin.closest('[data-is-node="true"]');
+        const nodeId = parentNode.dataset.nodeId;
+
+        // --- ケース1: 接続モード中でない時に、出力ピンがクリックされた (接続開始) ---
+        if (!this.connectionState.isActive && pinType === 'output') {
+            this.connectionState.isActive = true;
+            this.connectionState.fromNodeId = nodeId;
+            this.connectionState.fromPinElement = clickedPin;
+            
+            // 接続元であることを示す視覚的なフィードバック
+            clickedPin.classList.add('is-connecting');
+            console.log(`Connection started from node: ${nodeId}`);
+        } 
+        // --- ケース2: 接続モード中に、入力ピンがクリックされた (接続完了) ---
+        else if (this.connectionState.isActive && pinType === 'input') {
+            const fromNodeId = this.connectionState.fromNodeId;
+            const toNodeId = nodeId;
+            
+            // 接続をデータとして作成・保存
+            this.createConnection(fromNodeId, toNodeId);
+            
+            // 接続モードを終了
+            this.connectionState.fromPinElement.classList.remove('is-connecting');
+            this.connectionState.isActive = false;
+            this.connectionState.fromNodeId = null;
+            this.connectionState.fromPinElement = null;
+        }
+        // --- その他の場合 (接続モード中に別の出力ピンをクリックなど) は、接続をキャンセル ---
+        else if (this.connectionState.isActive) {
+            this.connectionState.fromPinElement.classList.remove('is-connecting');
+            this.connectionState.isActive = false;
+            // ... (キャンセル処理)
         }
     }
 }
