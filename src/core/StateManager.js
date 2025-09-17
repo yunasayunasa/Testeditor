@@ -36,11 +36,10 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         const oldValue = this.f[key];
         if (oldValue !== value) {
             this.f[key] = value;
-             console.log(`%c[LOG BOMB 1 | StateManager] 変数 '${key}' が ${oldValue} -> ${value} に変更されました。'f-changed'イベントを発行します。`, 'color: magenta; font-size: 1.2em;');
+            console.log(`%c[StateManager] 変数 'f.${key}' が ${oldValue} -> ${value} に変更されました。'f-variable-changed'イベントを発行します。`, 'color: magenta; font-size: 1.2em;');
             this.emit('f-variable-changed', key, value, oldValue);
         }
     }
-
     // --- sf (システム変数) の管理 ---
 
     /**
@@ -183,36 +182,25 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
-    /**
-     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (Lodash版)
-     * @param {string} path - "f.love_meter" や "sf.party.member1.hp" のような変数パス
+     /**
+     * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (最終FIX版)
+     * @param {string} path - "f.love_meter" のような変数パス
      * @param {*} value - 設定する値
      */
     setValueByPath(path, value) {
-        // ★★★ ここからデバッグコードを追加 ★★★
-        console.log('%c--- Debugging StateManager.setValueByPath ---', 'color: yellow; font-weight: bold;');
-        console.log('Received path:', path);
-        console.log('Received value:', value);
-        console.log('The state of "this.f" is:', this.f);
-        // ★★★ ここまで ★★★
-
         try {
-            const oldValue = _.get(this, path);
+            const pathParts = path.split('.'); // "f.love_meter" -> ["f", "love_meter"]
+            const variableType = pathParts.shift(); // "f"
+            const key = pathParts.join('.');       // "love_meter"
 
-            if (oldValue !== value) {
-                // ★★★ これが全てを解決する、唯一の修正です ★★★
-                // Lodashの`_.set`が、安全なネストオブジェクトの生成と代入を全て行ってくれる
-                _.set(this, path, value);
-
-                // f変数の場合のみ、変更イベントを発行
-                if (path.startsWith('f.')) {
-                    // pathから 'f.' を取り除いたキーをイベントで渡す
-                    const key = path.substring(2);
-                    this.emit('f-variable-changed', key, value, oldValue);
-                }
-                if (path.startsWith('sf.')) {
-                    this.saveSystemVariables();
-                }
+            if (variableType === 'f') {
+                // ★★★ f変数の場合は、必ずsetFを経由させる ★★★
+                this.setF(key, value);
+            } else if (variableType === 'sf') {
+                // ★★★ sf変数も、setSFを経由させる ★★★
+                this.setSF(key, value);
+            } else {
+                console.warn(`[StateManager.setValueByPath] 無効な変数タイプです: ${variableType}`);
             }
         } catch (e) {
             console.error(`[StateManager.setValueByPath] 値の設定に失敗しました: path=${path}`, e);
@@ -248,30 +236,32 @@ export default class StateManager extends Phaser.Events.EventEmitter {
      * @param {string} exp - "f.score = f.score + 10" のような代入式
      * @param {object} [context={}] - 式の中で利用可能にする追加の変数 (self, source, targetなど)
      */
+       /**
+     * イベントエディタ用の[eval]で使われる、式の「実行」専用メソッド (最終FIX版)
+     * @param {string} exp - "f.score = f.score + 10" のような代入式
+     * @param {object} context - self, source, targetなど
+     */
     execute(exp, context = {}) {
-        // --- コンテキストから変数を安全に取り出す ---
-        const self = context.self;
-        const source = context.source;
-        const target = context.target;
-        
-        // --- StateManagerが管理する変数を準備 ---
         const f = this.f;
         const sf = this.sf;
-        
+        // ... (self, source, target の取得) ...
+
+        // ★ Lodashのようなライブラリがない場合、手動で変更を検知するのは複雑で危険。
+        // ★ 代わりに、式の中で `setF('score', f.score + 10)` のようなヘルパー関数を呼べるようにする。
+
         try {
-            // --- new Functionを使って、制御された環境で式を実行 ---
-            // 'use strict'モードで、より安全に
-            new Function('f', 'sf', 'self', 'source', 'target', 'Phaser', `'use strict'; ${exp};`)(f, sf, self, source, target, Phaser);
+            // `setF` と `setSF` を、式の中から呼び出せるようにヘルパーとして渡す
+            const setF_helper = (key, value) => this.setF(key, value);
+            const setSF_helper = (key, value) => this.setSF(key, value);
             
-            console.log(`[StateManager.execute] Executed: "${exp}".`);
+            console.log(`[StateManager.execute] Executing: "${exp}".`);
+            new Function('f', 'sf', 'self', 'source', 'target', 'Phaser', 'setF', 'setSF', `'use strict'; ${exp};`)(f, sf, self, source, target, Phaser, setF_helper, setSF_helper);
 
         } catch (e) {
             console.error(`[StateManager.execute] 式の実行中にエラーが発生しました: "${exp}"`, e);
-            // エラーを再スローして、呼び出し元（ActionInterpreterなど）に伝える
             throw e;
         }
     }
-    
 
     // システム変数のセーブ/ロード、履歴の追加 (変更なし)
     saveSystemVariables() {

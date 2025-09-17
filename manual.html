@@ -155,7 +155,7 @@
             </ol>
         </li>
         <li><strong>（任意）背景を置く</strong>: HPバーの「枠」の画像（例: <code>hp_bar_frame.png</code>）をシーンに追加し、<code>depth</code>を調整して<code>player_hp_bar_fill</code>のすぐ後ろに配置します。</li>
-        <li><strong>テストする</strong>: シナリオやイベントで<code>[eval exp="f.player_hp = 50"]</code>のようなタグを実行すると、HPバーの表示が半分になるはずです。</li>
+        <li><strong>テストする</strong>: シナリオやイベントで<code>[eval exp="setF('player_hp', 50)"]</code>のようなタグを実行すると、HPバーの表示が半分になるはずです。</li>
     </ol>
     <p>これで完成です！<br><code>TextDisplayComponent</code>を使ったスコア表示も、全く同じ手順で作成できます。このコンポーネントシステムを使いこなせば、あなたのゲームのUIは無限の可能性を秘めることになります。</p>
 <hr>
