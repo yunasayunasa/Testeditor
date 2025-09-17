@@ -1324,4 +1324,81 @@ deselectNode() {
             canvasWrapper.style.cursor = 'default';
         }
     }
+    // src/editor/EditorUI.js
+
+    // ... (setVslModeメソッドなどの後)
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * VSLノードのピンがクリックされたときの処理
+     * @param {HTMLElement} clickedPin - クリックされたピンのHTML要素
+     */
+    onPinClicked(clickedPin) {
+        const pinType = clickedPin.dataset.pinType;
+        const parentNode = clickedPin.closest('[data-is-node="true"]');
+        const nodeId = parentNode.dataset.nodeId;
+
+        // --- ケース1: 接続モード中でない時に、出力ピンがクリックされた (接続開始) ---
+        if (!this.connectionState.isActive && pinType === 'output') {
+            this.connectionState.isActive = true;
+            this.connectionState.fromNodeId = nodeId;
+            this.connectionState.fromPinElement = clickedPin;
+            
+            // 接続元であることを示す視覚的なフィードバック (CSSで .is-connecting を定義)
+            clickedPin.classList.add('is-connecting');
+            console.log(`Connection started from node: ${nodeId}`);
+        } 
+        // --- ケース2: 接続モード中に、入力ピンがクリックされた (接続完了) ---
+        else if (this.connectionState.isActive && pinType === 'input') {
+            const fromNodeId = this.connectionState.fromNodeId;
+            const toNodeId = nodeId;
+            
+            // 接続をデータとして作成・保存
+            this.createConnection(fromNodeId, toNodeId);
+            
+            // 接続モードを終了
+            if (this.connectionState.fromPinElement) {
+                this.connectionState.fromPinElement.classList.remove('is-connecting');
+            }
+            this.connectionState.isActive = false;
+            this.connectionState.fromNodeId = null;
+            this.connectionState.fromPinElement = null;
+        }
+        // --- その他の場合 (接続モード中に別の場所をクリックなど) は、接続をキャンセル ---
+        else if (this.connectionState.isActive) {
+            if (this.connectionState.fromPinElement) {
+                this.connectionState.fromPinElement.classList.remove('is-connecting');
+            }
+            this.connectionState.isActive = false;
+            this.connectionState.fromNodeId = null;
+            this.connectionState.fromPinElement = null;
+            console.log("Connection cancelled.");
+        }
+    }
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * 新しい接続をイベントデータに追加し、キャンバスを再描画する
+     */
+    createConnection(fromNodeId, toNodeId) {
+        if (!this.editingObject || fromNodeId === toNodeId) return;
+
+        const events = this.editingObject.getData('events');
+        if (!events[0]) return;
+        
+        if (!events[0].connections) {
+            events[0].connections = [];
+        }
+
+        const exists = events[0].connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
+        if (!exists) {
+            events[0].connections.push({ fromNode: fromNodeId, toNode: toNodeId });
+            this.editingObject.setData('events', events);
+            
+            console.log(`New connection created: ${fromNodeId} -> ${toNodeId}`);
+            
+            // ★ キャンバスを再描画して、線を表示する (これは次のステップ)
+            this.populateVslCanvas(); 
+        }
+    }
 }
