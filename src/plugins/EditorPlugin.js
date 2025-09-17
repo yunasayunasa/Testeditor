@@ -1,4 +1,5 @@
 import { ComponentRegistry } from '../components/index.js';
+import EditorUI from '../editor/EditorUI.js';
 /**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
  * オブジェクトの選択、プロパティ編集、レイアウトのエクスポート機能などを管理する。
@@ -63,13 +64,27 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     start() {
         console.log("%c[TIMER BOMB B] EditorPlugin.start: 開始", "color: red;");
         if (!this.isEnabled) return;
+
+        // ▼▼▼【ここを、このように書き換えます】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- 1. このプラグイン自身が、自分のUIを生成する ---
+        if (!this.editorUI) {
+            this.editorUI = new EditorUI(this.game, this);
+            console.log("%c[TIMER BOMB A] new EditorUI() が完了しました。", "color: red;");
+        }
+
+        // --- 2. UIの準備ができたので、連携を開始する ---
         if (this.editorUI) {
-            // ★ UIの準備ができたことを通知し、レイヤーパネルを初期構築させる
             this.editorUI.onPluginReady(); 
             console.log("%c[TIMER BOMB C] EditorPlugin.start: onPluginReady() を呼び出しました。", "color: red;");
+            
             this.editorUI.startListeningToGameInput();
             console.log("%c[TIMER BOMB D] EditorPlugin.start: startListeningToGameInput() を呼び出しました。", "color: red;");
         }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         console.log("%c[TIMER BOMB E] EditorPlugin.start: 完了", "color: red;");
     }
     getActiveGameScene() { // ★ EditorUIから移動・統合
@@ -83,11 +98,11 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         return null;
     }
-    setUI(editorUI) {
+   /* setUI(editorUI) {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
         // ★★★ イベントリスナーの登録は、ここで行わない ★★★
-    }
+    }*/
 
  /**
      * ★★★ 修正版 ★★★

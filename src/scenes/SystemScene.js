@@ -118,7 +118,7 @@ export default class SystemScene extends Phaser.Scene {
             
             document.body.classList.add('debug-mode');
             
-            // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+     /*       // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ★★★ これが最もシンプルで確実な方法です ★★★
             // すでにPhaserによって起動済みのプラグインを「取得」するだけ
             const editorPlugin = this.plugins.get('EditorPlugin');
@@ -129,7 +129,7 @@ export default class SystemScene extends Phaser.Scene {
                   console.log("%c[TIMER BOMB A] new EditorUI() が完了しました。", "color: red;");
                  editorPlugin.setUI(this.editorUI);
                  this.editorUI.start(); 
-            }
+            }*/
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
     }
