@@ -14,12 +14,7 @@ export default class EditorUI {
         this.currentAssetTab = 'image';
         
          //ノードプロパティ
-        this.draggedNode = {
-            element: null, // ドラッグ中のHTML要素
-            nodeData: null,  // 対応するデータ
-            offsetX: 0,      // クリック位置とノード左上のX座標の差
-            offsetY: 0       // クリック位置とノード左上のY座標の差
-        };
+       
         this.selectedNodeData = null;
         this.connectionState = {
             isActive: false,      // 接続モード中か？
@@ -1100,57 +1095,31 @@ export default class EditorUI {
             // ================================================================
             // --- セレクトモードの処理 ---
             // ================================================================
-            const nodeElement = downEvent.target.closest('[data-is-node="true"]');
-            
-            // --- ケース1: ノードの上で押された場合 (ドラッグ開始) ---
-            if (nodeElement) {
-                downEvent.preventDefault();
-                
-                const nodeId = nodeElement.dataset.nodeId;
-                const events = this.editingObject.getData('events');
-                const nodeData = events[0].nodes.find(n => n.id === nodeId);
-                if (!nodeData) return;
-
-                const startNodeX = nodeData.x;
-                const startNodeY = nodeData.y;
-                const startClientX = downEvent.clientX;
-                const startClientY = downEvent.clientY;
-
-                const onNodeMove = (moveEvent) => {
-                    moveEvent.preventDefault();
-                    const dx = moveEvent.clientX - startClientX;
-                    const dy = moveEvent.clientY - startClientY;
-                    const newX = startNodeX + dx;
-                    const newY = startNodeY + dy;
-                    
-                    // 見た目とデータの両方を更新
-                    nodeElement.style.left = `${newX}px`;
-                    nodeElement.style.top = `${newY}px`;
-                    nodeData.x = newX;
-                    nodeData.y = newY;
-                };
-
-                const onNodeUp = () => {
-                    // 永続化データを保存
-                    const updatedEvents = this.editingObject.getData('events');
-                    this.editingObject.setData('events', updatedEvents);
-                    
-                    window.removeEventListener('pointermove', onNodeMove);
-                    window.removeEventListener('pointerup', onNodeUp);
-                };
-
-                window.addEventListener('pointermove', onNodeMove);
-                window.addEventListener('pointerup', onNodeUp);
-            }
-            
-            // --- ケース2: ピンの上で押された場合 (接続開始) ---
-            // (このロジックも、同様にこの中に追加します)
-        
-    
-            // --- ピンのクリック (接続開始) ---
            
+            
+           // --- セレクトモードの処理 ---
+        const nodeElement = event.target.closest('[data-is-node="true"]');
+        const pinElement = event.target.closest('[data-pin-type]');
+        
+        if (event.target.tagName === 'INPUT') return; // 入力欄のクリックは無視
 
-      }}
+        if (pinElement) {
+            // (ピンのクリック処理は、次のステップで実装します)
+            event.stopPropagation();
+            console.log("Pin clicked!");
+        } else if (nodeElement) {
+            // ★★★ ノードがクリックされたら、「選択」するだけ ★★★
+            const nodeId = nodeElement.dataset.nodeId;
+            const events = this.editingObject.getData('events');
+            const nodeData = events[0].nodes.find(n => n.id === nodeId);
+            if (nodeData) {
+                this.selectNode(nodeData);
+            }
+        } else {
+            // ★★★ キャンバスの何もない部分がクリックされたら、選択を解除 ★★★
+            this.deselectNode();
+        }
+    }}
 /**
      * ★★★ 新規メソッド ★★★
      * ノード接続モードを開始する
@@ -1241,81 +1210,6 @@ export default class EditorUI {
         }
 
         this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
-    }
-    /**
-     * ★★★ 新規メソッド ★★★
-     * ポインターが移動したときの処理 (ドラッグ中)
-     */
-    // onVslCanvasPointerMove を、モードに応じて処理を振り分けるように変更
-    onVslCanvasPointerMove(event) {
-        if (this.vslMode === 'pan' && this.panState.isPanning) {
-            // パンモードの処理
-            event.preventDefault();
-            const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
-            const x = this.panState.startX - event.clientX;
-            const y = this.panState.startY - event.clientY;
-            canvasWrapper.scrollLeft = x;
-            canvasWrapper.scrollTop = y;
-        } else { // selectモードの処理
-            // (前回実装した、ノードドラッグ/線プレビューのロジックはここ)
-            // ★★★ もし、ノードをドラッグ中、または線を接続中なら ★★★
-            if (this.draggedNode.element || this.connectionState.isActive) {
-                // ★★★ ブラウザのデフォルト動作（スクロール）を、常に抑制する ★★★
-                event.preventDefault();
-            }
-
-        // キャンバスの親要素の座標を取得
-        const parentRect = this.vslCanvas.parentElement.getBoundingClientRect();
-        
-        // 新しい座標を計算
-        // (マウスポインタの位置 - 親要素の左上座標 - クリック時のオフセット)
-        let newX = event.clientX - parentRect.left - this.draggedNode.offsetX;
-        let newY = event.clientY - parentRect.top - this.draggedNode.offsetY;
-        
-        // 見た目を更新
-        this.draggedNode.element.style.left = `${newX}px`;
-        this.draggedNode.element.style.top = `${newY}px`;
-        
-        // データを更新
-        this.draggedNode.nodeData.x = newX;
-        this.draggedNode.nodeData.y = newY;
-    }
-    }
-    /**
-     * ★★★ 新規メソッド ★★★
-     * ポインターが離されたときの処理 (ドラッグ終了)
-     */
-    onVslCanvasPointerUp(event) {
-        // --- ケース1: ノード接続モード中の場合 ---
-        if (this.connectionState.isActive) {
-            const pinElement = event.target.closest('[data-pin-type="input"]');
-            
-            if (pinElement) {
-                const toNodeElement = pinElement.closest('[data-is-node="true"]');
-                const toNodeId = toNodeElement.dataset.nodeId;
-                
-                // ★ 新しい接続をデータに追加する
-                this.createConnection(this.connectionState.fromNodeId, toNodeId);
-            }
-            
-            // 接続モードを終了
-            console.log("Connection ended.");
-            this.connectionState.isActive = false;
-            this.connectionState.fromNodeId = null;
-            // (プレビュー用の線を削除する処理もここに追加)
-            return; // ドラッグ終了処理と競合しないように
-        }
-        if (!this.draggedNode.element) return;
-        
-        // 永続化データを保存
-        const events = this.editingObject.getData('events');
-        this.editingObject.setData('events', events);
-        
-        this.draggedNode.element.classList.remove('is-dragging');
-
-        // ドラッグ状態をリセット
-        this.draggedNode.element = null;
-        this.draggedNode.nodeData = null;
     }
   
       /**
