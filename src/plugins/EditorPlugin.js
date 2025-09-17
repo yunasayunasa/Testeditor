@@ -1,5 +1,4 @@
 import { ComponentRegistry } from '../components/index.js';
-import EditorUI from '../editor/EditorUI.js';
 /**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
  * オブジェクトの選択、プロパティ編集、レイアウトのエクスポート機能などを管理する。
@@ -61,13 +60,15 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
      * すべてのシーンの `create` が完了した後に一度だけ呼ばれる。
      * このタイミングでUIにPhaserのイベントリスンを開始させるのが最も安全。
      */
-   start() {
-    if (!this.isEnabled) return;
-    if (this.editorUI) {
-        this.editorUI.onPluginReady();
-        this.editorUI.startListeningToGameInput();
+    start() {
+        if (!this.isEnabled) return;
+        if (this.editorUI) {
+            // ★ UIの準備ができたことを通知し、レイヤーパネルを初期構築させる
+            this.editorUI.onPluginReady(); 
+            this.editorUI.startListeningToGameInput();
+            
+        }
     }
-}
     getActiveGameScene() { // ★ EditorUIから移動・統合
         const scenes = this.pluginManager.game.scene.getScenes(true);
         for (const scene of scenes) {
@@ -79,7 +80,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         return null;
     }
-   setUI(editorUI) {
+    setUI(editorUI) {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
         // ★★★ イベントリスナーの登録は、ここで行わない ★★★
@@ -2375,21 +2376,18 @@ createComponentSection() {
     }
 
    openEventEditor() {
-    console.log("%c[LOG BOMB 1] EditorPlugin.openEventEditor: 開始", "color: orange; font-weight: bold;");
-        if (!this.selectedObject) {
+        if (!this.eventEditorOverlay || !this.selectedObject) {
             alert('先にイベントを編集するオブジェクトを選択してください。');
             return;
         }
-
-        // --- 1. Phaserの入力を止める（これはプラグインの責務） ---
         this.pluginManager.game.input.enabled = false;
+        const titleElement = document.getElementById('event-editor-title');
+        if (titleElement) titleElement.innerText = `イベント編集: ${this.selectedObject.name}`;
         
-        // --- 2. EditorUIに、UIの構築と表示を「依頼」する ---
-        if (this.editorUI) {
-            // ★★★ 選択s.edito中のオブジェクトを引数として渡す ★★★
-             this.editorUI.openEventEditor(this.selectedObject);
-        }
-        console.log("%c[LOG BOMB 1] EditorPlugin.openEventEditor: 完了 (EditorUIへの依頼が終了)", "color: orange; font-weight: bold;");
+        // ★★★ UIを生成するコアメソッドを呼び出す ★★★
+        this.populateEventEditor();
+        
+        this.eventEditorOverlay.style.display = 'flex';
     }
 
     closeEventEditor() {

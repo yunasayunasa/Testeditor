@@ -71,9 +71,6 @@ export default class EditorUI {
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
        this.layerListContainer = document.getElementById('layer-list');
-       this.vslToolbar = document.getElementById('vsl-toolbar');
-        this.vslNodeList = document.getElementById('vsl-node-list');
-        this.vslCanvas = document.getElementById('vsl-canvas');
     }
 
   
@@ -99,7 +96,7 @@ export default class EditorUI {
         document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
         document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
-        document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
+        
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
@@ -189,7 +186,6 @@ export default class EditorUI {
      * これが最も安定した方法。
      */
     startListeningToGameInput() {
-        console.log("%c[TIMER BOMB F] EditorUI.startListeningToGameInput: 開始", "color: red;");
         if (!this.game || !this.game.input) {
             console.error("[EditorUI] Cannot start listening: Game or input system not available.");
             return;
@@ -203,7 +199,6 @@ export default class EditorUI {
         console.log("[EditorUI] Attaching Phaser global input listeners.");
         this.game.input.on('pointermove', this.onPointerMove, this);
         this.game.input.on('pointerdown', this.onPointerDown, this);
-        console.log("%c[TIMER BOMB G] EditorUI.startListeningToGameInput: 完了", "color: red;");
     }
  // ▼▼▼ この新しいメソッドをクラス内に追加 ▼▼▼
   
@@ -882,97 +877,6 @@ export default class EditorUI {
         this.buildLayerPanel();
     }
 //レイヤー系ここまで
-//VSL周り
-   /**
-     * ★★★ 新規メソッド (EditorPluginから移設・改修) ★★★
-     * イベントエディタを開き、その中身を構築する
-     * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
-     */
-    openEventEditor(selectedObject) {
-        console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 開始", "color: cyan; font-weight: bold;");
-        if (!this.eventEditorOverlay || !selectedObject) return;
 
-        // ★ 編集対象のオブジェクトを、プロパティとして保持する
-        this.editingObject = selectedObject;
-
-        // --- UIの更新 ---
-        if (this.eventEditorTitle) {
-            this.eventEditorTitle.innerText = `イベント編集: ${this.editingObject.name}`;
-        }
-        
-        // --- ツールバーとキャンバスを構築 ---
-        this.populateVslToolbar();
-       // this.populateVslCanvas(); // ← これは次のステップで実装しますが、呼び出しだけ書いておきます
-
-        // --- モーダルを表示 ---
-           // ★★★ モーダルを表示する処理を、setTimeoutで囲む ★★★
-        // これにより、この関数の呼び出し元(EditorPlugin)の処理がすべて完了し、
-        // 現在のJavaScriptの実行スタックが空になった「後」で、
-        // モーダルの表示が実行されることが保証される。
-        setTimeout(() => {
-            this.eventEditorOverlay.style.display = 'flex';
-            console.log("%c[EditorUI] モーダル表示コマンドを、次のイベントサイクルで実行しました。", "color: green; font-weight: bold;");
-        }, 0); // 遅延は0ミリ秒でOK
-
-        console.log("%c[LOG BOMB 2] EditorUI.openEventEditor: 完了 (モーダル表示完了)", "color: cyan; font-weight: bold;");
-    }
-
-    /**
-     * ★★★ 新規メソッド ★★★
-     * イベントエディタを閉じる
-     */
-    closeEventEditor() {
-        if (!this.eventEditorOverlay) return;
-
-        this.eventEditorOverlay.style.display = 'none';
-        this.editingObject = null; // 編集対象をクリア
-
-        // Phaserの入力を再開するよう、プラグインに依頼
-        if(this.plugin) {
-            this.plugin.pluginManager.game.input.enabled = true;
-        }
-    }
-    
-    /**
-     * ★★★ 新規メソッド (EditorPluginから移設・改修) ★★★
-     * 利用可能なアクションタグから、VSLツールバーのノードリストを生成する
-     */
-    populateVslToolbar() {
-        console.log("%c[LOG BOMB 3] EditorUI.populateVslToolbar: 開始", "color: lime; font-weight: bold;");
-        if (!this.vslNodeList) return;
-
-        this.vslNodeList.innerHTML = ''; // 中身をクリア
-
-        // eventTagHandlersは、ActionInterpreterが持つのが望ましいが、
-        // ここでは registry から取得できると仮定する
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
-        
-        if (eventTagHandlers) {
-            for (const tagName in eventTagHandlers) {
-                const button = document.createElement('button');
-                button.className = 'node-add-button';
-                button.innerText = `[${tagName}]`;
-                
-                button.addEventListener('click', () => {
-                    // 次のステップで実装: 新しいノードをデータに追加し、キャンバスを再描画する
-                    this.addNodeToEventData(tagName);
-                });
-                
-                this.vslNodeList.appendChild(button);
-            }
-        } else {
-            this.vslNodeList.innerHTML = '<p>No event tags found.</p>';
-        }
-        console.log("%c[LOG BOMB 3] EditorUI.populateVslToolbar: 完了", "color: lime; font-weight: bold;");
-    }
-
-    // ★ addNodeToEventData と populateVslCanvas は、次のステップで実装します
-    addNodeToEventData(tagName) {
-        console.log(`(TODO) Add node: ${tagName}`);
-    }
-    populateVslCanvas() {
-        console.log('(TODO) Populate canvas');
-    }
-//VSL計ここまで
 
 }
