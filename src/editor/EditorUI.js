@@ -151,9 +151,11 @@ export default class EditorUI {
         // --- VSLキャンバス (イベント委譲の親) ---
         const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
-            // ★ onVslCanvasPointerDown を呼び出すだけでOK
-            canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
-        }
+            canvasWrapper.addEventListener('pointerdown', (event) => {
+                if (this.vslMode === 'pan') {
+                    // (パンモードの処理)
+                    return; 
+                }
                 const pinElement = event.target.closest('[data-pin-type]');
                 if (pinElement) {
                     event.stopPropagation();
