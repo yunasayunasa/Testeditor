@@ -147,12 +147,10 @@ export default class EditorUI {
         if (panBtn) {
             panBtn.addEventListener('click', () => this.setVslMode('pan'));
         }
-        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+       const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
+            // ★ キャンバス上で「押し下げ」イベントが起きた時だけを監視する
             canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
-            // ドラッグ中の移動と、ドラッグ終了は、window全体で監視する
-            window.addEventListener('pointermove', (event) => this.onVslCanvasPointerMove(event));
-            window.addEventListener('pointerup', (event) => this.onVslCanvasPointerUp(event));
         }
     }
 
@@ -1065,23 +1063,90 @@ export default class EditorUI {
      * VSLキャンバスでポインターが押されたときの処理 (ドラッグ開始)
      * (initializeEventListenersから呼び出される)
      */
-   onVslCanvasPointerDown(event) {
-   
+     /**
+     * ★★★ 新しい、統合されたポインターダウン処理 (最終FIX版) ★★★
+     * @param {PointerEvent} downEvent - pointerdownイベントオブジェクト
+     */
+    onVslCanvasPointerDown(downEvent) {
+        // --- モードに応じて処理を分岐 ---
         if (this.vslMode === 'pan') {
-            // パンモードの処理
-            event.preventDefault();
-            this.panState.isPanning = true;
+            // ================================================================
+            // --- パンモードの処理 ---
+            // ================================================================
+            downEvent.preventDefault();
             const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
-            this.panState.startX = canvasWrapper.scrollLeft + event.clientX;
-            this.panState.startY = canvasWrapper.scrollTop + event.clientY;
-            canvasWrapper.style.cursor = 'grabbing';
-           } else { // selectモードの処理
-            const nodeElement = event.target.closest('[data-is-node="true"]');
-            const pinElement = event.target.closest('[data-pin-type]');
+            const startScrollX = canvasWrapper.scrollLeft;
+            const startScrollY = canvasWrapper.scrollTop;
+            const startClientX = downEvent.clientX;
+            const startClientY = downEvent.clientY;
             
-            // 入力欄のクリックは何もしない
-            if (event.target.tagName === 'INPUT') return;
+            const onPanMove = (moveEvent) => {
+                moveEvent.preventDefault();
+                const dx = moveEvent.clientX - startClientX;
+                const dy = moveEvent.clientY - startClientY;
+                canvasWrapper.scrollLeft = startScrollX - dx;
+                canvasWrapper.scrollTop = startScrollY - dy;
+            };
 
+            const onPanUp = () => {
+                window.removeEventListener('pointermove', onPanMove);
+                window.removeEventListener('pointerup', onPanUp);
+            };
+
+            window.addEventListener('pointermove', onPanMove);
+            window.addEventListener('pointerup', onPanUp);
+
+        } else {
+            // ================================================================
+            // --- セレクトモードの処理 ---
+            // ================================================================
+            const nodeElement = downEvent.target.closest('[data-is-node="true"]');
+            
+            // --- ケース1: ノードの上で押された場合 (ドラッグ開始) ---
+            if (nodeElement) {
+                downEvent.preventDefault();
+                
+                const nodeId = nodeElement.dataset.nodeId;
+                const events = this.editingObject.getData('events');
+                const nodeData = events[0].nodes.find(n => n.id === nodeId);
+                if (!nodeData) return;
+
+                const startNodeX = nodeData.x;
+                const startNodeY = nodeData.y;
+                const startClientX = downEvent.clientX;
+                const startClientY = downEvent.clientY;
+
+                const onNodeMove = (moveEvent) => {
+                    moveEvent.preventDefault();
+                    const dx = moveEvent.clientX - startClientX;
+                    const dy = moveEvent.clientY - startClientY;
+                    const newX = startNodeX + dx;
+                    const newY = startNodeY + dy;
+                    
+                    // 見た目とデータの両方を更新
+                    nodeElement.style.left = `${newX}px`;
+                    nodeElement.style.top = `${newY}px`;
+                    nodeData.x = newX;
+                    nodeData.y = newY;
+                };
+
+                const onNodeUp = () => {
+                    // 永続化データを保存
+                    const updatedEvents = this.editingObject.getData('events');
+                    this.editingObject.setData('events', updatedEvents);
+                    
+                    window.removeEventListener('pointermove', onNodeMove);
+                    window.removeEventListener('pointerup', onNodeUp);
+                };
+
+                window.addEventListener('pointermove', onNodeMove);
+                window.addEventListener('pointerup', onNodeUp);
+            }
+            
+            // --- ケース2: ピンの上で押された場合 (接続開始) ---
+            // (このロジックも、同様にこの中に追加します)
+        
+    
             // --- ピンのクリック (接続開始) ---
             if (pinElement) {
                 event.preventDefault(); // ★ ここでpreventDefault
@@ -1091,28 +1156,7 @@ export default class EditorUI {
             return;
         }
 
-        if (nodeElement) {
-            event.preventDefault();
-            
-            const nodeId = nodeElement.dataset.nodeId;
-            const events = this.editingObject.getData('events');
-            const nodeData = events[0].nodes.find(n => n.id === nodeId);
-
-            if (nodeData) {
-                this.draggedNode.element = nodeElement;
-                this.draggedNode.nodeData = nodeData;
-                
-                const rect = nodeElement.getBoundingClientRect();
-                const parentRect = this.vslCanvas.parentElement.getBoundingClientRect();
-                
-                // ★ 座標計算を、より正確なものに修正
-                this.draggedNode.offsetX = event.clientX - rect.left;
-                this.draggedNode.offsetY = event.clientY - rect.top;
-
-                nodeElement.classList.add('is-dragging');
-            }
-        }
-    }}
+      }}
 /**
      * ★★★ 新規メソッド ★★★
      * ノード接続モードを開始する
