@@ -1035,7 +1035,7 @@ export default class EditorUI {
             nodeElement.dataset.nodeId = nodeData.id;
 
             nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
-            
+            this.buildNodeContent(nodeElement, nodeData);
             // ★★★ ここから mousedown イベントリスナーは削除します ★★★
 
             this.vslCanvas.appendChild(nodeElement);
@@ -1152,5 +1152,68 @@ export default class EditorUI {
         // ドラッグ状態をリセット
         this.draggedNode.element = null;
         this.draggedNode.nodeData = null;
+    }
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノードのHTML要素の中身を、そのデータに基づいて構築する
+     * @param {HTMLElement} nodeElement - ノードの親div要素
+     * @param {object} nodeData - ノードのデータ
+     */
+    buildNodeContent(nodeElement, nodeData) {
+        // --- 1. タイトル部分 ---
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
+        
+        // --- 2. パラメータ編集フォームのコンテナ ---
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
+        
+        // --- 3. ノードのタイプに応じて、入力欄を動的に生成 ---
+        switch (nodeData.type) {
+            case 'destroy':
+                this.createNodeTextInput(paramsContainer, nodeData, 'target', 'self');
+                break;
+            case 'wait':
+                this.createNodeTextInput(paramsContainer, nodeData, 'time', '1000');
+                break;
+            case 'set_data':
+                this.createNodeTextInput(paramsContainer, nodeData, 'name', '');
+                this.createNodeTextInput(paramsContainer, nodeData, 'value', '');
+                break;
+            // ... 他のタグ用のUIもここに追加 ...
+        }
+
+        // --- 4. 生成した要素を、ノードのdivに追加 ---
+        nodeElement.append(title, paramsContainer);
+    }
+    
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'time')
+     * @param {string} defaultValue - デフォルト値
+     */
+    createNodeTextInput(container, nodeData, paramKey, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        
+        const label = document.createElement('label');
+        label.innerText = `${paramKey}: `;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        // ★ フォーカスが外れたら、プラグインにデータ更新を依頼
+        input.addEventListener('change', () => {
+            if (this.plugin) {
+                this.plugin.updateNodeParameter(this.editingObject, nodeData.id, paramKey, input.value);
+            }
+        });
+        
+        row.append(label, input);
+        container.appendChild(row);
     }
 }

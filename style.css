@@ -262,5 +262,32 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     font-weight: bold;
     color: #569cd6; /* タグ名を青っぽくする */
 }
+.vsl-node .node-params {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.vsl-node .node-param-row {
+    display: flex;
+    align-items: center;
+}
+
+.vsl-node label {
+    font-size: 12px;
+    color: #aaa;
+    margin-right: 5px;
+}
+
+.vsl-node input[type="text"] {
+    width: 100%;
+    background-color: #1e1e1e;
+    border: 1px solid #555;
+    color: #d4d4d4;
+    padding: 3px;
+    border-radius: 2px;
+    font-size: 12px;
+}
 /* ------------------------------------------------------------------ */
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
