@@ -2436,7 +2436,45 @@ createComponentSection() {
         this.eventEditorOverlay.style.display = 'none';
         this.pluginManager.game.input.enabled = true;
     }
-    
+     /**
+     * ★★★ 新規メソッド ★★★
+     * VSLノード編集用のプロパティパネルを構築する
+     * @param {object} nodeData - 選択されたノードのデータ
+     */
+    updatePropertyPanelForNode(nodeData) {
+        if (!this.editorPropsContainer || !this.editorTitle) return;
+        this.editorPropsContainer.innerHTML = ''; // クリア
+
+        this.editorTitle.innerText = `ノード編集: [${nodeData.type}]`;
+
+        // --- パラメータ編集UIを動的に生成 ---
+        // (この部分は、将来的に各タグの定義ファイルから自動生成するのが理想)
+        switch (nodeData.type) {
+            case 'destroy':
+                this.createTextInput(this.editorPropsContainer, 'target', nodeData.params.target || 'self', (val) => nodeData.params.target = val);
+                break;
+            case 'wait':
+                this.createTextInput(this.editorPropsContainer, 'time', nodeData.params.time || '1000', (val) => nodeData.params.time = val);
+                break;
+            case 'set_data':
+                this.createTextInput(this.editorPropsContainer, 'name', nodeData.params.name || '', (val) => nodeData.params.name = val);
+                this.createTextInput(this.editorPropsContainer, 'value', nodeData.params.value || '', (val) => nodeData.params.value = val);
+                break;
+            // ... 他のタグ用のUIもここに追加 ...
+            default:
+                this.editorPropsContainer.innerHTML = '<p>This node has no editable parameters.</p>';
+        }
+
+        // --- 共通の削除ボタン ---
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = 'Delete Node';
+        deleteButton.style.backgroundColor = '#e65151';
+        deleteButton.style.marginTop = '20px';
+        deleteButton.onclick = () => {
+            // (ノードをデータから削除し、UIを再描画するロジック)
+        };
+        this.editorPropsContainer.appendChild(deleteButton);
+    }
     /**
      * イベントエディタのコンテンツを生成・再描画する (UI最終版)
      */

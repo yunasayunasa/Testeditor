@@ -20,6 +20,7 @@ export default class EditorUI {
             offsetX: 0,      // クリック位置とノード左上のX座標の差
             offsetY: 0       // クリック位置とノード左上のY座標の差
         };
+        this.selectedNodeData = null;
    //レイヤー
 
    this.layers = [
@@ -1057,6 +1058,7 @@ export default class EditorUI {
             const nodeData = events[0].nodes.find(n => n.id === nodeId);
 
             if (nodeData) {
+                this.selectNode(nodeData);
                 this.draggedNode.element = nodeElement;
                 this.draggedNode.nodeData = nodeData;
                 
@@ -1068,9 +1070,46 @@ export default class EditorUI {
                 // ドラッグ開始を示すCSSクラスなどを付けても良い
                 nodeElement.classList.add('is-dragging');
             }
+         } else {
+            // ★★★ キャンバスの何もない部分がクリックされたら、選択を解除 ★★★
+            this.deselectNode();
         }
     }
-    
+     /**
+     * ★★★ 新規メソッド ★★★
+     * VSLノードを選択し、プロパティパネルの更新をプラグインに依頼する
+     */
+    selectNode(nodeData) {
+        this.selectedNodeData = nodeData;
+        console.log("Selected node:", nodeData);
+
+        // ★ EditorPluginに、プロパティパネルを「ノード編集モード」で更新するよう依頼
+        if (this.plugin) {
+            this.plugin.updatePropertyPanelForNode(nodeData);
+        }
+        
+        // (任意) 選択されたノードの見た目を変える
+        this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+        const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
+        if (el) el.classList.add('selected');
+    }
+
+    /**
+     * ★★★ 新規メソッド ★★★
+     * VSLノードの選択を解除する
+     */
+    deselectNode() {
+        if (!this.selectedNodeData) return;
+        this.selectedNodeData = null;
+
+        if (this.plugin) {
+            // ★ EditorPluginに、プロパティパネルをデフォルトに戻すよう依頼
+            //    (selectSingleObjectにeditingObjectを渡せばOK)
+            this.plugin.selectSingleObject(this.editingObject);
+        }
+
+        this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+    }
     /**
      * ★★★ 新規メソッド ★★★
      * ポインターが移動したときの処理 (ドラッグ中)
