@@ -151,11 +151,9 @@ export default class EditorUI {
         // --- VSLキャンバス (イベント委譲の親) ---
         const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
-            canvasWrapper.addEventListener('pointerdown', (event) => {
-                if (this.vslMode === 'pan') {
-                    // (パンモードの処理)
-                    return; 
-                }
+            // ★ onVslCanvasPointerDown を呼び出すだけでOK
+            canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
+        }
                 const pinElement = event.target.closest('[data-pin-type]');
                 if (pinElement) {
                     event.stopPropagation();
@@ -1126,22 +1124,16 @@ export default class EditorUI {
         row.append(label, input);
         container.appendChild(row);
     }
+// src/editor/EditorUI.js
 
     /**
-     * ★★★ VSL完成版 - 2/3 ★★★
-     * VSLキャンバスでポインターが押されたときの処理 (ドラッグ開始)
-     * (initializeEventListenersから呼び出される)
-     */
-     /**
-     * ★★★ 新しい、統合されたポインターダウン処理 (最終FIX版) ★★★
+     * ★★★ A案＋ピン接続 - 完成版 ★★★
+     * VSLキャンバスでポインターが押されたときの処理
      * @param {PointerEvent} downEvent - pointerdownイベントオブジェクト
      */
     onVslCanvasPointerDown(downEvent) {
-        // --- モードに応じて処理を分岐 ---
+        // --- 1. パンモードの場合は、パン処理を開始して、ここで終了 ---
         if (this.vslMode === 'pan') {
-            // ================================================================
-            // --- パンモードの処理 ---
-            // ================================================================
             downEvent.preventDefault();
             const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
             const startScrollX = canvasWrapper.scrollLeft;
@@ -1164,36 +1156,41 @@ export default class EditorUI {
 
             window.addEventListener('pointermove', onPanMove);
             window.addEventListener('pointerup', onPanUp);
+            return; 
+        }
 
-        } else {
-            // ================================================================
-            // --- セレクトモードの処理 ---
-            // ================================================================
-           
-            
-           // --- セレクトモードの処理 ---
-        const nodeElement = event.target.closest('[data-is-node="true"]');
-        const pinElement = event.target.closest('[data-pin-type]');
+        // --- 2. セレクトモードの処理 ---
         
-        if (event.target.tagName === 'INPUT') return; // 入力欄のクリックは無視
+        // ★★★ 修正点: 未定義の`event`ではなく、引数の`downEvent`を使う ★★★
+        const pinElement = downEvent.target.closest('[data-pin-type]');
+        const nodeElement = downEvent.target.closest('[data-is-node="true"]');
+        
+        // 入力欄のクリックは何もしない
+        if (downEvent.target.tagName === 'INPUT') {
+            return;
+        }
 
+        // --- ケースA: ピンがクリックされた場合 (接続処理) ---
         if (pinElement) {
-            // (ピンのクリック処理は、次のステップで実装します)
-            event.stopPropagation();
-            console.log("Pin clicked!");
-        } else if (nodeElement) {
-            // ★★★ ノードがクリックされたら、「選択」するだけ ★★★
+            downEvent.stopPropagation();
+            this.onPinClicked(pinElement);
+        } 
+        // --- ケースB: ノードがクリックされた場合 (選択処理) ---
+        else if (nodeElement) {
             const nodeId = nodeElement.dataset.nodeId;
             const events = this.editingObject.getData('events');
             const nodeData = events[0].nodes.find(n => n.id === nodeId);
             if (nodeData) {
-                this.selectNode(nodeData);
+                // selectNodeはサイドバーを更新するので、もう不要
+                // this.selectNode(nodeData); 
             }
-        } else {
-            // ★★★ キャンバスの何もない部分がクリックされたら、選択を解除 ★★★
-            this.deselectNode();
+        } 
+        // --- ケースC: 何もない場所がクリックされた場合 (選択解除) ---
+        else {
+            // deselectNodeはサイドバーを更新するので、もう不要
+            // this.deselectNode();
         }
-    }}
+    }
 /**
      * ★★★ 新規メソッド ★★★
      * ノード接続モードを開始する
