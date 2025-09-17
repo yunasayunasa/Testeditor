@@ -1,44 +1,62 @@
 export default class EditorUI {
-    constructor(game, editorPlugin) {
-        this.game = game;
-        this.plugin = editorPlugin;
+    // src/editor/EditorUI.js
 
-        const currentURL = window.location.href;
-        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
+constructor(game, editorPlugin) {
+    // ▼▼▼【ここからが、時限爆弾付きのコンストラクタです】▼▼▼
+    console.log("%c[TIMER BOMB] EditorUI.constructor: 開始", "color: red; font-size: 1.2em;");
 
-        // --- プロパティの初期化 ---
-        this.selectedAssetKey = null;
-        this.selectedAssetType = null;
-        this.objectCounters = {};
-        this.currentEditorMode = 'select';
-        this.currentAssetTab = 'image';
-        
-         //レイヤープロパティ
-        
-   
+    this.game = game;
+    this.plugin = editorPlugin;
+    console.log("[TIMER BOMB] ... game and plugin refs set.");
 
-   this.layers = [
-            { name: 'Foreground', visible: true, locked: false },
-            { name: 'Gameplay', visible: true, locked: false },
-            { name: 'Background', visible: true, locked: false },
-        ];
- this.activeLayerName = 'Gameplay';
-        // --- DOM要素の参照 ---
-        this.getDomElements();
+    const currentURL = window.location.href;
+    if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
+    console.log("[TIMER BOMB] ... Debug mode confirmed.");
 
-        // --- UIの初期表示設定 ---
-        if (this.editorPanel) this.editorPanel.style.display = 'flex';
-        if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
-        
-        // --- UI要素の生成とリスナー設定 ---
-        this.createPauseToggle();
-        this.createHelpButton();
-        this.initializeEventListeners();
-        this.populateAssetBrowser();
+    // --- プロパティの初期化 ---
+    this.selectedAssetKey = null;
+    this.selectedAssetType = null;
+    this.objectCounters = {};
+    this.currentEditorMode = 'select';
+    this.currentAssetTab = 'image';
+    this.layers = [
+        { name: 'Foreground', visible: true, locked: false },
+        { name: 'Gameplay', visible: true, locked: false },
+        { name: 'Background', visible: true, locked: false },
+    ];
+    this.activeLayerName = 'Gameplay';
+    console.log("[TIMER BOMB] ... Properties initialized.");
 
-        
+    // --- DOM要素の参照 ---
+    this.getDomElements();
+    console.log("[TIMER BOMB] ... getDomElements() called.");
 
+    // --- UIの初期表示設定 ---
+    if (this.editorPanel) {
+        this.editorPanel.style.display = 'flex';
+        console.log("[TIMER BOMB] ... editorPanel displayed.");
     }
+    if (this.assetBrowserPanel) {
+        this.assetBrowserPanel.style.display = 'flex';
+        console.log("[TIMER BOMB] ... assetBrowserPanel displayed.");
+    }
+    
+    // --- UI要素の生成とリスナー設定 ---
+    this.createPauseToggle();
+    console.log("[TIMER BOMB] ... createPauseToggle() called.");
+    
+    this.createHelpButton();
+    console.log("[TIMER BOMB] ... createHelpButton() called.");
+    
+    this.initializeEventListeners();
+    console.log("[TIMER BOMB] ... initializeEventListeners() called.");
+    
+    this.populateAssetBrowser();
+    console.log("[TIMER BOMB] ... populateAssetBrowser() called.");
+
+    console.log("%c[TIMER BOMB] EditorUI.constructor: 正常に完了", "color: red; font-size: 1.2em;");
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
     
     // =================================================================
     // ヘルパーメソッド群
