@@ -1057,7 +1057,7 @@ export default class EditorUI {
             const nodeElement = document.createElement('div');
             nodeElement.className = 'vsl-node';
             nodeElement.style.left = `${nodeData.x}px`;
-            nodeElement.style.top = `${nodeData.y}px`;
+            nodeElement.style.top = `${nodeData.y} + 50px`;
             nodeElement.dataset.nodeId = nodeData.id;
 
             // ★ 描画処理は、buildNodeContentに一本化
@@ -1072,7 +1072,14 @@ export default class EditorUI {
 
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
-        
+         // ▼▼▼ ピンの生成 ▼▼▼
+        const inputPin = document.createElement('div');
+        inputPin.className = 'vsl-node-pin input';
+        inputPin.dataset.pinType = 'input';
+
+        const outputPin = document.createElement('div');
+        outputPin.className = 'vsl-node-pin output';
+        outputPin.dataset.pinType = 'output';
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
         
@@ -1094,9 +1101,7 @@ export default class EditorUI {
             // ... (他のタグのcase) ...
         }
         // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        nodeElement.append(title, paramsContainer);
+       nodeElement.append(inputPin, outputPin, title, paramsContainer);
     }
 
     /**
