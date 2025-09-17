@@ -1021,7 +1021,51 @@ export default class EditorUI {
                 nodeElement.dataset.nodeId = nodeData.id;
 
                 nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
-                
+                nodeElement.addEventListener('mousedown', (e_down) => {
+                    // --- 1. ドラッグ開始時の準備 ---
+                    e_down.preventDefault(); // テキスト選択などを防ぐ
+                    
+                    // マウスカーソルの初期位置と、ノードの初期位置を記録
+                    const startX = e_down.clientX;
+                    const startY = e_down.clientY;
+                    const startNodeX = nodeData.x;
+                    const startNodeY = nodeData.y;
+
+                    // --- 2. ドラッグ中の処理を定義 ---
+                    const onMouseMove = (e_move) => {
+                        // マウスの移動量
+                        const dx = e_move.clientX - startX;
+                        const dy = e_move.clientY - startY;
+                        
+                        // 新しいノードの位置を計算
+                        const newX = startNodeX + dx;
+                        const newY = startNodeY + dy;
+
+                        // ★ 見た目（HTML要素）を即座に動かす
+                        nodeElement.style.left = `${newX}px`;
+                        nodeElement.style.top = `${newY}px`;
+                        
+                        // ★ 永続化用のデータも更新する
+                        nodeData.x = newX;
+                        nodeData.y = newY;
+                    };
+
+                    // --- 3. ドラッグ終了時の処理を定義 ---
+                    const onMouseUp = () => {
+                        // ★ 最後に、更新された完全なイベントデータを保存する
+                        this.editingObject.setData('events', events);
+                        
+                        // ★ 使い終わったリスナーは、必ず解除する（メモリリーク防止）
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    // --- 4. ドラッグ開始！ ---
+                    // window全体でマウスの動きを監視する
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+                });
+
                 this.vslCanvas.appendChild(nodeElement);
             });
         }
