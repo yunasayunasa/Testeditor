@@ -940,4 +940,62 @@ export default class EditorUI {
             this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
         }
     }
+     /**
+     * ★★★ TODOを本実装に置き換え ★★★
+     * 選択中のオブジェクトのイベントデータに、新しいノード定義を追加する
+     * @param {string} tagName - 追加するノードのタイプ (e.g., 'destroy')
+     */
+    addNodeToEventData(tagName) {
+        if (!this.editingObject) return;
+        
+        const events = this.editingObject.getData('events');
+        // initializeEventDataが呼ばれているので、events[0]は必ず存在するはず
+        if (!events || events.length === 0) return;
+        const targetEvent = events[0];
+
+        // 新しいノードのデータを作成
+        const newNode = {
+            id: `node_${Date.now()}`,
+            type: tagName,
+            params: {},
+            x: 50,
+            y: 50
+        };
+        
+        targetEvent.nodes.push(newNode);
+        this.editingObject.setData('events', events);
+        
+        // ★ キャンバスを再描画して、追加したノードを表示する
+        this.populateVslCanvas();
+    }
+
+    /**
+     * ★★★ TODOを本実装に置き換え ★★★
+     * 現在のイベントデータに基づいて、VSLキャンバスにノードを描画する
+     */
+    populateVslCanvas() {
+        if (!this.vslCanvas || !this.editingObject) return;
+        this.vslCanvas.innerHTML = ''; // キャンバスをクリア
+
+        const events = this.editingObject.getData('events');
+        if (!events || events.length === 0) return;
+        const targetEvent = events[0];
+        
+        if (targetEvent.nodes) {
+            targetEvent.nodes.forEach(nodeData => {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'vsl-node';
+                nodeElement.style.left = `${nodeData.x}px`;
+                nodeElement.style.top = `${nodeData.y}px`;
+                nodeElement.dataset.nodeId = nodeData.id;
+
+                // ノードの中身（タイトル）
+                nodeElement.innerHTML = `<strong>[${nodeData.type}]</strong>`;
+                
+                // (ドラッグ処理やパラメータ表示は、さらに次のステップ)
+
+                this.vslCanvas.appendChild(nodeElement);
+            });
+        }
+    }
 }

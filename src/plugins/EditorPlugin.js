@@ -1188,7 +1188,13 @@ createMatterPropertiesUI(gameObject) {
         title.style.margin = '10px 0 5px 0';
         const button = document.createElement('button');
         button.innerText = 'イベント・エディタを開く';
-        button.onclick = () => this.openEventEditor();
+        button.onclick = () => {
+            // ★★★ イベントデータ構造を、開く「前」に初期化・移行する ★★★
+            this.initializeEventData(this.selectedObject);
+            
+            // ★ 元の openEventEditor 呼び出し
+            this.openEventEditor();
+        };
         this.editorPropsContainer.append(title, button);
     }
 
@@ -2375,7 +2381,7 @@ createComponentSection() {
         this.openAnimationEditor();
     }
 
- openEventEditor() {
+ /*openEventEditor() {
         if (!this.selectedObject) {
             alert('先にイベントを編集するオブジェクトを選択してください。');
             return;
@@ -2395,8 +2401,49 @@ createComponentSection() {
         
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-    }
+    }*/
+/**
+     * ★★★ 新規メソッド (これまでの populateEventEditor の代わり) ★★★
+     * オブジェクトのイベントデータを、新しいノードベース構造に変換・初期化する
+     * @param {Phaser.GameObjects.GameObject} targetObject - 対象のオブジェクト
+     */
+    initializeEventData(targetObject) {
+        const events = targetObject.getData('events') || [];
 
+        // まだイベントがなければ、空のonClickイベントを初期データとして作成
+        if (events.length === 0) {
+            events.push({
+                trigger: 'onClick',
+                nodes: [],       // ★ ノード配列
+                connections: []  // ★ 接続配列
+            });
+            targetObject.setData('events', events);
+            return;
+        }
+        
+        // --- 既存データの移行処理 ---
+        // もし、古い 'actions' 文字列を持つデータがあれば、ノード構造に変換する
+        events.forEach(eventData => {
+            if (eventData.actions && !eventData.nodes) {
+                console.log("Migrating old action string to new node structure...");
+                eventData.nodes = [];
+                // (簡易的な移行処理。将来的にはより高度なパーサーが必要)
+                // とりあえず、最初のタグだけをノードとして追加する
+                const match = eventData.actions.match(/\[(\w+)/);
+                if (match) {
+                    eventData.nodes.push({
+                        id: `node_${Date.now()}`,
+                        type: match[1],
+                        params: {}, // パラメータの移行は複雑なので今は省略
+                        x: 50,
+                        y: 50
+                    });
+                }
+                delete eventData.actions; // 古いプロパティは削除
+            }
+        });
+        targetObject.setData('events', events);
+    }
     closeEventEditor() {
         if (!this.eventEditorOverlay) return;
         this.eventEditorOverlay.style.display = 'none';
