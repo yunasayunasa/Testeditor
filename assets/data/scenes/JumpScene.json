@@ -19,8 +19,7 @@
   "objects": [
     {
       "name": "cg01_1",
-      "type": "Image",
-      "texture": "cg01",
+      "type": "initialize",
       "x": 299,
       "y": 465,
       "depth": 0,
@@ -28,6 +27,8 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [],
+      "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -44,8 +45,7 @@
     },
     {
       "name": "cg01_1",
-      "type": "Image",
-      "texture": "cg01",
+      "type": "initialize",
       "x": 884,
       "y": 690,
       "depth": 0,
@@ -53,6 +53,8 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [],
+      "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -69,8 +71,7 @@
     },
     {
       "name": "cg01_2",
-      "type": "Image",
-      "texture": "cg01",
+      "type": "initialize",
       "x": 2250,
       "y": 309,
       "depth": 0,
@@ -78,6 +79,8 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [],
+      "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -94,8 +97,7 @@
     },
     {
       "name": "cg01_3",
-      "type": "Image",
-      "texture": "cg01",
+      "type": "initialize",
       "x": 1603,
       "y": 470,
       "depth": 0,
@@ -103,6 +105,14 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [
+        {
+          "trigger": "onOverlap_Start",
+          "actions": "[eval exp=\"f.player_hp = 50\"]",
+          "targetGroup": "player"
+        }
+      ],
+      "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -119,8 +129,7 @@
     },
     {
       "name": "item_shield_1",
-      "type": "Image",
-      "texture": "__MISSING",
+      "type": "initialize",
       "x": 647,
       "y": 169,
       "depth": 0,
@@ -145,6 +154,7 @@
           "targetGroup": "player"
         }
       ],
+      "texture": "__MISSING",
       "physics": {
         "isStatic": false,
         "isSensor": true,
@@ -161,8 +171,7 @@
     },
     {
       "name": "text_1757603076799",
-      "type": "Text",
-      "texture": null,
+      "type": "initialize",
       "x": 795,
       "y": 409,
       "depth": 0,
@@ -170,21 +179,6 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "text": "New Text",
-      "style": {
-        "fontSize": "32px",
-        "fill": "#ffffff",
-        "fontFamily": "Courier",
-        "fontStyle": "",
-        "shadow": {
-          "offsetX": 0,
-          "offsetY": 0,
-          "color": "#000",
-          "blur": 0,
-          "stroke": false,
-          "fill": false
-        }
-      },
       "events": [
         {
           "trigger": "onOverlap_Start",
@@ -192,6 +186,40 @@
           "targetGroup": "player"
         }
       ],
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
       "physics": {
         "isStatic": false,
         "isSensor": true,
@@ -208,8 +236,7 @@
     },
     {
       "name": "walk_2_3_1",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 764,
       "y": 19,
       "depth": 0,
@@ -218,6 +245,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -234,6 +262,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -250,8 +279,7 @@
     },
     {
       "name": "walk_2_3_2",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 678,
       "y": 248,
       "depth": 0,
@@ -260,6 +288,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -276,6 +305,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -292,8 +322,7 @@
     },
     {
       "name": "walk_2_4_1",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 780,
       "y": 134,
       "depth": 0,
@@ -302,6 +331,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -318,6 +348,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -334,8 +365,7 @@
     },
     {
       "name": "walk_2_4_2",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 806,
       "y": 249,
       "depth": 0,
@@ -344,6 +374,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -360,6 +391,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -376,8 +408,7 @@
     },
     {
       "name": "walk_2_5_1",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 958,
       "y": 255,
       "depth": 0,
@@ -386,6 +417,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -402,6 +434,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -418,16 +451,16 @@
     },
     {
       "name": "walk_2_5_2",
-      "type": "Sprite",
-      "texture": "walk",
-      "x": 1067,
-      "y": 417,
+      "type": "initialize",
+      "x": 1168,
+      "y": 480,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
       "group": "player",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -444,6 +477,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -460,8 +494,7 @@
     },
     {
       "name": "walk_2_6_1",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 1271,
       "y": 248,
       "depth": 0,
@@ -470,6 +503,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -486,6 +520,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -502,8 +537,7 @@
     },
     {
       "name": "walk_2_6_2",
-      "type": "Sprite",
-      "texture": "walk",
+      "type": "initialize",
       "x": 1169,
       "y": 248,
       "depth": 0,
@@ -512,6 +546,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "fill_group_0ab85455-86ad-4f6f-abf2-557a2a14add3",
+      "events": [],
       "components": [
         {
           "type": "PlayerController",
@@ -528,6 +563,7 @@
           "params": {}
         }
       ],
+      "texture": "walk",
       "physics": {
         "isStatic": true,
         "isSensor": false,

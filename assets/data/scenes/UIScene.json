@@ -44,13 +44,27 @@
     {
       "name": "enemy_hp_bar",
       "type": "HpBar",
-      "x": 874,
-      "y": 198,
+      "x": 892,
+      "y": 194,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "components": [
+        {
+          "type": "WatchVariableComponent",
+          "params": {
+            "variable": "f.player_hp"
+          }
+        },
+        {
+          "type": "BarDisplayComponent",
+          "params": {
+            "maxValueVariable": "f.player_max_hp"
+          }
+        }
+      ],
       "registryKey": "enemy_hp_bar"
     },
     {
@@ -78,7 +92,7 @@
       "alpha": 1,
       "group": "jump_button",
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、193 回目ですね。」"
+      "label": "「このゲームを起動するのは、197 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -206,8 +220,8 @@
     {
       "name": "player_hp_bar_1758089818569",
       "type": "HpBar",
-      "x": 679,
-      "y": 326,
+      "x": 875,
+      "y": 260,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
