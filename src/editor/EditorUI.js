@@ -26,6 +26,12 @@ export default class EditorUI {
             fromNodeId: null,     // 接続元のノードID
             previewLine: null   // プレビュー用の線（SVG要素）
         };
+        this.vslMode = 'select'; // 'select' or 'pan'
+        this.panState = {
+            isPanning: false, // パンモード中か？
+            startX: 0,
+            startY: 0
+        };
    //レイヤー
 
    this.layers = [
@@ -132,6 +138,15 @@ export default class EditorUI {
                     this.plugin.selectLayer(this.layers.find(l => l.name === layerName));
                 }
             });
+            const selectBtn = document.getElementById('vsl-select-mode-btn');
+        const panBtn = document.getElementById('vsl-pan-mode-btn');
+        
+        if (selectBtn) {
+            selectBtn.addEventListener('click', () => this.setVslMode('select'));
+        }
+        if (panBtn) {
+            panBtn.addEventListener('click', () => this.setVslMode('pan'));
+        }
         const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
             canvasWrapper.addEventListener('pointerdown', (event) => this.onVslCanvasPointerDown(event));
@@ -1051,6 +1066,18 @@ export default class EditorUI {
      * (initializeEventListenersから呼び出される)
      */
    onVslCanvasPointerDown(event) {
+   
+        if (this.vslMode === 'pan') {
+            // パンモードの処理
+            event.preventDefault();
+            this.panState.isPanning = true;
+            const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+            this.panState.startX = canvasWrapper.scrollLeft + event.clientX;
+            this.panState.startY = canvasWrapper.scrollTop + event.clientY;
+            canvasWrapper.style.cursor = 'grabbing';
+        } else { // selectモードの処理
+            // (前回実装した、ノード選択/接続開始のロジックはここ)
+           
         const pinElement = event.target.closest('[data-pin-type]');
         const nodeElement = event.target.closest('[data-is-node="true"]');
 
@@ -1083,7 +1110,7 @@ export default class EditorUI {
                 nodeElement.classList.add('is-dragging');
             }
         }
-    }
+    }}
 /**
      * ★★★ 新規メソッド ★★★
      * ノード接続モードを開始する
@@ -1179,9 +1206,19 @@ export default class EditorUI {
      * ★★★ 新規メソッド ★★★
      * ポインターが移動したときの処理 (ドラッグ中)
      */
+    // onVslCanvasPointerMove を、モードに応じて処理を振り分けるように変更
     onVslCanvasPointerMove(event) {
-        // ドラッグ中のノードがなければ何もしない
-        if (!this.draggedNode.element) return;
+        if (this.vslMode === 'pan' && this.panState.isPanning) {
+            // パンモードの処理
+            event.preventDefault();
+            const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+            const x = this.panState.startX - event.clientX;
+            const y = this.panState.startY - event.clientY;
+            canvasWrapper.scrollLeft = x;
+            canvasWrapper.scrollTop = y;
+        } else { // selectモードの処理
+            // (前回実装した、ノードドラッグ/線プレビューのロジックはここ)
+            if (!this.draggedNode.element) return;
         event.preventDefault();
 
         // キャンバスの親要素の座標を取得
@@ -1200,7 +1237,7 @@ export default class EditorUI {
         this.draggedNode.nodeData.x = newX;
         this.draggedNode.nodeData.y = newY;
     }
-
+    }
     /**
      * ★★★ 新規メソッド ★★★
      * ポインターが離されたときの処理 (ドラッグ終了)
@@ -1291,5 +1328,29 @@ export default class EditorUI {
         
         row.append(label, input);
         container.appendChild(row);
+    }
+     /**
+     * ★★★ 新規メソッド ★★★
+     * VSLエディタの操作モードを切り替える
+     * @param {'select' | 'pan'} mode - 新しいモード
+     */
+    setVslMode(mode) {
+        if (this.vslMode === mode) return;
+        this.vslMode = mode;
+        console.log(`VSL mode changed to: ${mode}`);
+
+        const selectBtn = document.getElementById('vsl-select-mode-btn');
+        const panBtn = document.getElementById('vsl-pan-mode-btn');
+        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
+
+        if (mode === 'pan') {
+            selectBtn.classList.remove('active');
+            panBtn.classList.add('active');
+            canvasWrapper.style.cursor = 'grab';
+        } else { // 'select'
+            panBtn.classList.remove('active');
+            selectBtn.classList.add('active');
+            canvasWrapper.style.cursor = 'default';
+        }
     }
 }
