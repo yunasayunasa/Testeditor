@@ -4,7 +4,7 @@ import timeResumeHandler from './time_resume.js';
 import { handleTween } from './tween.js';
 import { handleDestroy } from './destroy.js';
 import { handleSetVisible } from './set_visible.js';
-import { handleVelocity } from './velocity.js';
+import { handleBodyVelocity } from './body_velocity.js';
 import animStopHandler from './anim_stop.js';
 import animFrameHandler from './anim_frame.js';
 // (もし、handleAnimのインポート名がanimPlayHandlerなどになっていたら、それに合わせる)
@@ -45,7 +45,7 @@ export const eventTagHandlers = {
     'tween': handleTween,
     'destroy': handleDestroy,
     'set_visible': handleSetVisible,
-      'velocity': handleVelocity,
+      'body_velocity': handleBodyVelocity,
      'anim_play': animPlayHandler, // anim_playも正式に登録
     'anim_stop': animStopHandler,
     'anim_frame': animFrameHandler,
