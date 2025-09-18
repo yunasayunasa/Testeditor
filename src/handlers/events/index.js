@@ -1,81 +1,71 @@
-// src/handlers/events/index.js
-import timeStopHandler from './time_stop.js';
-import timeResumeHandler from './time_resume.js';
-import { handleTween } from './tween.js';
-import { handleDestroy } from './destroy.js';
-import { handleSetVisible } from './set_visible.js';
-import { handleBodyVelocity } from './body_velocity.js';
-import animStopHandler from './anim_stop.js';
-import animFrameHandler from './anim_frame.js';
-// (もし、handleAnimのインポート名がanimPlayHandlerなどになっていたら、それに合わせる)
-import animPlayHandler from './anim_play.js'; 
-import evalExpressionHandler from './eval.js';
-import setFlipXHandler from './set_flip_x.js';
-import reload_scene from './reload_scene.js'; // ★ この行を追加
+// src/handlers/events/index.js (最終FIX・完成版)
+
+// すべてのハンドラを、'export default'されている前提でインポート
+import time_stop from './time_stop.js';
+import time_resume from './time_resume.js';
+import tween from './tween.js';
+import destroy from './destroy.js';
+import set_visible from './set_visible.js';
+import body_velocity from './body_velocity.js';
+import anim_play from './anim_play.js'; 
+import anim_stop from './anim_stop.js';
+import anim_frame from './anim_frame.js';
+import eval_expression from './eval.js';
+import set_flip_x from './set_flip_x.js';
+import reload_scene from './reload_scene.js';
 import apply_force from './apply_force.js';
 import play_sound from './play_sound.js';
 import spawn_object from './spawn_object.js';
 import interact_add from './interact_add.js';
 import interact_remove from './interact_remove.js';
 import transition_scene from './transition_scene.js';
-import waitHandler from './wait.js'; // ★ wait.js からインポート
-import cameraShakeHandler from './camera_shake.js';
-import cameraFadeHandler from './camera_fade.js'; // ★ 追加
-import cameraFollowHandler from './camera_follow.js'; // ★ 追加
-import playBgmHandler from './play_bgm.js'; // ★ 追加
-import stopBgmHandler from './stop_bgm.js'; // ★ 追加
-import setCollisionHandler from './set_collision.js';
-import setDataHandler from './set_data.js';
-import returnNovelHandler from './return_novel.js';
-import stopSoundHandler from './stop_sound.js';
-import runScenarioHandler from './run_scenario.js'; 
-import setUiVisibleHandler from './set_ui_visible.js';
+import wait from './wait.js';
+import camera_shake from './camera_shake.js';
+import camera_fade from './camera_fade.js';
+import camera_follow from './camera_follow.js';
+import play_bgm from './play_bgm.js';
+import stop_bgm from './stop_bgm.js';
+import set_collision from './set_collision.js';
+import set_data from './set_data.js';
+import return_novel from './return_novel.js';
+import stop_sound from './stop_sound.js';
+import run_scenario from './run_scenario.js'; 
+import set_ui_visible from './set_ui_visible.js';
 import flash_effect from './flash_effect.js';
 import vignette from './vignette.js';
 
-
-
-
-
-//*******************++++++++++++++++++++++ */
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
-   'time_stop': timeStopHandler,
-    'time_resume': timeResumeHandler,
-    'tween': handleTween,
-    'destroy': handleDestroy,
-    'set_visible': handleSetVisible,
-      'body_velocity': handleBodyVelocity,
-     'anim_play': animPlayHandler, // anim_playも正式に登録
-    'anim_stop': animStopHandler,
-    'anim_frame': animFrameHandler,
-      'set_flip_x': setFlipXHandler,
- 'reload_scene': reload_scene, // ★ この行を追加
-       'eval': evalExpressionHandler,  
-        'apply_force': apply_force,
-         'play_sound': play_sound, // ★ この行を追加
-           'spawn_object': spawn_object,
-'interact_add':interact_add,
-'interact_remove': interact_remove,
- 'transition_scene': transition_scene,
-'wait': waitHandler, // ★ タグ名を 'wait' に
-    'camera_shake': cameraShakeHandler,
-'camera_fade': cameraFadeHandler, // ★ 追加
-'camera_follow': cameraFollowHandler, // ★ 追加
-'play_bgm': playBgmHandler, // ★ 追加
-    'stop_bgm': stopBgmHandler, // ★ 追加
-'set_collision': setCollisionHandler,
-    'set_data': setDataHandler,
-   'return_novel': returnNovelHandler,
-'stop_sound': stopSoundHandler,
-'run_scenario': runScenarioHandler, 
- 'set_ui_visible': setUiVisibleHandler,
- 'flash_effect' : flash_effect,
-'vignette': vignette,
-
-
-
-
-
-    // 将来、ここに [eval] [body_velocity] などを追加していく
+    'time_stop': time_stop,
+    'time_resume': time_resume,
+    'tween': tween,
+    'destroy': destroy,
+    'set_visible': set_visible,
+    'body_velocity': body_velocity,
+    'anim_play': anim_play,
+    'anim_stop': anim_stop,
+    'anim_frame': anim_frame,
+    'eval': eval_expression,
+    'set_flip_x': set_flip_x,
+    'reload_scene': reload_scene,
+    'apply_force': apply_force,
+    'play_sound': play_sound,
+    'spawn_object': spawn_object,
+    'interact_add': interact_add,
+    'interact_remove': interact_remove,
+    'transition_scene': transition_scene,
+    'wait': wait,
+    'camera_shake': camera_shake,
+    'camera_fade': camera_fade,
+    'camera_follow': camera_follow,
+    'play_bgm': play_bgm,
+    'stop_bgm': stop_bgm,
+    'set_collision': set_collision,
+    'set_data': set_data,
+    'return_novel': return_novel,
+    'stop_sound': stop_sound,
+    'run_scenario': run_scenario, 
+    'set_ui_visible': set_ui_visible,
+    'flash_effect' : flash_effect,
+    'vignette': vignette,
 };

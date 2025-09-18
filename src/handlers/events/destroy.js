@@ -7,7 +7,7 @@
  * @param {object} params - このタグではパラメータは使用しません
  * @param {Phaser.GameObjects.GameObject} target - 破壊対象のオブジェクト
  */
-export default async function destroy(interpreter, params, target) {
+export default async function destroy(interpreter, params, target) { 
     if (target && typeof target.destroy === 'function') {
         target.destroy();
     } else {
