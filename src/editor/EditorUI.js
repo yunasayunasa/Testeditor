@@ -933,7 +933,7 @@ export default class EditorUI {
         this.game.input.enabled = false;
         console.log("[EditorUI] Phaser input disabled for Event Editor.");
         this.editingObject = selectedObject; // 編集対象を保持
-
+this.populateVslCanvas(selectedObject);
         if (this.eventEditorTitle) {
             this.eventEditorTitle.innerText = `イベント編集: ${this.editingObject.name}`;
         }
@@ -1047,11 +1047,8 @@ export default class EditorUI {
      * ★★★ 最終FIX版 (線描画機能付き) ★★★
      * 現在のイベントデータに基づいて、VSLキャンバスにノードと接続線を描画する
      */
-    populateVslCanvas() {
-        if (!this.vslCanvas || !this.editingObject) return;
-
-        // --- 1. まず、キャンバスの中身を完全にクリアする ---
-        // (SVGレイヤーも一度消えるが、後で再生成するので問題ない)
+    populateVslCanvas(targetObject) {
+        if (!this.vslCanvas || !targetObject) return;
         this.vslCanvas.innerHTML = '';
 
         // --- 2. 線を描画するためのSVGレイヤーを、毎回新しく生成する ---
@@ -1062,8 +1059,9 @@ export default class EditorUI {
         this.vslCanvas.appendChild(svgLayer);
 
         // --- 3. イベントデータを取得 ---
-        const events = this.editingObject.getData('events');
+        const events = targetObject.getData('events');
         if (!events || !events[0]) return;
+        
         const targetEvent = events[0];
         
         // --- 4. ノードを描画 (この部分は、あなたのコードと同じです) ---
