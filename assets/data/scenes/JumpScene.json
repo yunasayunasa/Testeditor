@@ -53,7 +53,23 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758180859237",
+          "trigger": "onCollide_Start",
+          "nodes": [
+            {
+              "id": "node_1758180868213",
+              "type": "destroy",
+              "params": {},
+              "x": 50,
+              "y": 150
+            }
+          ],
+          "connections": [],
+          "targetGroup": "player"
+        }
+      ],
       "texture": "cg01",
       "physics": {
         "isStatic": true,
