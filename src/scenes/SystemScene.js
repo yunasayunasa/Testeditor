@@ -265,9 +265,13 @@ _startInitialGame(initialData) {
      * @param {object} data - { from: string, params: object }
      */
     _handleReturnToNovel(data) {
+        console.log(`%c[LOG BOMB 2] SystemScene: 'return-to-novel'リクエストを受信しました。From: ${data.from}`, "color: orange; font-weight: bold;");
         const fromSceneKey = data.from;
         console.log(`[SystemScene] ノベル復帰リクエストを受信 (from: ${fromSceneKey})`);
-
+    if (this.scene.isActive(fromSceneKey)) {
+            console.log(`%c[LOG BOMB 3] SystemScene: シーン '${fromSceneKey}' を停止します。`, "color: orange; font-weight: bold;");
+            this.scene.stop(fromSceneKey);
+        }
         // 現在のGameSceneとサブシーンを停止させる
         if (this.scene.isActive('GameScene')) {
             this.scene.stop('GameScene');

@@ -35,7 +35,9 @@ export default class ActionInterpreter {
         // --- 2. 実行ループ ---
         while (currentNodeData) {
             console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
-            
+            if (currentNodeData.type === 'return_novel') {
+            console.log(`%c[LOG BOMB 1] ActionInterpreter:これから [return_novel] を実行します。Source: ${this.currentSource.name}, Scene: ${this.scene.scene.key}`, "color: orange; font-weight: bold;");
+        }
             const handler = this.tagHandlers[currentNodeData.type];
             if (handler) {
                 const finalTarget = this.findTarget(currentNodeData.params.target, source, collidedTarget);
