@@ -1200,7 +1200,7 @@ export default class EditorUI {
                 // ★ データを永続化し、キャンバスを再描画
                 const events = this.editingObject.getData('events');
                 this.editingObject.setData('events', events);
-                this.populateVslCanvas();
+                this.populateVslCanvas(this.editingObject);
             }
         });
 
@@ -1344,7 +1344,7 @@ deselectNode() {
             
             console.log(`New connection created: ${fromNodeId} -> ${toNodeId}`);
             // ★ キャンバスを再描画して、線を表示する
-            this.populateVslCanvas();
+            this.populateVslCanvas(this.editingObject);
         }
     }
     /**
@@ -1484,7 +1484,7 @@ deselectNode() {
             console.log(`New connection created: ${fromNodeId} -> ${toNodeId}`);
             
             // ★ キャンバスを再描画して、線を表示する (これは次のステップ)
-            this.populateVslCanvas(); 
+            this.populateVslCanvas(this.editingObject);
         }
     }
 }
