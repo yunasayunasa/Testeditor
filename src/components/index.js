@@ -4,7 +4,7 @@
 import PlayerController from './PlayerController.js';
 import Scrollable from './Scrollable.js';
 import Interactor from './Interactor.js';
-import FlashEffect from './game/FlashEffect.js';
+import FlashEffect from './FlashEffect.js';
 
 
 //UI系
