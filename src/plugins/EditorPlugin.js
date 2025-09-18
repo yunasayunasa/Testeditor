@@ -1182,18 +1182,19 @@ createMatterPropertiesUI(gameObject) {
         this.editorPropsContainer.append(title, button);
     }
 
-    createEventSection() {
+       createEventSection() {
         const title = document.createElement('h4');
         title.innerText = 'ロジック';
         title.style.margin = '10px 0 5px 0';
         const button = document.createElement('button');
         button.innerText = 'イベント・エディタを開く';
-         button.onclick = () => {
+
+        button.onclick = () => {
             if (this.selectedObject) {
-                // ★ 1. まず、イベントデータ構造を初期化・移行する
+                // ★ 1. まず、イベントデータ構造を「新しい形式」に初期化・移行する
                 this.initializeEventData(this.selectedObject);
                 
-                // ★ 2. 次に、EditorUIに、モーダルを開くよう依頼する
+                // ★ 2. 次に、EditorUIにモーダルを開くよう依頼する
                 if (this.editorUI) {
                     this.editorUI.openEventEditor(this.selectedObject);
                 }
@@ -1201,6 +1202,7 @@ createMatterPropertiesUI(gameObject) {
                 alert('先にイベントを編集するオブジェクトを選択してください。');
             }
         };
+        
         this.editorPropsContainer.append(title, button);
     }
 
