@@ -1339,13 +1339,9 @@ export default class EditorUI {
         input.addEventListener('change', () => {
             const value = parseInt(input.value, 10);
             if (!isNaN(value)) {
-                // ★ 位置(x,y)は、paramsの中ではなく、nodeDataの直下にある
-                nodeData[key] = value;
-                
-                // ★ 永続化と再描画
-                const events = this.editorUI.editingObject.getData('events');
-                this.editorUI.editingObject.setData('events', events);
-                this.editorUI.populateVslCanvas(this.editorUI.editingObject);
+               if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
+                    this.plugin.updateNodePosition(this.editingObject, nodeData.id, key, value);
+                }
             }
         });
 
@@ -1490,8 +1486,12 @@ deselectNode() {
         
         // フォーカスが外れたら、データ更新を呼び出す
         input.addEventListener('change', () => {
-            // ★ updateNodeParamヘルパーを呼び出す
-            this.updateNodeParam(nodeData, paramKey, input.value);
+         
+            // --------------------------------------------------------------------
+            // ★★★ thisではなく、this.pluginのメソッドを呼び出す ★★★
+            if (this.plugin && typeof this.plugin.updateNodeParam === 'function') {
+                this.plugin.updateNodeParam(this.editingObject, nodeData.id, paramKey, input.value);
+            }
         });
         
         row.append(labelEl, input);

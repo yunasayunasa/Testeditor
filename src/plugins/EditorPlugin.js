@@ -2484,17 +2484,43 @@ createComponentSection() {
      * ★★★ 既存のヘルパーを、VSL用に再利用 ★★★
      * ノードのパラメータを更新し、永続化する
      */
-    updateNodeParam(nodeData, paramKey, paramValue) {
-        if (!this.editorUI || !this.editorUI.editingObject) return;
+  // src/plugins/EditorPlugin.js
 
-        // 1. ノードデータ自体のパラメータを更新
-        nodeData.params[paramKey] = paramValue;
+    /**
+     * ★★★ 新規追加 ★★★
+     * EditorUIからの依頼で、VSLノードのパラメータを更新し、永続化する
+     */
+    updateNodeParam(targetObject, nodeId, paramKey, paramValue) {
+        if (!targetObject) return;
+        const events = targetObject.getData('events') || [];
+        if (!events[0] || !events[0].nodes) return;
         
-        // 2. オブジェクト全体の`events`データを、永続化する
-        const events = this.editorUI.editingObject.getData('events');
-        this.editorUI.editingObject.setData('events', events);
+        const nodeData = events[0].nodes.find(n => n.id === nodeId);
+        if (nodeData) {
+            nodeData.params[paramKey] = paramValue;
+            targetObject.setData('events', events);
+        }
+    }
+    
+    /**
+     * ★★★ 新規追加 ★★★
+     * EditorUIからの依頼で、VSLノードの位置を更新し、永続化・再描画する
+     */
+    updateNodePosition(targetObject, nodeId, key, value) {
+        if (!targetObject) return;
+        const events = targetObject.getData('events') || [];
+        if (!events[0] || !events[0].nodes) return;
 
-        console.log(`Node [${nodeData.id}] param '${paramKey}' updated to '${paramValue}'`);
+        const nodeData = events[0].nodes.find(n => n.id === nodeId);
+        if (nodeData) {
+            nodeData[key] = value;
+            targetObject.setData('events', events);
+
+            // ★ EditorUIに、キャンバスの再描画を依頼
+            if (this.editorUI) {
+                this.editorUI.populateVslCanvas(targetObject);
+            }
+        }
     }
     /**
      * イベントエディタのコンテンツを生成・再描画する (UI最終版)
