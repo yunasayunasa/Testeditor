@@ -186,26 +186,20 @@ _startInitialGame(initialData) {
      * @param {object} data - { from: string, to: string, params: object, fade: object }
      */
      /**
-     * ★★★ 新規メソッド ★★★
-     * GameSceneからの[jump]など、シンプルな遷移を処理する
+     * ★★★ 最終FIX版 ★★★
+     * [transition_scene]などから呼ばれる、最も基本的なシーン遷移
      */
     _handleSimpleTransition(data) {
-        
-        if (this.isProcessingTransition) return;
+        const { from, to, params } = data;
 
-        console.log(`[SystemScene] シンプルな遷移リクエスト: ${data.from} -> ${data.to}`);
-
-        // 古いシーンを停止
-        if (this.scene.isActive(data.from)) {
-            this.scene.stop(data.from);
-        }
-        if (this.scene.isActive('UIScene')) {
-            this.scene.get('UIScene').setVisible(false);
+        // --- 1. 古い「ゲームシーン」を停止する ---
+        // ★ 'UIScene'は絶対に停止しない
+        if (this.scene.isActive(from) && from !== 'UIScene') {
+            this.scene.stop(from);
         }
 
-        // 監視付きで新しいシーンを起動（フェードなし）
-        // ★★★ 以前からある、信頼性の高いメソッドを再利用 ★★★
-        this._startAndMonitorScene(data.to, data.params);
+        // --- 2. 新しい「ゲームシーン」を起動し、完了を待つ ---
+        this._startAndMonitorScene(to, params);
     }
 
 
@@ -260,31 +254,26 @@ _startInitialGame(initialData) {
     }
     
 
-   /**
-     * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
-     * @param {object} data - { from: string, params: object }
+    /**
+     * ★★★ 最終FIX版 ★★★
+     * [return_novel]から呼ばれる、ノベルパートへの復帰
      */
-  // src/scenes/SystemScene.js
     _handleReturnToNovel(data) {
         const fromSceneKey = data.from;
-        console.log(`[SystemScene] 'return-to-novel' request received from '${fromSceneKey}'.`);
 
-        // 1. 呼び出し元のシーンを停止する
-        if (this.scene.isActive(fromSceneKey)) {
+        // --- 1. 古い「ゲームシーン」を停止する ---
+        // ★ 呼び出し元が'UIScene'であっても、他のシーンであっても、
+        //    'UIScene'以外なら停止する
+        if (this.scene.isActive(fromSceneKey) && fromSceneKey !== 'UIScene') {
             this.scene.stop(fromSceneKey);
         }
-
-        // 2. UISceneとGameSceneを、シーンシーケンスで確実に再起動する
-        //    (これが最も安定した方法)
-        this._startSceneSequence(
-            [
-                { key: 'UIScene', params: {} },
-                { key: 'GameScene', params: { loadSlot: 0, charaDefs: this.globalCharaDefs } }
-            ], 
-            'GameScene' // 最終的にフォーカスするシーン
-        );
+        
+        // --- 2. GameSceneを起動し、完了を待つ ---
+        this._startAndMonitorScene('GameScene', { 
+            loadSlot: 0, 
+            charaDefs: this.globalCharaDefs
+        });
     }
-   // src/scenes/SystemScene.js
 
     /**
      * オーバーレイ表示のリクエストを処理 (入力制御オプション付き)
@@ -339,38 +328,35 @@ _startInitialGame(initialData) {
         }
     }
 
-  /**
-     * ★★★ 新しいシーンを起動し、完了まで監視するコアメソッド (真・最終確定版) ★★★
+   /**
+     * ★★★ 新しい、中核となるシーン起動ヘルパー (最終FIX版) ★★★
      * @param {string} sceneKey - 起動するシーンのキー
      * @param {object} params - シーンに渡すデータ
      */
-    _startAndMonitorScene(sceneKey, params) {
-        if (this.isProcessingTransition && sceneKey !== 'GameScene') { // GameSceneの初回起動は例外
-            console.warn(`[SystemScene] 遷移処理中に新たな遷移リクエスト(${sceneKey})が、無視されました。`);
-            return;
-        }
-
+    _startAndMonitorScene(sceneKey, params = {}) {
+        if (this.isProcessingTransition) { return; }
         this.isProcessingTransition = true;
-        this.game.input.enabled = false;
-        console.log(`[SystemScene] シーン[${sceneKey}]の起動を開始。ゲーム全体の入力を無効化。`);
-
-        this.tweens.killAll();
-        console.log("[SystemScene] すべての既存Tweenを強制終了しました。");
-
-        const targetScene = this.scene.get(sceneKey);
         
-        // 完了イベントを決定
-        const completionEvent = (sceneKey === 'GameScene')
-            ? 'gameScene-load-complete'
-            : 'scene-ready';
+        const targetScene = this.scene.get(sceneKey);
+        const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
 
-        // ★★★ 核心: 完了イベントを一度だけリッスンする ★★★
+        // ★★★ 2. シーンの準備が完了した「後で」、すべての後処理を行う ★★★
         targetScene.events.once(completionEvent, () => {
-            this._onTransitionComplete(sceneKey);
+            console.log(`[SystemScene] Scene '${sceneKey}' is ready. Updating UI.`);
+            
+            // (A) UISceneに通知を送る
+            const uiScene = this.scene.get('UIScene');
+            if (uiScene) {
+                uiScene.onSceneTransition(sceneKey);
+            }
+            
+            // (B) 遷移完了を宣言し、入力を有効化する
+            this.isProcessingTransition = false;
+            this.game.input.enabled = true;
+            this.events.emit('transition-complete', sceneKey);
         });
 
-        // リスナーを登録した後に、シーンの起動/再開を行う
-        // launchではなくrunを使うことで、すでに存在するシーンでも確実に実行される
+        // ★★★ 1. シーンを起動する ★★★
         this.scene.run(sceneKey, params);
     }
     /**
