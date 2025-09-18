@@ -14,7 +14,7 @@ export default class EditorUI {
         this.currentAssetTab = 'image';
         
          //ノードプロパティ
-       
+        this.activeEventId = null; // ★ 現在編集中のイベントの「ID」を保持する
         this.selectedNodeData = null;
         this.connectionState = {
             isActive: false,      // 接続モード中か？
@@ -86,7 +86,8 @@ export default class EditorUI {
        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
         this.eventEditorTitle = document.getElementById('event-editor-title');
         this.vslNodeList = document.getElementById('vsl-node-list');
-        this.vslCanvas = document.getElementById('vsl-canvas')
+        this.vslCanvas = document.getElementById('vsl-canvas');
+        this.vslTabs = document.getElementById('vsl-tabs');
     }
 
   
@@ -932,35 +933,93 @@ export default class EditorUI {
      * イベントエディタを開き、その中身を「選択されたオブジェクトのデータで」構築する
      * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
      */
-    openEventEditor(selectedObject) {
+   openEventEditor(selectedObject) {
         if (!this.eventEditorOverlay || !selectedObject) return;
-
-        // --- 1. Phaserの入力を無効化 ---
         this.game.input.enabled = false;
-        console.log("[EditorUI] Phaser input disabled for Event Editor.");
         
-        // --- 2. 「今、どのオブジェクトを編集中か」をプロパティに保存 ---
         this.editingObject = selectedObject;
-
-        // --- 3. モーダルのタイトルを、新しいオブジェクトの名前に更新 ---
+        
         if (this.eventEditorTitle) {
             this.eventEditorTitle.innerText = `イベント編集: ${this.editingObject.name}`;
         }
         
-        // --- 4. ツールバーとキャンバスを、新しいオブジェクトのデータで再構築 ---
-        this.populateVslToolbar();
+        // ★★★ タブUIを構築する新しいメソッドを呼び出す ★★★
+        this.buildVslTabs();
         
-        // ▼▼▼【ここが、今回の修正の核心です】▼▼▼
-        // --------------------------------------------------------------------
-        // ★★★ populateVslCanvasに、現在の編集対象オブジェクトを引数として渡す ★★★
-        this.populateVslCanvas(this.editingObject);
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ★★★ 最初に表示するイベントを決定する ★★★
+        const events = this.editingObject.getData('events') || [];
+        if (events.length > 0) {
+            // 最初のイベントをアクティブにする
+            this.setActiveVslEvent(events[0].id);
+        } else {
+            // イベントがなければ、すべてを空にする
+            this.setActiveVslEvent(null);
+        }
 
-        // --- 5. モーダルを表示 ---
         this.eventEditorOverlay.style.display = 'flex';
     }
 
+ /**
+     * ★★★ 新規メソッド ★★★
+     * イベントグラフを切り替えるためのタブUIを構築する
+     */
+    buildVslTabs() {
+        if (!this.vslTabs) return;
+        this.vslTabs.innerHTML = '';
+        
+        const events = this.editingObject.getData('events') || [];
+        events.forEach(eventData => {
+            const tabButton = document.createElement('button');
+            tabButton.className = 'vsl-tab-button';
+            // ★ とりあえず、トリガー名を表示しておく
+            tabButton.innerText = eventData.trigger || 'Event';
+            
+            // ★ もし、このタブが現在アクティブなイベントなら、'active'クラスを付ける
+            if (this.activeEventId === eventData.id) {
+                tabButton.classList.add('active');
+            }
+
+            tabButton.addEventListener('click', () => this.setActiveVslEvent(eventData.id));
+            this.vslTabs.appendChild(tabButton);
+        });
+
+        // 「イベントを追加」ボタン
+        const addButton = document.createElement('button');
+        addButton.className = 'vsl-add-event-button';
+        addButton.innerText = '+';
+        addButton.title = '新しいイベントを追加';
+        addButton.addEventListener('click', () => {
+            const currentEvents = this.editingObject.getData('events') || [];
+            const newEvent = {
+                id: `event_${Date.now()}`,
+                trigger: 'onClick',
+                nodes: [],
+                connections: []
+            };
+            currentEvents.push(newEvent);
+            this.editingObject.setData('events', currentEvents);
+            
+            this.buildVslTabs(); // タブUIを再描画
+            this.setActiveVslEvent(newEvent.id); // 作成した新しいイベントをアクティブにする
+        });
+        this.vslTabs.appendChild(addButton);
+    }
+    
+    /**
+     * ★★★ 新規メソッド ★★★
+     * 指定されたIDのイベントグラフを、アクティブにして表示する
+     * @param {string | null} eventId - アクティブにするイベントのID
+     */
+    setActiveVslEvent(eventId) {
+        this.activeEventId = eventId;
+        
+        // ★ ツールバーとキャンバスを、新しいアクティブイベントのデータで再描画する
+        this.populateVslToolbar();
+        this.populateVslCanvas(); // 引数は不要
+
+        // ★ タブの見た目も更新
+        this.buildVslTabs();
+    }
 
     /**
      * ★★★ 新規メソッド ★★★
@@ -982,8 +1041,12 @@ export default class EditorUI {
      * VSLツールバーのノードリストを生成する
      */
     populateVslToolbar() {
-        if (!this.vslNodeList) return;
-        this.vslNodeList.innerHTML = '';
+    if (!this.vslNodeList) return;
+    this.vslNodeList.innerHTML = '';
+    
+    // ★ イベントが選択されていない場合は、ボタンを無効化（または非表示）
+    if (!this.activeEventId) return;
+
 
         const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
         
@@ -994,8 +1057,7 @@ export default class EditorUI {
                 button.innerText = `[${tagName}]`;
                 
                 button.addEventListener('click', () => {
-                    console.log(`%c[LOG BOMB 1] Toolbar button clicked! Tag: ${tagName}`, 'color: orange;');
-                    this.addNodeToEventData(tagName);
+                 this.addNodeToEventData(tagName, targetEvent); // ★ どのイベントに追加するかを渡す
                 });
                 
                 this.vslNodeList.appendChild(button);
@@ -1011,21 +1073,22 @@ export default class EditorUI {
      */
     // src/editor/EditorUI.js
 
-    addNodeToEventData(tagName) {
-        if (!this.editingObject) {
-            console.error("[addNodeToEventData] 'this.editingObject' is not set!");
-            return;
-        }
-        
+   addNodeToEventData(tagName) {
+    if (!this.editingObject || !this.activeEventId) return;
+
+    const events = this.editingObject.getData('events');
+    // ★ アクティブなIDを使って、編集対象のイベントを見つける
+    const targetEvent = events.find(e => e.id === this.activeEventId);
+    if (!targetEvent) return;
         // --- 1. 元のデータを安全に取得 ---
         // ★ JSON.stringifyは使わない
-        let events = this.editingObject.getData('events');
+       
         
         // --- 2. データ構造の初期化を、ここでも行う（EditorPluginの処理が失敗した場合の保険） ---
         if (!events || !Array.isArray(events) || events.length === 0) {
             events = [{ trigger: 'onClick', nodes: [], connections: [] }];
         }
-        let targetEvent = events[0];
+       
         if (!targetEvent.nodes) {
             targetEvent.nodes = [];
         }
@@ -1054,7 +1117,7 @@ export default class EditorUI {
         
         
         // --- 5. キャンバスを再描画 ---
-        this.populateVslCanvas(this.editingObject);
+       this.populateVslCanvas();
     }
 
    // src/editor/EditorUI.js
@@ -1069,8 +1132,16 @@ export default class EditorUI {
      * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
      * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
      */
-    populateVslCanvas(targetObject) {
-        if (!this.vslCanvas || !targetObject) return;
+   populateVslCanvas() {
+    if (!this.vslCanvas || !this.editingObject) return;
+    this.vslCanvas.innerHTML = ''; // クリア
+
+    // ★ アクティブなイベントデータを見つける
+    const events = this.editingObject.getData('events') || [];
+    const targetEvent = events.find(e => e.id === this.activeEventId);
+
+    if (!targetEvent) return; // アクティブなイベントがなければ終了
+    
         
         // --- 1. キャンバスとSVGレイヤーをクリア ---
         this.vslCanvas.innerHTML = '';
@@ -1081,10 +1152,9 @@ export default class EditorUI {
         this.vslCanvas.appendChild(svgLayer);
 
         // --- 2. 「引数で渡された」オブジェクトから、最新のイベントデータを取得 ---
-        const events = targetObject.getData('events');
+      
         if (!events || !events[0]) return;
-        const targetEvent = events[0];
-        
+      
         // --- 3. ノードを描画 ---
         if (targetEvent.nodes) {
             
@@ -1179,15 +1249,16 @@ export default class EditorUI {
            // ★★★ 削除ボタンを生成 ★★★
         const deleteButton = document.createElement('button');
         deleteButton.innerText = '削除';
-        deleteButton.className = 'node-delete-button'; // CSSでスタイリング
+        deleteButton.className = 'node-delete-button';
         deleteButton.addEventListener('click', () => {
             if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
+                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
                 this.deleteNode(nodeData.id);
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             }
         });
 
-        // --------------------------------------------------------------------
-       nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
+        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
 
     /**
@@ -1332,31 +1403,7 @@ deselectNode() {
     this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
 }
   
-      /**
-     * ★★★ 新規メソッド ★★★
-     * 新しい接続をイベントデータに追加し、永続化する
-     */
-    createConnection(fromNodeId, toNodeId) {
-        if (!this.editingObject || fromNodeId === toNodeId) return;
-
-        const events = this.editingObject.getData('events');
-        if (!events[0]) return;
-        
-        if (!events[0].connections) {
-            events[0].connections = [];
-        }
-
-        // 既に同じ接続が存在しないかチェック
-        const exists = events[0].connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
-        if (!exists) {
-            events[0].connections.push({ fromNode: fromNodeId, toNode: toNodeId });
-            this.editingObject.setData('events', events);
-            
-            console.log(`New connection created: ${fromNodeId} -> ${toNodeId}`);
-            // ★ キャンバスを再描画して、線を表示する
-            this.populateVslCanvas(this.editingObject);
-        }
-    }
+    
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
@@ -1476,43 +1523,53 @@ deselectNode() {
      * ★★★ 新規追加 ★★★
      * 新しい接続をイベントデータに追加し、キャンバスを再描画する
      */
+    /**
+     * ★★★ マルチトリガー対応版 ★★★
+     * 「現在アクティブな」イベントグラフに、新しい接続を追加する
+     */
     createConnection(fromNodeId, toNodeId) {
-        if (!this.editingObject || fromNodeId === toNodeId) return;
+        if (!this.editingObject || !this.activeEventId || fromNodeId === toNodeId) return;
 
         const events = this.editingObject.getData('events');
-        if (!events[0]) return;
+        // ★ アクティブなIDを使って、編集対象のイベントグラフを見つける
+        const targetEvent = events.find(e => e.id === this.activeEventId);
+        if (!targetEvent) return;
         
-        if (!events[0].connections) {
-            events[0].connections = [];
+        if (!targetEvent.connections) {
+            targetEvent.connections = [];
         }
 
-        const exists = events[0].connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
+        const exists = targetEvent.connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
         if (!exists) {
-            events[0].connections.push({ fromNode: fromNodeId, toNode: toNodeId });
+            targetEvent.connections.push({ fromNode: fromNodeId, toNode: toNodeId });
             this.editingObject.setData('events', events);
             
-            console.log(`New connection created: ${fromNodeId} -> ${toNodeId}`);
+            console.log(`Connection created in event '${targetEvent.id}': ${fromNodeId} -> ${toNodeId}`);
             
-            // ★ キャンバスを再描画して、線を表示する (これは次のステップ)
-            this.populateVslCanvas(this.editingObject);
+            this.populateVslCanvas();
         }
     }
-       /**
-     * ★★★ 新規メソッド ★★★
-     * 指定されたIDのノードと、それに関連する接続をデータから削除し、再描画する
+      /**
+     * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
+     * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
      * @param {string} nodeIdToDelete - 削除するノードのID
      */
     deleteNode(nodeIdToDelete) {
-        if (!this.editingObject) return;
+        if (!this.editingObject || !this.activeEventId) return;
+
         const events = this.editingObject.getData('events');
-        if (!events[0]) return;
+        // ★ アクティブなIDを使って、編集対象のイベントグラフを見つける
+        const targetEvent = events.find(e => e.id === this.activeEventId);
+        if (!targetEvent) return;
 
         // --- 1. nodes配列から、該当するノードを削除 ---
-        events[0].nodes = events[0].nodes.filter(n => n.id !== nodeIdToDelete);
+        if (targetEvent.nodes) {
+            targetEvent.nodes = targetEvent.nodes.filter(n => n.id !== nodeIdToDelete);
+        }
         
         // --- 2. connections配列から、このノードに関連する接続をすべて削除 ---
-        if (events[0].connections) {
-            events[0].connections = events[0].connections.filter(c => 
+        if (targetEvent.connections) {
+            targetEvent.connections = targetEvent.connections.filter(c => 
                 c.fromNode !== nodeIdToDelete && c.toNode !== nodeIdToDelete
             );
         }
@@ -1521,6 +1578,6 @@ deselectNode() {
         this.editingObject.setData('events', events);
         
         // --- 4. キャンバスを再描画 ---
-        this.populateVslCanvas(this.editingObject);
+        this.populateVslCanvas();
     }
 }
