@@ -1105,7 +1105,7 @@ export default class EditorUI {
         // --- 既存のロジックは、このtargetEventを直接使う ---
         const existingNodeCount = targetEvent.nodes.length;
         const newX = 50;
-        const newY = 100 + (existingNodeCount * 80);
+        const newY = 150 + (existingNodeCount * 80);
 
         const newNode = {
             id: `node_${Date.now()}`,
