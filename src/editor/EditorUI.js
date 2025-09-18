@@ -560,79 +560,45 @@ export default class EditorUI {
     }}
 
    // in EditorUI.js
-
-    /**
-     * アセットブラウザの「Add Selected Asset」ボタンがクリックされたときの処理。
-     * アクティブなレイヤー名をシーンに渡す。
-     */
-  // in EditorUI.js
+// src/editor/EditorUI.js
 
     onAddButtonClicked() {
         if (!this.selectedAssetKey) {
-            alert('アセットを選択してください。'); // 日本語化
+            alert('アセットを選択してください。');
             return;
         }
-        
-        const targetScene = this.getActiveGameScene();
+
+        // ▼▼▼【変更点 1: targetSceneの取得を一度だけにする】▼▼▼
+        const targetScene = (this.selectedAssetType === 'ui')
+            ? this.game.scene.getScene('UIScene')
+            : this.getActiveGameScene();
+
         if (!targetScene) {
-            alert("対象のシーンが見つかりませんでした。"); // 日本語化
+            alert("対象のシーンが見つかりませんでした。");
             return;
         }
 
-        // オブジェクト名のカウンター (変更なし)
-        if (!this.objectCounters[this.selectedAssetKey]) {
-            this.objectCounters[this.selectedAssetKey] = 1;
-        } else {
-            this.objectCounters[this.selectedAssetKey]++;
-        }
-       
-        
-        
-          let newObject = null;
         const newName = `${this.selectedAssetKey.toLowerCase()}_${Date.now()}`;
+        
+        // ▼▼▼【変更点 2: 変数宣言を関数の先頭に移動】▼▼▼
+        let newObjectOrObjects = null;
 
-        // ▼▼▼【ここからが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- ケース1：UIコンポーネントを追加する場合 ---
+        // --- オブジェクトの生成 ---
         if (this.selectedAssetType === 'ui') {
-            const uiScene = this.game.scene.getScene('UIScene');
-            if (uiScene && typeof uiScene.addUiComponentFromEditor === 'function') {
-                console.log(`[EditorUI] Requesting UIScene to add UI component: ${this.selectedAssetKey}`);
-                // ★ UISceneの新しいメソッドを呼び出す
-                newObject = uiScene.addUiComponentFromEditor(this.selectedAssetKey, newName);
+            if (typeof targetScene.addUiComponentFromEditor === 'function') {
+                newObjectOrObjects = targetScene.addUiComponentFromEditor(this.selectedAssetKey, newName);
             }
         } 
-        
-        // --- ケース2：通常のアセットを追加する場合 (既存のロジック) ---
-        else {
-            const targetScene = this.getActiveGameScene();
-            if (!targetScene) {
-                alert("対象のゲームシーンが見つかりませんでした。");
-                return;
-            }
-        
-        // アセットのタイプに応じて、シーンのメソッドを呼び出す
-        if (this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') {
-            if (typeof targetScene.addObjectFromEditor === 'function') {
-                newObjectOrObjects = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-            }
+        else if ((this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') && typeof targetScene.addObjectFromEditor === 'function') {
+            newObjectOrObjects = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
         } 
-        // ▼▼▼【ここが修正箇所です】▼▼▼
-        // --------------------------------------------------------------------
-        // --- 'GroupPrefab' も、addPrefabFromEditor を呼び出す条件に含める ---
-        else if (this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') {
-            if (typeof targetScene.addPrefabFromEditor === 'function') {
-                newObjectOrObjects = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
-            }
+        else if ((this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') && typeof targetScene.addPrefabFromEditor === 'function') {
+            newObjectOrObjects = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
+
+        // ▼▼▼【変更点 3: オブジェクト選択処理を、if/elseの外に移動】▼▼▼
         // --- 新しく生成されたオブジェクトを選択状態にする ---
         if (newObjectOrObjects && this.plugin) {
-            // ▼▼▼【ここも修正箇所です】▼▼▼
-            // --------------------------------------------------------------------
             if (Array.isArray(newObjectOrObjects)) {
                 // 配列が返ってきた場合（グループプレハブ）は、複数選択
                 this.plugin.selectMultipleObjects(newObjectOrObjects);
@@ -640,11 +606,8 @@ export default class EditorUI {
                 // 単一オブジェクトが返ってきた場合は、単体選択
                 this.plugin.selectSingleObject(newObjectOrObjects);
             }
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
-    }}
-    
+    }
 
     
   
