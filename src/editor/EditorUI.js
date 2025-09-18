@@ -1176,8 +1176,18 @@ export default class EditorUI {
                 break;
             // ... (他のタグのcase) ...
         }
+           // ★★★ 削除ボタンを生成 ★★★
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = '削除';
+        deleteButton.className = 'node-delete-button'; // CSSでスタイリング
+        deleteButton.addEventListener('click', () => {
+            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
+                this.deleteNode(nodeData.id);
+            }
+        });
+
         // --------------------------------------------------------------------
-       nodeElement.append(inputPin, outputPin, title, paramsContainer);
+       nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
 
     /**
