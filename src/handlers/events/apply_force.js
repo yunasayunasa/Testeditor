@@ -1,18 +1,43 @@
-// src/actions/apply_force.js
+// src/handlers/events/apply_force.js
 
+/**
+ * [apply_force] アクションタグ
+ * ターゲットの物理ボディに、指定されたベクトルで力を加えます。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target
+ */
 export default async function apply_force(interpreter, params, target) {
-    // 1. ターゲットに物理ボディがなければ、警告を出して終了
     if (!target || !target.body) {
-        console.warn(`[apply_force] Target '${target.name}' has no physics body.`);
+        const targetName = target ? target.name : 'unknown';
+        console.warn(`[apply_force] Target '${targetName}' has no physics body.`);
         return;
     }
 
-    // 2. パラメータからXとYの力を読み取る。指定がなければ0とする。
     const forceX = parseFloat(params.x) || 0;
     const forceY = parseFloat(params.y) || 0;
 
-    // 3. 力を適用する
+    // ★ Phaserの公式APIである target.applyForce を使用
     target.applyForce({ x: forceX, y: forceY });
-    
-    // このアクションは即座に完了する
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+apply_force.define = {
+    description: '物理ボディを持つオブジェクトに、瞬間的な力（衝撃）を加えます。',
+    params: [
+        {
+            key: 'x',
+            type: 'number',
+            label: 'X方向の力',
+            defaultValue: 0
+        },
+        {
+            key: 'y',
+            type: 'number',
+            label: 'Y方向の力',
+            defaultValue: 0
+        }
+    ]
+};

@@ -1,14 +1,26 @@
+// src/handlers/events/anim_stop.js
 
 /**
  * [anim_stop] アクションタグ
- * 対象オブジェクトの現在のアニメーションを停止させる。
+ * ターゲットの現在のアニメーションを停止させます。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params - このタグではパラメータは使用しません
+ * @param {Phaser.GameObjects.Sprite} target
  */
-export default async function animStop(interpreter, params, target) {
-    // targetが 'stop' メソッドを持っているか確認 (Spriteオブジェクトなら持っている)
+export default async function anim_stop(interpreter, params, target) {
     if (target && typeof target.stop === 'function') {
         target.stop();
-        console.log(`[anim_stop] Animation stopped on '${target.name}'`);
     } else {
-        console.warn(`[anim_stop] Target '${target.name}' cannot stop animation.`);
+        const targetName = target ? target.name : 'unknown';
+        console.warn(`[anim_stop] Target '${targetName}' cannot stop animation.`);
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+anim_stop.define = {
+    description: 'スプライトの現在のアニメーションを停止させ、最初のフレームに戻します。',
+    // このタグはパラメータを取らないので、params配列は空にします。
+    params: []
+};
