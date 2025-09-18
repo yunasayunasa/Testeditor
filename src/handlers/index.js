@@ -34,6 +34,7 @@ import handleLiveBreathStart from './scenario/live_breath_start.js';
 //mport handleLiveBreathStop from './scenario/live_breath_stop.js';
 //import handleVideo from './scenario/video.js';
 //import handleStopVideo from './scenario/stopvideo.js';
+import vignette from './scenario/vignette.js';
 
 // --- 音声系 ---
 import handlePlaySe from './scenario/playse.js';
@@ -100,6 +101,7 @@ export const tagHandlers = {
     //'live_breath_stop': handleLiveBreathStop,
    // 'video': handleVideo,
     //'stopvideo': handleStopVideo,
+    'vignette': vignette,
 
     // 音声系
     'playse': handlePlaySe,
