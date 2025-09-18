@@ -197,7 +197,7 @@ export default class GameScene extends Phaser.Scene {
         console.log("[GameScene] Waiting for UIScene to be ready...");
         
         // ★★★ UISceneの'create'が完了したときに発行されるイベントを、一度だけ待つ ★★★
-        await new Promise(resolve => uiScene.events.once('create', resolve));
+       await new Promise(resolve => uiScene.events.once('scene-ready', resolve))
         
         console.log("[GameScene] UIScene is now ready. Proceeding with load.");
     }
