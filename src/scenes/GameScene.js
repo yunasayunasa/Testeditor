@@ -190,6 +190,17 @@ export default class GameScene extends Phaser.Scene {
     }
 
     async performLoad(slot, returnParams = null) {
+        const uiScene = this.scene.get('UIScene');
+
+    // --- 2. もし、UISceneがまだ起動中（準備ができていない）なら、準備完了を待つ ---
+    if (uiScene && !uiScene.scene.isActive()) {
+        console.log("[GameScene] Waiting for UIScene to be ready...");
+        
+        // ★★★ UISceneの'create'が完了したときに発行されるイベントを、一度だけ待つ ★★★
+        await new Promise(resolve => uiScene.events.once('create', resolve));
+        
+        console.log("[GameScene] UIScene is now ready. Proceeding with load.");
+    }
         console.log(`スロット[${slot}]からのロード処理を開始します。`);
         try {
             const jsonString = localStorage.getItem(`save_data_${slot}`);
