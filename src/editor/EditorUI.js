@@ -927,23 +927,40 @@ export default class EditorUI {
      * イベントエディタを開き、その中身を構築する
      * @param {Phaser.GameObjects.GameObject} selectedObject
      */
+        /**
+     * ★★★ 再描画問題 - 最終FIX版 ★★★
+     * イベントエディタを開き、その中身を「選択されたオブジェクトのデータで」構築する
+     * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
+     */
     openEventEditor(selectedObject) {
         if (!this.eventEditorOverlay || !selectedObject) return;
-// ★★★ モーダルを開く前に、Phaserの入力を無効化する ★★★
+
+        // --- 1. Phaserの入力を無効化 ---
         this.game.input.enabled = false;
         console.log("[EditorUI] Phaser input disabled for Event Editor.");
-        this.editingObject = selectedObject; // 編集対象を保持
-this.populateVslCanvas(selectedObject);
+        
+        // --- 2. 「今、どのオブジェクトを編集中か」をプロパティに保存 ---
+        this.editingObject = selectedObject;
+
+        // --- 3. モーダルのタイトルを、新しいオブジェクトの名前に更新 ---
         if (this.eventEditorTitle) {
             this.eventEditorTitle.innerText = `イベント編集: ${this.editingObject.name}`;
         }
         
-        // ★ ツールバーとキャンバス（まだ空）を構築するメソッドを呼び出す
+        // --- 4. ツールバーとキャンバスを、新しいオブジェクトのデータで再構築 ---
         this.populateVslToolbar();
-        // this.populateVslCanvas(); // ← これは次のステップ
+        
+        // ▼▼▼【ここが、今回の修正の核心です】▼▼▼
+        // --------------------------------------------------------------------
+        // ★★★ populateVslCanvasに、現在の編集対象オブジェクトを引数として渡す ★★★
+        this.populateVslCanvas(this.editingObject);
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+        // --- 5. モーダルを表示 ---
         this.eventEditorOverlay.style.display = 'flex';
     }
+
 
     /**
      * ★★★ 新規メソッド ★★★
@@ -1047,25 +1064,30 @@ this.populateVslCanvas(selectedObject);
      * ★★★ 最終FIX版 (線描画機能付き) ★★★
      * 現在のイベントデータに基づいて、VSLキャンバスにノードと接続線を描画する
      */
+    /**
+     * ★★★ 引数を受け取るように修正 ★★★
+     * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
+     * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
+     */
     populateVslCanvas(targetObject) {
         if (!this.vslCanvas || !targetObject) return;
+        
+        // --- 1. キャンバスとSVGレイヤーをクリア ---
         this.vslCanvas.innerHTML = '';
-
-        // --- 2. 線を描画するためのSVGレイヤーを、毎回新しく生成する ---
         const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svgLayer.id = 'vsl-svg-layer';
         svgLayer.setAttribute('width', '2000');
         svgLayer.setAttribute('height', '2000');
         this.vslCanvas.appendChild(svgLayer);
 
-        // --- 3. イベントデータを取得 ---
+        // --- 2. 「引数で渡された」オブジェクトから、最新のイベントデータを取得 ---
         const events = targetObject.getData('events');
         if (!events || !events[0]) return;
-        
         const targetEvent = events[0];
         
-        // --- 4. ノードを描画 (この部分は、あなたのコードと同じです) ---
+        // --- 3. ノードを描画 ---
         if (targetEvent.nodes) {
+            
             targetEvent.nodes.forEach(nodeData => {
                 const nodeElement = document.createElement('div');
                 nodeElement.className = 'vsl-node';
@@ -1080,7 +1102,7 @@ this.populateVslCanvas(selectedObject);
             });
         }
         
-        // --- 5. 最後に、接続線を描画する ---
+            // --- 4. 接続線を描画 ---
         if (targetEvent.connections) {
             this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
         }
