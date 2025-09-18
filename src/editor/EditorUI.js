@@ -1041,32 +1041,88 @@ export default class EditorUI {
     }
 
    // src/editor/EditorUI.js
+// src/editor/EditorUI.js
 
     /**
-     * ★★★ VSL完成版 - 1/3 ★★★
-     * 現在のイベントデータに基づいて、VSLキャンバスに「ドラッグ可能な」ノードを描画する
+     * ★★★ 最終FIX版 (線描画機能付き) ★★★
+     * 現在のイベントデータに基づいて、VSLキャンバスにノードと接続線を描画する
      */
-   populateVslCanvas() {
+    populateVslCanvas() {
         if (!this.vslCanvas || !this.editingObject) return;
+
+        // --- 1. まず、キャンバスの中身を完全にクリアする ---
+        // (SVGレイヤーも一度消えるが、後で再生成するので問題ない)
         this.vslCanvas.innerHTML = '';
 
-        const events = this.editingObject.getData('events');
-        if (!events || !events[0] || !events[0].nodes) return;
-        
-        events[0].nodes.forEach(nodeData => {
-            const nodeElement = document.createElement('div');
-            nodeElement.className = 'vsl-node';
-            nodeElement.style.left = `${nodeData.x}px`;
-            nodeElement.style.top = `${nodeData.y}px`;
-            nodeElement.dataset.nodeId = nodeData.id;
+        // --- 2. 線を描画するためのSVGレイヤーを、毎回新しく生成する ---
+        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgLayer.id = 'vsl-svg-layer';
+        svgLayer.setAttribute('width', '2000');
+        svgLayer.setAttribute('height', '2000');
+        this.vslCanvas.appendChild(svgLayer);
 
-            // ★ 描画処理は、buildNodeContentに一本化
-            this.buildNodeContent(nodeElement, nodeData);
-            
-            this.vslCanvas.appendChild(nodeElement);
-        });
+        // --- 3. イベントデータを取得 ---
+        const events = this.editingObject.getData('events');
+        if (!events || !events[0]) return;
+        const targetEvent = events[0];
+        
+        // --- 4. ノードを描画 (この部分は、あなたのコードと同じです) ---
+        if (targetEvent.nodes) {
+            targetEvent.nodes.forEach(nodeData => {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'vsl-node';
+                nodeElement.style.left = `${nodeData.x}px`;
+                nodeElement.style.top = `${nodeData.y}px`;
+                nodeElement.dataset.isNode = 'true'; // isNode属性を追加
+                nodeElement.dataset.nodeId = nodeData.id;
+
+                this.buildNodeContent(nodeElement, nodeData);
+                
+                this.vslCanvas.appendChild(nodeElement);
+            });
+        }
+        
+        // --- 5. 最後に、接続線を描画する ---
+        if (targetEvent.connections) {
+            this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
+        }
     }
 
+    /**
+     * ★★★ 新規追加 (線描画ヘルパー) ★★★
+     * connectionsデータに基づいて、SVGで線を描画する
+     */
+    drawConnections(svgLayer, nodes, connections) {
+        connections.forEach(conn => {
+            const fromNode = nodes.find(n => n.id === conn.fromNode);
+            const toNode = nodes.find(n => n.id === conn.toNode);
+
+            if (fromNode && toNode) {
+                // ノードの幅と高さを、CSSで定義した固定値とする (例: 幅150px, 高さ50px)
+                const nodeWidth = 150;
+                const nodeHeight = 50;
+
+                // 接続元のピンの座標 (右側の中央)
+                const fromX = fromNode.x + nodeWidth;
+                const fromY = fromNode.y + (nodeHeight / 2);
+
+                // 接続先のピンの座標 (左側の中央)
+                const toX = toNode.x;
+                const toY = toNode.y + (nodeHeight / 2);
+
+                // SVGの線(line)要素を生成
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromX);
+                line.setAttribute('y1', fromY);
+                line.setAttribute('x2', toX);
+                line.setAttribute('y2', toY);
+                line.setAttribute('stroke', '#aaa'); // 線の色
+                line.setAttribute('stroke-width', '2'); // 線の太さ
+                
+                svgLayer.appendChild(line);
+            }
+        });
+    }
     buildNodeContent(nodeElement, nodeData) {
         nodeElement.innerHTML = '';
 

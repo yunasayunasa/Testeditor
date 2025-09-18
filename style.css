@@ -314,5 +314,11 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 .vsl-node-pin.output {
     right: -8px;
 }
+#vsl-svg-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none; /* SVG自体はクリックイベントを拾わないようにする */
+}
 /* ------------------------------------------------------------------ */
 /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
