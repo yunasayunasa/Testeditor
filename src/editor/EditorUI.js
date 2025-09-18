@@ -1054,7 +1054,7 @@ export default class EditorUI {
         
         
         // --- 5. キャンバスを再描画 ---
-        this.populateVslCanvas();
+        this.populateVslCanvas(this.editingObject);
     }
 
    // src/editor/EditorUI.js
