@@ -1014,8 +1014,8 @@ export default class EditorUI {
         this.activeEventId = eventId;
         
         // ★ ツールバーとキャンバスを、新しいアクティブイベントのデータで再描画する
-        this.populateVslToolbar();
-        this.populateVslCanvas(); // 引数は不要
+        this.populateVslToolbar(this.activeEventData);
+        this.populateVslCanvas(this.activeEventData); 
 
         // ★ タブの見た目も更新
         this.buildVslTabs();
@@ -1040,13 +1040,15 @@ export default class EditorUI {
      * ★★★ 新規メソッド (旧 populateEventEditor の進化形) ★★★
      * VSLツールバーのノードリストを生成する
      */
-    populateVslToolbar() {
-    if (!this.vslNodeList) return;
-    this.vslNodeList.innerHTML = '';
-    
-    // ★ イベントが選択されていない場合は、ボタンを無効化（または非表示）
-    if (!this.activeEventId) return;
-
+     /**
+     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
+     * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
+     */
+    populateVslToolbar(activeEvent) {
+        if (!this.vslNodeList) return;
+        this.vslNodeList.innerHTML = '';
+        
+        if (!activeEvent) return;
 
         const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
         
@@ -1056,9 +1058,14 @@ export default class EditorUI {
                 button.className = 'node-add-button';
                 button.innerText = `[${tagName}]`;
                 
+                // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
+                // --------------------------------------------------------------------
                 button.addEventListener('click', () => {
-                 this.addNodeToEventData(tagName, targetEvent); // ★ どのイベントに追加するかを渡す
+                    // ★★★ addNodeToEventDataに、どのイベントに追加するかを渡す ★★★
+                    this.addNodeToEventData(tagName, activeEvent);
                 });
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 
                 this.vslNodeList.appendChild(button);
             }
@@ -1066,58 +1073,36 @@ export default class EditorUI {
             this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
         }
     }
-     // src/editor/EditorUI.js
 
     /**
-     * ★★★ 本実装に置き換え ★★★
+     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
+     * @param {string} tagName - 追加するノードのタイプ
+     * @param {object} targetEvent - 追加先のイベントグラフのデータ
      */
-    // src/editor/EditorUI.js
-
-   addNodeToEventData(tagName) {
-    if (!this.editingObject || !this.activeEventId) return;
-
-    const events = this.editingObject.getData('events');
-    // ★ アクティブなIDを使って、編集対象のイベントを見つける
-    const targetEvent = events.find(e => e.id === this.activeEventId);
-    if (!targetEvent) return;
-        // --- 1. 元のデータを安全に取得 ---
-        // ★ JSON.stringifyは使わない
-       
+    addNodeToEventData(tagName, targetEvent) {
+        if (!this.editingObject || !targetEvent) return;
         
-        // --- 2. データ構造の初期化を、ここでも行う（EditorPluginの処理が失敗した場合の保険） ---
-        if (!events || !Array.isArray(events) || events.length === 0) {
-            events = [{ trigger: 'onClick', nodes: [], connections: [] }];
-        }
-       
-        if (!targetEvent.nodes) {
-            targetEvent.nodes = [];
-        }
-        // --- 1. 現在のノードの数を取得 ---
+        // --- 既存のロジックは、このtargetEventを直接使う ---
         const existingNodeCount = targetEvent.nodes.length;
-        
-        // --- 2. ノードの数に基づいて、新しいノードのY座標を計算 ---
-        // (1個あたり40px下にずらし、初期位置は(50, 50)とする)
         const newX = 50;
-        const newY = 50 + (existingNodeCount * 80); // ★ ノードの高さに応じて調整
+        const newY = 50 + (existingNodeCount * 80);
 
-        // --- 3. 新しいノードを追加 ---
         const newNode = {
             id: `node_${Date.now()}`,
             type: tagName,
             params: {},
-           x: newX,  // ★ 計算したX座標を使う
-            y: newY   // ★ 計算したY座標を使う
+            x: newX,
+            y: newY
         };
+        
         targetEvent.nodes.push(newNode);
-
-        // --- 4. 更新したデータを保存 ---
-        this.editingObject.setData('events', events);
         
-       
+        // ★★★ 全体のevents配列を、ここで改めて取得して保存するのが最も安全 ★★★
+        const allEvents = this.editingObject.getData('events');
+        this.editingObject.setData('events', allEvents);
         
-        
-        // --- 5. キャンバスを再描画 ---
-       this.populateVslCanvas();
+        // ★ 再描画
+        this.populateVslCanvas();
     }
 
    // src/editor/EditorUI.js
