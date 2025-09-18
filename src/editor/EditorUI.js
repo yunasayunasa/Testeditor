@@ -1010,14 +1010,34 @@ export default class EditorUI {
      * 指定されたIDのイベントグラフを、アクティブにして表示する
      * @param {string | null} eventId - アクティブにするイベントのID
      */
+   // src/editor/EditorUI.js
+
+    /**
+     * ★★★ 最終FIX版 ★★★
+     * 指定されたIDのイベントグラフを、アクティブにして表示する
+     * @param {string | null} eventId - アクティブにするイベントのID
+     */
     setActiveVslEvent(eventId) {
         this.activeEventId = eventId;
         
-        // ★ ツールバーとキャンバスを、新しいアクティブイベントのデータで再描画する
+        // --- 1. 新しいアクティブイベントのデータを検索 ---
+        const events = this.editingObject.getData('events') || [];
+        this.activeEventData = events.find(e => e.id === eventId) || null;
+        
+        // --- 2. すべての関連UIを、新しいデータで再描画 ---
+        //    (populateVslTriggerEditorは、まだないのでコメントアウト)
+        
+        // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // ★★★ populateVslToolbarにも、見つけたactiveEventDataを渡す ★★★
         this.populateVslToolbar(this.activeEventData);
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
         this.populateVslCanvas(this.activeEventData); 
+        // this.populateVslTriggerEditor(this.activeEventData); // ← 将来これは復活させる
 
-        // ★ タブの見た目も更新
+        // --- 3. 最後に、タブの見た目を更新 ---
         this.buildVslTabs();
     }
 
@@ -1101,8 +1121,10 @@ export default class EditorUI {
         const allEvents = this.editingObject.getData('events');
         this.editingObject.setData('events', allEvents);
         
-        // ★ 再描画
-        this.populateVslCanvas();
+        // ★ 再描画は、setActiveVslEventに任せる
+        // これにより、ツールバー、キャンバス、タブのすべてが確実に同期される
+        this.setActiveVslEvent(targetEvent.id);
+        // this.populateVslCanvas(targetEvent); // ← これをやめる
     }
 
    // src/editor/EditorUI.js
