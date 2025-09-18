@@ -2414,23 +2414,42 @@ createComponentSection() {
      * ★★★ 新規メソッド ★★★
      * オブジェクトのイベントデータを、新しいノードベース構造に変換・初期化する
      */
+    
+    /**
+     * ★★★ マルチトリガー対応版 ★★★
+     * オブジェクトのイベントデータを、新しいノードベース構造に変換・初期化する
+     * @param {Phaser.GameObjects.GameObject} targetObject - 対象のオブジェクト
+     */
     initializeEventData(targetObject) {
-        const events = targetObject.getData('events') || [];
+        let events = targetObject.getData('events') || [];
 
+        // --- ケース1: まだイベントが何もない場合 ---
         if (events.length === 0) {
-            events.push({ trigger: 'onClick', nodes: [], connections: [] });
-            targetObject.setData('events', events);
-            return;
+            // 何もしない。EditorUI側で「追加」ボタンを押したときに最初のイベントが作られる。
+            return; 
+        }
+
+        // --- ケース2: 古い単一イベントのデータ構造の場合 ---
+        // (各イベント定義に'id'プロパティがないことで判定)
+        if (events.length > 0 && events[0].id === undefined) {
+            console.log("Migrating single-event structure to new multi-trigger structure...");
+            
+            const oldEventData = events[0]; // 古いデータは最初の要素だけだと仮定
+            
+            const newEvent = {
+                id: `event_${Date.now()}`, // ユニークなIDを付与
+                trigger: oldEventData.trigger || 'onClick',
+                nodes: oldEventData.nodes || [],
+                connections: oldEventData.connections || [],
+                targetGroup: oldEventData.targetGroup,
+                condition: oldEventData.condition
+            };
+
+            // ★ 新しい配列で、完全に置き換える
+            events = [newEvent];
         }
         
-        events.forEach(eventData => {
-            if (typeof eventData.actions === 'string' && !eventData.nodes) {
-                console.log("Migrating old action string to new node structure...");
-                eventData.nodes = [];
-                // 今は、移行ロジックは空でもOK
-                delete eventData.actions;
-            }
-        });
+        // ★ 変換後の、新しいデータ構造をオブジェクトに保存する
         targetObject.setData('events', events);
     }
     closeEventEditor() {
