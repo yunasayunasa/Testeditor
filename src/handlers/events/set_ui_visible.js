@@ -1,23 +1,33 @@
-// /src/handlers/events/set_ui_visible.js
+// src/handlers/events/set_ui_visible.js
 
 /**
- * [set_ui_visible] タグハンドラ
- * 指定されたグループに属するUI要素の表示/非表示を切り替える
+ * [set_ui_visible] アクションタグ
+ * 指定されたグループに属するUI要素の表示/非表示を切り替えます。
  * @param {ActionInterpreter} interpreter
  * @param {object} params
  */
-export default function setUiVisibleHandler(interpreter, params) {
+export default async function set_ui_visible(interpreter, params) {
     const group = params.group;
-    const visible = params.visible === 'true'; // 'true'という文字列の場合のみtrue
-
     if (!group) {
         console.warn('[set_ui_visible] "group" parameter is missing.');
         return;
     }
 
-    // UISceneへの参照を取得
+    const visible = params.visible !== 'false'; // デフォルトはtrue
+
     const uiScene = interpreter.scene.scene.get('UIScene');
     if (uiScene && typeof uiScene.setGroupVisible === 'function') {
         uiScene.setGroupVisible(group, visible);
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+set_ui_visible.define = {
+    description: '指定されたUIグループ全体の表示/非表示を切り替えます。',
+    params: [
+        { key: 'group', type: 'string', label: 'UIグループ名', defaultValue: '' },
+        { key: 'visible', type: 'boolean', label: '表示する', defaultValue: true }
+    ]
+};

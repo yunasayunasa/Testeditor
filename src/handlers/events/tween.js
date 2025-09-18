@@ -1,54 +1,92 @@
-// /src/handlers/events/tween.js
+// src/handlers/events/tween.js
 
 /**
- * ★★★ 新形式対応版 ★★★
- * [tween] タグの処理
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグからパースされたパラメータ
- * @param {Phaser.GameObjects.GameObject} target - アクションの対象となるオブジェクト
- * @returns {Promise<void>} アニメーション完了時に解決されるPromise
+ * [tween] アクションタグ
+ * ターゲットのプロパティを、時間をかけて変化（アニメーション）させます。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target
+ * @returns {Promise<void>} Tween完了時に解決されるPromise
  */
-export function handleTween(interpreter, params, target) {
+export default async function tween(interpreter, params, target) {
     return new Promise(resolve => {
-        // --- 1. インタプリタからシーンを取得し、存在チェック ---
         const scene = interpreter.scene;
         if (!target || !scene || !scene.tweens) {
-            console.warn('[tween] Target or Scene (or scene.tweens) not found.');
             resolve();
             return;
         }
 
-        // --- 2. tweenConfigの構築 (ロジックは変更なし) ---
         const tweenConfig = {
             targets: target,
-            duration: params.time ? parseInt(params.time) : 1000,
+            duration: parseInt(params.time, 10) || 1000,
             ease: params.ease || 'Linear',
             yoyo: params.yoyo === 'true',
             loop: params.loop ? parseInt(params.loop) : 0,
         };
+        
         const prop = params.property;
         if (!prop || params.to === undefined) {
             console.warn('[tween] "property" and "to" parameters are required.');
             resolve();
             return;
         }
-        tweenConfig[prop] = isNaN(params.to) ? params.to : parseFloat(params.to);
+
+        // ▼▼▼【ここが、Tint対応の新しいロジックです】▼▼▼
+        // --------------------------------------------------------------------
         
-        // --- 3. onCompleteコールバックの設定 (変更なし) ---
+        // ★ ケース1: プロパティが 'tint' の場合 ★
+        if (prop === 'tint') {
+            if (typeof target.setTintFill !== 'function') {
+                console.warn(`[tween] Target '${target.name}' does not support tint.`);
+                resolve();
+                return;
+            }
+            
+            // 色をアニメーションさせるための特殊な設定
+            const startColor = Phaser.Display.Color.ValueToColor(target.tintTopLeft);
+            const endColor = Phaser.Display.Color.ValueToColor(params.to);
+
+            tweenConfig.onUpdate = (tween) => {
+                const color = Phaser.Display.Color.Interpolate.ColorWithColor(startColor, endColor, 100, tween.progress * 100);
+                const colorInt = Phaser.Display.Color.GetColor(color.r, color.g, color.b);
+                target.setTint(colorInt);
+            };
+
+        } 
+        // ★ ケース2: 通常のプロパティの場合 ★
+        else {
+            tweenConfig[prop] = parseFloat(params.to);
+        }
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         tweenConfig.onComplete = () => {
-            // 無限ループ(-1)でない場合のみ、Promiseを解決して次のアクションへ進める
             if (tweenConfig.loop !== -1) {
+                target.clearTint(); // ★ 念のため、終わったらTintをクリア
                 resolve();
             }
         };
 
-        // --- 4. Tweenの実行 ---
-        // interpreter.scene ではなく、上で取得した scene 変数を使う
         scene.tweens.add(tweenConfig);
 
-        // --- 5. 無限ループの場合は、待たずに即座に次のアクションへ進む ---
         if (tweenConfig.loop === -1) {
             resolve();
         }
     });
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+tween.define = {
+    description: 'ターゲットのプロパティをアニメーションさせます。propertyに"tint", toに"0xff0000"で色を赤にできます。',
+    params: [
+        { key: 'property', type: 'string', label: 'プロパティ', defaultValue: 'alpha' },
+        { key: 'to', type: 'string', label: '目標値', defaultValue: '0' },
+        { key: 'time', type: 'number', label: '時間(ms)', defaultValue: 1000 },
+        { key: 'ease', type: 'string', label: 'イージング', defaultValue: 'Linear' },
+        { key: 'yoyo', type: 'boolean', label: 'ヨーヨー再生', defaultValue: false },
+        { key: 'loop', type: 'number', label: 'ループ回数(-1で無限)', defaultValue: 0 }
+    ]
+};

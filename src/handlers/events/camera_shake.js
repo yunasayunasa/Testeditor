@@ -1,25 +1,34 @@
-// /src/handlers/events/camera_shake.js
+// src/handlers/events/camera_shake.js
 
 /**
- * [camera_shake] タグハンドラ
- * カメラを揺らす
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ
- * @returns {Promise<void>}
+ * [camera_shake] アクションタグ
+ * カメラを揺らします。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ * @returns {Promise<void>} 揺れ完了時に解決されるPromise
  */
-export default async function cameraShakeHandler(interpreter, params, target) {
-    const time = parseInt(params.time, 10) || 500; // デフォルト500ms
-    const power = parseFloat(params.power) || 0.01; // デフォルトは弱い揺れ
+export default async function camera_shake(interpreter, params) {
+    const time = parseInt(params.time, 10) || 500;
+    const power = parseFloat(params.power) || 0.01;
 
     const camera = interpreter.scene.cameras.main;
 
     return new Promise(resolve => {
-        // Phaserのカメラシェイク機能を利用
         camera.shake(time, power, false, (cam, progress) => {
-            // シェイクが完了したら（progressが1になったら）、Promiseを解決する
             if (progress === 1) {
                 resolve();
             }
         });
     });
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+camera_shake.define = {
+    description: 'カメラを揺らします。',
+    params: [
+        { key: 'time', type: 'number', label: '時間(ms)', defaultValue: 500 },
+        { key: 'power', type: 'number', label: '強さ (0-1)', defaultValue: 0.01 }
+    ]
+};

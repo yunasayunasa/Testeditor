@@ -1,12 +1,12 @@
-// /src/handlers/events/set_data.js
+// src/handlers/events/set_data.js
 
 /**
- * [set_data] タグハンドラ
- * ゲーム変数 (f.) を設定する
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ
+ * [set_data] アクションタグ
+ * ゲーム変数 (f.) を設定します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
  */
-export default function setDataHandler(interpreter, params, target) {
+export default async function set_data(interpreter, params) {
     const name = params.name;
     let value = params.value;
 
@@ -15,38 +15,32 @@ export default function setDataHandler(interpreter, params, target) {
         return;
     }
 
+    // ★ 'f.'のプレフィックスは自動で補完/削除する方がユーザーフレンドリー
+    const key = name.startsWith('f.') ? name.substring(2) : name;
+    
     const stateManager = interpreter.scene.registry.get('stateManager');
-    if (!stateManager) {
-        console.error('[set_data] StateManager not found in registry.');
-        return;
-    }
+    if (!stateManager) return;
 
-    // --- 値の型を解釈 ---
-    // valueが 'true'/'false' なら、booleanに変換
-    if (value === 'true') {
-        value = true;
-    } else if (value === 'false') {
-        value = false;
-    }
-    // valueが数値と解釈できるなら、数値に変換
-    else if (!isNaN(value) && !isNaN(parseFloat(value))) {
-        value = parseFloat(value);
-    }
-    // それ以外は文字列のまま
-
-    // --- f.変数への代入式を解釈（例: "f.score + 100"） ---
-    if (typeof value === 'string' && value.includes('f.')) {
-        try {
-            // 現在のゲーム変数(f)をコンテキストとして、文字列を式として評価
-            const func = new Function('f', `'use strict'; return (${value});`);
-            value = func(stateManager.f);
-        } catch (e) {
-            console.error(`[set_data] Failed to evaluate expression: "${value}"`, e);
-            return;
-        }
+    let finalValue;
+    try {
+        // ★ stateManager.evalを使って、式を安全に評価する
+        //    (例: 'f.score + 100' や 'true' や '123' など、すべてを扱える)
+        finalValue = stateManager.eval(value);
+    } catch (e) {
+        // evalが失敗した場合 (例: 'hello' のような文字列リテラル)、元の文字列をそのまま使う
+        finalValue = value;
     }
     
-    // StateManagerを使って、変数を設定
-    stateManager.setF(name, value);
-    console.log(`[set_data] Set f.${name} =`, value);
+    stateManager.setF(key, finalValue);
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+set_data.define = {
+    description: 'ゲーム変数(f.)に値を設定します。値には式も使えます (例: f.score + 100)。',
+    params: [
+        { key: 'name', type: 'string', label: '変数名 (f.)', defaultValue: 'f.variable' },
+        { key: 'value', type: 'string', label: '設定する値/式', defaultValue: '0' }
+    ]
+};

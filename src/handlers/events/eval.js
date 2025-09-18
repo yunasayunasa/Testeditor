@@ -1,40 +1,40 @@
-// src/actions/eval.js
-// ★★★ ファイル名はeval.jsのままでOKです ★★★
+// src/handlers/events/eval.js
 
-// StateManagerをインポートする必要はありません。シーンから取得します。
-
-export default async function evalExpression(interpreter, params, target) {
+/**
+ * [eval] アクションタグ
+ * StateManager経由で、任意のJavaScript式を実行します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target - デフォルトの'self'ターゲット
+ */
+export default async function eval_expression(interpreter, params, target) {
     if (!params.exp) {
         console.warn('[eval tag] Missing required parameter: exp');
         return;
     }
 
-    // ★★★ interpreterから、それが属するシーンのインスタンスを取得 ★★★
     const scene = interpreter.scene;
-
     const stateManager = scene.registry.get('stateManager');
-    if (!stateManager) {
-        console.error('[eval tag] StateManager not found in scene registry.');
-        return;
-    }
+    if (!stateManager) return;
 
     try {
-        // ▼▼▼【ここからが修正箇所です】▼▼▼
-
-        // --- interpreterから、現在のコンテキスト情報を取得 ---
-        // ※これはActionInterpreterのrunメソッドが改修されている前提です
         const context = {
             source: interpreter.currentSource,
             target: interpreter.currentTarget,
-            self: target // eval.jsに渡される'target'は、解決済みの'self'
+            self: target
         };
-
-        // --- StateManagerの安全なexecuteメソッドに、コンテキストを渡して呼び出す ---
         stateManager.execute(params.exp, context); 
-        
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
     } catch (e) {
         console.error(`[eval tag] Error executing expression: "${params.exp}"`, e);
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+eval_expression.define = {
+    description: '任意のJavaScript式を実行します。変数の操作には setF() を使います。',
+    params: [
+        { key: 'exp', type: 'string', label: '実行する式', defaultValue: "setF('variable', 10)" }
+    ]
+};

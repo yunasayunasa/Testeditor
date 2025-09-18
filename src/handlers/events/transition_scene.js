@@ -1,35 +1,42 @@
-// /src/handlers/events/transition_scene.js
+// src/handlers/events/transition_scene.js
 
 /**
- * ★★★ 新形式対応版 ★★★
- * [transition_scene] タグハンドラ
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ
- * @param {Phaser.GameObjects.GameObject} target - 適用対象のオブジェクト (このハンドラでは未使用)
+ * [transition_scene] アクションタグ
+ * 現在のシーンから、別のゲームシーンへ遷移します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
  */
-export default async function transition_scene(interpreter, params, target) {
+export default async function transition_scene(interpreter, params) {
     const toSceneKey = params.scene;
     if (!toSceneKey) {
         console.warn('[transition_scene] Missing required parameter: "scene".');
         return;
     }
 
-    // --- ActionInterpreterが保持している現在のシーンへの参照を取得 ---
     const currentScene = interpreter.scene;
-    if (!currentScene) {
-        console.error('[transition_scene] Could not determine the current scene from the interpreter.');
-        return;
-    }
+    if (!currentScene) return;
 
     const transitionData = {
         from: currentScene.scene.key,
         to: toSceneKey,
         params: {
-            layoutDataKey: params.data,
-            startScript: params.script
+            layoutDataKey: params.data,   // どのJSONを読み込むか
+            startScript: params.script  // どのシナリオを起動するか（GameScene用）
         }
     };
     
-    // --- 現在のシーンからSystemSceneを取得してイベントを発行 ---
-    currentScene.scene.get('SystemScene').events.emit('request-scene-transition', transitionData);
+    // request-scene-transition ではなく、よりシンプルな request-simple-transition を使うのが望ましい
+    currentScene.scene.get('SystemScene').events.emit('request-simple-transition', transitionData);
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+transition_scene.define = {
+    description: '指定した別のゲームシーンへ遷移します。',
+    params: [
+        { key: 'scene', type: 'string', label: '遷移先シーン名', defaultValue: '' },
+        { key: 'data', type: 'string', label: 'レイアウトJSON名', defaultValue: '' },
+        { key: 'script', type: 'string', label: '開始シナリオ名', defaultValue: '' }
+    ]
+};

@@ -1,32 +1,30 @@
-// /src/handlers/events/set_collision.js
+// src/handlers/events/set_collision.js
 
 /**
- * [set_collision] タグハンドラ
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ
- * @param {Phaser.GameObjects.GameObject} targetObject - 適用対象のオブジェクト
+ * [set_collision] アクションタグ
+ * ターゲットの物理ボディの衝突ルール（カテゴリとマスク）を設定します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target
  */
-export default function setCollisionHandler(interpreter, params, targetObject) {
-    // ターゲットは既に解決済みなので、ここで探す必要はない
-    if (!targetObject || !targetObject.body) return;
+export default async function set_collision(interpreter, params, target) {
+    if (!target || !target.body) return;
     
-    // --- 物理定義を取得 ---
     const physicsDefine = interpreter.scene.registry.get('physics_define');
     if (!physicsDefine || !physicsDefine.categories) return;
     const categories = physicsDefine.categories;
 
-    // --- カテゴリの設定 ---
+    // カテゴリの設定
     if (params.category) {
         const categoryName = params.category;
         if (categories[categoryName]) {
-            targetObject.setCollisionCategory(categories[categoryName]);
+            target.setCollisionCategory(categories[categoryName]);
         }
     }
 
-    // --- マスクの設定 ---
+    // マスクの設定
     if (params.mask) {
         let newMask = 0;
-        // "enemy,wall" のようなカンマ区切りの文字列を配列に変換
         const maskNames = params.mask.split(',').map(s => s.trim());
         
         maskNames.forEach(name => {
@@ -35,6 +33,17 @@ export default function setCollisionHandler(interpreter, params, targetObject) {
             }
         });
         
-        targetObject.setCollidesWith(newMask);
+        target.setCollidesWith(newMask);
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+set_collision.define = {
+    description: 'ターゲットの物理カテゴリ（自分は誰か）と衝突マスク（誰と衝突するか）を設定します。',
+    params: [
+        { key: 'category', type: 'string', label: 'カテゴリ名', defaultValue: '' },
+        { key: 'mask', type: 'string', label: 'マスク名(カンマ区切り)', defaultValue: '' }
+    ]
+};

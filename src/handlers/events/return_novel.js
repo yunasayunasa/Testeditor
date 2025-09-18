@@ -1,34 +1,44 @@
-// /src/handlers/events/return_novel.js
+// src/handlers/events/return_novel.js
 
 /**
- * [return_novel] タグハンドラ
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ
+ * [return_novel] アクションタグ
+ * 現在のゲームシーンを終了し、ノベルパート（GameScene）に戻ります。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
  */
-export default function returnNovelHandler(interpreter, params, target) {
-    // インタプリタが保持しているシーンへの参照を使う
+export default async function return_novel(interpreter, params) {
     const scene = interpreter.scene;
     if (!scene) return;
 
-    const fromSceneKey = scene.scene.key;
-    console.log(`[return_novel] Requesting return to novel from '${fromSceneKey}'`);
-
-    // --- SystemSceneが期待するデータオブジェクトを作成 ---
     const eventData = {
-        from: fromSceneKey,
-        params: {} // デフォルトは空のオブジェクト
+        from: scene.scene.key,
+        params: {}
     };
 
-    // --- タグに params="{...}" が指定されていれば、それを復帰後のGameSceneに渡す ---
     if (params.params) {
         try {
-            // JSON文字列をパースしてオブジェクトに変換
-            eventData.params = JSON.parse(params.params);
+            // " (ダブルクォート) を ' (シングルクォート) に置換して、JSONパースの互換性を上げる
+            const sanitizedJson = params.params.replace(/'/g, '"');
+            eventData.params = JSON.parse(sanitizedJson);
         } catch (e) {
-            console.error(`[return_novel] Failed to parse "params" parameter. Make sure it's valid JSON.`, e);
+            console.error(`[return_novel] "params"の解析に失敗しました。有効なJSON形式（例: '{"score":100, "clear":true}'）で記述してください。`, e);
         }
     }
 
-    // --- 作成したデータオブジェクトを渡して、イベントを発行 ---
     scene.scene.get('SystemScene').events.emit('return-to-novel', eventData);
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+return_novel.define = {
+    description: '現在のゲームシーンを終了し、ノベルパートに戻ります。',
+    params: [
+        {
+            key: 'params',
+            type: 'string',
+            label: '復帰後パラメータ',
+            defaultValue: ''
+        }
+    ]
+};

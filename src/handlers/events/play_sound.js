@@ -1,6 +1,12 @@
-// src/actions/play_sound.js
+// src/handlers/events/play_sound.js
 
-export default async function play_sound(interpreter, params, target) {
+/**
+ * [play_sound] アクションタグ
+ * 効果音（SE）を再生します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ */
+export default async function play_sound(interpreter, params) {
     const soundKey = params.key;
     if (!soundKey) {
         console.warn('[play_sound] Missing required parameter: "key".');
@@ -8,20 +14,24 @@ export default async function play_sound(interpreter, params, target) {
     }
 
     const soundManager = interpreter.scene.registry.get('soundManager');
-    if (!soundManager) {
-        console.error('[play_sound] SoundManager not found in scene registry.');
-        return;
-    }
+    if (!soundManager) return;
 
     const config = {
-        volume: params.volume ? parseFloat(params.volume) : undefined, // ★ volumeはplaySe側でデフォルト処理するのでundefinedが良い
+        volume: params.volume ? parseFloat(params.volume) : undefined,
         loop: params.loop === 'true'
     };
 
-    // ▼▼▼【ここが修正箇所です】▼▼▼
-    // soundManager.playSfx  ->  soundManager.playSe
     soundManager.playSe(soundKey, config);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    console.log(`[play_sound] Playing sound effect: '${soundKey}'`);
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+play_sound.define = {
+    description: '効果音（SE）を再生します。',
+    params: [
+        { key: 'key', type: 'asset_key', label: 'SEアセット名', defaultValue: '' },
+        { key: 'volume', type: 'number', label: '音量 (0-1)', defaultValue: 1.0 },
+        { key: 'loop', type: 'boolean', label: 'ループ再生', defaultValue: false }
+    ]
+};

@@ -1,14 +1,15 @@
-// /src/handlers/events/camera_follow.js
+// src/handlers/events/camera_follow.js
 
 /**
- * [camera_follow] タグハンドラ
- * カメラの追従ターゲットを設定する
- * @param {ActionInterpreter} interpreter - アクションインタープリタのインスタンス
- * @param {object} params - タグのパラメータ
+ * [camera_follow] アクションタグ
+ * カメラの追従ターゲットを設定します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target - このタグは'target'パラメータを優先します
  */
-export default function cameraFollowHandler(interpreter, params, target) {
-    const targetId = params.target;
-    if (!targetId) {
+export default async function camera_follow(interpreter, params) {
+    const targetName = params.target;
+    if (!targetName) {
         console.warn('[camera_follow] "target" parameter is missing.');
         return;
     }
@@ -16,17 +17,25 @@ export default function cameraFollowHandler(interpreter, params, target) {
     const scene = interpreter.scene;
     const camera = scene.cameras.main;
     
-    if (targetId.toLowerCase() === 'none') {
-        // ターゲットの追従を解除
+    if (targetName.toLowerCase() === 'none') {
         camera.stopFollow();
     } else {
-        // 指定された名前のオブジェクトを探す
-        const targetObject = scene.children.list.find(obj => obj.name === targetId);
+        const targetObject = interpreter.findTarget(targetName, interpreter.currentSource, interpreter.currentTarget);
 
         if (targetObject) {
-            camera.startFollow(targetObject, true, 0.05, 0.05); // Lerpで滑らかに追従
+            camera.startFollow(targetObject, true, 0.05, 0.05);
         } else {
-            console.warn(`[camera_follow] Target object '${targetId}' not found.`);
+            console.warn(`[camera_follow] Target object '${targetName}' not found.`);
         }
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+camera_follow.define = {
+    description: 'カメラを指定したターゲットに追従させます。',
+    params: [
+        { key: 'target', type: 'string', label: 'ターゲット名', defaultValue: 'self' }
+    ]
+};

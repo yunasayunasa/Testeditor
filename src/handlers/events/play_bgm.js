@@ -1,15 +1,34 @@
-// /src/handlers/events/play_bgm.js
+// src/handlers/events/play_bgm.js
+
 /**
- * [play_bgm] タグハンドラ
+ * [play_bgm] アクションタグ
+ * BGMを再生します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
  */
-export default function playBgmHandler(interpreter, params, target) {
+export default async function play_bgm(interpreter, params) {
     const key = params.key;
-    if (!key) return;
+    if (!key) {
+        console.warn(`[play_bgm] 'key' parameter is missing.`);
+        return;
+    }
     
-    const loop = params.loop !== 'false'; // デフォルトはtrue
+    // params.loopが'false'の文字列である場合のみ、ループしない
+    const loop = params.loop !== 'false';
     
     const soundManager = interpreter.scene.registry.get('soundManager');
     if (soundManager) {
         soundManager.playBgm(key, loop);
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+play_bgm.define = {
+    description: 'BGM（背景音楽）を再生します。すでに別のBGMが再生中の場合は、クロスフェードして切り替わります。',
+    params: [
+        { key: 'key', type: 'asset_key', label: 'BGMアセット名', defaultValue: '' },
+        { key: 'loop', type: 'boolean', label: 'ループ再生', defaultValue: true }
+    ]
+};
