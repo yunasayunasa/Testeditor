@@ -1497,4 +1497,30 @@ deselectNode() {
             this.populateVslCanvas(this.editingObject);
         }
     }
+       /**
+     * ★★★ 新規メソッド ★★★
+     * 指定されたIDのノードと、それに関連する接続をデータから削除し、再描画する
+     * @param {string} nodeIdToDelete - 削除するノードのID
+     */
+    deleteNode(nodeIdToDelete) {
+        if (!this.editingObject) return;
+        const events = this.editingObject.getData('events');
+        if (!events[0]) return;
+
+        // --- 1. nodes配列から、該当するノードを削除 ---
+        events[0].nodes = events[0].nodes.filter(n => n.id !== nodeIdToDelete);
+        
+        // --- 2. connections配列から、このノードに関連する接続をすべて削除 ---
+        if (events[0].connections) {
+            events[0].connections = events[0].connections.filter(c => 
+                c.fromNode !== nodeIdToDelete && c.toNode !== nodeIdToDelete
+            );
+        }
+
+        // --- 3. 変更を永続化 ---
+        this.editingObject.setData('events', events);
+        
+        // --- 4. キャンバスを再描画 ---
+        this.populateVslCanvas(this.editingObject);
+    }
 }
