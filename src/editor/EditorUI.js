@@ -181,8 +181,10 @@ export default class EditorUI {
         const modeToggle = document.getElementById('mode-toggle-checkbox');
         if (modeToggle) {
             modeToggle.addEventListener('change', (event) => {
-                this.plugin.currentMode = event.target.checked ? 'play' : 'select';
-                document.getElementById('mode-label').textContent = event.target.checked ? 'Play Mode' : 'Select Mode';
+                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
+                const newMode = event.target.checked ? 'play' : 'select';
+                this.setGlobalEditorMode(newMode);
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             });
         }
         
@@ -191,6 +193,29 @@ export default class EditorUI {
         this.createHelpButton();
         
         this.createPauseToggle();
+    }
+     /**
+     * ★★★ 新規メソッド ★★★
+     * エディタ全体のグローバルなモードを設定し、UIとプラグインの状態を同期させる
+     * @param {'select' | 'play'} mode
+     */
+    setGlobalEditorMode(mode) {
+        if (this.plugin.currentMode === mode) return;
+
+        // --- 1. プラグインの状態を更新 ---
+        this.plugin.currentMode = mode;
+        
+        // --- 2. UIの見た目を更新 ---
+        const modeToggle = document.getElementById('mode-toggle-checkbox');
+        const modeLabel = document.getElementById('mode-label');
+        if (modeToggle) {
+            modeToggle.checked = (mode === 'play');
+        }
+        if (modeLabel) {
+            modeLabel.textContent = (mode === 'play') ? 'Play Mode' : 'Select Mode';
+        }
+        
+        console.log(`[EditorUI] Global mode changed to: ${mode}`);
     }
     // =================================================================
     // UI構築・更新メソッド群

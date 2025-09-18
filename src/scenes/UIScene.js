@@ -570,14 +570,13 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
     applyUiEvents(uiElement) {
         const events = uiElement.getData('events') || [];
         uiElement.off('onClick');
-        
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
-                // Buttonクラスなどが発行する'onClick'イベントをリッスン
                 uiElement.on('onClick', () => {
-                    console.log(`[UIScene] onClick triggered for '${uiElement.name}'`);
-                    // ★★★ eventData全体を渡す ★★★
-                    this.actionInterpreter.run(uiElement, eventData);
+                    const editor = this.plugins.get('EditorPlugin');
+                    if (!editor || editor.currentMode === 'play') {
+                        this.actionInterpreter.run(uiElement, eventData);
+                    }
                 });
             }
         });

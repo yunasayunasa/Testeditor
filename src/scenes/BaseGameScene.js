@@ -407,15 +407,27 @@ applyProperties(gameObject, layout) {
             // --- 'onClick' トリガーの処理 ---
             if (eventData.trigger === 'onClick') {
                 gameObject.on('pointerdown', () => {
-                    const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
-                    if (!editorUI || editorUI.currentMode === 'play') {
+                    // ▼▼▼【ここを、このように完全に書き換えます】▼▼▼
+                    // --------------------------------------------------------------------
+                    
+                    // ★★★ 1. EditorPluginへの参照を取得 ★★★
+                    const editor = this.plugins.get('EditorPlugin');
+                    
+                    // ★★★ 2. EditorPluginの現在のモードをチェック ★★★
+                    //    (プラグインが存在しない、またはプレイモードの場合に実行)
+                    if (!editor || editor.currentMode === 'play') {
                         if (this.actionInterpreter) {
-                           this.actionInterpreter.run(sourceObject, eventData, targetObject);
+                            console.log(`[BaseGameScene] Play mode click detected on '${gameObject.name}'. Running actions.`);
+                            // ★★★ 3. 正しい引数で、runを呼び出す ★★★
+                            //    source: イベントを持つオブジェクト自身 (gameObject)
+                            //    target: クリックイベントでは、相手はいないので自分自身 (gameObject)
+                            this.actionInterpreter.run(gameObject, eventData, gameObject);
                         }
                     }
+                    // --------------------------------------------------------------------
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 });
             }
-
               // --- 'onStateChange' トリガーの処理 ---
             if (eventData.trigger === 'onStateChange') {
                 gameObject.on('onStateChange', (newState, oldState) => {
