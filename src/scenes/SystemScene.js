@@ -190,6 +190,9 @@ _startInitialGame(initialData) {
      * GameSceneからの[jump]など、シンプルな遷移を処理する
      */
     _handleSimpleTransition(data) {
+        if (this.scene.isActive(data.from) && data.from !== 'UIScene') {
+            this.scene.stop(data.from);
+        }
         if (this.isProcessingTransition) return;
 
         console.log(`[SystemScene] シンプルな遷移リクエスト: ${data.from} -> ${data.to}`);
@@ -266,7 +269,8 @@ _startInitialGame(initialData) {
     _handleReturnToNovel(data) {
         const fromSceneKey = data.from;
         console.log(`[SystemScene] ノベル復帰リクエストを受信 (from: ${fromSceneKey})`);
-
+if (this.scene.isActive(fromSceneKey) && fromSceneKey !== 'UIScene') {
+            this.scene.stop(fromSceneKey);}
         // 現在のGameSceneとサブシーンを停止させる
         if (this.scene.isActive('GameScene')) {
             this.scene.stop('GameScene');
