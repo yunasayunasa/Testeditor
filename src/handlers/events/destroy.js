@@ -23,5 +23,12 @@ destroy.define = {
     description: 'ターゲットのオブジェクトをシーンから破壊（削除）します。',
     // パラメータは 'target' だけで、これはアクションタグの基本機能なので、
     // params配列で定義する必要はありません。
-    params: []
+    params: [
+        { 
+            key: 'target', 
+            type: 'string', 
+            label: 'ターゲット', 
+            defaultValue: 'self' 
+        }
+    ]
 };
