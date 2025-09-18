@@ -1357,7 +1357,12 @@ createComponentSection() {
                 }
             });
         }
-
+ if (componentDef.type === 'FlashEffect') {
+            const params = componentDef.params;
+            this.createTextInput(containerDiv, 'テクスチャ', params.texture || 'spark', (val) => params.texture = val);
+            this.createRangeInput(containerDiv, '拡大率', params.scale || 1.0, 0.1, 5, 0.1, (val) => params.scale = val);
+            this.createRangeInput(containerDiv, '表示時間', params.duration || 200, 50, 2000, 50, (val) => params.duration = val);
+        }
 
 
 
@@ -2475,27 +2480,21 @@ createComponentSection() {
     }
     // src/plugins/EditorPlugin.js
 
-    /**
-     * ★★★ 新規メソッド ★★★
-     * EditorUIからの依頼で、特定のVSLノードのパラメータを更新し、永続化する
-     * @param {Phaser.GameObjects.GameObject} targetObject - イベントを持つオブジェクト
-     * @param {string} nodeId - 更新対象ノードのID
-     * @param {string} paramKey - 更新するパラメータのキー (e.g., 'time')
-     * @param {string} paramValue - 新しい値
+    /*/**
+     * ★★★ 既存のヘルパーを、VSL用に再利用 ★★★
+     * ノードのパラメータを更新し、永続化する
      */
-    updateNodeParameter(targetObject, nodeId, paramKey, paramValue) {
-        if (!targetObject) return;
+    updateNodeParam(nodeData, paramKey, paramValue) {
+        if (!this.editorUI || !this.editorUI.editingObject) return;
+
+        // 1. ノードデータ自体のパラメータを更新
+        nodeData.params[paramKey] = paramValue;
         
-        const events = targetObject.getData('events') || [];
-        if (!events[0] || !events[0].nodes) return;
-        
-        const nodeData = events[0].nodes.find(n => n.id === nodeId);
-        
-        if (nodeData) {
-            nodeData.params[paramKey] = paramValue;
-            targetObject.setData('events', events); // 更新したデータを保存
-            console.log(`Node [${nodeId}] param '${paramKey}' updated to '${paramValue}'`);
-        }
+        // 2. オブジェクト全体の`events`データを、永続化する
+        const events = this.editorUI.editingObject.getData('events');
+        this.editorUI.editingObject.setData('events', events);
+
+        console.log(`Node [${nodeData.id}] param '${paramKey}' updated to '${paramValue}'`);
     }
     /**
      * イベントエディタのコンテンツを生成・再描画する (UI最終版)

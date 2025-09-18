@@ -1321,20 +1321,30 @@ export default class EditorUI {
         // ▼▼▼【ここが、最後の仕上げです】▼▼▼
         // --------------------------------------------------------------------
 
-        // ★★★ 最初に、XとYの座標入力欄を「常に」生成 ★★★
+        // 1. ハンドラのリストを取得
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+        // 2. このノードに対応するハンドラ関数を見つける
+        const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
+
+        // 3. もし、ハンドラに'define'プロパティがあれば、それに基づいてUIを生成
+        if (handler && handler.define && Array.isArray(handler.define.params)) {
+            handler.define.params.forEach(paramDef => {
+                
+                // ★ typeに応じて、適切なUI生成ヘルパーを呼び分ける
+                if (paramDef.type === 'number') {
+                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                } else { // 'string', 'asset_key' など
+                    this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                }
+
+            });
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
         this.createNodePositionInput(paramsContainer, nodeData, 'x');
         this.createNodePositionInput(paramsContainer, nodeData, 'y');
-        
-        // ★★★ その後に、各ノード固有のパラメータ入力欄を生成 ★★★
-        switch (nodeData.type) {
-            case 'destroy':
-                this.createNodeTextInput(paramsContainer, nodeData, 'target', 'self');
-                break;
-            case 'wait':
-                this.createNodeTextInput(paramsContainer, nodeData, 'time', '1000');
-                break;
-            // ... (他のタグのcase) ...
-        }
            // ★★★ 削除ボタンを生成 ★★★
         const deleteButton = document.createElement('button');
         deleteButton.innerText = '削除';
@@ -1366,11 +1376,13 @@ export default class EditorUI {
         input.addEventListener('change', () => {
             const value = parseInt(input.value, 10);
             if (!isNaN(value)) {
+                // ★ 位置(x,y)は、paramsの中ではなく、nodeDataの直下にある
                 nodeData[key] = value;
-                // ★ データを永続化し、キャンバスを再描画
-                const events = this.editingObject.getData('events');
-                this.editingObject.setData('events', events);
-                this.populateVslCanvas(this.editingObject);
+                
+                // ★ 永続化と再描画
+                const events = this.editorUI.editingObject.getData('events');
+                this.editorUI.editingObject.setData('events', events);
+                this.editorUI.populateVslCanvas(this.editorUI.editingObject);
             }
         });
 
@@ -1493,35 +1505,68 @@ deselectNode() {
 }
   
     
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
+   /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
      * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
      * @param {HTMLElement} container - 追加先の親要素
      * @param {object} nodeData - 対応するノードのデータ
-     * @param {string} paramKey - パラメータのキー (e.g., 'time')
+     * @param {string} paramKey - パラメータのキー (e.g., 'target')
+     * @param {string} label - 表示ラベル (e.g., 'ターゲット')
      * @param {string} defaultValue - デフォルト値
      */
-    createNodeTextInput(container, nodeData, paramKey, defaultValue) {
+    createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
         
-        const label = document.createElement('label');
-        label.innerText = `${paramKey}: `;
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
         
         const input = document.createElement('input');
         input.type = 'text';
         input.value = nodeData.params[paramKey] || defaultValue;
         
-        // ★ フォーカスが外れたら、プラグインにデータ更新を依頼
+        // フォーカスが外れたら、データ更新を呼び出す
         input.addEventListener('change', () => {
-            if (this.plugin) {
-                this.plugin.updateNodeParameter(this.editingObject, nodeData.id, paramKey, input.value);
+            // ★ updateNodeParamヘルパーを呼び出す
+            this.updateNodeParam(nodeData, paramKey, input.value);
+        });
+        
+        row.append(labelEl, input);
+        container.appendChild(row);
+    }
+
+    /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
+     * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'time')
+     * @param {string} label - 表示ラベル (e.g., '時間(ms)')
+     * @param {number} defaultValue - デフォルト値
+     */
+    createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const input = document.createElement('input');
+        input.type = 'number'; // ★ typeを'number'に変更
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        input.addEventListener('change', () => {
+            // ★ 値を数値に変換してから渡す
+            const value = parseFloat(input.value); 
+            if (!isNaN(value)) {
+                this.updateNodeParam(nodeData, paramKey, value);
             }
         });
         
-        row.append(label, input);
+        row.append(labelEl, input);
         container.appendChild(row);
     }
+
      /**
      * ★★★ 新規メソッド ★★★
      * VSLエディタの操作モードを切り替える
