@@ -410,7 +410,7 @@ applyProperties(gameObject, layout) {
                     const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
                     if (!editorUI || editorUI.currentMode === 'play') {
                         if (this.actionInterpreter) {
-                            this.actioninterpreter.run(gameObject, eventData.actions, gameObject);
+                           this.actionInterpreter.run(sourceObject, eventData, targetObject);
                         }
                     }
                 });
@@ -539,7 +539,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     }
 
     if (conditionMet && this.actionInterpreter) {
-        this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+       this.actionInterpreter.run(sourceObject, eventData, targetObject);
     }
 }
 // in src/scenes/BaseGameScene.js
@@ -553,7 +553,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
                 for (const eventData of events) {
                     if (eventData.trigger === 'onReady') {
                         if (this.actionInterpreter) {
-                            this.actionInterpreter.run(gameObject, eventData.actions, gameObject);
+                            this.actionInterpreter.run(sourceObject, eventData, targetObject);
                         }
                     }
                 }
@@ -629,7 +629,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             sourceObject.setData(overlapKey, true); // 今、重なったことを記録
             for (const eventData of events) {
                 if (eventData.trigger === 'onOverlap_Start' && eventData.targetGroup === targetObject.getData('group')) {
-                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                     this.actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
             }
         } else if (phase === 'end' && wasOverlapping) {
@@ -637,7 +637,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             sourceObject.setData(overlapKey, false); // 重なりが解消したことを記録
             for (const eventData of events) {
                 if (eventData.trigger === 'onOverlap_End' && eventData.targetGroup === targetObject.getData('group')) {
-                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                    this.actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
             }
         }
@@ -669,7 +669,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             // 方向を問わないので、グループが一致すれば即座にアクションを実行
             if (trigger === 'onCollide_Start') {
                 console.log(`%c[Collision] COLLIDE Event: '${sourceObject.name}' collided with '${targetObject.name}'`, 'color: yellow');
-                this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                this.actionInterpreter.run(sourceObject, eventData, targetObject);
                 // 一致するイベントが見つかったので、このイベント定義に対する処理は終了
                 continue; 
             }
@@ -689,7 +689,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
                 if (trigger === 'onStomp' && isStomp) {
                     console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
-                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                   this.actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
                 else if (trigger === 'onHit' && isHit) {
                     console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
@@ -753,7 +753,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             const keyObject = this.input.keyboard.addKey(key);
             if (Phaser.Input.Keyboard.JustDown(keyObject)) {
                 events.forEach(event => {
-                    if(this.actionInterpreter) this.actionInterpreter.run(event.target, event.actions);
+                    if(this.actionInterpreter) this.actionInterpreter.run(sourceObject, eventData, targetObject);
                 });
             }
         }

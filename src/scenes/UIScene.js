@@ -569,19 +569,17 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
      */
     applyUiEvents(uiElement) {
         const events = uiElement.getData('events') || [];
-        
-        // 既存のリスナーをクリア
         uiElement.off('onClick');
-
-        // 新しいリスナーを設定
+        
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
+                // Buttonクラスなどが発行する'onClick'イベントをリッスン
                 uiElement.on('onClick', () => {
-                    // ★ UISceneのActionInterpreterに処理を依頼
-                    this.actionInterpreter.run(uiElement, eventData.actions);
+                    console.log(`[UIScene] onClick triggered for '${uiElement.name}'`);
+                    // ★★★ eventData全体を渡す ★★★
+                    this.actionInterpreter.run(uiElement, eventData);
                 });
             }
-            // ... (将来的に、onHoverなどの他のトリガーもここに追加できる)
         });
     }
 

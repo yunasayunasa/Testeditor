@@ -4,7 +4,7 @@ import { eventTagHandlers } from '../handlers/events/index.js';
 
 export default class ActionInterpreter {
     constructor(scene) {
-        
+         this.scene = scene; // ★ シーンへの参照を保持
         this.tagHandlers = eventTagHandlers;
          this.currentSource = null;
         this.currentTarget = null;
@@ -12,62 +12,60 @@ export default class ActionInterpreter {
 
   
     /**
-     * アクションを解釈・実行する (ターゲット解決機能付き)
-     * @param {Phaser.GameObjects.GameObject} source - イベントを定義したオブジェクト
-     * @param {string} actionsString - アクション文字列
+     * ★★★ VSL対応版 ★★★
+     * イベントデータに基づいて、ノードグラフを実行する
+     * @param {Phaser.GameObjects.GameObject} source - イベントを発生させたオブジェクト
+     * @param {object} eventData - 単一のイベント定義 ({ trigger, nodes, connections })
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
- // in ActionInterpreter.js run()
+    async run(source, eventData, collidedTarget = null) {
+        if (!source || !source.scene || !source.scene.scene.isActive()) return;
+        if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
 
-  async run(source, actionsString, collidedTarget = null) {
-    if (!source || !source.scene || !source.scene.scene.isActive()) {
-        return;
-    }
-    this.scene = source.scene; // ★ 実行時のシーンをプロパティとして保持
-    this.gameObject = source; // ★ self もプロパティとして保持
-    this.targetObject = collidedTarget; // ★ other もプロパティとして保持
+        this.currentSource = source;
+        this.currentTarget = collidedTarget;
 
-    const tags = actionsString.match(/\[(.*?)\]/g) || [];
+        const { nodes, connections } = eventData;
 
-    for (const tagString of tags) {
-        try {
-            const { tagName, params } = this.parseTag(tagString);
+        // --- 1. 開始ノードを探す ---
+        // (入力ピンに何も接続されていないノードが開始点)
+        const allTargetNodeIds = new Set((connections || []).map(c => c.toNode));
+        let currentNodeData = nodes.find(n => !allTargetNodeIds.has(n.id));
+
+        // --- 2. 実行ループ ---
+        while (currentNodeData) {
+            console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
             
-            // ★ findTarget ヘルパーメソッドを新設して、ターゲット解決を任せる
-            const finalTarget = this.findTarget(params.target);
-
-            if (!finalTarget) {
-                console.warn(`[ActionInterpreter] Target not found: '${params.target}' for tag [${tagName}]`);
-                continue;
-            }
-            
-            const handler = this.tagHandlers[tagName];
+            const handler = this.tagHandlers[currentNodeData.type];
             if (handler) {
-                // ▼▼▼【ここが核心の修正です】▼▼▼
-                // ハンドラには、シーンではなく、ActionInterpreterのインスタンス自身(this)を渡す。
-                // これにより、ハンドラは interpreter.scene や interpreter.gameObject を参照できる。
-                await handler(this, params, finalTarget);
-            } else {
-                console.warn(`[ActionInterpreter] Unknown action tag: ${tagName}`);
+                const finalTarget = this.findTarget(currentNodeData.params.target, source, collidedTarget);
+
+                // ★ ハンドラに、interpreter(this), params, target を渡して実行
+                await handler(this, currentNodeData.params, finalTarget);
             }
-        } catch (error) {
-            console.error(`[ActionInterpreter] Error running action: ${tagString}`, error);
+
+            // --- 3. 次のノードを探す ---
+            const connection = (connections || []).find(c => c.fromNode === currentNodeData.id);
+            if (connection) {
+                currentNodeData = nodes.find(n => n.id === connection.toNode);
+            } else {
+                currentNodeData = null; // 次の接続がなければ、ループ終了
+            }
         }
+        
+        console.log("[ActionInterpreter] Event sequence finished.");
     }
-}
 
     /**
-     * ★★★ 新規ヘルパーメソッド ★★★
+     * ★★★ VSL対応版 ★★★
      * ターゲット文字列から、実際のGameObjectを見つけ出す
-     * @param {string} targetId - "self", "other", またはオブジェクト名
-     * @returns {Phaser.GameObjects.GameObject | null}
      */
-    findTarget(targetId) {
-        if (!targetId || targetId === 'self') {
-            return this.gameObject; // self
+    findTarget(targetId, source, collidedTarget) {
+        if (!targetId || targetId === 'self' || targetId === 'source') {
+            return source;
         }
-        if (targetId === 'other') {
-            return this.targetObject; // other
+        if (targetId === 'other' || targetId === 'target') {
+            return collidedTarget;
         }
         // それ以外は、シーンから名前で検索
         return this.scene.children.getByName(targetId);
