@@ -315,7 +315,12 @@ _startInitialGame(initialData) {
         if (this.scene.isActive(data.from)) {
             this.scene.stop(data.from); 
         }
-
+  // ★★★ 2. UISceneに、UIの状態を「戻り先」のシーン用に更新するよう命令 ★★★
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) {
+            console.log(`[SystemScene] Requesting UI update for scene: ${data.returnTo}`);
+            uiScene.onSceneTransition(data.returnTo);
+        }
         // 入力をブロック「していた」場合のみ、再度有効化する
         if (data.inputWasBlocked) {
             const returnScene = this.scene.get(data.returnTo);
