@@ -1035,7 +1035,7 @@ export default class EditorUI {
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         this.populateVslCanvas(this.activeEventData); 
-        // this.populateVslTriggerEditor(this.activeEventData); // ← 将来これは復活させる
+         this.populateVslTriggerEditor(this.activeEventData); // ← 将来これは復活させる
 
         // --- 3. 最後に、タブの見た目を更新 ---
         this.buildVslTabs();
@@ -1105,7 +1105,7 @@ export default class EditorUI {
         // --- 既存のロジックは、このtargetEventを直接使う ---
         const existingNodeCount = targetEvent.nodes.length;
         const newX = 50;
-        const newY = 50 + (existingNodeCount * 80);
+        const newY = 100 + (existingNodeCount * 80);
 
         const newNode = {
             id: `node_${Date.now()}`,
@@ -1127,8 +1127,65 @@ export default class EditorUI {
         // this.populateVslCanvas(targetEvent); // ← これをやめる
     }
 
-   // src/editor/EditorUI.js
-// src/editor/EditorUI.js
+   /**
+     * ★★★ 新規メソッド ★★★
+     * VSLトリガー編集UIを構築・再描画する
+     * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
+     */
+    populateVslTriggerEditor(activeEvent) {
+        const select = document.getElementById('vsl-trigger-select');
+        const contextContainer = document.getElementById('vsl-trigger-context');
+        if (!select || !contextContainer || !this.editingObject) return;
+
+        // --- イベントが選択されていない場合は、UIを隠すか無効化する ---
+        if (!activeEvent) {
+            select.innerHTML = '';
+            contextContainer.innerHTML = '';
+            return;
+        }
+
+        // --- 1. ドロップダウンの中身を生成 ---
+        select.innerHTML = '';
+        const availableTriggers = ['onClick', 'onReady', 'onCollide_Start', 'onStomp', 'onHit', 'onOverlap_Start', 'onOverlap_End'];
+        availableTriggers.forEach(triggerName => {
+            const option = document.createElement('option');
+            option.value = triggerName;
+            option.innerText = triggerName;
+            if (triggerName === activeEvent.trigger) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        // --- 2. ドロップダウンが変更されたときの処理 ---
+        select.onchange = () => {
+            activeEvent.trigger = select.value;
+            delete activeEvent.targetGroup; // 不要なコンテキスト情報を削除
+            
+            const allEvents = this.editingObject.getData('events');
+            this.editingObject.setData('events', allEvents);
+            
+            // ★ 変更をUIに反映するために、タブとトリガーUIを再描画
+            this.buildVslTabs(); 
+            this.populateVslTriggerEditor(activeEvent);
+        };
+
+        // --- 3. コンテキスト入力欄（相手のグループなど）を生成 ---
+        contextContainer.innerHTML = '';
+        if (['onCollide_Start', 'onStomp', 'onHit', 'onOverlap_Start', 'onOverlap_End'].includes(activeEvent.trigger)) {
+            const label = document.createElement('label');
+            label.innerText = '相手のグループ: ';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = activeEvent.targetGroup || '';
+            input.onchange = () => {
+                activeEvent.targetGroup = input.value;
+                const allEvents = this.editingObject.getData('events');
+                this.editingObject.setData('events', allEvents);
+            };
+            contextContainer.append(label, input);
+        }
+    }
 
     /**
      * ★★★ 最終FIX版 (線描画機能付き) ★★★
