@@ -1333,9 +1333,19 @@ deselectNode() {
      * VSLノードのピンがクリックされたときの処理
      * @param {HTMLElement} clickedPin - クリックされたピンのHTML要素
      */
-    onPinClicked(clickedPin) {
+  onPinClicked(clickedPin) {
+        // ▼▼▼【ここを、このように修正します】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- 1. クリックされたピンの情報を取得 ---
         const pinType = clickedPin.dataset.pinType;
-        const parentNode = clickedPin.closest('[data-is-node="true"]');
+        
+        // --- 2. 親であるノード要素を、より安全な方法で探す ---
+        const parentNode = clickedPin.parentElement;
+        if (!parentNode || !parentNode.dataset.nodeId) {
+            console.error("Could not find parent node for the clicked pin!", clickedPin);
+            return; // 親が見つからなければ、何もせず終了
+        }
         const nodeId = parentNode.dataset.nodeId;
 
         // --- ケース1: 接続モード中でない時に、出力ピンがクリックされた (接続開始) ---
