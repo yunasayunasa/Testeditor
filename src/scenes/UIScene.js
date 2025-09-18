@@ -569,7 +569,7 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
      */
     applyUiEvents(uiElement) {
         const events = uiElement.getData('events') || [];
-        uiElement.off('onClick');
+       /*uiElement.off('onClick');
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
                 uiElement.on('onClick', () => {
@@ -580,7 +580,7 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
                     }
                 });
             }
-        });
+        });*/
     }
 
     // in UIScene.js

@@ -393,7 +393,7 @@ applyProperties(gameObject, layout) {
         const events = eventsData || [];
         gameObject.setData('events', events);
         
-        // --- 既存のゲームプレイ用リスナーを全てクリア ---
+      /*  // --- 既存のゲームプレイ用リスナーを全てクリア ---
         gameObject.off('pointerdown');
         gameObject.off('onStateChange');
         gameObject.off('onDirectionChange');
@@ -438,15 +438,15 @@ applyProperties(gameObject, layout) {
                 });
             }
             
-        }); // ★★★ ここが、forEach ループの正しい閉じ括弧です ★★★
+        });*/ // ★★★ ここが、forEach ループの正しい閉じ括弧です ★★★
 
-        // --- エディタへの登録 (変更なし) ---
+        // ★★★ 3. makeEditableの呼び出しは、ここではなくapplyPropertiesの最後で行うのがより安全 ★★★
+        // (ただし、現状のままでも、次のステップで解決します)
         const editor = this.plugins.get('EditorPlugin');
         if (editor && editor.isEnabled) {
             editor.makeEditable(gameObject, this);
         }
     }
-
      /**
      * コンポーネントをGameObjectにアタッチする (動的読み込み対応版)
      */

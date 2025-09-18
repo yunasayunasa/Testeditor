@@ -1528,9 +1528,25 @@ createComponentSection() {
         // --------------------------------------------------------------------
         
         // --- タップ情報を記録するための変数をGameObjectに持たせる ---
-        gameObject.setData('lastTap', 0);
+       gameObject.setData('lastTap', 0);
 
-       gameObject.on('pointerdown', (pointer) => {
+        gameObject.on('pointerdown', (pointer) => {
+            // ★★★ 1. グローバルレジストリから、現在のモードを取得 ★★★
+            const currentMode = this.game.registry.get('editor_mode');
+
+            // --- ケースA: プレイモードの場合 ---
+            if (currentMode === 'play') {
+                const events = gameObject.getData('events') || [];
+                events.forEach(eventData => {
+                    if (eventData.trigger === 'onClick') {
+                        // ★ ActionInterpreterは、シーンが持っている
+                        if (scene.actionInterpreter) {
+                            scene.actionInterpreter.run(gameObject, eventData, gameObject);
+                        }
+                    }
+                });
+                return; // プレイモードの処理はここで終わり
+            }
             // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
           const layerName = gameObject.getData('layer');
             const layer = this.layerStates.find(l => l.name === layerName);
@@ -1562,7 +1578,7 @@ createComponentSection() {
                 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
             } else { // シングルタップの処理
-                setTimeout(() => {
+               setTimeout(() => {
                     if (gameObject.getData('lastTap') === now) {
                         this.selectSingleObject(gameObject);
                     }
