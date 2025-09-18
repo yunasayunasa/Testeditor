@@ -30,7 +30,7 @@ import returnNovelHandler from './return_novel.js';
 import stopSoundHandler from './stop_sound.js';
 import runScenarioHandler from './run_scenario.js'; 
 import setUiVisibleHandler from './set_ui_visible.js';
-
+import flash_effect from './flash_effect.js';
 
 //*******************++++++++++++++++++++++ */
 // ActionInterpreterが使う、イベントタグのカタログ
@@ -65,5 +65,6 @@ export const eventTagHandlers = {
 'stop_sound': stopSoundHandler,
 'run_scenario': runScenarioHandler, 
  'set_ui_visible': setUiVisibleHandler,
+ 'flash_effect' : flash_effect,
     // 将来、ここに [eval] [body_velocity] などを追加していく
 };
