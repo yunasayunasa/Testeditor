@@ -264,47 +264,26 @@ _startInitialGame(initialData) {
      * サブシーンからノベルパートへの復帰リクエストを処理する (ロード機能連携版)
      * @param {object} data - { from: string, params: object }
      */
+  // src/scenes/SystemScene.js
     _handleReturnToNovel(data) {
-        console.log(`%c[LOG BOMB 2] SystemScene: 'return-to-novel'リクエストを受信しました。From: ${data.from}`, "color: orange; font-weight: bold;");
         const fromSceneKey = data.from;
-        console.log(`[SystemScene] ノベル復帰リクエストを受信 (from: ${fromSceneKey})`);
-    if (this.scene.isActive(fromSceneKey)) {
-            console.log(`%c[LOG BOMB 3] SystemScene: シーン '${fromSceneKey}' を停止します。`, "color: orange; font-weight: bold;");
-            this.scene.stop(fromSceneKey);
-        }
-        // 現在のGameSceneとサブシーンを停止させる
-        if (this.scene.isActive('GameScene')) {
-            this.scene.stop('GameScene');
-        }
+        console.log(`[SystemScene] 'return-to-novel' request received from '${fromSceneKey}'.`);
+
+        // 1. 呼び出し元のシーンを停止する
         if (this.scene.isActive(fromSceneKey)) {
             this.scene.stop(fromSceneKey);
         }
-        
-        // UISceneの表示を戻す
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene) {
-            uiScene.onSceneTransition('GameScene'); // UIの表示グループをGameScene用に切り替え
-        }
 
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-        // ★★★ これが全てを解決する、唯一の修正です ★★★
-        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-        console.log("[SystemScene] GameSceneを「ロードモード」で再起動します。");
-        // GameSceneを起動する際に、どのスロットからロードするかを`init`データで渡す
-        this.scene.launch('GameScene', {
-            loadSlot: 0, // ★ オートセーブスロット(0)からロードするように指示
-            charaDefs: this.globalCharaDefs,
-            resumedFrom: fromSceneKey,
-            returnParams: data.params
-        });
-
-        // ★★★ _startAndMonitorSceneは使わない ★★★
-        // なぜなら、新しいGameSceneの起動と完了監視は、launchによって
-        // Phaserのシーンマネージャーが自動的に行ってくれるため。
-        // そして、GameSceneのcreateがloadSlotを元に正しくperformLoadを呼び出す。
+        // 2. UISceneとGameSceneを、シーンシーケンスで確実に再起動する
+        //    (これが最も安定した方法)
+        this._startSceneSequence(
+            [
+                { key: 'UIScene', params: {} },
+                { key: 'GameScene', params: { loadSlot: 0, charaDefs: this.globalCharaDefs } }
+            ], 
+            'GameScene' // 最終的にフォーカスするシーン
+        );
     }
-
    // src/scenes/SystemScene.js
 
     /**
