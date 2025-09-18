@@ -1057,7 +1057,7 @@ export default class EditorUI {
             const nodeElement = document.createElement('div');
             nodeElement.className = 'vsl-node';
             nodeElement.style.left = `${nodeData.x}px`;
-            nodeElement.style.top = `${nodeData.y} + 50px`;
+            nodeElement.style.top = `${nodeData.y}px`;
             nodeElement.dataset.nodeId = nodeData.id;
 
             // ★ 描画処理は、buildNodeContentに一本化
