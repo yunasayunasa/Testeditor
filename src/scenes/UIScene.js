@@ -573,8 +573,9 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
                 uiElement.on('onClick', () => {
-                    const editor = this.plugins.get('EditorPlugin');
-                    if (!editor || editor.currentMode === 'play') {
+                    const currentMode = this.registry.get('editor_mode');
+
+                    if (currentMode === 'play') {
                         this.actionInterpreter.run(uiElement, eventData);
                     }
                 });

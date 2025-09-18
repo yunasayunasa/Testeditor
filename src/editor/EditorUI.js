@@ -204,7 +204,7 @@ export default class EditorUI {
 
         // --- 1. プラグインの状態を更新 ---
         this.plugin.currentMode = mode;
-        
+        this.game.registry.set('editor_mode', mode);
         // --- 2. UIの見た目を更新 ---
         const modeToggle = document.getElementById('mode-toggle-checkbox');
         const modeLabel = document.getElementById('mode-label');
