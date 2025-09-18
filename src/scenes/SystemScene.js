@@ -2,6 +2,7 @@ import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
+import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -94,6 +95,10 @@ export default class SystemScene extends Phaser.Scene {
                 console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
             }
         });
+        const actionInterpreter = new ActionInterpreter(this.game);
+        this.registry.set('actionInterpreter', actionInterpreter);
+        console.log("SystemScene: ActionInterpreter has been registered globally.");
+        // --------------------------------------------------------------------
      // ★★★ 時間を再開させるための、公式な命令を追加 ★★★
         this.events.on('request-time-resume', () => {
             this.isTimeStopped = false;

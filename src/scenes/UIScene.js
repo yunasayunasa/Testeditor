@@ -1,6 +1,6 @@
 import { uiRegistry, sceneUiVisibility } from '../ui/index.js';
 import { ComponentRegistry } from '../components/index.js';
-import ActionInterpreter from '../core/ActionInterpreter.js';
+
 export default class UIScene extends Phaser.Scene {
     
     constructor() {
@@ -8,7 +8,7 @@ export default class UIScene extends Phaser.Scene {
         this.uiElements = new Map();
         this.isPanelOpen = false;
         this.componentsToUpdate = [];
-        this.actionInterpreter = null;
+       
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
 
@@ -33,7 +33,7 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
             } else {
                 console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
-this.actionInterpreter = new ActionInterpreter(this);
+
             // ステップ3: すべての準備が完了してから、成功を通知する
             console.log("UIScene: Finalizing setup and emitting scene-ready.");
             this.isFullyReady = true; // ★ 最後にフラグを立てる
@@ -563,26 +563,32 @@ textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを
 
         return textObject;
     }
-     /**
+   /**
+     * ★★★ グローバルInterpreterを使うように修正 ★★★
      * UIオブジェクトのイベント定義に基づいて、リスナーを設定する
-     * (BaseGameSceneのapplyEventsAndEditorFunctionsを参考にしたもの)
-     * @param {Phaser.GameObjects.GameObject} uiElement
      */
     applyUiEvents(uiElement) {
         const events = uiElement.getData('events') || [];
-       /*uiElement.off('onClick');
+        
+        // 既存のリスナーをクリア
+        uiElement.off('onClick');
+
         events.forEach(eventData => {
             if (eventData.trigger === 'onClick') {
                 uiElement.on('onClick', () => {
+                    // ★ 1. レジストリから、グローバルなInterpreterを取得
+                    const actionInterpreter = this.registry.get('actionInterpreter');
                     const currentMode = this.registry.get('editor_mode');
 
-                    if (currentMode === 'play') {
-                        this.actionInterpreter.run(uiElement, eventData);
+                    // ★ 2. 取得できたInterpreterを使い、モードを判定して実行
+                    if (actionInterpreter && currentMode === 'play') {
+                        actionInterpreter.run(uiElement, eventData);
                     }
                 });
             }
-        });*/
+        });
     }
+
 
     // in UIScene.js
 

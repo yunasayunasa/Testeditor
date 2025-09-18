@@ -544,8 +544,11 @@ evaluateConditionAndRun(gameObject, eventData, context) {
         }
     }
 
-    if (conditionMet && this.actionInterpreter) {
-       this.actionInterpreter.run(sourceObject, eventData, targetObject);
+    if (conditionMet) {
+        const actionInterpreter = this.registry.get('actionInterpreter');
+        if (actionInterpreter) {
+            actionInterpreter.run(gameObject, eventData, gameObject);
+        }
     }
 }
 // in src/scenes/BaseGameScene.js
@@ -557,11 +560,12 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             const events = gameObject.getData('events');
             if (events) {
                 for (const eventData of events) {
-                    if (eventData.trigger === 'onReady') {
-                        if (this.actionInterpreter) {
-                            this.actionInterpreter.run(sourceObject, eventData, targetObject);
-                        }
-                    }
+                        if (eventData.trigger === 'onReady') {
+        const actionInterpreter = this.registry.get('actionInterpreter');
+        if (actionInterpreter) {
+            actionInterpreter.run(gameObject, eventData, gameObject);
+        }
+    }
                 }
             }
         }
@@ -622,9 +626,12 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * @param {string} phase - 'active' (重なり中) or 'end' (重なり終了)
      */
     handleOverlap(sourceObject, targetObject, phase) {
-        if (!this.actionInterpreter || !sourceObject.getData) return;
+        const actionInterpreter = this.registry.get('actionInterpreter');
+        if (!actionInterpreter || !sourceObject.getData) return;
+        
         const events = sourceObject.getData('events');
         if (!events) return;
+     
 
         // "重なり始め" をエミュレートするためのフラグ管理
         const overlapKey = `overlap_${targetObject.name || targetObject.id}`;
@@ -635,7 +642,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             sourceObject.setData(overlapKey, true); // 今、重なったことを記録
             for (const eventData of events) {
                 if (eventData.trigger === 'onOverlap_Start' && eventData.targetGroup === targetObject.getData('group')) {
-                     this.actionInterpreter.run(sourceObject, eventData, targetObject);
+                    actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
             }
         } else if (phase === 'end' && wasOverlapping) {
@@ -643,7 +650,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             sourceObject.setData(overlapKey, false); // 重なりが解消したことを記録
             for (const eventData of events) {
                 if (eventData.trigger === 'onOverlap_End' && eventData.targetGroup === targetObject.getData('group')) {
-                    this.actionInterpreter.run(sourceObject, eventData, targetObject);
+                   actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
             }
         }
@@ -656,8 +663,11 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * @param {Phaser.GameObjects.GameObject} targetObject - 衝突相手のオブジェクト
      * @param {object} pair - Matter.jsが提供する衝突の詳細情報
      */
-    handleCollision(sourceObject, targetObject, pair) {
-        if (!this.actionInterpreter || !sourceObject.getData) return;
+    
+handleCollision(sourceObject, targetObject, pair) {
+        const actionInterpreter = this.registry.get('actionInterpreter');
+        if (!actionInterpreter || !sourceObject.getData) return;
+        
         const events = sourceObject.getData('events');
         if (!events) return;
 
@@ -675,7 +685,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             // 方向を問わないので、グループが一致すれば即座にアクションを実行
             if (trigger === 'onCollide_Start') {
                 console.log(`%c[Collision] COLLIDE Event: '${sourceObject.name}' collided with '${targetObject.name}'`, 'color: yellow');
-                this.actionInterpreter.run(sourceObject, eventData, targetObject);
+              actionInterpreter.run(sourceObject, eventData, targetObject);
                 // 一致するイベントが見つかったので、このイベント定義に対する処理は終了
                 continue; 
             }
@@ -695,11 +705,11 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 
                 if (trigger === 'onStomp' && isStomp) {
                     console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
-                   this.actionInterpreter.run(sourceObject, eventData, targetObject);
+                   actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
                 else if (trigger === 'onHit' && isHit) {
                     console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
-                    this.actionInterpreter.run(sourceObject, eventData.actions, targetObject);
+                    actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
             }
             
@@ -754,12 +764,16 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     
 
     handleKeyPressEvents() {
-        if (!this.input.keyboard.enabled) return;
+       const actionInterpreter = this.registry.get('actionInterpreter');
+        if (!actionInterpreter || !sourceObject.getData) return;
+        
+        const events = sourceObject.getData('events');
+        if (!events) return;
         for (const [key, events] of this.keyPressEvents.entries()) {
             const keyObject = this.input.keyboard.addKey(key);
             if (Phaser.Input.Keyboard.JustDown(keyObject)) {
                 events.forEach(event => {
-                    if(this.actionInterpreter) this.actionInterpreter.run(sourceObject, eventData, targetObject);
+                    if(actionInterpreter) this.actionInterpreter.run(sourceObject, eventData, targetObject);
                 });
             }
         }
