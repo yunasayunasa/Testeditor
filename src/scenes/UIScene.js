@@ -18,7 +18,7 @@ export default class UIScene extends Phaser.Scene {
       async create() {
         console.log("UIScene: Data-Driven Initialization Started");
         this.scene.bringToTop();
-
+this.isFullyReady = false; // ★ 最初にフラグを倒す
         try {
             // ステップ1: UIの構築を待つ
             const layoutData = this.cache.json.get(this.scene.key);
@@ -36,6 +36,7 @@ export default class UIScene extends Phaser.Scene {
 this.actionInterpreter = new ActionInterpreter(this);
             // ステップ3: すべての準備が完了してから、成功を通知する
             console.log("UIScene: Finalizing setup and emitting scene-ready.");
+            this.isFullyReady = true; // ★ 最後にフラグを立てる
             this.events.emit('scene-ready');
 
         } catch (err) {

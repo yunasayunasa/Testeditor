@@ -24,6 +24,22 @@ export default class GameScene extends Phaser.Scene {
     preload() { this.load.text('test', 'assets/test.ks'); }
 
  async create(data) {
+    const uiScene = this.scene.get('UIScene');
+
+        // --- 2. もし、UISceneが存在し、まだ準備ができていないなら、準備完了を待つ ---
+        if (uiScene) {
+            console.log("[GameScene] Checking UIScene status...");
+            // ★ UISceneが持つ「準備完了フラグ」を待つのが最も確実
+            //    (このフラグは、UISceneのcreateの最後にtrueにする)
+            await new Promise(resolve => {
+                if (uiScene.isFullyReady) {
+                    resolve();
+                } else {
+                    uiScene.events.once('scene-ready', resolve);
+                }
+            });
+            console.log("[GameScene] UIScene is ready. Proceeding with create.");
+        }
         console.log("GameScene: create処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
         
