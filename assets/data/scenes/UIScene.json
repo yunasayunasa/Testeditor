@@ -42,7 +42,7 @@
       "alpha": 1,
       "group": "jump_button",
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、226 回目ですね。」"
+      "label": "「このゲームを起動するのは、130 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -84,9 +84,9 @@
         "wordWrapCallbackScope": null,
         "wordWrapUseAdvanced": false,
         "metrics": {
-          "ascent": 26,
-          "descent": 7,
-          "fontSize": 33
+          "ascent": 28.09375,
+          "descent": 8.859375,
+          "fontSize": 36.953125
         }
       }
     },
@@ -156,7 +156,7 @@
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 0,
+      "angle": 156,
       "alpha": 1,
       "components": [
         {
@@ -171,7 +171,7 @@
         }
       ],
       "registryKey": "Text",
-      "text": "score:",
+      "text": "100",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -203,6 +203,64 @@
           "ascent": 24,
           "descent": 6,
           "fontSize": 30
+        }
+      }
+    },
+    {
+      "name": "text_1758278722102",
+      "type": "initialize",
+      "x": 779,
+      "y": 250,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "components": [
+        {
+          "type": "WatchVariableComponent",
+          "params": {
+            "variable": "f.score"
+          }
+        },
+        {
+          "type": "TextDisplayComponent",
+          "params": {}
+        }
+      ],
+      "registryKey": "Text",
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24.984375,
+          "descent": 7.875,
+          "fontSize": 32.859375
         }
       }
     }
