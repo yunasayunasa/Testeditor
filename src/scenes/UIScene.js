@@ -543,21 +543,33 @@ onSceneTransition(newSceneKey) {
      * ★★★ 新規メソッド ★★★
      * エディタから、新しいテキストUIオブジェクトを生成する
      */
+   /**
+     * ★★★ 最終FIX版 ★★★
+     * エディタから、新しいテキストUIオブジェクトを生成する
+     */
     addTextUiFromEditor(newName) {
         const centerX = this.scale.width / 2;
         const centerY = this.scale.height / 2;
         
-        // BaseGameSceneのロジックを参考に、Phaserの標準Textオブジェクトを生成
         const textObject = this.add.text(centerX, centerY, 'New Text', { 
             fontSize: '32px', 
             fill: '#ffffff' 
         }).setOrigin(0.5);
-textObject.setData('registryKey', 'Text'); // 'Text' という特別なキーを記憶させる
- if (layout.components) {
-                        layout.components.forEach(compDef => {
-                            this.addComponent(textObject, compDef.type, compDef.params);
-                        });
-                    }
+        
+        textObject.setData('registryKey', 'Text');
+
+        // ▼▼▼【このifブロックを、完全に削除します】▼▼▼
+        // --------------------------------------------------------------------
+        /*
+        if (layout.components) { // ← 'layout'は存在しないため、エラーになる
+            layout.components.forEach(compDef => {
+                this.addComponent(textObject, compDef.type, compDef.params);
+            });
+        }
+        */
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         // registerUiElement を使って、共通のセットアップを行う
         this.registerUiElement(newName, textObject, { name: newName, x: centerX, y: centerY });
 
