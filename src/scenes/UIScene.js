@@ -96,7 +96,7 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
      * ★★★ 新規メソッド (Phaserのライフサイクルメソッド) ★★★
      * 毎フレーム呼び出され、コンポーネントの更新処理を実行する
      */
-    update(time, delta) {
+    
         update(time, delta) {
     const scoreText = this.uiElements.get('text_1758268988092');
     if (scoreText) {
