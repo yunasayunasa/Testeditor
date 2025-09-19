@@ -30,7 +30,14 @@ export default async function play_sound(interpreter, params) {
 play_sound.define = {
     description: '効果音（SE）を再生します。',
     params: [
-        { key: 'key', type: 'asset_key', label: 'SEアセット名', defaultValue: '' },
+      
+        { 
+            key: 'key', 
+            type: 'asset_key',
+            assetType: 'audio', // ★ 音声アセットを指定
+            label: 'SEアセット名', 
+            defaultValue: '' 
+        },
         { key: 'volume', type: 'number', label: '音量 (0-1)', defaultValue: 1.0 },
         { key: 'loop', type: 'select', options: ['true', 'false'], label: 'ループ再生', defaultValue: false }
     ]

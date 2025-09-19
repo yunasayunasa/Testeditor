@@ -2739,4 +2739,57 @@ createComponentSection() {
         this.editorPropsContainer.appendChild(maxRow);
     }
 
+    /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
+     * アセット選択用のドロップダウンを生成する
+     * @param {HTMLElement} container
+     * @param {object} nodeData
+     * @param {string} paramKey
+     * @param {string} label
+     * @param {string} defaultValue
+     * @param {string} assetType - 'image', 'prefab', 'audio' などのフィルタリング用
+     */
+    createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue, assetType) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const select = document.createElement('select');
+        
+        // 1. グローバルレジストリから、アセットリストを取得
+        const assetList = this.game.registry.get('asset_list') || [];
+        
+        // 2. 指定されたassetTypeで、リストをフィルタリング
+        const filteredAssets = assetList.filter(asset => {
+            if (assetType === 'prefab') {
+                return asset.type === 'prefab' || asset.type === 'GroupPrefab';
+            }
+            if (assetType === 'audio') {
+                return asset.type === 'audio' || asset.type === 'sound'; // 'sound'も考慮
+            }
+            // 他のタイプも同様に追加
+            return asset.type === assetType;
+        });
+
+        // 3. フィルタリングされたリストから、<option>を生成
+        select.innerHTML = '<option value="">-- Select --</option>'; // 空の選択肢
+        filteredAssets.forEach(asset => {
+            const option = document.createElement('option');
+            option.value = asset.key;
+            option.innerText = asset.key;
+            if ((nodeData.params[paramKey] || defaultValue) === asset.key) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+            this.updateNodeParam(nodeData, paramKey, select.value);
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
+    }
+
 }

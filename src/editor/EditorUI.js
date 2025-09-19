@@ -1293,10 +1293,9 @@ export default class EditorUI {
         if (handler && handler.define && Array.isArray(handler.define.params)) {
             handler.define.params.forEach(paramDef => {
                  // ▼▼▼【アセット選択UIのロジックを追加】▼▼▼
-                if (paramDef.type === 'asset_key') {
-                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                } 
-                if (paramDef.type === 'select') { // ★ selectタイプを追加
+               if (paramDef.type === 'asset_key') {
+            this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.assetType);
+               } else if (paramDef.type === 'select') { // ★ selectタイプを追加
                     this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
                 } else if (paramDef.type === 'number') {
                     this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);

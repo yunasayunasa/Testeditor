@@ -61,7 +61,15 @@ export default async function spawn_object(interpreter, params) {
 spawn_object.define = {
     description: 'プレハブから新しいオブジェクトを生成します。',
     params: [
-        { key: 'prefab', type: 'asset_key', label: 'プレハブ名', defaultValue: '' },
+        { 
+            key: 'prefab', 
+            // ▼▼▼【ここを、このように拡張します】▼▼▼
+            type: 'asset_key',
+            assetType: 'prefab', // ★ どのアセットタイプかを追加
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            label: 'プレハブ名', 
+            defaultValue: '' 
+        },
         { key: 'at', type: 'string', label: '生成位置', defaultValue: 'source' }
     ]
 };

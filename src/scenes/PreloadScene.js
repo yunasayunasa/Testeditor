@@ -209,6 +209,16 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
                 });
             }
         }
+        // --- 'sounds' (audio) セクションから情報を取得 ---
+        if (assetDefine.sounds) {
+            for (const key in assetDefine.sounds) {
+                assetList.push({ 
+                    key: key, 
+                    type: 'audio', // タイプは'audio'に統一するのが良い
+                    path: assetDefine.sounds[key] 
+                });
+            }
+        }
         // --- 3. 他のタイプのアセットも、必要であればここに追加 ---
         // (例: 音声ファイルなども、将来的にアセットブラウザで扱いたくなった場合)
         
