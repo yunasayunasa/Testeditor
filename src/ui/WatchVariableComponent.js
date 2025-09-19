@@ -29,19 +29,27 @@ export default class WatchVariableComponent {
      * @param {string} key - 変更された変数のキー
      * @param {*} value - 新しい値
      */
-   onVariableChanged(key, value) {
-        // ★ 安全のためのガード節を追加
+    onVariableChanged(key, value) {
         if (!this.variableToWatch || typeof this.variableToWatch.replace !== 'function') {
-            // variableToWatchが設定されていないか、文字列でない場合は何もしない
             return; 
         }
 
-        const watchKey = this.variableToWatch.replace('f.', '');
+        // ▼▼▼【ここが、最後の、そして最も確実な修正です】▼▼▼
+        // --------------------------------------------------------------------
         
-        if (key === watchKey) {
+        // ★ 1. 監視対象のキーから 'f.' と前後の空白を取り除く
+        const watchKey = this.variableToWatch.replace('f.', '').trim();
+        
+        // ★ 2. イベントで渡されたキーからも、念のため前後の空白を取り除く
+        const eventKey = key.trim();
+
+        // ★ 3. 整形済みのキー同士で比較する
+        if (eventKey === watchKey) {
             this.gameObject.emit('onValueChanged', value, this.lastValue);
             this.lastValue = value;
         }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
       /**
