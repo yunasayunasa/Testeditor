@@ -36,14 +36,16 @@ export default class WatchVariableComponent {
      * @param {string} key - 変更された変数のキー
      * @param {*} value - 新しい値
      */
-    onVariableChanged(key, value) {
-        // 自分が監視している変数と、変更された変数のキーが一致するか確認
-        // ( "f.player_hp" と "player_hp" を比較できるように、 "f." を取り除く )
+   onVariableChanged(key, value) {
+        // ★ 安全のためのガード節を追加
+        if (!this.variableToWatch || typeof this.variableToWatch.replace !== 'function') {
+            // variableToWatchが設定されていないか、文字列でない場合は何もしない
+            return; 
+        }
+
         const watchKey = this.variableToWatch.replace('f.', '');
         
         if (key === watchKey) {
-              console.log(`%c[LOG BOMB 2 | WatchVariable] '${this.gameObject.name}'が監視中の変数'${key}'の変更を検知しました！ 'onValueChanged'イベントを発行します。ペイロード: ${value}`, 'color: cyan; font-size: 1.2em;');
-            // ★★★ アタッチされているGameObject自身にイベントを発行 ★★★
             this.gameObject.emit('onValueChanged', value, this.lastValue);
             this.lastValue = value;
         }
@@ -63,10 +65,10 @@ export default class WatchVariableComponent {
     /**
      * このコンポーネントが破棄されるときに呼ばれるクリーンアップ処理
      */
-    destroy() {
-        // 登録したイベントリスナーを必ず解除する
+     destroy() {
         if (this.stateManager) {
-            this.stateManager.off('f-changed', this.listener);
+            // ★★★ 購読した 'f-variable-changed' を解除する ★★★
+            this.stateManager.off('f-variable-changed', this.listener);
         }
         console.log(`[WatchVariableComponent] for ${this.gameObject.name} destroyed.`);
     }
