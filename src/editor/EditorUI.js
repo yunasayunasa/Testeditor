@@ -1293,14 +1293,17 @@ export default class EditorUI {
         if (handler && handler.define && Array.isArray(handler.define.params)) {
             handler.define.params.forEach(paramDef => {
                  // ▼▼▼【アセット選択UIのロジックを追加】▼▼▼
-               if (paramDef.type === 'asset_key') {
-            this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.assetType);
-               } else if (paramDef.type === 'select') { // ★ selectタイプを追加
-                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
-                } else if (paramDef.type === 'number') {
-                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                } else { // 'string', 'asset_key' など
-                    this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+              if (paramDef.type === 'asset_key') {
+                    this.createNodeAssetSelectInput.call(this, paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.assetType);
+                } 
+                else if (paramDef.type === 'select') {
+                    this.createNodeSelectInput.call(this, paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
+                } 
+                else if (paramDef.type === 'number') {
+                    this.createNodeNumberInput.call(this, paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                } 
+                else { // string
+                    this.createNodeTextInput.call(this, paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
                 }
 
             });
