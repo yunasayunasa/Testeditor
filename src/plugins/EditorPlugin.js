@@ -1384,11 +1384,11 @@ createComponentSection() {
                 select.innerHTML += `<option value="${compName}">${compName}</option>`;
             }
         });
-    select.onchange = (e) => {
+   select.onchange = (e) => {
         const compToAdd = e.target.value;
         if (compToAdd && this.selectedObject) {
             
-            // --- 1. 永続化データを更新 (これは正しい処理です) ---
+            // --- 1. 永続化データを更新 ---
             const currentComps = this.selectedObject.getData('components') || [];
             const newComponentDef = { type: compToAdd, params: {} };
             currentComps.push(newComponentDef);
@@ -1402,10 +1402,12 @@ createComponentSection() {
             
             // ★★★ シーンが'addComponent'メソッドを持っていることを確認 ★★★
             if (targetScene && typeof targetScene.addComponent === 'function') {
-                console.log(`[EditorPlugin] Requesting scene to add component instance: ${newComponentDef.type}`);
+                console.log(`[EditorPlugin] Requesting scene '${targetScene.scene.key}' to add component instance: ${newComponentDef.type}`);
                 
-                // ★★★ 実際にコンポーネントのインスタンスを生成させる ★★★
+                // ★★★ 実際にコンポーネントのインスタンスを生成させ、魂を吹き込む ★★★
                 targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
+            } else {
+                console.error(`[EditorPlugin] Target scene does not have an 'addComponent' method!`);
             }
             // --------------------------------------------------------------------
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
