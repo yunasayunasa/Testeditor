@@ -1408,7 +1408,7 @@ export default class EditorUI {
         });
 
         select.addEventListener('change', () => {
-            this.updateNodeParam(nodeData, paramKey, select.value);
+            this.plugin.updateNodeParam(nodeData, paramKey, select.value);
         });
         
         row.append(labelEl, select);
@@ -1553,9 +1553,10 @@ deselectNode() {
          
             // --------------------------------------------------------------------
             // ★★★ thisではなく、this.pluginのメソッドを呼び出す ★★★
-            if (this.plugin && typeof this.plugin.updateNodeParam === 'function') {
-                this.plugin.updateNodeParam(this.editingObject, nodeData.id, paramKey, input.value);
-            }
+              if (this.plugin) {
+            // ★★★ 渡す引数を、nodeData, paramKey, value に変更 ★★★
+            this.plugin.updateNodeParam(nodeData, paramKey, input.value);
+        }
         });
         
         row.append(labelEl, input);

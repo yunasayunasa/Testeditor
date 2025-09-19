@@ -2486,22 +2486,6 @@ createComponentSection() {
 
     /**
      * ★★★ 新規追加 ★★★
-     * EditorUIからの依頼で、VSLノードのパラメータを更新し、永続化する
-     */
-    updateNodeParam(targetObject, nodeId, paramKey, paramValue) {
-        if (!targetObject) return;
-        const events = targetObject.getData('events') || [];
-        if (!events[0] || !events[0].nodes) return;
-        
-        const nodeData = events[0].nodes.find(n => n.id === nodeId);
-        if (nodeData) {
-            nodeData.params[paramKey] = paramValue;
-            targetObject.setData('events', events);
-        }
-    }
-    
-    /**
-     * ★★★ 新規追加 ★★★
      * EditorUIからの依頼で、VSLノードの位置を更新し、永続化・再描画する
      */
     updateNodePosition(targetObject, nodeId, key, value) {
