@@ -2745,79 +2745,56 @@ createComponentSection() {
     }
 
    
-  /**
+  
+ /**
      * ★★★ 最終FIX版 ★★★
-     * VSLノード編集用のプロパティパネルを構築する
+     * VSLノード編集用のプロパティパネルと、「キャンバス」の両方を更新する
      */
     updatePropertyPanelForNode(nodeData) {
-        if (!this.editorPropsContainer || !this.editorTitle) return;
+        if (!this.editorPropsContainer || !this.editorTitle || !this.editorUI) return;
+        
+        // --- 1. プロパティパネルを構築 ---
         this.editorPropsContainer.innerHTML = '';
         this.editorTitle.innerText = `ノード編集: [${nodeData.type}]`;
+        this.buildNodeContent(this.editorPropsContainer, nodeData); // ★ パネルの中身を作る
 
-        // ★ buildNodeContentを、この場所で直接呼び出す
-        this.buildNodeContent(this.editorPropsContainer, nodeData);
-    }
-
- buildNodeContent(nodeElement, nodeData) {
-        nodeElement.innerHTML = '';
-
-        const title = document.createElement('strong');
-        title.innerText = `[${nodeData.type}]`;
-         // ▼▼▼ ピンの生成 ▼▼▼
-        const inputPin = document.createElement('div');
-        inputPin.className = 'vsl-node-pin input';
-        inputPin.dataset.pinType = 'input';
-
-        const outputPin = document.createElement('div');
-        outputPin.className = 'vsl-node-pin output';
-        outputPin.dataset.pinType = 'output';
-        const paramsContainer = document.createElement('div');
-        paramsContainer.className = 'node-params';
         
-        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
-        // --------------------------------------------------------------------
-
-        // 1. ハンドラのリストを取得
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
-       
-
-       // --- ハンドラのdefineに基づいて、パラメータUIを動的に生成 ---
-        const handler = this.game.registry.get('eventTagHandlers')?.[nodeData.type];
-        if (handler?.define?.params) {
-            handler.define.params.forEach(paramDef => {
-                if (paramDef.type === 'asset_key') {
-                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef);
-                } else if (paramDef.type === 'select') {
-                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef);
-                } else if (paramDef.type === 'number') {
-                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef);
-                } else { // 'string', 'asset_key' など
-                    this.createNodeTextInput(paramsContainer, nodeData, paramDef);
-                }
-
-            });
-        }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
-        this.createNodePositionInput(paramsContainer, nodeData, 'x');
-        this.createNodePositionInput(paramsContainer, nodeData, 'y');
-           // ★★★ 削除ボタンを生成 ★★★
-        const deleteButton = document.createElement('button');
-        deleteButton.innerText = '削除';
-        deleteButton.className = 'node-delete-button';
-        deleteButton.addEventListener('click', () => {
-            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
-                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
-                this.deleteNode(nodeData.id);
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-            }
-        });
-
-        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
 
+    /**
+     * ★★★ 新規メソッド (EditorUIから移植) ★★★
+     * VSLキャンバスに、現在のイベントグラフを描画する
+     */
+    populateVslCanvas() {
+        if (!this.editorUI || !this.editorUI.vslCanvas || !this.editorUI.editingObject) return;
+        
+        const canvas = this.editorUI.vslCanvas;
+        const targetObject = this.editorUI.editingObject;
+        
+        canvas.innerHTML = ''; // クリア
+
+        const events = targetObject.getData('events');
+        if (!events || !events[0] || !events[0].nodes) return;
+        
+        events[0].nodes.forEach(nodeData => {
+           
+             const nodeElement = document.createElement('div');
+                nodeElement.className = 'vsl-node';
+                nodeElement.style.left = `${nodeData.x}px`;
+                nodeElement.style.top = `${nodeData.y}px`;
+                nodeElement.dataset.isNode = 'true'; // isNode属性を追加
+                nodeElement.dataset.nodeId = nodeData.id;
+
+                this.buildNodeContent(nodeElement, nodeData);
+                
+                this.vslCanvas.appendChild(nodeElement);
+        
+            this.buildNodeContent(nodeElement, nodeData, true); // ★ 第3引数でモードを切り替える
+            
+            canvas.appendChild(nodeElement);
+        });
+    }
+ 
   
 /**
      * ★★★ 新規ヘルパー ★★★

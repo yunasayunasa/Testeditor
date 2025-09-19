@@ -1184,7 +1184,13 @@ export default class EditorUI {
      * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
      * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
      */
-   populateVslCanvas() {
+    populateVslCanvas() {
+        if (!this.vslCanvas) return;
+        // 中身をクリアするだけ。描画はEditorPluginに任せる。
+        this.vslCanvas.innerHTML = ''; 
+    }
+
+  /* populateVslCanvas() {
     if (!this.vslCanvas || !this.editingObject) return;
     this.vslCanvas.innerHTML = ''; // クリア
 
@@ -1228,7 +1234,7 @@ export default class EditorUI {
         if (targetEvent.connections) {
             this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
         }
-    }
+    }*/
 
     /**
      * ★★★ 新規追加 (線描画ヘルパー) ★★★
@@ -1352,18 +1358,75 @@ export default class EditorUI {
  */
 selectNode(nodeData) {
     this.selectedNodeData = nodeData;
-    console.log("Selected node:", nodeData);
-
-        // ★ EditorPluginに、プロパティパネルの更新を依頼する「だけ」
-        if (this.plugin) {
-            this.plugin.updatePropertyPanelForNode(nodeData);
-        }
+    if (this.plugin) {
+        this.plugin.updatePropertyPanelForNode(nodeData);
+    }
     
-    // 選択されたノードの見た目を変える (CSSで .vsl-node.selected を定義)
+    // ★★★ キャンバスの「見た目」の更新は、EditorUIの責任 ★★★
     this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
     const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
     if (el) el.classList.add('selected');
 }
+
+buildNodeContent(nodeElement, nodeData) {
+        nodeElement.innerHTML = '';
+
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
+         // ▼▼▼ ピンの生成 ▼▼▼
+        const inputPin = document.createElement('div');
+        inputPin.className = 'vsl-node-pin input';
+        inputPin.dataset.pinType = 'input';
+
+        const outputPin = document.createElement('div');
+        outputPin.className = 'vsl-node-pin output';
+        outputPin.dataset.pinType = 'output';
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
+        
+        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
+        // --------------------------------------------------------------------
+
+        // 1. ハンドラのリストを取得
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+       
+
+       // --- ハンドラのdefineに基づいて、パラメータUIを動的に生成 ---
+        const handler = this.game.registry.get('eventTagHandlers')?.[nodeData.type];
+        if (handler?.define?.params) {
+            handler.define.params.forEach(paramDef => {
+                if (paramDef.type === 'asset_key') {
+                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef);
+                } else if (paramDef.type === 'select') {
+                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef);
+                } else if (paramDef.type === 'number') {
+                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef);
+                } else { // 'string', 'asset_key' など
+                    this.createNodeTextInput(paramsContainer, nodeData, paramDef);
+                }
+
+            });
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
+        this.createNodePositionInput(paramsContainer, nodeData, 'x');
+        this.createNodePositionInput(paramsContainer, nodeData, 'y');
+           // ★★★ 削除ボタンを生成 ★★★
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = '削除';
+        deleteButton.className = 'node-delete-button';
+        deleteButton.addEventListener('click', () => {
+            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
+                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
+                this.deleteNode(nodeData.id);
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            }
+        });
+
+        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
+    }
 
 /**
  * ★★★ 復活させるメソッド (A案仕様) ★★★
