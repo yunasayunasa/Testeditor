@@ -144,7 +144,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         // --- ガード節1: 多重実行防止 ---
         if (this._isUpdatingPanel) return;
         this._isUpdatingPanel = true;
+const selectedNode = this.editorUI ? this.editorUI.selectedNodeData : null;
 
+    if (selectedNode) {
+        this.updatePropertyPanelForNode(selectedNode);
+        return; // ノード編集モードなので、ここで終了
+    }
         try {
             // --- ガード節2: 必須DOM要素の確認 ---
             if (!this.editorPropsContainer || !this.editorTitle) {
@@ -2739,17 +2744,86 @@ createComponentSection() {
         this.editorPropsContainer.appendChild(maxRow);
     }
 
-    /**
-     * ★★★ 新規ヘルパー (VSLノード用) ★★★
-     * アセット選択用のドロップダウンを生成する
-     * @param {HTMLElement} container
-     * @param {object} nodeData
-     * @param {string} paramKey
-     * @param {string} label
-     * @param {string} defaultValue
-     * @param {string} assetType - 'image', 'prefab', 'audio' などのフィルタリング用
+   
+  /**
+     * ★★★ 最終FIX版 ★★★
+     * VSLノード編集用のプロパティパネルを構築する
      */
-    createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue, assetType) {
+    updatePropertyPanelForNode(nodeData) {
+        if (!this.editorPropsContainer || !this.editorTitle) return;
+        this.editorPropsContainer.innerHTML = '';
+        this.editorTitle.innerText = `ノード編集: [${nodeData.type}]`;
+
+        // ★ buildNodeContentを、この場所で直接呼び出す
+        this.buildNodeContent(this.editorPropsContainer, nodeData);
+    }
+
+ buildNodeContent(nodeElement, nodeData) {
+        nodeElement.innerHTML = '';
+
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
+         // ▼▼▼ ピンの生成 ▼▼▼
+        const inputPin = document.createElement('div');
+        inputPin.className = 'vsl-node-pin input';
+        inputPin.dataset.pinType = 'input';
+
+        const outputPin = document.createElement('div');
+        outputPin.className = 'vsl-node-pin output';
+        outputPin.dataset.pinType = 'output';
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
+        
+        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
+        // --------------------------------------------------------------------
+
+        // 1. ハンドラのリストを取得
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+       
+
+       // --- ハンドラのdefineに基づいて、パラメータUIを動的に生成 ---
+        const handler = this.game.registry.get('eventTagHandlers')?.[nodeData.type];
+        if (handler?.define?.params) {
+            handler.define.params.forEach(paramDef => {
+                if (paramDef.type === 'asset_key') {
+                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef);
+                } else if (paramDef.type === 'select') {
+                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef);
+                } else if (paramDef.type === 'number') {
+                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef);
+                } else { // 'string', 'asset_key' など
+                    this.createNodeTextInput(paramsContainer, nodeData, paramDef);
+                }
+
+            });
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
+        this.createNodePositionInput(paramsContainer, nodeData, 'x');
+        this.createNodePositionInput(paramsContainer, nodeData, 'y');
+           // ★★★ 削除ボタンを生成 ★★★
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = '削除';
+        deleteButton.className = 'node-delete-button';
+        deleteButton.addEventListener('click', () => {
+            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
+                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
+                this.deleteNode(nodeData.id);
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            }
+        });
+
+        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
+    }
+
+  
+/**
+     * ★★★ 新規ヘルパー ★★★
+     * アセット選択用のドロップダウンを生成する
+     */
+    createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
         const labelEl = document.createElement('label');
@@ -2757,24 +2831,12 @@ createComponentSection() {
         
         const select = document.createElement('select');
         
-        // 1. グローバルレジストリから、アセットリストを取得
+        // --- 1. グローバルレジストリから、アセットリストを取得 ---
         const assetList = this.game.registry.get('asset_list') || [];
         
-        // 2. 指定されたassetTypeで、リストをフィルタリング
-        const filteredAssets = assetList.filter(asset => {
-            if (assetType === 'prefab') {
-                return asset.type === 'prefab' || asset.type === 'GroupPrefab';
-            }
-            if (assetType === 'audio') {
-                return asset.type === 'audio' || asset.type === 'sound'; // 'sound'も考慮
-            }
-            // 他のタイプも同様に追加
-            return asset.type === assetType;
-        });
-
-        // 3. フィルタリングされたリストから、<option>を生成
-        select.innerHTML = '<option value="">-- Select --</option>'; // 空の選択肢
-        filteredAssets.forEach(asset => {
+        // --- 2. アセットリストから、<option>を生成 ---
+        // (将来的に、ここで 'image' や 'prefab' など、アセットの種類でフィルタリングできると、さらに良い)
+        assetList.forEach(asset => {
             const option = document.createElement('option');
             option.value = asset.key;
             option.innerText = asset.key;
@@ -2785,10 +2847,131 @@ createComponentSection() {
         });
 
         select.addEventListener('change', () => {
-            this.updateNodeParam(nodeData, paramKey, select.value);
+            this.updateNodeParam(nodeData, paramDef.key, select.value);
         });
         
         row.append(labelEl, select);
+        container.appendChild(row);
+    }
+
+ /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノードのX/Y座標を編集する数値入力欄を生成する
+     */
+    createNodePositionInput(container, nodeData, key) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const label = document.createElement('label');
+        label.innerText = `${key}: `;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = Math.round(nodeData[key]);
+        
+        input.addEventListener('change', () => {
+            const value = parseInt(input.value, 10);
+            if (!isNaN(value)) {
+               if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
+                    this.updateNodeParam(nodeData, paramDef.key, select.value);
+                }
+            }
+        });
+
+        row.append(label, input);
+        container.appendChild(row);
+    }
+/**
+     * ★★★ 新規ヘルパー ★★★
+     * ノード内に、ドロップダウン選択式の入力欄を生成する
+     */
+    createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const select = document.createElement('select');
+        options.forEach(optValue => {
+            const option = document.createElement('option');
+            option.value = optValue;
+            option.innerText = optValue;
+            if ((nodeData.params[paramKey] || defaultValue) == optValue) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+           this.updateNodeParam(nodeData, paramDef.key, select.value);
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
+    }
+
+     /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
+     * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'target')
+     * @param {string} label - 表示ラベル (e.g., 'ターゲット')
+     * @param {string} defaultValue - デフォルト値
+     */
+    createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        // フォーカスが外れたら、データ更新を呼び出す
+        input.addEventListener('change', () => {
+         
+            // --------------------------------------------------------------------
+            // ★★★ thisではなく、this.pluginのメソッドを呼び出す ★★★
+              if (this.plugin) {
+            // ★★★ 渡す引数を、nodeData, paramKey, value に変更 ★★★
+            this.updateNodeParam(nodeData, paramDef.key, select.value);
+        }
+        });
+        
+        row.append(labelEl, input);
+        container.appendChild(row);
+    }
+ 
+    /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
+     * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'time')
+     * @param {string} label - 表示ラベル (e.g., '時間(ms)')
+     * @param {number} defaultValue - デフォルト値
+     */
+    createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const input = document.createElement('input');
+        input.type = 'number'; // ★ typeを'number'に変更
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        input.addEventListener('change', () => {
+            // ★ 値を数値に変換してから渡す
+            const value = parseFloat(input.value); 
+           if (this.plugin) {
+                this.updateNodeParam(nodeData, paramDef.key, select.value);
+            }
+        });
+        
+        row.append(labelEl, input);
         container.appendChild(row);
     }
 
