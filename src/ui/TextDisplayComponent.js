@@ -27,10 +27,12 @@ export default class TextDisplayComponent {
      * WatchVariableComponentから'onValueChanged'イベントが発行されたときに呼ばれる
      * @param {*} currentValue - 現在の値 (数値でも文字列でもOK)
      */
-    updateText(currentValue) {
-        // テンプレート内の'{value}'という文字列を、受け取った実際の値に置き換える
+     updateText(currentValue) {
+        // ▼▼▼ ログ爆弾 No.3 (再) ▼▼▼
+        console.log(`%c[LOG BOMB 3 | TextDisplay] OK! '${this.gameObject.name}' が 'onValueChanged' を受信しました。ペイロード: ${currentValue}`, 'color: lime; font-weight: bold; font-size: 1.2em;');
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         const newText = this.template.replace('{value}', currentValue);
-        
         this.gameObject.setText(newText);
     }
 

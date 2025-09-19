@@ -29,29 +29,20 @@ export default class WatchVariableComponent {
      * @param {string} key - 変更された変数のキー
      * @param {*} value - 新しい値
      */
-    onVariableChanged(key, value) {
-        if (!this.variableToWatch || typeof this.variableToWatch.replace !== 'function') {
-            return; 
-        }
-
-        // ▼▼▼【ここが、最後の、そして最も確実な修正です】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // ★ 1. 監視対象のキーから 'f.' と前後の空白を取り除く
+     onVariableChanged(key, value) {
+        if (!this.variableToWatch) return;
         const watchKey = this.variableToWatch.replace('f.', '').trim();
-        
-        // ★ 2. イベントで渡されたキーからも、念のため前後の空白を取り除く
         const eventKey = key.trim();
-
-        // ★ 3. 整形済みのキー同士で比較する
+        
         if (eventKey === watchKey) {
+            // ▼▼▼ ログ爆弾 No.2 (再) ▼▼▼
+            console.log(`%c[LOG BOMB 2 | WatchVariable] OK! イベントキー '${eventKey}' が一致しました。これから '${this.gameObject.name}' に対して 'onValueChanged' (ペイロード: ${value}) をemitします。`, 'color: cyan; font-weight: bold; font-size: 1.2em;');
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             this.gameObject.emit('onValueChanged', value, this.lastValue);
             this.lastValue = value;
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-
       /**
      * ★★★ 強化版 ★★★
      * コンポーネント生成時に、一度だけ現在の変数の値を確認し、UIに反映させる
