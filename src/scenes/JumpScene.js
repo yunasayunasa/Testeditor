@@ -1,6 +1,6 @@
 
 import BaseGameScene from './BaseGameScene.js';
-import ActionInterpreter from '../core/ActionInterpreter.js';
+
 
 export default class JumpScene extends BaseGameScene {
 
@@ -8,13 +8,13 @@ export default class JumpScene extends BaseGameScene {
         super({ key: 'JumpScene' });
         this.joystick = null;
         this.playerController = null; // ★ playerControllerもnullで初期化
-        this.actionInterpreter = null;
+        
     }
 
   create() {
         console.log("[JumpScene] Create started.");
         
-     this.actionInterpreter = new ActionInterpreter();
+    
         this.cameras.main.setBackgroundColor('#4488cc');
         
         const soundManager = this.registry.get('soundManager');

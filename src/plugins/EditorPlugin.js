@@ -1387,19 +1387,34 @@ createComponentSection() {
     select.onchange = (e) => {
         const compToAdd = e.target.value;
         if (compToAdd && this.selectedObject) {
+            
+            // --- 1. 永続化データを更新 (これは正しい処理です) ---
             const currentComps = this.selectedObject.getData('components') || [];
             const newComponentDef = { type: compToAdd, params: {} };
             currentComps.push(newComponentDef);
             this.selectedObject.setData('components', currentComps);
-          
+            
+            // ▼▼▼【ここが、リアルタイムで動かすための、最後のコードです】▼▼▼
+            // --------------------------------------------------------------------
+            
+            // --- 2. 実行中のシーンに、インスタンスの生成とアタッチを「依頼」する ---
             const targetScene = this.selectedObject.scene;
+            
+            // ★★★ シーンが'addComponent'メソッドを持っていることを確認 ★★★
             if (targetScene && typeof targetScene.addComponent === 'function') {
+                console.log(`[EditorPlugin] Requesting scene to add component instance: ${newComponentDef.type}`);
+                
+                // ★★★ 実際にコンポーネントのインスタンスを生成させる ★★★
                 targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
             }
-            
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+            // --- 3. UIを再描画して、追加されたコンポーネントを表示 ---
             this.updatePropertyPanel();
         }
     };
+
     this.editorPropsContainer.appendChild(select);
 }
 
