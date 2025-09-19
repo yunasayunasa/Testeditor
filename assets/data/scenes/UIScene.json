@@ -83,8 +83,8 @@
     {
       "name": "message_window",
       "type": "MessageWindow",
-      "x": 585,
-      "y": 709,
+      "x": 640,
+      "y": 600,
       "depth": 9998,
       "scaleX": 1,
       "scaleY": 1,
@@ -92,7 +92,7 @@
       "alpha": 1,
       "group": "jump_button",
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、223 回目ですね。」"
+      "label": "「このゲームを起動するのは、197 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -242,64 +242,6 @@
         }
       ],
       "registryKey": "player_hp_bar"
-    },
-    {
-      "name": "text_1758266364795",
-      "type": "initialize",
-      "x": 913,
-      "y": 402,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "components": [
-        {
-          "type": "WatchVariableComponent",
-          "params": {
-            "variable": "f.score"
-          }
-        },
-        {
-          "type": "TextDisplayComponent",
-          "params": {}
-        }
-      ],
-      "registryKey": "Text",
-      "text": "score:",
-      "style": {
-        "fontFamily": "Courier",
-        "fontSize": "32px",
-        "fontStyle": "",
-        "backgroundColor": null,
-        "color": "#ffffff",
-        "stroke": "#fff",
-        "strokeThickness": 0,
-        "shadowOffsetX": 0,
-        "shadowOffsetY": 0,
-        "shadowColor": "#000",
-        "shadowBlur": 0,
-        "shadowStroke": false,
-        "shadowFill": false,
-        "align": "left",
-        "maxLines": 0,
-        "fixedWidth": 0,
-        "fixedHeight": 0,
-        "resolution": 1,
-        "rtl": false,
-        "testString": "|MÃ‰qgy",
-        "baselineX": 1.2,
-        "baselineY": 1.4,
-        "wordWrapWidth": null,
-        "wordWrapCallback": null,
-        "wordWrapCallbackScope": null,
-        "wordWrapUseAdvanced": false,
-        "metrics": {
-          "ascent": 24,
-          "descent": 6,
-          "fontSize": 30
-        }
-      }
     }
   ]
 }
