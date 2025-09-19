@@ -1239,13 +1239,10 @@ createComponentSection() {
     title.style.margin = '10px 0 5px 0';
     this.editorPropsContainer.appendChild(title);
     
-    // --- 1. 永続化データから、アタッチされているコンポーネント定義を取得 ---
     const attachedComponents = this.selectedObject.getData('components') || [];
 
-    // --- 2. 各コンポーネント定義をループ処理し、UIを生成 ---
+    // --- 各コンポーネントのUIを生成 ---
     attachedComponents.forEach((componentDef, index) => {
-        
-        // --- a. コンポーネントごとのコンテナを作成 ---
         const containerDiv = document.createElement('div');
         containerDiv.style.flexDirection = 'column';
         containerDiv.style.alignItems = 'flex-start';
@@ -1253,7 +1250,6 @@ createComponentSection() {
         containerDiv.style.padding = '8px';
         containerDiv.style.marginBottom = '8px';
         
-        // --- b. ヘッダー (コンポーネント名と削除ボタン) ---
         const headerDiv = document.createElement('div');
         headerDiv.style.width = '100%';
         headerDiv.style.justifyContent = 'space-between';
@@ -1267,44 +1263,80 @@ createComponentSection() {
         removeBtn.style.padding = '2px';
         removeBtn.style.backgroundColor = '#666';
         removeBtn.onclick = () => {
-            // 確認ダイアログは不要なら省略しても良い
             if (confirm(`Component '${componentDef.type}' を削除しますか？`)) {
-                // イミュータブルな再構築で、コンポーネントを安全に削除
                 const currentComps = this.selectedObject.getData('components') || [];
-                currentComps.splice(index, 1); // このコンポーネントを配列から削除
+                currentComps.splice(index, 1);
                 this.selectedObject.setData('components', currentComps);
-                this.recreateBodyByReconstruction({}); // 再構築をトリガー
+
+                // ★ 古いインスタンスを破棄
+                if (this.selectedObject.components && this.selectedObject.components[componentDef.type]?.destroy) {
+                    this.selectedObject.components[componentDef.type].destroy();
+                    delete this.selectedObject.components[componentDef.type];
+                }
+                
+                this.updatePropertyPanel();
             }
         };
         headerDiv.append(compTitle, removeBtn);
         containerDiv.appendChild(headerDiv);
-
        
+        const paramsContainer = document.createElement('div');
+        containerDiv.appendChild(paramsContainer);
 
-        // --- c. パラメータ編集UIの生成 ---
+        // ▼▼▼【ここからが、完成版のパラメータ編集ロジックです】▼▼▼
+        // --------------------------------------------------------------------
 
-    //かこにコンポーネント特有の設定パラメータを追加して下さい
-        if (componentDef.type === 'Scrollable') {
-            // パラメータの現在値を取得 (なければデフォルト値)
-            const currentSpeed = componentDef.params.speed !== undefined ? componentDef.params.speed : -5;
-            
-            // 汎用ヘルパーを使って、スライダーを生成
-            this.createRangeInput(containerDiv, 'speed', currentSpeed, -20, 20, 0.5, (newValue) => {
-                // 1. 永続化データ (componentDef.params) を更新
+        // ★★★ 「再アタッチ」ヘルパー関数を定義 ★★★
+        const reattachComponent = () => {
+            const scene = this.selectedObject.scene;
+            if (scene && typeof scene.addComponent === 'function') {
+                if (this.selectedObject.components && this.selectedObject.components[componentDef.type]?.destroy) {
+                    this.selectedObject.components[componentDef.type].destroy();
+                }
+                scene.addComponent(this.selectedObject, componentDef.type, componentDef.params);
+                console.log(`[EditorPlugin] Re-attached component '${componentDef.type}' with new params.`);
+            }
+        };
+
+        // --- 各コンポーネントのUIを、統一されたルールで生成 ---
+        
+        if (componentDef.type === 'WatchVariableComponent') {
+            this.createTextInput(paramsContainer, '監視する変数', componentDef.params.variable || '', (newValue) => {
+                componentDef.params.variable = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+        }
+        
+        else if (componentDef.type === 'BarDisplayComponent') {
+            this.createTextInput(paramsContainer, '最大値の変数', componentDef.params.maxValueVariable || '', (newValue) => {
+                componentDef.params.maxValueVariable = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+        }
+          
+        else if (componentDef.type === 'TextDisplayComponent') {
+            this.createTextInput(paramsContainer, '表示テンプレート', componentDef.params.template || '{value}', (newValue) => {
+                componentDef.params.template = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+        }
+        
+        else if (componentDef.type === 'Scrollable') {
+            this.createRangeInput(paramsContainer, 'speed', componentDef.params.speed ?? -5, -20, 20, 0.5, (newValue) => {
                 componentDef.params.speed = newValue;
                 this.selectedObject.setData('components', attachedComponents);
-                
-                // 2. 実行中のインスタンスのプロパティを、リアルタイムで更新
+                // Scrollableは、インスタンスのプロパティを直接更新するだけでもOK
                 if (this.selectedObject.components?.Scrollable) {
                     this.selectedObject.components.Scrollable.scrollSpeed = newValue;
                 }
             });
         }
         
-        if (componentDef.type === 'PlayerController') {
-            // 同様に、PlayerControllerのパラメータUIもここに追加できる
-            const currentMoveSpeed = componentDef.params.moveSpeed !== undefined ? componentDef.params.moveSpeed : 4;
-            this.createRangeInput(containerDiv, 'moveSpeed', currentMoveSpeed, 1, 20, 0.5, (newValue) => {
+        else if (componentDef.type === 'PlayerController') {
+            this.createRangeInput(paramsContainer, 'moveSpeed', componentDef.params.moveSpeed ?? 4, 1, 20, 0.5, (newValue) => {
                 componentDef.params.moveSpeed = newValue;
                 this.selectedObject.setData('components', attachedComponents);
                 if (this.selectedObject.components?.PlayerController) {
@@ -1313,111 +1345,58 @@ createComponentSection() {
             });
         }
 
-  // ★★★ WatchVariableComponent用のUI ★★★
-        if (componentDef.type === 'WatchVariableComponent') {
-            // パラメータの現在値を取得
-            const currentVariable = componentDef.params.variable || '';
-            
-            // 汎用ヘルパーを使って、テキスト入力欄を生成
-            this.createTextInput(containerDiv, '監視する変数 (f.)', currentVariable, (newValue) => {
-                // 1. 永続化データ (componentDef.params) を更新
-                componentDef.params.variable = newValue;
+        else if (componentDef.type === 'FlashEffect') {
+            this.createTextInput(paramsContainer, 'テクスチャ', componentDef.params.texture || 'spark', (val) => {
+                componentDef.params.texture = val;
                 this.selectedObject.setData('components', attachedComponents);
-
-                // 2. 実行中のインスタンスも更新 (もし可能なら)
-                if (this.selectedObject.components?.WatchVariableComponent) {
-                    // ここでインスタンスのプロパティを直接書き換えても良いが、
-                    // 確実なのは、コンポーネントを一度破棄して再生成すること。
-                    // 今は、永続化データの更新だけでもOK。
-                }
+                reattachComponent();
             });
-        }
-        
-        // ★★★ BarDisplayComponent用のUI ★★★
-        if (componentDef.type === 'BarDisplayComponent') {
-            const currentMaxVariable = componentDef.params.maxValueVariable || '';
-            
-            this.createTextInput(containerDiv, '最大値の変数 (f.)', currentMaxVariable, (newValue) => {
-                componentDef.params.maxValueVariable = newValue;
+            this.createRangeInput(paramsContainer, '拡大率', componentDef.params.scale ?? 1.0, 0.1, 5, 0.1, (val) => {
+                componentDef.params.scale = val;
                 this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+            this.createRangeInput(paramsContainer, '表示時間', componentDef.params.duration ?? 200, 50, 2000, 50, (val) => {
+                componentDef.params.duration = val;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
             });
         }
 
-          // ★★★ TextDisplayComponent用のUI ★★★
-        if (componentDef.type === 'TextDisplayComponent') {
-            const currentTemplate = componentDef.params.template || '{value}';
-            
-            this.createTextInput(containerDiv, '表示テンプレート', currentTemplate, (newValue) => {
-                componentDef.params.template = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-
-                // 実行中のインスタンスも更新
-                if (this.selectedObject.components?.TextDisplayComponent) {
-                    this.selectedObject.components.TextDisplayComponent.template = newValue;
-                }
-            });
-        }
- if (componentDef.type === 'FlashEffect') {
-            const params = componentDef.params;
-            this.createTextInput(containerDiv, 'テクスチャ', params.texture || 'spark', (val) => params.texture = val);
-            this.createRangeInput(containerDiv, '拡大率', params.scale || 1.0, 0.1, 5, 0.1, (val) => params.scale = val);
-            this.createRangeInput(containerDiv, '表示時間', params.duration || 200, 50, 2000, 50, (val) => params.duration = val);
-        }
-
-
-
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         this.editorPropsContainer.appendChild(containerDiv);
     });
 
-       // --- ComponentRegistryから、利用可能なコンポーネント名のリストを自動生成 ---
-        const availableComponents = Object.keys(ComponentRegistry);
-        // --------------------------------------------------------------------
-  
-        
+    // --- 「コンポーネントを追加」ドロップダウンの処理 (変更なし) ---
+    const availableComponents = Object.keys(ComponentRegistry).filter(name => !attachedComponents.some(c => c.type === name));
+    if (availableComponents.length > 0) {
         const select = document.createElement('select');
-        select.innerHTML = '<option value="">Add Component...</option>';
-        
+        select.innerHTML = '<option value="">コンポーネントを追加...</option>';
         availableComponents.forEach(compName => {
-            // 既にアタッチされていないコンポーネントのみをリストに追加
-            if (!attachedComponents.some(c => c.type === compName)) {
-                select.innerHTML += `<option value="${compName}">${compName}</option>`;
-            }
+            select.innerHTML += `<option value="${compName}">${compName}</option>`;
         });
-   select.onchange = (e) => {
-        const compToAdd = e.target.value;
-        if (compToAdd && this.selectedObject) {
+        
+        select.onchange = (e) => {
+            const compToAdd = e.target.value;
+            if (!compToAdd) return;
             
-            // --- 1. 永続化データを更新 ---
             const currentComps = this.selectedObject.getData('components') || [];
             const newComponentDef = { type: compToAdd, params: {} };
             currentComps.push(newComponentDef);
             this.selectedObject.setData('components', currentComps);
             
-            // ▼▼▼【ここが、リアルタイムで動かすための、最後のコードです】▼▼▼
-            // --------------------------------------------------------------------
-            
-            // --- 2. 実行中のシーンに、インスタンスの生成とアタッチを「依頼」する ---
             const targetScene = this.selectedObject.scene;
-            
-            // ★★★ シーンが'addComponent'メソッドを持っていることを確認 ★★★
             if (targetScene && typeof targetScene.addComponent === 'function') {
-                console.log(`[EditorPlugin] Requesting scene '${targetScene.scene.key}' to add component instance: ${newComponentDef.type}`);
-                
-                // ★★★ 実際にコンポーネントのインスタンスを生成させ、魂を吹き込む ★★★
                 targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
-            } else {
-                console.error(`[EditorPlugin] Target scene does not have an 'addComponent' method!`);
             }
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-            // --- 3. UIを再描画して、追加されたコンポーネントを表示 ---
+            
             this.updatePropertyPanel();
-        }
-    };
-
-    this.editorPropsContainer.appendChild(select);
+        };
+        
+        this.editorPropsContainer.appendChild(select);
+    }
 }
 
     createExportButton() {
