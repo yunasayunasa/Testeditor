@@ -1367,7 +1367,32 @@ selectNode(nodeData) {
     const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
     if (el) el.classList.add('selected');
 }
+populateVslToolbar(activeEvent) {
+        if (!this.vslNodeList) return;
+        this.vslNodeList.innerHTML = '';
+        
+        if (!activeEvent) return;
 
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
+        
+        if (eventTagHandlers) {
+            for (const tagName in eventTagHandlers) {
+                const button = document.createElement('button');
+                button.className = 'node-add-button';
+                button.innerText = `[${tagName}]`;
+                
+                // ★★★ この中のロジックが、最も怪しいです ★★★
+                button.addEventListener('click', () => {
+                    // この addNodeToEventData は、本当に呼ばれていますか？
+                    this.addNodeToEventData(tagName, activeEvent);
+                });
+                
+                this.vslNodeList.appendChild(button);
+            }
+        } else {
+            this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
+        }
+    }
 buildNodeContent(nodeElement, nodeData) {
         nodeElement.innerHTML = '';
 
