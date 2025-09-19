@@ -2483,25 +2483,46 @@ createComponentSection() {
      * ノードのパラメータを更新し、永続化する
      */
   // src/plugins/EditorPlugin.js
-/**
-     * ★★★ 新規追加 ★★★
-     * EditorUIからの依頼で、VSLノードのパラメータを更新し、永続化する
+// src/plugins/EditorPlugin.js
+
+    /**
+     * ★★★ 最終FIX版 (引数名を修正) ★★★
+     * EditorUIからの依頼で、特定のVSLノードのパラメータを更新し、永続化する
+     * @param {object} nodeData - 更新対象のノードデータそのもの
+     * @param {string} paramKey - 更新するパラメータのキー
+     * @param {string|number|boolean} paramValue - 新しい値
      */
-    updateNodeParam(targetObject, nodeId, paramKey, paramValue) {
-        if (!targetObject) return;
-        const events = targetObject.getData('events') || [];
-        // findを使って、正しいイベントグラフを特定する
-        const targetEvent = events.find(e => e.id === this.editorUI.activeEventId);
-        if (!targetEvent || !targetEvent.nodes) return;
+    updateNodeParam(nodeData, paramKey, paramValue) {
+        // --- ガード節 ---
+        if (!this.editorUI || !this.editorUI.editingObject) {
+            console.error("Cannot update node param: Editing context is missing.");
+            return;
+        }
+        if (!nodeData) {
+            console.error("Cannot update node param: nodeData is null or undefined.");
+            return;
+        }
+
+        // --- 1. 受け取ったノードデータ（オブジェクト）の、パラメータを直接更新 ---
+        if (!nodeData.params) nodeData.params = {};
+        nodeData.params[paramKey] = paramValue;
         
-        const nodeData = targetEvent.nodes.find(n => n.id === nodeId);
-        if (nodeData) {
-            // paramsオブジェクトがなければ作成
-            if (!nodeData.params) {
-                nodeData.params = {};
-            }
-            nodeData.params[paramKey] = paramValue;
-            targetObject.setData('events', events);
+        // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- 2. 変更を含む、イベントデータ全体を永続化する ---
+        // ★★★ `this.editorUI.editingObject` が、本当のターゲットオブジェクト ★★★
+        const targetObject = this.editorUI.editingObject;
+        const allEvents = targetObject.getData('events');
+        targetObject.setData('events', allEvents);
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        console.log(`Node [${nodeData.id}] param '${paramKey}' updated to '${paramValue}'`);
+        
+        if (paramKey === 'trigger') {
+            this.editorUI.buildVslTabs();
         }
     }
     /**
