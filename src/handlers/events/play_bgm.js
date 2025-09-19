@@ -29,6 +29,6 @@ play_bgm.define = {
     description: 'BGM（背景音楽）を再生します。すでに別のBGMが再生中の場合は、クロスフェードして切り替わります。',
     params: [
         { key: 'key', type: 'asset_key', label: 'BGMアセット名', defaultValue: '' },
-        { key: 'loop', type: 'boolean', label: 'ループ再生', defaultValue: true }
+        { key: 'loop', type: 'select', options: ['true', 'false'], label: 'ループ再生', defaultValue: true }
     ]
 };

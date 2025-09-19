@@ -86,7 +86,7 @@ tween.define = {
         { key: 'to', type: 'string', label: '目標値', defaultValue: '0' },
         { key: 'time', type: 'number', label: '時間(ms)', defaultValue: 1000 },
         { key: 'ease', type: 'string', label: 'イージング', defaultValue: 'Linear' },
-        { key: 'yoyo', type: 'boolean', label: 'ヨーヨー再生', defaultValue: false },
+        { key: 'yoyo', type: 'select', options: ['true', 'false'], label: 'ヨーヨー再生', defaultValue: false },
         { key: 'loop', type: 'number', label: 'ループ回数(-1で無限)', defaultValue: 0 }
     ]
 };

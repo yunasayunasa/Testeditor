@@ -23,6 +23,6 @@ export default async function set_flip_x(interpreter, params, target) {
 set_flip_x.define = {
     description: 'ターゲットの左右の向きを反転させます。',
     params: [
-        { key: 'value', type: 'boolean', label: '反転する', defaultValue: true }
+        { key: 'value', type: 'select', options: ['true', 'false'], label: '反転する', defaultValue: true }
     ]
 };

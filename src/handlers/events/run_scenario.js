@@ -41,6 +41,6 @@ run_scenario.define = {
     description: '現在のシーンの上で、オーバーレイとしてノベルパートを再生します。',
     params: [
         { key: 'file', type: 'string', label: 'シナリオファイル名', defaultValue: '' },
-        { key: 'block_input', type: 'boolean', label: '背後を操作不能に', defaultValue: true }
+        { key: 'block_input', type: 'select', options: ['true', 'false'] ,label: '背後を操作不能に', defaultValue: true }
     ]
 };

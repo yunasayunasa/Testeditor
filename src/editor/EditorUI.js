@@ -1292,9 +1292,13 @@ export default class EditorUI {
         // 3. もし、ハンドラに'define'プロパティがあれば、それに基づいてUIを生成
         if (handler && handler.define && Array.isArray(handler.define.params)) {
             handler.define.params.forEach(paramDef => {
-                
-                // ★ typeに応じて、適切なUI生成ヘルパーを呼び分ける
-                if (paramDef.type === 'number') {
+                 // ▼▼▼【アセット選択UIのロジックを追加】▼▼▼
+                if (paramDef.type === 'asset_key') {
+                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                } 
+                if (paramDef.type === 'select') { // ★ selectタイプを追加
+                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
+                } else if (paramDef.type === 'number') {
                     this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
                 } else { // 'string', 'asset_key' など
                     this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
@@ -1322,7 +1326,40 @@ export default class EditorUI {
 
         nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
+/**
+     * ★★★ 新規ヘルパー ★★★
+     * アセット選択用のドロップダウンを生成する
+     */
+    createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const select = document.createElement('select');
+        
+        // --- 1. グローバルレジストリから、アセットリストを取得 ---
+        const assetList = this.game.registry.get('asset_list') || [];
+        
+        // --- 2. アセットリストから、<option>を生成 ---
+        // (将来的に、ここで 'image' や 'prefab' など、アセットの種類でフィルタリングできると、さらに良い)
+        assetList.forEach(asset => {
+            const option = document.createElement('option');
+            option.value = asset.key;
+            option.innerText = asset.key;
+            if ((nodeData.params[paramKey] || defaultValue) === asset.key) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
 
+        select.addEventListener('change', () => {
+            this.updateNodeParam(nodeData, paramKey, select.value);
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
+    }
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * ノードのX/Y座標を編集する数値入力欄を生成する
@@ -1349,7 +1386,34 @@ export default class EditorUI {
         container.appendChild(row);
     }
 // src/editor/EditorUI.js
+ /**
+     * ★★★ 新規ヘルパー ★★★
+     * ノード内に、ドロップダウン選択式の入力欄を生成する
+     */
+    createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const select = document.createElement('select');
+        options.forEach(optValue => {
+            const option = document.createElement('option');
+            option.value = optValue;
+            option.innerText = optValue;
+            if ((nodeData.params[paramKey] || defaultValue) == optValue) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
 
+        select.addEventListener('change', () => {
+            this.updateNodeParam(nodeData, paramKey, select.value);
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
+    }
     /**
      * ★★★ A案＋ピン接続 - 完成版 ★★★
      * VSLキャンバスでポインターが押されたときの処理

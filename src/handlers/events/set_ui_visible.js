@@ -28,6 +28,6 @@ set_ui_visible.define = {
     description: '指定されたUIグループ全体の表示/非表示を切り替えます。',
     params: [
         { key: 'group', type: 'string', label: 'UIグループ名', defaultValue: '' },
-        { key: 'visible', type: 'boolean', label: '表示する', defaultValue: true }
+        { key: 'visible', ype: 'boolean',type: 'select', options: ['true', 'false'], label: '表示する', defaultValue: true }
     ]
 };

@@ -23,6 +23,12 @@ export default async function set_visible(interpreter, params, target) {
 set_visible.define = {
     description: 'ターゲットの表示/非表示を切り替えます。',
     params: [
-        { key: 'value', type: 'boolean', label: '表示する', defaultValue: true }
-    ]
+        { key: 'value', 
+           丶type: 'select', // ★ タイプを'select'に
+options: ['true', 'false'], // ★ 選択肢のリストを追加
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+label: '表示する',
+defaultValue: true
+}
+]
 };

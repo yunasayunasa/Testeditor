@@ -32,6 +32,6 @@ play_sound.define = {
     params: [
         { key: 'key', type: 'asset_key', label: 'SEアセット名', defaultValue: '' },
         { key: 'volume', type: 'number', label: '音量 (0-1)', defaultValue: 1.0 },
-        { key: 'loop', type: 'boolean', label: 'ループ再生', defaultValue: false }
+        { key: 'loop', type: 'select', options: ['true', 'false'], label: 'ループ再生', defaultValue: false }
     ]
 };
