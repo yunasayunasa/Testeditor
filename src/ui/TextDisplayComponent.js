@@ -28,12 +28,23 @@ export default class TextDisplayComponent {
      * @param {*} currentValue - 現在の値 (数値でも文字列でもOK)
      */
      updateText(currentValue) {
-        // ▼▼▼ ログ爆弾 No.3 (再) ▼▼▼
         console.log(`%c[LOG BOMB 3 | TextDisplay] OK! '${this.gameObject.name}' が 'onValueChanged' を受信しました。ペイロード: ${currentValue}`, 'color: lime; font-weight: bold; font-size: 1.2em;');
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+        
+        // --- 1. 新しいテキストを計算 ---
         const newText = this.template.replace('{value}', currentValue);
+        
+        // ▼▼▼【ここが、最後の、そして最も確実な修正です】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- 2. まず、通常通りテキストを設定 ---
         this.gameObject.setText(newText);
+
+        // --- 3. 次に、Phaserの描画エンジンに「ダーティフラグ」を立てる ---
+        // これにより、このオブジェクトが次のフレームで「必ず」再描画されることを保証する
+        this.gameObject.dirty = true;
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
     destroy() {
