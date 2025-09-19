@@ -1786,7 +1786,7 @@ createComponentSection() {
         setTimeout(() => this.updatePropertyPanel(), 0);
         // ★ オブジェクトに選択中であることを示す視覚的なフィードバックを追加すると、より良くなる
         // 例: gameObject.setTint(0x00ff00);
-        this.updatePropertyPanel();
+        
     }
  /**
      * すべての選択状態を解除する
@@ -1802,12 +1802,12 @@ createComponentSection() {
                 if (typeof obj.clearTint === 'function') obj.clearTint();
             });
         }
-        setTimeout(() => this.updatePropertyPanel(), 0);
+        
         this.selectedLayer = null;
-        this.updatePropertyPanel();
+        setTimeout(() => this.updatePropertyPanel(), 0);
         if (this.editorUI) this.editorUI.buildLayerPanel();
         this.selectedObjects = [];
-        this.updatePropertyPanel();
+        setTimeout(() => this.updatePropertyPanel(), 0);
         
     }
 
@@ -1818,8 +1818,8 @@ createComponentSection() {
         gameObjects.forEach(obj => {
             if(typeof obj.setTint === 'function') obj.setTint(0x00ffff);
         });
+       
         setTimeout(() => this.updatePropertyPanel(), 0);
-        this.updatePropertyPanel(); // UI更新を呼び出すだけ
     }
 
    // in EditorPlugin.js
