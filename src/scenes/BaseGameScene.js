@@ -43,6 +43,13 @@ export default class BaseGameScene extends Phaser.Scene {
      * JSONデータに基づいてシーンの初期化を開始する (データキー動的選択版)
      */
     initSceneWithData() {
+          // ★★★ SystemSceneのイベントバスを取得 ★★★
+        const systemEvents = this.scene.get('SystemScene').events;
+
+        // ★★★ "start_tutorial" イベントをリッスンする ★★★
+        // (リスナーが重複登録されないよう、念のため一度offにしてからonする)
+        systemEvents.off('start_tutorial', this.handleStartTutorial, this);
+        systemEvents.on('start_tutorial', this.handleStartTutorial, this);
         // ▼▼▼【ここからが修正の核心です】▼▼▼
         // --------------------------------------------------------------------
         // --- 1. 読み込むべきJSONのキーを決定する ---
@@ -95,7 +102,23 @@ this.matter.world.on('beforeupdate', (event) => {
     this.buildSceneFromLayout(layoutData);
 }
  
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * 'start_tutorial'イベントを受け取ったときの処理
+     * @param {string} tutorialFile - イベントで渡されたシナリオファイル名
+     */
+    handleStartTutorial(tutorialFile) {
+        if (!tutorialFile) return;
 
+        console.log(`[${this.scene.key}] Caught 'start_tutorial' event for file: ${tutorialFile}`);
+        
+        // SystemSceneにオーバーレイの起動を依頼する
+        this.scene.get('SystemScene').events.emit('request-overlay', {
+            from: this.scene.key,
+            scenario: tutorialFile,
+            block_input: false
+        });
+    }
     /**
      * ★★★ 修正版 ★★★
      * エディタからの要求に応じて、新しいテキストオブジェクトを生成する。

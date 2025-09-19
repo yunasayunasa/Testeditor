@@ -34,6 +34,7 @@ import set_ui_visible from './set_ui_visible.js';
 import flash_effect from './flash_effect.js';
 import vignette from './vignette.js';
 
+import fire_event from './fire_event.js';
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
     'time_stop': time_stop,
@@ -68,4 +69,5 @@ export const eventTagHandlers = {
     'set_ui_visible': set_ui_visible,
     'flash_effect' : flash_effect,
     'vignette': vignette,
+    'fire_event' : fire_event,
 };
