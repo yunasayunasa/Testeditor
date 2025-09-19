@@ -2483,7 +2483,27 @@ createComponentSection() {
      * ノードのパラメータを更新し、永続化する
      */
   // src/plugins/EditorPlugin.js
-
+/**
+     * ★★★ 新規追加 ★★★
+     * EditorUIからの依頼で、VSLノードのパラメータを更新し、永続化する
+     */
+    updateNodeParam(targetObject, nodeId, paramKey, paramValue) {
+        if (!targetObject) return;
+        const events = targetObject.getData('events') || [];
+        // findを使って、正しいイベントグラフを特定する
+        const targetEvent = events.find(e => e.id === this.editorUI.activeEventId);
+        if (!targetEvent || !targetEvent.nodes) return;
+        
+        const nodeData = targetEvent.nodes.find(n => n.id === nodeId);
+        if (nodeData) {
+            // paramsオブジェクトがなければ作成
+            if (!nodeData.params) {
+                nodeData.params = {};
+            }
+            nodeData.params[paramKey] = paramValue;
+            targetObject.setData('events', events);
+        }
+    }
     /**
      * ★★★ 新規追加 ★★★
      * EditorUIからの依頼で、VSLノードの位置を更新し、永続化・再描画する

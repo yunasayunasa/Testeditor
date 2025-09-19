@@ -1562,27 +1562,7 @@ deselectNode() {
         row.append(labelEl, input);
         container.appendChild(row);
     }
- /**
-     * ★★★ 新規追加 ★★★
-     * EditorUIからの依頼で、VSLノードのパラメータを更新し、永続化する
-     */
-    updateNodeParam(targetObject, nodeId, paramKey, paramValue) {
-        if (!targetObject) return;
-        const events = targetObject.getData('events') || [];
-        // findを使って、正しいイベントグラフを特定する
-        const targetEvent = events.find(e => e.id === this.editorUI.activeEventId);
-        if (!targetEvent || !targetEvent.nodes) return;
-        
-        const nodeData = targetEvent.nodes.find(n => n.id === nodeId);
-        if (nodeData) {
-            // paramsオブジェクトがなければ作成
-            if (!nodeData.params) {
-                nodeData.params = {};
-            }
-            nodeData.params[paramKey] = paramValue;
-            targetObject.setData('events', events);
-        }
-    }
+ 
     /**
      * ★★★ 新規ヘルパー (VSLノード用) ★★★
      * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
