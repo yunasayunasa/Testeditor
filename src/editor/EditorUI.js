@@ -1094,10 +1094,16 @@ export default class EditorUI {
      * @param {string} tagName - 追加するノードのタイプ
      * @param {object} targetEvent - 追加先のイベントグラフのデータ
      */
+   // in src/editor/EditorUI.js
+
+    /**
+     * ★★★ デフォルト値設定機能付き - 最終FIX ★★★
+     * @param {string} tagName - 追加するノードのタイプ
+     * @param {object} targetEvent - 追加先のイベントグラフのデータ
+     */
     addNodeToEventData(tagName, targetEvent) {
         if (!this.editingObject || !targetEvent) return;
         
-        // --- 既存のロジックは、このtargetEventを直接使う ---
         const existingNodeCount = targetEvent.nodes.length;
         const newX = 50;
         const newY = 150 + (existingNodeCount * 80);
@@ -1105,21 +1111,35 @@ export default class EditorUI {
         const newNode = {
             id: `node_${Date.now()}`,
             type: tagName,
-            params: {},
+            params: {}, // ★ まず空のparamsで初期化
             x: newX,
             y: newY
         };
         
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // --------------------------------------------------------------------
+        // 1. このタグのハンドラ定義(define)を取得
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+        const handler = eventTagHandlers ? eventTagHandlers[tagName] : null;
+
+        // 2. もしdefineにparamsの定義があれば、そこからデフォルト値を読み取って設定する
+        if (handler && handler.define && Array.isArray(handler.define.params)) {
+            handler.define.params.forEach(paramDef => {
+                // defaultValueが定義されていれば、それを初期値として設定
+                if (paramDef.defaultValue !== undefined) {
+                    newNode.params[paramDef.key] = paramDef.defaultValue;
+                }
+            });
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
         targetEvent.nodes.push(newNode);
         
-        // ★★★ 全体のevents配列を、ここで改めて取得して保存するのが最も安全 ★★★
         const allEvents = this.editingObject.getData('events');
         this.editingObject.setData('events', allEvents);
         
-        // ★ 再描画は、setActiveVslEventに任せる
-        // これにより、ツールバー、キャンバス、タブのすべてが確実に同期される
         this.setActiveVslEvent(targetEvent.id);
-        // this.populateVslCanvas(targetEvent); // ← これをやめる
     }
 
    /**
