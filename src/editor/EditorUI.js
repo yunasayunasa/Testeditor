@@ -1975,9 +1975,11 @@ deselectNode() {
             });
         }
         
-        if (targetEvent.connections) {
-            this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
-        }
+        requestAnimationFrame(() => {
+            if (targetEvent.connections) {
+                this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
+            }
+        });
     }
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
