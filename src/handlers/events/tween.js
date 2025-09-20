@@ -79,14 +79,36 @@ export default async function tween(interpreter, params, target) {
 /**
  * ★ VSLエディタ用の自己定義 ★
  */
+// in src/handlers/events/tween.js
+
+/**
+ * ★ VSLエディタ用の自己定義 (タスク2 適用版) ★
+ */
 tween.define = {
     description: 'ターゲットのプロパティをアニメーションさせます。propertyに"tint", toに"0xff0000"で色を赤にできます。',
     params: [
-        { key: 'property', type: 'string', label: 'プロパティ', defaultValue: 'alpha' },
+        { 
+            key: 'property', 
+            // ▼▼▼【ここが修正の核心です】▼▼▼
+            type: 'select', 
+            options: [
+                'x', 
+                'y', 
+                'alpha', 
+                'scale', // scaleXとscaleYを同時に変更
+                'scaleX', 
+                'scaleY', 
+                'angle', 
+                'tint'  // 特別対応済みのtint
+            ],
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            label: 'プロパティ', 
+            defaultValue: 'alpha' 
+        },
         { key: 'to', type: 'string', label: '目標値', defaultValue: '0' },
         { key: 'time', type: 'number', label: '時間(ms)', defaultValue: 1000 },
         { key: 'ease', type: 'string', label: 'イージング', defaultValue: 'Linear' },
-        { key: 'yoyo', type: 'select', options: ['true', 'false'], label: 'ヨーヨー再生', defaultValue: false },
+        { key: 'yoyo', type: 'select', options: ['true', 'false'], label: 'ヨーヨー再生', defaultValue: 'false' }, // デフォルト値を文字列に
         { key: 'loop', type: 'number', label: 'ループ回数(-1で無限)', defaultValue: 0 }
     ]
 };

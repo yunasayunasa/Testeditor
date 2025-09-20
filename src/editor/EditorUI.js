@@ -1394,32 +1394,29 @@ export default class EditorUI {
         row.append(labelEl, select);
         container.appendChild(row);
     }
+   // in src/editor/EditorUI.js
+
     /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * ノードのX/Y座標を編集する数値入力欄を生成する
+     * ★★★ 新規ヘルパーメソッド (タスク1 適用版) ★★★
+     * ノードのX/Y座標を編集するUIを生成する (スライダー付き)
      */
     createNodePositionInput(container, nodeData, key) {
-        const row = document.createElement('div');
-        row.className = 'node-param-row';
-        const label = document.createElement('label');
-        label.innerText = `${key}: `;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.value = Math.round(nodeData[key]);
-        
-        input.addEventListener('change', () => {
-            const value = parseInt(input.value, 10);
-            if (!isNaN(value)) {
-               if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
+        // ★ 新しいヘルパーを呼び出す
+        this.createNodeSliderInput(
+            container,
+            key.toUpperCase(), // 'x' -> 'X'
+            Math.round(nodeData[key]),
+            0,     // 最小値
+            2000,  // 最大値 (キャンバスサイズに合わせて調整)
+            1,     // ステップ
+            (value) => { // 値が変更されたときの処理
+                if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
+                    // ★ 既存の更新ロジックをそのまま使う
                     this.plugin.updateNodePosition(this.editingObject, nodeData.id, key, value);
                 }
             }
-        });
-
-        row.append(label, input);
-        container.appendChild(row);
+        );
     }
-// src/editor/EditorUI.js
  /**
      * ★★★ 新規ヘルパー ★★★
      * ノード内に、ドロップダウン選択式の入力欄を生成する
@@ -1775,5 +1772,47 @@ deselectNode() {
         
         // --- 4. キャンバスを再描画 ---
         this.populateVslCanvas();
+    }
+    // in src/editor/EditorUI.js (createNodePositionInputの上あたりに追加)
+
+    /**
+     * ★★★ 新規ヘルパー (タスク1) ★★★
+     * ノード内に、スライダーと数値入力を組み合わせたUIを生成する
+     */
+    createNodeSliderInput(container, label, initialValue, min, max, step, changeCallback) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row node-slider-row'; // スタイリング用のクラスを追加
+
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = min;
+        slider.max = max;
+        slider.step = step;
+        slider.value = initialValue;
+
+        const numberInput = document.createElement('input');
+        numberInput.type = 'number';
+        numberInput.style.width = '60px'; // 幅を固定
+        numberInput.value = initialValue;
+
+        // スライダーを動かしたら、数値入力も更新
+        slider.addEventListener('input', () => {
+            const value = parseFloat(slider.value);
+            numberInput.value = value;
+            changeCallback(value);
+        });
+
+        // 数値入力を変更したら、スライダーも更新
+        numberInput.addEventListener('change', () => {
+            const value = parseFloat(numberInput.value);
+            slider.value = value;
+            changeCallback(value);
+        });
+        
+        row.append(labelEl, slider, numberInput);
+        container.appendChild(row);
     }
 }
