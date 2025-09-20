@@ -1334,104 +1334,86 @@ export default class EditorUI {
         });
     }
     // in src/editor/EditorUI.js
+// in src/editor/EditorUI.js
 
     buildNodeContent(nodeElement, nodeData) {
-        nodeElement.innerHTML = '';
+        nodeElement.innerHTML = ''; // クリア
 
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
         
-        // ▼▼▼【ここからがピン描画の修正版ロジックです】▼▼▼
-        // --------------------------------------------------------------------
         const eventTagHandlers = this.game.registry.get('eventTagHandlers');
         const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
         const pinDefine = handler?.define?.pins;
 
-        // --- 入力ピン用コンテナ ---
-        const inputsContainer = document.createElement('div');
-        inputsContainer.className = 'vsl-pins-container inputs';
-        
+        // --- ピンの描画 (絶対配置ベース) ---
         const inputPins = pinDefine?.inputs || [{ name: 'input' }];
-        inputPins.forEach(pinDef => {
-            const inputPinWrapper = document.createElement('div'); // ラベルとピンをまとめるラッパー
-            inputPinWrapper.className = 'vsl-pin-wrapper';
-            
+        inputPins.forEach((pinDef, index) => {
             const inputPin = document.createElement('div');
             inputPin.className = 'vsl-node-pin input';
             inputPin.dataset.pinType = 'input';
             inputPin.dataset.pinName = pinDef.name;
-            
-            const pinLabel = document.createElement('span');
-            pinLabel.className = 'pin-label';
-            // 入力ピンはラベルをピンの右側に表示
-            if (pinDef.label) pinLabel.innerText = pinDef.label; 
-            
-            inputPinWrapper.append(inputPin, pinLabel);
-            inputsContainer.appendChild(inputPinWrapper);
+            // ★ CSSで位置を決めるためのスタイルを設定 (入力ピンは左側中央)
+            inputPin.style.top = '50%';
+            inputPin.style.left = '0';
+            nodeElement.appendChild(inputPin);
         });
-        nodeElement.appendChild(inputsContainer);
-
-        // --- 出力ピン用コンテナ ---
-        const outputsContainer = document.createElement('div');
-        outputsContainer.className = 'vsl-pins-container outputs';
 
         const outputPins = pinDefine?.outputs || [{ name: 'output' }];
-        outputPins.forEach(pinDef => {
-            const outputPinWrapper = document.createElement('div');
-            outputPinWrapper.className = 'vsl-pin-wrapper';
-
+        outputPins.forEach((pinDef, index) => {
             const outputPin = document.createElement('div');
             outputPin.className = 'vsl-node-pin output';
             outputPin.dataset.pinType = 'output';
             outputPin.dataset.pinName = pinDef.name;
+            
+            // ★ 複数ある場合は、位置をずらす
+            const topPosition = (outputPins.length > 1) ? `${25 + index * 50}%` : '50%';
+            outputPin.style.top = topPosition;
+            outputPin.style.right = '0';
+            nodeElement.appendChild(outputPin);
 
-            const pinLabel = document.createElement('span');
-            pinLabel.className = 'pin-label';
-            // 出力ピンはラベルをピンの左側に表示
-            if (pinDef.label) pinLabel.innerText = pinDef.label;
-
-            outputPinWrapper.append(pinLabel, outputPin);
-            outputsContainer.appendChild(outputPinWrapper);
+            // ★ ラベルもピンの近くに絶対配置する
+            if (pinDef.label) {
+                const pinLabel = document.createElement('span');
+                pinLabel.className = 'pin-label output';
+                pinLabel.innerText = pinDef.label;
+                pinLabel.style.top = topPosition;
+                pinLabel.style.right = '10px'; // ピンの少し内側
+                nodeElement.appendChild(pinLabel);
+            }
         });
-        nodeElement.appendChild(outputsContainer);
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 中央のコンテンツエリア ---
+        const centerContent = document.createElement('div');
+        centerContent.className = 'vsl-node-content';
         
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
 
         if (handler && handler.define && Array.isArray(handler.define.params)) {
+            // パラメータ生成ロジック (変更なし)
             handler.define.params.forEach(paramDef => {
-                if (paramDef.type === 'asset_key') {
-                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
-                } else if (paramDef.type === 'select') {
-                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
-                } else if (paramDef.type === 'number') {
-                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                } else {
-                    this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                }
+                if (paramDef.type === 'asset_key') { this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef); } 
+                else if (paramDef.type === 'select') { this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options); }
+                else if (paramDef.type === 'number') { this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue); }
+                else { this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue); }
             });
         }
-
+        
         this.createNodePositionInput(paramsContainer, nodeData, 'x');
         this.createNodePositionInput(paramsContainer, nodeData, 'y');
+        
         const deleteButton = document.createElement('button');
         deleteButton.innerText = '削除';
         deleteButton.className = 'node-delete-button';
-        deleteButton.addEventListener('click', () => {
-            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
-                this.deleteNode(nodeData.id);
-            }
+        deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // ノード選択イベントを発火させない
+            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) { this.deleteNode(nodeData.id); }
         });
 
-        // ★ 中央にコンテンツ（タイトル、パラメータ）を配置するコンテナ
-        const centerContent = document.createElement('div');
-        centerContent.className = 'vsl-node-content';
         centerContent.append(title, paramsContainer, deleteButton);
         nodeElement.appendChild(centerContent);
     }
-
     /**
      * ★★★ 新規ヘルパー (ステップ3：複数タイプ対応版) ★★★
      * アセット選択用のドロップダウンを生成する
@@ -1871,33 +1853,36 @@ deselectNode() {
         
         this.populateVslCanvas();
     }
-    // in src/editor/EditorUI.js
+   // in src/editor/EditorUI.js
 
     drawConnections(svgLayer, nodes, connections) {
         connections.forEach(conn => {
+            // ★ ノード要素を this.vslCanvas から直接検索する (より確実)
             const fromNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
             const toNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.toNode}"]`);
 
             if (fromNodeEl && toNodeEl) {
-                // ★ 接続元のピン要素を特定
                 const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
-                // ★ 接続先のピン要素を特定
                 const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
 
-                // ピン要素が見つからない場合はスキップ
-                if (!fromPinEl || !toPinEl) return;
+                if (!fromPinEl || !toPinEl) {
+                    // console.warn('Could not find pin elements for connection:', conn);
+                    return;
+                }
 
                 const canvasRect = this.vslCanvas.getBoundingClientRect();
                 
-                // ピンの絶対座標を取得
                 const fromRect = fromPinEl.getBoundingClientRect();
                 const toRect = toPinEl.getBoundingClientRect();
 
-                // キャンバス基準の相対座標に変換
-                const fromX = fromRect.left + fromRect.width / 2 - canvasRect.left;
-                const fromY = fromRect.top + fromRect.height / 2 - canvasRect.top;
-                const toX = toRect.left + toRect.width / 2 - canvasRect.left;
-                const toY = toRect.top + toRect.height / 2 - canvasRect.top;
+                // キャンバスのスクロール状態を考慮に入れる
+                const scrollLeft = this.vslCanvas.parentElement.scrollLeft;
+                const scrollTop = this.vslCanvas.parentElement.scrollTop;
+
+                const fromX = fromRect.left + fromRect.width / 2 - canvasRect.left + scrollLeft;
+                const fromY = fromRect.top + fromRect.height / 2 - canvasRect.top + scrollTop;
+                const toX = toRect.left + toRect.width / 2 - canvasRect.left + scrollLeft;
+                const toY = toRect.top + toRect.height / 2 - canvasRect.top + scrollTop;
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', fromX);

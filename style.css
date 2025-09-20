@@ -246,7 +246,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 /* ------------------------------------------------------------------ */
 
 .vsl-node {
-    position: absolute; /* キャンバスの左上を基準に、x, yで位置を決める */
+    position: relative; /* キャンバスの左上を基準に、x, yで位置を決める */
     background-color: #2b2b2b;
     border: 1px solid #555;
     border-radius: 5px;
@@ -258,7 +258,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     justify-content: space-between; /* 両端に寄せる */
     align-items: center; /* 中央揃え */
-    padding: 5px 0; /* 上下のパディングを調整 */
+    padding: 5px 15px;/* 上下のパディングを調整 */
 }
 
 .vsl-node strong {
@@ -293,60 +293,46 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     font-size: 12px;
 }
 /* .vsl-node のスタイルの後あたりに追加 */
-
+/* ピンの共通スタイル */
 .vsl-node-pin {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    background-color: #777;
-    border: 1px solid #aaa;
-    border-radius: 50%;
-    cursor: pointer;
-}
-/* ピンを格納するコンテナ */
-.vsl-pins-container {
-    display: flex;
-    flex-direction: column; /* ピンを縦に並べる */
-    justify-content: space-around; /* ピンを均等に配置 */
-    height: 100%; /* 親要素の高さ全体を使う */
+    position: absolute; /* 親(vsl-node)を基準に絶対配置 */
+    transform: translate(-50%, -50%); /* 中央揃えのおまじない */
 }
 
-/* ピンとラベルをまとめるラッパー */
-.vsl-pin-wrapper {
-    display: flex;
-    align-items: center;
-    padding: 2px 0;
+/* 入力ピンは左側に配置 */
+.vsl-node-pin.input {
+    left: 0; /* 左端に配置 */
 }
 
-/* ピンのラベル */
+/* 出力ピンは右側に配置 */
+.vsl-node-pin.output {
+    right: 0; /* 右端に配置 */
+}
+
+/* ピンのラベルの共通スタイル */
 .pin-label {
+    position: absolute;
+    transform: translateY(-50%); /* 上下中央揃え */
     font-size: 11px;
     color: #ccc;
-    margin: 0 4px; /* ピンとの間に少し隙間を空ける */
+    pointer-events: none; /* ラベルがクリックを邪魔しないように */
 }
 
-/* 入力ピンのラベルは右側 (デフォルト) */
-.vsl-pins-container.inputs .vsl-pin-wrapper {
-    /* デフォルトの並びでOK */
+/* 出力ピンのラベルは右側、ピンの少し内側に配置 */
+.pin-label.output {
+    right: 12px; /* ピンの外径より少し大きい値 */
 }
 
-/* 出力ピンのラベルは左側 */
-.vsl-pins-container.outputs .vsl-pin-wrapper {
-    flex-direction: row-reverse; /* ラベルとピンの順序を逆にする */
+/* ノードの中央のコンテンツエリア */
+.vsl-node-content {
+    /* このエリアは通常のドキュメントフローに従う */
 }
+
+
 .vsl-node-pin:hover {
     background-color: #999;
 }
 
-.vsl-node-pin.input {
-    left: -8px; /* ピンがノードの境界線の中央にくるように調整 */
-}
-
-.vsl-node-pin.output {
-    right: -8px;
-}
 #vsl-svg-layer {
     position: absolute;
     top: 0;
