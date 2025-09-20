@@ -16,7 +16,7 @@
     {
       "trigger": "onCollide_Start",
       "targetGroup": "player",
-      "actions": "[play_sound key=smash][destroy target=self]"
+      "actions": "[play_sound key=smash]"
     }
   ]
 }
