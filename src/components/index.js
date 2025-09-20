@@ -5,7 +5,7 @@ import PlayerController from './PlayerController.js';
 import Scrollable from './Scrollable.js';
 import Interactor from './Interactor.js';
 import FlashEffect from './FlashEffect.js';
-
+import StateMachineComponent from './StateMachineComponent.js'; 
 
 //UI系
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
@@ -21,7 +21,7 @@ export const ComponentRegistry = {
     Scrollable,
     Interactor,
 FlashEffect,
-
+StateMachineComponent,
 
 
     //UI系
