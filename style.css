@@ -288,7 +288,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 
 /* 出力ピンは右側に配置 */
 .vsl-node-pin.output {
-    right: 0;
+    right: -10;
 }
 
 /* ピンのラベルの共通スタイル */
