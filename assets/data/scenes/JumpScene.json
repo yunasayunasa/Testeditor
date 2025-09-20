@@ -183,22 +183,43 @@
     {
       "name": "bgtest_1758338428034",
       "type": "initialize",
-      "x": 812,
-      "y": 372,
+      "x": 467,
+      "y": 376,
       "depth": 15,
       "scaleX": 1.86,
       "scaleY": 1.86,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
-      "events": [],
-      "texture": "bgtest"
+      "events": [
+        {
+          "id": "event_1758339423332",
+          "trigger": "onOverlap_Start",
+          "nodes": [],
+          "connections": [],
+          "targetGroup": "bg"
+        }
+      ],
+      "texture": "bgtest",
+      "physics": {
+        "isStatic": true,
+        "isSensor": true,
+        "ignoreGravity": true,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
     },
     {
       "name": "bgtest2_1758338444820",
       "type": "initialize",
-      "x": 1170,
-      "y": 645,
+      "x": 1077,
+      "y": 515,
       "depth": 20,
       "scaleX": 0.27,
       "scaleY": 0.27,
@@ -208,7 +229,7 @@
       "events": [
         {
           "id": "event_1758338949991",
-          "trigger": "onReady",
+          "trigger": "onOverlap_Start",
           "nodes": [
             {
               "id": "node_1758338960090",
@@ -220,10 +241,24 @@
               "y": 150
             }
           ],
-          "connections": []
+          "connections": [],
+          "targetGroup": "bg"
         }
       ],
-      "texture": "bgtest2"
+      "texture": "bgtest2",
+      "physics": {
+        "isStatic": true,
+        "isSensor": true,
+        "ignoreGravity": true,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
     },
     {
       "name": "bgtest3_1758338452766",
@@ -274,8 +309,8 @@
     {
       "name": "bgtest5_1758338496652",
       "type": "initialize",
-      "x": 250,
-      "y": 900,
+      "x": 285,
+      "y": 823,
       "depth": 20,
       "scaleX": 0.27,
       "scaleY": 0.27,
@@ -285,7 +320,7 @@
       "events": [
         {
           "id": "event_1758339040687",
-          "trigger": "onReady",
+          "trigger": "onOverlap_Start",
           "nodes": [
             {
               "id": "node_1758339045824",
@@ -297,10 +332,24 @@
               "y": 150
             }
           ],
-          "connections": []
+          "connections": [],
+          "targetGroup": "bg"
         }
       ],
-      "texture": "bgtest5"
+      "texture": "bgtest5",
+      "physics": {
+        "isStatic": true,
+        "isSensor": true,
+        "ignoreGravity": true,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
     },
     {
       "name": "bgtest3_1758338618267",
@@ -332,6 +381,51 @@
         }
       ],
       "texture": "bgtest3"
+    },
+    {
+      "name": "bgtest3_1758339676900",
+      "type": "initialize",
+      "x": 664,
+      "y": 290,
+      "depth": 26,
+      "scaleX": 1.12,
+      "scaleY": 1.12,
+      "angle": 0,
+      "alpha": 0.06,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1758339722399",
+          "trigger": "onOverlap_Start",
+          "nodes": [
+            {
+              "id": "node_1758339733055",
+              "type": "tween",
+              "params": {
+                "to": "0.8"
+              },
+              "x": 50,
+              "y": 150
+            }
+          ],
+          "connections": [],
+          "targetGroup": "bg"
+        }
+      ],
+      "texture": "bgtest3",
+      "physics": {
+        "isStatic": true,
+        "isSensor": true,
+        "ignoreGravity": true,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
     }
   ],
   "animations": [
