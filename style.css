@@ -250,12 +250,15 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     background-color: #2b2b2b;
     border: 1px solid #555;
     border-radius: 5px;
-    padding: 10px;
+    
     min-width: 150px; /* 最小幅 */
     color: #d4d4d4;
     cursor: grab; /* ドラッグできることを示すカーソル */
     user-select: none; /* テキスト選択を無効化 */
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    justify-content: space-between; /* 両端に寄せる */
+    align-items: center; /* 中央揃え */
+    padding: 5px 0; /* 上下のパディングを調整 */
 }
 
 .vsl-node strong {
@@ -302,7 +305,37 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     border-radius: 50%;
     cursor: pointer;
 }
+/* ピンを格納するコンテナ */
+.vsl-pins-container {
+    display: flex;
+    flex-direction: column; /* ピンを縦に並べる */
+    justify-content: space-around; /* ピンを均等に配置 */
+    height: 100%; /* 親要素の高さ全体を使う */
+}
 
+/* ピンとラベルをまとめるラッパー */
+.vsl-pin-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 2px 0;
+}
+
+/* ピンのラベル */
+.pin-label {
+    font-size: 11px;
+    color: #ccc;
+    margin: 0 4px; /* ピンとの間に少し隙間を空ける */
+}
+
+/* 入力ピンのラベルは右側 (デフォルト) */
+.vsl-pins-container.inputs .vsl-pin-wrapper {
+    /* デフォルトの並びでOK */
+}
+
+/* 出力ピンのラベルは左側 */
+.vsl-pins-container.outputs .vsl-pin-wrapper {
+    flex-direction: row-reverse; /* ラベルとピンの順序を逆にする */
+}
 .vsl-node-pin:hover {
     background-color: #999;
 }

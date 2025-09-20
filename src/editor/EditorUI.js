@@ -1341,33 +1341,59 @@ export default class EditorUI {
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
         
-        // ▼▼▼【ここからがピン描画の新しいロジックです】▼▼▼
+        // ▼▼▼【ここからがピン描画の修正版ロジックです】▼▼▼
         // --------------------------------------------------------------------
         const eventTagHandlers = this.game.registry.get('eventTagHandlers');
         const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
         const pinDefine = handler?.define?.pins;
 
-        // --- 入力ピンの生成 ---
-        const inputPins = pinDefine?.inputs || [{ name: 'input' }]; // デフォルト値
+        // --- 入力ピン用コンテナ ---
+        const inputsContainer = document.createElement('div');
+        inputsContainer.className = 'vsl-pins-container inputs';
+        
+        const inputPins = pinDefine?.inputs || [{ name: 'input' }];
         inputPins.forEach(pinDef => {
+            const inputPinWrapper = document.createElement('div'); // ラベルとピンをまとめるラッパー
+            inputPinWrapper.className = 'vsl-pin-wrapper';
+            
             const inputPin = document.createElement('div');
             inputPin.className = 'vsl-node-pin input';
             inputPin.dataset.pinType = 'input';
-            inputPin.dataset.pinName = pinDef.name; // 'input'
-            if (pinDef.label) inputPin.innerText = pinDef.label;
-            nodeElement.appendChild(inputPin);
+            inputPin.dataset.pinName = pinDef.name;
+            
+            const pinLabel = document.createElement('span');
+            pinLabel.className = 'pin-label';
+            // 入力ピンはラベルをピンの右側に表示
+            if (pinDef.label) pinLabel.innerText = pinDef.label; 
+            
+            inputPinWrapper.append(inputPin, pinLabel);
+            inputsContainer.appendChild(inputPinWrapper);
         });
+        nodeElement.appendChild(inputsContainer);
 
-        // --- 出力ピンの生成 ---
-        const outputPins = pinDefine?.outputs || [{ name: 'output' }]; // デフォルト値
+        // --- 出力ピン用コンテナ ---
+        const outputsContainer = document.createElement('div');
+        outputsContainer.className = 'vsl-pins-container outputs';
+
+        const outputPins = pinDefine?.outputs || [{ name: 'output' }];
         outputPins.forEach(pinDef => {
+            const outputPinWrapper = document.createElement('div');
+            outputPinWrapper.className = 'vsl-pin-wrapper';
+
             const outputPin = document.createElement('div');
             outputPin.className = 'vsl-node-pin output';
             outputPin.dataset.pinType = 'output';
-            outputPin.dataset.pinName = pinDef.name; // 'output', 'output_true', etc.
-            if (pinDef.label) outputPin.innerText = pinDef.label; // 'True', 'False'など
-            nodeElement.appendChild(outputPin);
+            outputPin.dataset.pinName = pinDef.name;
+
+            const pinLabel = document.createElement('span');
+            pinLabel.className = 'pin-label';
+            // 出力ピンはラベルをピンの左側に表示
+            if (pinDef.label) pinLabel.innerText = pinDef.label;
+
+            outputPinWrapper.append(pinLabel, outputPin);
+            outputsContainer.appendChild(outputPinWrapper);
         });
+        nodeElement.appendChild(outputsContainer);
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
@@ -1375,7 +1401,6 @@ export default class EditorUI {
         paramsContainer.className = 'node-params';
 
         if (handler && handler.define && Array.isArray(handler.define.params)) {
-            // (このパラメータ生成部分は変更なし)
             handler.define.params.forEach(paramDef => {
                 if (paramDef.type === 'asset_key') {
                     this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
@@ -1400,8 +1425,11 @@ export default class EditorUI {
             }
         });
 
-        // ★ title, params, deleteButton の追加順を変更
-        nodeElement.append(title, paramsContainer, deleteButton);
+        // ★ 中央にコンテンツ（タイトル、パラメータ）を配置するコンテナ
+        const centerContent = document.createElement('div');
+        centerContent.className = 'vsl-node-content';
+        centerContent.append(title, paramsContainer, deleteButton);
+        nodeElement.appendChild(centerContent);
     }
 
     /**
@@ -1915,7 +1943,47 @@ deselectNode() {
         this.populateVslCanvas();
     }
     // in src/editor/EditorUI.js (createNodePositionInputの上あたりに追加)
+// in src/editor/EditorUI.js
 
+    populateVslCanvas() {
+        if (!this.vslCanvas || !this.editingObject) return;
+
+        const events = this.editingObject.getData('events') || [];
+        const targetEvent = events.find(e => e.id === this.activeEventId);
+
+        this.vslCanvas.innerHTML = '';
+        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgLayer.id = 'vsl-svg-layer';
+        svgLayer.setAttribute('width', '2000');
+        svgLayer.setAttribute('height', '2000');
+        this.vslCanvas.appendChild(svgLayer);
+
+        if (!targetEvent) return;
+
+        if (targetEvent.nodes) {
+            targetEvent.nodes.forEach(nodeData => {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'vsl-node';
+                nodeElement.style.left = `${nodeData.x}px`;
+                nodeElement.style.top = `${nodeData.y}px`;
+                nodeElement.dataset.isNode = 'true';
+                nodeElement.dataset.nodeId = nodeData.id;
+
+                this.buildNodeContent(nodeElement, nodeData);
+                
+                this.vslCanvas.appendChild(nodeElement);
+            });
+        }
+        
+        // ▼▼▼【ここが抜けていた呼び出しです】▼▼▼
+        // --------------------------------------------------------------------
+        if (targetEvent.connections) {
+            // すべてのノードDOM要素が描画された後に、接続線を描画する
+            this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    }
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
      * ノード内に、スライダーと数値入力を組み合わせたUIを生成する
