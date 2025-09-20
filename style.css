@@ -373,3 +373,89 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 .node-delete-button:hover {
     background-color: #a14d4d;
 }
+
+
+/* style.css */
+
+/* --- ステートマシン・エディタの基本レイアウト --- */
+#sm-editor-body {
+    display: flex; /* 左右にペインを分割 */
+    flex-grow: 1; /* 親の高さ一杯に伸びる */
+    overflow: hidden; /* はみ出しを隠す */
+}
+
+/* 左ペイン: 状態リスト */
+#sm-states-panel {
+    width: 200px;
+    min-width: 150px; /* 最小幅 */
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #333;
+}
+#sm-states-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background-color: #3c3c3c;
+}
+#sm-states-panel .panel-header h4 {
+    margin: 0;
+}
+#sm-states-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.sm-state-item {
+    padding: 10px 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+}
+.sm-state-item:hover {
+    background-color: #4f4f4f;
+}
+.sm-state-item.active {
+    background-color: #4a6da7; /* 選択中の色 */
+    font-weight: bold;
+}
+
+
+/* 右ペイン: VSL編集エリア */
+#sm-vsl-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* イベントフックのタブ */
+#sm-hooks-tabs {
+    display: flex;
+    background-color: #252526;
+    border-bottom: 1px solid #333;
+}
+.sm-hook-tab {
+    padding: 8px 16px;
+    background-color: transparent;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    border-bottom: 2px solid transparent; /* 非アクティブ時の下線 */
+}
+.sm-hook-tab:hover {
+    background-color: #3e3e42;
+}
+.sm-hook-tab.active {
+    color: white;
+    font-weight: bold;
+    border-bottom: 2px solid #569cd6; /* アクティブ時の下線 */
+}
+
+/* VSLエディタのラッパー (イベントエディタと共通) */
+/* もし既存のスタイルがあれば、それを共用できる */
+.vsl-editor-wrapper {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+}
+/* ... .vsl-toolbar, .vsl-canvas-wrapper などのスタイルは
+   イベントエディタのものと共通化できるはず ... */
