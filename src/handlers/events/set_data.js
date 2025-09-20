@@ -1,11 +1,5 @@
 // src/handlers/events/set_data.js
 
-/**
- * [set_data] アクションタグ
- * ゲーム変数 (f.) を設定します。
- * @param {ActionInterpreter} interpreter
- * @param {object} params
- */
 export default async function set_data(interpreter, params) {
     const name = params.name;
     let value = params.value;
@@ -15,22 +9,23 @@ export default async function set_data(interpreter, params) {
         return;
     }
 
-    // ★ 'f.'のプレフィックスは自動で補完/削除する方がユーザーフレンドリー
     const key = name.startsWith('f.') ? name.substring(2) : name;
-    
     const stateManager = interpreter.scene.registry.get('stateManager');
     if (!stateManager) return;
 
+    // ▼▼▼【デバッグログを追加】▼▼▼
+    console.log(`%c[DEBUG | set_data]これから評価する値(value):`, 'color: orange;', value, `(型: ${typeof value})`);
+
     let finalValue;
     try {
-        // ★ stateManager.evalを使って、式を安全に評価する
-        //    (例: 'f.score + 100' や 'true' や '123' など、すべてを扱える)
         finalValue = stateManager.eval(value);
     } catch (e) {
-        // evalが失敗した場合 (例: 'hello' のような文字列リテラル)、元の文字列をそのまま使う
         finalValue = value;
     }
     
+    // ▼▼▼【デバッグログを追加】▼▼▼
+    console.log(`%c[DEBUG | set_data]評価後の値(finalValue):`, 'color: orange;', finalValue, `(型: ${typeof finalValue})`);
+
     stateManager.setF(key, finalValue);
 }
 
