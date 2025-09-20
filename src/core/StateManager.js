@@ -212,42 +212,18 @@ export default class StateManager extends Phaser.Events.EventEmitter {
      * @param {string} exp - "f.love_meter > 5" のような評価式
      * @returns {*} 評価結果 (true/falseなど)
      */
-    // in src/core/StateManager.js
-
-    /**
-     * 文字列の式を評価し、結果を返す (評価専用・最終FIX版)
-     * [if]タグなどで使われることを想定
-     * @param {string} exp - "f.love_meter > 5" のような評価式
-     * @returns {*} 評価結果 (true/falseなど)
-     */
- // src/core/StateManager.js
-
     eval(exp) {
-        if (typeof exp !== 'string') {
-            return exp;
-        }
-
         try {
-            const tempElem = document.createElement('textarea');
-            tempElem.innerHTML = exp;
-            let decodedExpression = tempElem.value;
-
-            if ((decodedExpression.startsWith('"') && decodedExpression.endsWith('"')) ||
-                (decodedExpression.startsWith("'") && decodedExpression.endsWith("'"))) {
-                decodedExpression = decodedExpression.substring(1, decodedExpression.length - 1);
-            }
-            
-            // ▼▼▼【デバッグログを追加】▼▼▼
-            console.log(`%c[DEBUG | eval]これから実行する式: return (${decodedExpression});`, 'color: skyblue;');
-
             const f = this.f;
             const sf = this.sf;
-            return new Function('f', 'sf', `'use strict'; return (${decodedExpression});`)(f, sf);
+            // new Functionは、純粋な値の取得または比較にのみ使用する
+            return new Function('f', 'sf', `'use strict'; return (${exp});`)(f, sf);
         } catch (e) {
             console.warn(`[StateManager.eval] 式の評価中にエラーが発生しました: "${exp}"`, e);
-            return exp; 
+            return undefined;
         }
     }
+
     /**
      * ★★★ 新規メソッド ★★★
      * 文字列の式を実行する (書き込み/代入を許可)

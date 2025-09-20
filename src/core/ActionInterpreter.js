@@ -66,31 +66,46 @@ export default class ActionInterpreter {
             const handler = this.tagHandlers[currentNodeData.type];
             let nextPinName = 'output';
 
-            if (handler) {
+           if (handler) {
                 if (currentNodeData.type === 'if') {
-                    const expression = currentNodeData.params.exp;
-                    const result = stateManager.eval(expression);
+                    // ▼▼▼【ここが修正の核心です】▼▼▼
+                    // --------------------------------------------------------------------
+                    let expression = currentNodeData.params.exp;
+                    let result = false;
+                    
+                    try {
+                        // ステップ1: HTMLエンティティのデコード
+                        const tempElem = document.createElement('textarea');
+                        tempElem.innerHTML = expression;
+                        let decodedExpression = tempElem.value;
+
+                        // ステップ2: 式が " " または ' ' で囲まれていたら、それを取り除く
+                        if ((decodedExpression.startsWith('"') && decodedExpression.endsWith('"')) ||
+                            (decodedExpression.startsWith("'") && decodedExpression.endsWith("'"))) {
+                            decodedExpression = decodedExpression.substring(1, decodedExpression.length - 1);
+                        }
+
+                        // ステップ3: クリーニングした式を、StateManagerのシンプルなevalに渡す
+                        result = stateManager.eval(decodedExpression);
+
+                    } catch (e) {
+                        // このtry-catchは、主にデコード処理中のエラーを捕捉するためのもの
+                        console.error(`[ActionInterpreter] Failed to clean/prepare expression: "${expression}"`, e);
+                        result = false;
+                    }
+                    // --------------------------------------------------------------------
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                     
                     nextPinName = result ? 'output_true' : 'output_false';
                     console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
 
                 } else {
-                     // ▼▼▼【ここが修正の核心です】▼-▼
-                    // --------------------------------------------------------------------
-                    // 1. このハンドラ専用の「コンテキスト」情報を作成する
+                    // [if]以外のタグの処理 (以前の destroy 修正を適用)
                     const context = {
-                        source: this.currentSource, // イベント発生源
-                        target: this.currentTarget  // 衝突相手など
+                        source: this.currentSource,
+                        target: this.currentTarget
                     };
-
-                    // 2. 汎用的なターゲット解決は行わない
-
-                    // 3. handlerに渡す引数を変更する
-                    //    第1引数はこれまで通り `this` (interpreter)
-                    //    第3引数に、新しく作成した `context` を渡す
                     await handler(this, currentNodeData.params, context);
-                    // --------------------------------------------------------------------
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 }
             }
 
