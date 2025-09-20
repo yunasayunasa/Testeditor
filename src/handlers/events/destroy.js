@@ -37,9 +37,10 @@ destroy.define = {
     params: [
         { 
             key: 'target', 
-            type: 'string', 
+            type: 'select', 
+            options: ['source', 'target'], // ★ 'self'をやめて、明確なキーワードにする
             label: 'ターゲット', 
-            defaultValue: 'self' 
+            defaultValue: 'source' // ★ デフォルトも 'source' に
         }
     ]
 };

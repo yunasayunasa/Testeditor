@@ -97,17 +97,21 @@ export default class ActionInterpreter {
    // in src/core/ActionInterpreter.js
 
     findTarget(targetId, scene, source, collidedTarget) {
-        let result = null; // ★ 結果を格納する変数を宣言
-
-        if (!targetId || targetId === 'self' || targetId === 'source') {
-            result = source; // ★ sourceを結果に設定
+        // デフォルトは source (イベント発生源)
+        if (!targetId || targetId === 'source') {
+            return source;
         }
-        else if (targetId === 'other' || targetId === 'target') {
-            result = collidedTarget; // ★ collidedTargetを結果に設定
+        // 'target' は明確に衝突相手などを指す
+        if (targetId === 'target') {
+            return collidedTarget;
         }
-        else {
-            result = scene.children.getByName(targetId); // ★ getByNameの結果を設定
+        // 'self' は後方互換性のために残すが、source と同じ
+        if (targetId === 'self') {
+            return source;
         }
+        // それ以外は名前で検索
+        return scene.children.getByName(targetId);
+    
 
         // ▼▼▼【ここが最重要のデバッグログです】▼▼▼
         console.log(`%c[DEBUG | findTarget] が呼ばれました。`, 'background: #222; color: #bada55');
