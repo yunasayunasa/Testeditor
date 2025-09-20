@@ -1603,6 +1603,17 @@ deselectNode() {
      * @param {string} label - 表示ラベル (e.g., '時間(ms)')
      * @param {number} defaultValue - デフォルト値
      */
+   // in src/editor/EditorUI.js
+
+    /**
+     * ★★★ 新規ヘルパー (VSLノード用) - バグ修正版 ★★★
+     * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'time')
+     * @param {string} label - 表示ラベル (e.g., '時間(ms)')
+     * @param {number} defaultValue - デフォルト値
+     */
     createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
@@ -1611,19 +1622,34 @@ deselectNode() {
         labelEl.innerText = `${label}: `;
         
         const input = document.createElement('input');
-        input.type = 'number'; // ★ typeを'number'に変更
-        input.value = nodeData.params[paramKey] || defaultValue;
+        input.type = 'number';
+        
+        // ▼▼▼【ここも、より安全なコードに修正します】▼▼▼
+        // --------------------------------------------------------------------
+        // params[paramKey] が存在すればそれを使い、なければdefaultValueを使う
+        const currentValue = (nodeData.params[paramKey] !== undefined) 
+            ? nodeData.params[paramKey] 
+            : defaultValue;
+        input.value = currentValue;
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         input.addEventListener('change', () => {
-            // ★ 値を数値に変換してから渡す
             const value = parseFloat(input.value); 
-           if (this.plugin) {
-                this.plugin.updateNodeParam(this.editingObject, nodeData.id, paramKey, value);
+            
+            // ▼▼▼【ここがバグ修正の核心です】▼▼▼
+            // --------------------------------------------------------------------
+            if (this.plugin) {
+                // 正しい引数 (nodeData, paramKey, value) を渡す
+                this.plugin.updateNodeParam(nodeData, paramKey, value);
             }
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         });
         
         row.append(labelEl, input);
         container.appendChild(row);
+    }tainer.appendChild(row);
     }
 
      /**
