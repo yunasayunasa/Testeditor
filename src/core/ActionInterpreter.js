@@ -94,16 +94,29 @@ export default class ActionInterpreter {
         
         console.log("%c[ActionInterpreter] Event sequence finished.", 'color: lightgreen;');
     }
-    /**
-     * ★★★ グローバルサービス版 ★★★
-     */
+   // in src/core/ActionInterpreter.js
+
     findTarget(targetId, scene, source, collidedTarget) {
+        let result = null; // ★ 結果を格納する変数を宣言
+
         if (!targetId || targetId === 'self' || targetId === 'source') {
-            return source;
+            result = source; // ★ sourceを結果に設定
         }
-        if (targetId === 'other' || targetId === 'target') {
-            return collidedTarget;
+        else if (targetId === 'other' || targetId === 'target') {
+            result = collidedTarget; // ★ collidedTargetを結果に設定
         }
-        return scene.children.getByName(targetId);
+        else {
+            result = scene.children.getByName(targetId); // ★ getByNameの結果を設定
+        }
+
+        // ▼▼▼【ここが最重要のデバッグログです】▼▼▼
+        console.log(`%c[DEBUG | findTarget] が呼ばれました。`, 'background: #222; color: #bada55');
+        console.log(`  > targetId: '${targetId}'`);
+        console.log(`  > source: '${source ? source.name : 'null'}'`);
+        console.log(`  > collidedTarget: '${collidedTarget ? collidedTarget.name : 'null'}'`);
+        console.log(`  > 最終的に返すオブジェクト: '${result ? result.name : 'null'}'`);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        return result; // ★ 最後に結果を返す
     }
 }
