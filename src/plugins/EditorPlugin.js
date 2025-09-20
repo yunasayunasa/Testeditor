@@ -2534,19 +2534,19 @@ createComponentSection() {
      * ★★★ 新規追加 ★★★
      * EditorUIからの依頼で、VSLノードの位置を更新し、永続化・再描画する
      */
-    updateNodePosition(targetObject, nodeId, key, value) {
+   updateNodePosition(targetObject, nodeId, key, value) {
         if (!targetObject) return;
         const events = targetObject.getData('events') || [];
-        if (!events[0] || !events[0].nodes) return;
+        const targetEvent = events.find(e => e.id === this.editorUI.activeEventId);
+        if (!targetEvent || !targetEvent.nodes) return;
 
-        const nodeData = events[0].nodes.find(n => n.id === nodeId);
+        const nodeData = targetEvent.nodes.find(n => n.id === nodeId);
         if (nodeData) {
             nodeData[key] = value;
             targetObject.setData('events', events);
 
-            // ★ EditorUIに、キャンバスの再描画を依頼
             if (this.editorUI) {
-                this.editorUI.populateVslCanvas(targetObject);
+                this.editorUI.populateVslCanvas();
             }
         }
     }

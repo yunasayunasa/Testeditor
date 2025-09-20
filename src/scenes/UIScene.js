@@ -98,11 +98,7 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
      */
     
         update(time, delta) {
-    const scoreText = this.uiElements.get('text_1758268988092');
-    if (scoreText) {
-        // 毎フレーム、強制的に回転させてみる
-        scoreText.angle += 1;
-    }
+  
         // 更新リストに入っているすべてのコンポーネントのupdateを呼び出す
         for (const component of this.componentsToUpdate) {
             // オブジェクトが破棄されていたら、リストから削除する
