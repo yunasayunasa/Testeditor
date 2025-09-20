@@ -1,13 +1,23 @@
 
+// in src/components/StateMachineComponent.js
 
-export default class StateMachineComponent extends Component {
+// ▼▼▼【この行を削除】▼▼▼
+// import Component from './Component.js';
+
+// ▼▼▼【extends Component を削除】▼▼▼
+export default class StateMachineComponent {
     /**
-     * @param {Phaser.Scene} scene - このコンポー-ントが属するシーン
+     * @param {Phaser.Scene} scene - このコンポーネントが属するシーン
      * @param {Phaser.GameObjects.GameObject} owner - このコンポーネントがアタッチされるGameObject
      * @param {object} params - コンポーネントの初期化パラメータ (ここでは未使用)
      */
     constructor(scene, owner, params = {}) {
-        super(scene, owner);
+        // ▼▼▼【この行を削除】▼▼▼
+        // super(scene, owner);
+
+        // ★★★ 代わりに、scene と owner を直接プロパティとして保存 ★★★
+        this.scene = scene;
+        this.owner = owner;
 
         // --- 1. ActionInterpreterへの参照を取得 ---
         this.actionInterpreter = this.scene.registry.get('actionInterpreter');
