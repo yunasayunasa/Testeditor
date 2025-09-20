@@ -947,8 +947,10 @@ export default class EditorUI {
         this.eventEditorOverlay.style.display = 'flex';
     }
 
- /**
-     * ★★★ 新規メソッド ★★★
+ // in src/editor/EditorUI.js
+
+    /**
+     * ★★★ コピー/ペースト機能付き - 完成版 ★★★
      * イベントグラフを切り替えるためのタブUIを構築する
      */
     buildVslTabs() {
@@ -959,10 +961,8 @@ export default class EditorUI {
         events.forEach(eventData => {
             const tabButton = document.createElement('button');
             tabButton.className = 'vsl-tab-button';
-            // ★ とりあえず、トリガー名を表示しておく
             tabButton.innerText = eventData.trigger || 'Event';
             
-            // ★ もし、このタブが現在アクティブなイベントなら、'active'クラスを付ける
             if (this.activeEventId === eventData.id) {
                 tabButton.classList.add('active');
             }
@@ -971,16 +971,17 @@ export default class EditorUI {
             this.vslTabs.appendChild(tabButton);
         });
 
-        // 「イベントを追加」ボタン
+        // --- 「イベントを追加」ボタン ---
         const addButton = document.createElement('button');
         addButton.className = 'vsl-add-event-button';
         addButton.innerText = '+';
         addButton.title = '新しいイベントを追加';
         addButton.addEventListener('click', () => {
+            // ★★★ この処理もここで実装 ★★★
             const currentEvents = this.editingObject.getData('events') || [];
             const newEvent = {
                 id: `event_${Date.now()}`,
-                trigger: 'onClick',
+                trigger: 'onClick', // デフォルトトリガー
                 nodes: [],
                 connections: []
             };
@@ -991,6 +992,46 @@ export default class EditorUI {
             this.setActiveVslEvent(newEvent.id); // 作成した新しいイベントをアクティブにする
         });
         this.vslTabs.appendChild(addButton);
+
+        const systemScene = this.game.scene.getScene('SystemScene');
+
+        // --- 「コピー」ボタン ---
+        if (this.activeEventId && this.activeEventData) {
+            const copyButton = document.createElement('button');
+            copyButton.className = 'vsl-tool-button';
+            copyButton.innerText = '📋';
+            copyButton.title = 'このイベントをコピー';
+            copyButton.addEventListener('click', () => {
+                // ▼▼▼【ここからがコピー処理】▼▼▼
+                const clonedData = this.cloneEventDataWithNewIds(this.activeEventData);
+                systemScene.eventClipboard = clonedData;
+                console.log("Copied event to clipboard:", systemScene.eventClipboard);
+                // 貼り付けボタンを即座に表示するために、タブUIを再描画
+                this.buildVslTabs();
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            });
+            this.vslTabs.appendChild(copyButton);
+        }
+        
+        // --- 「貼り付け」ボタン ---
+        if (systemScene && systemScene.eventClipboard) {
+            const pasteButton = document.createElement('button');
+            pasteButton.className = 'vsl-tool-button';
+            pasteButton.innerText = '📄';
+            pasteButton.title = 'コピーしたイベントを貼り付け';
+            pasteButton.addEventListener('click', () => {
+                // ▼▼▼【ここからが貼り付け処理】▼▼▼
+                const dataToPaste = this.cloneEventDataWithNewIds(systemScene.eventClipboard);
+                const currentEvents = this.editingObject.getData('events') || [];
+                currentEvents.push(dataToPaste);
+                this.editingObject.setData('events', currentEvents);
+
+                this.buildVslTabs();
+                this.setActiveVslEvent(dataToPaste.id); // 貼り付けたイベントをアクティブにする
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            });
+            this.vslTabs.appendChild(pasteButton);
+        }
     }
     
     /**
@@ -1858,5 +1899,40 @@ deselectNode() {
         
         row.append(labelEl, slider, numberInput);
         container.appendChild(row);
+    }
+
+    // in src/editor/EditorUI.js
+
+    /**
+     * ★★★ 新規ヘルパー (コピー機能の核心) ★★★
+     * イベントグラフのデータを安全にディープコピーし、すべてのIDを振り直す
+     * @param {object} originalEventData - コピー元のイベントデータ
+     * @returns {object} IDがすべて新しいものに置き換えられた、イベントデータの完全なコピー
+     */
+    cloneEventDataWithNewIds(originalEventData) {
+        // JSONを介して、元のデータを一切変更しない完全なコピーを作成
+        const clonedEvent = JSON.parse(JSON.stringify(originalEventData));
+
+        // 1. 新しいイベントIDを生成
+        clonedEvent.id = `event_${Date.now()}`;
+
+        // 2. ノードIDの古いものと新しいものの対応表を作成
+        const nodeIdMap = {};
+        clonedEvent.nodes.forEach(node => {
+            const oldId = node.id;
+            const newId = `node_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+            node.id = newId;
+            nodeIdMap[oldId] = newId;
+        });
+
+        // 3. 接続情報(connections)が古いIDを参照しないよう、新しいIDに更新
+        if (clonedEvent.connections) {
+            clonedEvent.connections.forEach(connection => {
+                connection.fromNode = nodeIdMap[connection.fromNode];
+                connection.toNode = nodeIdMap[connection.toNode];
+            });
+        }
+        
+        return clonedEvent;
     }
 }
