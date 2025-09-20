@@ -112,7 +112,7 @@ export default class ActionInterpreter {
             return source;
         }
         // それ以外は名前で検索
-        return scene.children.getByName(targetId);
+    
     
 
         // ▼▼▼【ここが最重要のデバッグログです】▼▼▼
