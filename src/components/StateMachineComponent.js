@@ -1,4 +1,4 @@
-import Component from './Component.js';
+
 
 export default class StateMachineComponent extends Component {
     /**
