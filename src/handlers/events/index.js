@@ -37,6 +37,12 @@ import _if from './if.js';
 import _else from './else.js';
 import endif from './endif.js';
 import fire_event from './fire_event.js';
+import state_transition from './state_transition.js';
+
+
+
+
+
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
     'time_stop': time_stop,
@@ -74,5 +80,6 @@ export const eventTagHandlers = {
     'fire_event' : fire_event,
     'if': _if,
     'else': _else,
-    'endif': endif
+    'endif': endif,
+    'state_transition': state_transition
 };
