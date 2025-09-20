@@ -1334,29 +1334,59 @@ export default class EditorUI {
         });
     }
    // in src/editor/EditorUI.js
+// in src/editor/EditorUI.js
 
     buildNodeContent(nodeElement, nodeData) {
         nodeElement.innerHTML = ''; // クリア
 
-        const title = document.createElement('strong');
-        title.innerText = `[${nodeData.type}]`;
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+        const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
+        const pinDefine = handler?.define?.pins;
+
+        // --- 列1: 入力ピン ---
+        const inputsContainer = document.createElement('div');
+        inputsContainer.className = 'vsl-pins-container inputs';
         
-        // --- 中央のコンテンツエリアを先に作成 ---
+        const inputPins = pinDefine?.inputs || [{ name: 'input' }];
+        inputPins.forEach(pinDef => {
+            const pinWrapper = document.createElement('div');
+            pinWrapper.className = 'vsl-pin-wrapper';
+            
+            const pinElement = document.createElement('div');
+            pinElement.className = 'vsl-node-pin input';
+            pinElement.dataset.pinType = 'input';
+            pinElement.dataset.pinName = pinDef.name;
+            
+            const pinLabel = document.createElement('span');
+            pinLabel.className = 'pin-label';
+            if (pinDef.label) pinLabel.innerText = pinDef.label;
+            
+            pinWrapper.append(pinElement, pinLabel);
+            inputsContainer.appendChild(pinWrapper);
+        });
+        nodeElement.appendChild(inputsContainer);
+
+        // --- 列2: 中央コンテンツ ---
         const centerContent = document.createElement('div');
         centerContent.className = 'vsl-node-content';
+        
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
         
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
         
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
-        const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
-
-        if (handler?.define?.params) {
+        if (handler && handler.define && Array.isArray(handler.define.params)) {
             handler.define.params.forEach(paramDef => {
-                if (paramDef.type === 'asset_key') { this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef); } 
-                else if (paramDef.type === 'select') { this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options); }
-                else if (paramDef.type === 'number') { this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue); }
-                else { this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue); }
+                if (paramDef.type === 'asset_key') {
+                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
+                } else if (paramDef.type === 'select') {
+                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
+                } else if (paramDef.type === 'number') {
+                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                } else {
+                    this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                }
             });
         }
         
@@ -1368,47 +1398,36 @@ export default class EditorUI {
         deleteButton.className = 'node-delete-button';
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) { this.deleteNode(nodeData.id); }
+            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
+                this.deleteNode(nodeData.id);
+            }
         });
 
         centerContent.append(title, paramsContainer, deleteButton);
-        // ★ 中央コンテンツを最初に追加
         nodeElement.appendChild(centerContent);
 
-        // --- ピンの描画 (上層に追加) ---
-        const pinDefine = handler?.define?.pins;
-
-        const inputPins = pinDefine?.inputs || [{ name: 'input' }];
-        inputPins.forEach((pinDef) => {
-            const inputPin = document.createElement('div');
-            inputPin.className = 'vsl-node-pin input';
-            inputPin.dataset.pinType = 'input';
-            inputPin.dataset.pinName = pinDef.name;
-            inputPin.style.top = '50%';
-            inputPin.style.left = '0';
-            nodeElement.appendChild(inputPin);
-        });
+        // --- 列3: 出力ピン ---
+        const outputsContainer = document.createElement('div');
+        outputsContainer.className = 'vsl-pins-container outputs';
 
         const outputPins = pinDefine?.outputs || [{ name: 'output' }];
-        outputPins.forEach((pinDef, index) => {
-            const outputPin = document.createElement('div');
-            outputPin.className = 'vsl-node-pin output';
-            outputPin.dataset.pinType = 'output';
-            outputPin.dataset.pinName = pinDef.name;
-            const topPosition = (outputPins.length > 1) ? `${25 + index * 50}%` : '50%';
-            outputPin.style.top = topPosition;
-            outputPin.style.right = '0';
-            nodeElement.appendChild(outputPin);
+        outputPins.forEach(pinDef => {
+            const pinWrapper = document.createElement('div');
+            pinWrapper.className = 'vsl-pin-wrapper';
 
-            if (pinDef.label) {
-                const pinLabel = document.createElement('span');
-                pinLabel.className = 'pin-label output';
-                pinLabel.innerText = pinDef.label;
-                pinLabel.style.top = topPosition;
-                pinLabel.style.right = '12px';
-                nodeElement.appendChild(pinLabel);
-            }
+            const pinElement = document.createElement('div');
+            pinElement.className = 'vsl-node-pin output';
+            pinElement.dataset.pinType = 'output';
+            pinElement.dataset.pinName = pinDef.name;
+
+            const pinLabel = document.createElement('span');
+            pinLabel.className = 'pin-label';
+            if (pinDef.label) pinLabel.innerText = pinDef.label;
+
+            pinWrapper.append(pinLabel, pinElement); // ラベルが先
+            outputsContainer.appendChild(pinWrapper);
         });
+        nodeElement.appendChild(outputsContainer);
     }
     /**
      * ★★★ 新規ヘルパー (ステップ3：複数タイプ対応版) ★★★

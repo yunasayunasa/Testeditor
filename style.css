@@ -254,61 +254,69 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 
 /* ノード本体 (ピンの基準点) */
 .vsl-node {
-    position: relative; /* 子要素の絶対配置の基準になる */
+    display: flex; /* ★ 横並びのレイアウト */
+    align-items: center; /* 列の高さを中央で揃える */
     background-color: #2b2b2b;
     border: 1px solid #555;
     border-radius: 5px;
-    padding: 5px 15px;
-    min-width: 150px;
+    padding: 8px 0; /* 上下のパディング */
+    min-width: 180px; /* 少し幅を広げる */
     color: #d4d4d4;
-    cursor: grab;
-    user-select: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    /* position: relative は不要 */
 }
 
-/* ピンの共通スタイル */
+/* 列1, 3: ピンのコンテナ */
+.vsl-pins-container {
+    display: flex;
+    flex-direction: column; /* ピンを縦に並べる */
+    justify-content: space-around; /* ピンを均等に配置 */
+    align-self: stretch; /* 親の高さ一杯に伸びる */
+}
+.vsl-pins-container.inputs {
+    align-items: flex-start; /* 左寄せ */
+}
+.vsl-pins-container.outputs {
+    align-items: flex-end; /* 右寄せ */
+}
+
+/* ピンとラベルのラッパー */
+.vsl-pin-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 4px 0; /* ピンの上下の間隔 */
+}
+
+/* ピン自体のスタイル */
 .vsl-node-pin {
-    position: absolute; /* 親(.vsl-node)を基準に絶対配置 */
     width: 12px;
     height: 12px;
     background-color: #777;
     border: 1px solid #aaa;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10; /* 他の要素より手前に表示 */
+    cursor: crosshair;
 }
 .vsl-node-pin:hover {
     background-color: #eee;
 }
 
-/* 入力ピンは左側に配置 */
-.vsl-node-pin.input {
-    left: 0;
-}
-
-/* 出力ピンは右側に配置 */
-.vsl-node-pin.output {
-    right: -10;
-}
-
-/* ピンのラベルの共通スタイル */
+/* ピンのラベル */
 .pin-label {
-    position: absolute;
-    transform: translateY(-50%);
     font-size: 11px;
     color: #ccc;
-    pointer-events: none;
-    z-index: 9;
+    white-space: nowrap; /* ラベルが改行しないように */
+}
+.vsl-pins-container.inputs .pin-label {
+    margin-left: 6px; /* 入力ピンとラベルの間隔 */
+}
+.vsl-pins-container.outputs .pin-label {
+    margin-right: 6px; /* 出力ピンとラベルの間隔 */
 }
 
-/* 出力ピンのラベルは右側、ピンの少し内側に配置 */
-.pin-label.output {
-    right: 12px;
-}
-
-/* ノードの中央のコンテンツエリア */
+/* 列2: 中央のコンテンツ */
 .vsl-node-content {
-    /* 通常のコンテンツ */
+    flex-grow: 1; /* 残りの幅をすべて使う */
+    padding: 0 10px; /* 両脇のピン列との間に隙間を確保 */
+    /* この中の要素 (.node-paramsなど) のスタイルは変更なし */
 }
 
 /* (以下、.node-params, .node-param-row, inputなどのスタイルは変更なし) */
