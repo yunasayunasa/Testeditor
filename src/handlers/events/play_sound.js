@@ -35,6 +35,7 @@ play_sound.define = {
             key: 'key', 
             type: 'asset_key',
             assetType: 'audio', // ★ 音声アセットを指定
+            
             label: 'SEアセット名', 
             defaultValue: '' 
         },

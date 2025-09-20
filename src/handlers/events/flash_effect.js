@@ -44,6 +44,7 @@ flash_effect.define = {
         {
             key: 'texture',         // パラメータ名
             type: 'asset_key',      // UIのタイプ (asset_keyは、アセットブラウザから選ばせるイメージ)
+            assetType: 'image',
             label: 'テクスチャ',      // UIに表示されるラベル
             defaultValue: 'spark'   // デフォルト値
         },

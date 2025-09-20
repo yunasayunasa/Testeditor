@@ -25,6 +25,6 @@ export default async function stop_sound(interpreter, params) {
 stop_sound.define = {
     description: '指定したキーの効果音（ループ再生中）を停止します。',
     params: [
-        { key: 'key', type: 'asset_key', label: 'SEアセット名', defaultValue: '' }
+        { key: 'key', type: 'asset_key', assetType: 'audio',label: 'SEアセット名', defaultValue: '' }
     ]
 };

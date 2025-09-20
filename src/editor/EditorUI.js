@@ -1323,12 +1323,10 @@ export default class EditorUI {
         nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
 
+  // in src/editor/EditorUI.js
+
     /**
-     * ★★★ 新規ヘルパー (ステップ1：全アセット表示版) ★★★
-     * アセット選択用のドロップダウンを生成する
-     */
-    /**
-     * ★★★ 新規ヘルパー (ステップ2：フィルタリング機能付き) ★★★
+     * ★★★ 新規ヘルパー (ステップ3：複数タイプ対応版) ★★★
      * アセット選択用のドロップダウンを生成する
      * @param {HTMLElement} container
      * @param {object} nodeData
@@ -1346,7 +1344,7 @@ export default class EditorUI {
         const select = document.createElement('select');
         
         const assetList = this.game.registry.get('asset_list') || [];
-        const targetAssetType = paramDef.assetType; // ★ フィルタリング対象のタイプ (e.g., 'prefab')
+        const targetAssetType = paramDef.assetType; // (例: 'prefab' or 'image')
 
         const placeholderOption = document.createElement('option');
         placeholderOption.value = '';
@@ -1354,10 +1352,28 @@ export default class EditorUI {
         select.appendChild(placeholderOption);
 
         assetList.forEach(asset => {
-            // ▼▼▼【ここが修正点２】▼▼▼
-            // フィルタリング条件を追加。targetAssetTypeが未指定の場合は、すべてのタイプを許可する
-            if (!targetAssetType || asset.type === targetAssetType) {
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            // ▼▼▼【ここが修正の核心です】▼▼▼
+            // --------------------------------------------------------------------
+
+            let isMatch = false;
+            // --- ケース1: ターゲットが'prefab'の場合、'GroupPrefab'も許可する ---
+            if (targetAssetType === 'prefab') {
+                isMatch = (asset.type === 'prefab' || asset.type === 'GroupPrefab');
+            }
+            // --- ケース2: ターゲットが'image'の場合、'spritesheet'も許可する ---
+            else if (targetAssetType === 'image') {
+                isMatch = (asset.type === 'image' || asset.type === 'spritesheet');
+            }
+            // --- ケース3: その他の場合 (audioなど) は、完全一致で判定 ---
+            else {
+                isMatch = (asset.type === targetAssetType);
+            }
+            
+            // --- フィルタリング条件: targetAssetTypeが未指定か、isMatchがtrueの場合 ---
+            if (!targetAssetType || isMatch) {
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
                 const option = document.createElement('option');
                 option.value = asset.key;
                 option.innerText = `[${asset.type}] ${asset.key}`;

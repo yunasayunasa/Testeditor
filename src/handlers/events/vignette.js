@@ -87,6 +87,7 @@ vignette.define = {
         {
             key: 'texture',
             type: 'asset_key',
+            assetType: 'image',
             label: 'ビネット画像',
             defaultValue: 'vignette_overlay'
         }
