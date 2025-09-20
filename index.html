@@ -21,23 +21,17 @@
     <!-- ====================================================================== -->
     <!--  1. Phaser Game Container                                              -->
     <!-- ====================================================================== -->
-    <!-- PhaserのScaleManagerが、この要素内に<canvas>を生成し、         -->
-    <!-- その位置とサイズを自動的に管理します。                               -->
-    <!-- 通常モードでは画面中央に、デバッグモードではCSSの補助で配置されます。    -->
-     <div id="app-container"></div>
     <div id="game-container"></div>
 
 
     <!-- ====================================================================== -->
     <!--  2. Editor UI Root Container                                           -->
     <!-- ====================================================================== -->
-    <!-- すべてのエディタ関連UIは、このコンテナの中に格納します。             -->
-    <!-- 通常時は display: none で非表示になり、デバッグモードでのみ表示されます。 -->
     <div id="editor-root">
 
         <!-- (A) Right Sidebar: アセットブラウザとプロパティパネル -->
         <div id="editor-sidebar">
-<div id="layers-panel" class="editor-panel">
+            <div id="layers-panel" class="editor-panel">
                 <div class="panel-header">
                     <span>Layers</span>
                     <div class="panel-header-buttons">
@@ -46,7 +40,7 @@
                 </div>
                 <div id="layer-list" class="panel-content"></div>
             </div>
-            <!-- Asset Browser Panel -->
+            
             <div id="asset-browser" class="editor-panel">
                 <div class="panel-header">
                     <span class="panel-title">Asset Browser</span>
@@ -55,25 +49,16 @@
                         <!-- Help button is dynamically added here by JavaScript -->
                     </div>
                 </div>
-                <div id="asset-tabs" class="panel-tabs">
-                    <!-- Asset category tabs are dynamically generated here -->
-                </div>
-                <div id="asset-list" class="panel-content">
-                    <!-- Asset items are dynamically generated here -->
-                </div>
+                <div id="asset-tabs" class="panel-tabs"></div>
+                <div id="asset-list" class="panel-content"></div>
                 <button id="add-asset-button" class="panel-footer-button">Add Selected Asset</button>
             </div>
 
-            <!-- Property Editor Panel -->
             <div id="editor-panel" class="editor-panel">
                 <div id="editor-title" class="panel-header">Properties</div>
-                <div id="editor-props" class="panel-content">
-                    <!-- Object properties will be displayed here -->
-                </div>
+                <div id="editor-props" class="panel-content"></div>
             </div>
-
-        </div> <!-- /#editor-sidebar -->
-
+        </div>
 
         <!-- (B) Overlay Controls: カメラ操作やモード切替など -->
         <div id="overlay-controls">
@@ -95,41 +80,19 @@
                 </label>
                 <span id="mode-label">Select Mode</span>
             </div>
-        </div> <!-- /#overlay-controls -->
-
+        </div>
 
         <!-- (C) Bottom Panel: タイルマップエディタ -->
-       <div id="bottom-panel">
+        <div id="bottom-panel">
             <div id="tilemap-editor-panel">
-             <!---   Tool Selection Area 
-                <div id="tools-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Tools</div>
-                    <div class="panel-section-content">
-                        <button class="tool-button active" title="Brush (B)"><img src="editor_icons/brush.svg" alt="Brush"></button>
-                        <button class="tool-button" title="Eraser (E)"><img src="editor_icons/eraser.svg" alt="Eraser"></button>
-                        <button class="tool-button" title="Fill (F)"><img src="editor_icons/fill.svg" alt="Fill"></button>
-                    </div>
-                </div>
-                 Layer Management Area 
-                <div id="layers-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Layers</div>
-                    <div class="panel-section-content">
-                        < Layer list is dynamically generated here 
-                    </div>
-                </div>--->
-          <!---     Tileset Display Area---
-                <div id="tileset-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Tileset</div>
-                    <div id="tileset-preview" class="panel-section-content">
-                    <!---   Tileset image and selection highlight are displayed here --
-                    </div>
-                    <button id="add-tile-button" class="panel-footer-button">タイルを追加</button>
-                </div>-->
+                <!-- Tileset, Tools, etc. -->
             </div>
         </div>  
 
+        <!-- ================================================================== -->
+        <!-- (D) Modal Windows                                                  -->
+        <!-- ================================================================== -->
 
-        <!-- (D) Modal Windows -->
         <!-- Animation Editor Modal -->
         <div id="anim-editor-overlay" class="modal-overlay">
             <div class="modal-window">
@@ -140,111 +103,78 @@
                 <div id="animation-editor-content" class="modal-content"></div>
             </div>
         </div>
+
         <!-- Event Editor Modal -->
         <div id="event-editor-overlay" class="modal-overlay">
-            <div class="modal-window wide"> <!-- ★ wideクラスを追加して、モーダルを広くする -->
+            <div class="modal-window wide">
                 <div class="modal-header">
                     <h3 id="event-editor-title">イベント編集</h3>
                     <button id="event-editor-close-btn" class="modal-close-btn">&times;</button>
                 </div>
-                
-                <!-- ▼▼▼ ここからが、新しく追加・変更する部分です ▼▼▼ -->
-                <div id="event-editor-main-content" class="modal-content">
-                    
-                    <!-- (左側) 追加できるノードのリストなどを置くツールバー -->
-                    <div id="vsl-toolbar">
-                         <div id="vsl-trigger-editor">
+                <div class="modal-content" id="event-editor-main-content">
+                    <div class="vsl-toolbar"> <!-- ★ IDを削除し、クラスに変更 -->
+                        <div id="vsl-trigger-editor">
                             <h4>トリガー</h4>
                             <select id="vsl-trigger-select"></select>
-                            <div id="vsl-trigger-context">
-                                <!-- 状況に応じて、JSがここに入力欄を追加します -->
-                            </div>
+                            <div id="vsl-trigger-context"></div>
                         </div>
                         <hr>
-                      <div id="vsl-tabs-container">
+                        <div id="vsl-tabs-container">
                             <h4>イベントグラフ</h4>
-                            <div id="vsl-tabs">
-                                <!-- タブボタンはJSでここに追加されます -->
-                            </div>
+                            <div id="vsl-tabs"></div>
                         </div>
                         <hr>
                         <h4>ノードを追加</h4>
-                        <div id="vsl-node-list">
-                            <!-- この中身はJavaScriptで動的に生成されます -->
-                        </div>
+                        <div class="vsl-node-list"></div> <!-- ★ IDを削除し、クラスに変更 -->
                     </div>
-
-                    <!-- (右側) ノードを配置する広大なキャンバス -->
-                    <div id="vsl-canvas-wrapper">
-                        <div id="vsl-canvas">
-                             <svg id="vsl-svg-layer" width="2000" height="2000"></svg>
-                            <!-- ノードはJavaScriptでここに追加されます -->
-                        </div>
-                    </div>
-
-                </div>
-                <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
-            </div>
-        </div>
-        <!-- ================================================================= -->
-<!-- ▼▼▼ ステートマシン・エディタ (ここから追加) ▼▼▼ -->
-<!-- ================================================================= -->
-<div id="sm-editor-overlay" class="modal-overlay"> <!-- ★★★ ここを修正 ★★★ -->
-    <div id="sm-editor-panel" class="modal-window wide"> <!-- ★★★ ここも修正 ★★★ -->
-        
-        <!-- ヘッダー -->
-        <div class="modal-header"> <!-- ★★★ ここも修正 ★★★ -->
-            <h3 id="sm-editor-title">ステートマシン編集: [オブジェクト名]</h3>
-            <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
-        </div>
-        
-        <!-- 本体 -->
-        <div class="modal-content" id="sm-editor-body"> <!-- ★★★ ここも修正 ★★★ -->
-
-            <!-- 左ペイン: 状態リスト -->
-            <div id="sm-states-panel">
-                <div class="panel-header">
-                    <h4>状態リスト</h4>
-                    <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
-                </div>
-                <div id="sm-states-list">
-                    <!-- (ここにJSで状態が追加される) -->
-                    <!-- <div class="sm-state-item active">idle</div> -->
-                    <!-- <div class="sm-state-item">chase</div> -->
-                </div>
-            </div>
-
-            <!-- 右ペイン: VSL編集エリア -->
-            <div id="sm-vsl-panel">
-                <!-- イベントフック選択タブ -->
-                <div id="sm-hooks-tabs">
-                    <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
-                    <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
-                    <button class="sm-hook-tab" data-hook="onExit">onExit</button>
-                </div>
-
-                <!-- VSLキャンバス (イベントエディタと共用できるかも) -->
-                <div class="vsl-editor-wrapper">
-                    <div id="sm-vsl-toolbar" class="vsl-toolbar">
-                        <h4>ノードリスト</h4>
-                        <div id="sm-vsl-node-list" class="vsl-node-list">
-                           <!-- (ここにJSでノード追加ボタンが追加される) -->
-                        </div>
-                    </div>
-                    <div id="sm-vsl-canvas-wrapper" class="vsl-canvas-wrapper">
-                        <div id="sm-vsl-canvas" class="vsl-canvas">
-                           <!-- (ここにJSでノードが描画される) -->
+                    <div class="vsl-canvas-wrapper"> <!-- ★ IDを削除し、クラスに変更 -->
+                        <div class="vsl-canvas"> <!-- ★ IDを削除し、クラスに変更 -->
+                             <svg class="vsl-svg-layer" width="2000" height="2000"></svg> <!-- ★ IDを削除し、クラスに変更 -->
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
-    </div>
-</div>
-<!-- ================================================================= -->
-<!-- ▲▲▲ ステートマシン・エディタ (ここまで) ▲▲▲ -->
-<!-- ================================================================= -->
+
+        <!-- State Machine Editor Modal -->
+        <div id="sm-editor-overlay" class="modal-overlay"> <!-- ★ クラス名を修正 -->
+            <div class="modal-window wide"> <!-- ★ クラス名を追加・修正 -->
+                <div class="modal-header"> <!-- ★ クラス名を修正 -->
+                    <h3 id="sm-editor-title">ステートマシン編集: [オブジェクト名]</h3>
+                    <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
+                </div>
+                <div class="modal-content" id="sm-editor-body"> <!-- ★ クラス名を追加・修正 -->
+                    <!-- 左ペイン: 状態リスト -->
+                    <div id="sm-states-panel">
+                        <div class="panel-header">
+                            <h4>状態リスト</h4>
+                            <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
+                        </div>
+                        <div id="sm-states-list"></div>
+                    </div>
+                    <!-- 右ペイン: VSL編集エリア -->
+                    <div id="sm-vsl-panel">
+                        <div id="sm-hooks-tabs">
+                            <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
+                            <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
+                            <button class="sm-hook-tab" data-hook="onExit">onExit</button>
+                        </div>
+                        <div class="vsl-editor-wrapper">
+                            <div class="vsl-toolbar"> <!-- ★ クラスを使用 -->
+                                <h4>ノードリスト</h4>
+                                <div class="vsl-node-list"></div> <!-- ★ クラスを使用 -->
+                            </div>
+                            <div class="vsl-canvas-wrapper"> <!-- ★ クラスを使用 -->
+                                <div class="vsl-canvas"> <!-- ★ クラスを使用 -->
+                                   <svg class="vsl-svg-layer" width="2000" height="2000"></svg> <!-- ★ クラスを使用 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Help Modal -->
         <div id="help-modal-overlay" class="modal-overlay">
             <div class="modal-window">
@@ -255,9 +185,7 @@
                 <div id="help-modal-content" class="modal-content"></div>
             </div>
         </div>
-
-    </div> <!-- /#editor-root -->
-
+    </div>
 
     <!-- ====================================================================== -->
     <!--  3. JavaScript Entry Point                                             -->

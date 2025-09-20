@@ -1305,41 +1305,7 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
         }
     }
 
-    /**
-     * ★★★ 新規追加 (線描画ヘルパー) ★★★
-     * connectionsデータに基づいて、SVGで線を描画する
-     */
-    drawConnections(svgLayer, nodes, connections) {
-        connections.forEach(conn => {
-            const fromNode = nodes.find(n => n.id === conn.fromNode);
-            const toNode = nodes.find(n => n.id === conn.toNode);
-
-            if (fromNode && toNode) {
-                // ノードの幅と高さを、CSSで定義した固定値とする (例: 幅150px, 高さ50px)
-                const nodeWidth = 150;
-                const nodeHeight = 50;
-
-                // 接続元のピンの座標 (右側の中央)
-                const fromX = fromNode.x + nodeWidth;
-                const fromY = fromNode.y + (nodeHeight / 2);
-
-                // 接続先のピンの座標 (左側の中央)
-                const toX = toNode.x;
-                const toY = toNode.y + (nodeHeight / 2);
-
-                // SVGの線(line)要素を生成
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', fromX);
-                line.setAttribute('y1', fromY);
-                line.setAttribute('x2', toX);
-                line.setAttribute('y2', toY);
-                line.setAttribute('stroke', '#aaa'); // 線の色
-                line.setAttribute('stroke-width', '2'); // 線の太さ
-                
-                svgLayer.appendChild(line);
-            }
-        });
-    }
+   
    // in src/editor/EditorUI.js
 // in src/editor/EditorUI.js
 

@@ -188,7 +188,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 }
 
 /* --- (左側) ツールバー --- */
-#vsl-toolbar {
+.vsl-toolbar {
     width: 200px;
     padding: 10px;
     background-color: #252526; /* サイドバーと同じ背景色 */
@@ -197,12 +197,12 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     overflow-y: auto;
 }
 
-#vsl-toolbar h4 {
+.vsl-toolbar h4 {
     margin-top: 0;
     margin-bottom: 10px;
 }
 
-#vsl-node-list {
+.vsl-node-list {
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -224,13 +224,13 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 }
 
 /* --- (右側) キャンバス --- */
-#vsl-canvas-wrapper {
+.vsl-canvas-wrapper {
     flex-grow: 1; /* 残りのスペースをすべて使う */
     position: relative; /* ノードを絶対位置で配置するための基準 */
     overflow: auto; /* ノードがはみ出たらスクロールできるように */
 }
 
-#vsl-canvas {
+.vsl-canvas {
     position: relative;
     width: 2000px;  /* 広大な作業スペースを確保 */
     height: 2000px;
@@ -353,7 +353,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     font-size: 12px;
 }
 
-#vsl-svg-layer {
+.vsl-svg-layer {
     position: absolute;
     top: 0;
     left: 0;
