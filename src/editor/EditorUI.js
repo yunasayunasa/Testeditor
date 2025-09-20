@@ -1044,43 +1044,7 @@ export default class EditorUI {
         }
     }
     
-    /**
-     * ★★★ 新規メソッド (旧 populateEventEditor の進化形) ★★★
-     * VSLツールバーのノードリストを生成する
-     */
-     /**
-     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
-     * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
-     */
-    populateVslToolbar(activeEvent) {
-        if (!this.vslNodeList) return;
-        this.vslNodeList.innerHTML = '';
-        
-        if (!activeEvent) return;
-
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
-        
-        if (eventTagHandlers) {
-            for (const tagName in eventTagHandlers) {
-                const button = document.createElement('button');
-                button.className = 'node-add-button';
-                button.innerText = `[${tagName}]`;
-                
-                // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
-                // --------------------------------------------------------------------
-                button.addEventListener('click', () => {
-                    // ★★★ addNodeToEventDataに、どのイベントに追加するかを渡す ★★★
-                    this.addNodeToEventData(tagName, activeEvent);
-                });
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                
-                this.vslNodeList.appendChild(button);
-            }
-        } else {
-            this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
-        }
-    }
+  
 
     /**
      * ★★★ マルチトリガー対応版 - 最終FIX ★★★
@@ -1384,6 +1348,7 @@ populateVslToolbar(activeEvent) {
                 // ★★★ この中のロジックが、最も怪しいです ★★★
                 button.addEventListener('click', () => {
                     // この addNodeToEventData は、本当に呼ばれていますか？
+                    console.log(`%c[VSL Toolbar] ボタン [${tagName}] がクリックされました！これからaddNodeToEventDataを呼び出します。`, "color: orange; font-weight: bold;");
                     this.addNodeToEventData(tagName, activeEvent);
                 });
                 
