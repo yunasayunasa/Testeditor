@@ -4,25 +4,36 @@
  * [destroy] アクションタグ
  * ターゲットのオブジェクトをシーンから破壊します。
  * @param {ActionInterpreter} interpreter
- * @param {object} params - このタグではパラメータは使用しません
- * @param {Phaser.GameObjects.GameObject} target - 破壊対象のオブジェクト
+ * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target - ActionInterpreterによって解決された破壊対象オブジェクト
  */
 export default async function destroy(interpreter, params, target) { 
+    // ▼▼▼【デバッグログを追加】▼▼▼
+    const sourceObject = interpreter.currentSource;
+    const collidedTargetObject = interpreter.currentTarget;
+    console.log(`%c[DEBUG | destroy] が実行されました。`, 'color: red; font-weight: bold;');
+    console.log(`  > VSLで指定されたパラメータ(params.target): '${params.target}'`);
+    console.log(`  > ActionInterpreterが解決したターゲット(target)の名前: '${target ? target.name : 'null'}'`);
+    console.log(`  --- コンテキスト情報 ---`);
+    console.log(`  > イベント発生源(source)の名前: '${sourceObject ? sourceObject.name : 'null'}'`);
+    console.log(`  > 衝突の相手(collidedTarget)の名前: '${collidedTargetObject ? collidedTargetObject.name : 'null'}'`);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     if (target && typeof target.destroy === 'function') {
-        target.destroy();
+        // デバッグ中は、実際に消さないように一旦コメントアウト
+        // target.destroy();
+        console.log(`  > 実際にdestroy()されるはずだったのは: ${target.name}`);
     } else {
-        const targetName = target ? target.name : 'unknown';
-        console.warn(`[destroy] Target '${targetName}' could not be destroyed.`);
+        const targetName = params.target || 'unknown';
+        console.warn(`[destroy] ターゲット '${targetName}' を破壊できませんでした。`);
     }
 }
 
 /**
- * ★ VSLエディタ用の自己定義 ★
+ * ★ VSLエ-タ用の自己定義 ★
  */
 destroy.define = {
     description: 'ターゲットのオブジェクトをシーンから破壊（削除）します。',
-    // パラメータは 'target' だけで、これはアクションタグの基本機能なので、
-    // params配列で定義する必要はありません。
     params: [
         { 
             key: 'target', 
