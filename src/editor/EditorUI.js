@@ -1045,40 +1045,7 @@ export default class EditorUI {
     }
     
   
-
-    /**
-     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
-     * @param {string} tagName - 追加するノードのタイプ
-     * @param {object} targetEvent - 追加先のイベントグラフのデータ
-     */
-    addNodeToEventData(tagName, targetEvent) {
-        if (!this.editingObject || !targetEvent) return;
-        
-        // --- 既存のロジックは、このtargetEventを直接使う ---
-        const existingNodeCount = targetEvent.nodes.length;
-        const newX = 50;
-        const newY = 150 + (existingNodeCount * 80);
-
-        const newNode = {
-            id: `node_${Date.now()}`,
-            type: tagName,
-            params: {},
-            x: newX,
-            y: newY
-        };
-        
-        targetEvent.nodes.push(newNode);
-        
-        // ★★★ 全体のevents配列を、ここで改めて取得して保存するのが最も安全 ★★★
-        const allEvents = this.editingObject.getData('events');
-        this.editingObject.setData('events', allEvents);
-        
-        // ★ 再描画は、setActiveVslEventに任せる
-        // これにより、ツールバー、キャンバス、タブのすべてが確実に同期される
-        this.setActiveVslEvent(targetEvent.id);
-        // this.populateVslCanvas(targetEvent); // ← これをやめる
-    }
-
+addNodeToEventData
    /**
      * ★★★ 新規メソッド ★★★
      * VSLトリガー編集UIを構築・再描画する
