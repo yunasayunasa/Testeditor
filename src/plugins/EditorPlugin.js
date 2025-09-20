@@ -2492,37 +2492,50 @@ createComponentSection() {
      * @param {string} paramKey - 更新するパラメータのキー
      * @param {string|number|boolean} paramValue - 新しい値
      */
-    updateNodeParam(nodeData, paramKey, paramValue) {
-        // --- ガード節 ---
-        if (!this.editorUI || !this.editorUI.editingObject) {
+   // in src/plugins/EditorPlugin.js
+
+    /**
+     * ★★★ 最終FIX版 (ノード位置更新も統合) ★★★
+     * VSLノードのパラメータ、またはプロパティ(x, y)を更新し、永続化する
+     * @param {object} nodeData - 更新対象のノードデータ
+     * @param {string} paramKey - 更新するキー ('x', 'y', または params内のキー)
+     * @param {any} paramValue - 新しい値
+     * @param {boolean} isPosition - 位置の更新かどうかを示すフラグ
+     */
+    updateNodeParam(nodeData, paramKey, paramValue, isPosition = false) {
+        if (!this.editorUI || !this.editorUI.editingObject || !nodeData) {
             console.error("Cannot update node param: Editing context is missing.");
             return;
         }
-        if (!nodeData) {
-            console.error("Cannot update node param: nodeData is null or undefined.");
-            return;
-        }
 
-        // --- 1. 受け取ったノードデータ（オブジェクト）の、パラメータを直接更新 ---
-        if (!nodeData.params) nodeData.params = {};
-        nodeData.params[paramKey] = paramValue;
-        
-        // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
-        // --------------------------------------------------------------------
-
-        // --- 2. 変更を含む、イベントデータ全体を永続化する ---
-        // ★★★ `this.editorUI.editingObject` が、本当のターゲットオブジェクト ★★★
+        // --- 1. 永続化するデータを更新 ---
         const targetObject = this.editorUI.editingObject;
         const allEvents = targetObject.getData('events');
-        targetObject.setData('events', allEvents);
         
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // 念のため、最新のノードデータをイベント配列から再検索する
+        let freshNodeData = null;
+        for (const event of allEvents) {
+            freshNodeData = event.nodes.find(n => n.id === nodeData.id);
+            if (freshNodeData) break;
+        }
 
-        console.log(`Node [${nodeData.id}] param '${paramKey}' updated to '${paramValue}'`);
-        
-        if (paramKey === 'trigger') {
-            this.editorUI.buildVslTabs();
+        if (!freshNodeData) return; // ノードが見つからなければ終了
+
+        if (isPosition) {
+            // 位置(x, y)の更新の場合
+            freshNodeData[paramKey] = paramValue;
+        } else {
+            // パラメータ(params)の更新の場合
+            if (!freshNodeData.params) freshNodeData.params = {};
+            freshNodeData.params[paramKey] = paramValue;
+        }
+
+        targetObject.setData('events', allEvents);
+
+        // --- 2. UIを再描画 ---
+        // 位置の変更の場合は、線を描き直すためにキャンバス全体を更新
+        if (isPosition) {
+            this.editorUI.populateVslCanvas();
         }
     }
     /**

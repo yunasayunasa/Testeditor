@@ -1485,19 +1485,23 @@ export default class EditorUI {
      * ★★★ 新規ヘルパーメソッド (タスク1 適用版) ★★★
      * ノードのX/Y座標を編集するUIを生成する (スライダー付き)
      */
+  // in src/editor/EditorUI.js
+
     createNodePositionInput(container, nodeData, key) {
-        // ★ 新しいヘルパーを呼び出す
         this.createNodeSliderInput(
             container,
-            key.toUpperCase(), // 'x' -> 'X'
+            key.toUpperCase(),
             Math.round(nodeData[key]),
-            0,     // 最小値
-            2000,  // 最大値 (キャンバスサイズに合わせて調整)
-            1,     // ステップ
-            (value) => { // 値が変更されたときの処理
-                if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
-                    // ★ 既存の更新ロジックをそのまま使う
-                    this.plugin.updateNodePosition(this.editingObject, nodeData.id, key, value);
+            0,
+            2000,
+            1,
+            (value) => {
+                if (this.plugin) {
+                    // ▼▼▼【ここが修正の核心です】▼▼▼
+                    // updateNodePosition ではなく、updateNodeParam を呼び出す
+                    // 第4引数に true を渡して、これが位置の更新であることを伝える
+                    this.plugin.updateNodeParam(nodeData, key, value, true);
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 }
             }
         );
