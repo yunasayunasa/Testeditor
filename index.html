@@ -189,17 +189,17 @@
         <!-- ================================================================= -->
 <!-- ▼▼▼ ステートマシン・エディタ (ここから追加) ▼▼▼ -->
 <!-- ================================================================= -->
-<div id="sm-editor-overlay" class="editor-modal-overlay">
-    <div id="sm-editor-panel" class="editor-modal-panel">
+<div id="sm-editor-overlay" class="modal-overlay"> <!-- ★★★ ここを修正 ★★★ -->
+    <div id="sm-editor-panel" class="modal-window wide"> <!-- ★★★ ここも修正 ★★★ -->
         
         <!-- ヘッダー -->
-        <div class="editor-modal-header">
+        <div class="modal-header"> <!-- ★★★ ここも修正 ★★★ -->
             <h3 id="sm-editor-title">ステートマシン編集: [オブジェクト名]</h3>
-            <button id="sm-editor-close-btn" class="editor-modal-close-btn">&times;</button>
+            <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
         </div>
         
         <!-- 本体 -->
-        <div class="editor-modal-body" id="sm-editor-body">
+        <div class="modal-content" id="sm-editor-body"> <!-- ★★★ ここも修正 ★★★ -->
 
             <!-- 左ペイン: 状態リスト -->
             <div id="sm-states-panel">
