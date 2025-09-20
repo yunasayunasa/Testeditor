@@ -34,6 +34,8 @@ export default class ActionInterpreter {
      */
     // in src/core/ActionInterpreter.js
 
+  // in src/core/ActionInterpreter.js
+
     async run(source, eventData, collidedTarget = null) {
         if (!source || !source.scene || !source.scene.scene.isActive()) return;
         if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
@@ -44,11 +46,11 @@ export default class ActionInterpreter {
 
         const { nodes, connections } = eventData;
         if (!connections || connections.length === 0) {
-             console.warn("[ActionInterpreter] Event has nodes but no connections. Cannot determine execution flow.");
-             return;
+             // 開始ノードが[if]で、Falseルートが未接続の場合など、これは正常なケースもある
+             // console.warn("[ActionInterpreter] Event has nodes but no connections.");
         }
 
-        const allTargetNodeIds = new Set(connections.map(c => c.toNode));
+        const allTargetNodeIds = new Set((connections || []).map(c => c.toNode));
         let currentNodeData = nodes.find(n => !allTargetNodeIds.has(n.id));
         
         if (!currentNodeData) {
@@ -64,22 +66,26 @@ export default class ActionInterpreter {
 
             if (handler) {
                 if (currentNodeData.type === 'if') {
-                    // ▼▼▼【ここからが修正箇所です】▼▼▼
-                    // --------------------------------------------------------------------
                     let expression = currentNodeData.params.exp;
                     let result = false;
                     try {
-                        // ★★★ HTMLエンティティをデコードする処理を追加 ★★★
+                        // --- ステップ1: HTMLエンティティのデコード ---
                         const tempElem = document.createElement('textarea');
                         tempElem.innerHTML = expression;
-                        const decodedExpression = tempElem.value;
+                        let decodedExpression = tempElem.value;
+
+                        // ▼▼▼【ここが最終FIXの核心です】▼▼▼
+                        // --- ステップ2: 式が引用符で囲まれていたら、それを取り除く ---
+                        if ((decodedExpression.startsWith('"') && decodedExpression.endsWith('"')) ||
+                            (decodedExpression.startsWith("'") && decodedExpression.endsWith("'"))) {
+                            decodedExpression = decodedExpression.substring(1, decodedExpression.length - 1);
+                        }
+                        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
                         const f = this.scene.stateManager.f;
                         const sf = this.scene.stateManager.sf;
                         
                         result = Function('f', 'sf', `return ${decodedExpression}`)(f, sf);
-                    // --------------------------------------------------------------------
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                     } catch (e) {
                         console.error(`[ActionInterpreter] Error evaluating [if] expression: "${expression}"`, e);
                         result = false;
@@ -95,7 +101,7 @@ export default class ActionInterpreter {
                 }
             }
 
-            const connection = connections.find(c => 
+            const connection = (connections || []).find(c => 
                 c.fromNode === currentNodeData.id && c.fromPin === nextPinName
             );
 
