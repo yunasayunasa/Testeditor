@@ -1851,9 +1851,10 @@ deselectNode() {
     }
    // in src/editor/EditorUI.js
 
+   // in src/editor/EditorUI.js
+
     drawConnections(svgLayer, nodes, connections) {
         connections.forEach(conn => {
-            // ★ ノード要素を this.vslCanvas から直接検索する (より確実)
             const fromNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
             const toNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.toNode}"]`);
 
@@ -1861,30 +1862,35 @@ deselectNode() {
                 const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
                 const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
 
-                if (!fromPinEl || !toPinEl) {
-                    // console.warn('Could not find pin elements for connection:', conn);
-                    return;
-                }
+                if (!fromPinEl || !toPinEl) return;
 
-                const canvasRect = this.vslCanvas.getBoundingClientRect();
+                // ▼▼▼【ここが座標計算の修正箇所です】▼▼▼
+                // --------------------------------------------------------------------
+                // 1. ノード本体の、キャンバス内での相対位置 (x, y) を取得
+                const fromNodeX = fromNodeEl.parentElement.offsetLeft; // wrapperのleft
+                const fromNodeY = fromNodeEl.parentElement.offsetTop;  // wrapperのtop
+                const toNodeX = toNodeEl.parentElement.offsetLeft;
+                const toNodeY = toNodeEl.parentElement.offsetTop;
+
+                // 2. ピンの、ノード内での相対位置 (中央) を取得
+                const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
+                const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
+                const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
+                const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
                 
-                const fromRect = fromPinEl.getBoundingClientRect();
-                const toRect = toPinEl.getBoundingClientRect();
-
-                // キャンバスのスクロール状態を考慮に入れる
-                const scrollLeft = this.vslCanvas.parentElement.scrollLeft;
-                const scrollTop = this.vslCanvas.parentElement.scrollTop;
-
-                const fromX = fromRect.left + fromRect.width / 2 - canvasRect.left + scrollLeft;
-                const fromY = fromRect.top + fromRect.height / 2 - canvasRect.top + scrollTop;
-                const toX = toRect.left + toRect.width / 2 - canvasRect.left + scrollLeft;
-                const toY = toRect.top + toRect.height / 2 - canvasRect.top + scrollTop;
+                // 3. 最終的なSVG内の絶対座標を計算
+                const finalFromX = fromNodeX + fromPinX;
+                const finalFromY = fromNodeY + fromPinY;
+                const finalToX = toNodeX + toPinX;
+                const finalToY = toNodeY + toPinY;
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', fromX);
-                line.setAttribute('y1', fromY);
-                line.setAttribute('x2', toX);
-                line.setAttribute('y2', toY);
+                line.setAttribute('x1', finalFromX);
+                line.setAttribute('y1', finalFromY);
+                line.setAttribute('x2', finalToX);
+                line.setAttribute('y2', finalToY);
                 line.setAttribute('stroke', '#aaa');
                 line.setAttribute('stroke-width', '2');
                 

@@ -1,21 +1,21 @@
 // src/handlers/events/destroy.js
 
 /**
- * [destroy] アクションタグ (最終FIX版・改)
+ * [destroy] アクションタグ
  * @param {ActionInterpreter} interpreter
  * @param {object} params
+ * @param {Phaser.GameObjects.GameObject} target - この引数は使わない
  * @param {object} context - runメソッドから渡される { source, target }
  */
-export default async function destroy(interpreter, params, context) {
+export default async function destroy(interpreter, params, target_do_not_use, context) {
     let finalTarget = null;
     const targetId = params.target || 'source';
 
     if (targetId === 'source') {
-        finalTarget = context.source; // ★ 第3引数のcontextから取得
+        finalTarget = context.source;
     } else if (targetId === 'target') {
-        finalTarget = context.target; // ★ 第3引数のcontextから取得
+        finalTarget = context.target;
     } else {
-        // 名前検索の場合は、従来のinterpreter.findTargetを使う
         finalTarget = interpreter.findTarget(targetId, interpreter.scene, context.source, context.target);
     }
 

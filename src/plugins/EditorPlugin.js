@@ -2529,20 +2529,37 @@ createComponentSection() {
      * ★★★ 新規追加 ★★★
      * EditorUIからの依頼で、VSLノードの位置を更新し、永続化・再描画する
      */
+   // in src/plugins/EditorPlugin.js
+
     updateNodePosition(targetObject, nodeId, key, value) {
         if (!targetObject) return;
+        
+        // ▼▼▼【ここが修正箇所です】▼▼▼
+        // --------------------------------------------------------------------
+        // 1. 最新のイベントデータを取得
         const events = targetObject.getData('events') || [];
-        if (!events[0] || !events[0].nodes) return;
-
-        const nodeData = events[0].nodes.find(n => n.id === nodeId);
-        if (nodeData) {
-            nodeData[key] = value;
-            targetObject.setData('events', events);
-
-            // ★ EditorUIに、キャンバスの再描画を依頼
-            if (this.editorUI) {
-                this.editorUI.populateVslCanvas(targetObject);
+        
+        // 2. すべてのイベントグラフをループして、該当するノードを探す (より安全)
+        for (const eventData of events) {
+            if (eventData.nodes) {
+                const nodeData = eventData.nodes.find(n => n.id === nodeId);
+                if (nodeData) {
+                    // 3. 見つけたら、そのノードの x または y プロパティだけを更新
+                    nodeData[key] = value;
+                    // 4. ループを抜ける
+                    break;
+                }
             }
+        }
+
+        // 5. 変更を含むイベントデータ全体を、改めて保存する
+        targetObject.setData('events', events);
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // ★ EditorUIに、キャンバスの再描画を依頼 (これは変更なし)
+        if (this.editorUI) {
+            this.editorUI.populateVslCanvas();
         }
     }
     /**

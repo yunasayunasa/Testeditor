@@ -100,12 +100,21 @@ export default class ActionInterpreter {
                     console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
 
                 } else {
-                    // [if]以外のタグの処理 (以前の destroy 修正を適用)
+                    // ▼▼▼【ここが修正箇所です】▼▼▼
+                    // --------------------------------------------------------------------
+                    // 1. 汎用的なターゲットを、以前のように解決する
+                    const finalTarget = this.findTarget(currentNodeData.params.target, this.scene, this.currentSource, this.currentTarget);
+
+                    // 2. [destroy]タグのために、コンテキスト情報も作成する
                     const context = {
                         source: this.currentSource,
                         target: this.currentTarget
                     };
-                    await handler(this, currentNodeData.params, context);
+                    
+                    // 3. handlerに、第3引数として finalTarget、第4引数として context を渡す
+                    await handler(this, currentNodeData.params, finalTarget, context);
+                    // --------------------------------------------------------------------
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 }
             }
 
