@@ -1043,33 +1043,57 @@ export default class EditorUI {
             this.plugin.pluginManager.game.input.enabled = true;
         }
     }
-  // src/editor/EditorUI.js
+    
+    /**
+     * ★★★ 新規メソッド (旧 populateEventEditor の進化形) ★★★
+     * VSLツールバーのノードリストを生成する
+     */
+     /**
+     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
+     * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
+     */
+    populateVslToolbar(activeEvent) {
+        if (!this.vslNodeList) return;
+        this.vslNodeList.innerHTML = '';
+        
+        if (!activeEvent) return;
+
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
+        
+        if (eventTagHandlers) {
+            for (const tagName in eventTagHandlers) {
+                const button = document.createElement('button');
+                button.className = 'node-add-button';
+                button.innerText = `[${tagName}]`;
+                
+                // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
+                // --------------------------------------------------------------------
+                button.addEventListener('click', () => {
+                    // ★★★ addNodeToEventDataに、どのイベントに追加するかを渡す ★★★
+                    this.addNodeToEventData(tagName, activeEvent);
+                });
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                
+                this.vslNodeList.appendChild(button);
+            }
+        } else {
+            this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
+        }
+    }
 
     /**
-     * ★★★ 最終FIX版 (ログ爆弾付き) ★★★
-     * アクティブなイベントグラフに、新しいノードを追加し、キャンバスを再描画する
+     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
      * @param {string} tagName - 追加するノードのタイプ
      * @param {object} targetEvent - 追加先のイベントグラフのデータ
      */
     addNodeToEventData(tagName, targetEvent) {
-        console.log(`%c[addNodeToEventData] 開始。tagName: ${tagName}`, 'color: yellow;');
+        if (!this.editingObject || !targetEvent) return;
         
-        if (!this.editingObject) {
-            console.error("[addNodeToEventData] Error: 'this.editingObject' is not set!");
-            return;
-        }
-        if (!targetEvent) {
-            console.error("[addNodeToEventData] Error: 'targetEvent' is not provided!");
-            return;
-        }
-        
-        // --- 1. 永続化用の、完全なイベントリストを取得 ---
-        const allEvents = this.editingObject.getData('events');
-        
-        // --- 2. 新しいノードのデータを作成 ---
-        const existingNodeCount = targetEvent.nodes ? targetEvent.nodes.length : 0;
+        // --- 既存のロジックは、このtargetEventを直接使う ---
+        const existingNodeCount = targetEvent.nodes.length;
         const newX = 50;
-        const newY = 50 + (existingNodeCount * 120);
+        const newY = 150 + (existingNodeCount * 80);
 
         const newNode = {
             id: `node_${Date.now()}`,
@@ -1079,26 +1103,18 @@ export default class EditorUI {
             y: newY
         };
         
-        // --- 3. ターゲットとなるイベントグラフのnodes配列に、新しいノードを追加 ---
-        if (!targetEvent.nodes) targetEvent.nodes = [];
         targetEvent.nodes.push(newNode);
         
-        // --- 4. 更新した完全なイベントリストを、オブジェクトに保存 ---
+        // ★★★ 全体のevents配列を、ここで改めて取得して保存するのが最も安全 ★★★
+        const allEvents = this.editingObject.getData('events');
         this.editingObject.setData('events', allEvents);
-        console.log("[addNodeToEventData] Event data updated and set.", allEvents);
         
-        // ▼▼▼【ここが、最後の砦です】▼▼▼
-        // --------------------------------------------------------------------
-
-        // --- 5. キャンバスと、関連するすべてのUIを再描画する ---
-        // ★ setActiveVslEventを呼び出すことで、キャンバス、ツールバー、タブが
-        //    すべて最新の状態で再描画されることが保証される。
-        console.log("[addNodeToEventData] これからsetActiveVslEventを呼び出して、UIを再描画します。");
+        // ★ 再描画は、setActiveVslEventに任せる
+        // これにより、ツールバー、キャンバス、タブのすべてが確実に同期される
         this.setActiveVslEvent(targetEvent.id);
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // this.populateVslCanvas(targetEvent); // ← これをやめる
     }
+
    /**
      * ★★★ 新規メソッド ★★★
      * VSLトリガー編集UIを構築・再描画する
@@ -1168,13 +1184,7 @@ export default class EditorUI {
      * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
      * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
      */
-    populateVslCanvas() {
-        if (!this.vslCanvas) return;
-        // 中身をクリアするだけ。描画はEditorPluginに任せる。
-        this.vslCanvas.innerHTML = ''; 
-    }
-
-  /* populateVslCanvas() {
+   populateVslCanvas() {
     if (!this.vslCanvas || !this.editingObject) return;
     this.vslCanvas.innerHTML = ''; // クリア
 
@@ -1218,7 +1228,7 @@ export default class EditorUI {
         if (targetEvent.connections) {
             this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
         }
-    }*/
+    }
 
     /**
      * ★★★ 新規追加 (線描画ヘルパー) ★★★
@@ -1255,10 +1265,155 @@ export default class EditorUI {
             }
         });
     }
- 
-   
+    buildNodeContent(nodeElement, nodeData) {
+        nodeElement.innerHTML = '';
+
+        const title = document.createElement('strong');
+        title.innerText = `[${nodeData.type}]`;
+         // ▼▼▼ ピンの生成 ▼▼▼
+        const inputPin = document.createElement('div');
+        inputPin.className = 'vsl-node-pin input';
+        inputPin.dataset.pinType = 'input';
+
+        const outputPin = document.createElement('div');
+        outputPin.className = 'vsl-node-pin output';
+        outputPin.dataset.pinType = 'output';
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
+        
+        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
+        // --------------------------------------------------------------------
+
+        // 1. ハンドラのリストを取得
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+        // 2. このノードに対応するハンドラ関数を見つける
+        const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
+
+        // 3. もし、ハンドラに'define'プロパティがあれば、それに基づいてUIを生成
+        if (handler && handler.define && Array.isArray(handler.define.params)) {
+            handler.define.params.forEach(paramDef => {
+                 // ▼▼▼【アセット選択UIのロジックを追加】▼▼▼
+                if (paramDef.type === 'asset_key') {
+                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                } 
+                if (paramDef.type === 'select') { // ★ selectタイプを追加
+                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
+                } else if (paramDef.type === 'number') {
+                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                } else { // 'string', 'asset_key' など
+                    this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                }
+
+            });
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
+        this.createNodePositionInput(paramsContainer, nodeData, 'x');
+        this.createNodePositionInput(paramsContainer, nodeData, 'y');
+           // ★★★ 削除ボタンを生成 ★★★
+        const deleteButton = document.createElement('button');
+        deleteButton.innerText = '削除';
+        deleteButton.className = 'node-delete-button';
+        deleteButton.addEventListener('click', () => {
+            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
+                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
+                this.deleteNode(nodeData.id);
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            }
+        });
+
+        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
+    }
+/**
+     * ★★★ 新規ヘルパー ★★★
+     * アセット選択用のドロップダウンを生成する
+     */
+    createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const select = document.createElement('select');
+        
+        // --- 1. グローバルレジストリから、アセットリストを取得 ---
+        const assetList = this.game.registry.get('asset_list') || [];
+        
+        // --- 2. アセットリストから、<option>を生成 ---
+        // (将来的に、ここで 'image' や 'prefab' など、アセットの種類でフィルタリングできると、さらに良い)
+        assetList.forEach(asset => {
+            const option = document.createElement('option');
+            option.value = asset.key;
+            option.innerText = asset.key;
+            if ((nodeData.params[paramKey] || defaultValue) === asset.key) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+            this.updateNodeParam(nodeData, paramKey, select.value);
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
+    }
+    /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * ノードのX/Y座標を編集する数値入力欄を生成する
+     */
+    createNodePositionInput(container, nodeData, key) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const label = document.createElement('label');
+        label.innerText = `${key}: `;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = Math.round(nodeData[key]);
+        
+        input.addEventListener('change', () => {
+            const value = parseInt(input.value, 10);
+            if (!isNaN(value)) {
+               if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
+                    this.plugin.updateNodePosition(this.editingObject, nodeData.id, key, value);
+                }
+            }
+        });
+
+        row.append(label, input);
+        container.appendChild(row);
+    }
 // src/editor/EditorUI.js
- 
+ /**
+     * ★★★ 新規ヘルパー ★★★
+     * ノード内に、ドロップダウン選択式の入力欄を生成する
+     */
+    createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const select = document.createElement('select');
+        options.forEach(optValue => {
+            const option = document.createElement('option');
+            option.value = optValue;
+            option.innerText = optValue;
+            if ((nodeData.params[paramKey] || defaultValue) == optValue) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+            this.plugin.updateNodeParam(nodeData, paramKey, select.value);
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
+    }
     /**
      * ★★★ A案＋ピン接続 - 完成版 ★★★
      * VSLキャンバスでポインターが押されたときの処理
@@ -1314,7 +1469,8 @@ export default class EditorUI {
             const events = this.editingObject.getData('events');
             const nodeData = events[0].nodes.find(n => n.id === nodeId);
             if (nodeData) {
-               this.selectNode(nodeData);
+                // selectNodeはサイドバーを更新するので、もう不要
+                // this.selectNode(nodeData); 
             }
         } 
         // --- ケースC: 何もない場所がクリックされた場合 (選択解除) ---
@@ -1342,101 +1498,18 @@ export default class EditorUI {
  */
 selectNode(nodeData) {
     this.selectedNodeData = nodeData;
+    console.log("Selected node:", nodeData);
+
+    // ★ EditorPluginに、プロパティパネルを「ノード編集モード」で更新するよう依頼
     if (this.plugin) {
         this.plugin.updatePropertyPanelForNode(nodeData);
     }
     
-    // ★★★ キャンバスの「見た目」の更新は、EditorUIの責任 ★★★
+    // 選択されたノードの見た目を変える (CSSで .vsl-node.selected を定義)
     this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
     const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
     if (el) el.classList.add('selected');
 }
-populateVslToolbar(activeEvent) {
-        if (!this.vslNodeList) return;
-        this.vslNodeList.innerHTML = '';
-        
-        if (!activeEvent) return;
-
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
-        
-        if (eventTagHandlers) {
-            for (const tagName in eventTagHandlers) {
-                const button = document.createElement('button');
-                button.className = 'node-add-button';
-                button.innerText = `[${tagName}]`;
-                
-                // ★★★ この中のロジックが、最も怪しいです ★★★
-                button.addEventListener('click', () => {
-                    // この addNodeToEventData は、本当に呼ばれていますか？
-                    console.log(`%c[VSL Toolbar] ボタン [${tagName}] がクリックされました！これからaddNodeToEventDataを呼び出します。`, "color: orange; font-weight: bold;");
-                    this.addNodeToEventData(tagName, activeEvent);
-                });
-                
-                this.vslNodeList.appendChild(button);
-            }
-        } else {
-            this.vslNodeList.innerHTML = '<p>Event Handlers not found.</p>';
-        }
-    }
-buildNodeContent(nodeElement, nodeData) {
-        nodeElement.innerHTML = '';
-
-        const title = document.createElement('strong');
-        title.innerText = `[${nodeData.type}]`;
-         // ▼▼▼ ピンの生成 ▼▼▼
-        const inputPin = document.createElement('div');
-        inputPin.className = 'vsl-node-pin input';
-        inputPin.dataset.pinType = 'input';
-
-        const outputPin = document.createElement('div');
-        outputPin.className = 'vsl-node-pin output';
-        outputPin.dataset.pinType = 'output';
-        const paramsContainer = document.createElement('div');
-        paramsContainer.className = 'node-params';
-        
-        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
-        // --------------------------------------------------------------------
-
-        // 1. ハンドラのリストを取得
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
-       
-
-       // --- ハンドラのdefineに基づいて、パラメータUIを動的に生成 ---
-        const handler = this.game.registry.get('eventTagHandlers')?.[nodeData.type];
-        if (handler?.define?.params) {
-            handler.define.params.forEach(paramDef => {
-                if (paramDef.type === 'asset_key') {
-                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef);
-                } else if (paramDef.type === 'select') {
-                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef);
-                } else if (paramDef.type === 'number') {
-                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef);
-                } else { // 'string', 'asset_key' など
-                    this.createNodeTextInput(paramsContainer, nodeData, paramDef);
-                }
-
-            });
-        }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
-        this.createNodePositionInput(paramsContainer, nodeData, 'x');
-        this.createNodePositionInput(paramsContainer, nodeData, 'y');
-           // ★★★ 削除ボタンを生成 ★★★
-        const deleteButton = document.createElement('button');
-        deleteButton.innerText = '削除';
-        deleteButton.className = 'node-delete-button';
-        deleteButton.addEventListener('click', () => {
-            if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
-                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
-                this.deleteNode(nodeData.id);
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-            }
-        });
-
-        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
-    }
 
 /**
  * ★★★ 復活させるメソッド (A案仕様) ★★★
@@ -1446,16 +1519,82 @@ deselectNode() {
     if (!this.selectedNodeData) return;
     this.selectedNodeData = null;
 
-      if (this.plugin) {
-            // ★ プロパティパネルを、通常のオブジェクト編集モードに戻すよう依頼
-            this.plugin.updatePropertyPanel(); // 引数なしで呼ぶ
-        }
+    if (this.plugin) {
+        // ★ プロパティパネルを、通常の「オブジェクト編集モード」に戻すよう依頼
+        this.plugin.selectSingleObject(this.editingObject);
+    }
 
     this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
 }
   
     
-  
+   /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
+     * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'target')
+     * @param {string} label - 表示ラベル (e.g., 'ターゲット')
+     * @param {string} defaultValue - デフォルト値
+     */
+    createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        // フォーカスが外れたら、データ更新を呼び出す
+        input.addEventListener('change', () => {
+         
+            // --------------------------------------------------------------------
+            // ★★★ thisではなく、this.pluginのメソッドを呼び出す ★★★
+              if (this.plugin) {
+            // ★★★ 渡す引数を、nodeData, paramKey, value に変更 ★★★
+            this.plugin.updateNodeParam(nodeData, paramKey, input.value);
+        }
+        });
+        
+        row.append(labelEl, input);
+        container.appendChild(row);
+    }
+ 
+    /**
+     * ★★★ 新規ヘルパー (VSLノード用) ★★★
+     * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
+     * @param {HTMLElement} container - 追加先の親要素
+     * @param {object} nodeData - 対応するノードのデータ
+     * @param {string} paramKey - パラメータのキー (e.g., 'time')
+     * @param {string} label - 表示ラベル (e.g., '時間(ms)')
+     * @param {number} defaultValue - デフォルト値
+     */
+    createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
+        
+        const input = document.createElement('input');
+        input.type = 'number'; // ★ typeを'number'に変更
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        input.addEventListener('change', () => {
+            // ★ 値を数値に変換してから渡す
+            const value = parseFloat(input.value); 
+           if (this.plugin) {
+                this.plugin.updateNodeParam(this.editingObject, nodeData.id, paramKey, value);
+            }
+        });
+        
+        row.append(labelEl, input);
+        container.appendChild(row);
+    }
+
      /**
      * ★★★ 新規メソッド ★★★
      * VSLエディタの操作モードを切り替える
