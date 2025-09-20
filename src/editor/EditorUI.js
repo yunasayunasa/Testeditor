@@ -1326,13 +1326,16 @@ export default class EditorUI {
 
         nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
-/**
-     * ★★★ 新規ヘルパー ★★★
+// in src/editor/EditorUI.js
+
+    /**
+     * ★★★ 新規ヘルパー (ステップ1：全アセット表示版) ★★★
      * アセット選択用のドロップダウンを生成する
      */
     createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
+        
         const labelEl = document.createElement('label');
         labelEl.innerText = `${label}: `;
         
@@ -1341,20 +1344,32 @@ export default class EditorUI {
         // --- 1. グローバルレジストリから、アセットリストを取得 ---
         const assetList = this.game.registry.get('asset_list') || [];
         
-        // --- 2. アセットリストから、<option>を生成 ---
-        // (将来的に、ここで 'image' や 'prefab' など、アセットの種類でフィルタリングできると、さらに良い)
+        // --- 2. プレースホルダー（未選択状態）のオプションを追加 ---
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.innerText = 'アセットを選択...';
+        select.appendChild(placeholderOption);
+
+        // --- 3. アセットリストから、<option>を動的に生成 ---
+        // (現時点では、種類によるフィルタリングは行わない)
         assetList.forEach(asset => {
             const option = document.createElement('option');
             option.value = asset.key;
-            option.innerText = asset.key;
+            option.innerText = `[${asset.type}] ${asset.key}`; // [image] bg_school のように表示
+            
+            // 現在設定されている値、またはデフォルト値と一致すれば、その項目を選択状態にする
             if ((nodeData.params[paramKey] || defaultValue) === asset.key) {
                 option.selected = true;
             }
             select.appendChild(option);
         });
 
+        // --- 4. 値が変更されたら、EditorPluginに通知するリスナーを設定 ---
         select.addEventListener('change', () => {
-            this.updateNodeParam(nodeData, paramKey, select.value);
+            // ★ 既存の更新ロジックをそのまま呼び出すだけ
+            if (this.plugin) {
+                this.plugin.updateNodeParam(nodeData, paramKey, select.value);
+            }
         });
         
         row.append(labelEl, select);
