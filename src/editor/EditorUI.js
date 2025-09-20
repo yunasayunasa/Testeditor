@@ -1603,7 +1603,7 @@ deselectNode() {
      * @param {string} label - 表示ラベル (e.g., '時間(ms)')
      * @param {number} defaultValue - デフォルト値
      */
-   // in src/editor/EditorUI.js
+    // in src/editor/EditorUI.js
 
     /**
      * ★★★ 新規ヘルパー (VSLノード用) - バグ修正版 ★★★
@@ -1649,9 +1649,7 @@ deselectNode() {
         
         row.append(labelEl, input);
         container.appendChild(row);
-    }tainer.appendChild(row);
     }
-
      /**
      * ★★★ 新規メソッド ★★★
      * VSLエディタの操作モードを切り替える
