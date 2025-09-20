@@ -186,65 +186,7 @@
                 <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
             </div>
         </div>
-        <!-- ================================================================= -->
-<!-- ▼▼▼ ステートマシン・エディタ (ここから追加) ▼▼▼ -->
-<!-- ================================================================= -->
-<div id="sm-editor-overlay" class="editor-modal-overlay">
-    <div id="sm-editor-panel" class="editor-modal-panel">
         
-        <!-- ヘッダー -->
-        <div class="editor-modal-header">
-            <h3 id="sm-editor-title">ステートマシン編集: [オブジェクト名]</h3>
-            <button id="sm-editor-close-btn" class="editor-modal-close-btn">&times;</button>
-        </div>
-        
-        <!-- 本体 -->
-        <div class="editor-modal-body" id="sm-editor-body">
-
-            <!-- 左ペイン: 状態リスト -->
-            <div id="sm-states-panel">
-                <div class="panel-header">
-                    <h4>状態リスト</h4>
-                    <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
-                </div>
-                <div id="sm-states-list">
-                    <!-- (ここにJSで状態が追加される) -->
-                    <!-- <div class="sm-state-item active">idle</div> -->
-                    <!-- <div class="sm-state-item">chase</div> -->
-                </div>
-            </div>
-
-            <!-- 右ペイン: VSL編集エリア -->
-            <div id="sm-vsl-panel">
-                <!-- イベントフック選択タブ -->
-                <div id="sm-hooks-tabs">
-                    <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
-                    <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
-                    <button class="sm-hook-tab" data-hook="onExit">onExit</button>
-                </div>
-
-                <!-- VSLキャンバス (イベントエディタと共用できるかも) -->
-                <div class="vsl-editor-wrapper">
-                    <div id="sm-vsl-toolbar" class="vsl-toolbar">
-                        <h4>ノードリスト</h4>
-                        <div id="sm-vsl-node-list" class="vsl-node-list">
-                           <!-- (ここにJSでノード追加ボタンが追加される) -->
-                        </div>
-                    </div>
-                    <div id="sm-vsl-canvas-wrapper" class="vsl-canvas-wrapper">
-                        <div id="sm-vsl-canvas" class="vsl-canvas">
-                           <!-- (ここにJSでノードが描画される) -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-<!-- ================================================================= -->
-<!-- ▲▲▲ ステートマシン・エディタ (ここまで) ▲▲▲ -->
-<!-- ================================================================= -->
         <!-- Help Modal -->
         <div id="help-modal-overlay" class="modal-overlay">
             <div class="modal-window">
