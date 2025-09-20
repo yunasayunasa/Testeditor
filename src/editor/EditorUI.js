@@ -1044,12 +1044,11 @@ export default class EditorUI {
         }
     }
     
+   // in src/editor/EditorUI.js
+
     /**
-     * ★★★ 新規メソッド (旧 populateEventEditor の進化形) ★★★
+     * ★★★ アルファベット順ソート機能付き - 最終版 ★★★
      * VSLツールバーのノードリストを生成する
-     */
-     /**
-     * ★★★ マルチトリガー対応版 - 最終FIX ★★★
      * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
      */
     populateVslToolbar(activeEvent) {
@@ -1061,19 +1060,27 @@ export default class EditorUI {
         const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
         
         if (eventTagHandlers) {
-            for (const tagName in eventTagHandlers) {
+            // ▼▼▼【ここが修正の核心です】▼▼▼
+            // --------------------------------------------------------------------
+
+            // 1. オブジェクトからキー（タグ名）の配列を取得する
+            const tagNames = Object.keys(eventTagHandlers);
+
+            // 2. 配列をアルファベット順にソートする
+            tagNames.sort();
+
+            // 3. ソート済みの配列を使ってループ処理を行う
+            for (const tagName of tagNames) {
+            // --------------------------------------------------------------------
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            
                 const button = document.createElement('button');
                 button.className = 'node-add-button';
                 button.innerText = `[${tagName}]`;
                 
-                // ▼▼▼【ここが、エラーを解決する修正です】▼▼▼
-                // --------------------------------------------------------------------
                 button.addEventListener('click', () => {
-                    // ★★★ addNodeToEventDataに、どのイベントに追加するかを渡す ★★★
                     this.addNodeToEventData(tagName, activeEvent);
                 });
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 
                 this.vslNodeList.appendChild(button);
             }
