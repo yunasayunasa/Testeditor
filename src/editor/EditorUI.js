@@ -1333,8 +1333,7 @@ export default class EditorUI {
             }
         });
     }
-    // in src/editor/EditorUI.js
-// in src/editor/EditorUI.js
+   // in src/editor/EditorUI.js
 
     buildNodeContent(nodeElement, nodeData) {
         nodeElement.innerHTML = ''; // クリア
@@ -1342,56 +1341,17 @@ export default class EditorUI {
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
         
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
-        const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
-        const pinDefine = handler?.define?.pins;
-
-        // --- ピンの描画 (絶対配置ベース) ---
-        const inputPins = pinDefine?.inputs || [{ name: 'input' }];
-        inputPins.forEach((pinDef, index) => {
-            const inputPin = document.createElement('div');
-            inputPin.className = 'vsl-node-pin input';
-            inputPin.dataset.pinType = 'input';
-            inputPin.dataset.pinName = pinDef.name;
-            // ★ CSSで位置を決めるためのスタイルを設定 (入力ピンは左側中央)
-            inputPin.style.top = '50%';
-            inputPin.style.left = '0';
-            nodeElement.appendChild(inputPin);
-        });
-
-        const outputPins = pinDefine?.outputs || [{ name: 'output' }];
-        outputPins.forEach((pinDef, index) => {
-            const outputPin = document.createElement('div');
-            outputPin.className = 'vsl-node-pin output';
-            outputPin.dataset.pinType = 'output';
-            outputPin.dataset.pinName = pinDef.name;
-            
-            // ★ 複数ある場合は、位置をずらす
-            const topPosition = (outputPins.length > 1) ? `${25 + index * 50}%` : '50%';
-            outputPin.style.top = topPosition;
-            outputPin.style.right = '0';
-            nodeElement.appendChild(outputPin);
-
-            // ★ ラベルもピンの近くに絶対配置する
-            if (pinDef.label) {
-                const pinLabel = document.createElement('span');
-                pinLabel.className = 'pin-label output';
-                pinLabel.innerText = pinDef.label;
-                pinLabel.style.top = topPosition;
-                pinLabel.style.right = '10px'; // ピンの少し内側
-                nodeElement.appendChild(pinLabel);
-            }
-        });
-
-        // --- 中央のコンテンツエリア ---
+        // --- 中央のコンテンツエリアを先に作成 ---
         const centerContent = document.createElement('div');
         centerContent.className = 'vsl-node-content';
         
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
+        
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+        const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
 
-        if (handler && handler.define && Array.isArray(handler.define.params)) {
-            // パラメータ生成ロジック (変更なし)
+        if (handler?.define?.params) {
             handler.define.params.forEach(paramDef => {
                 if (paramDef.type === 'asset_key') { this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef); } 
                 else if (paramDef.type === 'select') { this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options); }
@@ -1407,12 +1367,48 @@ export default class EditorUI {
         deleteButton.innerText = '削除';
         deleteButton.className = 'node-delete-button';
         deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // ノード選択イベントを発火させない
+            e.stopPropagation();
             if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) { this.deleteNode(nodeData.id); }
         });
 
         centerContent.append(title, paramsContainer, deleteButton);
+        // ★ 中央コンテンツを最初に追加
         nodeElement.appendChild(centerContent);
+
+        // --- ピンの描画 (上層に追加) ---
+        const pinDefine = handler?.define?.pins;
+
+        const inputPins = pinDefine?.inputs || [{ name: 'input' }];
+        inputPins.forEach((pinDef) => {
+            const inputPin = document.createElement('div');
+            inputPin.className = 'vsl-node-pin input';
+            inputPin.dataset.pinType = 'input';
+            inputPin.dataset.pinName = pinDef.name;
+            inputPin.style.top = '50%';
+            inputPin.style.left = '0';
+            nodeElement.appendChild(inputPin);
+        });
+
+        const outputPins = pinDefine?.outputs || [{ name: 'output' }];
+        outputPins.forEach((pinDef, index) => {
+            const outputPin = document.createElement('div');
+            outputPin.className = 'vsl-node-pin output';
+            outputPin.dataset.pinType = 'output';
+            outputPin.dataset.pinName = pinDef.name;
+            const topPosition = (outputPins.length > 1) ? `${25 + index * 50}%` : '50%';
+            outputPin.style.top = topPosition;
+            outputPin.style.right = '0';
+            nodeElement.appendChild(outputPin);
+
+            if (pinDef.label) {
+                const pinLabel = document.createElement('span');
+                pinLabel.className = 'pin-label output';
+                pinLabel.innerText = pinDef.label;
+                pinLabel.style.top = topPosition;
+                pinLabel.style.right = '12px';
+                nodeElement.appendChild(pinLabel);
+            }
+        });
     }
     /**
      * ★★★ 新規ヘルパー (ステップ3：複数タイプ対応版) ★★★
@@ -1930,6 +1926,8 @@ deselectNode() {
     // in src/editor/EditorUI.js (createNodePositionInputの上あたりに追加)
 // in src/editor/EditorUI.js
 
+   // in src/editor/EditorUI.js
+
     populateVslCanvas() {
         if (!this.vslCanvas || !this.editingObject) return;
 
@@ -1947,27 +1945,29 @@ deselectNode() {
 
         if (targetEvent.nodes) {
             targetEvent.nodes.forEach(nodeData => {
+                // ▼▼▼【ここが変更点】▼▼▼
+                // 外側のラッパーを作成 (位置決め用)
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'vsl-node-wrapper';
+                nodeWrapper.style.left = `${nodeData.x}px`;
+                nodeWrapper.style.top = `${nodeData.y}px`;
+
+                // 内側の本体を作成 (ピンの基準用)
                 const nodeElement = document.createElement('div');
                 nodeElement.className = 'vsl-node';
-                nodeElement.style.left = `${nodeData.x}px`;
-                nodeElement.style.top = `${nodeData.y}px`;
                 nodeElement.dataset.isNode = 'true';
                 nodeElement.dataset.nodeId = nodeData.id;
 
                 this.buildNodeContent(nodeElement, nodeData);
                 
-                this.vslCanvas.appendChild(nodeElement);
+                nodeWrapper.appendChild(nodeElement);
+                this.vslCanvas.appendChild(nodeWrapper);
             });
         }
         
-        // ▼▼▼【ここが抜けていた呼び出しです】▼▼▼
-        // --------------------------------------------------------------------
         if (targetEvent.connections) {
-            // すべてのノードDOM要素が描画された後に、接続線を描画する
             this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
