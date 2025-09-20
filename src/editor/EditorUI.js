@@ -1340,26 +1340,45 @@ export default class EditorUI {
 
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
-        const inputPin = document.createElement('div');
-        inputPin.className = 'vsl-node-pin input';
-        inputPin.dataset.pinType = 'input';
-
-        const outputPin = document.createElement('div');
-        outputPin.className = 'vsl-node-pin output';
-        outputPin.dataset.pinType = 'output';
-        const paramsContainer = document.createElement('div');
-        paramsContainer.className = 'node-params';
         
+        // ▼▼▼【ここからがピン描画の新しいロジックです】▼▼▼
+        // --------------------------------------------------------------------
         const eventTagHandlers = this.game.registry.get('eventTagHandlers');
         const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
+        const pinDefine = handler?.define?.pins;
+
+        // --- 入力ピンの生成 ---
+        const inputPins = pinDefine?.inputs || [{ name: 'input' }]; // デフォルト値
+        inputPins.forEach(pinDef => {
+            const inputPin = document.createElement('div');
+            inputPin.className = 'vsl-node-pin input';
+            inputPin.dataset.pinType = 'input';
+            inputPin.dataset.pinName = pinDef.name; // 'input'
+            if (pinDef.label) inputPin.innerText = pinDef.label;
+            nodeElement.appendChild(inputPin);
+        });
+
+        // --- 出力ピンの生成 ---
+        const outputPins = pinDefine?.outputs || [{ name: 'output' }]; // デフォルト値
+        outputPins.forEach(pinDef => {
+            const outputPin = document.createElement('div');
+            outputPin.className = 'vsl-node-pin output';
+            outputPin.dataset.pinType = 'output';
+            outputPin.dataset.pinName = pinDef.name; // 'output', 'output_true', etc.
+            if (pinDef.label) outputPin.innerText = pinDef.label; // 'True', 'False'など
+            nodeElement.appendChild(outputPin);
+        });
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        const paramsContainer = document.createElement('div');
+        paramsContainer.className = 'node-params';
 
         if (handler && handler.define && Array.isArray(handler.define.params)) {
+            // (このパラメータ生成部分は変更なし)
             handler.define.params.forEach(paramDef => {
                 if (paramDef.type === 'asset_key') {
-                    // ▼▼▼【ここが修正点１】▼▼▼
-                    // 最後の引数を paramDef.defaultValue から paramDef そのものに変更
                     this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 } else if (paramDef.type === 'select') {
                     this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
                 } else if (paramDef.type === 'number') {
@@ -1381,10 +1400,9 @@ export default class EditorUI {
             }
         });
 
-        nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
+        // ★ title, params, deleteButton の追加順を変更
+        nodeElement.append(title, paramsContainer, deleteButton);
     }
-
-  // in src/editor/EditorUI.js
 
     /**
      * ★★★ 新規ヘルパー (ステップ3：複数タイプ対応版) ★★★
@@ -1744,72 +1762,62 @@ deselectNode() {
      * VSLノードのピンがクリックされたときの処理
      * @param {HTMLElement} clickedPin - クリックされたピンのHTML要素
      */
-  onPinClicked(clickedPin) {
-        // ▼▼▼【ここを、このように修正します】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- 1. クリックされたピンの情報を取得 ---
+ // in src/editor/EditorUI.js
+
+    onPinClicked(clickedPin) {
         const pinType = clickedPin.dataset.pinType;
+        const pinName = clickedPin.dataset.pinName; // ★ピン名を取得
         
-        // --- 2. 親であるノード要素を、より安全な方法で探す ---
-        const parentNode = clickedPin.parentElement;
+        const parentNode = clickedPin.closest('.vsl-node'); // .parentElementより安全
         if (!parentNode || !parentNode.dataset.nodeId) {
             console.error("Could not find parent node for the clicked pin!", clickedPin);
-            return; // 親が見つからなければ、何もせず終了
+            return;
         }
         const nodeId = parentNode.dataset.nodeId;
 
-        // --- ケース1: 接続モード中でない時に、出力ピンがクリックされた (接続開始) ---
+        // --- ケース1: 接続開始 (出力ピンをクリック) ---
         if (!this.connectionState.isActive && pinType === 'output') {
             this.connectionState.isActive = true;
             this.connectionState.fromNodeId = nodeId;
+            this.connectionState.fromPinName = pinName; // ★接続元のピン名を保存
             this.connectionState.fromPinElement = clickedPin;
             
-            // 接続元であることを示す視覚的なフィードバック (CSSで .is-connecting を定義)
             clickedPin.classList.add('is-connecting');
-            console.log(`Connection started from node: ${nodeId}`);
+            console.log(`Connection started from node: ${nodeId} (pin: ${pinName})`);
         } 
-        // --- ケース2: 接続モード中に、入力ピンがクリックされた (接続完了) ---
+        // --- ケース2: 接続完了 (入力ピンをクリック) ---
         else if (this.connectionState.isActive && pinType === 'input') {
             const fromNodeId = this.connectionState.fromNodeId;
+            const fromPinName = this.connectionState.fromPinName;
             const toNodeId = nodeId;
+            const toPinName = pinName; // ★接続先のピン名を取得
+
+            // 新しい接続データを作成・保存
+            this.createConnection(fromNodeId, fromPinName, toNodeId, toPinName);
             
-            // 接続をデータとして作成・保存
-            this.createConnection(fromNodeId, toNodeId);
-            
-            // 接続モードを終了
+            // 接続モードを正常終了
             if (this.connectionState.fromPinElement) {
                 this.connectionState.fromPinElement.classList.remove('is-connecting');
             }
-            this.connectionState.isActive = false;
-            this.connectionState.fromNodeId = null;
-            this.connectionState.fromPinElement = null;
+            this.connectionState = { isActive: false }; // stateをリセット
         }
-        // --- その他の場合 (接続モード中に別の場所をクリックなど) は、接続をキャンセル ---
+        // --- その他の場合: 接続キャンセル ---
         else if (this.connectionState.isActive) {
             if (this.connectionState.fromPinElement) {
                 this.connectionState.fromPinElement.classList.remove('is-connecting');
             }
-            this.connectionState.isActive = false;
-            this.connectionState.fromNodeId = null;
-            this.connectionState.fromPinElement = null;
+            this.connectionState = { isActive: false }; // stateをリセット
             console.log("Connection cancelled.");
         }
     }
-
-    /**
-     * ★★★ 新規追加 ★★★
+   /**
+     * ★★★ ピン名対応版 ★★★
      * 新しい接続をイベントデータに追加し、キャンバスを再描画する
      */
-    /**
-     * ★★★ マルチトリガー対応版 ★★★
-     * 「現在アクティブな」イベントグラフに、新しい接続を追加する
-     */
-    createConnection(fromNodeId, toNodeId) {
+    createConnection(fromNodeId, fromPinName, toNodeId, toPinName) {
         if (!this.editingObject || !this.activeEventId || fromNodeId === toNodeId) return;
 
         const events = this.editingObject.getData('events');
-        // ★ アクティブなIDを使って、編集対象のイベントグラフを見つける
         const targetEvent = events.find(e => e.id === this.activeEventId);
         if (!targetEvent) return;
         
@@ -1817,15 +1825,63 @@ deselectNode() {
             targetEvent.connections = [];
         }
 
-        const exists = targetEvent.connections.some(c => c.fromNode === fromNodeId && c.toNode === toNodeId);
-        if (!exists) {
-            targetEvent.connections.push({ fromNode: fromNodeId, toNode: toNodeId });
-            this.editingObject.setData('events', events);
-            
-            console.log(`Connection created in event '${targetEvent.id}': ${fromNodeId} -> ${toNodeId}`);
-            
-            this.populateVslCanvas();
-        }
+        // ★ 同一ピンからの接続は1本までとする（上書きする）
+        targetEvent.connections = targetEvent.connections.filter(
+            c => !(c.fromNode === fromNodeId && c.fromPin === fromPinName)
+        );
+
+        // 新しい接続を追加
+        targetEvent.connections.push({ 
+            fromNode: fromNodeId, 
+            fromPin: fromPinName, 
+            toNode: toNodeId, 
+            toPin: toPinName 
+        });
+
+        this.editingObject.setData('events', events);
+        console.log(`Connection created: ${fromNodeId}:${fromPinName} -> ${toNodeId}:${toPinName}`);
+        
+        this.populateVslCanvas();
+    }
+    // in src/editor/EditorUI.js
+
+    drawConnections(svgLayer, nodes, connections) {
+        connections.forEach(conn => {
+            const fromNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
+            const toNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.toNode}"]`);
+
+            if (fromNodeEl && toNodeEl) {
+                // ★ 接続元のピン要素を特定
+                const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
+                // ★ 接続先のピン要素を特定
+                const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
+
+                // ピン要素が見つからない場合はスキップ
+                if (!fromPinEl || !toPinEl) return;
+
+                const canvasRect = this.vslCanvas.getBoundingClientRect();
+                
+                // ピンの絶対座標を取得
+                const fromRect = fromPinEl.getBoundingClientRect();
+                const toRect = toPinEl.getBoundingClientRect();
+
+                // キャンバス基準の相対座標に変換
+                const fromX = fromRect.left + fromRect.width / 2 - canvasRect.left;
+                const fromY = fromRect.top + fromRect.height / 2 - canvasRect.top;
+                const toX = toRect.left + toRect.width / 2 - canvasRect.left;
+                const toY = toRect.top + toRect.height / 2 - canvasRect.top;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromX);
+                line.setAttribute('y1', fromY);
+                line.setAttribute('x2', toX);
+                line.setAttribute('y2', toY);
+                line.setAttribute('stroke', '#aaa');
+                line.setAttribute('stroke-width', '2');
+                
+                svgLayer.appendChild(line);
+            }
+        });
     }
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
