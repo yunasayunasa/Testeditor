@@ -18,67 +18,10 @@
   ],
   "objects": [
     {
-      "name": "cg01_1",
-      "type": "initialize",
-      "x": 859,
-      "y": 904,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "id": "event_1758180859237",
-          "trigger": "onCollide_Start",
-          "nodes": [
-            {
-              "id": "node_1758180868213",
-              "type": "destroy",
-              "params": {},
-              "x": 50,
-              "y": 500
-            },
-            {
-              "id": "node_1758268952261",
-              "type": "set_data",
-              "params": {
-                "name": "f.score",
-                "value": "100"
-              },
-              "x": 50,
-              "y": 230
-            }
-          ],
-          "connections": [
-            {
-              "fromNode": "node_1758268952261",
-              "toNode": "node_1758180868213"
-            }
-          ],
-          "targetGroup": "player"
-        }
-      ],
-      "texture": "cg01",
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
       "name": "cg01_2",
       "type": "initialize",
-      "x": 2250,
-      "y": 309,
+      "x": 403,
+      "y": 519,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -103,8 +46,8 @@
     {
       "name": "cg01_3",
       "type": "initialize",
-      "x": 1603,
-      "y": 500,
+      "x": 1048,
+      "y": 412,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -123,133 +66,6 @@
         "isStatic": true,
         "isSensor": false,
         "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "walk_2_5_2",
-      "type": "initialize",
-      "x": 1420,
-      "y": 285,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "group": "player",
-      "events": [
-        {
-          "trigger": "onStomp",
-          "actions": "[eval exp=\"setF('player_hp', 50)\"]",
-          "targetGroup": "floor"
-        }
-      ],
-      "components": [
-        {
-          "type": "WatchVariableComponent",
-          "params": {
-            "variable": "f.player_hp"
-          }
-        },
-        {
-          "type": "BarDisplayComponent",
-          "params": {
-            "maxValueVariable": "f.player_max_hp"
-          }
-        }
-      ],
-      "texture": "walk",
-      "physics": {
-        "isStatic": false,
-        "isSensor": false,
-        "ignoreGravity": false,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 0.1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "bgtest_1758338428034",
-      "type": "initialize",
-      "x": 467,
-      "y": 376,
-      "depth": 15,
-      "scaleX": 1.86,
-      "scaleY": 1.86,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1758339423332",
-          "trigger": "onOverlap_Start",
-          "nodes": [],
-          "connections": [],
-          "targetGroup": "bg"
-        }
-      ],
-      "texture": "bgtest",
-      "physics": {
-        "isStatic": true,
-        "isSensor": true,
-        "ignoreGravity": true,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "bgtest2_1758338444820",
-      "type": "initialize",
-      "x": 1077,
-      "y": 515,
-      "depth": 20,
-      "scaleX": 0.27,
-      "scaleY": 0.27,
-      "angle": 0,
-      "alpha": 0.1,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1758338949991",
-          "trigger": "onOverlap_Start",
-          "nodes": [
-            {
-              "id": "node_1758338960090",
-              "type": "tween",
-              "params": {
-                "to": "1"
-              },
-              "x": 50,
-              "y": 150
-            }
-          ],
-          "connections": [],
-          "targetGroup": "bg"
-        }
-      ],
-      "texture": "bgtest2",
-      "physics": {
-        "isStatic": true,
-        "isSensor": true,
-        "ignoreGravity": true,
         "gravityScale": 1,
         "shape": "rectangle",
         "friction": 1,
@@ -307,51 +123,6 @@
       "texture": "bgtest4"
     },
     {
-      "name": "bgtest5_1758338496652",
-      "type": "initialize",
-      "x": 285,
-      "y": 823,
-      "depth": 20,
-      "scaleX": 0.27,
-      "scaleY": 0.27,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1758339040687",
-          "trigger": "onOverlap_Start",
-          "nodes": [
-            {
-              "id": "node_1758339045824",
-              "type": "tween",
-              "params": {
-                "property": "y"
-              },
-              "x": 50,
-              "y": 150
-            }
-          ],
-          "connections": [],
-          "targetGroup": "bg"
-        }
-      ],
-      "texture": "bgtest5",
-      "physics": {
-        "isStatic": true,
-        "isSensor": true,
-        "ignoreGravity": true,
-        "gravityScale": 1,
-        "shape": "rectangle",
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
       "name": "bgtest3_1758338618267",
       "type": "initialize",
       "x": 640,
@@ -383,26 +154,26 @@
       "texture": "bgtest3"
     },
     {
-      "name": "bgtest3_1758339676900",
+      "name": "bgtest2_1758338444820",
       "type": "initialize",
-      "x": 664,
-      "y": 290,
-      "depth": 26,
-      "scaleX": 1.12,
-      "scaleY": 1.12,
+      "x": 893,
+      "y": 191,
+      "depth": 20,
+      "scaleX": 0.32,
+      "scaleY": 0.32,
       "angle": 0,
-      "alpha": 0.06,
-      "layer": "Gameplay",
+      "alpha": 1,
+      "group": "player",
       "events": [
         {
-          "id": "event_1758339722399",
+          "id": "event_1758338949991",
           "trigger": "onOverlap_Start",
           "nodes": [
             {
-              "id": "node_1758339733055",
+              "id": "node_1758338960090",
               "type": "tween",
               "params": {
-                "to": "0.8"
+                "to": "1"
               },
               "x": 50,
               "y": 150
@@ -412,14 +183,30 @@
           "targetGroup": "bg"
         }
       ],
-      "texture": "bgtest3",
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {
+            "moveSpeed": 8.5
+          }
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        }
+      ],
+      "texture": "bgtest2",
       "physics": {
-        "isStatic": true,
-        "isSensor": true,
-        "ignoreGravity": true,
+        "isStatic": false,
+        "isSensor": false,
+        "ignoreGravity": false,
         "gravityScale": 1,
         "shape": "rectangle",
-        "friction": 1,
+        "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
           "category": 1,
@@ -428,16 +215,5 @@
       }
     }
   ],
-  "animations": [
-    {
-      "key": "歩き",
-      "texture": "walk",
-      "frames": {
-        "start": 0,
-        "end": 4
-      },
-      "frameRate": 10,
-      "repeat": -1
-    }
-  ]
+  "animations": []
 }
