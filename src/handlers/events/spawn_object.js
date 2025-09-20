@@ -76,3 +76,22 @@ export default async function spawn_object(interpreter, params) {
         console.error(`[spawn_object] Failed to create game object from prefab '${prefabKey}'.`);
     }
 }
+
+/**
+ * ★ VSLエディタ用の自己定義 ★
+ */
+spawn_object.define = {
+    description: 'プレハブから新しいオブジェクトを生成します。',
+    params: [
+        { 
+            key: 'prefab', 
+            // ▼▼▼【ここを、このように拡張します】▼▼▼
+            type: 'asset_key',
+            assetType: 'prefab', // ★ どのアセットタイプかを追加
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            label: 'プレハブ名', 
+            defaultValue: '' 
+        },
+        { key: 'at', type: 'string', label: '生成位置', defaultValue: 'source' }
+    ]
+};
