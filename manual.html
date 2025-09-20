@@ -981,3 +981,65 @@ Actions: [set_flip_x value=false]
 </code>
 </pre>
 <hr>
+<hr>
+
+<h2>[if], [else], [endif] - 条件分岐</h2>
+<p>
+    ゲームの変数 (<code>f.</code>) の値に応じて、実行するロジックの流れを分岐させるための、最も強力なフロー制御タグ群です。
+    これらは必ずセットで使います。
+</p>
+<p>
+    VSLエディタ上では、<code>[if]</code>ノードから「True」と「False」の2つの線が分岐します。
+</p>
+
+<h4>[if]</h4>
+<p>分岐の開始点です。条件式を評価し、結果が真(true)か偽(false)かを決定します。</p>
+<ul>
+    <li><strong>exp</strong> (必須): 評価する条件式を、JavaScriptの構文で記述します。
+        <ul>
+            <li>例: <code>f.player_hp <= 0</code> (プレイヤーのHPが0以下なら)</li>
+            <li>例: <code>f.found_key === true</code> (鍵を見つけているフラグがtrueなら)</li>
+            <li>例: <code>f.score >= 100 && f.level === 5</code> (スコアが100以上、かつ、レベルが5なら)</li>
+        </ul>
+    </li>
+</ul>
+
+<h4>[else]</h4>
+<p>
+    省略可能な中間点です。<code>[if]</code>の条件式が偽(false)だった場合に、こちらのルートの処理が実行されます。
+    このタグ自体にパラメータはありません。
+</p>
+
+<h4>[endif]</h4>
+<p>
+    分岐の合流点です。<code>[if]</code>のTrueルートの最後と、<code>[else]</code>ルートの最後（または<code>[if]</code>のFalseルートの最後）からこのノードに接続することで、分岐した処理が再び一つの流れに戻ります。
+    このタグ自体にパラメータはありません。
+</p>
+
+<p><strong>VSLでの接続例:</strong></p>
+<ol>
+    <li>
+        <strong>シンプルなIf文 (Elseなし):</strong><br>
+        <code>[if exp="..."]</code> の <strong>Trueピン</strong>から次のアクション（例: <code>[spawn_object]</code>）に繋ぎ、そのアクションから <code>[endif]</code> に繋ぎます。<br>
+        <code>[if exp="..."]</code> の <strong>Falseピン</strong>は、直接 <code>[endif]</code> に繋ぎます。<br>
+        → これにより、条件が偽だった場合はアクションがスキップされます。
+    </li>
+    <li>
+        <strong>If-Else文:</strong><br>
+        <code>[if exp="..."]</code> の <strong>Trueピン</strong>からTrue用のアクション（例: <code>[play_sound key="success"]</code>）に繋ぎ、そのアクションから <code>[endif]</code> に繋ぎます。<br>
+        <code>[if exp="..."]</code> の <strong>Falseピン</strong>から <code>[else]</code> に繋ぎ、<code>[else]</code> からFalse用のアクション（例: <code>[play_sound key="failure"]</code>）に繋ぎ、そのアクションから <code>[endif]</code> に繋ぎます。<br>
+        → これにより、条件に応じてどちらか片方のアクションだけが実行されます。
+    </li>
+</ol>
+
+<p><strong>使用例:</strong></p>
+<pre><code>; プレイヤーのHPが0以下ならゲームオーバーシーンに遷移し、そうでなければHPを10回復する
+[if exp="f.player_hp <= 0"]
+    [transition_scene scene=GameOverScene]
+[else]
+    [set_data name=player_hp value="f.player_hp + 10"]
+    [play_sound key=heal]
+[endif]
+</code></pre>
+
+<hr>

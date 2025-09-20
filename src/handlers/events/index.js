@@ -33,7 +33,9 @@ import run_scenario from './run_scenario.js';
 import set_ui_visible from './set_ui_visible.js';
 import flash_effect from './flash_effect.js';
 import vignette from './vignette.js';
-
+import _if from './if.js';
+import _else from './else.js';
+import endif from './endif.js';
 import fire_event from './fire_event.js';
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
@@ -70,4 +72,7 @@ export const eventTagHandlers = {
     'flash_effect' : flash_effect,
     'vignette': vignette,
     'fire_event' : fire_event,
+    'if': _if,
+    'else': _else,
+    'endif': endif
 };
