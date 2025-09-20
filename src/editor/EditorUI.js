@@ -1859,56 +1859,55 @@ deselectNode() {
 
    // in src/editor/EditorUI.js
 
-    drawConnections(svgLayer, nodes, connections, canvas) { // ★ canvas引数を活用
+  // in src/editor/EditorUI.js
+
+    drawConnections(svgLayer, nodes, connections, canvas) {
         connections.forEach(conn => {
-            // ★ canvas から検索
-            const fromNodeWrapper = canvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
-            const toNodeWrapper = canvas.querySelector(`[data-node-id="${conn.toNode}"]`);
+            // ★ canvas から、ノードのラッパー要素(.vsl-node-wrapper)を検索する
+            const fromNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`)?.parentElement;
+            const toNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`)?.parentElement;
 
-            if (fromNodeWrapper && toNodeWrapper) {
-                const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-name="${conn.fromPin}"]`);
-                const toPinEl = toNodeWrapper.querySelector(`[data-pin-name="${conn.toPin}"]`);
-                
-            if (fromNodeEl && toNodeEl) {
-                const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
-                const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
-const canvasRect = canvas.getBoundingClientRect()
-                if (!fromPinEl || !toPinEl) return;
+            // ラッパー要素が見つからなければ、この接続は描画しない
+            if (!fromNodeWrapper || !toNodeWrapper) return;
+            
+            // ラッパーの中から、ピン要素を検索する
+            const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-name="${conn.fromPin}"]`);
+            const toPinEl = toNodeWrapper.querySelector(`[data-pin-name="${conn.toPin}"]`);
 
-                // ▼▼▼【ここが座標計算の修正箇所です】▼▼▼
-                // --------------------------------------------------------------------
-                // 1. ノード本体の、キャンバス内での相対位置 (x, y) を取得
-                const fromNodeX = fromNodeEl.parentElement.offsetLeft; // wrapperのleft
-                const fromNodeY = fromNodeEl.parentElement.offsetTop;  // wrapperのtop
-                const toNodeX = toNodeEl.parentElement.offsetLeft;
-                const toNodeY = toNodeEl.parentElement.offsetTop;
+            // ピン要素が見つからなければ、この接続は描画しない
+            if (!fromPinEl || !toPinEl) return;
 
-                // 2. ピンの、ノード内での相対位置 (中央) を取得
-                const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
-                const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
-                const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
-                const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
-                
-                // 3. 最終的なSVG内の絶対座標を計算
-                const finalFromX = fromNodeX + fromPinX;
-                const finalFromY = fromNodeY + fromPinY;
-                const finalToX = toNodeX + toPinX;
-                const finalToY = toNodeY + toPinY;
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            // --- ここからが座標計算ロジック ---
 
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', finalFromX);
-                line.setAttribute('y1', finalFromY);
-                line.setAttribute('x2', finalToX);
-                line.setAttribute('y2', finalToY);
-                line.setAttribute('stroke', '#aaa');
-                line.setAttribute('stroke-width', '2');
-                
-                svgLayer.appendChild(line);
-            }
-        });
-    }
+            // 1. ノードラッパーの、キャンバス内での相対位置 (left, top) を取得
+            const fromNodeX = fromNodeWrapper.offsetLeft;
+            const fromNodeY = fromNodeWrapper.offsetTop;
+            const toNodeX = toNodeWrapper.offsetLeft;
+            const toNodeY = toNodeWrapper.offsetTop;
+
+            // 2. ピンの、ノード本体内での相対位置 (中央) を取得
+            const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
+            const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
+            const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
+            const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
+            
+            // 3. 最終的なSVG内の絶対座標を計算
+            const finalFromX = fromNodeX + fromPinX;
+            const finalFromY = fromNodeY + fromPinY;
+            const finalToX = toNodeX + toPinX;
+            const finalToY = toNodeY + toPinY;
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', finalFromX);
+            line.setAttribute('y1', finalFromY);
+            line.setAttribute('x2', finalToX);
+            line.setAttribute('y2', finalToY);
+            line.setAttribute('stroke', '#aaa');
+            line.setAttribute('stroke-width', '2');
+            
+            svgLayer.appendChild(line);
+        }); // ★ forEach の閉じ括弧
+    } // ★ メソッドの閉じ括弧
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
      * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
