@@ -75,10 +75,22 @@ export default class ActionInterpreter {
                     console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
 
                 } else {
-                    const finalTarget = this.findTarget(currentNodeData.params.target, source, collidedTarget);
-                    console.log(`%c[DEBUG | run]これからハンドラ [${currentNodeData.type}] を呼び出します。`, 'background: red; color: white;');
-                    console.log(`  > 解決されたターゲット(finalTarget)の名前: '${finalTarget ? finalTarget.name : 'null'}'`);
-                    await handler(this, currentNodeData.params, finalTarget);
+                     // ▼▼▼【ここが修正の核心です】▼-▼
+                    // --------------------------------------------------------------------
+                    // 1. このハンドラ専用の「コンテキスト」情報を作成する
+                    const context = {
+                        source: this.currentSource, // イベント発生源
+                        target: this.currentTarget  // 衝突相手など
+                    };
+
+                    // 2. 汎用的なターゲット解決は行わない
+
+                    // 3. handlerに渡す引数を変更する
+                    //    第1引数はこれまで通り `this` (interpreter)
+                    //    第3引数に、新しく作成した `context` を渡す
+                    await handler(this, currentNodeData.params, context);
+                    // --------------------------------------------------------------------
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 }
             }
 

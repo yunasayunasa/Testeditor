@@ -1,34 +1,30 @@
 // src/handlers/events/destroy.js
 
 /**
- * [destroy] アクションタグ
- * ターゲットのオブジェクトをシーンから破壊します。
+ * [destroy] アクションタグ (最終FIX版・改)
  * @param {ActionInterpreter} interpreter
  * @param {object} params
- * @param {Phaser.GameObjects.GameObject} target - ActionInterpreterによって解決された破壊対象オブジェクト
+ * @param {object} context - runメソッドから渡される { source, target }
  */
-export default async function destroy(interpreter, params, target) { 
-    // ▼▼▼【デバッグログを追加】▼▼▼
-    const sourceObject = interpreter.currentSource;
-    const collidedTargetObject = interpreter.currentTarget;
-    console.log(`%c[DEBUG | destroy] が実行されました。`, 'color: red; font-weight: bold;');
-    console.log(`  > VSLで指定されたパラメータ(params.target): '${params.target}'`);
-    console.log(`  > ActionInterpreterが解決したターゲット(target)の名前: '${target ? target.name : 'null'}'`);
-    console.log(`  --- コンテキスト情報 ---`);
-    console.log(`  > イベント発生源(source)の名前: '${sourceObject ? sourceObject.name : 'null'}'`);
-    console.log(`  > 衝突の相手(collidedTarget)の名前: '${collidedTargetObject ? collidedTargetObject.name : 'null'}'`);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+export default async function destroy(interpreter, params, context) {
+    let finalTarget = null;
+    const targetId = params.target || 'source';
 
-    if (target && typeof target.destroy === 'function') {
-        // デバッグ中は、実際に消さないように一旦コメントアウト
-        // target.destroy();
-        console.log(`  > 実際にdestroy()されるはずだったのは: ${target.name}`);
+    if (targetId === 'source') {
+        finalTarget = context.source; // ★ 第3引数のcontextから取得
+    } else if (targetId === 'target') {
+        finalTarget = context.target; // ★ 第3引数のcontextから取得
     } else {
-        const targetName = params.target || 'unknown';
-        console.warn(`[destroy] ターゲット '${targetName}' を破壊できませんでした。`);
+        // 名前検索の場合は、従来のinterpreter.findTargetを使う
+        finalTarget = interpreter.findTarget(targetId, interpreter.scene, context.source, context.target);
+    }
+
+    if (finalTarget && typeof finalTarget.destroy === 'function') {
+        finalTarget.destroy();
+    } else {
+        console.warn(`[destroy] ターゲット '${targetId}' を破壊できませんでした。`);
     }
 }
-
 /**
  * ★ VSLエ-タ用の自己定義 ★
  */
