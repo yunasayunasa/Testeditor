@@ -203,9 +203,26 @@
       "scaleX": 0.27,
       "scaleY": 0.27,
       "angle": 0,
-      "alpha": 1,
+      "alpha": 0.1,
       "layer": "Gameplay",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758338949991",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1758338960090",
+              "type": "tween",
+              "params": {
+                "to": "1"
+              },
+              "x": 50,
+              "y": 150
+            }
+          ],
+          "connections": []
+        }
+      ],
       "texture": "bgtest2"
     },
     {
@@ -231,9 +248,27 @@
       "scaleX": 0.93,
       "scaleY": 0.93,
       "angle": 0,
-      "alpha": 1,
+      "alpha": 0,
       "layer": "Gameplay",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758339003956",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1758339008794",
+              "type": "tween",
+              "params": {
+                "to": "1",
+                "time": 500
+              },
+              "x": 50,
+              "y": 150
+            }
+          ],
+          "connections": []
+        }
+      ],
       "texture": "bgtest4"
     },
     {
@@ -247,7 +282,24 @@
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758339040687",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1758339045824",
+              "type": "tween",
+              "params": {
+                "property": "y"
+              },
+              "x": 50,
+              "y": 150
+            }
+          ],
+          "connections": []
+        }
+      ],
       "texture": "bgtest5"
     },
     {
@@ -259,9 +311,26 @@
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1,
+      "alpha": 0,
       "layer": "Gameplay",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758338736052",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1758338741992",
+              "type": "tween",
+              "params": {
+                "to": "0.8"
+              },
+              "x": 50,
+              "y": 150
+            }
+          ],
+          "connections": []
+        }
+      ],
       "texture": "bgtest3"
     }
   ],
