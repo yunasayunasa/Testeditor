@@ -1272,12 +1272,13 @@ export default class EditorUI {
             }
         });
     }
+    // in src/editor/EditorUI.js
+
     buildNodeContent(nodeElement, nodeData) {
         nodeElement.innerHTML = '';
 
         const title = document.createElement('strong');
         title.innerText = `[${nodeData.type}]`;
-         // ▼▼▼ ピンの生成 ▼▼▼
         const inputPin = document.createElement('div');
         inputPin.className = 'vsl-node-pin input';
         inputPin.dataset.pinType = 'input';
@@ -1288,58 +1289,54 @@ export default class EditorUI {
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
         
-        // ▼▼▼【ここが、最後の仕上げです】▼▼▼
-        // --------------------------------------------------------------------
-
-        // 1. ハンドラのリストを取得
         const eventTagHandlers = this.game.registry.get('eventTagHandlers');
-        // 2. このノードに対応するハンドラ関数を見つける
         const handler = eventTagHandlers ? eventTagHandlers[nodeData.type] : null;
 
-        // 3. もし、ハンドラに'define'プロパティがあれば、それに基づいてUIを生成
         if (handler && handler.define && Array.isArray(handler.define.params)) {
             handler.define.params.forEach(paramDef => {
-                 // ▼▼▼【アセット選択UIのロジックを追加】▼▼▼
                 if (paramDef.type === 'asset_key') {
-                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                } 
-                if (paramDef.type === 'select') { // ★ selectタイプを追加
+                    // ▼▼▼【ここが修正点１】▼▼▼
+                    // 最後の引数を paramDef.defaultValue から paramDef そのものに変更
+                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                } else if (paramDef.type === 'select') {
                     this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
                 } else if (paramDef.type === 'number') {
                     this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                } else { // 'string', 'asset_key' など
+                } else {
                     this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
                 }
-
             });
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // ★ X/Y座標の入力欄は、すべてのノードで共通なので、ここに追加
         this.createNodePositionInput(paramsContainer, nodeData, 'x');
         this.createNodePositionInput(paramsContainer, nodeData, 'y');
-           // ★★★ 削除ボタンを生成 ★★★
         const deleteButton = document.createElement('button');
         deleteButton.innerText = '削除';
         deleteButton.className = 'node-delete-button';
         deleteButton.addEventListener('click', () => {
             if (confirm(`ノード [${nodeData.type}] を削除しますか？`)) {
-                // ▼▼▼【ここを、新しいメソッドを呼び出すように変更】▼▼▼
                 this.deleteNode(nodeData.id);
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             }
         });
 
         nodeElement.append(inputPin, outputPin, title, paramsContainer, deleteButton);
     }
-// in src/editor/EditorUI.js
 
     /**
      * ★★★ 新規ヘルパー (ステップ1：全アセット表示版) ★★★
      * アセット選択用のドロップダウンを生成する
      */
-    createNodeAssetSelectInput(container, nodeData, paramKey, label, defaultValue) {
+    /**
+     * ★★★ 新規ヘルパー (ステップ2：フィルタリング機能付き) ★★★
+     * アセット選択用のドロップダウンを生成する
+     * @param {HTMLElement} container
+     * @param {object} nodeData
+     * @param {string} paramKey
+     * @param {string} label
+     * @param {object} paramDef - defineで定義されたパラメータ情報全体
+     */
+    createNodeAssetSelectInput(container, nodeData, paramKey, label, paramDef) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
         
@@ -1348,32 +1345,31 @@ export default class EditorUI {
         
         const select = document.createElement('select');
         
-        // --- 1. グローバルレジストリから、アセットリストを取得 ---
         const assetList = this.game.registry.get('asset_list') || [];
-        
-        // --- 2. プレースホルダー（未選択状態）のオプションを追加 ---
+        const targetAssetType = paramDef.assetType; // ★ フィルタリング対象のタイプ (e.g., 'prefab')
+
         const placeholderOption = document.createElement('option');
         placeholderOption.value = '';
         placeholderOption.innerText = 'アセットを選択...';
         select.appendChild(placeholderOption);
 
-        // --- 3. アセットリストから、<option>を動的に生成 ---
-        // (現時点では、種類によるフィルタリングは行わない)
         assetList.forEach(asset => {
-            const option = document.createElement('option');
-            option.value = asset.key;
-            option.innerText = `[${asset.type}] ${asset.key}`; // [image] bg_school のように表示
-            
-            // 現在設定されている値、またはデフォルト値と一致すれば、その項目を選択状態にする
-            if ((nodeData.params[paramKey] || defaultValue) === asset.key) {
-                option.selected = true;
+            // ▼▼▼【ここが修正点２】▼▼▼
+            // フィルタリング条件を追加。targetAssetTypeが未指定の場合は、すべてのタイプを許可する
+            if (!targetAssetType || asset.type === targetAssetType) {
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                const option = document.createElement('option');
+                option.value = asset.key;
+                option.innerText = `[${asset.type}] ${asset.key}`;
+                
+                if ((nodeData.params[paramKey] || paramDef.defaultValue) === asset.key) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
             }
-            select.appendChild(option);
         });
 
-        // --- 4. 値が変更されたら、EditorPluginに通知するリスナーを設定 ---
         select.addEventListener('change', () => {
-            // ★ 既存の更新ロジックをそのまま呼び出すだけ
             if (this.plugin) {
                 this.plugin.updateNodeParam(nodeData, paramKey, select.value);
             }
