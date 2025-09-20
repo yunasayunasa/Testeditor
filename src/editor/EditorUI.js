@@ -88,9 +88,12 @@ export default class EditorUI {
        this.layerListContainer = document.getElementById('layer-list');
        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
         this.eventEditorTitle = document.getElementById('event-editor-title');
-        this.vslNodeList = document.getElementById('vsl-node-list');
-        this.vslCanvas = document.getElementById('vsl-canvas');
+       // this.vslNodeList = document.getElementById('vsl-node-list');
+       // this.vslCanvas = document.getElementById('vsl-canvas');
         this.vslTabs = document.getElementById('vsl-tabs');
+      //  this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        this.smEditorOverlay = document.getElementById('sm-editor-overlay'); // ★ ステートマシン用も追加
+
     }
 
   
@@ -1105,14 +1108,19 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
      * VSLツールバーのノードリストを生成する
      * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
      */
-  populateVslToolbar() { // ★ 引数 (activeEvent) を削除
-        // ▼▼▼ IDとコンテナを、現在のモードに応じて切り替える ▼▼▼
-        const overlay = document.querySelector('.modal-overlay.is-active');
-        const nodeList = overlay ? overlay.querySelector('.vsl-node-list') : null;
+ // in src/editor/EditorUI.js
+
+    populateVslToolbar() {
+        // ▼▼▼【ここを、より堅牢なセレクタに修正】▼▼▼
+        const activeOverlay = document.querySelector('.modal-overlay.is-active');
+        if (!activeOverlay) return; // アクティブなモーダルがなければ終了
+        const nodeList = activeOverlay.querySelector('.vsl-node-list');
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         if (!nodeList) return;
         nodeList.innerHTML = '';
         
-        const activeEvent = this.getActiveEventData(); // ★ 新しいヘルパーを呼ぶ
+        const activeEvent = this.getActiveEventData();
         if (!activeEvent) return;
 
         const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
@@ -1123,13 +1131,12 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
                 button.className = 'node-add-button';
                 button.innerText = `[${tagName}]`;
                 button.addEventListener('click', () => {
-                    this.addNodeToEventData(tagName); // ★ 引数を削除
+                    this.addNodeToEventData(tagName);
                 });
                 nodeList.appendChild(button);
             }
         }
     }
-
 
     /**
      * ★★★ マルチトリガー対応版 - 最終FIX ★★★
@@ -1259,50 +1266,52 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
      * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
      * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
      */
-   populateVslCanvas() {
-    if (!this.vslCanvas || !this.editingObject) return;
-    this.vslCanvas.innerHTML = ''; // クリア
+    populateVslCanvas() {
+        // ▼▼▼【ここを、より堅牢なセレクタに修正】▼▼▼
+        const activeOverlay = document.querySelector('.modal-overlay.is-active');
+        if (!activeOverlay) return;
+        const canvas = activeOverlay.querySelector('.vsl-canvas');
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // ★ アクティブなイベントデータを見つける
-    const events = this.editingObject.getData('events') || [];
-    const targetEvent = events.find(e => e.id === this.activeEventId);
+        if (!canvas) {
+            console.error("VSL Canvas element not found in the active modal.");
+            return;
+        }
+        canvas.innerHTML = '';
 
-    if (!targetEvent) return; // アクティブなイベントがなければ終了
-    
-        
-        // --- 1. キャンバスとSVGレイヤーをクリア ---
-        this.vslCanvas.innerHTML = '';
+        const targetEvent = this.getActiveEventData();
+        if (!targetEvent) return;
+
         const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.id = 'vsl-svg-layer';
+        svgLayer.className = 'vsl-svg-layer';
         svgLayer.setAttribute('width', '2000');
         svgLayer.setAttribute('height', '2000');
-        this.vslCanvas.appendChild(svgLayer);
+        canvas.appendChild(svgLayer);
 
-        // --- 2. 「引数で渡された」オブジェクトから、最新のイベントデータを取得 ---
-      
-        if (!events || !events[0]) return;
-      
-        // --- 3. ノードを描画 ---
         if (targetEvent.nodes) {
-            
             targetEvent.nodes.forEach(nodeData => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'vsl-node-wrapper';
+                nodeWrapper.style.left = `${nodeData.x}px`;
+                nodeWrapper.style.top = `${nodeData.y}px`;
+
                 const nodeElement = document.createElement('div');
                 nodeElement.className = 'vsl-node';
-                nodeElement.style.left = `${nodeData.x}px`;
-                nodeElement.style.top = `${nodeData.y}px`;
-                nodeElement.dataset.isNode = 'true'; // isNode属性を追加
+                nodeElement.dataset.isNode = 'true';
                 nodeElement.dataset.nodeId = nodeData.id;
 
                 this.buildNodeContent(nodeElement, nodeData);
                 
-                this.vslCanvas.appendChild(nodeElement);
+                nodeWrapper.appendChild(nodeElement);
+                canvas.appendChild(nodeWrapper); // ★ canvas に追加
             });
         }
         
-            // --- 4. 接続線を描画 ---
-        if (targetEvent.connections) {
-            this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
-        }
+        requestAnimationFrame(() => {
+            if (targetEvent.connections) {
+                this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
+            }
+        });
     }
 
    
@@ -1850,11 +1859,16 @@ deselectNode() {
 
    // in src/editor/EditorUI.js
 
-    drawConnections(svgLayer, nodes, connections, canvas) {
+    drawConnections(svgLayer, nodes, connections, canvas) { // ★ canvas引数を活用
         connections.forEach(conn => {
-            const fromNodeEl = canvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
-            const toNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.toNode}"]`);
+            // ★ canvas から検索
+            const fromNodeWrapper = canvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
+            const toNodeWrapper = canvas.querySelector(`[data-node-id="${conn.toNode}"]`);
 
+            if (fromNodeWrapper && toNodeWrapper) {
+                const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-name="${conn.fromPin}"]`);
+                const toPinEl = toNodeWrapper.querySelector(`[data-pin-name="${conn.toPin}"]`);
+                
             if (fromNodeEl && toNodeEl) {
                 const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
                 const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
