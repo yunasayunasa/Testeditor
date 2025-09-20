@@ -79,7 +79,9 @@ export default class JumpScene extends BaseGameScene {
     onSetupComplete() {
         // ★★★ プレイヤーの参照取得は、ここで行うのが最も確実 ★★★
         this.player = this.children.list.find(obj => obj.getData('group') === 'player');
-        
+        if (this.stateManager.f.score === undefined) {
+            this.stateManager.setF('score', 0);
+        }
         if (this.player) {
             this.playerController = this.player.components?.PlayerController;
             this.player.setFixedRotation(); 

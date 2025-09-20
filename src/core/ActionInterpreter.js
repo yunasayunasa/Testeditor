@@ -32,7 +32,7 @@ export default class ActionInterpreter {
      * @param {object} eventData - 単一のイベント定義 ({ trigger, nodes, connections })
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
-   // in src/core/ActionInterpreter.js
+ // in src/core/ActionInterpreter.js
 
     async run(source, eventData, collidedTarget = null) {
         if (!source || !source.scene || !source.scene.scene.isActive()) return;
@@ -41,7 +41,14 @@ export default class ActionInterpreter {
         this.scene = source.scene;
         this.currentSource = source;
         this.currentTarget = collidedTarget;
-        const stateManager = this.scene.stateManager; // ★ 先に取得しておく
+        
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        const stateManager = this.scene.registry.get('stateManager');
+        if (!stateManager) {
+            console.error("[ActionInterpreter] StateManager not found in scene registry!");
+            return;
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         const { nodes, connections } = eventData;
         
@@ -61,15 +68,11 @@ export default class ActionInterpreter {
 
             if (handler) {
                 if (currentNodeData.type === 'if') {
-                    // ▼▼▼【ここが修正の核心です】▼▼▼
                     const expression = currentNodeData.params.exp;
-                    
-                    // ★ StateManagerに評価を完全に委任する
                     const result = stateManager.eval(expression);
                     
                     nextPinName = result ? 'output_true' : 'output_false';
                     console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
                 } else {
                     const finalTarget = this.findTarget(currentNodeData.params.target, source, collidedTarget);
