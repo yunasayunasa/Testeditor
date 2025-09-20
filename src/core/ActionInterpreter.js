@@ -76,6 +76,8 @@ export default class ActionInterpreter {
 
                 } else {
                     const finalTarget = this.findTarget(currentNodeData.params.target, source, collidedTarget);
+                    console.log(`%c[DEBUG | run]これからハンドラ [${currentNodeData.type}] を呼び出します。`, 'background: red; color: white;');
+                    console.log(`  > 解決されたターゲット(finalTarget)の名前: '${finalTarget ? finalTarget.name : 'null'}'`);
                     await handler(this, currentNodeData.params, finalTarget);
                 }
             }
