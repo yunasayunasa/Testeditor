@@ -27,6 +27,9 @@ export default class EditorUI {
             startX: 0,
             startY: 0
         };
+        //ステートマシンプロパティ
+        this.activeStateName = null; // ★ 現在編集中の「状態」の名前
+        this.activeHookName = 'onEnter'; // ★ 現在編集中のイベントフックの名前
    //レイヤー
 
    this.layers = [
@@ -113,6 +116,7 @@ export default class EditorUI {
         document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
         document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
         document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => this.closeStateMachineEditor());
+        document.getElementById('sm-add-state-btn')?.addEventListener('click', () => this.addNewState());
 
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
@@ -2097,13 +2101,31 @@ deselectNode() {
         if (title) {
             title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
         }
-        
-        // TODO: ここに、状態リストやVSLキャンバスを構築する処理を追加していく
-        // (今はまだ空っぽでOK)
-        console.log(`[EditorUI] Opening State Machine Editor for '${this.editingObject.name}'`);
+        let sm_data = this.editingObject.getData('state_machine');
 
+        // 2. データがなければ、初期データを作成する
+        if (!sm_data || !sm_data.states) {
+            sm_data = {
+                initialState: 'idle',
+                states: [
+                    {
+                        name: 'idle',
+                        onEnter: { id: `event_${Date.now()}_en`, trigger: 'onStateEnter', nodes: [], connections: [] },
+                        onUpdate: { id: `event_${Date.now()}_up`, trigger: 'onStateUpdate', nodes: [], connections: [] },
+                        onExit: { id: `event_${Date.now()}_ex`, trigger: 'onStateExit', nodes: [], connections: [] }
+                    }
+                ]
+            };
+            this.editingObject.setData('state_machine', sm_data);
+        }
 
-        // ★ is-activeクラスを付けて、モーダルを表示
+        // 3. 最初に選択する状態を決定
+        this.activeStateName = sm_data.initialState || sm_data.states[0]?.name;
+
+        // 4. 状態リストのUIを構築する
+        this.buildStatesList();
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         overlay.classList.add('is-active');
     }
 
@@ -2118,5 +2140,82 @@ deselectNode() {
         overlay.classList.remove('is-active');
         this.editingObject = null;
         this.game.input.enabled = true; // Phaserの入力を元に戻す
+    }
+    // in src/editor/EditorUI.js (openStateMachineEditor の後など)
+
+    /**
+     * ★★★ 新規ヘルパー ★★★
+     * ステートマシンの状態リストUIを構築・再描画する
+     */
+    buildStatesList() {
+        const listContainer = document.getElementById('sm-states-list');
+        if (!listContainer || !this.editingObject) return;
+        listContainer.innerHTML = ''; // クリア
+
+        const sm_data = this.editingObject.getData('state_machine');
+        if (!sm_data || !sm_data.states) return;
+
+        sm_data.states.forEach(stateDef => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'sm-state-item';
+            itemDiv.innerText = stateDef.name;
+            itemDiv.dataset.stateName = stateDef.name;
+
+            // 現在選択中の状態なら、activeクラスを付ける
+            if (this.activeStateName === stateDef.name) {
+                itemDiv.classList.add('active');
+            }
+
+            // クリックしたら、その状態をアクティブにする
+            itemDiv.addEventListener('click', () => {
+                this.setActiveState(stateDef.name);
+            });
+            listContainer.appendChild(itemDiv);
+        });
+    }
+
+    /**
+     * ★★★ 新規ヘルパー ★★★
+     * 新しい状態をデータに追加し、UIを更新する
+     */
+    addNewState() {
+        if (!this.editingObject) return;
+        const newStateName = prompt("新しい状態の名前を入力してください:", `newState_${Date.now()}`);
+        if (!newStateName) return;
+
+        const sm_data = this.editingObject.getData('state_machine');
+        if (sm_data.states.some(s => s.name === newStateName)) {
+            alert("エラー: 同じ名前の状態が既に存在します。");
+            return;
+        }
+
+        const newState = {
+            name: newStateName,
+            onEnter: { id: `event_${Date.now()}_en`, trigger: 'onStateEnter', nodes: [], connections: [] },
+            onUpdate: { id: `event_${Date.now()}_up`, trigger: 'onStateUpdate', nodes: [], connections: [] },
+            onExit: { id: `event_${Date.now()}_ex`, trigger: 'onStateExit', nodes: [], connections: [] }
+        };
+        sm_data.states.push(newState);
+        this.editingObject.setData('state_machine', sm_data);
+
+        // 新しく作った状態をアクティブにする
+        this.setActiveState(newStateName);
+    }
+
+    /**
+     * ★★★ 新規ヘルパー ★★★
+     * 指定された状態をアクティブにし、関連するUIをすべて更新する
+     * @param {string} stateName 
+     */
+    setActiveState(stateName) {
+        if (!this.editingObject) return;
+        this.activeStateName = stateName;
+        console.log(`[EditorUI] Active state changed to: ${stateName}`);
+
+        // 1. 状態リストのハイライトを更新
+        this.buildStatesList();
+
+        // 2. TODO: 右ペインのVSLキャンバスを、新しい状態のデータで再描画する
+        // this.populateSmVslCanvas();
     }
 }
