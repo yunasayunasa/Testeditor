@@ -2760,42 +2760,38 @@ createComponentSection() {
 
         
     }
-
-    /**
-     * ★★★ 新規メソッド (EditorUIから移植) ★★★
-     * VSLキャンバスに、現在のイベントグラフを描画する
+ /**
+     * ★★★ 完成版 ★★★
+     * ノード内に、ドロップダウン選択欄を生成する
      */
-    populateVslCanvas() {
-        if (!this.editorUI || !this.editorUI.vslCanvas || !this.editorUI.editingObject) return;
+    createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
+        const row = document.createElement('div');
+        row.className = 'node-param-row';
+        const labelEl = document.createElement('label');
+        labelEl.innerText = `${label}: `;
         
-        const canvas = this.editorUI.vslCanvas;
-        const targetObject = this.editorUI.editingObject;
-        
-        canvas.innerHTML = ''; // クリア
-
-        const events = targetObject.getData('events');
-        if (!events || !events[0] || !events[0].nodes) return;
-        
-        events[0].nodes.forEach(nodeData => {
-           
-             const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node';
-                nodeElement.style.left = `${nodeData.x}px`;
-                nodeElement.style.top = `${nodeData.y}px`;
-                nodeElement.dataset.isNode = 'true'; // isNode属性を追加
-                nodeElement.dataset.nodeId = nodeData.id;
-
-                this.buildNodeContent(nodeElement, nodeData);
-                
-                this.vslCanvas.appendChild(nodeElement);
-        
-            this.buildNodeContent(nodeElement, nodeData, true); // ★ 第3引数でモードを切り替える
-            
-            canvas.appendChild(nodeElement);
+        const select = document.createElement('select');
+        options.forEach(optValue => {
+            const option = document.createElement('option');
+            option.value = optValue;
+            option.innerText = optValue;
+            if ((nodeData.params[paramKey] ?? defaultValue) == optValue) {
+                option.selected = true;
+            }
+            select.appendChild(option);
         });
+
+        select.addEventListener('change', () => {
+            if (this.plugin) {
+                this.plugin.updateNodeParam(nodeData, paramKey, select.value);
+            }
+        });
+        
+        row.append(labelEl, select);
+        container.appendChild(row);
     }
- 
-  
+    
+    
 /**
      * ★★★ 新規ヘルパー ★★★
      * アセット選択用のドロップダウンを生成する
@@ -2824,7 +2820,12 @@ createComponentSection() {
         });
 
         select.addEventListener('change', () => {
-            this.updateNodeParam(nodeData, paramDef.key, select.value);
+           if (this.plugin) {
+                // ★ this.plugin の updateNodeParam を呼び出す
+                // ★ 引数は、この関数が受け取った paramKey と、
+                // ★ このselect要素自身の値 (select.value) を使う
+                this.plugin.updateNodeParam(nodeData, paramKey, select.value);
+            }
         });
         
         row.append(labelEl, select);
@@ -2835,11 +2836,16 @@ createComponentSection() {
      * ★★★ 新規ヘルパーメソッド ★★★
      * ノードのX/Y座標を編集する数値入力欄を生成する
      */
+   /**
+     * ★★★ 完成版 ★★★
+     * ノードのX/Y座標を編集する数値入力欄を生成する
+     */
     createNodePositionInput(container, nodeData, key) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
         const label = document.createElement('label');
         label.innerText = `${key}: `;
+        
         const input = document.createElement('input');
         input.type = 'number';
         input.value = Math.round(nodeData[key]);
@@ -2847,8 +2853,9 @@ createComponentSection() {
         input.addEventListener('change', () => {
             const value = parseInt(input.value, 10);
             if (!isNaN(value)) {
-               if (this.plugin && typeof this.plugin.updateNodePosition === 'function') {
-                    this.updateNodeParam(nodeData, paramDef.key, select.value);
+                // ★ EditorPluginに、位置更新を依頼する
+                if (this.plugin) {
+                    this.plugin.updateNodePosition(this.editingObject, nodeData.id, key, value);
                 }
             }
         });
@@ -2860,28 +2867,27 @@ createComponentSection() {
      * ★★★ 新規ヘルパー ★★★
      * ノード内に、ドロップダウン選択式の入力欄を生成する
      */
-    createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
+  /**
+     * ★★★ 完成版 ★★★
+     * ノード内に、テキスト入力欄を生成する
+     */
+    createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
         const labelEl = document.createElement('label');
         labelEl.innerText = `${label}: `;
         
-        const select = document.createElement('select');
-        options.forEach(optValue => {
-            const option = document.createElement('option');
-            option.value = optValue;
-            option.innerText = optValue;
-            if ((nodeData.params[paramKey] || defaultValue) == optValue) {
-                option.selected = true;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = nodeData.params[paramKey] || defaultValue;
+        
+        input.addEventListener('change', () => {
+            if (this.plugin) {
+                this.plugin.updateNodeParam(nodeData, paramKey, input.value);
             }
-            select.appendChild(option);
-        });
-
-        select.addEventListener('change', () => {
-           this.updateNodeParam(nodeData, paramDef.key, select.value);
         });
         
-        row.append(labelEl, select);
+        row.append(labelEl, input);
         container.appendChild(row);
     }
 
@@ -2909,11 +2915,12 @@ createComponentSection() {
         input.addEventListener('change', () => {
          
             // --------------------------------------------------------------------
-            // ★★★ thisではなく、this.pluginのメソッドを呼び出す ★★★
-              if (this.plugin) {
-            // ★★★ 渡す引数を、nodeData, paramKey, value に変更 ★★★
-            this.updateNodeParam(nodeData, paramDef.key, select.value);
-        }
+           if (this.plugin) {
+                // ★ this.plugin の updateNodeParam を呼び出す
+                // ★ 引数は、この関数が受け取った paramKey と、
+                // ★ このinput要素自身の値 (input.value) を使う
+                this.plugin.updateNodeParam(nodeData, paramKey, input.value);
+            }
         });
         
         row.append(labelEl, input);
@@ -2929,22 +2936,24 @@ createComponentSection() {
      * @param {string} label - 表示ラベル (e.g., '時間(ms)')
      * @param {number} defaultValue - デフォルト値
      */
+      /**
+     * ★★★ 完成版 ★★★
+     * ノード内に、数値入力欄を生成する
+     */
     createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
         const row = document.createElement('div');
         row.className = 'node-param-row';
-        
         const labelEl = document.createElement('label');
         labelEl.innerText = `${label}: `;
         
         const input = document.createElement('input');
-        input.type = 'number'; // ★ typeを'number'に変更
-        input.value = nodeData.params[paramKey] || defaultValue;
+        input.type = 'number';
+        input.value = nodeData.params[paramKey] ?? defaultValue; // ?? は、0や空文字列も有効な値として扱う
         
         input.addEventListener('change', () => {
-            // ★ 値を数値に変換してから渡す
-            const value = parseFloat(input.value); 
-           if (this.plugin) {
-                this.updateNodeParam(nodeData, paramDef.key, select.value);
+            if (this.plugin) {
+                // ★ 数値に変換してから渡す
+                this.plugin.updateNodeParam(nodeData, paramKey, parseFloat(input.value));
             }
         });
         
