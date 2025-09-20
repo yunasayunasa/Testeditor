@@ -1043,9 +1043,62 @@ export default class EditorUI {
             this.plugin.pluginManager.game.input.enabled = true;
         }
     }
-    
-  
-addNodeToEventData
+  // src/editor/EditorUI.js
+
+    /**
+     * ★★★ 最終FIX版 (ログ爆弾付き) ★★★
+     * アクティブなイベントグラフに、新しいノードを追加し、キャンバスを再描画する
+     * @param {string} tagName - 追加するノードのタイプ
+     * @param {object} targetEvent - 追加先のイベントグラフのデータ
+     */
+    addNodeToEventData(tagName, targetEvent) {
+        console.log(`%c[addNodeToEventData] 開始。tagName: ${tagName}`, 'color: yellow;');
+        
+        if (!this.editingObject) {
+            console.error("[addNodeToEventData] Error: 'this.editingObject' is not set!");
+            return;
+        }
+        if (!targetEvent) {
+            console.error("[addNodeToEventData] Error: 'targetEvent' is not provided!");
+            return;
+        }
+        
+        // --- 1. 永続化用の、完全なイベントリストを取得 ---
+        const allEvents = this.editingObject.getData('events');
+        
+        // --- 2. 新しいノードのデータを作成 ---
+        const existingNodeCount = targetEvent.nodes ? targetEvent.nodes.length : 0;
+        const newX = 50;
+        const newY = 50 + (existingNodeCount * 120);
+
+        const newNode = {
+            id: `node_${Date.now()}`,
+            type: tagName,
+            params: {},
+            x: newX,
+            y: newY
+        };
+        
+        // --- 3. ターゲットとなるイベントグラフのnodes配列に、新しいノードを追加 ---
+        if (!targetEvent.nodes) targetEvent.nodes = [];
+        targetEvent.nodes.push(newNode);
+        
+        // --- 4. 更新した完全なイベントリストを、オブジェクトに保存 ---
+        this.editingObject.setData('events', allEvents);
+        console.log("[addNodeToEventData] Event data updated and set.", allEvents);
+        
+        // ▼▼▼【ここが、最後の砦です】▼▼▼
+        // --------------------------------------------------------------------
+
+        // --- 5. キャンバスと、関連するすべてのUIを再描画する ---
+        // ★ setActiveVslEventを呼び出すことで、キャンバス、ツールバー、タブが
+        //    すべて最新の状態で再描画されることが保証される。
+        console.log("[addNodeToEventData] これからsetActiveVslEventを呼び出して、UIを再描画します。");
+        this.setActiveVslEvent(targetEvent.id);
+
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    }
    /**
      * ★★★ 新規メソッド ★★★
      * VSLトリガー編集UIを構築・再描画する
