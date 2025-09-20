@@ -34,13 +34,7 @@ export default class TextDisplayComponent {
         this.gameObject.setText(newText);
         this.gameObject.dirty = true;
         
-        // ▼▼▼【ここが、最後の検証コードです】▼▼▼
-        // --------------------------------------------------------------------
-        // ★★★ テキストを変えるだけでなく、オブジェクトを45度回転させてみる ★★★
-        console.log(`%c[TextDisplayComponent] Setting angle to 45!`, "color: red; font-weight: bold;");
-        this.gameObject.setAngle(45);
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+       
     }
 
     destroy() {
