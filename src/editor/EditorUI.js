@@ -2276,46 +2276,5 @@ populateSmVslCanvas = () => {
     // --- 2. キャンバスの中身を描画 ---
     this.populateVslCanvas();
 }
-// in EditorPlugin.js
 
-/**
- * ★★★ 新規メソッド ★★★
- * ステートマシンデータ内の特定のノードパラメータを更新する
- * @param {object} nodeData - 更新対象のノードのデータ
- * @param {string} paramKey - 更新するパラメータのキー ('x', 'y', または 'params'内のキー)
- * @param {*} value - 新しい値
- * @param {boolean} [isPosition=false] - 位置の更新かどうか
- */
-updateStateMachineNodeParam(nodeData, paramKey, value, isPosition = false) {
-    if (!this.selectedObject || !nodeData) return;
-
-    // 1. 最新のステートマシンデータを取得
-    const smData = this.selectedObject.getData('stateMachine');
-    if (!smData) return;
-
-    // 2. 編集中の状態とフックをUIから取得 (これが最も確実)
-    const activeStateName = this.editorUI.activeStateName;
-    const activeHookName = this.editorUI.activeHookName;
-
-    if (!activeStateName || !activeHookName) return;
-
-    // 3. 該当するVSLデータ内のノードを探す
-    const targetVsl = smData.states[activeStateName]?.[activeHookName];
-    const targetNode = targetVsl?.nodes.find(n => n.id === nodeData.id);
-
-    if (targetNode) {
-        // 4. パラメータを更新
-        if (isPosition) {
-            targetNode[paramKey] = value;
-        } else {
-            targetNode.params[paramKey] = value;
-        }
-
-        // 5. オブジェクトにデータを再設定して永続化
-        this.selectedObject.setData('stateMachine', smData);
-
-        // 6. UIを再描画
-        this.editorUI.populateVslCanvas();
-    }
-}
 }
