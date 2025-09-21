@@ -1563,27 +1563,37 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
         console.log(`Connection started from node: ${fromNodeId}`);
     }
   
-   /**
- * ★★★ 復活させるメソッド (A案仕様) ★★★
- * VSLノードを選択し、プロパティパネルの更新をプラグインに依頼する
+  /**
+ * ★★★ 最終FIX版 ★★★
+ * VSLノードを選択し、プロパティパネルの更新を依頼する
  */
 selectNode(nodeData) {
     this.selectedNodeData = nodeData;
     console.log("Selected node:", nodeData);
 
-    // ★ EditorPluginに、プロパティパネルを「ノード編集モード」で更新するよう依頼
     if (this.plugin) {
         this.plugin.updatePropertyPanelForNode(nodeData);
     }
     
-    // 選択されたノードの見た目を変える (CSSで .vsl-node.selected を定義)
-    this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
-    const el = this.vslCanvas.querySelector(`[data-node-id="${nodeData.id}"]`);
+    // ▼▼▼【ここが修正箇所です】▼▼▼
+    // --------------------------------------------------------------------
+    // 1. アクティブなモーダルを探す
+    const activeOverlay = document.querySelector('.modal-overlay.is-active');
+    if (!activeOverlay) return;
+    // 2. その中にあるキャンバスを探す
+    const canvas = activeOverlay.querySelector('.vsl-canvas');
+    if (!canvas) return;
+
+    // 3. 見つけたキャンバスに対して操作を行う
+    canvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+    const el = canvas.querySelector(`.vsl-node[data-node-id="${nodeData.id}"]`);
     if (el) el.classList.add('selected');
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
 
 /**
- * ★★★ 復活させるメソッド (A案仕様) ★★★
+ * ★★★ 最終FIX版 ★★★
  * VSLノードの選択を解除する
  */
 deselectNode() {
@@ -1591,11 +1601,19 @@ deselectNode() {
     this.selectedNodeData = null;
 
     if (this.plugin) {
-        // ★ プロパティパネルを、通常の「オブジェクト編集モード」に戻すよう依頼
         this.plugin.selectSingleObject(this.editingObject);
     }
 
-    this.vslCanvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+    // ▼▼▼【ここが修正箇所です】▼▼▼
+    // --------------------------------------------------------------------
+    const activeOverlay = document.querySelector('.modal-overlay.is-active');
+    if (!activeOverlay) return;
+    const canvas = activeOverlay.querySelector('.vsl-canvas');
+    if (!canvas) return;
+
+    canvas.querySelectorAll('.vsl-node.selected').forEach(el => el.classList.remove('selected'));
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
   
     
