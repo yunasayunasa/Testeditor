@@ -213,18 +213,32 @@
             </div>
 
             <!-- ====== 右ペイン: VSL編集エリア ====== -->
-            <div id="sm-vsl-panel">
-                <div id="sm-hooks-tabs">
-                    <!-- (フェーズ2でここに onEnter, onUpdate などのタブが作られます) -->
-                    <button class="sm-hook-tab active">onEnter</button>
-                    <button class="sm-hook-tab">onUpdate</button>
-                    <button class="sm-hook-tab">onExit</button>
-                </div>
+            <!-- ====== 右ペイン: VSL編集エリア ====== -->
+<div id="sm-vsl-panel">
+    <div id="sm-hooks-tabs">
+        <!-- (ここにはJavaScriptによってタブが動的に追加されます) -->
+    </div>
 
-                <!-- (フェーズ2でここにVSLエディタが入ります) -->
-                <div class="sm-vsl-editor-container" style="background-color: #333; align-items: center; justify-content: center;">
-                    <p>Select a state to edit its logic.</p>
-                </div>
+    <!-- ★★★ VSLエディタのコンテナ構造を、イベントエディタのものと合わせる ★★★ -->
+    <div class="sm-vsl-editor-container">
+        
+        <!-- 左側: ノードを追加するツールバー -->
+        <div class="sm-vsl-toolbar">
+            <h4>ノードリスト</h4>
+            <div class="sm-vsl-node-list">
+                <!-- (populateVslToolbarによってノードボタンが追加されます) -->
+            </div>
+        </div>
+        
+        <!-- 右側: ノードを配置するキャンバス -->
+        <div class="sm-vsl-canvas-wrapper">
+            <div class="sm-vsl-canvas">
+                <!-- (populateVslCanvasによってノードが追加されます) -->
+            </div>
+        </div>
+
+    </div>
+</div>
             </div>
 
         </div>

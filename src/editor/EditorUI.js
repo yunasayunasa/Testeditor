@@ -1123,51 +1123,39 @@ closeEventEditor = () => {
      */
    // in src/editor/EditorUI.js
 
-    /**
-     * ★★★ デフォルト値設定機能付き - 最終FIX ★★★
-     * @param {string} tagName - 追加するノードのタイプ
-     * @param {object} targetEvent - 追加先のイベントグラフのデータ
-     */
-    addNodeToEventData(tagName, targetEvent) {
-        if (!this.editingObject || !targetEvent) return;
-        
-        const existingNodeCount = targetEvent.nodes.length;
-        const newX = 50;
-        const newY = 150 + (existingNodeCount * 80);
-
-        const newNode = {
-            id: `node_${Date.now()}`,
-            type: tagName,
-            params: {}, // ★ まず空のparamsで初期化
-            x: newX,
-            y: newY
-        };
-        
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        // --------------------------------------------------------------------
-        // 1. このタグのハンドラ定義(define)を取得
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
-        const handler = eventTagHandlers ? eventTagHandlers[tagName] : null;
-
-        // 2. もしdefineにparamsの定義があれば、そこからデフォルト値を読み取って設定する
-        if (handler && handler.define && Array.isArray(handler.define.params)) {
-            handler.define.params.forEach(paramDef => {
-                // defaultValueが定義されていれば、それを初期値として設定
-                if (paramDef.defaultValue !== undefined) {
-                    newNode.params[paramDef.key] = paramDef.defaultValue;
-                }
-            });
-        }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
-        targetEvent.nodes.push(newNode);
-        
-        const allEvents = this.editingObject.getData('events');
-        this.editingObject.setData('events', allEvents);
-        
-        this.setActiveVslEvent(targetEvent.id);
+   /**
+ * ★★★ 既存の addNodeToEventData を修正 ★★★
+ * 引数で渡されたイベントデータにノードを追加するようにする
+ * @param {string} tagName - 追加するノードのタイプ
+ * @param {object} targetEventData - ★追加: 追加先のVSLデータ (例: this.activeVslData)
+ */
+addNodeToEventData(tagName, targetEventData) {
+    if (!this.editingObject || !targetEventData) return;
+    
+    const existingNodeCount = targetEventData.nodes.length;
+    const newNode = {
+        id: `node_${Date.now()}`, type: tagName, params: {},
+        x: 50, y: 50 + (existingNodeCount * 80)
+    };
+    
+    const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+    const handler = eventTagHandlers?.[tagName];
+    if (handler?.define?.params) {
+        handler.define.params.forEach(paramDef => {
+            if (paramDef.defaultValue !== undefined) {
+                newNode.params[paramDef.key] = paramDef.defaultValue;
+            }
+        });
     }
+    
+    targetEventData.nodes.push(newNode);
+    
+    // 変更を永続化
+    this.editingObject.setData('stateMachine', this.stateMachineData);
+    
+    // UIを再描画
+    this.displayActiveVslEditor();
+}
 
    /**
      * ★★★ 新規メソッド ★★★
@@ -1226,61 +1214,6 @@ closeEventEditor = () => {
                 this.editingObject.setData('events', allEvents);
             };
             contextContainer.append(label, input);
-        }
-    }
-
-    /**
-     * ★★★ 最終FIX版 (線描画機能付き) ★★★
-     * 現在のイベントデータに基づいて、VSLキャンバスにノードと接続線を描画する
-     */
-    /**
-     * ★★★ 引数を受け取るように修正 ★★★
-     * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
-     * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
-     */
-   populateVslCanvas() {
-    if (!this.vslCanvas || !this.editingObject) return;
-    this.vslCanvas.innerHTML = ''; // クリア
-
-    // ★ アクティブなイベントデータを見つける
-    const events = this.editingObject.getData('events') || [];
-    const targetEvent = events.find(e => e.id === this.activeEventId);
-
-    if (!targetEvent) return; // アクティブなイベントがなければ終了
-    
-        
-        // --- 1. キャンバスとSVGレイヤーをクリア ---
-        this.vslCanvas.innerHTML = '';
-        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.id = 'vsl-svg-layer';
-        svgLayer.setAttribute('width', '2000');
-        svgLayer.setAttribute('height', '2000');
-        this.vslCanvas.appendChild(svgLayer);
-
-        // --- 2. 「引数で渡された」オブジェクトから、最新のイベントデータを取得 ---
-      
-        if (!events || !events[0]) return;
-      
-        // --- 3. ノードを描画 ---
-        if (targetEvent.nodes) {
-            
-            targetEvent.nodes.forEach(nodeData => {
-                const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node';
-                nodeElement.style.left = `${nodeData.x}px`;
-                nodeElement.style.top = `${nodeData.y}px`;
-                nodeElement.dataset.isNode = 'true'; // isNode属性を追加
-                nodeElement.dataset.nodeId = nodeData.id;
-
-                this.buildNodeContent(nodeElement, nodeData);
-                
-                this.vslCanvas.appendChild(nodeElement);
-            });
-        }
-        
-            // --- 4. 接続線を描画 ---
-        if (targetEvent.connections) {
-            this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
         }
     }
 
@@ -1938,54 +1871,69 @@ deselectNode() {
         // --- 4. キャンバスを再描画 ---
         this.populateVslCanvas();
     }
-    // in src/editor/EditorUI.js (createNodePositionInputの上あたりに追加)
-// in src/editor/EditorUI.js
-
-   // in src/editor/EditorUI.js
-
-    populateVslCanvas() {
-        if (!this.vslCanvas || !this.editingObject) return;
-
-        const events = this.editingObject.getData('events') || [];
-        const targetEvent = events.find(e => e.id === this.activeEventId);
-
-        this.vslCanvas.innerHTML = '';
-        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.id = 'vsl-svg-layer';
-        svgLayer.setAttribute('width', '2000');
-        svgLayer.setAttribute('height', '2000');
-        this.vslCanvas.appendChild(svgLayer);
-
-        if (!targetEvent) return;
-
-        if (targetEvent.nodes) {
-            targetEvent.nodes.forEach(nodeData => {
-                // ▼▼▼【ここが変更点】▼▼▼
-                // 外側のラッパーを作成 (位置決め用)
-                const nodeWrapper = document.createElement('div');
-                nodeWrapper.className = 'vsl-node-wrapper';
-                nodeWrapper.style.left = `${nodeData.x}px`;
-                nodeWrapper.style.top = `${nodeData.y}px`;
-
-                // 内側の本体を作成 (ピンの基準用)
-                const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node';
-                nodeElement.dataset.isNode = 'true';
-                nodeElement.dataset.nodeId = nodeData.id;
-
-                this.buildNodeContent(nodeElement, nodeData);
-                
-                nodeWrapper.appendChild(nodeElement);
-                this.vslCanvas.appendChild(nodeWrapper);
-            });
-        }
+  /**
+ * ★★★ populateVslCanvas を、現在のVSLデータを元に描画するよう修正 ★★★
+ * 既存の populateVslCanvas メソッドをこれに置き換えてください。
+ * (EditorUIクラス内に populateVslCanvas は一つだけになるように)
+ */
+populateVslCanvas() {
+    // どのモーダルで呼ばれても対応できるように、コンテキストを判別
+    const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+    const canvasEl = isSmEditor
+        ? this.smEditorOverlay.querySelector('.sm-vsl-canvas')
+        : this.vslCanvas; // イベントエディタ用の要素
         
-        requestAnimationFrame(() => {
-            if (targetEvent.connections) {
-                this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections);
-            }
+    if (!canvasEl) return;
+    
+    // --- 描画対象のデータを決定 ---
+    let targetEventData;
+    if (isSmEditor) {
+        // ステートマシンエディタの場合
+        targetEventData = this.activeVslData;
+    } else {
+        // イベントエディタの場合
+        const events = this.editingObject?.getData('events') || [];
+        targetEventData = events.find(e => e.id === this.activeEventId);
+    }
+    
+    // --- 描画処理 (ここから下はほぼ既存のコードと同じ) ---
+    canvasEl.innerHTML = ''; // クリア
+    const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgLayer.id = 'vsl-svg-layer'; // IDは共通でOK
+    svgLayer.setAttribute('width', '4000');
+    svgLayer.setAttribute('height', '4000');
+    canvasEl.appendChild(svgLayer);
+
+    if (!targetEventData) return;
+
+    if (targetEventData.nodes) {
+        targetEventData.nodes.forEach(nodeData => {
+            const nodeWrapper = document.createElement('div');
+            nodeWrapper.className = 'vsl-node-wrapper';
+            nodeWrapper.style.left = `${nodeData.x}px`;
+            nodeWrapper.style.top = `${nodeData.y}px`;
+
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'vsl-node';
+            nodeElement.dataset.isNode = 'true';
+            nodeElement.dataset.nodeId = nodeData.id;
+
+            // buildNodeContentは共通のメソッドをそのまま使える
+            this.buildNodeContent(nodeElement, nodeData);
+            
+            nodeWrapper.appendChild(nodeElement);
+            canvasEl.appendChild(nodeWrapper);
         });
     }
+    
+    requestAnimationFrame(() => {
+        if (targetEventData.connections) {
+            // drawConnectionsも共通のメソッドをそのまま使える
+            this.drawConnections(svgLayer, targetEventData.nodes, targetEventData.connections);
+        }
+    });
+}
+
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
      * ノード内に、スライダーと数値入力を組み合わせたUIを生成する
@@ -2075,15 +2023,16 @@ deselectNode() {
 // ステートマシン・エディタ関連のメソッド群
 // =================================================================
 
+// =================================================================
+// ステートマシン・エディタ関連のメソッド群 (フェーズ2実装版)
+// =================================================================
+
 /**
- * ステートマシン・エディタを開く (機能実装版)
+ * ステートマシン・エディタを開く
  * @param {Phaser.GameObjects.GameObject} selectedObject
  */
 openStateMachineEditor = (selectedObject) => {
-    if (!this.smEditorOverlay || !selectedObject) {
-        console.error('StateMachine Editor could not be opened.');
-        return;
-    }
+    if (!this.smEditorOverlay || !selectedObject) return;
 
     // --- モーダル表示と入力無効化 ---
     document.body.classList.add('modal-open');
@@ -2093,22 +2042,23 @@ openStateMachineEditor = (selectedObject) => {
     
     // --- タイトルの更新 ---
     const title = this.smEditorOverlay.querySelector('#sm-editor-title');
-    if (title) {
-        title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
-    }
+    if (title) title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
 
-    // ★★★ ここからが新しい処理 ★★★
-    // --- 1. オブジェクトからステートマシンデータを取得 (なければ初期化) ---
+    // --- オブジェクトからデータを取得 (なければ初期化) ---
     this.stateMachineData = this.editingObject.getData('stateMachine');
     if (!this.stateMachineData) {
         this.stateMachineData = this.getInitialStateMachineData();
         this.editingObject.setData('stateMachine', this.stateMachineData);
     }
     
-    // --- 2. 状態リストのUIを構築 ---
-    this.buildStatesPanel();
+    // ★★★ 最初に表示する状態とフックを決定 ★★★
+    this.activeStateName = this.stateMachineData.initialState;
+    this.activeHookName = 'onEnter'; // デフォルトはonEnter
 
-    // --- 3. イベントリスナーを設定 ---
+    // --- UIの構築とリスナー設定 ---
+    this.buildStatesPanel();
+    this.buildHooksTabs(); // ★追加
+    this.displayActiveVslEditor(); // ★追加
     this.setupStateMachineEventListeners();
 }
 
@@ -2116,10 +2066,11 @@ openStateMachineEditor = (selectedObject) => {
  * ステートマシン用の初期データ構造を返す
  */
 getInitialStateMachineData() {
+    const defaultStateName = '待機';
     return {
-        initialState: 'Idle',
+        initialState: defaultStateName,
         states: {
-            'Idle': {
+            [defaultStateName]: {
                 onEnter: { nodes: [], connections: [] },
                 onUpdate: { nodes: [], connections: [] },
                 onExit: { nodes: [], connections: [] }
@@ -2134,51 +2085,89 @@ getInitialStateMachineData() {
 buildStatesPanel() {
     const statesListContainer = this.smEditorOverlay.querySelector('#sm-states-list');
     if (!statesListContainer) return;
-
-    statesListContainer.innerHTML = ''; // 中身をクリア
-
-    // this.stateMachineData から states のキー (状態名) を取得してループ
+    statesListContainer.innerHTML = '';
     const stateNames = Object.keys(this.stateMachineData.states);
-
     stateNames.forEach(stateName => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'sm-state-item';
         itemDiv.innerText = stateName;
-        itemDiv.dataset.stateName = stateName; // データ属性に状態名を保存
-
-        // 現在選択中の状態なら 'active' クラスを付与
+        itemDiv.dataset.stateName = stateName;
         if (this.activeStateName === stateName) {
             itemDiv.classList.add('active');
         }
-
         statesListContainer.appendChild(itemDiv);
     });
 }
 
 /**
- * ステートマシンエディタ内のイベントリスナーを一度だけ設定する
+ * ★★★ 新規メソッド ★★★
+ * 右ペイン上部の「イベントフック」のタブUIを構築・再描画する
+ */
+buildHooksTabs() {
+    const hooksTabsContainer = this.smEditorOverlay.querySelector('#sm-hooks-tabs');
+    if (!hooksTabsContainer) return;
+    hooksTabsContainer.innerHTML = '';
+
+    const hooks = [
+        { key: 'onEnter', label: '実行時 (onEnter)' },
+        { key: 'onUpdate', label: '更新時 (onUpdate)' },
+        { key: 'onExit', label: '終了時 (onExit)' }
+    ];
+
+    hooks.forEach(hook => {
+        const tabButton = document.createElement('button');
+        tabButton.className = 'sm-hook-tab';
+        tabButton.innerText = hook.label;
+        tabButton.dataset.hookName = hook.key;
+        if (this.activeHookName === hook.key) {
+            tabButton.classList.add('active');
+        }
+        hooksTabsContainer.appendChild(tabButton);
+    });
+}
+
+
+/**
+ * ★★★ 新規メソッド (VSL連携の核心) ★★★
+ * 現在選択されている状態とフックに基づいて、VSLエディタの中身を表示する
+ */
+displayActiveVslEditor() {
+    // VSLエディタのコンテナを取得
+    const vslContainer = this.smEditorOverlay.querySelector('.sm-vsl-editor-container');
+    if (!vslContainer) return;
+    
+    // --- アクティブなVSLデータを取得 ---
+    const activeState = this.stateMachineData.states[this.activeStateName];
+    if (!activeState) {
+        vslContainer.innerHTML = `<p>状態「${this.activeStateName}」が見つかりません。</p>`;
+        return;
+    }
+    this.activeVslData = activeState[this.activeHookName];
+    if (!this.activeVslData) {
+        vslContainer.innerHTML = `<p>フック「${this.activeHookName}」のデータが見つかりません。</p>`;
+        return;
+    }
+
+    // --- VSLエディタのUIを描画 ---
+    // populateSmVslCanvas は populateVslToolbar と populateVslCanvas を呼び出すラッパー
+    this.populateSmVslCanvas();
+}
+/**
+ * ステートマシンエディタ内のイベントリスナーを設定・更新する
  */
 setupStateMachineEventListeners() {
-    // 古いリスナーが残っていれば削除 (念のため)
-    if (this._onAddNewState) {
-        this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
-    }
-    if (this._onStateClicked) {
-        this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
-    }
-    
+    // --- 古いリスナーをすべて削除 ---
+    this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
+    this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
+    this.smEditorOverlay.querySelector('#sm-hooks-tabs')?.removeEventListener('click', this._onHookTabClicked); // ★追加
+
     // --- 新しいリスナー関数を定義 ---
     this._onAddNewState = () => {
-        const newStateName = prompt('新しい状態の名前を入力してください:', `NewState${Object.keys(this.stateMachineData.states).length}`);
+        const newStateName = prompt('新しい状態の名前を入力してください:', `新しい状態${Object.keys(this.stateMachineData.states).length}`);
         if (newStateName && !this.stateMachineData.states[newStateName]) {
-            // 新しい状態のデータを追加
-            this.stateMachineData.states[newStateName] = {
-                onEnter: { nodes: [], connections: [] },
-                onUpdate: { nodes: [], connections: [] },
-                onExit: { nodes: [], connections: [] }
-            };
-            this.editingObject.setData('stateMachine', this.stateMachineData); // データを保存
-            this.buildStatesPanel(); // UIを再描画
+            this.stateMachineData.states[newStateName] = { onEnter: { nodes: [], connections: [] }, onUpdate: { nodes: [], connections: [] }, onExit: { nodes: [], connections: [] }};
+            this.editingObject.setData('stateMachine', this.stateMachineData);
+            this.buildStatesPanel();
         } else if (newStateName) {
             alert('その名前の状態は既に使用されています。');
         }
@@ -2187,42 +2176,85 @@ setupStateMachineEventListeners() {
     this._onStateClicked = (event) => {
         const targetItem = event.target.closest('.sm-state-item');
         if (targetItem) {
-            const stateName = targetItem.dataset.stateName;
-            this.activeStateName = stateName;
-            this.buildStatesPanel(); // 選択状態を反映して再描画
-            
-            // TODO: フェーズ2で、右側のVSLエディタを更新する処理をここに追加する
-            console.log(`State selected: ${this.activeStateName}`);
+            this.activeStateName = targetItem.dataset.stateName;
+            this.buildStatesPanel();
+            this.displayActiveVslEditor(); // ★VSLを更新
+        }
+    };
+
+    // ★★★ 新規リスナー関数 ★★★
+    this._onHookTabClicked = (event) => {
+        const targetTab = event.target.closest('.sm-hook-tab');
+        if (targetTab) {
+            this.activeHookName = targetTab.dataset.hookName;
+            this.buildHooksTabs();
+            this.displayActiveVslEditor(); // ★VSLを更新
         }
     };
 
     // --- リスナーを登録 ---
     this.smEditorOverlay.querySelector('#sm-add-state-btn')?.addEventListener('click', this._onAddNewState);
     this.smEditorOverlay.querySelector('#sm-states-list')?.addEventListener('click', this._onStateClicked);
+    this.smEditorOverlay.querySelector('#sm-hooks-tabs')?.addEventListener('click', this._onHookTabClicked); // ★追加
 }
 
+
 /**
- * ステートマシン・エディタを閉じる (機能実装版)
+ * ステートマシン・エディタを閉じる
  */
 closeStateMachineEditor = () => {
     if (!this.smEditorOverlay) return;
     
-    // --- モーダル非表示と入力有効化 ---
     this.smEditorOverlay.style.display = 'none';
     this.game.input.enabled = true;
     document.body.classList.remove('modal-open');
     
     // --- イベントリスナーを解除 ---
-    if (this._onAddNewState) {
-        this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
-    }
-    if (this._onStateClicked) {
-        this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
-    }
+    this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
+    this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
+    this.smEditorOverlay.querySelector('#sm-hooks-tabs')?.removeEventListener('click', this._onHookTabClicked);
     
     // --- 状態をリセット ---
     this.editingObject = null;
     this.stateMachineData = null;
     this.activeStateName = null;
+    this.activeHookName = null;
+    this.activeVslData = null;
+}
+
+
+// in EditorUI.js
+
+/**
+ * ★★★ 既存の populateSmVslCanvas メソッドをこれに置き換える ★★★
+ * ステートマシン用のVSLツールバーとVSLキャンバスの両方を再描画する
+ */
+populateSmVslCanvas = () => {
+    // --- 1. ツールバーの中身を描画 ---
+    // populateVslToolbar は、現在アクティブなVSLデータを見てノードリストを作る
+    // ステートマシンエディタの場合、`this.activeVslData` を渡してあげる必要がある
+    const toolbarList = this.smEditorOverlay.querySelector('.sm-vsl-node-list');
+    if (toolbarList) {
+        // ★ 既存の `populateVslToolbar` を呼び出すが、コンテナ要素を渡すように改造が必要
+        //    (今回は直接実装してしまうのが手っ取り早い)
+        toolbarList.innerHTML = '';
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
+        if (eventTagHandlers) {
+            const tagNames = Object.keys(eventTagHandlers).sort();
+            for (const tagName of tagNames) {
+                const button = document.createElement('button');
+                button.className = 'node-add-button'; // CSSは共通クラスを使う
+                button.innerText = `[${tagName}]`;
+                button.addEventListener('click', () => {
+                    // addNodeToEventData も activeVslData を対象にする
+                    this.addNodeToEventData(tagName, this.activeVslData);
+                });
+                toolbarList.appendChild(button);
+            }
+        }
+    }
+    
+    // --- 2. キャンバスの中身を描画 ---
+    this.populateVslCanvas();
 }
 }
