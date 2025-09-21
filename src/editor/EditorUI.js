@@ -1356,7 +1356,7 @@ createNodePositionInput(container, nodeData, key) {
      * ★★★ A案＋ピン接続 - 完成版 ★★★
      * VSLキャンバスでポインターが押されたときの処理
      * @param {PointerEvent} downEvent - pointerdownイベントオブジェクト
-     */
+     
     onVslCanvasPointerDown(downEvent) {
         // --- 1. パンモードの場合は、パン処理を開始して、ここで終了 ---
         if (this.vslMode === 'pan') {
@@ -1416,7 +1416,7 @@ createNodePositionInput(container, nodeData, key) {
             // deselectNodeはサイドバーを更新するので、もう不要
             // this.deselectNode();
         }
-    }
+    }*/
 /**
      * ★★★ 新規メソッド ★★★
      * ノード接続モードを開始する
@@ -1956,6 +1956,14 @@ populateVslCanvas() {
             
             nodeWrapper.appendChild(nodeElement);
             canvasEl.appendChild(nodeWrapper);
+            nodeElement.querySelectorAll('[data-pin-type]').forEach(pinElement => {
+                pinElement.addEventListener('pointerdown', (event) => {
+                    // 親要素へのイベント伝播を止めて、意図しない動作を防ぐ
+                    event.stopPropagation(); 
+                    // 既存のピンクリック処理メソッドを呼び出す
+                    this.onPinClicked(pinElement); 
+                });
+            });
         });
     }
     
