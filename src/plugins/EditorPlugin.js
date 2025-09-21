@@ -2792,63 +2792,53 @@ createComponentSection() {
  * @param {*} value - 新しい値
  * @param {boolean} [isPosition=false] - 位置の更新かどうか
  */
+// in EditorPlugin.js
+
+/**
+ * ★★★ UI更新遅延機能付き・最終FIX版 ★★★
+ * ステートマシンデータ内の特定のノードパラメータを更新する
+ */
 updateStateMachineNodeParam(nodeData, paramKey, value, isPosition = false) {
-    if (!this.selectedObject || !nodeData?.id) {
-        console.warn("updateStateMachineNodeParam: ターゲットオブジェクトまたはnodeIdがありません。");
-        return;
-    }
+    if (!this.selectedObject || !nodeData?.id) return;
 
-    // 1. Phaserオブジェクトから最新のステートマシンデータを取得
     const smData = this.selectedObject.getData('stateMachine');
-    if (!smData) {
-        console.error("updateStateMachineNodeParam: stateMachineデータが見つかりません。");
-        return;
-    }
+    if (!smData) return;
 
-    // 2. 編集中の状態とフックをUIから取得
     const activeStateName = this.editorUI.activeStateName;
     const activeHookName = this.editorUI.activeHookName;
-    if (!activeStateName || !activeHookName) {
-        console.warn("updateStateMachineNodeParam: アクティブなState/Hookが不明です。");
-        return;
-    }
+    if (!activeStateName || !activeHookName) return;
 
-    // 3. 該当するVSLデータ内のノードの「インデックス」を探す
     const targetVsl = smData.states[activeStateName]?.[activeHookName];
-    if (!targetVsl || !targetVsl.nodes) {
-        console.error("updateStateMachineNodeParam: VSLデータまたはnodes配列が見つかりません。");
-        return;
-    }
+    if (!targetVsl || !targetVsl.nodes) return;
     const nodeIndex = targetVsl.nodes.findIndex(n => n.id === nodeData.id);
 
-    // 4. ノードが見つかった場合のみ処理 (nodeIndexが -1 でない)
     if (nodeIndex > -1) {
-        
-        // 5. 配列から、更新対象のノードオブジェクトへの「参照」を直接取得
         const nodeToUpdate = targetVsl.nodes[nodeIndex];
 
-        // 6. 取得したオブジェクトのプロパティを直接変更する
         if (isPosition) {
-            // スライダーや数値入力による位置の更新
             nodeToUpdate[paramKey] = value;
         } else {
-            // params内の値の更新
-            if (!nodeToUpdate.params) {
-                nodeToUpdate.params = {};
-            }
+            if (!nodeToUpdate.params) nodeToUpdate.params = {};
             nodeToUpdate.params[paramKey] = value;
         }
 
-        // 7. オブジェクトにデータを再設定して永続化する
-        //    この時点で、`smData` は `nodeToUpdate` への変更が反映された最新の状態になっている
         this.selectedObject.setData('stateMachine', smData);
 
-        // 8. UIを再描画して、変更を視覚的に反映させる
-        //    (特に線の再描画に必要)
-        this.editorUI.populateVslCanvas();
+        // ▼▼▼【ここが修正の核心】▼▼▼
+        if (this._updateCanvasTimeout) {
+            clearTimeout(this._updateCanvasTimeout);
+        }
 
-    } else {
-        console.error(`updateStateMachineNodeParam: ID '${nodeData.id}' のノードが見つかりませんでした。`);
+        // isPosition (スライダー操作) の場合は、少し待ってからUIを更新
+        // それ以外 (テキスト入力など) の場合は、即時更新
+        const delay = isPosition ? 100 : 0; 
+
+        this._updateCanvasTimeout = setTimeout(() => {
+            if (this.editorUI) {
+                this.editorUI.populateVslCanvas();
+            }
+        }, delay);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 }
 }

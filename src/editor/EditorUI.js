@@ -1472,21 +1472,23 @@ deselectNode() {
  * ★★★ データ欠損防止策を施した最終版 ★★★
  * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
  */
+// in EditorUI.js
+
+/**
+ * ★★★ イベントを 'input' に変更した最終版 ★★★
+ * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
+ */
 createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
     const row = document.createElement('div');
     row.className = 'node-param-row';
-    
     const labelEl = document.createElement('label');
     labelEl.innerText = `${label}: `;
-    
     const input = document.createElement('input');
     input.type = 'text';
-    // ▼▼▼【ここが最重要容疑箇所】▼▼▼
-    // nodeData.params[paramKey] の値が存在すればそれを使い、なければdefaultValue、それもなければ空文字を設定。
     input.value = nodeData.params?.[paramKey] ?? defaultValue ?? '';
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     
-    input.addEventListener('change', () => {
+    // ▼▼▼ イベントを 'change' から 'input' に変更 ▼▼▼
+    input.addEventListener('input', () => {
         if (!this.plugin) return;
         const isSmEditor = this.smEditorOverlay.style.display === 'flex';
         if (isSmEditor) {
@@ -1501,30 +1503,30 @@ createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
 }
 
 /**
- * ★★★ データ欠損防止策を施した最終版 ★★★
+ * ★★★ イベントを 'input' に変更した最終版 ★★★
  * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
  */
 createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
     const row = document.createElement('div');
     row.className = 'node-param-row';
-    
     const labelEl = document.createElement('label');
     labelEl.innerText = `${label}: `;
-    
     const input = document.createElement('input');
     input.type = 'number';
-    // ▼▼▼【ここが最重要容疑箇所】▼▼▼
     input.value = nodeData.params?.[paramKey] ?? defaultValue ?? 0;
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     
-    input.addEventListener('change', () => {
+    // ▼▼▼ イベントを 'change' から 'input' に変更 ▼▼▼
+    input.addEventListener('input', () => {
         if (!this.plugin) return;
         const value = parseFloat(input.value);
         const isSmEditor = this.smEditorOverlay.style.display === 'flex';
-        if (isSmEditor) {
-            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, value, false);
-        } else {
-            this.plugin.updateNodeParam(nodeData, paramKey, value, false);
+        // isNaNチェックを追加して、不正な入力でデータが壊れるのを防ぐ
+        if (!isNaN(value)) {
+            if (isSmEditor) {
+                this.plugin.updateStateMachineNodeParam(nodeData, paramKey, value, false);
+            } else {
+                this.plugin.updateNodeParam(nodeData, paramKey, value, false);
+            }
         }
     });
     
