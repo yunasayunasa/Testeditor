@@ -166,12 +166,31 @@ body.tilemap-mode #bottom-panel { display: block; transform: translateY(0); }
 body.tilemap-mode #overlay-controls { transform: translateY(-220px); }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 10000; display: none; justify-content: center; align-items: center; }
 .modal-overlay.is-active { display: flex; }
-.modal-window { width: 90%; max-width: 700px; max-height: 80vh; background-color: #2b2b2b; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; }
+/* --- 1. .modal-window を単純化 --- */
+.modal-window {
+    width: 90%;
+    max-width: 1200px; /* ★ max-widthは残す */
+    /* height: 90vh; をコメントアウト */
+    max-height: 90vh; /* ★ max-height は残す */
+    
+    background-color: #2b2b2b;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+
+    /* ★ display: flex と overflow: hidden を一時的に削除し、中身に任せる */
+    /* flex-direction: column; */
+}
 .modal-header { padding: 10px 15px; background-color: #3c3c3c; display: flex; align-items: center; border-bottom: 1px solid #1e1e1e; user-select: none; }
 .modal-header h3 { margin: 0; font-size: 1.1em; }
 .modal-close-btn, .modal-help-btn { cursor: pointer; border: none; background: none; color: #d4d4d4; font-size: 24px; line-height: 1; padding: 0 5px; }
 .modal-help-btn { margin-left: auto; font-size: 18px; width: 24px; height: 24px; border-radius: 50%; background-color: #555; }
-.modal-content { padding: 15px; overflow-y: auto; flex-grow: 1; }
+
+.modal-content {
+    padding: 15px; /* ★ パディングを復活させておく */
+    overflow-y: auto;
+    /* flex-grow: 1; を削除 */
+}
+
 .modal-sub-panel { display: none; padding: 15px; background-color: #1e1e1e; border-top: 1px solid #555; max-height: 200px; overflow-y: auto; }
 .modal-sub-panel.is-visible { display: block; }
 body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; filter: blur(2px); }
@@ -180,12 +199,12 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
    Visual Scripting Language (VSL) Editor Styles
    ========================================================================== */
 
-/* --- メインコンテンツエリアを、ツールバーとキャンバスに分割 --- */
+/* --- メインコンテンツエリアを、ツールバーとキャンバスに分割 --- 
 #event-editor-main-content {
     display: flex;
     flex-direction: row;
-    padding: 0; /* 内側の余白は不要に */
-}
+    padding: 0; 
+}*/
 
 /* --- (左側) ツールバー --- */
 #vsl-toolbar {
@@ -377,12 +396,12 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 
 /* style.css */
 
-/* --- ステートマシン・エディタの基本レイアウト --- */
+/* --- ステートマシン・エディタの基本レイアウト --- 
 #sm-editor-body {
-    display: flex; /* 左右にペインを分割 */
-    flex-grow: 1; /* 親の高さ一杯に伸びる */
-    overflow: hidden; /* はみ出しを隠す */
-}
+    display: flex; 
+    flex-grow: 1; 
+    overflow: hidden; 
+}*/
 
 /* 左ペイン: 状態リスト */
 #sm-states-panel {
