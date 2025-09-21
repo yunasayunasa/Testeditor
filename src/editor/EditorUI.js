@@ -1140,7 +1140,7 @@ addNodeToEventData(tagName, targetVslData) {
     if (!this.editingObject || !targetVslData) return;
     
     // ▼▼▼【ここからが座標計算の修正】▼▼▼
-    const NODE_AVERAGE_HEIGHT = 100; // ノードのおおよその高さ (CSSに合わせて調整)
+    const NODE_AVERAGE_HEIGHT = 150; // ノードのおおよその高さ (CSSに合わせて調整)
     const NODE_MARGIN_Y = 20;      // ノード間の垂直マージン
 
     let newX = 50;
