@@ -1869,43 +1869,41 @@ drawConnections(svgLayer, nodes, connections) {
         // --- 4. キャンバスを再描画 ---
         this.populateVslCanvas();
     }
-  /**
- * ★★★ populateVslCanvas を、現在のVSLデータを元に描画するよう修正 ★★★
- * 既存の populateVslCanvas メソッドをこれに置き換えてください。
- * (EditorUIクラス内に populateVslCanvas は一つだけになるように)
+  // in EditorUI.js
+
+/**
+ * ★★★ 既存の populateVslCanvas を、この内容で確認・修正 ★★★
  */
 populateVslCanvas() {
     // どのモーダルで呼ばれても対応できるように、コンテキストを判別
     const isSmEditor = this.smEditorOverlay.style.display === 'flex';
     const canvasEl = isSmEditor
         ? this.smEditorOverlay.querySelector('.sm-vsl-canvas')
-        : this.vslCanvas; // イベントエディタ用の要素
+        : this.vslCanvas;
         
     if (!canvasEl) return;
     
     // --- 描画対象のデータを決定 ---
-    let targetEventData;
+    let targetVslData;
     if (isSmEditor) {
-        // ステートマシンエディタの場合
-        targetEventData = this.activeVslData;
+        targetVslData = this.activeVslData;
     } else {
-        // イベントエディタの場合
         const events = this.editingObject?.getData('events') || [];
-        targetEventData = events.find(e => e.id === this.activeEventId);
+        targetVslData = events.find(e => e.id === this.activeEventId);
     }
     
-    // --- 描画処理 (ここから下はほぼ既存のコードと同じ) ---
-    canvasEl.innerHTML = ''; // クリア
+    // --- 描画処理 ---
+    canvasEl.innerHTML = ''; 
     const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svgLayer.id = 'vsl-svg-layer'; // IDは共通でOK
+    svgLayer.id = 'vsl-svg-layer'; 
     svgLayer.setAttribute('width', '4000');
     svgLayer.setAttribute('height', '4000');
     canvasEl.appendChild(svgLayer);
 
-    if (!targetEventData) return;
+    if (!targetVslData) return;
 
-    if (targetEventData.nodes) {
-        targetEventData.nodes.forEach(nodeData => {
+    if (targetVslData.nodes) {
+        targetVslData.nodes.forEach(nodeData => {
             const nodeWrapper = document.createElement('div');
             nodeWrapper.className = 'vsl-node-wrapper';
             nodeWrapper.style.left = `${nodeData.x}px`;
@@ -1916,7 +1914,6 @@ populateVslCanvas() {
             nodeElement.dataset.isNode = 'true';
             nodeElement.dataset.nodeId = nodeData.id;
 
-            // buildNodeContentは共通のメソッドをそのまま使える
             this.buildNodeContent(nodeElement, nodeData);
             
             nodeWrapper.appendChild(nodeElement);
@@ -1924,10 +1921,12 @@ populateVslCanvas() {
         });
     }
     
+    // ▼▼▼【ここが重要】▼▼▼
+    // DOMの配置が完了した次のフレームで線を描画することで、座標計算が正確になる
     requestAnimationFrame(() => {
-        if (targetEventData.connections) {
-            // drawConnectionsも共通のメソッドをそのまま使える
-            this.drawConnections(svgLayer, targetEventData.nodes, targetEventData.connections);
+        if (targetVslData && targetVslData.connections) {
+            // 正しい引数で drawConnections を呼び出す
+            this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
         }
     });
 }
