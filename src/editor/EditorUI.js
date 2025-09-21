@@ -2070,33 +2070,61 @@ deselectNode() {
      */
     // in src/editor/EditorUI.js
 
-/**
+/**P
  * ステートマシン・エディタを開く
  * @param {Phaser.GameObjects.GameObject} selectedObject
  */
+// in src/editor/EditorUI.js
+
+/**
+ * ステートマシン・エディタを開く (デバッグログ付き)
+ * @param {Phaser.GameObjects.GameObject} selectedObject
+ */
 openStateMachineEditor = (selectedObject) => {
-    // ガード節: 必要な要素やオブジェクトがなければ処理を中断
-    if (!this.smEditorOverlay || !selectedObject) return;
+    // ▼▼▼ ここからデバッグログ ▼▼▼
+    console.log('%c--- openStateMachineEditor START ---', 'color: #f0f; font-weight: bold;');
 
-    // 1. 背景の操作をできなくする
+    // --- 1. メソッドが呼ばれた直後の状態を確認 ---
+    console.log('[1] Method called. `this` refers to:', this);
+    console.log('[2] `selectedObject` is:', selectedObject);
+
+    // --- 2. ガード節のチェック ---
+    if (!this.smEditorOverlay) {
+        console.error('[2a] FATAL: this.smEditorOverlay is null or undefined. Aborting.');
+        return;
+    }
+    if (!selectedObject) {
+        console.error('[2b] FATAL: selectedObject is null or undefined. Aborting.');
+        return;
+    }
+    console.log('[3] Guard clauses passed. Proceeding...');
+
+    // --- 3. 背景操作の無効化 ---
     document.body.classList.add('modal-open');
+    console.log('[4] `modal-open` class added to body.');
     this.game.input.enabled = false;
+    console.log('[5] Phaser input disabled.');
     
-    // 2. どのオブジェクトを編集中か、状態を保存
+    // --- 4. 状態の保存 ---
     this.editingObject = selectedObject;
+    console.log('[6] `this.editingObject` has been set.');
 
-    // 3. モーダルを表示する
+    // --- 5. モーダルの表示 ---
     this.smEditorOverlay.style.display = 'flex';
+    console.log('[7] smEditorOverlay display set to `flex`.');
 
-    // 4. (おまけ) タイトルを更新する
+    // --- 6. タイトルの更新 ---
     const title = this.smEditorOverlay.querySelector('#sm-editor-title');
     if (title) {
         title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
+        console.log('[8] Modal title updated.');
+    } else {
+        console.warn('[8] Modal title element could not be found.');
     }
 
-    // TODO: この後、モーダルの中身（状態リストなど）を構築する処理が入る
+    console.log('%c--- openStateMachineEditor END ---', 'color: #f0f; font-weight: bold;');
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
-
 /**
  * ステートマシン・エディタを閉じる
  */
