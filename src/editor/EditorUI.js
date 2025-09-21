@@ -1836,7 +1836,68 @@ deselectNode() {
         this.saveCurrentEventData(); // ★
         this.populateVslCanvas(); // ★
     }
-   drawConnections
+   // in src/editor/EditorUI.js
+
+// ... populateVslCanvas() { ... } の後など ...
+
+/**
+ * ★★★ まず、このメソッドをクラス内に正しく追加してください ★★★
+ * スクロール位置を考慮して、ノード間の接続線を正しく描画する
+ * @param {SVGElement} svgLayer - 描画対象のSVG要素
+ * @param {Array} nodes - 全ノードのデータ配列 (現在は未使用)
+ * @param {Array} connections - 全接続のデータ配列
+ * @param {HTMLElement} canvas - ノードDOMが配置されている親キャンバス要素
+ */
+drawConnections(svgLayer, nodes, connections, canvas) {
+    // 1. 描画前に、古い線をすべてクリアする
+    svgLayer.innerHTML = '';
+
+    // 2. SVGレイヤー自体の画面上の位置を取得。これが座標計算の原点(0,0)となる。
+    const svgRect = svgLayer.getBoundingClientRect();
+
+    if (!connections || connections.length === 0) return;
+
+    connections.forEach(conn => {
+        // 3. 接続元のノードとピンのDOM要素を、データ属性を使って検索する
+        const fromNodeEl = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`);
+        const toNodeEl = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`);
+
+        if (!fromNodeEl || !toNodeEl) return;
+
+        const fromPinEl = fromNodeEl.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
+        const toPinEl = toNodeEl.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
+        
+        if (!fromPinEl || !toPinEl) return;
+
+        // 4. 各ピンの「画面上での」絶対座標を取得する
+        const fromPinRect = fromPinEl.getBoundingClientRect();
+        const toPinRect = toPinEl.getBoundingClientRect();
+
+        // 5. ピンの中心点の「画面座標」を計算する
+        const fromX = fromPinRect.left + fromPinRect.width / 2;
+        const fromY = fromPinRect.top + fromPinRect.height / 2;
+        const toX = toPinRect.left + toPinRect.width / 2;
+        const toY = toPinRect.top + toPinRect.height / 2;
+
+        // 6. 画面座標を、SVGレイヤーの左上からの「相対座標」に変換する
+        const finalFromX = fromX - svgRect.left;
+        const finalFromY = fromY - svgRect.top;
+        const finalToX = toX - svgRect.left;
+        const finalToY = toY - svgRect.top;
+
+        // 7. SVGの<path>要素を作成して、ベジェ曲線を描画する
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const dx = Math.abs(finalFromX - finalToX) * 0.5;
+        const pathData = `M ${finalFromX} ${finalFromY} C ${finalFromX + dx} ${finalFromY}, ${finalToX - dx} ${finalToY}, ${finalToX} ${finalToY}`;
+        
+        path.setAttribute('d', pathData);
+        path.setAttribute('stroke', '#aaa');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        
+        svgLayer.appendChild(path);
+    });
+}
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
      * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
