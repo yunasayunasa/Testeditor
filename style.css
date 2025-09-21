@@ -448,5 +448,7 @@ body.modal-open #editor-root {
 }
 .sm-hook-tab:hover { background-color: #3e3e42; }
 .sm-hook-tab.active { color: white; font-weight: bold; border-bottom: 2px solid #569cd6; }
-
+#sm-hooks-tabs {
+    flex-shrink: 0; /* ★重要：親要素が縮んでも、このタブコンテナ自体は縮まないようにする */
+}
 /* Úsáideann an chuid eile (.vsl-editor-container, etc.) na stíleanna comhroinnte thuas */
