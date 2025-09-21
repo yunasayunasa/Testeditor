@@ -1830,58 +1830,7 @@ deselectNode() {
         this.saveCurrentEventData(); // ★
         this.populateVslCanvas(); // ★
     }
-   // in src/editor/EditorUI.js
-
-drawConnections(svgLayer, nodes, connections, canvas) {
-    svgLayer.innerHTML = ''; // 描画前にクリア
-
-    // ★★★ 解決策の核心 ★★★
-    // SVGレイヤー自体の画面上の位置を取得。これが座標計算の原点(0,0)となる。
-    const svgRect = svgLayer.getBoundingClientRect();
-
-    connections.forEach(conn => {
-        const fromNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`);
-        const toNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`);
-
-        // ★ ピン要素の検索は、ノード本体から行う
-        if (!fromNodeWrapper || !toNodeWrapper) return;
-
-        const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
-        const toPinEl = toNodeWrapper.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
-
-        if (!fromPinEl || !toPinEl) return;
-
-        // --- ここからが新しい座標計算ロジック ---
-
-        // 1. 各ピンの「画面上での」絶対座標を取得
-        const fromPinRect = fromPinEl.getBoundingClientRect();
-        const toPinRect = toPinEl.getBoundingClientRect();
-
-        // 2. ピンの中心点の画面座標を計算
-        const fromX = fromPinRect.left + fromPinRect.width / 2;
-        const fromY = fromPinRect.top + fromPinRect.height / 2;
-        const toX = toPinRect.left + toPinRect.width / 2;
-        const toY = toPinRect.top + toPinRect.height / 2;
-
-        // 3. 画面座標を、SVGレイヤーの左上からの「相対座標」に変換
-        const finalFromX = fromX - svgRect.left;
-        const finalFromY = fromY - svgRect.top;
-        const finalToX = toX - svgRect.left;
-        const finalToY = toY - svgRect.top;
-
-        // SVGの線（今回はpath要素でベジェ曲線を描画）を作成
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        const dx = Math.abs(finalFromX - finalToX) * 0.5; // 曲線の曲がり具合を調整
-        const pathData = `M ${finalFromX} ${finalFromY} C ${finalFromX + dx} ${finalFromY}, ${finalToX - dx} ${finalToY}, ${finalToX} ${finalToY}`;
-        
-        path.setAttribute('d', pathData);
-        path.setAttribute('stroke', '#aaa');
-        path.setAttribute('stroke-width', '2');
-        path.setAttribute('fill', 'none');
-        
-        svgLayer.appendChild(path);
-    });
-}
+   drawConnections
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
      * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
