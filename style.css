@@ -502,6 +502,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none;  }
     position: relative;
     overflow: auto;
     cursor: default;
+    min-width: 0; /* ★★★ この一行を追加 ★★★ */
 }
 
 /* --- ステートマシン用のキャンバス --- */
