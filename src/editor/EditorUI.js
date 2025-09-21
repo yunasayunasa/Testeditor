@@ -27,6 +27,7 @@ export default class EditorUI {
             startX: 0,
             startY: 0
         };
+        
         //ステートマシンプロパティ
         this.activeStateName = null; // ★ 現在編集中の「状態」の名前
         this.activeHookName = 'onEnter'; // ★ 現在編集中のイベントフックの名前
@@ -50,7 +51,12 @@ export default class EditorUI {
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
-
+this.populateVslCanvas = this.populateVslCanvas.bind(this);
+    this.drawConnections = this.drawConnections.bind(this);
+    this.setActiveVslEvent = this.setActiveVslEvent.bind(this);
+    this.setActiveState = this.setActiveState.bind(this);
+    
+    console.log("[EditorUI] Core methods have been bound to the instance.");
         
 
     }

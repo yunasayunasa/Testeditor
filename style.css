@@ -280,11 +280,12 @@ body.modal-open #editor-root {
 /* --- Coimeádán Fréimhe an Eagarthóra VSL (Comhroinnte ag Imeacht & Meaisín Stáit) --- */
 .vsl-editor-container {
     display: flex;
-    flex-direction: row; /* Cinntigh go bhfuil an barra uirlisí agus an canbhás taobh le taobh */
+    flex-direction: row;
     flex-grow: 1;
     overflow: hidden;
     width: 100%;
-    height: 100%;
+    /* ★ 新規追加: 高さが0になるのを防ぐ */
+    min-height: 0;
 }
 
 /* --- Barra Uirlisí VSL (Clé) --- */
@@ -423,20 +424,23 @@ body.modal-open #editor-root {
 .sm-state-item:hover { background-color: #4f4f4f; }
 .sm-state-item.active { background-color: #4a6da7; font-weight: bold; }
 
-/* Painéal Deas: Eagarthóireacht VSL */
+/* 既存の #sm-vsl-panel をこれで置き換える */
 #sm-vsl-panel {
     flex-grow: 1;
     display: flex;
-    flex-direction: column; /* Cruachaigh cluaisíní agus coimeádán VSL go hingearach */
+    flex-direction: column;
     overflow: hidden;
+    /* ★ 新規追加: 高さが0になるのを防ぐ */
+    min-height: 0; 
 }
 
 /* Cluaisíní Hook Imeachta */
 #sm-hooks-tabs {
     display: flex;
-    background-color: #252526;
+    background-color: #252226;
     border-bottom: 1px solid #333;
-    flex-shrink: 0; /* Cosc ar chrapadh */
+    /* ★ flex-shrink: 0 は必須 */
+    flex-shrink: 0; 
 }
 .sm-hook-tab {
     padding: 8px 16px;
