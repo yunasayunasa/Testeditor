@@ -1228,43 +1228,6 @@ addNodeToEventData(tagName, targetEventData) {
         }
     }
 
-    /**
-     * ★★★ 新規追加 (線描画ヘルパー) ★★★
-     * connectionsデータに基づいて、SVGで線を描画する
-     */
-    drawConnections(svgLayer, nodes, connections) {
-        connections.forEach(conn => {
-            const fromNode = nodes.find(n => n.id === conn.fromNode);
-            const toNode = nodes.find(n => n.id === conn.toNode);
-
-            if (fromNode && toNode) {
-                // ノードの幅と高さを、CSSで定義した固定値とする (例: 幅150px, 高さ50px)
-                const nodeWidth = 150;
-                const nodeHeight = 50;
-
-                // 接続元のピンの座標 (右側の中央)
-                const fromX = fromNode.x + nodeWidth;
-                const fromY = fromNode.y + (nodeHeight / 2);
-
-                // 接続先のピンの座標 (左側の中央)
-                const toX = toNode.x;
-                const toY = toNode.y + (nodeHeight / 2);
-
-                // SVGの線(line)要素を生成
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', fromX);
-                line.setAttribute('y1', fromY);
-                line.setAttribute('x2', toX);
-                line.setAttribute('y2', toY);
-                line.setAttribute('stroke', '#aaa'); // 線の色
-                line.setAttribute('stroke-width', '2'); // 線の太さ
-                
-                svgLayer.appendChild(line);
-            }
-        });
-    }
-   // in src/editor/EditorUI.js
-// in src/editor/EditorUI.js
 
     buildNodeContent(nodeElement, nodeData) {
         nodeElement.innerHTML = ''; // クリア
@@ -1729,136 +1692,145 @@ createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
      * VSLノードのピンがクリックされたときの処理
      * @param {HTMLElement} clickedPin - クリックされたピンのHTML要素
      */
- // in src/editor/EditorUI.js
+ onPinClicked(clickedPin) {
+    const pinType = clickedPin.dataset.pinType;
+    const pinName = clickedPin.dataset.pinName;
+    const parentNode = clickedPin.closest('.vsl-node');
+    if (!parentNode || !parentNode.dataset.nodeId) return;
+    const nodeId = parentNode.dataset.nodeId;
 
-    onPinClicked(clickedPin) {
-        const pinType = clickedPin.dataset.pinType;
-        const pinName = clickedPin.dataset.pinName; // ★ピン名を取得
-        
-        const parentNode = clickedPin.closest('.vsl-node'); // .parentElementより安全
-        if (!parentNode || !parentNode.dataset.nodeId) {
-            console.error("Could not find parent node for the clicked pin!", clickedPin);
-            return;
+    if (!this.connectionState.isActive && pinType === 'output') {
+        this.connectionState = {
+            isActive: true, fromNodeId: nodeId, fromPinName: pinName,
+            fromPinElement: clickedPin
+        };
+        clickedPin.classList.add('is-connecting');
+    } 
+    else if (this.connectionState.isActive && pinType === 'input') {
+        const { fromNodeId, fromPinName } = this.connectionState;
+        const toNodeId = nodeId;
+        const toPinName = pinName;
+
+        // ▼▼▼【ここが修正の核心】▼▼▼
+        const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        // どちらのエディタが開いているかに応じて、正しい接続作成メソッドを呼ぶ
+        if (isSmEditor) {
+            this.createConnection(fromNodeId, fromPinName, toNodeId, toPinName, this.activeVslData);
+        } else {
+            const events = this.editingObject.getData('events');
+            const targetEvent = events.find(e => e.id === this.activeEventId);
+            this.createConnection(fromNodeId, fromPinName, toNodeId, toPinName, targetEvent);
         }
-        const nodeId = parentNode.dataset.nodeId;
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- ケース1: 接続開始 (出力ピンをクリック) ---
-        if (!this.connectionState.isActive && pinType === 'output') {
-            this.connectionState.isActive = true;
-            this.connectionState.fromNodeId = nodeId;
-            this.connectionState.fromPinName = pinName; // ★接続元のピン名を保存
-            this.connectionState.fromPinElement = clickedPin;
+        if (this.connectionState.fromPinElement) {
+            this.connectionState.fromPinElement.classList.remove('is-connecting');
+        }
+        this.connectionState = { isActive: false };
+    }
+    else if (this.connectionState.isActive) {
+        if (this.connectionState.fromPinElement) {
+            this.connectionState.fromPinElement.classList.remove('is-connecting');
+        }
+        this.connectionState = { isActive: false };
+    }
+}
+ // in EditorUI.js
+
+/**
+ * ★★★ 既存の createConnection を、この内容に置き換える ★★★
+ * 新しい接続をイベントデータに追加し、キャンバスを再描画する
+ * @param {string} fromNodeId
+ * @param {string} fromPinName
+ * @param {string} toNodeId
+ * @param {string} toPinName
+ * @param {object} targetVslData - ★追加: 接続を追加する対象のVSLデータ
+ */
+createConnection(fromNodeId, fromPinName, toNodeId, toPinName, targetVslData) {
+    if (!this.editingObject || !targetVslData || fromNodeId === toNodeId) return;
+
+    if (!targetVslData.connections) {
+        targetVslData.connections = [];
+    }
+
+    // 既存の接続を上書き
+    targetVslData.connections = targetVslData.connections.filter(
+        c => !(c.fromNode === fromNodeId && c.fromPin === fromPinName)
+    );
+
+    targetVslData.connections.push({ 
+        fromNode: fromNodeId, fromPin: fromPinName, 
+        toNode: toNodeId, toPin: toPinName 
+    });
+
+    // ▼▼▼【ここが修正の核心】▼▼▼
+    const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+    if (isSmEditor) {
+        this.editingObject.setData('stateMachine', this.stateMachineData);
+    } else {
+        const allEvents = this.editingObject.getData('events');
+        this.editingObject.setData('events', allEvents);
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    // UI再描画
+    this.populateVslCanvas();
+}
+
+  // in EditorUI.js
+
+/**
+ * ★★★ 既存の drawConnections を、この内容に置き換える ★★★
+ * connectionsデータに基づいて、SVGで線を描画する
+ */
+drawConnections(svgLayer, nodes, connections) {
+    // ▼▼▼【ここが修正の核心】▼▼▼
+    const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+    const canvasEl = isSmEditor
+        ? this.smEditorOverlay.querySelector('.sm-vsl-canvas')
+        : this.vslCanvas;
+    if (!canvasEl) return;
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    connections.forEach(conn => {
+        // canvasEl を基準にノード要素を検索
+        const fromNodeEl = canvasEl.querySelector(`[data-node-id="${conn.fromNode}"]`);
+        const toNodeEl = canvasEl.querySelector(`[data-node-id="${conn.toNode}"]`);
+
+        if (fromNodeEl && toNodeEl) {
+            const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
+            const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
+            if (!fromPinEl || !toPinEl) return;
+
+            const fromNodeWrapper = fromNodeEl.closest('.vsl-node-wrapper');
+            const toNodeWrapper = toNodeEl.closest('.vsl-node-wrapper');
+
+            const fromNodeX = fromNodeWrapper.offsetLeft;
+            const fromNodeY = fromNodeWrapper.offsetTop;
+            const toNodeX = toNodeWrapper.offsetLeft;
+            const toNodeY = toNodeWrapper.offsetTop;
+
+            const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
+            const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
+            const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
+            const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
             
-            clickedPin.classList.add('is-connecting');
-            console.log(`Connection started from node: ${nodeId} (pin: ${pinName})`);
-        } 
-        // --- ケース2: 接続完了 (入力ピンをクリック) ---
-        else if (this.connectionState.isActive && pinType === 'input') {
-            const fromNodeId = this.connectionState.fromNodeId;
-            const fromPinName = this.connectionState.fromPinName;
-            const toNodeId = nodeId;
-            const toPinName = pinName; // ★接続先のピン名を取得
+            const finalFromX = fromNodeX + fromPinX;
+            const finalFromY = fromNodeY + fromPinY;
+            const finalToX = toNodeX + toPinX;
+            const finalToY = toNodeY + toPinY;
 
-            // 新しい接続データを作成・保存
-            this.createConnection(fromNodeId, fromPinName, toNodeId, toPinName);
-            
-            // 接続モードを正常終了
-            if (this.connectionState.fromPinElement) {
-                this.connectionState.fromPinElement.classList.remove('is-connecting');
-            }
-            this.connectionState = { isActive: false }; // stateをリセット
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', finalFromX);
+            line.setAttribute('y1', finalFromY);
+            line.setAttribute('x2', finalToX);
+            line.setAttribute('y2', finalToY);
+            line.setAttribute('stroke', '#aaa');
+            line.setAttribute('stroke-width', '2');
+            svgLayer.appendChild(line);
         }
-        // --- その他の場合: 接続キャンセル ---
-        else if (this.connectionState.isActive) {
-            if (this.connectionState.fromPinElement) {
-                this.connectionState.fromPinElement.classList.remove('is-connecting');
-            }
-            this.connectionState = { isActive: false }; // stateをリセット
-            console.log("Connection cancelled.");
-        }
-    }
-   /**
-     * ★★★ ピン名対応版 ★★★
-     * 新しい接続をイベントデータに追加し、キャンバスを再描画する
-     */
-    createConnection(fromNodeId, fromPinName, toNodeId, toPinName) {
-        if (!this.editingObject || !this.activeEventId || fromNodeId === toNodeId) return;
-
-        const events = this.editingObject.getData('events');
-        const targetEvent = events.find(e => e.id === this.activeEventId);
-        if (!targetEvent) return;
-        
-        if (!targetEvent.connections) {
-            targetEvent.connections = [];
-        }
-
-        // ★ 同一ピンからの接続は1本までとする（上書きする）
-        targetEvent.connections = targetEvent.connections.filter(
-            c => !(c.fromNode === fromNodeId && c.fromPin === fromPinName)
-        );
-
-        // 新しい接続を追加
-        targetEvent.connections.push({ 
-            fromNode: fromNodeId, 
-            fromPin: fromPinName, 
-            toNode: toNodeId, 
-            toPin: toPinName 
-        });
-
-        this.editingObject.setData('events', events);
-        console.log(`Connection created: ${fromNodeId}:${fromPinName} -> ${toNodeId}:${toPinName}`);
-        
-        this.populateVslCanvas();
-    }
-   // in src/editor/EditorUI.js
-
-   // in src/editor/EditorUI.js
-
-    drawConnections(svgLayer, nodes, connections) {
-        connections.forEach(conn => {
-            const fromNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.fromNode}"]`);
-            const toNodeEl = this.vslCanvas.querySelector(`[data-node-id="${conn.toNode}"]`);
-
-            if (fromNodeEl && toNodeEl) {
-                const fromPinEl = fromNodeEl.querySelector(`[data-pin-name="${conn.fromPin}"]`);
-                const toPinEl = toNodeEl.querySelector(`[data-pin-name="${conn.toPin}"]`);
-
-                if (!fromPinEl || !toPinEl) return;
-
-                // ▼▼▼【ここが座標計算の修正箇所です】▼▼▼
-                // --------------------------------------------------------------------
-                // 1. ノード本体の、キャンバス内での相対位置 (x, y) を取得
-                const fromNodeX = fromNodeEl.parentElement.offsetLeft; // wrapperのleft
-                const fromNodeY = fromNodeEl.parentElement.offsetTop;  // wrapperのtop
-                const toNodeX = toNodeEl.parentElement.offsetLeft;
-                const toNodeY = toNodeEl.parentElement.offsetTop;
-
-                // 2. ピンの、ノード内での相対位置 (中央) を取得
-                const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
-                const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
-                const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
-                const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
-                
-                // 3. 最終的なSVG内の絶対座標を計算
-                const finalFromX = fromNodeX + fromPinX;
-                const finalFromY = fromNodeY + fromPinY;
-                const finalToX = toNodeX + toPinX;
-                const finalToY = toNodeY + toPinY;
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', finalFromX);
-                line.setAttribute('y1', finalFromY);
-                line.setAttribute('x2', finalToX);
-                line.setAttribute('y2', finalToY);
-                line.setAttribute('stroke', '#aaa');
-                line.setAttribute('stroke-width', '2');
-                
-                svgLayer.appendChild(line);
-            }
-        });
-    }
+    });
+}
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
      * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
