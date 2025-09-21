@@ -1,8 +1,9 @@
+// src/handlers/events/move_to_target.js
+
 /**
- * [move_to_target]タグ
- * sourceオブジェクトをターゲットオブジェクトに向かって移動させる
+ * [move_to_target]タグ ... (コメントはそのまま)
  */
-const move_to_target = async (interpreter, params) => {
+export default async function move_to_target(interpreter, params) {
     const scene = interpreter.scene;
     const source = interpreter.currentSource;
     const target = interpreter.findTarget(params.target, scene, source, interpreter.currentTarget);
@@ -10,26 +11,20 @@ const move_to_target = async (interpreter, params) => {
 
     if (!source || !target || !source.body) {
         console.warn(`[move_to_target] 対象'${source.name}'に物理ボディがないため、移動できません。`);
-        return; // 物理ボディがないと動かせない
+        return;
     }
 
-    // ターゲットへの方向ベクトルを計算
     const directionX = target.x - source.x;
     const directionY = target.y - source.y;
 
-    // ベクトルを正規化（長さを1にする）し、ゼロ除算を避ける
     const vec = new Phaser.Math.Vector2(directionX, directionY);
     if (vec.length() > 0) {
         vec.normalize();
     }
 
-    // 速度を適用
     source.setVelocity(vec.x * speed, vec.y * speed);
 };
 
-/**
- * VSLエディタ用の定義
- */
 move_to_target.define = {
     description: "ターゲットオブジェクトに向かって、指定された速度で移動します。(物理ボディ必須)",
     params: [
@@ -37,5 +32,3 @@ move_to_target.define = {
         { key: "speed", type: "number", label: "速度", defaultValue: 2 }
     ]
 };
-
-export default move_to_target;

@@ -1,38 +1,31 @@
+// src/handlers/events/distance_check.js
+
 /**
- * [distance_check]タグ
- * 2つのオブジェクト間の距離を測り、ピンを分岐させる
+ * [distance_check]タグ ... (コメントはそのまま)
  */
-const distance_check = async (interpreter, params) => {
+export default async function distance_check(interpreter, params) {
     const scene = interpreter.scene;
     const source = interpreter.currentSource;
-    const target = interpreter.currentTarget; // 衝突相手など
+    const target = interpreter.currentTarget;
 
-    // ターゲットオブジェクトを見つける
     const objA = interpreter.findTarget(params.target_a, scene, source, target);
     const objB = interpreter.findTarget(params.target_b, scene, source, target);
     const distance = parseFloat(params.distance);
 
     if (!objA || !objB || isNaN(distance)) {
         console.error("[distance_check] パラメータが不正です。", params);
-        // 失敗した場合、デフォルトの'output'に進むのは危険なので、何もしないのが安全
-        // もし分岐させたいなら return 'output_far' などとする
         return;
     }
 
-    // Phaserの機能を使って距離を計算
     const currentDistance = Phaser.Math.Distance.Between(objA.x, objA.y, objB.x, objB.y);
 
-    // 距離を比較して、次に進むべき出力ピンの名前を返す
     if (currentDistance <= distance) {
-        return 'output_near'; // 近い
+        return 'output_near';
     } else {
-        return 'output_far';  // 遠い
+        return 'output_far';
     }
 };
 
-/**
- * VSLエディタ用の定義
- */
 distance_check.define = {
     description: "2つのオブジェクト間の距離を比較し、結果に応じて処理を分岐します。",
     params: [
@@ -48,5 +41,3 @@ distance_check.define = {
         ]
     }
 };
-
-export default distance_check;
