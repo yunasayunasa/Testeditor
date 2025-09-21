@@ -1,6 +1,6 @@
 // src/components/StateMachineComponent.js
 
-export class StateMachineComponent {
+class StateMachineComponent { // ← 先頭の'export'を削除
     constructor(scene, owner, params = {}) {
         this.scene = scene;
         this.gameObject = owner;
@@ -14,7 +14,6 @@ export class StateMachineComponent {
         if (!this.stateMachineData || !this.stateMachineData.initialState) {
             return;
         }
-        // ▼▼▼ メソッド名を変更 ▼▼▼
         this.transitionTo(this.stateMachineData.initialState);
     }
 
@@ -27,7 +26,6 @@ export class StateMachineComponent {
         }
     }
 
-    // ▼▼▼ メソッド名を changeState から transitionTo に変更 ▼▼▼
     transitionTo(newStateName) {
         if (!this.actionInterpreter) return;
 
@@ -50,3 +48,7 @@ export class StateMachineComponent {
         }
     }
 }
+
+// ▼▼▼【ここが重要】▼▼▼
+// クラス定義が終わった後で、defaultとしてエクスポートする
+export default StateMachineComponent;
