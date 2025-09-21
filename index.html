@@ -192,52 +192,38 @@
 <!-- ▼▼▼ ステートマシン・エディタ (完全分離版) ▼▼▼ -->
 <!-- ================================================================= -->
 <div id="sm-editor-overlay" class="modal-overlay">
-    <div class="modal-window wide">
-        
-        <!-- ヘッダー -->
+    <div class="modal-window" style="width: 95vw; height: 90vh; max-width: none;">
         <div class="modal-header">
             <h3 id="sm-editor-title">ステートマシン編集</h3>
             <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
         </div>
-        
-        <!-- 本体 -->
         <div class="modal-content" id="sm-editor-body">
-
-            <!-- 左ペイン: 状態リスト -->
+            
+            <!-- ====== 左ペイン: 状態リスト ====== -->
             <div id="sm-states-panel">
                 <div class="panel-header">
-                    <h4>状態リスト</h4>
+                    <h4>States</h4>
+                    <!-- ★★★「状態を追加」ボタンを追加 ★★★ -->
                     <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
                 </div>
-                <div id="sm-states-list"></div>
+                <!-- ★★★ 状態リストが表示されるコンテナ ★★★ -->
+                <div id="sm-states-list">
+                    <!-- (ここにはJavaScriptによって .sm-state-item が動的に追加されます) -->
+                </div>
             </div>
 
-            <!-- 右ペイン: VSL編集エリア -->
+            <!-- ====== 右ペイン: VSL編集エリア ====== -->
             <div id="sm-vsl-panel">
-                <!-- イベントフック選択タブ -->
                 <div id="sm-hooks-tabs">
-                    <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
-                    <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
-                    <button class="sm-hook-tab" data-hook="onExit">onExit</button>
+                    <!-- (フェーズ2でここに onEnter, onUpdate などのタブが作られます) -->
+                    <button class="sm-hook-tab active">onEnter</button>
+                    <button class="sm-hook-tab">onUpdate</button>
+                    <button class="sm-hook-tab">onExit</button>
                 </div>
 
-                <!-- ★★★ ここからが重要 ★★★ -->
-                <!-- VSLコンテナのクラス名を変更 -->
-                <div class="sm-vsl-editor-container"> 
-                    <!-- ツールバーのIDとクラス名を変更 -->
-                    <div id="sm-vsl-toolbar" class="sm-vsl-toolbar">
-                        <h4>ノードリスト</h4>
-                        <!-- ノードリストのクラス名を変更 -->
-                        <div class="sm-vsl-node-list"></div>
-                    </div>
-                    <!-- キャンバスラッパーのIDとクラス名を変更 -->
-                    <div id="sm-vsl-canvas-wrapper" class="sm-vsl-canvas-wrapper">
-                        <!-- キャンバスのIDとクラス名を変更 -->
-                        <div id="sm-vsl-canvas" class="sm-vsl-canvas">
-                           <!-- SVGレイヤーのIDを変更 -->
-                           <svg id="sm-vsl-svg-layer" width="4000" height="4000"></svg>
-                        </div>
-                    </div>
+                <!-- (フェーズ2でここにVSLエディタが入ります) -->
+                <div class="sm-vsl-editor-container" style="background-color: #333; align-items: center; justify-content: center;">
+                    <p>Select a state to edit its logic.</p>
                 </div>
             </div>
 

@@ -2069,114 +2069,160 @@ deselectNode() {
      * ここからステートマシン
      */
     // in src/editor/EditorUI.js
+// in EditorUI.js
 
-/**P
- * ステートマシン・エディタを開く
- * @param {Phaser.GameObjects.GameObject} selectedObject
- */
-// in src/editor/EditorUI.js
+// =================================================================
+// ステートマシン・エディタ関連のメソッド群
+// =================================================================
 
 /**
- * ステートマシン・エディタを開く (デバッグログ付き)
+ * ステートマシン・エディタを開く (機能実装版)
  * @param {Phaser.GameObjects.GameObject} selectedObject
  */
 openStateMachineEditor = (selectedObject) => {
-    // ▼▼▼ ここからデバッグログ ▼▼▼
-    console.log('%c--- openStateMachineEditor START ---', 'color: #f0f; font-weight: bold;');
-
-    // --- 1. メソッドが呼ばれた直後の状態を確認 ---
-    console.log('[1] Method called. `this` refers to:', this);
-    console.log('[2] `selectedObject` is:', selectedObject);
-
-    // --- 2. ガード節のチェック ---
-    if (!this.smEditorOverlay) {
-        console.error('[2a] FATAL: this.smEditorOverlay is null or undefined. Aborting.');
+    if (!this.smEditorOverlay || !selectedObject) {
+        console.error('StateMachine Editor could not be opened.');
         return;
     }
-    if (!selectedObject) {
-        console.error('[2b] FATAL: selectedObject is null or undefined. Aborting.');
-        return;
-    }
-    console.log('[3] Guard clauses passed. Proceeding...');
 
-    // --- 3. 背景操作の無効化 ---
+    // --- モーダル表示と入力無効化 ---
     document.body.classList.add('modal-open');
-    console.log('[4] `modal-open` class added to body.');
     this.game.input.enabled = false;
-    console.log('[5] Phaser input disabled.');
-    
-    // --- 4. 状態の保存 ---
     this.editingObject = selectedObject;
-    console.log('[6] `this.editingObject` has been set.');
-
-    // --- 5. モーダルの表示 ---
     this.smEditorOverlay.style.display = 'flex';
-    console.log('[7] smEditorOverlay display set to `flex`.');
-
-    // --- 6. タイトルの更新 ---
+    
+    // --- タイトルの更新 ---
     const title = this.smEditorOverlay.querySelector('#sm-editor-title');
     if (title) {
         title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
-        console.log('[8] Modal title updated.');
-    } else {
-        console.warn('[8] Modal title element could not be found.');
     }
 
-    console.log('%c--- openStateMachineEditor END ---', 'color: #f0f; font-weight: bold;');
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ★★★ ここからが新しい処理 ★★★
+    // --- 1. オブジェクトからステートマシンデータを取得 (なければ初期化) ---
+    this.stateMachineData = this.editingObject.getData('stateMachine');
+    if (!this.stateMachineData) {
+        this.stateMachineData = this.getInitialStateMachineData();
+        this.editingObject.setData('stateMachine', this.stateMachineData);
+    }
+    
+    // --- 2. 状態リストのUIを構築 ---
+    this.buildStatesPanel();
+
+    // --- 3. イベントリスナーを設定 ---
+    this.setupStateMachineEventListeners();
 }
+
 /**
- * ステートマシン・エディタを閉じる
+ * ステートマシン用の初期データ構造を返す
+ */
+getInitialStateMachineData() {
+    return {
+        initialState: 'Idle',
+        states: {
+            'Idle': {
+                onEnter: { nodes: [], connections: [] },
+                onUpdate: { nodes: [], connections: [] },
+                onExit: { nodes: [], connections: [] }
+            }
+        }
+    };
+}
+
+/**
+ * 左ペインの「状態リスト」を構築・再描画する
+ */
+buildStatesPanel() {
+    const statesListContainer = this.smEditorOverlay.querySelector('#sm-states-list');
+    if (!statesListContainer) return;
+
+    statesListContainer.innerHTML = ''; // 中身をクリア
+
+    // this.stateMachineData から states のキー (状態名) を取得してループ
+    const stateNames = Object.keys(this.stateMachineData.states);
+
+    stateNames.forEach(stateName => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'sm-state-item';
+        itemDiv.innerText = stateName;
+        itemDiv.dataset.stateName = stateName; // データ属性に状態名を保存
+
+        // 現在選択中の状態なら 'active' クラスを付与
+        if (this.activeStateName === stateName) {
+            itemDiv.classList.add('active');
+        }
+
+        statesListContainer.appendChild(itemDiv);
+    });
+}
+
+/**
+ * ステートマシンエディタ内のイベントリスナーを一度だけ設定する
+ */
+setupStateMachineEventListeners() {
+    // 古いリスナーが残っていれば削除 (念のため)
+    if (this._onAddNewState) {
+        this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
+    }
+    if (this._onStateClicked) {
+        this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
+    }
+    
+    // --- 新しいリスナー関数を定義 ---
+    this._onAddNewState = () => {
+        const newStateName = prompt('新しい状態の名前を入力してください:', `NewState${Object.keys(this.stateMachineData.states).length}`);
+        if (newStateName && !this.stateMachineData.states[newStateName]) {
+            // 新しい状態のデータを追加
+            this.stateMachineData.states[newStateName] = {
+                onEnter: { nodes: [], connections: [] },
+                onUpdate: { nodes: [], connections: [] },
+                onExit: { nodes: [], connections: [] }
+            };
+            this.editingObject.setData('stateMachine', this.stateMachineData); // データを保存
+            this.buildStatesPanel(); // UIを再描画
+        } else if (newStateName) {
+            alert('その名前の状態は既に使用されています。');
+        }
+    };
+
+    this._onStateClicked = (event) => {
+        const targetItem = event.target.closest('.sm-state-item');
+        if (targetItem) {
+            const stateName = targetItem.dataset.stateName;
+            this.activeStateName = stateName;
+            this.buildStatesPanel(); // 選択状態を反映して再描画
+            
+            // TODO: フェーズ2で、右側のVSLエディタを更新する処理をここに追加する
+            console.log(`State selected: ${this.activeStateName}`);
+        }
+    };
+
+    // --- リスナーを登録 ---
+    this.smEditorOverlay.querySelector('#sm-add-state-btn')?.addEventListener('click', this._onAddNewState);
+    this.smEditorOverlay.querySelector('#sm-states-list')?.addEventListener('click', this._onStateClicked);
+}
+
+/**
+ * ステートマシン・エディタを閉じる (機能実装版)
  */
 closeStateMachineEditor = () => {
-    // ガード節: 必要な要素がなければ処理を中断
     if (!this.smEditorOverlay) return;
     
-    // 1. モーダルを非表示にする
+    // --- モーダル非表示と入力有効化 ---
     this.smEditorOverlay.style.display = 'none';
-
-    // 2. 編集中の状態を完全にリセット
-    this.editingObject = null;
-    this.activeStateName = null;
-    this.activeHookName = 'onEnter'; // デフォルトに戻す
-
-    // 3. 背景の操作をできるように戻す
     this.game.input.enabled = true;
     document.body.classList.remove('modal-open');
-}
-populateSmVslCanvas = () => {
-    // ★★★ クラス名を sm-vsl- に変更 ★★★
-    const toolbar = this.smEditorOverlay.querySelector('.sm-vsl-toolbar');
-    const canvasWrapper = this.smEditorOverlay.querySelector('.sm-vsl-canvas-wrapper');
-    if (!toolbar || !canvasWrapper) return;
     
-    // ツールバーとキャンバスの中身を描画する
-    this.populateVslToolbar(); // ツールバーの中身は共用
-    this.populateVslCanvas();  // キャンバスの中身も共用
-}
-
-// --- 2. setupVslCanvasListeners を置き換え ---
-setupVslCanvasListeners = (overlayElement) => {
-    // ★★★ クラス名を動的に変更 ★★★
-    const canvasWrapper = overlayElement.id === 'sm-editor-overlay'
-        ? overlayElement.querySelector('.sm-vsl-canvas-wrapper')
-        : overlayElement.querySelector('.vsl-canvas-wrapper');
-
-    if (!canvasWrapper) return;
-    canvasWrapper._pointerDownHandler = (event) => this.onVslCanvasPointerDown(event);
-    canvasWrapper.addEventListener('pointerdown', canvasWrapper._pointerDownHandler);
-}
-
-// --- 3. removeVslCanvasListeners を置き換え ---
-removeVslCanvasListeners = (overlayElement) => {
-    // ★★★ クラス名を動的に変更 ★★★
-    const canvasWrapper = overlayElement.id === 'sm-editor-overlay'
-        ? overlayElement.querySelector('.sm-vsl-canvas-wrapper')
-        : overlayElement.querySelector('.vsl-canvas-wrapper');
-
-    if (canvasWrapper && canvasWrapper._pointerDownHandler) {
-        canvasWrapper.removeEventListener('pointerdown', canvasWrapper._pointerDownHandler);
-        delete canvasWrapper._pointerDownHandler;
+    // --- イベントリスナーを解除 ---
+    if (this._onAddNewState) {
+        this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
     }
+    if (this._onStateClicked) {
+        this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
+    }
+    
+    // --- 状態をリセット ---
+    this.editingObject = null;
+    this.stateMachineData = null;
+    this.activeStateName = null;
 }
 }
