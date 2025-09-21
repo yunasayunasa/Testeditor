@@ -1123,15 +1123,16 @@ closeEventEditor = () => {
      */
    // in src/editor/EditorUI.js
 
-   /**
- * ★★★ 既存の addNodeToEventData を修正 ★★★
- * 引数で渡されたイベントデータにノードを追加するようにする
+  /**
+ * ★★★ 既存の addNodeToEventData を、この内容に置き換える ★★★
+ * 引数で渡されたイベントデータにノードを追加する
  * @param {string} tagName - 追加するノードのタイプ
- * @param {object} targetEventData - ★追加: 追加先のVSLデータ (例: this.activeVslData)
+ * @param {object} targetEventData - 追加先のVSLデータ
  */
 addNodeToEventData(tagName, targetEventData) {
     if (!this.editingObject || !targetEventData) return;
     
+    // --- ノードデータの生成 (ここは共通) ---
     const existingNodeCount = targetEventData.nodes.length;
     const newNode = {
         id: `node_${Date.now()}`, type: tagName, params: {},
@@ -1150,11 +1151,21 @@ addNodeToEventData(tagName, targetEventData) {
     
     targetEventData.nodes.push(newNode);
     
-    // 変更を永続化
-    this.editingObject.setData('stateMachine', this.stateMachineData);
-    
-    // UIを再描画
-    this.displayActiveVslEditor();
+    // ▼▼▼【ここが修正の核心】▼▼▼
+    const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+    if (isSmEditor) {
+        // ステートマシンエディタの場合: stateMachineデータを丸ごと保存
+        this.editingObject.setData('stateMachine', this.stateMachineData);
+        // UIを再描画
+        this.displayActiveVslEditor();
+    } else {
+        // イベントエディタの場合: eventsデータを丸ごと保存
+        const allEvents = this.editingObject.getData('events');
+        this.editingObject.setData('events', allEvents);
+        // UIを再描画
+        this.setActiveVslEvent(this.activeEventId);
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
 
    /**
