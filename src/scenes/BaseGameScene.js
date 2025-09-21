@@ -470,69 +470,69 @@ applyProperties(gameObject, layout) {
             editor.makeEditable(gameObject, this);
         }
     }
-     /**
-     * コンポーネントをGameObjectにアタッチする (動的読み込み対応版)
-     */
-    addComponent(target, componentType, params = {}) {
-        
-        // ▼▼▼【ここからが修正箇所 2/2】▼▼▼
-        // --------------------------------------------------------------------
-        // --- 1. ComponentRegistryに、指定された名前のコンポーネントが存在するか確認 ---
-      
-      
+  addComponent(target, componentType, params = {}) {
         const ComponentClass = ComponentRegistry[componentType];
-
         if (ComponentClass) {
-            // --- 2. 存在すれば、そのクラスをインスタンス化する ---
-           
-           
             const componentInstance = new ComponentClass(this, target, params);
 
-            // --- 3. GameObjectにインスタンスを格納する (以降の処理は変更なし) ---
-            if (!target.components) {
-                target.components = {};
-            }
+            if (!target.components) target.components = {};
             target.components[componentType] = componentInstance;
+
+            // ▼▼▼【ここから修正】▼▼▼
+            // --- コンポーネントのライフサイクル管理 ---
+            // 1. updateメソッドがあれば、更新リストに追加
+            if (typeof componentInstance.update === 'function') {
+                if (!this.updatableComponents) { // updatableComponents を使う
+                    this.updatableComponents = new Set();
+                }
+                this.updatableComponents.add(componentInstance);
+            }
+            
+            // 2. startメソッドがあれば、この場で即時呼び出す
+            if (typeof componentInstance.start === 'function') {
+                componentInstance.start();
+            }
+            // ▲▲▲【ここまで修正】▲▲▲
 
             const currentData = target.getData('components') || [];
             if (!currentData.some(c => c.type === componentType)) {
                 currentData.push({ type: componentType, params: params });
                 target.setData('components', currentData);
             }
-            console.log(`[JumpScene] Component '${componentType}' added to '${target.name}'.`);
-
         } else {
-            // --- 4. 存在しないコンポーネントが指定された場合は、警告を出す ---
-            console.warn(`[JumpScene] Attempted to add an unknown component: '${componentType}'`);
+            console.warn(`[BaseGameScene] Attempted to add an unknown component: '${componentType}'`);
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-  /**
-     * ★★★ 以下のメソッドで、既存の update を完全に置き換えてください ★★★
+  // in src/scenes/BaseGameScene.js
+
+    /**
+     * ★★★ 既存の処理と汎用ループを統合した最終確定版 ★★★
+     * 既存のupdateメソッドを、この内容で完全に置き換えてください。
      */
     update(time, delta) {
-        
-     
 
-        // --- 1. PlayerControllerのための特別な更新 ---
+        // --- 1. PlayerControllerのための特別な更新 (既存のロジック) ---
         if (this.playerController) {
             this.playerController.updateWithJoystick(this.joystick);
         }
         
-        // --- 2. その他の全てのコンポーネントのための汎用的な更新ループ ---
-        for (const gameObject of this.children.list) {
-            if (gameObject.components) {
-                for (const componentName in gameObject.components) {
-                    // PlayerControllerはすでに更新したので、スキップする
-                    if (componentName === 'PlayerController') continue;
-                    
-                    const component = gameObject.components[componentName];
-                    if (component && typeof component.update === 'function') {
-                        component.update(time, delta);
-                    }
+        // --- 2. その他の全てのコンポーネントのための汎用的な更新ループ (新しいロジック) ---
+        //    (PlayerController以外のコンポーネントはここで更新される)
+        if (this.updatableComponents) {
+            this.updatableComponents.forEach(component => {
+                // オブジェクトが破棄されていたらリストから削除
+                if (!component.gameObject.scene || !component.gameObject.active) {
+                    this.updatableComponents.delete(component);
+                    return;
                 }
-            }
+                
+                // ★★★ PlayerControllerは既に更新済みなので、ここではスキップする ★★★
+                if (component.constructor.name === 'PlayerController') {
+                    return;
+                }
+
+                component.update(time, delta);
+            });
         }
     }
 
