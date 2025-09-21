@@ -2,13 +2,14 @@
  * [move_to_target]タグ
  * sourceオブジェクトをターゲットオブジェクトに向かって移動させる
  */
-export default move_to_target = async (interpreter, params) => {
+const move_to_target = async (interpreter, params) => {
     const scene = interpreter.scene;
     const source = interpreter.currentSource;
     const target = interpreter.findTarget(params.target, scene, source, interpreter.currentTarget);
     const speed = parseFloat(params.speed) || 1;
 
     if (!source || !target || !source.body) {
+        console.warn(`[move_to_target] 対象'${source.name}'に物理ボディがないため、移動できません。`);
         return; // 物理ボディがないと動かせない
     }
 
@@ -16,8 +17,11 @@ export default move_to_target = async (interpreter, params) => {
     const directionX = target.x - source.x;
     const directionY = target.y - source.y;
 
-    // ベクトルを正規化（長さを1にする）
-    const vec = new Phaser.Math.Vector2(directionX, directionY).normalize();
+    // ベクトルを正規化（長さを1にする）し、ゼロ除算を避ける
+    const vec = new Phaser.Math.Vector2(directionX, directionY);
+    if (vec.length() > 0) {
+        vec.normalize();
+    }
 
     // 速度を適用
     source.setVelocity(vec.x * speed, vec.y * speed);
@@ -33,3 +37,5 @@ move_to_target.define = {
         { key: "speed", type: "number", label: "速度", defaultValue: 2 }
     ]
 };
+
+export default move_to_target;

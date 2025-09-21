@@ -2,7 +2,7 @@
  * [distance_check]タグ
  * 2つのオブジェクト間の距離を測り、ピンを分岐させる
  */
-export default distance_check = async (interpreter, params) => {
+const distance_check = async (interpreter, params) => {
     const scene = interpreter.scene;
     const source = interpreter.currentSource;
     const target = interpreter.currentTarget; // 衝突相手など
@@ -14,8 +14,9 @@ export default distance_check = async (interpreter, params) => {
 
     if (!objA || !objB || isNaN(distance)) {
         console.error("[distance_check] パラメータが不正です。", params);
-        // 失敗した場合、どちらに進むべきか？ デフォルトの'output'に進むのが無難
-        return 'output';
+        // 失敗した場合、デフォルトの'output'に進むのは危険なので、何もしないのが安全
+        // もし分岐させたいなら return 'output_far' などとする
+        return;
     }
 
     // Phaserの機能を使って距離を計算
@@ -47,3 +48,5 @@ distance_check.define = {
         ]
     }
 };
+
+export default distance_check;
