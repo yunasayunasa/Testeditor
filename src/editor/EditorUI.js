@@ -1409,9 +1409,12 @@ addNodeToEventData(tagName, targetEventData) {
         });
 
         select.addEventListener('change', () => {
-            if (this.plugin) {
-                this.plugin.updateNodeParam(nodeData, paramKey, select.value);
-            }
+               const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        if (isSmEditor) {
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
+        } else {
+            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
+        }
         });
         
         row.append(labelEl, select);
@@ -1419,31 +1422,34 @@ addNodeToEventData(tagName, targetEventData) {
     }
    // in src/editor/EditorUI.js
 
-    /**
-     * ★★★ 新規ヘルパーメソッド (タスク1 適用版) ★★★
-     * ノードのX/Y座標を編集するUIを生成する (スライダー付き)
-     */
-  // in src/editor/EditorUI.js
+   
+/**
+ * ★★★ 既存の createNodePositionInput を、この内容に置き換える ★★★
+ * ノードのX/Y座標を編集するUIを生成する (スライダー付き)
+ */
+createNodePositionInput(container, nodeData, key) {
+    this.createNodeSliderInput(
+        container,
+        key.toUpperCase(),
+        Math.round(nodeData[key]),
+        0, 4000, 1,
+        (value) => {
+            if (!this.plugin) return;
 
-    createNodePositionInput(container, nodeData, key) {
-        this.createNodeSliderInput(
-            container,
-            key.toUpperCase(),
-            Math.round(nodeData[key]),
-            0,
-            2000,
-            1,
-            (value) => {
-                if (this.plugin) {
-                    // ▼▼▼【ここが修正の核心です】▼▼▼
-                    // updateNodePosition ではなく、updateNodeParam を呼び出す
-                    // 第4引数に true を渡して、これが位置の更新であることを伝える
-                    this.plugin.updateNodeParam(nodeData, key, value, true);
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                }
+            // ▼▼▼【ここが修正の核心】▼▼▼
+            const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+            if (isSmEditor) {
+                // ステートマシンエディタの場合、新しい専用メソッドを呼ぶ
+                this.plugin.updateStateMachineNodeParam(nodeData, key, value, true);
+            } else {
+                // イベントエディタの場合、既存のメソッドを呼ぶ
+                this.plugin.updateNodeParam(nodeData, key, value, true);
             }
-        );
-    }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        }
+    );
+}
+
  /**
      * ★★★ 新規ヘルパー ★★★
      * ノード内に、ドロップダウン選択式の入力欄を生成する
@@ -1466,7 +1472,12 @@ addNodeToEventData(tagName, targetEventData) {
         });
 
         select.addEventListener('change', () => {
-            this.plugin.updateNodeParam(nodeData, paramKey, select.value);
+             const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        if (isSmEditor) {
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
+        } else {
+            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
+        }
         });
         
         row.append(labelEl, select);
@@ -1586,40 +1597,35 @@ deselectNode() {
 }
   
     
-   /**
-     * ★★★ 新規ヘルパー (VSLノード用) ★★★
-     * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
-     * @param {HTMLElement} container - 追加先の親要素
-     * @param {object} nodeData - 対応するノードのデータ
-     * @param {string} paramKey - パラメータのキー (e.g., 'target')
-     * @param {string} label - 表示ラベル (e.g., 'ターゲット')
-     * @param {string} defaultValue - デフォルト値
-     */
-    createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
-        const row = document.createElement('div');
-        row.className = 'node-param-row';
-        
-        const labelEl = document.createElement('label');
-        labelEl.innerText = `${label}: `;
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = nodeData.params[paramKey] || defaultValue;
-        
-        // フォーカスが外れたら、データ更新を呼び出す
-        input.addEventListener('change', () => {
-         
-            // --------------------------------------------------------------------
-            // ★★★ thisではなく、this.pluginのメソッドを呼び出す ★★★
-              if (this.plugin) {
-            // ★★★ 渡す引数を、nodeData, paramKey, value に変更 ★★★
-            this.plugin.updateNodeParam(nodeData, paramKey, input.value);
+  /**
+ * ★★★ 既存の createNodeTextInput を、この内容に置き換える ★★★
+ * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
+ */
+createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    const labelEl = document.createElement('label');
+    labelEl.innerText = `${label}: `;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = nodeData.params[paramKey] ?? defaultValue ?? ''; // 安全なデフォルト値設定
+    
+    input.addEventListener('change', () => {
+        if (!this.plugin) return;
+
+        // ▼▼▼【ここが修正の核心】▼▼▼
+        const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        if (isSmEditor) {
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
+        } else {
+            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
         }
-        });
-        
-        row.append(labelEl, input);
-        container.appendChild(row);
-    }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    });
+    
+    row.append(labelEl, input);
+    container.appendChild(row);
+}
  
     /**
      * ★★★ 新規ヘルパー (VSLノード用) ★★★
@@ -1666,10 +1672,12 @@ deselectNode() {
             
             // ▼▼▼【ここがバグ修正の核心です】▼▼▼
             // --------------------------------------------------------------------
-            if (this.plugin) {
-                // 正しい引数 (nodeData, paramKey, value) を渡す
-                this.plugin.updateNodeParam(nodeData, paramKey, value);
-            }
+              const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        if (isSmEditor) {
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
+        } else {
+            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
+        }
             // --------------------------------------------------------------------
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         });
@@ -2256,5 +2264,47 @@ populateSmVslCanvas = () => {
     
     // --- 2. キャンバスの中身を描画 ---
     this.populateVslCanvas();
+}
+// in EditorPlugin.js
+
+/**
+ * ★★★ 新規メソッド ★★★
+ * ステートマシンデータ内の特定のノードパラメータを更新する
+ * @param {object} nodeData - 更新対象のノードのデータ
+ * @param {string} paramKey - 更新するパラメータのキー ('x', 'y', または 'params'内のキー)
+ * @param {*} value - 新しい値
+ * @param {boolean} [isPosition=false] - 位置の更新かどうか
+ */
+updateStateMachineNodeParam(nodeData, paramKey, value, isPosition = false) {
+    if (!this.selectedObject || !nodeData) return;
+
+    // 1. 最新のステートマシンデータを取得
+    const smData = this.selectedObject.getData('stateMachine');
+    if (!smData) return;
+
+    // 2. 編集中の状態とフックをUIから取得 (これが最も確実)
+    const activeStateName = this.editorUI.activeStateName;
+    const activeHookName = this.editorUI.activeHookName;
+
+    if (!activeStateName || !activeHookName) return;
+
+    // 3. 該当するVSLデータ内のノードを探す
+    const targetVsl = smData.states[activeStateName]?.[activeHookName];
+    const targetNode = targetVsl?.nodes.find(n => n.id === nodeData.id);
+
+    if (targetNode) {
+        // 4. パラメータを更新
+        if (isPosition) {
+            targetNode[paramKey] = value;
+        } else {
+            targetNode.params[paramKey] = value;
+        }
+
+        // 5. オブジェクトにデータを再設定して永続化
+        this.selectedObject.setData('stateMachine', smData);
+
+        // 6. UIを再描画
+        this.editorUI.populateVslCanvas();
+    }
 }
 }
