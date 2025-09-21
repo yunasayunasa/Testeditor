@@ -1322,80 +1322,7 @@ addNodeToEventData(tagName, targetEventData) {
         });
         nodeElement.appendChild(outputsContainer);
     }
-    /**
-     * ★★★ 新規ヘルパー (ステップ3：複数タイプ対応版) ★★★
-     * アセット選択用のドロップダウンを生成する
-     * @param {HTMLElement} container
-     * @param {object} nodeData
-     * @param {string} paramKey
-     * @param {string} label
-     * @param {object} paramDef - defineで定義されたパラメータ情報全体
-     */
-    createNodeAssetSelectInput(container, nodeData, paramKey, label, paramDef) {
-        const row = document.createElement('div');
-        row.className = 'node-param-row';
-        
-        const labelEl = document.createElement('label');
-        labelEl.innerText = `${label}: `;
-        
-        const select = document.createElement('select');
-        
-        const assetList = this.game.registry.get('asset_list') || [];
-        const targetAssetType = paramDef.assetType; // (例: 'prefab' or 'image')
-
-        const placeholderOption = document.createElement('option');
-        placeholderOption.value = '';
-        placeholderOption.innerText = 'アセットを選択...';
-        select.appendChild(placeholderOption);
-
-        assetList.forEach(asset => {
-            // ▼▼▼【ここが修正の核心です】▼▼▼
-            // --------------------------------------------------------------------
-
-            let isMatch = false;
-            // --- ケース1: ターゲットが'prefab'の場合、'GroupPrefab'も許可する ---
-            if (targetAssetType === 'prefab') {
-                isMatch = (asset.type === 'prefab' || asset.type === 'GroupPrefab');
-            }
-            // --- ケース2: ターゲットが'image'の場合、'spritesheet'も許可する ---
-            else if (targetAssetType === 'image') {
-                isMatch = (asset.type === 'image' || asset.type === 'spritesheet');
-            }
-            // --- ケース3: その他の場合 (audioなど) は、完全一致で判定 ---
-            else {
-                isMatch = (asset.type === targetAssetType);
-            }
-            
-            // --- フィルタリング条件: targetAssetTypeが未指定か、isMatchがtrueの場合 ---
-            if (!targetAssetType || isMatch) {
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-                const option = document.createElement('option');
-                option.value = asset.key;
-                option.innerText = `[${asset.type}] ${asset.key}`;
-                
-                if ((nodeData.params[paramKey] || paramDef.defaultValue) === asset.key) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            }
-        });
-
-        select.addEventListener('change', () => {
-               const isSmEditor = this.smEditorOverlay.style.display === 'flex';
-        if (isSmEditor) {
-            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
-        } else {
-            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
-        }
-        });
-        
-        row.append(labelEl, select);
-        container.appendChild(row);
-    }
-   // in src/editor/EditorUI.js
-
+   
    
 /**
  * ★★★ 既存の createNodePositionInput を、この内容に置き換える ★★★
@@ -1424,39 +1351,7 @@ createNodePositionInput(container, nodeData, key) {
     );
 }
 
- /**
-     * ★★★ 新規ヘルパー ★★★
-     * ノード内に、ドロップダウン選択式の入力欄を生成する
-     */
-    createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
-        const row = document.createElement('div');
-        row.className = 'node-param-row';
-        const labelEl = document.createElement('label');
-        labelEl.innerText = `${label}: `;
-        
-        const select = document.createElement('select');
-        options.forEach(optValue => {
-            const option = document.createElement('option');
-            option.value = optValue;
-            option.innerText = optValue;
-            if ((nodeData.params[paramKey] || defaultValue) == optValue) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
-
-        select.addEventListener('change', () => {
-             const isSmEditor = this.smEditorOverlay.style.display === 'flex';
-        if (isSmEditor) {
-            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
-        } else {
-            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
-        }
-        });
-        
-        row.append(labelEl, select);
-        container.appendChild(row);
-    }
+ 
     /**
      * ★★★ A案＋ピン接続 - 完成版 ★★★
      * VSLキャンバスでポインターが押されたときの処理
@@ -1571,94 +1466,164 @@ deselectNode() {
 }
   
     
-  /**
- * ★★★ 既存の createNodeTextInput を、この内容に置き換える ★★★
+ // in EditorUI.js
+
+/**
+ * ★★★ データ欠損防止策を施した最終版 ★★★
  * ノード内に、パラメータを編集するためのテキスト入力欄を1行生成する
  */
 createNodeTextInput(container, nodeData, paramKey, label, defaultValue) {
     const row = document.createElement('div');
     row.className = 'node-param-row';
+    
     const labelEl = document.createElement('label');
     labelEl.innerText = `${label}: `;
+    
     const input = document.createElement('input');
     input.type = 'text';
-    input.value = nodeData.params[paramKey] ?? defaultValue ?? ''; // 安全なデフォルト値設定
+    // ▼▼▼【ここが最重要容疑箇所】▼▼▼
+    // nodeData.params[paramKey] の値が存在すればそれを使い、なければdefaultValue、それもなければ空文字を設定。
+    input.value = nodeData.params?.[paramKey] ?? defaultValue ?? '';
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     
     input.addEventListener('change', () => {
         if (!this.plugin) return;
-
-        // ▼▼▼【ここが修正の核心】▼▼▼
         const isSmEditor = this.smEditorOverlay.style.display === 'flex';
         if (isSmEditor) {
             this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
         } else {
             this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     });
     
     row.append(labelEl, input);
     container.appendChild(row);
 }
- 
-    /**
-     * ★★★ 新規ヘルパー (VSLノード用) ★★★
-     * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
-     * @param {HTMLElement} container - 追加先の親要素
-     * @param {object} nodeData - 対応するノードのデータ
-     * @param {string} paramKey - パラメータのキー (e.g., 'time')
-     * @param {string} label - 表示ラベル (e.g., '時間(ms)')
-     * @param {number} defaultValue - デフォルト値
-     */
-    // in src/editor/EditorUI.js
 
-    /**
-     * ★★★ 新規ヘルパー (VSLノード用) - バグ修正版 ★★★
-     * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
-     * @param {HTMLElement} container - 追加先の親要素
-     * @param {object} nodeData - 対応するノードのデータ
-     * @param {string} paramKey - パラメータのキー (e.g., 'time')
-     * @param {string} label - 表示ラベル (e.g., '時間(ms)')
-     * @param {number} defaultValue - デフォルト値
-     */
-    createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
-        const row = document.createElement('div');
-        row.className = 'node-param-row';
-        
-        const labelEl = document.createElement('label');
-        labelEl.innerText = `${label}: `;
-        
-        const input = document.createElement('input');
-        input.type = 'number';
-        
-        // ▼▼▼【ここも、より安全なコードに修正します】▼▼▼
-        // --------------------------------------------------------------------
-        // params[paramKey] が存在すればそれを使い、なければdefaultValueを使う
-        const currentValue = (nodeData.params[paramKey] !== undefined) 
-            ? nodeData.params[paramKey] 
-            : defaultValue;
-        input.value = currentValue;
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
-        input.addEventListener('change', () => {
-            const value = parseFloat(input.value); 
-            
-            // ▼▼▼【ここがバグ修正の核心です】▼▼▼
-            // --------------------------------------------------------------------
-              const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+/**
+ * ★★★ データ欠損防止策を施した最終版 ★★★
+ * ノード内に、パラメータを編集するための「数値」入力欄を1行生成する
+ */
+createNodeNumberInput(container, nodeData, paramKey, label, defaultValue) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    
+    const labelEl = document.createElement('label');
+    labelEl.innerText = `${label}: `;
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    // ▼▼▼【ここが最重要容疑箇所】▼▼▼
+    input.value = nodeData.params?.[paramKey] ?? defaultValue ?? 0;
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    input.addEventListener('change', () => {
+        if (!this.plugin) return;
+        const value = parseFloat(input.value);
+        const isSmEditor = this.smEditorOverlay.style.display === 'flex';
         if (isSmEditor) {
-            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, input.value, false);
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, value, false);
         } else {
-            this.plugin.updateNodeParam(nodeData, paramKey, input.value, false);
+            this.plugin.updateNodeParam(nodeData, paramKey, value, false);
         }
-            // --------------------------------------------------------------------
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        });
+    });
+    
+    row.append(labelEl, input);
+    container.appendChild(row);
+}
+
+/**
+ * ★★★ データ欠損防止策を施した最終版 ★★★
+ * ノード内に、ドロップダウン選択式の入力欄を生成する
+ */
+createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, options) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    const labelEl = document.createElement('label');
+    labelEl.innerText = `${label}: `;
+    
+    const select = document.createElement('select');
+    // ▼▼▼【ここが最重要容疑箇所】▼▼▼
+    const currentValue = nodeData.params?.[paramKey] ?? defaultValue;
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    options.forEach(optValue => {
+        const option = document.createElement('option');
+        option.value = optValue;
+        option.innerText = optValue;
+        if (currentValue == optValue) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+
+    select.addEventListener('change', () => {
+        if (!this.plugin) return;
+        const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        if (isSmEditor) {
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, select.value, false);
+        } else {
+            this.plugin.updateNodeParam(nodeData, paramKey, select.value, false);
+        }
+    });
+    
+    row.append(labelEl, select);
+    container.appendChild(row);
+}
+
+
+/**
+ * ★★★ データ欠損防止策を施した最終版 ★★★
+ * アセット選択用のドロップダウンを生成する
+ */
+createNodeAssetSelectInput(container, nodeData, paramKey, label, paramDef) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    const labelEl = document.createElement('label');
+    labelEl.innerText = `${label}: `;
+    const select = document.createElement('select');
+    
+    const assetList = this.game.registry.get('asset_list') || [];
+    const targetAssetType = paramDef.assetType;
+
+    const placeholderOption = document.createElement('option');
+    placeholderOption.value = '';
+    placeholderOption.innerText = 'アセットを選択...';
+    select.appendChild(placeholderOption);
+
+    // ▼▼▼【ここが最重要容疑箇所】▼▼▼
+    const currentValue = nodeData.params?.[paramKey] ?? paramDef.defaultValue;
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    assetList.forEach(asset => {
+        let isMatch = false;
+        if (targetAssetType === 'prefab') isMatch = (asset.type === 'prefab' || asset.type === 'GroupPrefab');
+        else if (targetAssetType === 'image') isMatch = (asset.type === 'image' || asset.type === 'spritesheet');
+        else isMatch = (asset.type === targetAssetType);
         
-        row.append(labelEl, input);
-        container.appendChild(row);
-    }
+        if (!targetAssetType || isMatch) {
+            const option = document.createElement('option');
+            option.value = asset.key;
+            option.innerText = `[${asset.type}] ${asset.key}`;
+            if (currentValue === asset.key) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+    });
+
+    select.addEventListener('change', () => {
+        if (!this.plugin) return;
+        const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+        if (isSmEditor) {
+            this.plugin.updateStateMachineNodeParam(nodeData, paramKey, select.value, false);
+        } else {
+            this.plugin.updateNodeParam(nodeData, paramKey, select.value, false);
+        }
+    });
+    
+    row.append(labelEl, select);
+    container.appendChild(row);
+}
      /**
      * ★★★ 新規メソッド ★★★
      * VSLエディタの操作モードを切り替える
