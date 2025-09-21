@@ -34,7 +34,24 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const currentURL = window.location.href;
         if (!currentURL.includes('debug=true')) return;
         this.isEnabled = true;
-   
+
+        // DOM要素を取得
+        this.editorPanel = document.getElementById('editor-panel');
+        this.editorTitle = document.getElementById('editor-title');
+        this.editorPropsContainer = document.getElementById('editor-props');
+        
+        this.animEditorOverlay = document.getElementById('anim-editor-overlay');
+        this.animEditorCloseBtn = document.getElementById('animation-editor-close-btn');
+        if (this.animEditorCloseBtn) {
+            this.animEditorCloseBtn.addEventListener('click', () => this.closeAnimationEditor());
+        }
+        
+        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        this.eventEditorCloseBtn = document.getElementById('event-editor-close-btn');
+        if (this.eventEditorCloseBtn) {
+            this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
+        }
+
         console.warn("[EditorPlugin] Debug mode activated.");
     }
    
@@ -65,9 +82,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
     setUI(editorUI) {
         this.editorUI = editorUI;
-        // EditorUIにDOM参照の取得を指示
-        this.editorUI.getDomElements();
+        // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
+        // ★★★ イベントリスナーの登録は、ここで行わない ★★★
     }
+
  /**
      * ★★★ 修正版 ★★★
      * UIから渡された最新のレイヤー状態を保存し、シーンに即時反映させる
@@ -2255,7 +2273,11 @@ const hasStateMachine = attachedComponents.some(c => c.type === 'StateMachineCom
         this.animEditorOverlay.style.display = 'flex';
     }
 
-  
+    closeAnimationEditor() {
+        if (!this.animEditorOverlay) return;
+        this.animEditorOverlay.style.display = 'none';
+        this.pluginManager.game.input.enabled = true;
+    }
 
     createAnimationCreationForm() {
         const form = document.createElement('div');
@@ -2463,7 +2485,11 @@ const hasStateMachine = attachedComponents.some(c => c.type === 'StateMachineCom
         // ★ 変換後の、新しいデータ構造をオブジェクトに保存する
         targetObject.setData('events', events);
     }
-   
+    closeEventEditor() {
+        if (!this.eventEditorOverlay) return;
+        this.eventEditorOverlay.style.display = 'none';
+        this.pluginManager.game.input.enabled = true;
+    }
     // src/plugins/EditorPlugin.js
 
     /*/**
