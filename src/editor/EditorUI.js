@@ -2203,11 +2203,22 @@ displayActiveVslEditor() {
  * ステートマシンエディタ内のイベントリスナーを設定・更新する
  */
 setupStateMachineEventListeners() {
-    // --- 古いリスナーをすべて削除 ---
-    this.smEditorOverlay.querySelector('#sm-add-state-btn')?.removeEventListener('click', this._onAddNewState);
-    this.smEditorOverlay.querySelector('#sm-states-list')?.removeEventListener('click', this._onStateClicked);
-    this.smEditorOverlay.querySelector('#sm-hooks-tabs')?.removeEventListener('click', this._onHookTabClicked); // ★追加
+    // --- 既存のリスナーを確実に削除 ---
+    const addStateBtn = this.smEditorOverlay.querySelector('#sm-add-state-btn');
+    if (addStateBtn && this._onAddNewState) addStateBtn.removeEventListener('click', this._onAddNewState);
+    
+    const statesList = this.smEditorOverlay.querySelector('#sm-states-list');
+    if (statesList && this._onStateClicked) statesList.removeEventListener('click', this._onStateClicked);
 
+    const hooksTabs = this.smEditorOverlay.querySelector('#sm-hooks-tabs');
+    if (hooksTabs && this._onHookTabClicked) hooksTabs.removeEventListener('click', this._onHookTabClicked);
+
+    // ▼▼▼【ここからデバッグログ】▼▼▼
+    console.groupCollapsed("[DEBUG] setupStateMachineEventListeners 実行");
+    console.log("Add State Button:", addStateBtn);
+    console.log("States List Container:", statesList);
+    console.log("Hooks Tabs Container:", hooksTabs);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     // --- 新しいリスナー関数を定義 ---
     this._onAddNewState = () => {
         const newStateName = prompt('新しい状態の名前を入力してください:', `新しい状態${Object.keys(this.stateMachineData.states).length}`);
@@ -2240,9 +2251,16 @@ setupStateMachineEventListeners() {
     };
 
     // --- リスナーを登録 ---
-    this.smEditorOverlay.querySelector('#sm-add-state-btn')?.addEventListener('click', this._onAddNewState);
-    this.smEditorOverlay.querySelector('#sm-states-list')?.addEventListener('click', this._onStateClicked);
-    this.smEditorOverlay.querySelector('#sm-hooks-tabs')?.addEventListener('click', this._onHookTabClicked); // ★追加
+    if (addStateBtn) addStateBtn.addEventListener('click', this._onAddNewState);
+    else console.error("リスナー登録失敗: #sm-add-state-btn が見つかりません。");
+
+    if (statesList) statesList.addEventListener('click', this._onStateClicked);
+    else console.error("リスナー登録失敗: #sm-states-list が見つかりません。");
+    
+    if (hooksTabs) hooksTabs.addEventListener('click', this._onHookTabClicked);
+    else console.error("リスナー登録失敗: #sm-hooks-tabs が見つかりません。");
+
+    console.groupEnd();
 }
 
 
