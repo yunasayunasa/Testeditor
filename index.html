@@ -139,42 +139,63 @@
         </div>
 
 
-      <!-- State Machine Editor Modal -->
-        <div id="sm-editor-overlay" class="modal-overlay">
-            <div class="modal-window wide">
-                <div class="modal-header">
-                    <h3 id="sm-editor-title">ステートマシン編集</h3>
-                    <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
-                </div>
-                <div class="modal-content" id="sm-editor-body">
-                    <div id="sm-states-panel">
-                        <div class="panel-header">
-                            <h4>状態リスト</h4>
-                            <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
-                        </div>
-                        <div id="sm-states-list"></div>
-                    </div>
-                   <div class="vsl-editor-container">
-                        <div id="sm-hooks-tabs">
-                            <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
-                            <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
-                            <button class="sm-hook-tab" data-hook="onExit">onExit</button>
-                        </div>
-                        <div class="vsl-toolbar">
-                            <h4>ノードリスト</h4>
-                            <div class="vsl-node-list"></div>
-                        </div>
-                        <div class="vsl-canvas-wrapper">
-                            <div class="vsl-canvas">
-                               <svg class="vsl-svg-layer" width="2000" height="2000"></svg>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- ▲▲▲ ここまでが VSL エディタ本体 ▲▲▲ -->
-                </div>
-            </div>
-        </div>
+    <!-- index.html を修正 -->
 
+<!-- State Machine Editor Modal -->
+<div id="sm-editor-overlay" class="modal-overlay">
+    <div class="modal-window wide">
+        <div class="modal-header">
+            <h3 id="sm-editor-title">ステートマシン編集</h3>
+            <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-content" id="sm-editor-body">
+
+            <!-- ▼▼▼ 左ペイン：状態リスト（ここは変更なし） ▼▼▼ -->
+            <div id="sm-states-panel">
+                <div class="panel-header">
+                    <h4>状態リスト</h4>
+                    <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
+                </div>
+                <div id="sm-states-list"></div>
+            </div>
+            <!-- ▲▲▲ 左ペインここまで ▲▲▲ -->
+
+
+            <!-- ▼▼▼【ここからが最重要修正箇所です】▼▼▼ -->
+            <!-- 右ペイン全体を囲むラッパーを追加 -->
+            <div id="sm-vsl-panel">
+
+                <!-- 1. イベントフックのタブ -->
+                <div id="sm-hooks-tabs">
+                    <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
+                    <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
+                    <button class="sm-hook-tab" data-hook="onExit">onExit</button>
+                </div>
+
+                <!-- 2. VSLエディタ本体のコンテナ -->
+                <div class="vsl-editor-container">
+                
+                    <!-- 2a. ツールバー（ノードリスト） -->
+                    <div class="vsl-toolbar">
+                        <h4>ノードリスト</h4>
+                        <div class="vsl-node-list"></div>
+                    </div>
+                    
+                    <!-- 2b. キャンバスラッパー -->
+                    <div class="vsl-canvas-wrapper">
+                        <div class="vsl-canvas">
+                           <svg class="vsl-svg-layer" width="4000" height="4000"></svg>
+                        </div>
+                    </div>
+
+                </div> <!-- .vsl-editor-container の閉じタグ -->
+
+            </div> <!-- #sm-vsl-panel の閉じタグ -->
+            <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
+
+        </div> <!-- #sm-editor-body の閉じタグ -->
+    </div> <!-- .modal-window の閉じタグ -->
+</div> <!-- #sm-editor-overlay の閉じタグ -->
         <!-- Help Modal -->
         <div id="help-modal-overlay" class="modal-overlay">
             <div class="modal-window">
