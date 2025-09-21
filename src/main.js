@@ -130,5 +130,9 @@ window.onload = async () => {
     game.registry.set('uiRegistry', processedUiRegistry);
     game.registry.set('sceneUiVisibility', sceneUiVisibility);
     game.registry.set('eventTagHandlers', eventTagHandlers);
+    game.events.on('ready', () => {
+    const editorPlugin = game.plugins.get('EditorPlugin');
+    const editorUI = new EditorUI(game, editorPlugin);
+    editorPlugin.setUI(editorUI);
     console.log("[main.js] Event tag handlers have been registered globally.");
 };
