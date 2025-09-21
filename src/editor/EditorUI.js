@@ -1092,23 +1092,7 @@ this.populateVslCanvas = this.populateVslCanvas.bind(this);
         this.buildVslTabs();
     }
 
-    /**
-     * ★★★ 新規メソッド ★★★
-     * イベントエディタを閉じる
-     */
-    closeEventEditor() {
-        if (!this.eventEditorOverlay) return;
-        this.removeVslCanvasListeners(this.eventEditorOverlay);
-
-    this.eventEditorOverlay.style.display = 'none';
-       this.eventEditorOverlay.classList.remove('is-active');
-        this.editingObject = null;
-        this.game.input.enabled = true;
-        console.log("[EditorUI] Phaser input re-enabled.");
-        if(this.plugin) {
-            this.plugin.pluginManager.game.input.enabled = true;
-        }
-    }
+   
     
    // in src/editor/EditorUI.js
 
@@ -1958,10 +1942,15 @@ drawConnections(svgLayer, nodes, connections, canvas) {
 
     // in src/editor/EditorUI.js
 
-    populateVslCanvas = () => {
-    const activeOverlay = document.querySelector('.modal-overlay.is-active');
-    if (!activeOverlay) return;
+   populateVslCanvas = () => {
+    // ▼▼▼【ここからガード節を追加】▼▼▼
+    const activeOverlay = document.querySelector('.modal-overlay.is-active, .modal-overlay[style*="display: flex"]');
 
+    // モーダルがアクティブでない、または編集中オブジェクトがない場合は、絶対に実行しない
+    if (!activeOverlay || !this.editingObject) {
+        console.warn("populateVslCanvas call prevented: No active modal or editing object.");
+        return;
+    }
     const canvas = activeOverlay.querySelector('.vsl-canvas');
     const svgLayer = activeOverlay.querySelector('.vsl-svg-layer');
 
@@ -2134,21 +2123,43 @@ drawConnections(svgLayer, nodes, connections, canvas) {
 
        this.setupVslCanvasListeners(overlay);
 }
+// in src/editor/Editor-ui.js
 
-    /**
-     * ★★★ 新規メソッド ★★★
-     * ステートマシン・エディタを閉じる
-     */
-    closeStateMachineEditor() {
-        const overlay = document.getElementById('sm-editor-overlay');
-        if (!overlay) return;
-this.removeVslCanvasListeners(overlay);
+// closeEventEditor を修正
+closeEventEditor = () => {
+    if (!this.eventEditorOverlay) return;
+    console.log("%cClosing Event Editor...", "color: red;");
 
+    this.removeVslCanvasListeners(this.eventEditorOverlay);
+    this.eventEditorOverlay.style.display = 'none';
+    
+    // ★★★ 以下の状態リセットを必ず行う ★★★
+    this.editingObject = null;
+    this.activeEventId = null;
+    this.activeEventData = null;
+
+    this.game.input.enabled = true;
+    document.body.classList.remove('modal-open');
+}
+
+// closeStateMachineEditor を修正
+closeStateMachineEditor = () => {
+    const overlay = document.getElementById('sm-editor-overlay');
+    if (!overlay) return;
+    console.log("%cClosing State Machine Editor...", "color: red;");
+
+    this.removeVslCanvasListeners(overlay);
     overlay.style.display = 'none';
-       overlay.classList.remove('is-active');
-        this.editingObject = null;
-        this.game.input.enabled = true; // Phaserの入力を元に戻す
-    }
+
+    // ★★★ 以下の状態リセットを必ず行う ★★★
+    this.editingObject = null;
+    this.activeStateName = null;
+    this.activeHookName = 'onEnter'; // デフォルトに戻す
+
+    this.game.input.enabled = true;
+    document.body.classList.remove('modal-open');
+}
+   
     // in src/editor/EditorUI.js (openStateMachineEditor の後など)
 
     /**
