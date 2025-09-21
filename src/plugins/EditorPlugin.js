@@ -1240,7 +1240,24 @@ createComponentSection() {
     this.editorPropsContainer.appendChild(title);
     
     const attachedComponents = this.selectedObject.getData('components') || [];
+  // 1. StateMachineComponentを持っているかチェック
+    const hasStateMachine = attachedComponents.some(c => c.type === 'StateMachineComponent');
 
+    // 2. もし持っていたら、専用のボタンを表示する
+    if (hasStateMachine) {
+        const sm_button = document.createElement('button');
+        sm_button.innerText = 'ステートマシン・エディタを開く';
+        sm_button.style.backgroundColor = '#4a8a4a'; // 分かりやすいように緑色に
+        sm_button.style.marginBottom = '10px'; // 下に少し余白
+        
+        sm_button.onclick = () => {
+            // ★ EditorUIに、モーダルを開くよう「依頼」する
+            if (this.editorUI) {
+                this.editorUI.openStateMachineEditor(this.selectedObject);
+            }
+        };
+        this.editorPropsContainer.appendChild(sm_button);
+    }
     // --- 各コンポーネントのUIを生成 ---
     attachedComponents.forEach((componentDef, index) => {
         const containerDiv = document.createElement('div');
