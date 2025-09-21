@@ -1762,8 +1762,10 @@ createConnection(fromNodeId, fromPinName, toNodeId, toPinName, targetVslData) {
  */
 // in EditorUI.js
 
+// in EditorUI.js
+
 /**
- * ★★★ HTML構造の差異を吸収する最終FIX版 ★★★
+ * ★★★ getBoundingClientRectを使った座標計算・最終確定版 ★★★
  * connectionsデータに基づいて、SVGで滑らかな曲線を描画する。
  */
 drawConnections(svgLayer, nodes, connections) {
@@ -1772,6 +1774,12 @@ drawConnections(svgLayer, nodes, connections) {
         ? this.smEditorOverlay.querySelector('.sm-vsl-canvas')
         : this.vslCanvas;
     if (!canvasEl) return;
+
+    // ▼▼▼【ここからが修正の核心】▼▼▼
+    // 1. SVGレイヤーとキャンバスの絶対位置を取得
+    //    これがすべての座標計算の基準点となる
+    const svgRect = svgLayer.getBoundingClientRect();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     svgLayer.innerHTML = '';
     if (!connections || connections.length === 0) return;
@@ -1786,43 +1794,34 @@ drawConnections(svgLayer, nodes, connections) {
 
             if (!fromPinEl || !toPinEl) return;
 
-            // ▼▼▼【ここからがエラー回避の修正】▼▼▼
-            // 1. ノードの位置決め用ラッパー要素を取得
-            //    イベントエディタとステートマシンエディタでクラス名が違う可能性を考慮
-            const fromNodeWrapper = fromNodeEl.closest('.vsl-node-wrapper') || fromNodeEl.closest('.sm-vsl-node-wrapper');
-            const toNodeWrapper = toNodeEl.closest('.vsl-node-wrapper') || toNodeEl.closest('.sm-vsl-node-wrapper');
+            // ▼▼▼【ここからが座標計算の修正】▼▼▼
+            // 2. 各ピンのビューポート基準の絶対位置を取得
+            const fromPinRect = fromPinEl.getBoundingClientRect();
+            const toPinRect = toPinEl.getBoundingClientRect();
+
+            // 3. ピンの中心座標を計算
+            const fromPinCenterX = fromPinRect.left + fromPinRect.width / 2;
+            const fromPinCenterY = fromPinRect.top + fromPinRect.height / 2;
+            const toPinCenterX = toPinRect.left + toPinRect.width / 2;
+            const toPinCenterY = toPinRect.top + toPinRect.height / 2;
             
-            // 2. もしラッパーが見つからなければ、エラーを回避して次の接続へ
-            if (!fromNodeWrapper || !toNodeWrapper) {
-                console.warn(`[drawConnections] Could not find wrapper for node ${conn.fromNode} or ${conn.toNode}. Skipping connection.`);
-                return; // forEachの次のイテレーションへ
-            }
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            // 4. ビューポート座標を、SVGレイヤー内のローカル座標に変換
+            //    (ピンの座標 - SVGの座標)
+            const startX = fromPinCenterX - svgRect.left;
+            const startY = fromPinCenterY - svgRect.top;
+            const endX = toPinCenterX - svgRect.left;
+            const endY = toPinCenterY - svgRect.top;
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            const fromNodeX = fromNodeWrapper.offsetLeft;
-            const fromNodeY = fromNodeWrapper.offsetTop;
-            const toNodeX = toNodeWrapper.offsetLeft;
-            const toNodeY = toNodeWrapper.offsetTop;
-
-            const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
-            const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
-            const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
-            const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
-            
-            const startX = fromNodeX + fromPinX;
-            const startY = fromNodeY + fromPinY;
-            const endX = toNodeX + toPinX;
-            const endY = toNodeY + toPinY;
-
+            // ベジェ曲線の計算 (ここは変更なし)
             const dx = Math.abs(startX - endX);
             const handleOffset = Math.max(50, dx / 2);
-
             const controlX1 = startX + handleOffset;
             const controlY1 = startY;
             const controlX2 = endX - handleOffset;
             const controlY2 = endY;
             
-            const path = document.createElementNS('http://www.w3.0/2000/svg', 'path');
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             const pathData = `M ${startX},${startY} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${endX},${endY}`;
             path.setAttribute('d', pathData);
             path.setAttribute('fill', 'none');
