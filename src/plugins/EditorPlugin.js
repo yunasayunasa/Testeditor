@@ -2783,8 +2783,9 @@ createComponentSection() {
 
 // in EditorPlugin.js
 
+
 /**
- * ★★★ 既存の updateStateMachineNodeParam を、この内容に置き換える (バグ修正版) ★★★
+ * ★★★ ノードのデータ初期化問題を解決する最終版 ★★★
  * ステートマシンデータ内の特定のノードパラメータを更新する
  * @param {object} nodeData - UI側が認識している、更新対象のノードのデータ (IDの識別に使う)
  * @param {string} paramKey - 更新するパラメータのキー ('x', 'y', または 'params'内のキー)
@@ -2792,49 +2793,62 @@ createComponentSection() {
  * @param {boolean} [isPosition=false] - 位置の更新かどうか
  */
 updateStateMachineNodeParam(nodeData, paramKey, value, isPosition = false) {
-    if (!this.selectedObject || !nodeData?.id) return;
+    if (!this.selectedObject || !nodeData?.id) {
+        console.warn("updateStateMachineNodeParam: ターゲットオブジェクトまたはnodeIdがありません。");
+        return;
+    }
 
-    // 1. 最新のステートマシンデータを取得
+    // 1. Phaserオブジェクトから最新のステートマシンデータを取得
     const smData = this.selectedObject.getData('stateMachine');
-    if (!smData) return;
+    if (!smData) {
+        console.error("updateStateMachineNodeParam: stateMachineデータが見つかりません。");
+        return;
+    }
 
     // 2. 編集中の状態とフックをUIから取得
     const activeStateName = this.editorUI.activeStateName;
     const activeHookName = this.editorUI.activeHookName;
-    if (!activeStateName || !activeHookName) return;
+    if (!activeStateName || !activeHookName) {
+        console.warn("updateStateMachineNodeParam: アクティブなState/Hookが不明です。");
+        return;
+    }
 
-    // 3. 該当するVSLデータ内のノードを探す
+    // 3. 該当するVSLデータ内のノードの「インデックス」を探す
     const targetVsl = smData.states[activeStateName]?.[activeHookName];
-    // ★重要: findではなくfindIndexを使うことで、後で配列内のオブジェクトを直接置き換えられる
-    const nodeIndex = targetVsl?.nodes.findIndex(n => n.id === nodeData.id);
+    if (!targetVsl || !targetVsl.nodes) {
+        console.error("updateStateMachineNodeParam: VSLデータまたはnodes配列が見つかりません。");
+        return;
+    }
+    const nodeIndex = targetVsl.nodes.findIndex(n => n.id === nodeData.id);
 
-    // 見つかった場合のみ処理 (nodeIndexが -1 でない)
-    if (targetVsl && nodeIndex > -1) {
+    // 4. ノードが見つかった場合のみ処理 (nodeIndexが -1 でない)
+    if (nodeIndex > -1) {
         
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        // 4. 配列から、更新対象のノードオブジェクトへの参照を直接取得
+        // 5. 配列から、更新対象のノードオブジェクトへの「参照」を直接取得
         const nodeToUpdate = targetVsl.nodes[nodeIndex];
 
-        // 5. 取得したオブジェクトのプロパティを直接変更する
-        //    これにより、smDataオブジェクト全体が正しく更新される
+        // 6. 取得したオブジェクトのプロパティを直接変更する
         if (isPosition) {
+            // スライダーや数値入力による位置の更新
             nodeToUpdate[paramKey] = value;
         } else {
-            // paramsオブジェクトが存在しない場合も考慮して初期化
+            // params内の値の更新
             if (!nodeToUpdate.params) {
                 nodeToUpdate.params = {};
             }
             nodeToUpdate.params[paramKey] = value;
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // 6. オブジェクトにデータを再設定して永続化
-        //    この時点で、smData は nodeToUpdate への変更が反映された最新の状態になっている
+        // 7. オブジェクトにデータを再設定して永続化する
+        //    この時点で、`smData` は `nodeToUpdate` への変更が反映された最新の状態になっている
         this.selectedObject.setData('stateMachine', smData);
 
-        // 7. UIを再描画（ドラッグ中は負荷が高いので、位置更新の場合は省略しても良い）
-        //    今回はスライダーからの呼び出しも兼ねているため、再描画は残しておく
+        // 8. UIを再描画して、変更を視覚的に反映させる
+        //    (特に線の再描画に必要)
         this.editorUI.populateVslCanvas();
+
+    } else {
+        console.error(`updateStateMachineNodeParam: ID '${nodeData.id}' のノードが見つかりませんでした。`);
     }
 }
 }
