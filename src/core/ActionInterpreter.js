@@ -100,6 +100,12 @@ export default class ActionInterpreter {
                     console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
 
                 } else {
+                    const result = await handler(this, currentNodeData.params, finalTarget, context);
+
+        // handlerが文字列を返した場合、それが次のピン名になる
+        if (typeof result === 'string') {
+            nextPinName = result;
+        }
                     // ▼▼▼【ここが修正箇所です】▼▼▼
                     // --------------------------------------------------------------------
                     // 1. 汎用的なターゲットを、以前のように解決する

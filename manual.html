@@ -1043,3 +1043,70 @@ Actions: [set_flip_x value=false]
 </code></pre>
 
 <hr>
+<hr>
+
+<h2>[distance_check]</h2>
+<p>
+    2つのオブジェクト間の距離をリアルタイムで測定し、指定した距離よりも「近い」か「遠い」かに応じて、VSLの処理フローを分岐させます。
+    敵AIがプレイヤーを発見したり、見失ったりするロジックの根幹をなす、ステートマシンで最も重要なタグの一つです。
+</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>target_a</strong> (任意): 距離測定の起点となるオブジェクトの名前。デフォルトは<code>source</code>（このVSLを実行しているオブジェクト自身）。</li>
+    <li><strong>target_b</strong> (任意): 距離測定の目標となるオブジェクトの名前。デフォルトは<code>player</code>。</li>
+    <li><strong>distance</strong> (必須): 比較の基準となる距離をピクセル単位で指定します。</li>
+</ul>
+<h4>出力ピン:</h4>
+<ul>
+    <li><strong>output_near</strong>: 2オブジェクト間の距離が、<code>distance</code>パラメータの値「以下」の場合に、こちらに接続されたノードが実行されます。</li>
+    <li><strong>output_far</strong>: 距離が<code>distance</code>パラメータの値より「大きい」場合に、こちらに接続されたノードが実行されます。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; プレイヤーとの距離が300px以下になったら、状態を「追跡」に切り替える
+[distance_check target_b="player" distance="300"]
+; output_nearピンから次のノードへ接続
+; output_farピンからはどこにも接続しない（何もしない）
+</code></pre>
+
+<hr>
+
+<h2>[move_to_target]</h2>
+<p>
+    このVSLを実行しているオブジェクト（source）を、指定したターゲットオブジェクトに向かって、一定の速度で移動させます。
+    このタグを機能させるには、対象オブジェクトに物理ボディが付与されている必要があります。主に<code>onUpdate</code>フック内で継続的に実行することで、追跡行動などを実現します。
+</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>target</strong> (任意): 移動の目標となるオブジェクトの名前。デフォルトは<code>player</code>。</li>
+    <li><strong>speed</strong> (任意): 移動速度。数値を大きくするほど速く移動します。デフォルトは<code>2</code>。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; プレイヤーに向かって、速度3.5で移動し続ける
+[move_to_target target="player" speed="3.5"]
+</code></pre>
+
+<hr>
+
+<h2>[timer_check]</h2>
+<p>
+    指定した時間が経過したかどうかを判定し、処理フローを分岐させます。
+    このノードが初めて実行された瞬間に、内部タイマーを開始します。以降、指定時間が経過するまでは「実行中」ピンを、時間が経過した瞬間に「完了」ピンを実行し、タイマーをリセットします。
+    攻撃のクールダウン、一定時間の待機行動などに使用します。
+</p>
+<h4>パラメータ:</h4>
+<ul>
+    <li><strong>duration</strong> (必須): 待機する時間をミリ秒単位で指定します（1000 = 1秒）。</li>
+    <li><strong>id</strong> (任意): 1つのオブジェクトで複数のタイマーを同時に管理したい場合に使用する、一意の識別子。デフォルトは<code>default</code>。</li>
+</ul>
+<h4>出力ピン:</h4>
+<ul>
+    <li><strong>output_running</strong>: タイマーがまだ実行中の場合に、こちらに接続されたノードが実行されます。</li>
+    <li><strong>output_finished</strong>: 指定時間が経過した瞬間に、こちらに接続されたノードが実行されます。</li>
+</ul>
+<p><strong>使用例:</strong></p>
+<pre><code>; 3秒間待機してから、状態を「待機」に戻す
+[timer_check duration="3000"]
+; output_finishedピンから[state_transition to="待機"]ノードへ接続
+</code></pre>
+
+<hr>

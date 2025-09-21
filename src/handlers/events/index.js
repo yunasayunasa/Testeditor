@@ -38,7 +38,9 @@ import _else from './else.js';
 import endif from './endif.js';
 import fire_event from './fire_event.js';
 import state_transition from './state_transition.js';
-
+import { distance_check } from './distance_check.js';
+import { move_to_target } from './move_to_target.js';
+import { timer_check } from './timer_check.js';
 
 
 
@@ -81,5 +83,11 @@ export const eventTagHandlers = {
     'if': _if,
     'else': _else,
     'endif': endif,
-    'state_transition': state_transition
+    'state_transition': state_transition,
+'distance_check': distance_check,
+    'move_to_target': move_to_target,
+    'timer_check': timer_check
+
+
+
 };
