@@ -33,112 +33,79 @@ export default class ActionInterpreter {
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
  // in src/core/ActionInterpreter.js
+// in src/core/ActionInterpreter.js
 
-    async run(source, eventData, collidedTarget = null) {
-        if (!source || !source.scene || !source.scene.scene.isActive()) return;
-        if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
+async run(source, eventData, collidedTarget = null) {
+    if (!source || !source.scene || !source.scene.scene.isActive()) return;
+    if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
 
-        this.scene = source.scene;
-        this.currentSource = source;
-        this.currentTarget = collidedTarget;
-        
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        const stateManager = this.scene.registry.get('stateManager');
-        if (!stateManager) {
-            console.error("[ActionInterpreter] StateManager not found in scene registry!");
-            return;
-        }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        const { nodes, connections } = eventData;
-        
-        const allTargetNodeIds = new Set((connections || []).map(c => c.toNode));
-        let currentNodeData = nodes.find(n => !allTargetNodeIds.has(n.id));
-        
-        if (!currentNodeData) {
-            console.warn("[ActionInterpreter] No starting node found.");
-            return;
-        }
-
-        while (currentNodeData) {
-            console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
-            
-            const handler = this.tagHandlers[currentNodeData.type];
-            let nextPinName = 'output';
-
-           if (handler) {
-                if (currentNodeData.type === 'if') {
-                    // ▼▼▼【ここが修正の核心です】▼▼▼
-                    // --------------------------------------------------------------------
-                    let expression = currentNodeData.params.exp;
-                    let result = false;
-                    
-                    try {
-                        // ステップ1: HTMLエンティティのデコード
-                        const tempElem = document.createElement('textarea');
-                        tempElem.innerHTML = expression;
-                        let decodedExpression = tempElem.value;
-
-                        // ステップ2: 式が " " または ' ' で囲まれていたら、それを取り除く
-                        if ((decodedExpression.startsWith('"') && decodedExpression.endsWith('"')) ||
-                            (decodedExpression.startsWith("'") && decodedExpression.endsWith("'"))) {
-                            decodedExpression = decodedExpression.substring(1, decodedExpression.length - 1);
-                        }
-
-                        // ステップ3: クリーニングした式を、StateManagerのシンプルなevalに渡す
-                        result = stateManager.eval(decodedExpression);
-
-                    } catch (e) {
-                        // このtry-catchは、主にデコード処理中のエラーを捕捉するためのもの
-                        console.error(`[ActionInterpreter] Failed to clean/prepare expression: "${expression}"`, e);
-                        result = false;
-                    }
-                    // --------------------------------------------------------------------
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                    
-                    nextPinName = result ? 'output_true' : 'output_false';
-                    console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
-
-                } else {
-                    const result = await handler(this, currentNodeData.params, finalTarget, context);
-
-        // handlerが文字列を返した場合、それが次のピン名になる
-        if (typeof result === 'string') {
-            nextPinName = result;
-        }
-                    // ▼▼▼【ここが修正箇所です】▼▼▼
-                    // --------------------------------------------------------------------
-                    // 1. 汎用的なターゲットを、以前のように解決する
-                    const finalTarget = this.findTarget(currentNodeData.params.target, this.scene, this.currentSource, this.currentTarget);
-
-                    // 2. [destroy]タグのために、コンテキスト情報も作成する
-                    const context = {
-                        source: this.currentSource,
-                        target: this.currentTarget
-                    };
-                    
-                    // 3. handlerに、第3引数として finalTarget、第4引数として context を渡す
-                    await handler(this, currentNodeData.params, finalTarget, context);
-                    // --------------------------------------------------------------------
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                }
-            }
-
-            const connection = (connections || []).find(c => 
-                c.fromNode === currentNodeData.id && c.fromPin === nextPinName
-            );
-
-            if (connection) {
-                currentNodeData = nodes.find(n => n.id === connection.toNode);
-            } else {
-                console.log(`  > No connection found from pin: ${nextPinName}. Sequence finished.`);
-                currentNodeData = null; 
-            }
-        }
-        
-        console.log("%c[ActionInterpreter] Event sequence finished.", 'color: lightgreen;');
+    this.scene = source.scene;
+    this.currentSource = source;
+    this.currentTarget = collidedTarget;
+    
+    const stateManager = this.scene.registry.get('stateManager');
+    if (!stateManager) {
+        console.error("[ActionInterpreter] StateManager not found in scene registry!");
+        return;
     }
-   // in src/core/ActionInterpreter.js
+
+    const { nodes, connections } = eventData;
+    
+    const allTargetNodeIds = new Set((connections || []).map(c => c.toNode));
+    let currentNodeData = nodes.find(n => !allTargetNodeIds.has(n.id));
+    
+    if (!currentNodeData) return;
+
+    while (currentNodeData) {
+        console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
+        
+        const handler = this.tagHandlers[currentNodeData.type];
+        let nextPinName = 'output'; // デフォルトの出力ピン
+
+        if (handler) {
+            const params = currentNodeData.params || {};
+            
+            // ▼▼▼【ここからがハンドラ呼び出しの修正】▼▼▼
+            // --- ターゲットオブジェクトを解決 ---
+            const finalTarget = this.findTarget(params.target, this.scene, this.currentSource, this.currentTarget);
+            
+            // --- 戻り値を受け取るための変数 ---
+            let handlerResult;
+
+            // --- ハンドラのタイプに応じて呼び出し方を切り替える ---
+            if (currentNodeData.type === 'if' || currentNodeData.type === 'distance_check' || currentNodeData.type === 'timer_check') {
+                // [if]や[distance_check]のような、ピンを分岐させる特殊なタグ
+                // (ifタグのロジックは、ここに直接書いても良いし、ハンドラに任せても良い)
+                handlerResult = await handler(this, params, finalTarget);
+
+            } else if (currentNodeData.type === 'destroy') {
+                 // [destroy]のような、特別なコンテキストを必要とするタグ
+                const context = { source: this.currentSource, target: this.currentTarget };
+                handlerResult = await handler(this, params, finalTarget, context);
+
+            } else {
+                // その他のほとんどの汎用タグ (apply_force, anim_play など)
+                handlerResult = await handler(this, params, finalTarget);
+            }
+
+            // --- ハンドラの戻り値に応じて、次に進むピンを決定 ---
+            if (typeof handlerResult === 'string') {
+                nextPinName = handlerResult;
+            }
+            // ▲▲▲【ここまでがハンドラ呼び出しの修正】▲▲▲
+        }
+
+        const connection = (connections || []).find(c => 
+            c.fromNode === currentNodeData.id && c.fromPin === nextPinName
+        );
+
+        if (connection) {
+            currentNodeData = nodes.find(n => n.id === connection.toNode);
+        } else {
+            currentNodeData = null; 
+        }
+    }
+}
 
     findTarget(targetId, scene, source, collidedTarget) {
         // デフォルトは source (イベント発生源)
