@@ -179,7 +179,7 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 
 #help-modal-overlay,#event-editor-overlay,#anim-editor-overlay,
 #sm-editor-overlay { /* ← この行を追加 */
-    z-index:10000;
+    z-index:100000;
     pointer-events:auto;
 }
 
