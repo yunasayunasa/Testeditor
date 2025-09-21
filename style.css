@@ -186,15 +186,22 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     flex-direction: row;
     padding: 0; /* 内側の余白は不要に */
 }
+レイアウト --- */
+.vsl-editor-container {
+    display: flex;
+    flex-grow: 1; /* 親のスペースを埋める */
+    padding: 0;
+    overflow: hidden;
+}
 
 /* --- (左側) ツールバー --- */
 .vsl-toolbar {
     width: 200px;
     padding: 10px;
-    background-color: #252526; /* サイドバーと同じ背景色 */
+    background-color: #252526;
     border-right: 1px solid #3c3c3c;
-    flex-shrink: 0; /* 縮まないようにする */
-    overflow-y: auto;
+    flex-shrink: 0;
+    overflow-y: auto; /* ★ 縦スクロールを許可 */
 }
 
 .vsl-toolbar h4 {
@@ -223,23 +230,14 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     background-color: #555;
 }
 
-/* --- (右側) キャンバス --- */
+/* --- (右側) キャンバスラッパー --- */
 .vsl-canvas-wrapper {
-    flex-grow: 1; /* 残りのスペースをすべて使う */
-    position: relative; /* ノードを絶対位置で配置するための基準 */
-    overflow: auto; /* ノードがはみ出たらスクロールできるように */
+    flex-grow: 1;
+    position: relative;
+    overflow: auto;   /* ★ 縦横両方のスクロールを許可 */
 }
 
-.vsl-canvas {
-    position: relative;
-    width: 2000px;  /* 広大な作業スペースを確保 */
-    height: 2000px;
-    background-color: #1e1e1e;
-    background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 20px 20px; /* 背景にグリッドを描画 */
-}
+
 
 
 /* ▼▼▼【これが、ノードの「見た目」を定義するCSSです】▼▼▼ */
@@ -247,10 +245,6 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 /* in your style.css */
 /* style.css */
 
-/* ノードの位置を決めるラッパー */
-.vsl-node-wrapper {
-    position: absolute; /* キャンバス内での位置決め */
-}
 
 /* ノード本体 (ピンの基準点) */
 .vsl-node {
@@ -352,13 +346,14 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     border-radius: 2px;
     font-size: 12px;
 }
-
+/* --- SVGレイヤー --- */
 .vsl-svg-layer {
     position: absolute;
     top: 0;
     left: 0;
-    pointer-events: none; /* SVG自体はクリックイベントを拾わないようにする */
+    pointer-events: none;
 }
+
    /* style.css */
 .node-delete-button {
     margin-top: 10px;
@@ -457,26 +452,23 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     flex-grow: 1;
     overflow: hidden;
 }
-/* --- キャンバスラッパーのスタイル --- */
-.vsl-canvas-wrapper {
-    flex-grow: 1;
-    position: relative; /* ★ ノードの絶対配置の基準点 */
-    overflow: auto;   /* ★ これで縦横両方にスクロールバーが出る */
-    background-color: #1e1e1e; /* 背景色を追加 */
-}
 
-/* --- キャンバス自体のスタイル --- */
+
+/* --- キャンバス本体 --- */
 .vsl-canvas {
-    position: relative; /* ★ ラッパーがスクロールしても、この要素自体は動かない */
+    position: relative;
     width: 2000px;
     height: 2000px;
-    background-image: /* ... (グリッドのスタイルは変更なし) ... */
+    background-color: #1e1e1e;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 20px 20px;
 }
-
-/* --- ノードラッパーのスタイル --- */
+/* --- ノードラッパー --- */
 .vsl-node-wrapper {
     position: absolute; /* ★ これでJSの style.left/top が有効になる */
 }
+
 /* ... .vsl-toolbar, .vsl-canvas-wrapper などのスタイルは
    イベントエディタのものと共通化できるはず ... */

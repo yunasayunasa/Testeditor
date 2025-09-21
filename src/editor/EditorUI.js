@@ -1920,56 +1920,67 @@ deselectNode() {
 
     // in src/editor/EditorUI.js
 
+    // in src/editor/EditorUI.js
+
     populateVslCanvas() {
         const activeOverlay = document.querySelector('.modal-overlay.is-active');
         if (!activeOverlay) return;
 
+        // 1. アクティブなモーダルの中から、正しいキャンバス要素とSVGレイヤー要素を見つける
         const canvas = activeOverlay.querySelector('.vsl-canvas');
-        if (!canvas) return;
+        const svgLayer = activeOverlay.querySelector('.vsl-svg-layer');
 
-        // ▼▼▼【ここからが修正の核心です】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // 1. SVGレイヤーはHTMLに既にあるので、それを検索して取得する
-        const svgLayer = canvas.querySelector('.vsl-svg-layer');
-        if (!svgLayer) return;
+        // どちらかが見つからなければ、処理を中断
+        if (!canvas || !svgLayer) {
+            console.error("VSL canvas or SVG layer not found in the active modal.");
+            return;
+        }
 
-        // 2. キャンバスから、古いノード(wrapper)だけを削除する
-        //    (SVGレイヤーは削除しない)
+        // 2. キャンバスから、古いノード(wrapper)だけを削除する (SVGレイヤーは残す)
         canvas.querySelectorAll('.vsl-node-wrapper').forEach(node => node.remove());
 
+        // 3. 描画すべき現在のイベントデータを取得する
         const targetEvent = this.getActiveEventData();
+        // データがなければ、キャンバスを空にした状態で終了 (ツールバーは表示されたまま)
         if (!targetEvent) return;
 
-        // 3. ノードを描画する (SVGレイヤーには触れない)
+        // 4. ノードのDOM要素を生成し、キャンバスに追加する
         if (targetEvent.nodes) {
             targetEvent.nodes.forEach(nodeData => {
+                // 外側のラッパーを作成 (位置決め用)
                 const nodeWrapper = document.createElement('div');
-                // ... (nodeWrapper, nodeElement の作成は変更なし)
                 nodeWrapper.className = 'vsl-node-wrapper';
                 nodeWrapper.style.left = `${nodeData.x}px`;
                 nodeWrapper.style.top = `${nodeData.y}px`;
 
+                // 内側の本体を作成 (ピンやコンテンツの基準)
                 const nodeElement = document.createElement('div');
                 nodeElement.className = 'vsl-node';
                 nodeElement.dataset.isNode = 'true';
                 nodeElement.dataset.nodeId = nodeData.id;
 
+                // ノードの中身を構築するヘルパーを呼ぶ
                 this.buildNodeContent(nodeElement, nodeData);
                 
+                // 組み立てた要素をDOMに追加
                 nodeWrapper.appendChild(nodeElement);
                 canvas.appendChild(nodeWrapper);
             });
         }
         
-        // 4. 次のフレームで、線を描画する
+        // 5. 次の描画フレームで、接続線を描画する
+        //    (すべてのノードDOMがレイアウトされた後に実行するため)
         requestAnimationFrame(() => {
-            if (targetEvent.connections) {
-                this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
+            // 再度アクティブかどうかを確認 (ユーザーが高速で閉じた場合など)
+            if (activeOverlay.classList.contains('is-active')) {
+                if (targetEvent.connections) {
+                    this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
+                } else {
+                    // 接続がない場合は、念のためSVGをクリアしておく
+                    svgLayer.innerHTML = '';
+                }
             }
         });
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★

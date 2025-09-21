@@ -111,13 +111,14 @@
                     <h3 id="event-editor-title">イベント編集</h3>
                     <button id="event-editor-close-btn" class="modal-close-btn">&times;</button>
                 </div>
-                <div class="modal-content" id="event-editor-main-content">
-                    <div class="vsl-toolbar"> <!-- ★ IDを削除し、クラスに変更 -->
+                <!-- ▼▼▼ ここからが VSL エディタ本体 ▼▼▼ -->
+                <div class="modal-content vsl-editor-container">
+                    <div class="vsl-toolbar">
                         <div id="vsl-trigger-editor">
                             <h4>トリガー</h4>
                             <select id="vsl-trigger-select"></select>
                             <div id="vsl-trigger-context"></div>
-                        </div>
+                       </div>
                         <hr>
                         <div id="vsl-tabs-container">
                             <h4>イベントグラフ</h4>
@@ -125,26 +126,27 @@
                         </div>
                         <hr>
                         <h4>ノードを追加</h4>
-                        <div class="vsl-node-list"></div> <!-- ★ IDを削除し、クラスに変更 -->
+                        <div class="vsl-node-list"></div>
                     </div>
-                    <div class="vsl-canvas-wrapper"> <!-- ★ IDを削除し、クラスに変更 -->
-                        <div class="vsl-canvas"> <!-- ★ IDを削除し、クラスに変更 -->
-                             <svg class="vsl-svg-layer" width="2000" height="2000"></svg> <!-- ★ IDを削除し、クラスに変更 -->
+                    <div class="vsl-canvas-wrapper">
+                        <div class="vsl-canvas">
+                            <svg class="vsl-svg-layer" width="2000" height="2000"></svg>
                         </div>
                     </div>
                 </div>
+                <!-- ▲▲▲ ここまでが VSL エディタ本体 ▲▲▲ -->
             </div>
         </div>
 
-        <!-- State Machine Editor Modal -->
-        <div id="sm-editor-overlay" class="modal-overlay"> <!-- ★ クラス名を修正 -->
-            <div class="modal-window wide"> <!-- ★ クラス名を追加・修正 -->
-                <div class="modal-header"> <!-- ★ クラス名を修正 -->
-                    <h3 id="sm-editor-title">ステートマシン編集: [オブジェクト名]</h3>
+
+      <!-- State Machine Editor Modal -->
+        <div id="sm-editor-overlay" class="modal-overlay">
+            <div class="modal-window wide">
+                <div class="modal-header">
+                    <h3 id="sm-editor-title">ステートマシン編集</h3>
                     <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
                 </div>
-                <div class="modal-content" id="sm-editor-body"> <!-- ★ クラス名を追加・修正 -->
-                    <!-- 左ペイン: 状態リスト -->
+                <div class="modal-content" id="sm-editor-body">
                     <div id="sm-states-panel">
                         <div class="panel-header">
                             <h4>状態リスト</h4>
@@ -152,25 +154,23 @@
                         </div>
                         <div id="sm-states-list"></div>
                     </div>
-                    <!-- 右ペイン: VSL編集エリア -->
-                    <div id="sm-vsl-panel">
+                   <div class="vsl-editor-container">
                         <div id="sm-hooks-tabs">
                             <button class="sm-hook-tab active" data-hook="onEnter">onEnter</button>
                             <button class="sm-hook-tab" data-hook="onUpdate">onUpdate</button>
                             <button class="sm-hook-tab" data-hook="onExit">onExit</button>
                         </div>
-                        <div class="vsl-editor-wrapper">
-                            <div class="vsl-toolbar"> <!-- ★ クラスを使用 -->
-                                <h4>ノードリスト</h4>
-                                <div class="vsl-node-list"></div> <!-- ★ クラスを使用 -->
-                            </div>
-                            <div class="vsl-canvas-wrapper"> <!-- ★ クラスを使用 -->
-                                <div class="vsl-canvas"> <!-- ★ クラスを使用 -->
-                                   <svg class="vsl-svg-layer" width="2000" height="2000"></svg> <!-- ★ クラスを使用 -->
-                                </div>
+                        <div class="vsl-toolbar">
+                            <h4>ノードリスト</h4>
+                            <div class="vsl-node-list"></div>
+                        </div>
+                        <div class="vsl-canvas-wrapper">
+                            <div class="vsl-canvas">
+                               <svg class="vsl-svg-layer" width="2000" height="2000"></svg>
                             </div>
                         </div>
                     </div>
+                    <!-- ▲▲▲ ここまでが VSL エディタ本体 ▲▲▲ -->
                 </div>
             </div>
         </div>
