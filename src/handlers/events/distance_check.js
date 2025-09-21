@@ -2,7 +2,7 @@
  * [distance_check]タグ
  * 2つのオブジェクト間の距離を測り、ピンを分岐させる
  */
-export const distance_check = async (interpreter, params) => {
+export default distance_check = async (interpreter, params) => {
     const scene = interpreter.scene;
     const source = interpreter.currentSource;
     const target = interpreter.currentTarget; // 衝突相手など

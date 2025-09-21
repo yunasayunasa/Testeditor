@@ -3,7 +3,7 @@
  * [timer_check]タグ
  * 一定時間が経過したかをチェックし、ピンを分岐させる
  */
-export const timer_check = async (interpreter, params) => {
+export default timer_check = async (interpreter, params) => {
     const source = interpreter.currentSource;
     const duration = parseFloat(params.duration);
     const timerId = `vsl_timer_${params.id || 'default'}`;

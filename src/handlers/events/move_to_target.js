@@ -2,7 +2,7 @@
  * [move_to_target]タグ
  * sourceオブジェクトをターゲットオブジェクトに向かって移動させる
  */
-export const move_to_target = async (interpreter, params) => {
+export default move_to_target = async (interpreter, params) => {
     const scene = interpreter.scene;
     const source = interpreter.currentSource;
     const target = interpreter.findTarget(params.target, scene, source, interpreter.currentTarget);
