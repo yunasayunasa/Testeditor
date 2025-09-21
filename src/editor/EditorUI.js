@@ -1110,19 +1110,16 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
      */
  // in src/editor/EditorUI.js
 
-    populateVslToolbar() {
-        // ▼▼▼【ここを、より堅牢なセレクタに修正】▼▼▼
-        const activeOverlay = document.querySelector('.modal-overlay.is-active');
-        if (!activeOverlay) return; // アクティブなモーダルがなければ終了
-        const nodeList = activeOverlay.querySelector('.vsl-node-list');
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+ // in src/editor/EditorUI.js
 
+    populateVslToolbar() {
+        const activeOverlay = document.querySelector('.modal-overlay.is-active');
+        if (!activeOverlay) return;
+        const nodeList = activeOverlay.querySelector('.vsl-node-list');
         if (!nodeList) return;
         nodeList.innerHTML = '';
         
-        const activeEvent = this.getActiveEventData();
-        if (!activeEvent) return;
-
+        // ★ activeEventがなくても、ツールバー自体は表示する
         const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
         if (eventTagHandlers) {
             const tagNames = Object.keys(eventTagHandlers).sort();
@@ -1130,8 +1127,15 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
                 const button = document.createElement('button');
                 button.className = 'node-add-button';
                 button.innerText = `[${tagName}]`;
+                
                 button.addEventListener('click', () => {
-                    this.addNodeToEventData(tagName);
+                    // クリックされたときに、アクティブなイベントがあるか再度チェック
+                    const activeEvent = this.getActiveEventData();
+                    if (activeEvent) {
+                        this.addNodeToEventData(tagName);
+                    } else {
+                        alert("ノードを追加するイベントグラフが選択されていません。");
+                    }
                 });
                 nodeList.appendChild(button);
             }
@@ -1257,62 +1261,8 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
         }
     }
 
-    /**
-     * ★★★ 最終FIX版 (線描画機能付き) ★★★
-     * 現在のイベントデータに基づいて、VSLキャンバスにノードと接続線を描画する
-     */
-    /**
-     * ★★★ 引数を受け取るように修正 ★★★
-     * 指定されたオブジェクトのイベントデータに基づいて、VSLキャンバスを描画する
-     * @param {Phaser.GameObjects.GameObject} targetObject - 描画対象のオブジェクト
-     */
-    populateVslCanvas() {
-        // ▼▼▼【ここを、より堅牢なセレクタに修正】▼▼▼
-        const activeOverlay = document.querySelector('.modal-overlay.is-active');
-        if (!activeOverlay) return;
-        const canvas = activeOverlay.querySelector('.vsl-canvas');
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        if (!canvas) {
-            console.error("VSL Canvas element not found in the active modal.");
-            return;
-        }
-        canvas.innerHTML = '';
-
-        const targetEvent = this.getActiveEventData();
-        if (!targetEvent) return;
-
-        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.className = 'vsl-svg-layer';
-        svgLayer.setAttribute('width', '2000');
-        svgLayer.setAttribute('height', '2000');
-        canvas.appendChild(svgLayer);
-
-        if (targetEvent.nodes) {
-            targetEvent.nodes.forEach(nodeData => {
-                const nodeWrapper = document.createElement('div');
-                nodeWrapper.className = 'vsl-node-wrapper';
-                nodeWrapper.style.left = `${nodeData.x}px`;
-                nodeWrapper.style.top = `${nodeData.y}px`;
-
-                const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node';
-                nodeElement.dataset.isNode = 'true';
-                nodeElement.dataset.nodeId = nodeData.id;
-
-                this.buildNodeContent(nodeElement, nodeData);
-                
-                nodeWrapper.appendChild(nodeElement);
-                canvas.appendChild(nodeWrapper); // ★ canvas に追加
-            });
-        }
-        
-        requestAnimationFrame(() => {
-            if (targetEvent.connections) {
-                this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
-            }
-        });
-    }
+    
+    
 
    
    // in src/editor/EditorUI.js
@@ -1945,35 +1895,35 @@ deselectNode() {
 
    // in src/editor/EditorUI.js
 
-   populateVslCanvas() {
-        // ▼▼▼ IDとコンテナを、現在のモードに応じて切り替える ▼▼▼
-        const overlay = document.querySelector('.modal-overlay.is-active');
-        const canvas = overlay ? overlay.querySelector('.vsl-canvas') : null;
-        if (!canvas) return;
-        canvas.innerHTML = '';
+  // in src/editor/EditorUI.js
 
-        const targetEvent = this.getActiveEventData(); // ★ 新しいヘルパーを呼ぶ
-        if (!targetEvent) return;
+    populateVslCanvas() {
+        const activeOverlay = document.querySelector('.modal-overlay.is-active');
+        if (!activeOverlay) return;
+        const canvas = activeOverlay.querySelector('.vsl-canvas');
 
-        this.vslCanvas.innerHTML = '';
+        if (!canvas) {
+            console.error("VSL Canvas element not found in the active modal.");
+            return;
+        }
+        canvas.innerHTML = ''; // ★ 正しいcanvasをクリア
+
+        const targetEvent = this.getActiveEventData();
+        if (!targetEvent) return; // 描画すべきデータがなければここで終了
+
         const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.id = 'vsl-svg-layer';
+        svgLayer.className = 'vsl-svg-layer'; // ★ classNameを使用
         svgLayer.setAttribute('width', '2000');
         svgLayer.setAttribute('height', '2000');
-        this.vslCanvas.appendChild(svgLayer);
-
-        if (!targetEvent) return;
+        canvas.appendChild(svgLayer); // ★ 正しいcanvasに追加
 
         if (targetEvent.nodes) {
             targetEvent.nodes.forEach(nodeData => {
-                // ▼▼▼【ここが変更点】▼▼▼
-                // 外側のラッパーを作成 (位置決め用)
                 const nodeWrapper = document.createElement('div');
                 nodeWrapper.className = 'vsl-node-wrapper';
                 nodeWrapper.style.left = `${nodeData.x}px`;
                 nodeWrapper.style.top = `${nodeData.y}px`;
 
-                // 内側の本体を作成 (ピンの基準用)
                 const nodeElement = document.createElement('div');
                 nodeElement.className = 'vsl-node';
                 nodeElement.dataset.isNode = 'true';
@@ -1982,13 +1932,12 @@ deselectNode() {
                 this.buildNodeContent(nodeElement, nodeData);
                 
                 nodeWrapper.appendChild(nodeElement);
-                this.vslCanvas.appendChild(nodeWrapper);
+                canvas.appendChild(nodeWrapper); // ★ 正しいcanvasに追加
             });
         }
         
         requestAnimationFrame(() => {
             if (targetEvent.connections) {
-                // ★ this.vslCanvas を canvas に変更
                 this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
             }
         });
