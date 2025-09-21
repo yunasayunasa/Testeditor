@@ -1806,36 +1806,44 @@ deselectNode() {
      * ★★★ ピン名対応版 ★★★
      * 新しい接続をイベントデータに追加し、キャンバスを再描画する
      */
-   createConnection(fromNodeId, fromPinName, toNodeId, toPinName) {
-        const targetEvent = this.getActiveEventData(); // ★
-        if (!this.editingObject || !targetEvent || fromNodeId === toNodeId) return;
+// in src/editor/EditorUI.js
 
-        const events = this.editingObject.getData('events');
-       
-        if (!targetEvent) return;
-        
-        if (!targetEvent.connections) {
-            targetEvent.connections = [];
-        }
-
-        // ★ 同一ピンからの接続は1本までとする（上書きする）
-        targetEvent.connections = targetEvent.connections.filter(
-            c => !(c.fromNode === fromNodeId && c.fromPin === fromPinName)
-        );
-
-        // 新しい接続を追加
-        targetEvent.connections.push({ 
-            fromNode: fromNodeId, 
-            fromPin: fromPinName, 
-            toNode: toNodeId, 
-            toPin: toPinName 
-        });
-
-        this.editingObject.setData('events', events);
-        console.log(`Connection created: ${fromNodeId}:${fromPinName} -> ${toNodeId}:${toPinName}`);
-        this.saveCurrentEventData(); // ★
-        this.populateVslCanvas(); // ★
+createConnection = (fromNodeId, fromPinName, toNodeId, toPinName) => {
+    console.log('%c--- createConnection START ---', 'color: orange; font-weight: bold;');
+    
+    const targetEvent = this.getActiveEventData();
+    if (!this.editingObject || !targetEvent || fromNodeId === toNodeId) {
+        console.error('  [DEBUG] createConnection cancelled: Invalid condition.');
+        return;
     }
+
+    if (!targetEvent.connections) {
+        targetEvent.connections = [];
+    }
+
+    targetEvent.connections = targetEvent.connections.filter(
+        c => !(c.fromNode === fromNodeId && c.fromPin === fromPinName)
+    );
+
+    const newConnection = { 
+        fromNode: fromNodeId, 
+        fromPin: fromPinName, 
+        toNode: toNodeId, 
+        toPin: toPinName 
+    };
+    targetEvent.connections.push(newConnection);
+    
+    // ▼▼▼ デバッグポイント ▼▼▼
+    console.log('  [DEBUG] New connection created:', newConnection);
+    console.log('  [DEBUG] Current event connections array:', targetEvent.connections);
+
+    this.saveCurrentEventData();
+    
+    const savedEventData = this.getActiveEventData();
+    console.log('  [DEBUG] Event data AFTER save:', savedEventData);
+
+    this.populateVslCanvas();
+}
    // in src/editor/EditorUI.js
 
 // ... populateVslCanvas() { ... } の後など ...
@@ -1954,31 +1962,31 @@ drawConnections(svgLayer, nodes, connections, canvas) {
 
     // in src/editor/EditorUI.js
 
-    populateVslCanvas() {
-        const activeOverlay = document.querySelector('.modal-overlay.is-active');
-        if (!activeOverlay) return;
+    populateVslCanvas = () => {
+    const activeOverlay = document.querySelector('.modal-overlay.is-active');
+    if (!activeOverlay) return;
 
-        // 1. アクティブなモーダルの中から、正しいキャンバス要素とSVGレイヤー要素を見つける
-        const canvas = activeOverlay.querySelector('.vsl-canvas');
-        const svgLayer = activeOverlay.querySelector('.vsl-svg-layer');
+    const canvas = activeOverlay.querySelector('.vsl-canvas');
+    const svgLayer = activeOverlay.querySelector('.vsl-svg-layer');
 
-        // どちらかが見つからなければ、処理を中断
-        if (!canvas || !svgLayer) {
-            console.error("VSL canvas or SVG layer not found in the active modal.");
-            return;
-        }
+    if (!canvas || !svgLayer) {
+        console.error("VSL canvas or SVG layer not found in the active modal.");
+        return;
+    }
 
-        // 2. キャンバスから、古いノード(wrapper)だけを削除する (SVGレイヤーは残す)
-        canvas.querySelectorAll('.vsl-node-wrapper').forEach(node => node.remove());
+    const targetEvent = this.getActiveEventData();
 
-        // 3. 描画すべき現在のイベントデータを取得する
-        const targetEvent = this.getActiveEventData();
-        // データがなければ、キャンバスを空にした状態で終了 (ツールバーは表示されたまま)
-        if (!targetEvent) return;
+    // ▼▼▼ デバッグポイント ▼▼▼
+    console.log('%c--- populateVslCanvas START ---', 'color: lightblue; font-weight: bold;');
+    console.log('  [DEBUG] Trying to populate canvas with event data:', targetEvent);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // 4. ノードのDOM要素を生成し、キャンバスに追加する
-        if (targetEvent.nodes) {
-            targetEvent.nodes.forEach(nodeData => {
+    canvas.querySelectorAll('.vsl-node-wrapper').forEach(node => node.remove());
+
+    if (!targetEvent) return;
+
+    if (targetEvent.nodes) {
+        targetEvent.nodes.forEach(nodeData => {
                 // 外側のラッパーを作成 (位置決め用)
                 const nodeWrapper = document.createElement('div');
                 nodeWrapper.className = 'vsl-node-wrapper';
@@ -1997,23 +2005,16 @@ drawConnections(svgLayer, nodes, connections, canvas) {
                 // 組み立てた要素をDOMに追加
                 nodeWrapper.appendChild(nodeElement);
                 canvas.appendChild(nodeWrapper);
-            });
-        }
-        
-        // 5. 次の描画フレームで、接続線を描画する
-        //    (すべてのノードDOMがレイアウトされた後に実行するため)
-        requestAnimationFrame(() => {
-            // 再度アクティブかどうかを確認 (ユーザーが高速で閉じた場合など)
-            if (activeOverlay.classList.contains('is-active')) {
-                if (targetEvent.connections) {
-                    this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
-                } else {
-                    // 接続がない場合は、念のためSVGをクリアしておく
-                    svgLayer.innerHTML = '';
-                }
-            }
         });
     }
+    
+    requestAnimationFrame(() => {
+        if (activeOverlay.classList.contains('is-active')) {
+            // ★ こちらのデバッグ版 drawConnections もアロー関数にしておくと、さらに安全です
+            this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
+        }
+    });
+}
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
      * ノード内に、スライダーと数値入力を組み合わせたUIを生成する
