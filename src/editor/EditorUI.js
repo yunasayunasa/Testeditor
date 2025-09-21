@@ -1123,50 +1123,62 @@ closeEventEditor = () => {
      */
    // in src/editor/EditorUI.js
 
-  /**
- * ★★★ 既存の addNodeToEventData を、この内容に置き換える ★★★
+  /// in EditorUI.js
+
+/**
+ * ★★★ ノードが重ならないように配置する修正版 ★★★
  * 引数で渡されたイベントデータにノードを追加する
  * @param {string} tagName - 追加するノードのタイプ
- * @param {object} targetEventData - 追加先のVSLデータ
+ * @param {object} targetVslData - 追加先のVSLデータ
  */
-addNodeToEventData(tagName, targetEventData) {
-    if (!this.editingObject || !targetEventData) return;
+addNodeToEventData(tagName, targetVslData) {
+    if (!this.editingObject || !targetVslData) return;
     
-    // --- ノードデータの生成 (ここは共通) ---
-    const existingNodeCount = targetEventData.nodes.length;
+    // ▼▼▼【ここからが座標計算の修正】▼▼▼
+    let newX = 50;
+    let newY = 50; // デフォルトのY座標
+
+    // もし既存のノードがあれば、一番Y座標が大きいものを探す
+    if (targetVslData.nodes && targetVslData.nodes.length > 0) {
+        // 全てのノードのY座標の最大値を取得
+        const maxY = Math.max(...targetVslData.nodes.map(n => n.y));
+        newY = maxY + 80; // 一番下のノードから80px下に配置 (80はノードの高さの目安)
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     const newNode = {
         id: `node_${Date.now()}`, type: tagName, params: {},
-        x: 50, y: 50 + (existingNodeCount * 80)
+        x: newX, y: newY
     };
     
+    // (これ以降のロジックは変更なし)
     const eventTagHandlers = this.game.registry.get('eventTagHandlers');
     const handler = eventTagHandlers?.[tagName];
     if (handler?.define?.params) {
         handler.define.params.forEach(paramDef => {
             if (paramDef.defaultValue !== undefined) {
-                newNode.params[paramDef.key] = paramDef.defaultValue;
+                newNode.params[paramKey] = paramDef.defaultValue;
             }
         });
     }
     
-    targetEventData.nodes.push(newNode);
+    // ★★★ targetVslData.nodes が undefined の場合を考慮 ★★★
+    if (!targetVslData.nodes) {
+        targetVslData.nodes = [];
+    }
+    targetVslData.nodes.push(newNode);
     
-    // ▼▼▼【ここが修正の核心】▼▼▼
     const isSmEditor = this.smEditorOverlay.style.display === 'flex';
     if (isSmEditor) {
-        // ステートマシンエディタの場合: stateMachineデータを丸ごと保存
         this.editingObject.setData('stateMachine', this.stateMachineData);
-        // UIを再描画
         this.displayActiveVslEditor();
     } else {
-        // イベントエディタの場合: eventsデータを丸ごと保存
         const allEvents = this.editingObject.getData('events');
         this.editingObject.setData('events', allEvents);
-        // UIを再描画
         this.setActiveVslEvent(this.activeEventId);
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-}
+} 
+
 
    /**
      * ★★★ 新規メソッド ★★★
@@ -1876,39 +1888,63 @@ drawConnections(svgLayer, nodes, connections) {
 
     console.groupEnd(); // 全体ロググループを閉じる
 }
-      /**
-     * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
-     * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
-     * @param {string} nodeIdToDelete - 削除するノードのID
-     */
-    deleteNode(nodeIdToDelete) {
-        if (!this.editingObject || !this.activeEventId) return;
+     // in EditorUI.js
 
-        const events = this.editingObject.getData('events');
-        // ★ アクティブなIDを使って、編集対象のイベントグラフを見つける
-        const targetEvent = events.find(e => e.id === this.activeEventId);
-        if (!targetEvent) return;
+/**
+ * ★★★ ステートマシンエディタに対応した修正版 ★★★
+ * 「現在アクティブな」VSLグラフから、指定されたIDのノードを削除する
+ * @param {string} nodeIdToDelete - 削除するノードのID
+ */
+deleteNode(nodeIdToDelete) {
+    if (!this.editingObject) return;
 
-        // --- 1. nodes配列から、該当するノードを削除 ---
-        if (targetEvent.nodes) {
-            targetEvent.nodes = targetEvent.nodes.filter(n => n.id !== nodeIdToDelete);
+    const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+    
+    let targetVslData = null;
+    
+    // ▼▼▼【ここからが修正の核心】▼▼▼
+    // 1. どちらのエディタが開いているかに応じて、編集対象のVSLデータを特定する
+    if (isSmEditor) {
+        if (this.stateMachineData && this.activeStateName && this.activeHookName) {
+            targetVslData = this.stateMachineData.states[this.activeStateName]?.[this.activeHookName];
         }
-        
-        // --- 2. connections配列から、このノードに関連する接続をすべて削除 ---
-        if (targetEvent.connections) {
-            targetEvent.connections = targetEvent.connections.filter(c => 
-                c.fromNode !== nodeIdToDelete && c.toNode !== nodeIdToDelete
-            );
+    } else {
+        if (this.activeEventId) {
+            const events = this.editingObject.getData('events') || [];
+            targetVslData = events.find(e => e.id === this.activeEventId);
         }
-
-        // --- 3. 変更を永続化 ---
-        this.editingObject.setData('events', events);
-        
-        // --- 4. キャンバスを再描画 ---
-        this.populateVslCanvas();
     }
-  // in EditorUI.js
 
+    if (!targetVslData) {
+        console.error("削除対象のVSLデータが見つかりません。");
+        return;
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // --- 2. nodes配列から、該当するノードを削除 (ここは共通ロジック) ---
+    if (targetVslData.nodes) {
+        targetVslData.nodes = targetVslData.nodes.filter(n => n.id !== nodeIdToDelete);
+    }
+    
+    // --- 3. connections配列から、このノードに関連する接続をすべて削除 (ここは共通ロジック) ---
+    if (targetVslData.connections) {
+        targetVslData.connections = targetVslData.connections.filter(c => 
+            c.fromNode !== nodeIdToDelete && c.toNode !== nodeIdToDelete
+        );
+    }
+
+    // ▼▼▼【ここからが修正の核心】▼▼▼
+    // 4. 変更を永続化し、UIを再描画する
+    if (isSmEditor) {
+        this.editingObject.setData('stateMachine', this.stateMachineData);
+        this.displayActiveVslEditor(); // ステートマシンUIを更新
+    } else {
+        const allEvents = this.editingObject.getData('events');
+        this.editingObject.setData('events', allEvents);
+        this.setActiveVslEvent(this.activeEventId); // イベントエディタUIを更新
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 /**
  * ★★★ 既存の populateVslCanvas を、この内容で確認・修正 ★★★
  */
