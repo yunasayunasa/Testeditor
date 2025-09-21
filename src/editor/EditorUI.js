@@ -88,6 +88,7 @@ export default class EditorUI {
         this.vslNodeList = document.getElementById('vsl-node-list');
         this.vslCanvas = document.getElementById('vsl-canvas');
         this.vslTabs = document.getElementById('vsl-tabs');
+        this.smEditorOverlay = document.getElementById('sm-editor-overlay');
     }
 
   
@@ -112,7 +113,7 @@ export default class EditorUI {
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
         document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
         document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
-
+document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => this.closeStateMachineEditor());
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
@@ -2075,4 +2076,59 @@ deselectNode() {
         
         return clonedEvent;
     }
+
+
+    /**
+     * 
+     * 
+     * ここからステートマシン
+     */
+    // in src/editor/EditorUI.js
+
+/**
+ * ステートマシン・エディタを開く
+ * @param {Phaser.GameObjects.GameObject} selectedObject
+ */
+openStateMachineEditor = (selectedObject) => {
+    // ガード節: 必要な要素やオブジェクトがなければ処理を中断
+    if (!this.smEditorOverlay || !selectedObject) return;
+
+    // 1. 背景の操作をできなくする
+    document.body.classList.add('modal-open');
+    this.game.input.enabled = false;
+    
+    // 2. どのオブジェクトを編集中か、状態を保存
+    this.editingObject = selectedObject;
+
+    // 3. モーダルを表示する
+    this.smEditorOverlay.style.display = 'flex';
+
+    // 4. (おまけ) タイトルを更新する
+    const title = this.smEditorOverlay.querySelector('#sm-editor-title');
+    if (title) {
+        title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
+    }
+
+    // TODO: この後、モーダルの中身（状態リストなど）を構築する処理が入る
+}
+
+/**
+ * ステートマシン・エディタを閉じる
+ */
+closeStateMachineEditor = () => {
+    // ガード節: 必要な要素がなければ処理を中断
+    if (!this.smEditorOverlay) return;
+    
+    // 1. モーダルを非表示にする
+    this.smEditorOverlay.style.display = 'none';
+
+    // 2. 編集中の状態を完全にリセット
+    this.editingObject = null;
+    this.activeStateName = null;
+    this.activeHookName = 'onEnter'; // デフォルトに戻す
+
+    // 3. 背景の操作をできるように戻す
+    this.game.input.enabled = true;
+    document.body.classList.remove('modal-open');
+}
 }
