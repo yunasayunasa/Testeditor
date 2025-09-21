@@ -1099,7 +1099,7 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
      */
     closeEventEditor() {
         if (!this.eventEditorOverlay) return;
-        this.eventEditorOverlay.style.display = 'none';
+       this.eventEditorOverlay.classList.remove('is-active');
         this.editingObject = null;
         this.game.input.enabled = true;
         console.log("[EditorUI] Phaser input re-enabled.");
@@ -1832,58 +1832,56 @@ deselectNode() {
     }
    // in src/editor/EditorUI.js
 
-   // in src/editor/EditorUI.js
+drawConnections(svgLayer, nodes, connections, canvas) {
+    svgLayer.innerHTML = ''; // 描画前にクリア
 
-  // in src/editor/EditorUI.js
- drawConnections(svgLayer, nodes, connections, canvas) {
-        // ★ 描画前に、古い線をすべてクリアする
-        svgLayer.innerHTML = '';
+    // ★★★ 解決策の核心 ★★★
+    // SVGレイヤー自体の画面上の位置を取得。これが座標計算の原点(0,0)となる。
+    const svgRect = svgLayer.getBoundingClientRect();
 
-        connections.forEach(conn => {
-            const fromNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`)?.parentElement;
-            const toNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`)?.parentElement;
+    connections.forEach(conn => {
+        const fromNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`);
+        const toNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`);
 
-            if (!fromNodeWrapper || !toNodeWrapper) return;
-            
-            
-            // ラッパーの中から、ピン要素を検索する
-            const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-name="${conn.fromPin}"]`);
-            const toPinEl = toNodeWrapper.querySelector(`[data-pin-name="${conn.toPin}"]`);
+        // ★ ピン要素の検索は、ノード本体から行う
+        if (!fromNodeWrapper || !toNodeWrapper) return;
 
-            // ピン要素が見つからなければ、この接続は描画しない
-            if (!fromPinEl || !toPinEl) return;
+        const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
+        const toPinEl = toNodeWrapper.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
 
-            // --- ここからが座標計算ロジック ---
+        if (!fromPinEl || !toPinEl) return;
 
-            // 1. ノードラッパーの、キャンバス内での相対位置 (left, top) を取得
-            const fromNodeX = fromNodeWrapper.offsetLeft;
-            const fromNodeY = fromNodeWrapper.offsetTop;
-            const toNodeX = toNodeWrapper.offsetLeft;
-            const toNodeY = toNodeWrapper.offsetTop;
+        // --- ここからが新しい座標計算ロジック ---
 
-            // 2. ピンの、ノード本体内での相対位置 (中央) を取得
-            const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
-            const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
-            const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
-            const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
-            
-            // 3. 最終的なSVG内の絶対座標を計算
-            const finalFromX = fromNodeX + fromPinX;
-            const finalFromY = fromNodeY + fromPinY;
-            const finalToX = toNodeX + toPinX;
-            const finalToY = toNodeY + toPinY;
+        // 1. 各ピンの「画面上での」絶対座標を取得
+        const fromPinRect = fromPinEl.getBoundingClientRect();
+        const toPinRect = toPinEl.getBoundingClientRect();
 
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', finalFromX);
-            line.setAttribute('y1', finalFromY);
-            line.setAttribute('x2', finalToX);
-            line.setAttribute('y2', finalToY);
-            line.setAttribute('stroke', '#aaa');
-            line.setAttribute('stroke-width', '2');
-            
-            svgLayer.appendChild(line);
-        }); // ★ forEach の閉じ括弧
-    } // ★ メソッドの閉じ括弧
+        // 2. ピンの中心点の画面座標を計算
+        const fromX = fromPinRect.left + fromPinRect.width / 2;
+        const fromY = fromPinRect.top + fromPinRect.height / 2;
+        const toX = toPinRect.left + toPinRect.width / 2;
+        const toY = toPinRect.top + toPinRect.height / 2;
+
+        // 3. 画面座標を、SVGレイヤーの左上からの「相対座標」に変換
+        const finalFromX = fromX - svgRect.left;
+        const finalFromY = fromY - svgRect.top;
+        const finalToX = toX - svgRect.left;
+        const finalToY = toY - svgRect.top;
+
+        // SVGの線（今回はpath要素でベジェ曲線を描画）を作成
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const dx = Math.abs(finalFromX - finalToX) * 0.5; // 曲線の曲がり具合を調整
+        const pathData = `M ${finalFromX} ${finalFromY} C ${finalFromX + dx} ${finalFromY}, ${finalToX - dx} ${finalToY}, ${finalToX} ${finalToY}`;
+        
+        path.setAttribute('d', pathData);
+        path.setAttribute('stroke', '#aaa');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        
+        svgLayer.appendChild(path);
+    });
+}
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
      * 「現在アクティブな」イベントグラフから、指定されたIDのノードを削除する
@@ -2114,7 +2112,7 @@ deselectNode() {
         const overlay = document.getElementById('sm-editor-overlay');
         if (!overlay) return;
 
-        overlay.classList.remove('is-active');
+       overlay.classList.remove('is-active');
         this.editingObject = null;
         this.game.input.enabled = true; // Phaserの入力を元に戻す
     }

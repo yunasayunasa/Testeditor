@@ -166,7 +166,7 @@ body.tilemap-mode #bottom-panel { display: block; transform: translateY(0); }
 body.tilemap-mode #overlay-controls { transform: translateY(-220px); }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 10000; display: none; justify-content: center; align-items: center; }
 .modal-overlay.is-active { display: flex; }
-.modal-window { width: 90%; max-width: 700px; max-height: 80vh; background-color: #2b2b2b; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; }
+.modal-window { width: 90%; max-width: 700px; max-height: 80vh; background-color: #2b2b2b; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column;   z-index: 10002; }
 .modal-header { padding: 10px 15px; background-color: #3c3c3c; display: flex; align-items: center; border-bottom: 1px solid #1e1e1e; user-select: none; }
 .modal-header h3 { margin: 0; font-size: 1.1em; }
 .modal-close-btn, .modal-help-btn { cursor: pointer; border: none; background: none; color: #d4d4d4; font-size: 24px; line-height: 1; padding: 0 5px; }
@@ -469,6 +469,11 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
 .vsl-node-wrapper {
     position: absolute; /* ★ これでJSの style.left/top が有効になる */
 }
-
+#event-editor-overlay,
+#sm-editor-overlay,
+#anim-editor-overlay,
+#help-modal-overlay {
+    z-index: 10001; /* カメラ操作(10000)より明確に高くする */
+}
 /* ... .vsl-toolbar, .vsl-canvas-wrapper などのスタイルは
    イベントエディタのものと共通化できるはず ... */
