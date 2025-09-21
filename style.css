@@ -457,5 +457,26 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none; fil
     flex-grow: 1;
     overflow: hidden;
 }
+/* --- キャンバスラッパーのスタイル --- */
+.vsl-canvas-wrapper {
+    flex-grow: 1;
+    position: relative; /* ★ ノードの絶対配置の基準点 */
+    overflow: auto;   /* ★ これで縦横両方にスクロールバーが出る */
+    background-color: #1e1e1e; /* 背景色を追加 */
+}
+
+/* --- キャンバス自体のスタイル --- */
+.vsl-canvas {
+    position: relative; /* ★ ラッパーがスクロールしても、この要素自体は動かない */
+    width: 2000px;
+    height: 2000px;
+    background-image: /* ... (グリッドのスタイルは変更なし) ... */
+    background-size: 20px 20px;
+}
+
+/* --- ノードラッパーのスタイル --- */
+.vsl-node-wrapper {
+    position: absolute; /* ★ これでJSの style.left/top が有効になる */
+}
 /* ... .vsl-toolbar, .vsl-canvas-wrapper などのスタイルは
    イベントエディタのものと共通化できるはず ... */

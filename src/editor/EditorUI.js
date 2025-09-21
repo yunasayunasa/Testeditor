@@ -932,35 +932,42 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
      * イベントエディタを開き、その中身を構築する
      * @param {Phaser.GameObjects.GameObject} selectedObject
      */
-        /**
-     * ★★★ 再描画問題 - 最終FIX版 ★★★
-     * イベントエディタを開き、その中身を「選択されたオブジェクトのデータで」構築する
-     * @param {Phaser.GameObjects.GameObject} selectedObject - 編集対象のオブジェクト
-     */
-   openEventEditor(selectedObject) {
+  // in src/editor/EditorUI.js
+
+    openEventEditor(selectedObject) {
         if (!this.eventEditorOverlay || !selectedObject) return;
         this.game.input.enabled = false;
+        this.editingObject = selectedObject; 
         
-        this.editingObject = selectedObject;
-        
-        if (this.eventEditorTitle) {
-            this.eventEditorTitle.innerText = `イベント編集: ${this.editingObject.name}`;
+        const title = document.getElementById('event-editor-title');
+        if (title) {
+            title.innerText = `イベント編集: ${this.editingObject.name}`;
         }
         
-        // ★★★ タブUIを構築する新しいメソッドを呼び出す ★★★
-        this.buildVslTabs();
-        
-        // ★★★ 最初に表示するイベントを決定する ★★★
-        const events = this.editingObject.getData('events') || [];
-        if (events.length > 0) {
-            // 最初のイベントをアクティブにする
-            this.setActiveVslEvent(events[0].id);
-        } else {
-            // イベントがなければ、すべてを空にする
-            this.setActiveVslEvent(null);
-        }
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // --------------------------------------------------------------------
+        // 1. まず、イベントデータがあるか確認
+        let events = this.editingObject.getData('events') || [];
 
-        this.eventEditorOverlay.style.display = 'flex';
+        // 2. データがなければ（配列が空なら）、初期データを作成する
+        if (events.length === 0) {
+            const newEvent = {
+                id: `event_${Date.now()}`,
+                trigger: 'onClick', // デフォルトトリガー
+                nodes: [],
+                connections: []
+            };
+            events.push(newEvent);
+            this.editingObject.setData('events', events);
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // 3. 最初に表示するイベントを決定する
+        this.buildVslTabs(); // ★ タブを先に作らないと activeEventId が決まらない
+        this.setActiveVslEvent(events[0].id);
+
+        this.eventEditorOverlay.classList.add('is-active');
     }
 
  // in src/editor/EditorUI.js
