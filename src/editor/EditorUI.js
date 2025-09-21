@@ -51,12 +51,7 @@ export default class EditorUI {
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
-this.populateVslCanvas = this.populateVslCanvas.bind(this);
-    this.drawConnections = this.drawConnections.bind(this);
-    this.setActiveVslEvent = this.setActiveVslEvent.bind(this);
-    this.setActiveState = this.setActiveState.bind(this);
-    
-    console.log("[EditorUI] Core methods have been bound to the instance.");
+
         
 
     }
@@ -163,22 +158,7 @@ this.populateVslCanvas = this.populateVslCanvas.bind(this);
             panBtn.addEventListener('click', () => this.setVslMode('pan'));
         }
         
-        // --- VSLキャンバス (イベント委譲の親) ---
-        const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
-        if (canvasWrapper) {
-            canvasWrapper.addEventListener('pointerdown', (event) => {
-                if (this.vslMode === 'pan') {
-                    // (パンモードの処理)
-                    return; 
-                }
-                const pinElement = event.target.closest('[data-pin-type]');
-                if (pinElement) {
-                    event.stopPropagation();
-                    this.onPinClicked(pinElement);
-                    return;
-                }
-            });
-        }
+      
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
@@ -932,42 +912,33 @@ this.populateVslCanvas = this.populateVslCanvas.bind(this);
      */
   // in src/editor/EditorUI.js
 
-    openEventEditor(selectedObject) {
-        if (!this.eventEditorOverlay || !selectedObject) return;
-        this.game.input.enabled = false;
-        this.editingObject = selectedObject; 
-        
-        const title = document.getElementById('event-editor-title');
-        if (title) {
-            title.innerText = `イベント編集: ${this.editingObject.name}`;
-        }
-        
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        // --------------------------------------------------------------------
-        // 1. まず、イベントデータがあるか確認
-        let events = this.editingObject.getData('events') || [];
+  // in src/editor/EditorUI.js
 
-        // 2. データがなければ（配列が空なら）、初期データを作成する
-        if (events.length === 0) {
-            const newEvent = {
-                id: `event_${Date.now()}`,
-                trigger: 'onClick', // デフォルトトリガー
-                nodes: [],
-                connections: []
-            };
-            events.push(newEvent);
-            this.editingObject.setData('events', events);
-        }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
-        // 3. 最初に表示するイベントを決定する
-        this.buildVslTabs(); // ★ タブを先に作らないと activeEventId が決まらない
-        this.setActiveVslEvent(events[0].id);
+openEventEditor = (selectedObject) => {
+    if (!this.eventEditorOverlay || !selectedObject) return;
 
-        this.eventEditorOverlay.classList.add('is-active');
-        this.setupVslCanvasListeners(this.eventEditorOverlay);
+    document.body.classList.add('modal-open');
+    this.game.input.enabled = false;
+    this.editingObject = selectedObject;
+
+    this.eventEditorOverlay.style.display = 'flex';
+    
+    const title = document.getElementById('event-editor-title');
+    if (title) title.innerText = `イベント編集: ${this.editingObject.name}`;
+    
+    let events = this.editingObject.getData('events') || [];
+    if (events.length === 0) {
+        const newEvent = { id: `event_${Date.now()}`, trigger: 'onClick', nodes: [], connections: [] };
+        events.push(newEvent);
+        this.editingObject.setData('events', events);
     }
+    
+    this.buildVslTabs();
+    this.setActiveVslEvent(events[0].id);
+
+    // ★ 最後にリスナーを設定する処理を追加
+    this.setupVslCanvasListeners(this.eventEditorOverlay);
+}
 
  // in src/editor/EditorUI.js
 
@@ -2125,15 +2096,17 @@ drawConnections(svgLayer, nodes, connections, canvas) {
 }
 // in src/editor/Editor-ui.js
 
-// closeEventEditor を修正
+// in src/editor/EditorUI.js
+
 closeEventEditor = () => {
     if (!this.eventEditorOverlay) return;
-    console.log("%cClosing Event Editor...", "color: red;");
 
+    // ★ 先にリスナーを解除する処理を追加
     this.removeVslCanvasListeners(this.eventEditorOverlay);
+
     this.eventEditorOverlay.style.display = 'none';
     
-    // ★★★ 以下の状態リセットを必ず行う ★★★
+    // ★ 状態を完全にリセットする処理を追加
     this.editingObject = null;
     this.activeEventId = null;
     this.activeEventData = null;
