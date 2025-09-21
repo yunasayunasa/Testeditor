@@ -34,9 +34,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const currentURL = window.location.href;
         if (!currentURL.includes('debug=true')) return;
         this.isEnabled = true;
-
-        
-
+    this.editorPanel = document.getElementById('editor-panel');
+    this.editorTitle = document.getElementById('editor-title');
+    this.editorPropsContainer = document.getElementById('editor-props');
         console.warn("[EditorPlugin] Debug mode activated.");
     }
    
