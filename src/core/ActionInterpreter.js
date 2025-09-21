@@ -34,7 +34,6 @@ export default class ActionInterpreter {
      */
  // in src/core/ActionInterpreter.js
 // in src/core/ActionInterpreter.js
-
 async run(source, eventData, collidedTarget = null) {
     if (!source || !source.scene || !source.scene.scene.isActive()) return;
     if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
@@ -60,39 +59,54 @@ async run(source, eventData, collidedTarget = null) {
         console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
         
         const handler = this.tagHandlers[currentNodeData.type];
-        let nextPinName = 'output'; // デフォルトの出力ピン
+        let nextPinName = 'output';
 
         if (handler) {
             const params = currentNodeData.params || {};
             
-            // ▼▼▼【ここからがハンドラ呼び出しの修正】▼▼▼
-            // --- ターゲットオブジェクトを解決 ---
-            const finalTarget = this.findTarget(params.target, this.scene, this.currentSource, this.currentTarget);
-            
-            // --- 戻り値を受け取るための変数 ---
-            let handlerResult;
-
-            // --- ハンドラのタイプに応じて呼び出し方を切り替える ---
-            if (currentNodeData.type === 'if' || currentNodeData.type === 'distance_check' || currentNodeData.type === 'timer_check') {
-                // [if]や[distance_check]のような、ピンを分岐させる特殊なタグ
-                // (ifタグのロジックは、ここに直接書いても良いし、ハンドラに任せても良い)
-                handlerResult = await handler(this, params, finalTarget);
-
-            } else if (currentNodeData.type === 'destroy') {
-                 // [destroy]のような、特別なコンテキストを必要とするタグ
-                const context = { source: this.currentSource, target: this.currentTarget };
-                handlerResult = await handler(this, params, finalTarget, context);
+            if (currentNodeData.type === 'if') {
+                // [if] タグは特別扱い
+                let expression = params.exp || 'false';
+                let result = false;
+                try {
+                    const tempElem = document.createElement('textarea');
+                    tempElem.innerHTML = expression;
+                    let decodedExpression = tempElem.value;
+                    if ((decodedExpression.startsWith('"') && decodedExpression.endsWith('"')) || (decodedExpression.startsWith("'") && decodedExpression.endsWith("'"))) {
+                        decodedExpression = decodedExpression.substring(1, decodedExpression.length - 1);
+                    }
+                    result = stateManager.eval(decodedExpression);
+                } catch (e) {
+                    console.error(`[ActionInterpreter] Failed to evaluate expression: "${expression}"`, e);
+                    result = false;
+                }
+                
+                nextPinName = result ? 'output_true' : 'output_false';
+                console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
 
             } else {
-                // その他のほとんどの汎用タグ (apply_force, anim_play など)
-                handlerResult = await handler(this, params, finalTarget);
-            }
+                // ▼▼▼【ここが変数名修正箇所】▼▼▼
+                // --- その他の全てのタグ ---
+                
+                // 1. [tag target="..."]で指定されたオブジェクトを解決する
+                const target = this.findTarget(params.target, this.scene, this.currentSource, this.currentTarget);
+                
+                // 2. ハンドラを呼び出す
+                const handlerResult = await handler(
+                    this,            // 第1引数: interpreter
+                    params,          // 第2引数: params
+                    target,          // 第3引数: target (解決済みのGameObject)
+                    {                // 第4引数: context (追加情報)
+                        source: this.currentSource,
+                        target: this.currentTarget
+                    }
+                );
+                // ▲▲▲【ここまでが変数名修正箇所】▲▲▲
 
-            // --- ハンドラの戻り値に応じて、次に進むピンを決定 ---
-            if (typeof handlerResult === 'string') {
-                nextPinName = handlerResult;
+                if (typeof handlerResult === 'string') {
+                    nextPinName = handlerResult;
+                }
             }
-            // ▲▲▲【ここまでがハンドラ呼び出しの修正】▲▲▲
         }
 
         const connection = (connections || []).find(c => 
@@ -104,8 +118,7 @@ async run(source, eventData, collidedTarget = null) {
         } else {
             currentNodeData = null; 
         }
-    }
-}
+    }}
 
     findTarget(targetId, scene, source, collidedTarget) {
         // デフォルトは source (イベント発生源)
