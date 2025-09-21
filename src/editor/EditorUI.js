@@ -1848,55 +1848,73 @@ deselectNode() {
  * @param {Array} connections - 全接続のデータ配列
  * @param {HTMLElement} canvas - ノードDOMが配置されている親キャンバス要素
  */
-drawConnections(svgLayer, nodes, connections, canvas) {
-    // 1. 描画前に、古い線をすべてクリアする
-    svgLayer.innerHTML = '';
+// in src/editor/EditorUI.js
 
-    // 2. SVGレイヤー自体の画面上の位置を取得。これが座標計算の原点(0,0)となる。
+drawConnections(svgLayer, nodes, connections, canvas) {
+    console.log('%c--- drawConnections START ---', 'color: cyan; font-weight: bold;');
+
+    // ▼▼▼ デバッグポイント 1: 引数が正しいか ▼▼▼
+    if (!svgLayer) { console.error('  [DEBUG] svgLayer is NULL!'); return; }
+    if (!canvas) { console.error('  [DEBUG] canvas is NULL!'); return; }
+    if (!connections) { console.warn('  [DEBUG] connections array is UNDEFINED.'); return; }
+    if (connections.length === 0) { console.warn('  [DEBUG] connections array is EMPTY. No lines to draw.'); return; }
+    
+    console.log(`  [DEBUG] Drawing ${connections.length} connection(s).`);
+    
+    svgLayer.innerHTML = '';
     const svgRect = svgLayer.getBoundingClientRect();
 
-    if (!connections || connections.length === 0) return;
+    // ▼▼▼ デバッグポイント 2: SVGレイヤーの座標は有効か ▼▼▼
+    console.log('  [DEBUG] SVG Layer Rect:', svgRect);
+    if (svgRect.width === 0 || svgRect.height === 0) {
+        console.error('  [DEBUG] SVG Layer has no size! Drawing is impossible.');
+    }
 
-    connections.forEach(conn => {
-        // 3. 接続元のノードとピンのDOM要素を、データ属性を使って検索する
+    connections.forEach((conn, index) => {
+        console.log(`  [DEBUG] Processing connection #${index}:`, conn);
+
         const fromNodeEl = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`);
         const toNodeEl = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`);
-
-        if (!fromNodeEl || !toNodeEl) return;
+        
+        // ▼▼▼ デバッグポイント 3: ノード要素は見つかっているか ▼▼▼
+        if (!fromNodeEl) { console.error(`    -> fromNode element NOT FOUND for id: ${conn.fromNode}`); return; }
+        if (!toNodeEl) { console.error(`    -> toNode element NOT FOUND for id: ${conn.toNode}`); return; }
 
         const fromPinEl = fromNodeEl.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
         const toPinEl = toNodeEl.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
-        
-        if (!fromPinEl || !toPinEl) return;
 
-        // 4. 各ピンの「画面上での」絶対座標を取得する
+        // ▼▼▼ デバッグポイント 4: ピン要素は見つかっているか ▼▼▼
+        if (!fromPinEl) { console.error(`    -> fromPin element NOT FOUND for name: ${conn.fromPin}`); return; }
+        if (!toPinEl) { console.error(`    -> toPin element NOT FOUND for name: ${conn.toPin}`); return; }
+        
         const fromPinRect = fromPinEl.getBoundingClientRect();
         const toPinRect = toPinEl.getBoundingClientRect();
 
-        // 5. ピンの中心点の「画面座標」を計算する
-        const fromX = fromPinRect.left + fromPinRect.width / 2;
-        const fromY = fromPinRect.top + fromPinRect.height / 2;
-        const toX = toPinRect.left + toPinRect.width / 2;
-        const toY = toPinRect.top + toPinRect.height / 2;
+        const finalFromX = (fromPinRect.left + fromPinRect.width / 2) - svgRect.left;
+        const finalFromY = (fromPinRect.top + fromPinRect.height / 2) - svgRect.top;
+        const finalToX = (toPinRect.left + toPinRect.width / 2) - svgRect.left;
+        const finalToY = (toPinRect.top + toPinRect.height / 2) - svgRect.top;
 
-        // 6. 画面座標を、SVGレイヤーの左上からの「相対座標」に変換する
-        const finalFromX = fromX - svgRect.left;
-        const finalFromY = fromY - svgRect.top;
-        const finalToX = toX - svgRect.left;
-        const finalToY = toY - svgRect.top;
+        // ▼▼▼ デバッグポイント 5: 最終座標は有効な数値か ▼▼▼
+        console.log(`    -> Final Coords: (${finalFromX}, ${finalFromY}) -> (${finalToX}, ${finalToY})`);
+        if (isNaN(finalFromX) || isNaN(finalFromY) || isNaN(finalToX) || isNaN(finalToY)) {
+            console.error('    -> FATAL: Coordinate calculation resulted in NaN!');
+            return;
+        }
 
-        // 7. SVGの<path>要素を作成して、ベジェ曲線を描画する
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         const dx = Math.abs(finalFromX - finalToX) * 0.5;
         const pathData = `M ${finalFromX} ${finalFromY} C ${finalFromX + dx} ${finalFromY}, ${finalToX - dx} ${finalToY}, ${finalToX} ${finalToY}`;
         
         path.setAttribute('d', pathData);
-        path.setAttribute('stroke', '#aaa');
-        path.setAttribute('stroke-width', '2');
+        path.setAttribute('stroke', '#00ff00'); // ★目立つように緑色に変更
+        path.setAttribute('stroke-width', '3'); // ★目立つように太く変更
         path.setAttribute('fill', 'none');
         
         svgLayer.appendChild(path);
+        console.log(`    -> SUCCESS: Appended path to SVG layer.`);
     });
+    console.log('%c--- drawConnections END ---', 'color: cyan; font-weight: bold;');
 }
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
