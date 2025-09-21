@@ -126,15 +126,7 @@ this.populateVslCanvas = this.populateVslCanvas.bind(this);
         document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
         document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => this.closeStateMachineEditor());
         document.getElementById('sm-add-state-btn')?.addEventListener('click', () => this.addNewState());
-const hooksTabs = document.getElementById('sm-hooks-tabs');
-    if (hooksTabs) {
-        hooksTabs.addEventListener('click', (event) => {
-            const button = event.target.closest('.sm-hook-tab');
-            if (button && button.dataset.hook) {
-                this.setActiveHook(button.dataset.hook);
-            }
-        });
-    }
+
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
@@ -974,6 +966,7 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
         this.setActiveVslEvent(events[0].id);
 
         this.eventEditorOverlay.classList.add('is-active');
+        this.setupVslCanvasListeners(this.eventEditorOverlay);
     }
 
  // in src/editor/EditorUI.js
@@ -1105,6 +1098,9 @@ const hooksTabs = document.getElementById('sm-hooks-tabs');
      */
     closeEventEditor() {
         if (!this.eventEditorOverlay) return;
+        this.removeVslCanvasListeners(this.eventEditorOverlay);
+
+    this.eventEditorOverlay.style.display = 'none';
        this.eventEditorOverlay.classList.remove('is-active');
         this.editingObject = null;
         this.game.input.enabled = true;
@@ -2136,8 +2132,8 @@ drawConnections(svgLayer, nodes, connections, canvas) {
         this.buildStatesList();
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        overlay.classList.add('is-active');
-    }
+       this.setupVslCanvasListeners(overlay);
+}
 
     /**
      * ★★★ 新規メソッド ★★★
@@ -2146,7 +2142,9 @@ drawConnections(svgLayer, nodes, connections, canvas) {
     closeStateMachineEditor() {
         const overlay = document.getElementById('sm-editor-overlay');
         if (!overlay) return;
+this.removeVslCanvasListeners(overlay);
 
+    overlay.style.display = 'none';
        overlay.classList.remove('is-active');
         this.editingObject = null;
         this.game.input.enabled = true; // Phaserの入力を元に戻す
@@ -2299,4 +2297,59 @@ drawConnections(svgLayer, nodes, connections, canvas) {
             this.editingObject.setData('events', events);
         }
     }
+
+    // in src/editor/EditorUI.js (クラス内の分かりやすい場所に追加)
+
+/**
+ * ★★★ 新規メソッド ★★★
+ * 指定されたオーバーレイ内のVSLキャンバスにイベントリスナーを設定する
+ * @param {HTMLElement} overlayElement - 対象のモーダルオーバーレイ要素
+ */
+setupVslCanvasListeners = (overlayElement) => {
+    const canvasWrapper = overlayElement.querySelector('.vsl-canvas-wrapper');
+    if (!canvasWrapper) return;
+
+    // `this.onVslCanvasPointerDown` をリスナーとして登録
+    // .bind(this) を使って、`this` が常に EditorUI インスタンスを指すようにする
+    canvasWrapper._pointerDownHandler = this.onVslCanvasPointerDown.bind(this);
+    canvasWrapper.addEventListener('pointerdown', canvasWrapper._pointerDownHandler);
+}
+
+/**
+ * ★★★ 新規メソッド ★★★
+ * 指定されたオーバーレイ内のVSLキャンバスからイベントリスナーを解除する
+ * @param {HTMLElement} overlayElement - 対象のモーダルオーバーレイ要素
+ */
+removeVslCanvasListeners = (overlayElement) => {
+    const canvasWrapper = overlayElement.querySelector('.vsl-canvas-wrapper');
+    // `_pointerDownHandler` が存在すれば、そのリスナーを解除
+    if (canvasWrapper && canvasWrapper._pointerDownHandler) {
+        canvasWrapper.removeEventListener('pointerdown', canvasWrapper._pointerDownHandler);
+        delete canvasWrapper._pointerDownHandler; // 後片付け
+    }
+}
+
+
+// in src/editor/EditorUI.js (クラス内の分かりやすい場所に追加)
+
+/**
+ * ★★★ 新規メソッド ★★★
+ * VSLキャンバスでポインターが押されたときの統一処理
+ * @param {PointerEvent} event
+ */
+onVslCanvasPointerDown = (event) => {
+    // パンモードの処理などは後で追加可能
+    
+    const pinElement = event.target.closest('[data-pin-type]');
+    if (pinElement) {
+        event.stopPropagation();
+        this.onPinClicked(pinElement);
+        return;
+    }
+
+    const nodeElement = event.target.closest('.vsl-node-wrapper');
+    if (nodeElement) {
+        // ノードのドラッグ処理などをここに追加
+    }
+}
 }
