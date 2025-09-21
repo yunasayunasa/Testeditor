@@ -48,9 +48,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         
         this.eventEditorOverlay = document.getElementById('event-editor-overlay');
         this.eventEditorCloseBtn = document.getElementById('event-editor-close-btn');
-        if (this.eventEditorCloseBtn) {
-            this.eventEditorCloseBtn.addEventListener('click', () => this.closeEventEditor());
-        }
+     
 
         console.warn("[EditorPlugin] Debug mode activated.");
     }
@@ -2488,11 +2486,7 @@ createComponentSection() {
         // ★ 変換後の、新しいデータ構造をオブジェクトに保存する
         targetObject.setData('events', events);
     }
-    closeEventEditor() {
-        if (!this.eventEditorOverlay) return;
-        this.eventEditorOverlay.style.display = 'none';
-        this.pluginManager.game.input.enabled = true;
-    }
+  
     // src/plugins/EditorPlugin.js
 
     /*/**

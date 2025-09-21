@@ -344,22 +344,7 @@ export default class EditorUI {
     
     }
 
-   /**
-     * テキスト追加ボタンがクリックされたときの処理
-     */
-    closeEventEditor = () => {
-        console.count('onAddTextClicked called');
-        const targetScene = this.getActiveGameScene();
-        if (!targetScene || typeof targetScene.addTextObjectFromEditor !== 'function') return;
-        
-        const newName = `text_${Date.now()}`;
-        // ★ アクティブなレイヤー名を渡す
-        const newObject = targetScene.addTextObjectFromEditor(newName, this.activeLayerName);
-        
-        if (newObject && this.plugin) {
-            this.plugin.selectSingleObject(newObject);
-        }
-    }
+  
 
     /**
      * ★★★ 最終FIX版 ★★★
