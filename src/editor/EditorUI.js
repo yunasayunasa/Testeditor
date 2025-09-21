@@ -1890,32 +1890,31 @@ deselectNode() {
         this.saveCurrentEventData(); // ★
         this.populateVslCanvas(); // ★
     }
-    // in src/editor/EditorUI.js (createNodePositionInputの上あたりに追加)
-// in src/editor/EditorUI.js
-
-   // in src/editor/EditorUI.js
-
   // in src/editor/EditorUI.js
 
     populateVslCanvas() {
         const activeOverlay = document.querySelector('.modal-overlay.is-active');
         if (!activeOverlay) return;
-        const canvas = activeOverlay.querySelector('.vsl-canvas');
 
+        // 1. アクティブなモーダルの中から、正しいキャンバス要素を一つだけ見つける
+        const canvas = activeOverlay.querySelector('.vsl-canvas');
         if (!canvas) {
-            console.error("VSL Canvas element not found in the active modal.");
+            // ステートマシン・エディタを開いた直後など、
+            // VSLキャンバスがないUI状態もあるかもしれないので、エラーではなく静かに終了
             return;
         }
-        canvas.innerHTML = ''; // ★ 正しいcanvasをクリア
+
+        // 2. 見つけたキャンバスの中身だけを操作する
+        canvas.innerHTML = '';
 
         const targetEvent = this.getActiveEventData();
-        if (!targetEvent) return; // 描画すべきデータがなければここで終了
+        if (!targetEvent) return;
 
         const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.className = 'vsl-svg-layer'; // ★ classNameを使用
+        svgLayer.className = 'vsl-svg-layer';
         svgLayer.setAttribute('width', '2000');
         svgLayer.setAttribute('height', '2000');
-        canvas.appendChild(svgLayer); // ★ 正しいcanvasに追加
+        canvas.appendChild(svgLayer);
 
         if (targetEvent.nodes) {
             targetEvent.nodes.forEach(nodeData => {
@@ -1932,7 +1931,7 @@ deselectNode() {
                 this.buildNodeContent(nodeElement, nodeData);
                 
                 nodeWrapper.appendChild(nodeElement);
-                canvas.appendChild(nodeWrapper); // ★ 正しいcanvasに追加
+                canvas.appendChild(nodeWrapper);
             });
         }
         
