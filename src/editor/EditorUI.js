@@ -1129,35 +1129,51 @@ closeEventEditor = () => {
  * @param {string} tagName - 追加するノードのタイプ
  * @param {object} targetVslData - 追加先のVSLデータ
  */
+// in EditorUI.js
+
+/**
+ * ★★★ ノードの高さを考慮して重なりを防ぐ最終FIX版 ★★★
+ * @param {string} tagName - 追加するノードのタイプ
+ * @param {object} targetVslData - 追加先のVSLデータ
+ */
 addNodeToEventData(tagName, targetVslData) {
     if (!this.editingObject || !targetVslData) return;
     
+    // ▼▼▼【ここからが座標計算の修正】▼▼▼
+    const NODE_AVERAGE_HEIGHT = 100; // ノードのおおよその高さ (CSSに合わせて調整)
+    const NODE_MARGIN_Y = 20;      // ノード間の垂直マージン
+
     let newX = 50;
     let newY = 50;
 
     if (targetVslData.nodes && targetVslData.nodes.length > 0) {
-        const maxY = Math.max(...targetVslData.nodes.map(n => n.y));
-        newY = maxY + 80;
+        // 最も下に突き出ているノードの「下端」の座標を見つける
+        // (各ノードの y座標 + 高さ) の最大値を探す
+        const lowestPoint = Math.max(
+            ...targetVslData.nodes.map(n => n.y + NODE_AVERAGE_HEIGHT)
+        );
+        
+        // 新しいノードの上端(Y座標)は、その下端からマージンを空けた位置に設定
+        newY = lowestPoint + NODE_MARGIN_Y;
     }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const newNode = {
         id: `node_${Date.now()}`, type: tagName, params: {},
         x: newX, y: newY
     };
     
-    // --- デフォルト値設定ロジック ---
+    // (これ以降のロジックは変更なし)
     const eventTagHandlers = this.game.registry.get('eventTagHandlers');
     const handler = eventTagHandlers?.[tagName];
     if (handler?.define?.params) {
         handler.define.params.forEach(paramDef => {
             if (paramDef.defaultValue !== undefined) {
-                // ★★★ ここが修正箇所です ★★★
                 newNode.params[paramDef.key] = paramDef.defaultValue;
             }
         });
     }
     
-    // --- データの追加と保存 ---
     if (!targetVslData.nodes) {
         targetVslData.nodes = [];
     }
