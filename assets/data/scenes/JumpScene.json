@@ -20,8 +20,8 @@
     {
       "name": "cg01_2",
       "type": "initialize",
-      "x": 403,
-      "y": 519,
+      "x": 399,
+      "y": 551,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -46,11 +46,11 @@
     {
       "name": "cg01_3",
       "type": "initialize",
-      "x": 1048,
-      "y": 412,
+      "x": 1105,
+      "y": 588,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 0.49,
+      "scaleY": 0.49,
       "angle": 0,
       "alpha": 1,
       "group": "floor",
@@ -156,11 +156,11 @@
     {
       "name": "bgtest2_1758338444820",
       "type": "initialize",
-      "x": 893,
-      "y": 191,
+      "x": 486,
+      "y": 291,
       "depth": 20,
-      "scaleX": 0.32,
-      "scaleY": 0.32,
+      "scaleX": 0.51,
+      "scaleY": 0.51,
       "angle": 0,
       "alpha": 1,
       "group": "player",
@@ -200,6 +200,40 @@
         }
       ],
       "texture": "bgtest2",
+      "physics": {
+        "isStatic": false,
+        "isSensor": false,
+        "ignoreGravity": false,
+        "gravityScale": 1,
+        "shape": "rectangle",
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
+    },
+    {
+      "name": "Enemy",
+      "type": "initialize",
+      "x": 1146,
+      "y": 480,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "group": "enemy",
+      "events": [],
+      "components": [
+        {
+          "type": "StateMachineComponent",
+          "params": {}
+        }
+      ],
+      "texture": "next_arrow",
       "physics": {
         "isStatic": false,
         "isSensor": false,
