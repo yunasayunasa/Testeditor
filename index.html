@@ -186,20 +186,22 @@
                 <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
             </div>
         </div>
-        <!-- ================================================================= -->
-<!-- ▼▼▼ ステートマシン・エディタ (ここから追加) ▼▼▼ -->
+     <!-- in index.html -->
+
 <!-- ================================================================= -->
-<div id="sm-editor-overlay" class="modal-overlay"> <!-- ★★★ ここを修正 ★★★ -->
-    <div id="sm-editor-panel" class="modal-window wide"> <!-- ★★★ ここも修正 ★★★ -->
+<!-- ▼▼▼ ステートマシン・エディタ (完全分離版) ▼▼▼ -->
+<!-- ================================================================= -->
+<div id="sm-editor-overlay" class="modal-overlay">
+    <div class="modal-window wide">
         
         <!-- ヘッダー -->
-        <div class="modal-header"> <!-- ★★★ ここも修正 ★★★ -->
-            <h3 id="sm-editor-title">ステートマシン編集: [オブジェクト名]</h3>
+        <div class="modal-header">
+            <h3 id="sm-editor-title">ステートマシン編集</h3>
             <button id="sm-editor-close-btn" class="modal-close-btn">&times;</button>
         </div>
         
         <!-- 本体 -->
-        <div class="modal-content" id="sm-editor-body"> <!-- ★★★ ここも修正 ★★★ -->
+        <div class="modal-content" id="sm-editor-body">
 
             <!-- 左ペイン: 状態リスト -->
             <div id="sm-states-panel">
@@ -207,11 +209,7 @@
                     <h4>状態リスト</h4>
                     <button id="sm-add-state-btn" title="新しい状態を追加">+</button>
                 </div>
-                <div id="sm-states-list">
-                    <!-- (ここにJSで状態が追加される) -->
-                    <!-- <div class="sm-state-item active">idle</div> -->
-                    <!-- <div class="sm-state-item">chase</div> -->
-                </div>
+                <div id="sm-states-list"></div>
             </div>
 
             <!-- 右ペイン: VSL編集エリア -->
@@ -223,17 +221,21 @@
                     <button class="sm-hook-tab" data-hook="onExit">onExit</button>
                 </div>
 
-                <!-- VSLキャンバス (イベントエディタと共用できるかも) -->
-                <div class="vsl-editor-wrapper">
-                    <div id="sm-vsl-toolbar" class="vsl-toolbar">
+                <!-- ★★★ ここからが重要 ★★★ -->
+                <!-- VSLコンテナのクラス名を変更 -->
+                <div class="sm-vsl-editor-container"> 
+                    <!-- ツールバーのIDとクラス名を変更 -->
+                    <div id="sm-vsl-toolbar" class="sm-vsl-toolbar">
                         <h4>ノードリスト</h4>
-                        <div id="sm-vsl-node-list" class="vsl-node-list">
-                           <!-- (ここにJSでノード追加ボタンが追加される) -->
-                        </div>
+                        <!-- ノードリストのクラス名を変更 -->
+                        <div class="sm-vsl-node-list"></div>
                     </div>
-                    <div id="sm-vsl-canvas-wrapper" class="vsl-canvas-wrapper">
-                        <div id="sm-vsl-canvas" class="vsl-canvas">
-                           <!-- (ここにJSでノードが描画される) -->
+                    <!-- キャンバスラッパーのIDとクラス名を変更 -->
+                    <div id="sm-vsl-canvas-wrapper" class="sm-vsl-canvas-wrapper">
+                        <!-- キャンバスのIDとクラス名を変更 -->
+                        <div id="sm-vsl-canvas" class="sm-vsl-canvas">
+                           <!-- SVGレイヤーのIDを変更 -->
+                           <svg id="sm-vsl-svg-layer" width="4000" height="4000"></svg>
                         </div>
                     </div>
                 </div>

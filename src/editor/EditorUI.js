@@ -2144,4 +2144,39 @@ closeStateMachineEditor = () => {
     this.game.input.enabled = true;
     document.body.classList.remove('modal-open');
 }
+populateSmVslCanvas = () => {
+    // ★★★ クラス名を sm-vsl- に変更 ★★★
+    const toolbar = this.smEditorOverlay.querySelector('.sm-vsl-toolbar');
+    const canvasWrapper = this.smEditorOverlay.querySelector('.sm-vsl-canvas-wrapper');
+    if (!toolbar || !canvasWrapper) return;
+    
+    // ツールバーとキャンバスの中身を描画する
+    this.populateVslToolbar(); // ツールバーの中身は共用
+    this.populateVslCanvas();  // キャンバスの中身も共用
+}
+
+// --- 2. setupVslCanvasListeners を置き換え ---
+setupVslCanvasListeners = (overlayElement) => {
+    // ★★★ クラス名を動的に変更 ★★★
+    const canvasWrapper = overlayElement.id === 'sm-editor-overlay'
+        ? overlayElement.querySelector('.sm-vsl-canvas-wrapper')
+        : overlayElement.querySelector('.vsl-canvas-wrapper');
+
+    if (!canvasWrapper) return;
+    canvasWrapper._pointerDownHandler = (event) => this.onVslCanvasPointerDown(event);
+    canvasWrapper.addEventListener('pointerdown', canvasWrapper._pointerDownHandler);
+}
+
+// --- 3. removeVslCanvasListeners を置き換え ---
+removeVslCanvasListeners = (overlayElement) => {
+    // ★★★ クラス名を動的に変更 ★★★
+    const canvasWrapper = overlayElement.id === 'sm-editor-overlay'
+        ? overlayElement.querySelector('.sm-vsl-canvas-wrapper')
+        : overlayElement.querySelector('.vsl-canvas-wrapper');
+
+    if (canvasWrapper && canvasWrapper._pointerDownHandler) {
+        canvasWrapper.removeEventListener('pointerdown', canvasWrapper._pointerDownHandler);
+        delete canvasWrapper._pointerDownHandler;
+    }
+}
 }
