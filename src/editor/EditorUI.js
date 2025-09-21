@@ -1121,48 +1121,43 @@ closeEventEditor = () => {
      * @param {string} tagName - 追加するノードのタイプ
      * @param {object} targetEvent - 追加先のイベントグラフのデータ
      */
-   // in src/editor/EditorUI.js
-
-  /// in EditorUI.js
+   // in EditorUI.js
 
 /**
- * ★★★ ノードが重ならないように配置する修正版 ★★★
- * 引数で渡されたイベントデータにノードを追加する
+ * ★★★ 変数名エラーを修正した最終版 ★★★
+ * ノードが重ならないように配置する
  * @param {string} tagName - 追加するノードのタイプ
  * @param {object} targetVslData - 追加先のVSLデータ
  */
 addNodeToEventData(tagName, targetVslData) {
     if (!this.editingObject || !targetVslData) return;
     
-    // ▼▼▼【ここからが座標計算の修正】▼▼▼
     let newX = 50;
-    let newY = 50; // デフォルトのY座標
+    let newY = 50;
 
-    // もし既存のノードがあれば、一番Y座標が大きいものを探す
     if (targetVslData.nodes && targetVslData.nodes.length > 0) {
-        // 全てのノードのY座標の最大値を取得
         const maxY = Math.max(...targetVslData.nodes.map(n => n.y));
-        newY = maxY + 80; // 一番下のノードから80px下に配置 (80はノードの高さの目安)
+        newY = maxY + 80;
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const newNode = {
         id: `node_${Date.now()}`, type: tagName, params: {},
         x: newX, y: newY
     };
     
-    // (これ以降のロジックは変更なし)
+    // --- デフォルト値設定ロジック ---
     const eventTagHandlers = this.game.registry.get('eventTagHandlers');
     const handler = eventTagHandlers?.[tagName];
     if (handler?.define?.params) {
         handler.define.params.forEach(paramDef => {
             if (paramDef.defaultValue !== undefined) {
-                newNode.params[paramKey] = paramDef.defaultValue;
+                // ★★★ ここが修正箇所です ★★★
+                newNode.params[paramDef.key] = paramDef.defaultValue;
             }
         });
     }
     
-    // ★★★ targetVslData.nodes が undefined の場合を考慮 ★★★
+    // --- データの追加と保存 ---
     if (!targetVslData.nodes) {
         targetVslData.nodes = [];
     }
@@ -1177,8 +1172,7 @@ addNodeToEventData(tagName, targetVslData) {
         this.editingObject.setData('events', allEvents);
         this.setActiveVslEvent(this.activeEventId);
     }
-} 
-
+}
 
    /**
      * ★★★ 新規メソッド ★★★
