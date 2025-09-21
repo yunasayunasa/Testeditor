@@ -916,11 +916,9 @@ export default class EditorUI {
 
 openEventEditor = (selectedObject) => {
     if (!this.eventEditorOverlay || !selectedObject) return;
-
     document.body.classList.add('modal-open');
     this.game.input.enabled = false;
     this.editingObject = selectedObject;
-
     this.eventEditorOverlay.style.display = 'flex';
     
     const title = document.getElementById('event-editor-title');
@@ -935,10 +933,9 @@ openEventEditor = (selectedObject) => {
     
     this.buildVslTabs();
     this.setActiveVslEvent(events[0].id);
-
-    // ★ 最後にリスナーを設定する処理を追加
     this.setupVslCanvasListeners(this.eventEditorOverlay);
 }
+
 
  // in src/editor/EditorUI.js
 
@@ -1808,8 +1805,7 @@ createConnection = (fromNodeId, fromPinName, toNodeId, toPinName) => {
  * @param {HTMLElement} canvas - ノードDOMが配置されている親キャンバス要素
  */
 // in src/editor/EditorUI.js
-
-drawConnections(svgLayer, nodes, connections, canvas) {
+drawConnections = (svgLayer, nodes, connections, canvas) => {
     console.log('%c--- drawConnections START ---', 'color: cyan; font-weight: bold;');
 
     // ▼▼▼ デバッグポイント 1: 引数が正しいか ▼▼▼
@@ -1907,70 +1903,47 @@ drawConnections(svgLayer, nodes, connections, canvas) {
         this.saveCurrentEventData(); // ★
         this.populateVslCanvas(); // ★
     }
-  // in src/editor/EditorUI.js
-
-    // in src/editor/EditorUI.js
-
-    // in src/editor/EditorUI.js
-
-   populateVslCanvas = () => {
-    // ▼▼▼【ここからガード節を追加】▼▼▼
+ populateVslCanvas = () => {
     const activeOverlay = document.querySelector('.modal-overlay.is-active, .modal-overlay[style*="display: flex"]');
-
-    // モーダルがアクティブでない、または編集中オブジェクトがない場合は、絶対に実行しない
     if (!activeOverlay || !this.editingObject) {
-        console.warn("populateVslCanvas call prevented: No active modal or editing object.");
         return;
     }
     const canvas = activeOverlay.querySelector('.vsl-canvas');
     const svgLayer = activeOverlay.querySelector('.vsl-svg-layer');
-
     if (!canvas || !svgLayer) {
-        console.error("VSL canvas or SVG layer not found in the active modal.");
         return;
     }
 
     const targetEvent = this.getActiveEventData();
-
-    // ▼▼▼ デバッグポイント ▼▼▼
     console.log('%c--- populateVslCanvas START ---', 'color: lightblue; font-weight: bold;');
     console.log('  [DEBUG] Trying to populate canvas with event data:', targetEvent);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     canvas.querySelectorAll('.vsl-node-wrapper').forEach(node => node.remove());
-
     if (!targetEvent) return;
 
     if (targetEvent.nodes) {
         targetEvent.nodes.forEach(nodeData => {
-                // 外側のラッパーを作成 (位置決め用)
-                const nodeWrapper = document.createElement('div');
-                nodeWrapper.className = 'vsl-node-wrapper';
-                nodeWrapper.style.left = `${nodeData.x}px`;
-                nodeWrapper.style.top = `${nodeData.y}px`;
-
-                // 内側の本体を作成 (ピンやコンテンツの基準)
-                const nodeElement = document.createElement('div');
-                nodeElement.className = 'vsl-node';
-                nodeElement.dataset.isNode = 'true';
-                nodeElement.dataset.nodeId = nodeData.id;
-
-                // ノードの中身を構築するヘルパーを呼ぶ
-                this.buildNodeContent(nodeElement, nodeData);
-                
-                // 組み立てた要素をDOMに追加
-                nodeWrapper.appendChild(nodeElement);
-                canvas.appendChild(nodeWrapper);
+            const nodeWrapper = document.createElement('div');
+            nodeWrapper.className = 'vsl-node-wrapper';
+            nodeWrapper.style.left = `${nodeData.x}px`;
+            nodeWrapper.style.top = `${nodeData.y}px`;
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'vsl-node';
+            nodeElement.dataset.isNode = 'true';
+            nodeElement.dataset.nodeId = nodeData.id;
+            this.buildNodeContent(nodeElement, nodeData);
+            nodeWrapper.appendChild(nodeElement);
+            canvas.appendChild(nodeWrapper);
         });
     }
     
     requestAnimationFrame(() => {
-        if (activeOverlay.classList.contains('is-active')) {
-            // ★ こちらのデバッグ版 drawConnections もアロー関数にしておくと、さらに安全です
+        if (activeOverlay.style.display === 'flex') {
             this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
         }
     });
 }
+
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
      * ノード内に、スライダーと数値入力を組み合わせたUIを生成する
@@ -2053,87 +2026,52 @@ drawConnections(svgLayer, nodes, connections, canvas) {
      * ステートマシン・エディタを開き、その中身を構築する
      * @param {Phaser.GameObjects.GameObject} selectedObject
      */
-    openStateMachineEditor(selectedObject) {
-        const overlay = document.getElementById('sm-editor-overlay');
-        if (!overlay || !selectedObject) return;
+   openStateMachineEditor = (selectedObject) => {
+    if (!this.smEditorOverlay || !selectedObject) return;
+    document.body.classList.add('modal-open');
+    this.game.input.enabled = false;
+    this.editingObject = selectedObject;
+    this.smEditorOverlay.style.display = 'flex';
 
-        // ★ Phaserのゲーム内クリックなどを無効化
-        this.game.input.enabled = false;
-
-        // どのオブジェクトを編集中か保存
-        this.editingObject = selectedObject; 
-        
-        const title = document.getElementById('sm-editor-title');
-        if (title) {
-            title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
-        }
-        let sm_data = this.editingObject.getData('state_machine');
-
-        // 2. データがなければ、初期データを作成する
-        if (!sm_data || !sm_data.states) {
-            sm_data = {
-                initialState: 'idle',
-                states: [
-                    {
-                        name: 'idle',
-                        onEnter: { id: `event_${Date.now()}_en`, trigger: 'onStateEnter', nodes: [], connections: [] },
-                        onUpdate: { id: `event_${Date.now()}_up`, trigger: 'onStateUpdate', nodes: [], connections: [] },
-                        onExit: { id: `event_${Date.now()}_ex`, trigger: 'onStateExit', nodes: [], connections: [] }
-                    }
-                ]
-            };
-            this.editingObject.setData('state_machine', sm_data);
-        }
-
-        // 3. 最初に選択する状態を決定
-        this.activeStateName = sm_data.initialState || sm_data.states[0]?.name;
-
-        // 4. 状態リストのUIを構築する
-        this.buildStatesList();
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-       this.setupVslCanvasListeners(overlay);
+    const title = document.getElementById('sm-editor-title');
+    if (title) title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
+    
+    let sm_data = this.editingObject.getData('state_machine');
+    if (!sm_data || !sm_data.states) {
+        sm_data = {
+            initialState: 'idle',
+            states: [{ name: 'idle', onEnter: { id: `event_${Date.now()}_en`, nodes: [], connections: [] }, onUpdate: { id: `event_${Date.now()}_up`, nodes: [], connections: [] }, onExit: { id: `event_${Date.now()}_ex`, nodes: [], connections: [] }}]
+        };
+        this.editingObject.setData('state_machine', sm_data);
+    }
+    
+    this.activeStateName = sm_data.initialState || sm_data.states[0]?.name;
+    this.buildStatesList();
+    this.setupVslCanvasListeners(this.smEditorOverlay);
 }
 // in src/editor/Editor-ui.js
 
 // in src/editor/EditorUI.js
-
 closeEventEditor = () => {
     if (!this.eventEditorOverlay) return;
-
-    // ★ 先にリスナーを解除する処理を追加
     this.removeVslCanvasListeners(this.eventEditorOverlay);
-
     this.eventEditorOverlay.style.display = 'none';
-    
-    // ★ 状態を完全にリセットする処理を追加
     this.editingObject = null;
     this.activeEventId = null;
     this.activeEventData = null;
-
     this.game.input.enabled = true;
     document.body.classList.remove('modal-open');
 }
-
-// closeStateMachineEditor を修正
 closeStateMachineEditor = () => {
-    const overlay = document.getElementById('sm-editor-overlay');
-    if (!overlay) return;
-    console.log("%cClosing State Machine Editor...", "color: red;");
-
-    this.removeVslCanvasListeners(overlay);
-    overlay.style.display = 'none';
-
-    // ★★★ 以下の状態リセットを必ず行う ★★★
+    if (!this.smEditorOverlay) return;
+    this.removeVslCanvasListeners(this.smEditorOverlay);
+    this.smEditorOverlay.style.display = 'none';
     this.editingObject = null;
     this.activeStateName = null;
-    this.activeHookName = 'onEnter'; // デフォルトに戻す
-
+    this.activeHookName = 'onEnter';
     this.game.input.enabled = true;
     document.body.classList.remove('modal-open');
 }
-   
-    // in src/editor/EditorUI.js (openStateMachineEditor の後など)
 
     /**
      * ★★★ 新規ヘルパー ★★★
@@ -2248,22 +2186,18 @@ closeStateMachineEditor = () => {
      * 現在編集中の「アクティブなイベントグラフ」のデータを返す
      * @returns {object | null} VSLイベントデータ
      */
-    getActiveEventData() {
-        if (!this.editingObject) return null;
-
-        // --- ステートマシン編集中の場合 ---
-        const smOverlay = document.getElementById('sm-editor-overlay');
-        if (smOverlay && smOverlay.classList.contains('is-active')) {
-            const sm_data = this.editingObject.getData('state_machine');
-            if (!sm_data) return null;
-            const activeState = sm_data.states.find(s => s.name === this.activeStateName);
-            return activeState ? activeState[this.activeHookName] : null;
-        }
-
-        // --- (通常)イベント編集中の場合 ---
-        const events = this.editingObject.getData('events') || [];
-        return events.find(e => e.id === this.activeEventId) || null;
+   getActiveEventData = () => {
+    if (!this.editingObject) return null;
+    const smOverlay = this.smEditorOverlay;
+    if (smOverlay && (smOverlay.classList.contains('is-active') || smOverlay.style.display === 'flex')) {
+        const sm_data = this.editingObject.getData('state_machine');
+        if (!sm_data) return null;
+        const activeState = sm_data.states.find(s => s.name === this.activeStateName);
+        return activeState ? activeState[this.activeHookName] : null;
     }
+    const events = this.editingObject.getData('events') || [];
+    return events.find(e => e.id === this.activeEventId) || null;
+}
 
     /**
      * ★★★ 新規ヘルパー (汎用) ★★★
@@ -2288,14 +2222,10 @@ closeStateMachineEditor = () => {
  * ★★★ 新規メソッド ★★★
  * 指定されたオーバーレイ内のVSLキャンバスにイベントリスナーを設定する
  * @param {HTMLElement} overlayElement - 対象のモーダルオーバーレイ要素
- */
-setupVslCanvasListeners = (overlayElement) => {
+ */setupVslCanvasListeners = (overlayElement) => {
     const canvasWrapper = overlayElement.querySelector('.vsl-canvas-wrapper');
     if (!canvasWrapper) return;
-
-    // `this.onVslCanvasPointerDown` をリスナーとして登録
-    // .bind(this) を使って、`this` が常に EditorUI インスタンスを指すようにする
-    canvasWrapper._pointerDownHandler = this.onVslCanvasPointerDown.bind(this);
+    canvasWrapper._pointerDownHandler = (event) => this.onVslCanvasPointerDown(event);
     canvasWrapper.addEventListener('pointerdown', canvasWrapper._pointerDownHandler);
 }
 
@@ -2306,10 +2236,9 @@ setupVslCanvasListeners = (overlayElement) => {
  */
 removeVslCanvasListeners = (overlayElement) => {
     const canvasWrapper = overlayElement.querySelector('.vsl-canvas-wrapper');
-    // `_pointerDownHandler` が存在すれば、そのリスナーを解除
     if (canvasWrapper && canvasWrapper._pointerDownHandler) {
         canvasWrapper.removeEventListener('pointerdown', canvasWrapper._pointerDownHandler);
-        delete canvasWrapper._pointerDownHandler; // 後片付け
+        delete canvasWrapper._pointerDownHandler;
     }
 }
 
@@ -2320,20 +2249,12 @@ removeVslCanvasListeners = (overlayElement) => {
  * ★★★ 新規メソッド ★★★
  * VSLキャンバスでポインターが押されたときの統一処理
  * @param {PointerEvent} event
- */
-onVslCanvasPointerDown = (event) => {
-    // パンモードの処理などは後で追加可能
-    
+ */onVslCanvasPointerDown = (event) => {
     const pinElement = event.target.closest('[data-pin-type]');
     if (pinElement) {
         event.stopPropagation();
         this.onPinClicked(pinElement);
         return;
-    }
-
-    const nodeElement = event.target.closest('.vsl-node-wrapper');
-    if (nodeElement) {
-        // ノードのドラッグ処理などをここに追加
     }
 }
 }
