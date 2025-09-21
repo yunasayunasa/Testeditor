@@ -285,7 +285,7 @@ body.modal-open #editor-root {
     overflow: hidden;
     width: 100%;
     /* ★ 新規追加: 高さが0になるのを防ぐ */
-    min-height: 0;
+    min-height: 0 !important;
 }
 
 /* --- Barra Uirlisí VSL (Clé) --- */
@@ -431,7 +431,8 @@ body.modal-open #editor-root {
     flex-direction: column;
     overflow: hidden;
     /* ★ 新規追加: 高さが0になるのを防ぐ */
-    min-height: 0; 
+    
+      min-height: 0 !important;
 }
 
 /* Cluaisíní Hook Imeachta */
@@ -441,6 +442,7 @@ body.modal-open #editor-root {
     border-bottom: 1px solid #333;
     /* ★ flex-shrink: 0 は必須 */
     flex-shrink: 0; 
+    
 }
 .sm-hook-tab {
     padding: 8px 16px;
@@ -453,6 +455,6 @@ body.modal-open #editor-root {
 .sm-hook-tab:hover { background-color: #3e3e42; }
 .sm-hook-tab.active { color: white; font-weight: bold; border-bottom: 2px solid #569cd6; }
 #sm-hooks-tabs {
-    flex-shrink: 0; /* ★重要：親要素が縮んでも、このタブコンテナ自体は縮まないようにする */
+     flex-shrink: 0 !important; 
 }
 /* Úsáideann an chuid eile (.vsl-editor-container, etc.) na stíleanna comhroinnte thuas */
