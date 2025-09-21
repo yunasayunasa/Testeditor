@@ -120,31 +120,31 @@ async run(source, eventData, collidedTarget = null) {
         }
     }}
 
-    findTarget(targetId, scene, source, collidedTarget) {
-        // デフォルトは source (イベント発生源)
-        if (!targetId || targetId === 'source') {
-            return source;
-        }
-        // 'target' は明確に衝突相手などを指す
-        if (targetId === 'target') {
-            return collidedTarget;
-        }
-        // 'self' は後方互換性のために残すが、source と同じ
-        if (targetId === 'self') {
-            return source;
-        }
-        // それ以外は名前で検索
-    
-    
+   // in src/core/ActionInterpreter.js
 
-        // ▼▼▼【ここが最重要のデバッグログです】▼▼▼
-        console.log(`%c[DEBUG | findTarget] が呼ばれました。`, 'background: #222; color: #bada55');
-        console.log(`  > targetId: '${targetId}'`);
-        console.log(`  > source: '${source ? source.name : 'null'}'`);
-        console.log(`  > collidedTarget: '${collidedTarget ? collidedTarget.name : 'null'}'`);
-        console.log(`  > 最終的に返すオブジェクト: '${result ? result.name : 'null'}'`);
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+findTarget(targetId, scene, source, collidedTarget) {
+    let result = source; // デフォルトはsource
 
-        return result; // ★ 最後に結果を返す
+    if (!targetId || targetId === 'source' || targetId === 'self') {
+        result = source;
     }
+    else if (targetId === 'target') {
+        result = collidedTarget;
+    }
+    else {
+        // ★ BaseGameSceneにオブジェクト検索を依頼する形が理想
+        result = scene.children.getByName(targetId);
+    }
+
+    // ▼▼▼【ここからがデバッグログ】▼▼▼
+    console.groupCollapsed(`[DEBUG] findTarget`);
+    console.log(`- Request ID: '${targetId}'`);
+    console.log(`- Source:`, source);
+    console.log(`- Collided Target:`, collidedTarget);
+    console.log(`- Found Object:`, result); // ★★★ この行がnullになっていないか？ ★★★
+    console.groupEnd();
+    // ▲▲▲【ここまでがデバッグログ】▲▲▲
+
+    return result;
+}
 }
