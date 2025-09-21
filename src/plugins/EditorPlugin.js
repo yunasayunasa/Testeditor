@@ -34,9 +34,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         const currentURL = window.location.href;
         if (!currentURL.includes('debug=true')) return;
         this.isEnabled = true;
-    this.editorPanel = document.getElementById('editor-panel');
-    this.editorTitle = document.getElementById('editor-title');
-    this.editorPropsContainer = document.getElementById('editor-props');
+   
         console.warn("[EditorPlugin] Debug mode activated.");
     }
    
@@ -67,10 +65,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     }
     setUI(editorUI) {
         this.editorUI = editorUI;
-        // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
-        // ★★★ イベントリスナーの登録は、ここで行わない ★★★
+        // EditorUIにDOM参照の取得を指示
+        this.editorUI.getDomElements();
     }
-
  /**
      * ★★★ 修正版 ★★★
      * UIから渡された最新のレイヤー状態を保存し、シーンに即時反映させる

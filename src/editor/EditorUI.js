@@ -92,7 +92,8 @@ export default class EditorUI {
        // this.vslNodeList = document.getElementById('vsl-node-list');
        // this.vslCanvas = document.getElementById('vsl-canvas');
         this.vslTabs = document.getElementById('vsl-tabs');
-      //  this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        
         this.smEditorOverlay = document.getElementById('sm-editor-overlay'); // ★ ステートマシン用も追加
 
     }
