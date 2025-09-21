@@ -1768,69 +1768,113 @@ createConnection(fromNodeId, fromPinName, toNodeId, toPinName, targetVslData) {
  * ★★★ getBoundingClientRectを使った座標計算・最終確定版 ★★★
  * connectionsデータに基づいて、SVGで滑らかな曲線を描画する。
  */
+// in EditorUI.js
+
+/**
+ * ★★★ デバッグログ完全組み込み・最終確定版 ★★★
+ * getBoundingClientRectを使った座標計算で、SVGで滑らかな曲線を描画する。
+ */
 drawConnections(svgLayer, nodes, connections) {
     const isSmEditor = this.smEditorOverlay.style.display === 'flex';
     const canvasEl = isSmEditor
         ? this.smEditorOverlay.querySelector('.sm-vsl-canvas')
         : this.vslCanvas;
-    if (!canvasEl) return;
 
-    // ▼▼▼【ここからが修正の核心】▼▼▼
-    // 1. SVGレイヤーとキャンバスの絶対位置を取得
-    //    これがすべての座標計算の基準点となる
+    // --- ガード節 ---
+    if (!canvasEl) {
+        console.error("[DEBUG] drawConnections: キャンバス要素が見つかりませんでした。");
+        return;
+    }
+    if (!svgLayer) {
+        console.error("[DEBUG] drawConnections: SVGレイヤーが渡されませんでした。");
+        return;
+    }
+
+    // --- 描画の準備 ---
     const svgRect = svgLayer.getBoundingClientRect();
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
     svgLayer.innerHTML = '';
-    if (!connections || connections.length === 0) return;
 
-    connections.forEach(conn => {
+    // --- デバッグログ (Phase 1: 実行開始) ---
+    console.groupCollapsed("[DEBUG] drawConnections 実行");
+    console.log("渡されたnodesデータ:", JSON.parse(JSON.stringify(nodes || [])));
+    console.log("渡されたconnectionsデータ:", JSON.parse(JSON.stringify(connections || [])));
+    
+    if (!connections || connections.length === 0) {
+        console.log("接続データが空のため、描画をスキップします。");
+        console.groupEnd();
+        return;
+    }
+    
+    // --- 各接続をループして描画 ---
+    connections.forEach((conn, index) => {
+        // --- デバッグログ (Phase 2: 個別接続の処理開始) ---
+        console.groupCollapsed(`接続 ${index + 1}: [${conn.fromNode}:${conn.fromPin}] -> [${conn.toNode}:${conn.toPin}]`);
+        
+        // --- DOM要素の検索 ---
         const fromNodeEl = canvasEl.querySelector(`[data-node-id="${conn.fromNode}"]`);
         const toNodeEl = canvasEl.querySelector(`[data-node-id="${conn.toNode}"]`);
+        
+        console.log("FromノードDOM:", fromNodeEl);
+        console.log("ToノードDOM:", toNodeEl);
 
         if (fromNodeEl && toNodeEl) {
             const fromPinEl = fromNodeEl.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
             const toPinEl = toNodeEl.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
 
-            if (!fromPinEl || !toPinEl) return;
+            console.log("FromピンDOM:", fromPinEl);
+            console.log("ToピンDOM:", toPinEl);
 
-            // ▼▼▼【ここからが座標計算の修正】▼▼▼
-            // 2. 各ピンのビューポート基準の絶対位置を取得
-            const fromPinRect = fromPinEl.getBoundingClientRect();
-            const toPinRect = toPinEl.getBoundingClientRect();
+            if (fromPinEl && toPinEl) {
+                // --- 座標計算 ---
+                const fromPinRect = fromPinEl.getBoundingClientRect();
+                const toPinRect = toPinEl.getBoundingClientRect();
 
-            // 3. ピンの中心座標を計算
-            const fromPinCenterX = fromPinRect.left + fromPinRect.width / 2;
-            const fromPinCenterY = fromPinRect.top + fromPinRect.height / 2;
-            const toPinCenterX = toPinRect.left + toPinRect.width / 2;
-            const toPinCenterY = toPinRect.top + toPinRect.height / 2;
-            
-            // 4. ビューポート座標を、SVGレイヤー内のローカル座標に変換
-            //    (ピンの座標 - SVGの座標)
-            const startX = fromPinCenterX - svgRect.left;
-            const startY = fromPinCenterY - svgRect.top;
-            const endX = toPinCenterX - svgRect.left;
-            const endY = toPinCenterY - svgRect.top;
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                const fromPinCenterX = fromPinRect.left + fromPinRect.width / 2;
+                const fromPinCenterY = fromPinRect.top + fromPinRect.height / 2;
+                const toPinCenterX = toPinRect.left + toPinRect.width / 2;
+                const toPinCenterY = toPinRect.top + toPinRect.height / 2;
+                
+                const startX = fromPinCenterX - svgRect.left;
+                const startY = fromPinCenterY - svgRect.top;
+                const endX = toPinCenterX - svgRect.left;
+                const endY = toPinCenterY - svgRect.top;
 
-            // ベジェ曲線の計算 (ここは変更なし)
-            const dx = Math.abs(startX - endX);
-            const handleOffset = Math.max(50, dx / 2);
-            const controlX1 = startX + handleOffset;
-            const controlY1 = startY;
-            const controlX2 = endX - handleOffset;
-            const controlY2 = endY;
-            
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const pathData = `M ${startX},${startY} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${endX},${endY}`;
-            path.setAttribute('d', pathData);
-            path.setAttribute('fill', 'none');
-            path.setAttribute('stroke', '#888');
-            path.setAttribute('stroke-width', '2');
-            
-            svgLayer.appendChild(path);
+                // --- ベジェ曲線データ生成 ---
+                const dx = Math.abs(startX - endX);
+                const handleOffset = Math.max(50, dx / 2);
+                const controlX1 = startX + handleOffset;
+                const controlY1 = startY;
+                const controlX2 = endX - handleOffset;
+                const controlY2 = endY;
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const pathData = `M ${startX},${startY} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${endX},${endY}`;
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', '#888');
+                path.setAttribute('stroke-width', '2');
+                
+                // --- 描画実行 ---
+                svgLayer.appendChild(path);
+                
+                // --- デバッグログ (Phase 3: 成功) ---
+                console.log("計算後の座標:", {startX, startY, endX, endY});
+                console.log("SVGパスデータ:", pathData);
+                console.log("%c描画成功！", "color: lightgreen;");
+
+            } else {
+                // --- デバッグログ (Phase 3: 失敗) ---
+                console.error("ピンのDOM要素が見つかりませんでした。");
+            }
+        } else {
+            // --- デバッグログ (Phase 3: 失敗) ---
+            console.error("ノードのDOM要素が見つかりませんでした。");
         }
+        
+        console.groupEnd(); // 個別接続ロググループを閉じる
     });
+
+    console.groupEnd(); // 全体ロググループを閉じる
 }
       /**
      * ★★★ マルチトリガー対応版 (buildNodeContentから移動) ★★★
@@ -2118,29 +2162,41 @@ buildHooksTabs() {
 }
 
 
+/// in EditorUI.js
+
 /**
- * ★★★ 新規メソッド (VSL連携の核心) ★★★
+ * ★★★ デバッグログ付き ★★★
  * 現在選択されている状態とフックに基づいて、VSLエディタの中身を表示する
  */
 displayActiveVslEditor() {
-    // VSLエディタのコンテナを取得
     const vslContainer = this.smEditorOverlay.querySelector('.sm-vsl-editor-container');
     if (!vslContainer) return;
     
-    // --- アクティブなVSLデータを取得 ---
+    // ▼▼▼【ここからデバッグログ】▼▼▼
+    console.group(`[DEBUG] displayActiveVslEditor (State: ${this.activeStateName}, Hook: ${this.activeHookName})`);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     const activeState = this.stateMachineData.states[this.activeStateName];
     if (!activeState) {
         vslContainer.innerHTML = `<p>状態「${this.activeStateName}」が見つかりません。</p>`;
+        console.error("デバッグ: activeState が見つかりません。", this.stateMachineData);
+        console.groupEnd();
         return;
     }
     this.activeVslData = activeState[this.activeHookName];
     if (!this.activeVslData) {
         vslContainer.innerHTML = `<p>フック「${this.activeHookName}」のデータが見つかりません。</p>`;
+        console.error("デバッグ: activeVslData が見つかりません。", activeState);
+        console.groupEnd();
         return;
     }
 
-    // --- VSLエディタのUIを描画 ---
-    // populateSmVslCanvas は populateVslToolbar と populateVslCanvas を呼び出すラッパー
+    // ▼▼▼【ここからデバッグログ】▼▼▼
+    // ★★★ JSON.stringifyを使って、データが実際にどうなっているかを確認 ★★★
+    console.log("1. 描画に使用するVSLデータ (activeVslData):", JSON.parse(JSON.stringify(this.activeVslData)));
+    console.groupEnd();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     this.populateSmVslCanvas();
 }
 /**
