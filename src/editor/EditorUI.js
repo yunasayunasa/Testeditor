@@ -1760,81 +1760,76 @@ createConnection(fromNodeId, fromPinName, toNodeId, toPinName, targetVslData) {
  * @param {Array<object>} nodes - ノードデータの配列
  * @param {Array<object>} connections - 接続データの配列
  */
+// in EditorUI.js
+
+/**
+ * ★★★ HTML構造の差異を吸収する最終FIX版 ★★★
+ * connectionsデータに基づいて、SVGで滑らかな曲線を描画する。
+ */
 drawConnections(svgLayer, nodes, connections) {
-    // 描画対象のキャンバス要素を特定 (スクロール問題の時と同じロジック)
     const isSmEditor = this.smEditorOverlay.style.display === 'flex';
     const canvasEl = isSmEditor
         ? this.smEditorOverlay.querySelector('.sm-vsl-canvas')
         : this.vslCanvas;
     if (!canvasEl) return;
 
-    // 既存の線をすべてクリア
     svgLayer.innerHTML = '';
-
     if (!connections || connections.length === 0) return;
 
     connections.forEach(conn => {
-        // canvasEl を基準に、接続元と接続先のノードDOM要素を検索
         const fromNodeEl = canvasEl.querySelector(`[data-node-id="${conn.fromNode}"]`);
         const toNodeEl = canvasEl.querySelector(`[data-node-id="${conn.toNode}"]`);
 
         if (fromNodeEl && toNodeEl) {
-            // 各ノードから、対応するピンのDOM要素を検索
             const fromPinEl = fromNodeEl.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
             const toPinEl = toNodeEl.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
 
             if (!fromPinEl || !toPinEl) return;
 
-            // --- ここからが座標計算 ---
-            const fromNodeWrapper = fromNodeEl.closest('.v-sl-node-wrapper');
-            const toNodeWrapper = toNodeEl.closest('.vsl-node-wrapper');
+            // ▼▼▼【ここからがエラー回避の修正】▼▼▼
+            // 1. ノードの位置決め用ラッパー要素を取得
+            //    イベントエディタとステートマシンエディタでクラス名が違う可能性を考慮
+            const fromNodeWrapper = fromNodeEl.closest('.vsl-node-wrapper') || fromNodeEl.closest('.sm-vsl-node-wrapper');
+            const toNodeWrapper = toNodeEl.closest('.vsl-node-wrapper') || toNodeEl.closest('.sm-vsl-node-wrapper');
+            
+            // 2. もしラッパーが見つからなければ、エラーを回避して次の接続へ
+            if (!fromNodeWrapper || !toNodeWrapper) {
+                console.warn(`[drawConnections] Could not find wrapper for node ${conn.fromNode} or ${conn.toNode}. Skipping connection.`);
+                return; // forEachの次のイテレーションへ
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            // 1. ノードのキャンバス内での絶対位置 (左上)
             const fromNodeX = fromNodeWrapper.offsetLeft;
             const fromNodeY = fromNodeWrapper.offsetTop;
             const toNodeX = toNodeWrapper.offsetLeft;
             const toNodeY = toNodeWrapper.offsetTop;
 
-            // 2. ピンのノード内での相対位置 (中心)
             const fromPinX = fromPinEl.offsetLeft + fromPinEl.offsetWidth / 2;
             const fromPinY = fromPinEl.offsetTop + fromPinEl.offsetHeight / 2;
             const toPinX = toPinEl.offsetLeft + toPinEl.offsetWidth / 2;
             const toPinY = toPinEl.offsetTop + toPinEl.offsetHeight / 2;
             
-            // 3. 最終的なSVG内でのピンの絶対座標
             const startX = fromNodeX + fromPinX;
             const startY = fromNodeY + fromPinY;
             const endX = toNodeX + toPinX;
             const endY = toNodeY + toPinY;
 
-            // ▼▼▼【ここからがベジェ曲線描画の核心】▼▼▼
-            // 4. 曲線の制御点を計算
-            //    水平方向の距離に応じて、曲線の膨らみを調整する
             const dx = Math.abs(startX - endX);
-            const handleOffset = Math.max(50, dx / 2); // 最低50px、最大で距離の半分
+            const handleOffset = Math.max(50, dx / 2);
 
             const controlX1 = startX + handleOffset;
             const controlY1 = startY;
             const controlX2 = endX - handleOffset;
             const controlY2 = endY;
             
-            // 5. SVGのpath要素を作成
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            
-            // 6. d属性にコマンド文字列を設定
-            //    M = Move To (始点へ移動)
-            //    C = Cubic Bezier To (制御点1, 制御点2, 終点)
+            const path = document.createElementNS('http://www.w3.0/2000/svg', 'path');
             const pathData = `M ${startX},${startY} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${endX},${endY}`;
             path.setAttribute('d', pathData);
-            
-            // 7. スタイルを設定
             path.setAttribute('fill', 'none');
-            path.setAttribute('stroke', '#888'); // 線の色を少し濃くする
+            path.setAttribute('stroke', '#888');
             path.setAttribute('stroke-width', '2');
             
-            // 8. SVGレイヤーに追加
             svgLayer.appendChild(path);
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         }
     });
 }
