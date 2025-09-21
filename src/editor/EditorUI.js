@@ -107,13 +107,13 @@ export default class EditorUI {
 
     initializeEventListeners() {
         // --- UIボタンのリスナー ---
-        document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
-        document.getElementById('add-text-button')?.addEventListener('click', () => this.onAddTextClicked());
-        document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
-        document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
-        document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
-        document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
-document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => this.closeStateMachineEditor());
+       document.getElementById('add-asset-button')?.addEventListener('click', this.onAddButtonClicked);
+    document.getElementById('add-text-button')?.addEventListener('click', this.onAddTextClicked);
+    document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
+    document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
+    document.getElementById('add-layer-btn')?.addEventListener('click', this.addNewLayer);
+    document.getElementById('event-editor-close-btn')?.addEventListener('click', this.closeEventEditor);
+    document.getElementById('sm-editor-close-btn')?.addEventListener('click', this.closeStateMachineEditor);
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
         if (layerListContainer) {
@@ -347,7 +347,7 @@ document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => 
    /**
      * テキスト追加ボタンがクリックされたときの処理
      */
-    onAddTextClicked() {
+    closeEventEditor = () => {
         console.count('onAddTextClicked called');
         const targetScene = this.getActiveGameScene();
         if (!targetScene || typeof targetScene.addTextObjectFromEditor !== 'function') return;
@@ -563,7 +563,7 @@ document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => 
    // in EditorUI.js
 // src/editor/EditorUI.js
 
-    onAddButtonClicked() {
+    onAddButtonClicked = () => {
         if (!this.selectedAssetKey) {
             alert('アセットを選択してください。');
             return;
@@ -843,7 +843,7 @@ document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => 
         }
     }
     
-    addNewLayer() {
+   addNewLayer = () => {
         const newLayerName = prompt("Enter new layer name:", `Layer ${this.layers.length + 1}`);
         if (newLayerName && !this.layers.some(l => l.name === newLayerName)) {
             this.layers.unshift({ name: newLayerName, visible: true, locked: false });
@@ -1075,7 +1075,7 @@ document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => 
      * ★★★ 新規メソッド ★★★
      * イベントエディタを閉じる
      */
-    closeEventEditor() {
+closeEventEditor = () => {
         if (!this.eventEditorOverlay) return;
         this.eventEditorOverlay.style.display = 'none';
         this.editingObject = null;
