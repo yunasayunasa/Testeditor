@@ -1828,15 +1828,16 @@ deselectNode() {
    // in src/editor/EditorUI.js
 
   // in src/editor/EditorUI.js
+ drawConnections(svgLayer, nodes, connections, canvas) {
+        // ★ 描画前に、古い線をすべてクリアする
+        svgLayer.innerHTML = '';
 
-    drawConnections(svgLayer, nodes, connections, canvas) {
         connections.forEach(conn => {
-            // ★ canvas から、ノードのラッパー要素(.vsl-node-wrapper)を検索する
             const fromNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.fromNode}"]`)?.parentElement;
             const toNodeWrapper = canvas.querySelector(`.vsl-node[data-node-id="${conn.toNode}"]`)?.parentElement;
 
-            // ラッパー要素が見つからなければ、この接続は描画しない
             if (!fromNodeWrapper || !toNodeWrapper) return;
+            
             
             // ラッパーの中から、ピン要素を検索する
             const fromPinEl = fromNodeWrapper.querySelector(`[data-pin-name="${conn.fromPin}"]`);
@@ -1910,33 +1911,34 @@ deselectNode() {
     }
   // in src/editor/EditorUI.js
 
+    // in src/editor/EditorUI.js
+
     populateVslCanvas() {
         const activeOverlay = document.querySelector('.modal-overlay.is-active');
         if (!activeOverlay) return;
 
-        // 1. アクティブなモーダルの中から、正しいキャンバス要素を一つだけ見つける
         const canvas = activeOverlay.querySelector('.vsl-canvas');
-        if (!canvas) {
-            // ステートマシン・エディタを開いた直後など、
-            // VSLキャンバスがないUI状態もあるかもしれないので、エラーではなく静かに終了
-            return;
-        }
+        if (!canvas) return;
 
-        // 2. 見つけたキャンバスの中身だけを操作する
-        canvas.innerHTML = '';
+        // ▼▼▼【ここからが修正の核心です】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // 1. SVGレイヤーはHTMLに既にあるので、それを検索して取得する
+        const svgLayer = canvas.querySelector('.vsl-svg-layer');
+        if (!svgLayer) return;
+
+        // 2. キャンバスから、古いノード(wrapper)だけを削除する
+        //    (SVGレイヤーは削除しない)
+        canvas.querySelectorAll('.vsl-node-wrapper').forEach(node => node.remove());
 
         const targetEvent = this.getActiveEventData();
         if (!targetEvent) return;
 
-        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.className = 'vsl-svg-layer';
-        svgLayer.setAttribute('width', '2000');
-        svgLayer.setAttribute('height', '2000');
-        canvas.appendChild(svgLayer);
-
+        // 3. ノードを描画する (SVGレイヤーには触れない)
         if (targetEvent.nodes) {
             targetEvent.nodes.forEach(nodeData => {
                 const nodeWrapper = document.createElement('div');
+                // ... (nodeWrapper, nodeElement の作成は変更なし)
                 nodeWrapper.className = 'vsl-node-wrapper';
                 nodeWrapper.style.left = `${nodeData.x}px`;
                 nodeWrapper.style.top = `${nodeData.y}px`;
@@ -1953,11 +1955,14 @@ deselectNode() {
             });
         }
         
+        // 4. 次のフレームで、線を描画する
         requestAnimationFrame(() => {
             if (targetEvent.connections) {
                 this.drawConnections(svgLayer, targetEvent.nodes, targetEvent.connections, canvas);
             }
         });
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
     /**
      * ★★★ 新規ヘルパー (タスク1) ★★★
