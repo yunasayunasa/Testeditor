@@ -112,7 +112,6 @@ export default class EditorUI {
         document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
         document.getElementById('add-layer-btn')?.addEventListener('click', () => this.addNewLayer());
         document.getElementById('event-editor-close-btn')?.addEventListener('click', () => this.closeEventEditor());
-        document.getElementById('sm-editor-close-btn')?.addEventListener('click', () => this.closeStateMachineEditor());
 
         // --- レイヤーリスト（イベント委譲） ---
         const layerListContainer = document.getElementById('layer-list');
@@ -2075,48 +2074,5 @@ deselectNode() {
         }
         
         return clonedEvent;
-    }
-    // in src/editor/EditorUI.js (クラス内の分かりやすい場所に追加)
-
-    /**
-     * ★★★ 新規メソッド ★★★
-     * ステートマシン・エディタを開き、その中身を構築する
-     * @param {Phaser.GameObjects.GameObject} selectedObject
-     */
-    openStateMachineEditor(selectedObject) {
-        const overlay = document.getElementById('sm-editor-overlay');
-        if (!overlay || !selectedObject) return;
-
-        // ★ Phaserのゲーム内クリックなどを無効化
-        this.game.input.enabled = false;
-
-        // どのオブジェクトを編集中か保存
-        this.editingObject = selectedObject; 
-        
-        const title = document.getElementById('sm-editor-title');
-        if (title) {
-            title.innerText = `ステートマシン編集: ${this.editingObject.name}`;
-        }
-        
-        // TODO: ここに、状態リストやVSLキャンバスを構築する処理を追加していく
-        // (今はまだ空っぽでOK)
-        console.log(`[EditorUI] Opening State Machine Editor for '${this.editingObject.name}'`);
-
-
-        // ★ is-activeクラスを付けて、モーダルを表示
-        overlay.classList.add('is-active');
-    }
-
-    /**
-     * ★★★ 新規メソッド ★★★
-     * ステートマシン・エディタを閉じる
-     */
-    closeStateMachineEditor() {
-        const overlay = document.getElementById('sm-editor-overlay');
-        if (!overlay) return;
-
-        overlay.classList.remove('is-active');
-        this.editingObject = null;
-        this.game.input.enabled = true; // Phaserの入力を元に戻す
     }
 }
