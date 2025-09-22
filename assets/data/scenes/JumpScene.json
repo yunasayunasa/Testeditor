@@ -225,7 +225,8 @@
               "y": 50
             }
           ],
-          "connections": []
+          "connections": [],
+          "targetGroup": "floor"
         }
       ],
       "components": [
