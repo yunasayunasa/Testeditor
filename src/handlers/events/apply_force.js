@@ -1,33 +1,38 @@
-// src/handlers/events/apply_force.js
+// in src/handlers/events/apply_force.js (最終決定版)
+
+// Matter.jsのネイティブ Body モジュールをインポート（Phaserがグローバルに公開しているものを利用）
+const MatterBody = Phaser.Physics.Matter.Matter.Body;
 
 export default async function apply_force(interpreter, params, target) {
+    // --- ガード節 ---
     if (!target || !target.body) {
-        console.warn(`[apply_force] Target has no physics body.`);
+        console.warn(`[apply_force] Target or its physics body not found.`);
         return;
     }
-console.log(`%c[Force Test] Temporarily setting frictionAir to 0.`, 'color: yellow; background: black;');
-    // 空気抵抗を強制的にゼロにする
-    target.setFrictionAir(0);
-    // ▼▼▼【ここから最終デバッグコード】▼▼▼
-    console.log("--- Physics Body Diagnostics ---");
-    console.log("Target Name:", target.name);
-    const body = target.body;
-    console.log("Is Static?:", body.isStatic);
-    console.log("Mass:", body.mass);
-    console.log("Inverse Mass:", body.inverseMass); // 0だと動かない
-    console.log("Friction:", body.friction);
-    console.log("Static Friction:", body.frictionStatic);
-    console.log("Is Sleeping?:", body.isSleeping);
-    console.log("World Time Scale:", target.scene.matter.world.timeScale); // 0だと物理計算が止まる
-    console.log("--------------------------------");
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+    // --- 力のベクトルを計算 ---
     const forceX = parseFloat(params.x) || 0;
     const forceY = parseFloat(params.y) || 0;
+    const forceVector = { x: forceX, y: forceY };
+
+    // ▼▼▼【ここが核心の変更点です】▼▼▼
+    // --------------------------------------------------------------------
+    // Phaserの target.applyForce() の代わりに、
+    // Matter.jsネイティブの Body.applyForce() を直接呼び出す
     
-    console.log(`  > Applying force: { x: ${forceX}, y: ${forceY} }`);
-    target.setAwake(); // スリープ状態からの復帰を試す
-    target.applyForce({ x: forceX, y: forceY });
+    console.log(`%c[Force Native] Applying force via Matter.js native API.`, 'color: white; background: green;');
+    
+    MatterBody.applyForce(
+        target.body,          // 第1引数: 対象の物理ボディ (target ではなく target.body)
+        target.body.position, // 第2引数: 力を加える位置 (通常はボディの中心)
+        forceVector           // 第3引数: 適用する力のベクトル
+    );
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // --- 実行結果の確認ログ ---
+    // (注意: 実際の速度変化は次の物理ステップまで反映されない場合があるが、ログとして記録する)
+    console.log(`  > Force applied. Velocity is now: { x: ${target.body.velocity.x.toFixed(2)}, y: ${target.body.velocity.y.toFixed(2)} }`);
 }
 /**
  * ★ VSLエディタ用の自己定義 ★
