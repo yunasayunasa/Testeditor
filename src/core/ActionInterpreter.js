@@ -11,6 +11,12 @@ export default class ActionInterpreter {
         this.scene = null;
         this.currentSource = null;
         this.currentTarget = null;
+        this.actionInterpreter = this.scene.registry.get('actionInterpreter');
+
+        // --- 念のためのガード節 ---
+        if (!this.actionInterpreter) {
+            console.error("[StateMachineComponent] CRITICAL: ActionInterpreter not found in scene registry!");
+        }
     }
 
     /**
