@@ -20,8 +20,8 @@
     {
       "name": "cg01_2",
       "type": "initialize",
-      "x": 399,
-      "y": 551,
+      "x": 381,
+      "y": 498,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -46,8 +46,8 @@
     {
       "name": "cg01_3",
       "type": "initialize",
-      "x": 1105,
-      "y": 588,
+      "x": 864,
+      "y": 442,
       "depth": 0,
       "scaleX": 0.49,
       "scaleY": 0.49,
@@ -157,7 +157,7 @@
       "name": "player",
       "type": "initialize",
       "x": 402,
-      "y": 373,
+      "y": 320,
       "depth": 20,
       "scaleX": 0.1,
       "scaleY": 0.1,
@@ -183,22 +183,6 @@
           "targetGroup": "bg"
         }
       ],
-      "components": [
-        {
-          "type": "PlayerController",
-          "params": {
-            "moveSpeed": 8.5
-          }
-        },
-        {
-          "type": "Scrollable",
-          "params": {}
-        },
-        {
-          "type": "Interactor",
-          "params": {}
-        }
-      ],
       "texture": "bgtest2",
       "physics": {
         "isStatic": false,
@@ -215,47 +199,33 @@
       }
     },
     {
-      "name": "Enemy",
+      "name": "bgtest4_1758555036555",
       "type": "initialize",
-      "x": 1146,
-      "y": 400,
+      "x": 883,
+      "y": 273,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 0.71,
+      "scaleY": 0.71,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
-      "group": "enemy",
       "events": [
         {
-          "id": "event_1758525869749",
+          "id": "event_1758555056626",
           "trigger": "onStomp",
           "nodes": [
             {
-              "id": "node_1758525896294",
-              "type": "distance_check",
+              "id": "node_1758555067039",
+              "type": "state_transition",
               "params": {
-                "target_a": "source",
-                "target_b": "player",
-                "distance": 100
+                "to": "chase",
+                "target": "source"
               },
               "x": 50,
               "y": 50
-            },
-            {
-              "id": "node_1758525904286",
-              "type": "transition_scene",
-              "params": {
-                "scene": "追跡",
-                "data": "",
-                "script": ""
-              },
-              "x": 50,
-              "y": 220
             }
           ],
-          "connections": [],
-          "targetGroup": "floor"
+          "connections": []
         }
       ],
       "components": [
@@ -264,7 +234,7 @@
           "params": {}
         }
       ],
-      "texture": "next_arrow",
+      "texture": "bgtest4",
       "physics": {
         "isStatic": false,
         "isSensor": false,
