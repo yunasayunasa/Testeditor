@@ -120,28 +120,55 @@ async run(source, eventData, collidedTarget = null) {
             currentNodeData = null; 
         }
     }}
+// in src/core/ActionInterpreter.js
 
- findTarget(targetId, scene, source, collidedTarget) {
-    // ▼▼▼ ログを一番上に移動し、シンプルにする ▼▼▼
-    console.log(`--- [DEBUG] findTarget ---`);
-    console.log(`Request ID: '${targetId}'`);
+// ... (constructor や run メソッドは変更なし) ...
 
+/**
+ * ★★★ 'player'検索を高速化するキャッシュ機能付き・最終FIX版 ★★★
+ * 指定されたIDに基づいて、シーンからターゲットとなるGameObjectを検索して返す。
+ * @param {string} targetId - 検索するID ('player', 'source', 'target', またはオブジェクト名)
+ * @param {Phaser.Scene} scene - 検索対象のシーン
+ * @param {Phaser.GameObjects.GameObject} source - イベントの発生源オブジェクト
+ * @param {Phaser.GameObjects.GameObject} collidedTarget - 衝突イベントの相手オブジェクト
+ * @returns {Phaser.GameObjects.GameObject | null} 見つかったGameObject、またはnull
+ */
+findTarget(targetId, scene, source, collidedTarget) {
+    // 1. 特殊なIDを先に処理する ('source', 'self', 'target')
     if (!targetId || targetId === 'source' || targetId === 'self') {
-        console.log(`Result: source ('${source.name}')`);
         return source;
     }
     if (targetId === 'target') {
-        console.log(`Result: collidedTarget ('${collidedTarget ? collidedTarget.name : 'null'}')`);
         return collidedTarget;
     }
-    
-    // グループ検索は一旦コメントアウトして問題を切り分ける
-    // if (targetId.startsWith('#')) { ... }
-    
-    const result = scene.children.getByName(targetId);
 
-    console.log(`Found by name:`, result); // ★★★ ここがnullになっていないか？ ★★★
-    return result;
+    // ▼▼▼【ここがパフォーマンス改善の核心です】▼▼▼
+    // --------------------------------------------------------------------
+    // 2. 'player' が指定された場合の特別高速化処理
+    if (targetId === 'player') {
+        // a) シーンにプレイヤーのキャッシュが存在し、かつそのオブジェクトがまだ有効かチェック
+        //    (シーン遷移後などに古いキャッシュを使わないようにするため)
+        if (scene._playerCache && scene._playerCache.scene === scene && scene._playerCache.active) {
+            // 有効なキャッシュがあれば、検索せずに即座に返す
+            return scene._playerCache;
+        }
+
+        // b) キャッシュがない、または無効な場合のみ、通常の名前検索を実行
+        const playerObject = scene.children.getByName('player');
+
+        if (playerObject) {
+            // c) 見つかったplayerオブジェクトを、シーンのカスタムプロパティとして保存（キャッシュ）
+            scene._playerCache = playerObject;
+            console.log(`[findTarget] Caching 'player' object for scene '${scene.scene.key}'.`);
+        }
+        
+        return playerObject;
+    }
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // 3. 'player' 以外の、すべての通常オブジェクトの名前検索
+    return scene.children.getByName(targetId);
 }
 
 
