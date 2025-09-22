@@ -14,6 +14,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.keyPressEvents = new Map();
         this.layoutDataKey = null;
         this.componentsToUpdate = [];
+        this._deferredActions = []; 
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -101,7 +102,10 @@ this.matter.world.on('beforeupdate', (event) => {
 
     this.buildSceneFromLayout(layoutData);
 }
- 
+  // ★★★ 遅延実行キューにアクションを追加するための新しいメソッド ★★★
+    deferAction(action) {
+        this._deferredActions.push(action);
+    }
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * 'start_tutorial'イベントを受け取ったときの処理
@@ -506,36 +510,33 @@ applyProperties(gameObject, layout) {
   // in src/scenes/BaseGameScene.js
 
     /**
-     * ★★★ 既存の処理と汎用ループを統合した最終確定版 ★★★
-     * 既存のupdateメソッドを、この内容で完全に置き換えてください。
+     * ★★★ updateメソッドを、この内容に置き換える ★★★
+     * 遅延実行キューの処理を追加
      */
     update(time, delta) {
-
-        // --- 1. PlayerControllerのための特別な更新 (既存のロジック) ---
-        if (this.playerController) {
-            this.playerController.updateWithJoystick(this.joystick);
+        // ▼▼▼【ここからが修正の核心】▼▼▼
+        // --- 1. 遅延実行キューに溜まったアクションをすべて実行 ---
+        if (this._deferredActions.length > 0) {
+            // キューのコピーを作成して、ループ中にキューが変更されても影響を受けないようにする
+            const actionsToRun = [...this._deferredActions];
+            // 元のキューは空にする
+            this._deferredActions.length = 0;
+            
+            actionsToRun.forEach(action => action());
         }
-        
-        // --- 2. その他の全てのコンポーネントのための汎用的な更新ループ (新しいロジック) ---
-        //    (PlayerController以外のコンポーネントはここで更新される)
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 2. 既存のコンポーネント更新ループ ---
         if (this.updatableComponents) {
             this.updatableComponents.forEach(component => {
-                // オブジェクトが破棄されていたらリストから削除
                 if (!component.gameObject.scene || !component.gameObject.active) {
                     this.updatableComponents.delete(component);
                     return;
                 }
-                
-                // ★★★ PlayerControllerは既に更新済みなので、ここではスキップする ★★★
-                if (component.constructor.name === 'PlayerController') {
-                    return;
-                }
-
                 component.update(time, delta);
             });
         }
     }
-
 
 
  
