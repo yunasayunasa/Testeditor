@@ -512,6 +512,7 @@ applyProperties(gameObject, layout) {
  * @param {object} [params={}] - コンポーネントのコンストラクタに渡すパラメータ
  */
 addComponent(target, componentType, params = {}) {
+    console.log(`%c[DEBUG] addComponent CALLED for '${target.name}' with component '${componentType}'.`, 'background: #222; color: #bada55');
     // --- ガード節: 既に同じコンポーネントがアタッチされている場合は、警告を出して処理を中断 ---
     if (target.components && target.components[componentType]) {
         console.warn(`[BaseGameScene] Component '${componentType}' already exists on '${target.name}'. Addition cancelled.`);
@@ -549,6 +550,7 @@ addComponent(target, componentType, params = {}) {
     // b) ライフサイクルメソッド(init/start)を呼び出す
     // ▼▼▼【ここがリアルタイム編集対応の核心部分です】▼▼▼
     if (componentType === 'StateMachineComponent') {
+        console.log('%c[DEBUG] StateMachineComponent DETECTED! Creating default data...', 'background: #222; color: #bada55');
         // --- StateMachineComponentが「後から」追加された場合の特別処理 ---
         // 1. このコンポーネントが機能するために最低限必要な、空のデフォルトデータを作成する
         const defaultStateData = {
@@ -567,6 +569,7 @@ addComponent(target, componentType, params = {}) {
         
         // 3. コンポーネントにinitメソッドがあれば、今セットしたデータを渡して呼び出す
         if (typeof componentInstance.init === 'function') {
+            console.log('%c[DEBUG] Calling componentInstance.init() NOW!', 'background: #222; color: #bada55');
             componentInstance.init(defaultStateData);
             console.log(`%c[BaseGameScene] StateMachineComponent added to '${target.name}' and initialized with default data.`, 'color: skyblue');
         }
