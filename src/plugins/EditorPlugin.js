@@ -1393,22 +1393,29 @@ createComponentSection() {
             select.innerHTML += `<option value="${compName}">${compName}</option>`;
         });
         
-        select.onchange = (e) => {
-            const compToAdd = e.target.value;
-            if (!compToAdd) return;
-            
-            const currentComps = this.selectedObject.getData('components') || [];
-            const newComponentDef = { type: compToAdd, params: {} };
-            currentComps.push(newComponentDef);
-            this.selectedObject.setData('components', currentComps);
-            
-            const targetScene = this.selectedObject.scene;
-            if (targetScene && typeof targetScene.addComponent === 'function') {
-                targetScene.addComponent(this.selectedObject, newComponentDef.type, newComponentDef.params);
-            }
-            
-            this.updatePropertyPanel();
-        };
+       select.onchange = (e) => {
+    const compToAdd = e.target.value;
+    if (!compToAdd) return;
+    
+    // 1. まず、永続化用のデータだけを更新する
+    const currentComps = this.selectedObject.getData('components') || [];
+    currentComps.push({ type: compToAdd, params: {} });
+    this.selectedObject.setData('components', currentComps);
+    
+    // ▼▼▼【ここが修正の核心】▼▼▼
+    // 2. addComponentを直接呼ばない！
+    //    代わりに、シーンに「このオブジェクトのコンポーネントを再初期化してくれ」と依頼する
+    const targetScene = this.selectedObject.scene;
+    if (targetScene && typeof targetScene.initComponentsAndEvents === 'function') {
+        // ★ 古いコンポーネントインスタンスを破棄する処理も必要になる（後述）
+        
+        // ★ オブジェクトのロジック部分を丸ごと再構築・再初期化する
+        targetScene.initComponentsAndEvents(this.selectedObject);
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    this.updatePropertyPanel();
+};
         
         this.editorPropsContainer.appendChild(select);
     }

@@ -158,23 +158,19 @@ this.matter.world.on('beforeupdate', (event) => {
      * @param {object} layoutData - シーンのレイアウトを定義するJSONオブジェクト。
      */
 
+/**
+ * ★★★ 二段階初期化を実装した最終FIX版 ★★★
+ * レイアウトデータからシーンのオブジェクトを構築・初期化する。
+ */
 buildSceneFromLayout(layoutData) {
-    // --- ガード節: レイアウトデータがなければ、何もせず終了 ---
     if (!layoutData) {
-        this.finalizeSetup([]); // 空のリストを渡して、シーンを正常に完了させる
+        this.finalizeSetup([]);
         return;
     }
-    // --- 1. レイヤー情報の復元 ---
-        const editorUI = this.game.scene.getScene('SystemScene')?.editorUI;
-        if (editorUI && layoutData.layers) {
-            console.log("[BaseGameScene] Found layer data. Restoring layers.");
-            
-            // EditorUIに、保存されていたレイヤー構成を渡して上書きさせる
-            editorUI.setLayers(layoutData.layers); 
-        }
-    
 
-    // --- 1. アニメーションの登録 (変更なし) ---
+    if (this.editorUI && layoutData.layers) {
+        this.editorUI.setLayers(layoutData.layers);
+    }
     if (layoutData.animations) {
         layoutData.animations.forEach(animData => {
             if (!this.anims.exists(animData.key)) {
@@ -188,24 +184,24 @@ buildSceneFromLayout(layoutData) {
         });
     }
     
-       // --- 1. 変数を宣言し、オブジェクトを生成して格納する ---
-        let allGameObjects = []; 
-        if (layoutData.objects) {
-            allGameObjects = layoutData.objects.map(layout => {
-                const gameObject = this.createObjectFromLayout(layout);
-                if (gameObject) {
-                    this.applyProperties(gameObject, layout);
-                }
-                return gameObject;
-            }).filter(Boolean);
+      const allGameObjects = [];
+    if (layoutData.objects) {
+        for (const layout of layoutData.objects) {
+            const gameObject = this.createObjectFromLayout(layout);
+            if (gameObject) {
+                // 【第一段階】構築フェーズを実行
+                this.applyProperties(gameObject, layout);
+
+                // 【第二段階】初期化フェーズを実行
+                this.initComponentsAndEvents(gameObject);
+
+                allGameObjects.push(gameObject);
+            }
         }
-        
-        console.log(`%c[LOG BOMB 1] buildSceneFromLayout: About to call finalizeSetup with ${allGameObjects.length} objects.`, 'color: yellow; font-weight: bold;', allGameObjects);
-        
-        // --- 2. finalizeSetupに、完成したリストを「引数」として渡す ---
-        this.finalizeSetup(allGameObjects);
     }
 
+    this.finalizeSetup(allGameObjects);
+}
    
     /**
      * レイアウト定義に基づいてゲームオブジェクトを生成する (テキストオブジェクト対応版)
@@ -251,156 +247,121 @@ buildSceneFromLayout(layoutData) {
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
         
-
+// in src/scenes/BaseGameScene.js
 
 /**
- * ★★★ 最終FIX版 ★★★
- * 単体のオブジェクトにプロパティを適用し、シーンに追加する。
- * レイヤーの表示状態を確実に反映させる。
+ * ★★★【第二段階：初期化】最終FIX版 ★★★
+ * 構築が完了したGameObjectに対し、コンポーネントとイベントをアタッチし、初期化する。
+ * このメソッドは、オブジェクトの「ロジック」のセットアップに専念する。
+ * @param {Phaser.GameObjects.GameObject} gameObject - 初期化する対象オブジェクト
+ */
+initComponentsAndEvents(gameObject) {
+    // --- 1. 既存のコンポーネントインスタンスを破棄（再初期化のため） ---
+    if (gameObject.components) {
+        for (const key in gameObject.components) {
+            const component = gameObject.components[key];
+            if (this.updatableComponents && this.updatableComponents.has(component)) {
+                this.updatableComponents.delete(component);
+            }
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        }
+    }
+    gameObject.components = {}; // コンポーネントホルダーをリセット
+
+    // --- 2. データからコンポーネント定義を読み込み、追加・初期化する ---
+    const componentsData = gameObject.getData('components');
+    if (componentsData) {
+        for (const compData of componentsData) {
+            // ★★★ addComponentをここで呼び出す ★★★
+            // この時点では、stateMachineDataなどが既にsetDataされていることが保証されている
+            this.addComponent(gameObject, compData.type, compData.params);
+        }
+    }
+
+    // --- 3. イベントリスナーを（再）設定する ---
+    const eventsData = gameObject.getData('events');
+    this.applyEventsAndEditorFunctions(gameObject, eventsData); // このメソッドはイベント設定専用にする
+
+    // --- 4. オブジェクトをエディタで編集可能にする ---
+    const editor = this.plugins.get('EditorPlugin');
+    if (editor && editor.isEnabled) {
+        editor.makeEditable(gameObject, this);
+    }
+}
+
+/**
+ * ★★★【第一段階：構築】最終FIX版 ★★★
+ * GameObjectのインスタンスに対し、レイアウトデータに基づいて基本的なプロパティを設定する。
+ * このメソッドは、オブジェクトの「ガワ」と「データ」の構築に専念する。
+ * コンポーネントのインスタンス化やイベントリスナーの登録は「行わない」。
+ * @param {Phaser.GameObjects.GameObject} gameObject - プロパティを適用する対象オブジェクト
+ * @param {object} layout - 単一オブジェクトのレイアウト定義
+ * @returns {Phaser.GameObjects.GameObject} プロパティ適用後のオブジェクト
  */
 applyProperties(gameObject, layout) {
     const data = layout || {};
-    if (data.layer) {
-            gameObject.setData('layer', data.layer);
-        }
-    console.log(`%c[BaseGameScene] Applying properties for '${data.name}':`, 'color: lightgreen;', data);
-
-    // --- 1. 基本データの設定 ---
     gameObject.name = data.name || 'untitled';
-    if (data.group) gameObject.setData('group', data.group);
-    if (data.layer) gameObject.setData('layer', data.layer);
- // ★★★ 先に汎用データをすべてセットする ★★★
+
+    // --- 1. すべてのカスタムデータをGameObjectのデータマネージャーに保存する ---
+    // a) JSONの最上位にある汎用データをセット
     if (data.data) {
         for (const key in data.data) {
             gameObject.setData(key, data.data[key]);
         }
     }
-    // --- 2. シーンへの追加 ---
+    // b) 将来の初期化フェーズで使われるコンポーネントとイベントの「定義」もデータとして保存
+    if (data.components) gameObject.setData('components', data.components);
+    if (data.events) gameObject.setData('events', data.events);
+    if (data.layer) gameObject.setData('layer', data.layer);
+    if (data.group) gameObject.setData('group', data.group);
+
+    // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
     
-    // --- 3. 見た目に関するプロパティ設定 ---
-    if (data.type !== 'Text' && data.texture) {
-        gameObject.setTexture(data.texture);
-    }
+    // --- 3. 見た目（Transform）に関するプロパティを設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha !== undefined ? data.alpha : 1);
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
+    if (data.type === 'Text' && data.texture) { // TextオブジェクトはsetTextureを持たないのでガード
+        // (Textオブジェクトのスタイル設定はcreateObjectFromLayoutで行われている前提)
+    } else if (data.texture) {
+        gameObject.setTexture(data.texture);
+    }
     
-    // ▼▼▼【ここからが核心の修正です】▼▼▼
-    // --------------------------------------------------------------------
-    // --- 4. 表示状態の決定（優先順位： レイヤー > JSON > デフォルト） ---
-    const editor = this.plugins.get('EditorPlugin');
-    const layerName = data.layer;
-    
-    // ケース1：所属レイヤーが存在する場合
-    if (layerName && editor) {
-        const layerState = editor.layerStates.find(l => l.name === layerName);
-        if (layerState) {
-            // レイヤーの表示設定を最優先で適用する
-            gameObject.setVisible(layerState.visible);
-        }
-    } 
-    // ケース2：レイヤーはないが、JSONにvisibleの指定がある場合
-    else if (data.visible !== undefined) {
-        gameObject.setVisible(data.visible);
-    }
-  // --- 4. 物理ボディの生成と設定 ---
-if (data.physics) {
-    // ★★★ 最初に `phys` 変数を宣言し、nullチェックも行う ★★★
-    const phys = data.physics;
-    if (!phys) return; // 念のためのガード節
+    // --- 4. 物理ボディの生成と設定 ---
+    if (data.physics) {
+        const phys = data.physics;
+        const bodyOptions = { isStatic: phys.isStatic, isSensor: phys.isSensor };
+        if (phys.collisionFilter) bodyOptions.collisionFilter = phys.collisionFilter;
 
-    const bodyOptions = {
-        isStatic: phys.isStatic,
-        isSensor: phys.isSensor
-    };
-    if (phys.collisionFilter) {
-        bodyOptions.collisionFilter = phys.collisionFilter;
-    }
-
-    // 物理ボディをアタッチ
-    this.matter.add.gameObject(gameObject, bodyOptions);
-    
-    // --- ボディが存在することを確認してから、詳細設定を行う ---
-    if (gameObject.body) {
-        // --- 基本的な物理プロパティを設定 ---
-        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-        if (phys.isSensor) gameObject.setSensor(true);
-        gameObject.setStatic(phys.isStatic || false);
-        gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
-        gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01);
-        gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
+        this.matter.add.gameObject(gameObject, bodyOptions);
         
-        // ▼▼▼【ここからがスケール適用の修正コードです】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- 1. まず、ボディの基本形状を設定する ---
-        //    (この時点では、まだスケール1.0の形状)
-        gameObject.setData('shape', phys.shape || 'rectangle');
-        if (phys.shape === 'circle') {
-            const radius = (gameObject.width + gameObject.height) / 4; // スケール前のサイズでOK
-            gameObject.setCircle(radius);
-        } else {
-            gameObject.setRectangle();
-        }
-
-        // --- 2. Matter.jsのネイティブAPIで、ボディにスケールを適用する ---
-        const MatterBody = Phaser.Physics.Matter.Matter.Body;
-        MatterBody.scale(
-            gameObject.body,      // 対象のボディ
-            data.scaleX || 1,       // JSONから読み取ったXスケール
-            data.scaleY || 1        // JSONから読み取ったYスケール
-        );
-
-        // --- 3. スケール適用後にプロパティがリセットされる場合があるので、再設定 ---
-        if (phys.isSensor) gameObject.setSensor(true);
-        gameObject.setStatic(phys.isStatic || false);
-        
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        // --- 最終確認ログ ---
-        console.log(`[BaseGameScene] Body configured for '${data.name}'. isStatic: ${gameObject.body.isStatic}, Scale applied: (${data.scaleX || 1}, ${data.scaleY || 1})`);
-    }
-}
-    // --- 5. アニメーション、コンポーネント、イベント ---
-    if (data.animation && gameObject.play) {
-        gameObject.setData('animation_data', data.animation);
-        if (data.animation.default && this.anims.exists(data.animation.default)) {
-            gameObject.play(data.animation.default);
-        }
-    }
- if (data.components) {
-        // 以前は `this.addComponent` を直接呼んでいたが、それをやめる
-        for (const compData of data.components) { // JSONの "components": [{"type": "...", "params":{}}] を想定
-            const ComponentClass = ComponentRegistry[compData.type];
-            if (ComponentClass) {
-                const componentInstance = new ComponentClass(this, gameObject, compData.params);
-                if (!gameObject.components) gameObject.components = {};
-                gameObject.components[compData.type] = componentInstance;
-
-                // updateの登録
-                if (typeof componentInstance.update === 'function') {
-                    if (!this.updatableComponents) this.updatableComponents = new Set();
-                    this.updatableComponents.add(componentInstance);
-                }
-
-                // ★★★ StateMachineComponent のための特別処理 ★★★
-                if (compData.type === 'StateMachineComponent' && typeof componentInstance.init === 'function') {
-                    // `setData`が完了した後なので、確実にデータを取得できる
-                    componentInstance.init(gameObject.getData('stateMachine'));
-                }
-                // 従来のstartも呼ぶ
-                else if (typeof componentInstance.start === 'function') {
-                    componentInstance.start();
-                }
+        if (gameObject.body) {
+            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+            if (phys.isSensor) gameObject.setSensor(true);
+            gameObject.setStatic(phys.isStatic || false);
+            gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
+            gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01);
+            gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
+            
+            // スケール問題を解決するコード
+            gameObject.setData('shape', phys.shape || 'rectangle');
+            if (phys.shape === 'circle') {
+                const radius = (gameObject.width + gameObject.height) / 4;
+                gameObject.setCircle(radius);
+            } else {
+                gameObject.setRectangle();
             }
+            const MatterBody = Phaser.Physics.Matter.Matter.Body;
+            MatterBody.scale(gameObject.body, data.scaleX || 1, data.scaleY || 1);
+            if (phys.isSensor) gameObject.setSensor(true);
+            gameObject.setStatic(phys.isStatic || false);
         }
     }
-
-    this.applyEventsAndEditorFunctions(gameObject, data.events);
 
     return gameObject;
 }
