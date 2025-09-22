@@ -478,67 +478,61 @@ if (data.physics) {
  * @param {string} componentType - 追加するコンポーネントのクラス名 (例: 'StateMachineComponent')
  * @param {object} [params={}] - コンポーネントのコンストラクタに渡すパラメータ
  */
+/**
+ * ★★★ JSONロードとリアルタイム編集の両シナリオに対応した最終完成版 ★★★
+ * ターゲットオブジェクトにコンポーネントを追加し、適切に初期化する。
+ */
 addComponent(target, componentType, params = {}) {
-    console.log(`%c[DEBUG] addComponent CALLED for '${target.name}' with component '${componentType}'.`, 'background: #222; color: #bada55');
-    // --- ガード節: 既に同じコンポーネントがアタッチされている場合は、警告を出して処理を中断 ---
     if (target.components && target.components[componentType]) {
-        console.warn(`[BaseGameScene] Component '${componentType}' already exists on '${target.name}'. Addition cancelled.`);
+        console.warn(`[BaseGameScene] Component '${componentType}' already exists on '${target.name}'.`);
         return;
     }
 
-    // --- 1. ComponentRegistryからコンポーネントのクラス定義を取得 ---
     const ComponentClass = ComponentRegistry[componentType];
-    
-    // --- ガード節: 未知のコンポーネントタイプの場合は、警告を出して処理を中断 ---
     if (!ComponentClass) {
-        console.warn(`[BaseGameScene] Attempted to add an unknown component: '${componentType}'`);
+        console.warn(`[BaseGameScene] Unknown component: '${componentType}'`);
         return;
     }
 
-    // --- 2. コンポーネントをインスタンス化 ---
     const componentInstance = new ComponentClass(this, target, params);
 
-    // --- 3. ターゲットオブジェクトにコンポーネントを登録 ---
-    // (componentsプロパティがなければ初期化)
-    if (!target.components) {
-        target.components = {};
-    }
+    if (!target.components) target.components = {};
     target.components[componentType] = componentInstance;
 
-    // --- 4. コンポーネントのライフサイクル管理 ---
-    // a) updateメソッドがあれば、シーンの更新リストに追加
     if (typeof componentInstance.update === 'function') {
-        if (!this.updatableComponents) {
-            this.updatableComponents = new Set();
-        }
+        if (!this.updatableComponents) this.updatableComponents = new Set();
         this.updatableComponents.add(componentInstance);
     }
     
-    // b) ライフサイクルメソッド(init/start)を呼び出す
-    // ▼▼▼【ここがリアルタイム編集対応の核心部分です】▼▼▼
-    if (componentType === 'StateMachineComponent') {
-        console.log('%c[DEBUG] StateMachineComponent DETECTED! Creating default data...', 'background: #222; color: #bada55');
-        // --- StateMachineComponentが「後から」追加された場合の特別処理 ---
-        // 1. このコンポーネントが機能するために最低限必要な、空のデフォルトデータを作成する
-        const defaultStateData = {
-            initialState: 'idle', // 必須プロパティなので、デフォルトの初期ステート名を入れる
-            states: {
-                'idle': { // 最低限のステートとして'idle'を定義しておく
-                    onEnter: { "nodes": [], "connections": [] },
-                    onUpdate: { "nodes": [], "connections": [] },
-                    onExit: { "nodes": [], "connections": [] }
+    // ▼▼▼【ここが2つのシナリオを統合する核心部分です】▼▼▼
+    if (componentType === 'StateMachineComponent' && typeof componentInstance.init === 'function') {
+        
+        // --- 1. まず、オブジェクトにデータが既にセットされているか確認 ---
+        // (JSONからロードされた場合は、ここにデータが入っているはず)
+        let existingData = target.getData('stateMachine');
+
+        if (existingData) {
+            // --- ケースA: データが存在する場合 (JSONロード時) ---
+            console.log(`%c[BaseGameScene] Initializing StateMachine for '${target.name}' with existing data from JSON.`, 'color: lightblue');
+            componentInstance.init(existingData);
+
+        } else {
+            // --- ケースB: データが存在しない場合 (リアルタイム追加時) ---
+            console.log(`%c[BaseGameScene] Initializing StateMachine for '${target.name}' with new default data.`, 'color: skyblue');
+            
+            // 2. デフォルトの骨格データを作成する
+            const defaultStateData = {
+                initialState: 'idle',
+                states: {
+                    'idle': { onEnter: { "nodes": [], "connections": [] } }
                 }
-            }
-        };
-        
-        // 2. 作成したデータをオブジェクトのデータマネージャーに保存する
-        target.setData('stateMachine', defaultStateData);
-        
-        // 3. コンポーネントにinitメソッドがあれば、今セットしたデータを渡して呼び出す
-        if (typeof componentInstance.init === 'function') {
-            console.log('%c[DEBUG] Calling componentInstance.init() NOW!', 'background: #222; color: #bada55');
+            };
+            
+            // 3. 作成したデータをオブジェクトにセットする
+            target.setData('stateMachine', defaultStateData);
+            
+            // 4. そのデフォルトデータでコンポーネントを初期化する
             componentInstance.init(defaultStateData);
-            console.log(`%c[BaseGameScene] StateMachineComponent added to '${target.name}' and initialized with default data.`, 'color: skyblue');
         }
     } 
     else if (typeof componentInstance.start === 'function') {
@@ -547,23 +541,17 @@ addComponent(target, componentType, params = {}) {
     }
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // --- 5. 永続化用のコンポーネントリストを更新 ---
-    // (これはJSON書き出し時に使われるデータ)
     const currentData = target.getData('components') || [];
     if (!currentData.some(c => c.type === componentType)) {
         currentData.push({ type: componentType, params: params });
         target.setData('components', currentData);
     }
 
-    // --- 6. (任意) エディタプラグインに通知して、UIを更新させる ---
-    // EditorPlugin側に onComponentAdded のようなメソッドがあれば、連携がスムーズになる
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled && typeof editor.onComponentAdded === 'function') {
         editor.onComponentAdded(target, componentType, params);
     }
 }
-  // in src/scenes/BaseGameScene.js
-
     /**
      * ★★★ updateメソッドを、この内容に置き換える ★★★
      * 遅延実行キューの処理を追加
