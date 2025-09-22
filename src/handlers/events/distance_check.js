@@ -1,43 +1,53 @@
-// src/handlers/events/distance_check.js
+// in src/handlers/events/distance_check.js
 
-/**
- * [distance_check]タグ ... (コメントはそのまま)
- */
-export default async function distance_check(interpreter, params) {
-    const scene = interpreter.scene;
-    const source = interpreter.currentSource;
-    const target = interpreter.currentTarget;
+export default async function distance_check(interpreter, params, target) {
+    // ★★★ target引数は使わない。paramsで指定された2つのオブジェクトを比較する
+    const source = interpreter.currentSource; // このタグを実行しているオブジェクト（例：Enemy）
+    
+    // params.target1 と params.target2 で比較対象を指定できるようにする
+    const targetId1 = params.target1 || 'self'; // デフォルトは自分自身
+    const targetId2 = params.target2 || 'player'; // デフォルトはプレイヤー
+    const threshold = parseFloat(params.distance) || 100; // 比較する距離
 
-    const objA = interpreter.findTarget(params.target_a, scene, source, target);
-    const objB = interpreter.findTarget(params.target_b, scene, source, target);
-    const distance = parseFloat(params.distance);
+    const obj1 = interpreter.findTarget(targetId1, interpreter.scene, source);
+    const obj2 = interpreter.findTarget(targetId2, interpreter.scene, source);
 
-    if (!objA || !objB || isNaN(distance)) {
-        console.error("[distance_check] パラメータが不正です。", params);
-        return;
+    // ▼▼▼【ここからがデバッグログ】▼▼▼
+    console.groupCollapsed(`[distance_check] | ${source.name}`);
+    
+    if (!obj1 || !obj2) {
+        console.error("比較対象のオブジェクトが見つかりません。");
+        console.log("Target 1 ID:", targetId1, "-> Found:", !!obj1);
+        console.log("Target 2 ID:", targetId2, "-> Found:", !!obj2);
+        console.groupEnd();
+        return 'output_far'; // エラー時は「遠い」として扱う
     }
 
-    const currentDistance = Phaser.Math.Distance.Between(objA.x, objA.y, objB.x, objB.y);
+    const currentDistance = Phaser.Math.Distance.Between(obj1.x, obj1.y, obj2.x, obj2.y);
+    const isNear = currentDistance < threshold;
+    const resultPin = isNear ? 'output_near' : 'output_far';
 
-    if (currentDistance <= distance) {
-        return 'output_near';
-    } else {
-        return 'output_far';
-    }
-};
+    console.log(`比較: '${obj1.name}' vs '${obj2.name}'`);
+    console.log(`現在の距離: ${currentDistance.toFixed(2)}`);
+    console.log(`しきい値: ${threshold}`);
+    console.log(`結果: ${isNear ? '近い (near)' : '遠い (far)'}`);
+    console.groupEnd();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    return resultPin;
+}
 
 distance_check.define = {
-    description: "2つのオブジェクト間の距離を比較し、結果に応じて処理を分岐します。",
-    params: [
-        { key: "target_a", type: "string", label: "対象A", defaultValue: "source" },
-        { key: "target_b", type: "string", label: "対象B", defaultValue: "player" },
-        { key: "distance", type: "number", label: "比較距離", defaultValue: 100 }
-    ],
+    description: "2つのオブジェクト間の距離を測定し、指定した距離より近いか遠いかで処理を分岐します。",
     pins: {
-        inputs: [{ name: "input", label: "" }],
         outputs: [
-            { name: "output_near", label: "近い" },
-            { name: "output_far", label: "遠い" }
+            { name: 'output_near', label: '近い' },
+            { name: 'output_far', label: '遠い' }
         ]
-    }
+    },
+    params: [
+        { key: 'target1', type: 'string', label: '対象1', defaultValue: 'self' },
+        { key: 'target2', type: 'string', label: '対象2', defaultValue: 'player' },
+        { key: 'distance', type: 'number', label: '距離のしきい値', defaultValue: 100 }
+    ]
 };

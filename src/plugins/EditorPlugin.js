@@ -2044,6 +2044,22 @@ createComponentSection() {
                     animation_data: gameObject.getData('animation_data')
                 };
 
+                // --- "data" ブロックを新設し、カスタムデータをすべてここにまとめる ---
+objData.data = {};
+
+// a) StateMachineデータを取得して保存
+const smData = gameObject.getData('stateMachine');
+if (smData) {
+    objData.data.stateMachine = smData;
+}
+
+// b) ignoreGravity, shape などの物理関連カスタムデータもここに移動
+if (gameObject.body) {
+    objData.data.ignoreGravity = gameObject.getData('ignoreGravity');
+    objData.data.shape = gameObject.getData('shape');
+}
+// ----------
+
                 // ★★★ もし、エクスポート対象がUISceneのオブジェクトなら、registryKeyを追加 ★★★
                 if (sceneKey === 'UIScene') {
                     objData.registryKey = gameObject.getData('registryKey');
@@ -2073,9 +2089,9 @@ createComponentSection() {
                     objData.physics = {
                         isStatic: body.isStatic,
                         isSensor: body.isSensor,
-                        ignoreGravity: gameObject.getData('ignoreGravity') === true,
+                   //    ignoreGravity: gameObject.getData('ignoreGravity') === true,
                         gravityScale: body.gravityScale.y,
-                        shape: gameObject.getData('shape') || 'rectangle', 
+                       // shape: gameObject.getData('shape') || 'rectangle', 
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
                         collisionFilter: {
