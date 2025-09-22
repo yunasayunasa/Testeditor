@@ -154,13 +154,13 @@
       "texture": "bgtest3"
     },
     {
-      "name": "bgtest2_1758338444820",
+      "name": "player",
       "type": "initialize",
-      "x": 486,
-      "y": 291,
+      "x": 402,
+      "y": 197,
       "depth": 20,
-      "scaleX": 0.51,
-      "scaleY": 0.51,
+      "scaleX": 3.62,
+      "scaleY": 3.62,
       "angle": 0,
       "alpha": 1,
       "group": "player",
@@ -218,7 +218,7 @@
       "name": "Enemy",
       "type": "initialize",
       "x": 1146,
-      "y": 480,
+      "y": 400,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -226,7 +226,38 @@
       "alpha": 1,
       "layer": "Gameplay",
       "group": "enemy",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758525869749",
+          "trigger": "onStomp",
+          "nodes": [
+            {
+              "id": "node_1758525896294",
+              "type": "distance_check",
+              "params": {
+                "target_a": "source",
+                "target_b": "player",
+                "distance": 100
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1758525904286",
+              "type": "transition_scene",
+              "params": {
+                "scene": "追跡",
+                "data": "",
+                "script": ""
+              },
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [],
+          "targetGroup": "floor"
+        }
+      ],
       "components": [
         {
           "type": "StateMachineComponent",
