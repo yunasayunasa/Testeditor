@@ -18,11 +18,13 @@ export default async function destroy(interpreter, params, target_do_not_use, co
     } else {
         finalTarget = interpreter.findTarget(targetId, interpreter.scene, context.source, context.target);
     }
-
-    if (finalTarget && typeof finalTarget.destroy === 'function') {
-        finalTarget.destroy();
-    } else {
-        console.warn(`[destroy] ターゲット '${targetId}' を破壊できませんでした。`);
+   if (finalTarget && finalTarget.active) {
+        // ★★★ 次のフレームで安全に破棄する ★★★
+        interpreter.scene.time.delayedCall(0, () => {
+            if (finalTarget.active) {
+                finalTarget.destroy();
+            }
+        });
     }
 }
 /**
