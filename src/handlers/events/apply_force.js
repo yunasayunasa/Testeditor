@@ -1,6 +1,10 @@
-// in src/handlers/events/apply_force.js (最終手段バージョン)
+// in src/handlers/events/apply_force.js (スケール調整・最終FIX版)
 
 const MatterBody = Phaser.Physics.Matter.Matter.Body;
+const MatterEngine = Phaser.Physics.Matter.Matter.Engine;
+
+// 1フレームの時間 (ミリ秒) を定数として定義
+const DELTA_TIME_MS = 16.66;
 
 export default async function apply_force(interpreter, params, target) {
     if (!target || !target.body) {
@@ -8,30 +12,32 @@ export default async function apply_force(interpreter, params, target) {
         return;
     }
 
+    // ▼▼▼【ここが最後の修正です】▼▼▼
+    // --------------------------------------------------------------------
+    // 1. パラメータから「ユーザーが意図した力」を取得
     const forceX = parseFloat(params.x) || 0;
     const forceY = parseFloat(params.y) || 0;
-    const forceVector = { x: forceX, y: forceY };
     
-    // 1. ネイティブAPIで力を加える
-    MatterBody.applyForce(target.body, target.body.position, forceVector);
-    console.log(`%c[Force Native] Force calculation submitted to the engine.`, 'color: white; background: blue;');
+    // 2. Matter.jsの内部計算（力 × 時間）を打ち消すため、
+    //    あらかじめ力（force）を時間（delta）で割っておく。
+    //    これにより、ユーザーが指定した値が、ほぼそのまま速度変化に近い値になる。
+    //    (※ 1000で割っているのは、DELTA_TIME_MSがミリ秒単位だから)
+    const normalizedForce = {
+        x: forceX / (DELTA_TIME_MS / 1000),
+        y: forceY / (DELTA_TIME_MS / 1000)
+    };
     
-    // ▼▼▼【ここが最後の切り札です】▼▼▼
-    // --------------------------------------------------------------------
-    // Phaserの次の更新を待たずに、Matter.jsエンジンを手動で1ステップ進める
+    console.log(`%c[Force Normalized] User force: (${forceX}, ${forceY}) -> Engine force: (${normalizedForce.x.toFixed(2)}, ${normalizedForce.y.toFixed(2)})`, 'color: white; background: red;');
     
-    console.log('%c[Engine Step] Manually stepping the Matter.js engine forward...', 'color: white; background: purple;');
+    // 3. 正規化された力をエンジンに与える
+    MatterBody.applyForce(target.body, target.body.position, normalizedForce);
     
-    // a) シーンから物理エンジン本体への参照を取得
+    // 4. エンジンを手動で1ステップ進める
     const engine = target.scene.matter.world.engine;
-    
-    // b) 手動でエンジンを更新する (通常、deltaは約16.66ms)
-    Phaser.Physics.Matter.Matter.Engine.update(engine, 16.66);
+    MatterEngine.update(engine, DELTA_TIME_MS);
     // --------------------------------------------------------------------
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // --- 実行結果の最終確認ログ ---
-    // 手動ステップ後なので、速度が反映されているはず
     console.log(`  > Velocity AFTER manual engine step: { x: ${target.body.velocity.x.toFixed(2)}, y: ${target.body.velocity.y.toFixed(2)} }`);
 }
 /**
