@@ -7,6 +7,12 @@ export default class StateMachineComponent {
         this.currentStateLogic = null;
         this.stateMachineData = null; // 初期値は null
         this.actionInterpreter = this.scene.actionInterpreter;
+        this.actionInterpreter = this.scene.registry.get('actionInterpreter');
+
+        // --- 念のためのガード節 ---
+        if (!this.actionInterpreter) {
+            console.error("[StateMachineComponent] CRITICAL: ActionInterpreter not found in scene registry!");
+        }
     }
 
      // 新しい初期化メソッド
