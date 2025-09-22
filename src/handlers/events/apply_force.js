@@ -1,22 +1,30 @@
 // src/handlers/events/apply_force.js
 
 export default async function apply_force(interpreter, params, target) {
-    // ▼▼▼【デバッグログを追加】▼▼▼
-    console.log("%c[apply_force] Handler executed.", "color: cyan;");
-    console.log("  > Received target:", target);
-    console.log("  > Target has body?:", !!(target && target.body));
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
     if (!target || !target.body) {
-        const targetName = target ? target.name : 'unknown';
-        console.warn(`[apply_force] Target '${targetName}' has no physics body.`);
+        console.warn(`[apply_force] Target has no physics body.`);
         return;
     }
+
+    // ▼▼▼【ここから最終デバッグコード】▼▼▼
+    console.log("--- Physics Body Diagnostics ---");
+    console.log("Target Name:", target.name);
+    const body = target.body;
+    console.log("Is Static?:", body.isStatic);
+    console.log("Mass:", body.mass);
+    console.log("Inverse Mass:", body.inverseMass); // 0だと動かない
+    console.log("Friction:", body.friction);
+    console.log("Static Friction:", body.frictionStatic);
+    console.log("Is Sleeping?:", body.isSleeping);
+    console.log("World Time Scale:", target.scene.matter.world.timeScale); // 0だと物理計算が止まる
+    console.log("--------------------------------");
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const forceX = parseFloat(params.x) || 0;
     const forceY = parseFloat(params.y) || 0;
     
     console.log(`  > Applying force: { x: ${forceX}, y: ${forceY} }`);
+    target.setAwake(); // スリープ状態からの復帰を試す
     target.applyForce({ x: forceX, y: forceY });
 }
 /**
