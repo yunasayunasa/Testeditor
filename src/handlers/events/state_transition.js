@@ -1,32 +1,28 @@
-// src/handlers/events/state_transition.js
 
-/**
- * [state_transition] アクションタグ
- * ターゲットのStateMachineComponentの状態を、指定された新しい状態に遷移させます。
- * @param {ActionInterpreter} interpreter
- * @param {object} params
- * @param {Phaser.GameObjects.GameObject} target - 状態遷移させたいオブジェクト
- */
 export default async function state_transition(interpreter, params, target) {
+    // ▼▼▼【デバッグログを追加】▼▼▼
+    console.log("%c[state_transition] Handler executed.", "color: magenta;");
+    console.log("  > Received target (from interpreter):", target);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     const newStateName = params.to;
     if (!newStateName) {
         console.warn('[state_transition] "to" parameter is missing.');
         return;
     }
 
-    // ターゲットが指定されていなければ、イベントの発生源(source)を対象とする
     const finalTarget = target || interpreter.currentSource;
+    console.log("  > Final target to transition:", finalTarget);
 
     if (!finalTarget) {
         console.warn('[state_transition] Target object not found.');
         return;
     }
 
-    // ターゲットがStateMachineComponentを持っているか確認
     const stateMachine = finalTarget.components?.StateMachineComponent;
     
     if (stateMachine && typeof stateMachine.transitionTo === 'function') {
-        // transitionToはasync関数なので、完了を待つ
+        console.log(`  > Attempting to transition '${finalTarget.name}' to state '${newStateName}'`);
         await stateMachine.transitionTo(newStateName);
     } else {
         console.warn(`[state_transition] Target '${finalTarget.name}' does not have a StateMachineComponent.`);

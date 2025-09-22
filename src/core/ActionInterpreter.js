@@ -120,32 +120,29 @@ async run(source, eventData, collidedTarget = null) {
         }
     }}
 
-  
-findTarget(targetId, scene, source, collidedTarget) {
+ findTarget(targetId, scene, source, collidedTarget) {
+    // ▼▼▼ ログを一番上に移動し、シンプルにする ▼▼▼
+    console.log(`--- [DEBUG] findTarget ---`);
+    console.log(`Request ID: '${targetId}'`);
+
     if (!targetId || targetId === 'source' || targetId === 'self') {
+        console.log(`Result: source ('${source.name}')`);
         return source;
     }
     if (targetId === 'target') {
+        console.log(`Result: collidedTarget ('${collidedTarget ? collidedTarget.name : 'null'}')`);
         return collidedTarget;
     }
     
-    if (targetId.startsWith('#')) {
-        const groupId = targetId.substring(1);
-        const objectsInGroup = scene.getObjectsByGroup(groupId);
-        return objectsInGroup.length > 0 ? objectsInGroup[0] : null; 
-    }
+    // グループ検索は一旦コメントアウトして問題を切り分ける
+    // if (targetId.startsWith('#')) { ... }
     
     const result = scene.children.getByName(targetId);
 
-    // ▼▼▼【ここが構文エラーの修正箇所】▼▼▼
-    console.groupCollapsed(`[DEBUG] findTarget`);
-    console.log(`- Request ID: '${targetId}'`); 
-    console.log(`- Source:`, source);
-    console.log(`- Collided Target:`, collidedTarget);
-    console.log(`- Found Object:`, result);
-    console.groupEnd();
-    // ▲▲▲【ここまでが構文エラーの修正箇所】▲▲▲
-
+    console.log(`Found by name:`, result); // ★★★ ここがnullになっていないか？ ★★★
     return result;
 }
+
+
 }
+

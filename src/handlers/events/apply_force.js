@@ -1,13 +1,12 @@
 // src/handlers/events/apply_force.js
 
-/**
- * [apply_force] アクションタグ
- * ターゲットの物理ボディに、指定されたベクトルで力を加えます。
- * @param {ActionInterpreter} interpreter
- * @param {object} params
- * @param {Phaser.GameObjects.GameObject} target
- */
 export default async function apply_force(interpreter, params, target) {
+    // ▼▼▼【デバッグログを追加】▼▼▼
+    console.log("%c[apply_force] Handler executed.", "color: cyan;");
+    console.log("  > Received target:", target);
+    console.log("  > Target has body?:", !!(target && target.body));
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     if (!target || !target.body) {
         const targetName = target ? target.name : 'unknown';
         console.warn(`[apply_force] Target '${targetName}' has no physics body.`);
@@ -16,11 +15,10 @@ export default async function apply_force(interpreter, params, target) {
 
     const forceX = parseFloat(params.x) || 0;
     const forceY = parseFloat(params.y) || 0;
-
-    // ★ Phaserの公式APIである target.applyForce を使用
+    
+    console.log(`  > Applying force: { x: ${forceX}, y: ${forceY} }`);
     target.applyForce({ x: forceX, y: forceY });
 }
-
 /**
  * ★ VSLエディタ用の自己定義 ★
  */
