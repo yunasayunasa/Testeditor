@@ -28,16 +28,18 @@ apply_force.define = {
     description: '物理ボディを持つオブジェクトに、瞬間的な力（衝撃）を加えます。',
     params: [
         {
-            key: 'x',
-            type: 'number',
-            label: 'X方向の力',
-            defaultValue: 0
+            key: 'x', type: 'number', label: 'X方向の力', defaultValue: 0
         },
         {
-            key: 'y',
-            type: 'number',
-            label: 'Y方向の力',
-            defaultValue: 0
+            key: 'y', type: 'number', label: 'Y方向の力', defaultValue: 0
+        },
+        // ▼▼▼【ここを追加】▼▼▼
+        {
+            key: 'target',
+            type: 'string',
+            label: '力の対象',
+            defaultValue: 'source'
         }
+        // ▲▲▲【ここまで追加】▲▲▲
     ]
 };

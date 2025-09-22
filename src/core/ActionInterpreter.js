@@ -121,20 +121,28 @@ async run(source, eventData, collidedTarget = null) {
     }}
 
    // in src/core/ActionInterpreter.js
-
 findTarget(targetId, scene, source, collidedTarget) {
-    let result = source; // デフォルトはsource
-
     if (!targetId || targetId === 'source' || targetId === 'self') {
-        result = source;
+        return source;
     }
-    else if (targetId === 'target') {
-        result = collidedTarget;
+    if (targetId === 'target') {
+        return collidedTarget;
     }
-    else {
-        // ★ BaseGameSceneにオブジェクト検索を依頼する形が理想
-        result = scene.children.getByName(targetId);
+    
+    // ▼▼▼【ここからがグループ対応の拡張】▼▼▼
+    // IDの先頭が '#' なら、グループ名で検索する
+    if (targetId.startsWith('#')) {
+        const groupId = targetId.substring(1); // '#'を取り除く
+        // BaseGameSceneのヘルパーメソッドを呼び出す
+        const objectsInGroup = scene.getObjectsByGroup(groupId);
+        // グループに複数のオブジェクトがある場合、とりあえず最初の1つを返す
+        return objectsInGroup.length > 0 ? objectsInGroup[0] : null; 
     }
+    // ▲▲▲【ここまでがグループ対応の拡張】▲▲▲
+    
+    // それ以外は、これまで通り名前で検索
+    const result = scene.children.getByName(targetId);
+
 
     // ▼▼▼【ここからがデバッグログ】▼▼▼
     console.groupCollapsed(`[DEBUG] findTarget`);
