@@ -1,6 +1,4 @@
-// src/components/StateMachineComponent.js
-
-class StateMachineComponent { // ← 先頭の'export'を削除
+export default class StateMachineComponent {
     constructor(scene, owner, params = {}) {
         this.scene = scene;
         this.gameObject = owner;
@@ -11,24 +9,27 @@ class StateMachineComponent { // ← 先頭の'export'を削除
     }
 
     start() {
-        if (!this.stateMachineData || !this.stateMachineData.initialState) {
-            return;
-        }
+        if (!this.stateMachineData || !this.stateMachineData.initialState) return;
         this.transitionTo(this.stateMachineData.initialState);
     }
 
     update(time, delta) {
-        if (!this.currentStateLogic || !this.currentStateLogic.onUpdate) {
-            return;
-        }
+        if (!this.currentStateLogic || !this.currentStateLogic.onUpdate) return;
         if (this.actionInterpreter) {
             this.actionInterpreter.run(this.gameObject, this.currentStateLogic.onUpdate);
         }
     }
 
+    // ▼▼▼【asyncを削除し、呼び出しっぱなしにする】▼▼▼
     transitionTo(newStateName) {
         if (!this.actionInterpreter) return;
 
+        // 既にその状態なら何もしない
+        if (this.currentStateName === newStateName) return;
+
+        console.log(`[StateMachine] Transitioning from '${this.currentStateName}' to '${newStateName}'...`, this.gameObject.name);
+
+        // 1. 今の状態の onExit を実行 (完了を待たない)
         if (this.currentStateLogic && this.currentStateLogic.onExit) {
             this.actionInterpreter.run(this.gameObject, this.currentStateLogic.onExit);
         }
@@ -43,12 +44,10 @@ class StateMachineComponent { // ← 先頭の'export'を削除
         this.currentStateName = newStateName;
         this.currentStateLogic = newStateLogic;
 
+        // 2. 新しい状態の onEnter を実行 (完了を待たない)
         if (this.currentStateLogic.onEnter) {
             this.actionInterpreter.run(this.gameObject, this.currentStateLogic.onEnter);
         }
+        console.log(`[StateMachine] Transition complete. Current state: '${this.currentStateName}'`, this.gameObject.name);
     }
 }
-
-// ▼▼▼【ここが重要】▼▼▼
-// クラス定義が終わった後で、defaultとしてエクスポートする
-export default StateMachineComponent;
