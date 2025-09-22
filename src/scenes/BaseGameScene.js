@@ -485,7 +485,11 @@ addComponent(target, componentType, params = {}) {
             const defaultStateData = {
                 initialState: 'idle',
                 states: {
-                    'idle': { onEnter: { "nodes": [], "connections": [] } }
+                    'idle': { 
+                        onEnter: { "nodes": [], "connections": [] },
+                        onUpdate: { "nodes": [], "connections": [] }, // ★ onUpdateを追加
+                        onExit: { "nodes": [], "connections": [] }   // ★ onExitを追加
+                    }
                 }
             };
             

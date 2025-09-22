@@ -2222,35 +2222,41 @@ buildHooksTabs() {
  * ★★★ デバッグログ付き ★★★
  * 現在選択されている状態とフックに基づいて、VSLエディタの中身を表示する
  */
+// in src/editor/EditorUI.js
+
+/**
+ * ★★★ データ欠損時に自動生成する機能を追加した最終FIX版 ★★★
+ * 現在選択されている状態とフックに基づいて、VSLエディタの中身を表示する
+ */
 displayActiveVslEditor() {
     const vslContainer = this.smEditorOverlay.querySelector('.sm-vsl-editor-container');
     if (!vslContainer) return;
     
-    // ▼▼▼【ここからデバッグログ】▼▼▼
-    console.group(`[DEBUG] displayActiveVslEditor (State: ${this.activeStateName}, Hook: ${this.activeHookName})`);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    const activeState = this.stateMachineData.states[this.activeStateName];
+    // --- 1. アクティブなステートのデータを取得 ---
+    let activeState = this.stateMachineData.states[this.activeStateName];
     if (!activeState) {
-        vslContainer.innerHTML = `<p>状態「${this.activeStateName}」が見つかりません。</p>`;
-        console.error("デバッグ: activeState が見つかりません。", this.stateMachineData);
-        console.groupEnd();
-        return;
+        // 万が一ステート自体がない場合は、ここで作る
+        this.stateMachineData.states[this.activeStateName] = {};
+        activeState = this.stateMachineData.states[this.activeStateName];
     }
+
+    // --- 2. アクティブなフックのVSLデータを取得 ---
     this.activeVslData = activeState[this.activeHookName];
+
+    // ▼▼▼【ここがエラーを解決する核心部分です】▼▼▼
+    // --- 3. もしフックのデータが存在しなかったら、その場で空のデータを作成してあげる ---
     if (!this.activeVslData) {
-        vslContainer.innerHTML = `<p>フック「${this.activeHookName}」のデータが見つかりません。</p>`;
-        console.error("デバッグ: activeVslData が見つかりません。", activeState);
-        console.groupEnd();
-        return;
+        console.warn(`VSL data for hook '${this.activeHookName}' not found. Creating it now.`);
+        activeState[this.activeHookName] = { nodes: [], connections: [] };
+        this.activeVslData = activeState[this.activeHookName];
+        
+        // ★ 作成したデータを、必ずGameObject本体のデータにも反映させる
+        this.editingObject.setData('stateMachine', this.stateMachineData);
     }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // ▼▼▼【ここからデバッグログ】▼▼▼
-    // ★★★ JSON.stringifyを使って、データが実際にどうなっているかを確認 ★★★
-    console.log("1. 描画に使用するVSLデータ (activeVslData):", JSON.parse(JSON.stringify(this.activeVslData)));
-    console.groupEnd();
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+    // --- 4. UIを再描画 ---
+    // この時点では、this.activeVslDataは必ず存在することが保証されている
     this.populateSmVslCanvas();
 }
 /**
