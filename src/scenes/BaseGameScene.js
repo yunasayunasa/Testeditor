@@ -306,116 +306,65 @@ applyProperties(gameObject, layout) {
     else if (data.visible !== undefined) {
         gameObject.setVisible(data.visible);
     }
-    // --- 4. 物理ボディの生成と設定 ---
-   // --- 4. 物理ボディの生成と設定 ---
-    if (data.physics) {
-        const phys = data.physics;
-        
-             const bodyOptions = {
-            isStatic: phys.isStatic,
-            isSensor: phys.isSensor
-            // (ここに、frictionやrestitutionなど、JSONから読み込みたい他の基本物理プロパティを追加できます)
-        };
-        
-        // --- 5b. 保存された衝突フィルター情報があれば、オプションに追加 ---
-        if (phys.collisionFilter) {
-            bodyOptions.collisionFilter = {
-                category: phys.collisionFilter.category,
-                mask: phys.collisionFilter.mask
-            };
-        }
+  // --- 4. 物理ボディの生成と設定 ---
+if (data.physics) {
+    // ★★★ 最初に `phys` 変数を宣言し、nullチェックも行う ★★★
+    const phys = data.physics;
+    if (!phys) return; // 念のためのガード節
 
-        // --- 5c. 組み立てたオプションを使って、gameObjectをmatterワールドに追加 ---
-        // ★★★ あなたの既存のロジック `this.matter.add.gameObject(gameObject);` を、
-        // ★★★ この新しい、オプション付きの呼び出しに置き換えます。
-        this.matter.add.gameObject(gameObject, bodyOptions);
-        
-        
-        // ★★★ 2. オブジェクトがテキストの場合、ボディを再構築する ★★★
-        if (gameObject instanceof Phaser.GameObjects.Text) {
-            // テキストの表示原点を中心に設定
-            gameObject.setOrigin(0.5, 0.5);
-            
-            // 重要：既存のボディを一度削除
-            this.matter.world.remove(gameObject.body);
-
-            // テキストのサイズに基づいて、新しい長方形ボディを生成
-            const body = this.matter.bodies.rectangle(gameObject.x, gameObject.y, gameObject.width, gameObject.height, { isSensor: phys.isSensor });
-            
-            // 新しく作った正しいサイズのボディをセットする
-            gameObject.setExistingBody(body);
-        }
-        
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-       
-        
-
-        // --- 4b. ボディが存在すれば、プロパティを順番に設定 ---
-        if (gameObject.body) {
-            
-            // --- 1. JSONから読み込んだ 'ignoreGravity' の値をデータとして保存 ---
-            // これが、'beforeupdate'ループで参照される唯一の正しい情報源となる
-            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-
-            // --- 2. isSensorの場合は、強制的に重力無視リストに追加 ---
-            if (phys.isSensor) {
-                gameObject.setSensor(true);
-                gameObject.setData('ignoreGravity', true); // ★ PhaserのAPIではなく、setDataを使う
-            }
-            
-            // --- 3. isStaticを設定 ---
-            gameObject.setStatic(phys.isStatic || false);
-
-            // --- 4. ★★★ PhaserのsetIgnoreGravity()は、一切呼び出さない ★★★ ---
-            // ★★★ 4. その他の物理プロパティを設定 ★★★
-            gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
-            gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01); // 空気抵抗も適用
-            gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
-            
-            const gravityY = phys.gravityScale !== undefined ? phys.gravityScale : 1;
-            gameObject.body.gravityScale.y = gravityY;
-
-            // ★★★ 5. 永続化用のデータを保存 ★★★
-            gameObject.setData('shape', phys.shape || 'rectangle');
-            // ignoreGravityはJSONの値を正として保存
-            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-
-            // ★★★ 6. 最後に、ボディの形状を設定 ★★★
-           // --- スケール変更を物理ボディに反映させる ---
-            
-            // 1. まず、ボディの形状を設定する (setCircle/setRectangle)
-            //    これにより、ボディの頂点情報などが初期化される
-            const phys = data.physics;
-            if (phys.shape === 'circle') {
-                // 円の場合は、スケール後の表示幅の平均を半径とするのが一般的
-                const radius = (gameObject.displayWidth + gameObject.displayHeight) / 4;
-                gameObject.setCircle(radius);
-            } else {
-                // 長方形の場合は、引数なしでOK
-                gameObject.setRectangle();
-            }
-
-            // 2. ★★★ 最重要 ★★★
-            //    PhaserのAPI `gameObject.body.setBodyScale()` は存在しないため、
-            //    Matter.jsのネイティブAPI `Body.scale()` を直接呼び出す
-            const MatterBody = Phaser.Physics.Matter.Matter.Body;
-            MatterBody.scale(
-                gameObject.body, // 対象のボディ
-                data.scaleX || 1,  // X方向のスケール
-                data.scaleY || 1   // Y方向のスケール
-            );
-            
-            // 3. 形状変更後にプロパティがリセットされる可能性に備え、再設定
-            if (phys.isSensor) gameObject.setSensor(true);
-            gameObject.setStatic(phys.isStatic || false);
-            // ---------------------------------------------
-            
-            // --- 4d. 最終確認ログ ---
-           console.log(`[BaseGameScene] Body configured for '${data.name}'. isStatic: ${gameObject.body.isStatic}, isSensor: ${gameObject.body.isSensor}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
-        }
+    const bodyOptions = {
+        isStatic: phys.isStatic,
+        isSensor: phys.isSensor
+    };
+    if (phys.collisionFilter) {
+        bodyOptions.collisionFilter = phys.collisionFilter;
     }
+
+    // 物理ボディをアタッチ
+    this.matter.add.gameObject(gameObject, bodyOptions);
     
+    // --- ボディが存在することを確認してから、詳細設定を行う ---
+    if (gameObject.body) {
+        // --- 基本的な物理プロパティを設定 ---
+        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+        if (phys.isSensor) gameObject.setSensor(true);
+        gameObject.setStatic(phys.isStatic || false);
+        gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
+        gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01);
+        gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
+        
+        // ▼▼▼【ここからがスケール適用の修正コードです】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- 1. まず、ボディの基本形状を設定する ---
+        //    (この時点では、まだスケール1.0の形状)
+        gameObject.setData('shape', phys.shape || 'rectangle');
+        if (phys.shape === 'circle') {
+            const radius = (gameObject.width + gameObject.height) / 4; // スケール前のサイズでOK
+            gameObject.setCircle(radius);
+        } else {
+            gameObject.setRectangle();
+        }
+
+        // --- 2. Matter.jsのネイティブAPIで、ボディにスケールを適用する ---
+        const MatterBody = Phaser.Physics.Matter.Matter.Body;
+        MatterBody.scale(
+            gameObject.body,      // 対象のボディ
+            data.scaleX || 1,       // JSONから読み取ったXスケール
+            data.scaleY || 1        // JSONから読み取ったYスケール
+        );
+
+        // --- 3. スケール適用後にプロパティがリセットされる場合があるので、再設定 ---
+        if (phys.isSensor) gameObject.setSensor(true);
+        gameObject.setStatic(phys.isStatic || false);
+        
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // --- 最終確認ログ ---
+        console.log(`[BaseGameScene] Body configured for '${data.name}'. isStatic: ${gameObject.body.isStatic}, Scale applied: (${data.scaleX || 1}, ${data.scaleY || 1})`);
+    }
+}
     // --- 5. アニメーション、コンポーネント、イベント ---
     if (data.animation && gameObject.play) {
         gameObject.setData('animation_data', data.animation);
