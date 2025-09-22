@@ -26,7 +26,8 @@ export default class JumpScene extends BaseGameScene {
         // ★★★ ここからがMatter.jsへの対応です ★★★
         // 1. Matter.jsのAPIを使って、世界の境界を設定する
         this.matter.world.setBounds(0, 0, worldWidth, worldHeight);
-
+    this.matter.world.timeScale = 1;
+    console.log(`[JumpScene] Matter.js world time scale was set to: ${this.matter.world.timeScale}`);
         // 2. カメラの境界設定は、物理エンジンとは無関係なので、そのまま使える
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
         // ★★★ ここまで ★★★
