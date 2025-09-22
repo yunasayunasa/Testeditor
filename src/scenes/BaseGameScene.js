@@ -382,16 +382,34 @@ applyProperties(gameObject, layout) {
             gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
 
             // ★★★ 6. 最後に、ボディの形状を設定 ★★★
+           // --- スケール変更を物理ボディに反映させる ---
+            
+            // 1. まず、ボディの形状を設定する (setCircle/setRectangle)
+            //    これにより、ボディの頂点情報などが初期化される
+            const phys = data.physics;
             if (phys.shape === 'circle') {
-                const radius = (gameObject.width * gameObject.scaleX + gameObject.height * gameObject.scaleY) / 4;
+                // 円の場合は、スケール後の表示幅の平均を半径とするのが一般的
+                const radius = (gameObject.displayWidth + gameObject.displayHeight) / 4;
                 gameObject.setCircle(radius);
             } else {
+                // 長方形の場合は、引数なしでOK
                 gameObject.setRectangle();
             }
+
+            // 2. ★★★ 最重要 ★★★
+            //    PhaserのAPI `gameObject.body.setBodyScale()` は存在しないため、
+            //    Matter.jsのネイティブAPI `Body.scale()` を直接呼び出す
+            const MatterBody = Phaser.Physics.Matter.Matter.Body;
+            MatterBody.scale(
+                gameObject.body, // 対象のボディ
+                data.scaleX || 1,  // X方向のスケール
+                data.scaleY || 1   // Y方向のスケール
+            );
             
-            // ★★★ 7. 形状変更後にプロパティがリセットされる可能性に備え、再設定 ★★★
+            // 3. 形状変更後にプロパティがリセットされる可能性に備え、再設定
             if (phys.isSensor) gameObject.setSensor(true);
             gameObject.setStatic(phys.isStatic || false);
+            // ---------------------------------------------
             
             // --- 4d. 最終確認ログ ---
            console.log(`[BaseGameScene] Body configured for '${data.name}'. isStatic: ${gameObject.body.isStatic}, isSensor: ${gameObject.body.isSensor}, ignoreGravity: ${gameObject.getData('ignoreGravity')}`);
