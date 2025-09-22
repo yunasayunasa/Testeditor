@@ -5,7 +5,9 @@ export default async function apply_force(interpreter, params, target) {
         console.warn(`[apply_force] Target has no physics body.`);
         return;
     }
-
+console.log(`%c[Force Test] Temporarily setting frictionAir to 0.`, 'color: yellow; background: black;');
+    // 空気抵抗を強制的にゼロにする
+    target.setFrictionAir(0);
     // ▼▼▼【ここから最終デバッグコード】▼▼▼
     console.log("--- Physics Body Diagnostics ---");
     console.log("Target Name:", target.name);
