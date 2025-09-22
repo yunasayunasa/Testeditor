@@ -120,7 +120,7 @@ async run(source, eventData, collidedTarget = null) {
         }
     }}
 
-   // in src/core/ActionInterpreter.js
+  
 findTarget(targetId, scene, source, collidedTarget) {
     if (!targetId || targetId === 'source' || targetId === 'self') {
         return source;
@@ -129,29 +129,22 @@ findTarget(targetId, scene, source, collidedTarget) {
         return collidedTarget;
     }
     
-    // ▼▼▼【ここからがグループ対応の拡張】▼▼▼
-    // IDの先頭が '#' なら、グループ名で検索する
     if (targetId.startsWith('#')) {
-        const groupId = targetId.substring(1); // '#'を取り除く
-        // BaseGameSceneのヘルパーメソッドを呼び出す
+        const groupId = targetId.substring(1);
         const objectsInGroup = scene.getObjectsByGroup(groupId);
-        // グループに複数のオブジェクトがある場合、とりあえず最初の1つを返す
         return objectsInGroup.length > 0 ? objectsInGroup[0] : null; 
     }
-    // ▲▲▲【ここまでがグループ対応の拡張】▲▲▲
     
-    // それ以外は、これまで通り名前で検索
     const result = scene.children.getByName(targetId);
 
-
-    // ▼▼▼【ここからがデバッグログ】▼▼▼
+    // ▼▼▼【ここが構文エラーの修正箇所】▼▼▼
     console.groupCollapsed(`[DEBUG] findTarget`);
-    console.log(`- Request ID: '${targetId}'`);
+    console.log(`- Request ID: '${targetId}'`); 
     console.log(`- Source:`, source);
     console.log(`- Collided Target:`, collidedTarget);
-    console.log(`- Found Object:`, result); // ★★★ この行がnullになっていないか？ ★★★
+    console.log(`- Found Object:`, result);
     console.groupEnd();
-    // ▲▲▲【ここまでがデバッグログ】▲▲▲
+    // ▲▲▲【ここまでが構文エラーの修正箇所】▲▲▲
 
     return result;
 }
