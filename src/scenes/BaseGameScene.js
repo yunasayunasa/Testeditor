@@ -269,7 +269,12 @@ applyProperties(gameObject, layout) {
     gameObject.name = data.name || 'untitled';
     if (data.group) gameObject.setData('group', data.group);
     if (data.layer) gameObject.setData('layer', data.layer);
-
+ // ★★★ 先に汎用データをすべてセットする ★★★
+    if (data.data) {
+        for (const key in data.data) {
+            gameObject.setData(key, data.data[key]);
+        }
+    }
     // --- 2. シーンへの追加 ---
     this.add.existing(gameObject);
     
@@ -400,11 +405,32 @@ applyProperties(gameObject, layout) {
             gameObject.play(data.animation.default);
         }
     }
+ if (data.components) {
+        // 以前は `this.addComponent` を直接呼んでいたが、それをやめる
+        for (const compData of data.components) { // JSONの "components": [{"type": "...", "params":{}}] を想定
+            const ComponentClass = ComponentRegistry[compData.type];
+            if (ComponentClass) {
+                const componentInstance = new ComponentClass(this, gameObject, compData.params);
+                if (!gameObject.components) gameObject.components = {};
+                gameObject.components[compData.type] = componentInstance;
 
-    if (data.components && typeof this.addComponent === 'function') {
-        data.components.forEach(comp => {
-            this.addComponent(gameObject, comp.type, comp.params);
-        });
+                // updateの登録
+                if (typeof componentInstance.update === 'function') {
+                    if (!this.updatableComponents) this.updatableComponents = new Set();
+                    this.updatableComponents.add(componentInstance);
+                }
+
+                // ★★★ StateMachineComponent のための特別処理 ★★★
+                if (compData.type === 'StateMachineComponent' && typeof componentInstance.init === 'function') {
+                    // `setData`が完了した後なので、確実にデータを取得できる
+                    componentInstance.init(gameObject.getData('stateMachine'));
+                }
+                // 従来のstartも呼ぶ
+                else if (typeof componentInstance.start === 'function') {
+                    componentInstance.start();
+                }
+            }
+        }
     }
 
     this.applyEventsAndEditorFunctions(gameObject, data.events);

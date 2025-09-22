@@ -2,15 +2,19 @@ export default class StateMachineComponent {
     constructor(scene, owner, params = {}) {
         this.scene = scene;
         this.gameObject = owner;
-        this.stateMachineData = this.gameObject.getData('stateMachine');
+        
         this.currentStateName = null;
         this.currentStateLogic = null;
+        this.stateMachineData = null; // 初期値は null
         this.actionInterpreter = this.scene.actionInterpreter;
     }
 
-    start() {
-        if (!this.stateMachineData || !this.stateMachineData.initialState) return;
-        this.transitionTo(this.stateMachineData.initialState);
+     // 新しい初期化メソッド
+    init(stateMachineData) {
+        this.stateMachineData = stateMachineData;
+        if (this.stateMachineData && this.stateMachineData.initialState) {
+            this.transitionTo(this.stateMachineData.initialState);
+        }
     }
 
     update(time, delta) {
@@ -20,10 +24,11 @@ export default class StateMachineComponent {
         }
     }
 
-    // ▼▼▼【asyncを削除し、呼び出しっぱなしにする】▼▼▼
-    transitionTo(newStateName) {
-        if (!this.actionInterpreter) return;
-
+   transitionTo(newStateName) {
+        if (!this.stateMachineData) {
+             console.error(`[StateMachine] Error: stateMachineData is not initialized for '${this.gameObject.name}'.`);
+             return; // ガード節
+        }
         // 既にその状態なら何もしない
         if (this.currentStateName === newStateName) return;
 
