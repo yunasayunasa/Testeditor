@@ -28,13 +28,15 @@
       "angle": 0,
       "alpha": 1,
       "events": [],
+      "data": {
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
       "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": false,
-        "ignoreGravity": false,
         "gravityScale": 1,
-        "shape": "rectangle",
         "friction": 1,
         "restitution": 0,
         "collisionFilter": {
@@ -61,13 +63,15 @@
           "targetGroup": "player"
         }
       ],
+      "data": {
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
       "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": false,
-        "ignoreGravity": false,
         "gravityScale": 1,
-        "shape": "rectangle",
         "friction": 1,
         "restitution": 0,
         "collisionFilter": {
@@ -88,6 +92,7 @@
       "alpha": 0,
       "layer": "Gameplay",
       "events": [],
+      "data": {},
       "texture": "bgtest3"
     },
     {
@@ -120,6 +125,7 @@
           "connections": []
         }
       ],
+      "data": {},
       "texture": "bgtest4"
     },
     {
@@ -151,6 +157,7 @@
           "connections": []
         }
       ],
+      "data": {},
       "texture": "bgtest3"
     },
     {
@@ -183,13 +190,15 @@
           "targetGroup": "bg"
         }
       ],
+      "data": {
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
       "texture": "bgtest2",
       "physics": {
         "isStatic": false,
         "isSensor": false,
-        "ignoreGravity": false,
         "gravityScale": 1,
-        "shape": "rectangle",
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
@@ -235,13 +244,92 @@
           "params": {}
         }
       ],
+      "data": {
+        "stateMachine": {
+          "initialState": "idle",
+          "states": {
+            "idle": {
+              "onEnter": {
+                "nodes": [],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [],
+                "connections": []
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            },
+            "追跡": {
+              "onEnter": {
+                "nodes": [],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [
+                  {
+                    "id": "node_1758585498855",
+                    "type": "move_to_target",
+                    "params": {
+                      "target": "player",
+                      "speed": 2
+                    },
+                    "x": 50,
+                    "y": 50
+                  },
+                  {
+                    "id": "node_1758585502110",
+                    "type": "distance_check",
+                    "params": {
+                      "target1": "self",
+                      "target2": "player",
+                      "distance": 10
+                    },
+                    "x": 50,
+                    "y": 220
+                  },
+                  {
+                    "id": "node_1758585518627",
+                    "type": "destroy",
+                    "params": {
+                      "target": "source"
+                    },
+                    "x": 50,
+                    "y": 390
+                  }
+                ],
+                "connections": [
+                  {
+                    "fromNode": "node_1758585498855",
+                    "fromPin": "output",
+                    "toNode": "node_1758585502110",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1758585502110",
+                    "fromPin": "output_near",
+                    "toNode": "node_1758585518627",
+                    "toPin": "input"
+                  }
+                ]
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            }
+          }
+        },
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
       "texture": "bgtest4",
       "physics": {
         "isStatic": false,
         "isSensor": false,
-        "ignoreGravity": false,
         "gravityScale": 1,
-        "shape": "rectangle",
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
