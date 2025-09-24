@@ -58,7 +58,12 @@ async run(source, eventData, collidedTarget = null) {
 
     while (currentNodeData) {
         console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
-        
+         console.groupCollapsed(`[VSL] Executing: [${currentNodeData.type}] (ID: ${currentNodeData.id})`);
+    
+    // パラメータやコンテキスト情報をログに出力
+    console.log("Params:", currentNodeData.params);
+    console.log("Source:", this.currentSource.name);
+    if(this.currentTarget) console.log("Target:", this.currentTarget.name);
         const handler = this.tagHandlers[currentNodeData.type];
         let nextPinName = 'output';
 
@@ -113,7 +118,7 @@ async run(source, eventData, collidedTarget = null) {
         const connection = (connections || []).find(c => 
             c.fromNode === currentNodeData.id && c.fromPin === nextPinName
         );
-
+ console.groupEnd();
         if (connection) {
             currentNodeData = nodes.find(n => n.id === connection.toNode);
         } else {
