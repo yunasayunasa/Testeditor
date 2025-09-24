@@ -44,7 +44,7 @@ export default class JumpScene extends BaseGameScene {
         // --- デバッグモードでない時だけ、ジョイスティックを生成する ---
         const isDebug = new URLSearchParams(window.location.search).has('debug');
 
-        if (!isDebug) {
+      /*  if (!isDebug) {
             this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
                 x: 150, y: 550, radius: 100,
                 base: this.add.circle(0, 0, 100, 0x888888, 0.5),
@@ -53,7 +53,7 @@ export default class JumpScene extends BaseGameScene {
         } else {
             // デバッグモードの時は、joystickをnullのままにしておく
             this.joystick = null;
-        }
+        }*/
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
