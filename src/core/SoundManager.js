@@ -70,6 +70,21 @@ export default class SoundManager {
         });
     }
 
+     /**
+     * ★★★ 音ゲーの心臓部（マスタークロック）★★★
+     * 現在再生中のBGMの再生位置を、ミリ秒単位の数値で返す。
+     * @returns {number | null} 再生中の場合はミリ秒、再生されていない場合はnullを返す。
+     */
+    getBgmCurrentTimeMs() {
+        // currentBgmが存在し、かつ実際に再生中であることを確認
+        if (this.currentBgm && this.currentBgm.isPlaying) {
+            // seekは秒単位なので、1000を掛けてミリ秒に変換する
+            return this.currentBgm.seek * 1000;
+        }
+        // BGMが再生されていない場合は、nullを返す
+        return null;
+    }
+
     /**
      * BGMを停止する (フェード対応版)
      * @param {number} [fadeoutTime=0] - フェードアウト時間(ms)
