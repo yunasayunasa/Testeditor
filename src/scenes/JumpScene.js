@@ -8,6 +8,7 @@ export default class JumpScene extends BaseGameScene {
         super({ key: 'JumpScene' });
         this.joystick = null;
         this.playerController = null; // ★ playerControllerもnullで初期化
+        this.player = null;
         
     }
 
@@ -21,7 +22,7 @@ export default class JumpScene extends BaseGameScene {
         if (soundManager) soundManager.playBgm('bgm_action');
 
         const worldWidth = 3840;
-        const worldHeight = 1440;
+        const worldHeight = 720;
 
         // ★★★ ここからがMatter.jsへの対応です ★★★
         // 1. Matter.jsのAPIを使って、世界の境界を設定する
@@ -42,9 +43,9 @@ export default class JumpScene extends BaseGameScene {
         }*/
      // --------------------------------------------------------------------
         // --- デバッグモードでない時だけ、ジョイスティックを生成する ---
-        const isDebug = new URLSearchParams(window.location.search).has('debug');
+       /* const isDebug = new URLSearchParams(window.location.search).has('debug');
 
-      /*  if (!isDebug) {
+       if (!isDebug) {
             this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
                 x: 150, y: 550, radius: 100,
                 base: this.add.circle(0, 0, 100, 0x888888, 0.5),
@@ -72,33 +73,67 @@ export default class JumpScene extends BaseGameScene {
         // --- 共通処理は親クラス(super)を呼び出す ---
         return super._addObjectFromEditorCore({ texture: assetKey, type: type }, newName, layerName);
     }
-
-  
-    /**
-     * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
+ /**
+     * ★★★ 新しいヘルパーメソッド ★★★
+     * ジャンプボタンのリスナーを安全に設定する。
+     * 必要なオブジェクトが揃ってから初めて実行される。
      */
-    onSetupComplete() {
-        // ★★★ プレイヤーの参照取得は、ここで行うのが最も確実 ★★★
-        this.player = this.children.list.find(obj => obj.getData('group') === 'player');
-        
-        if (this.player) {
-            this.playerController = this.player.components?.PlayerController;
-            this.player.setFixedRotation(); 
-        }
-        
-        // --- ジャンプボタンのイベント処理をここで行う ---
+    attachJumpButtonListener() {
         const uiScene = this.scene.get('UIScene');
         if (uiScene) {
-            const jumpButton = uiScene.uiElements.get('jump_button');
+            const jumpButton = uiScene.uiElements?.get('jump_button');
+            
+            // ★ ジャンプボタンが見つかったら、リスナーを設定してフラグを立てる
             if (jumpButton) {
                 jumpButton.on('button_pressed', () => {
+                    // ★ リスナー内部でも、その時点でのplayerControllerを参照する
                     if (this.playerController) {
                         this.playerController.jump();
                     }
                 }, this);
+                
+                this._jumpButtonListenerAttached = true;
+                console.log("[JumpScene] Jump button listener attached successfully.");
             }
         }
     }
+  /**
+     * ★★★ リアルタイム編集に対応したメインループ ★★★
+     */
+    update(time, delta) {
+        // --- 親クラスのupdateを必ず呼び出す ---
+        super.update(time, delta);
+        
+        // --- 1. プレイヤーコントローラーへの参照を毎フレーム取得しようと試みる ---
+        //    (一度見つけたら、以降はこの処理はほぼゼロコストになる)
+        if (!this.playerController || !this.player?.active) {
+            this.player = this.children.getByName('player');
+            if (this.player) {
+                this.playerController = this.player.components?.PlayerController;
+            }
+        }
+        
+        // --- 2. プレイヤーコントローラーが見つかったら、更新処理を実行 ---
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+        }
+        
+        // --- 3. ジャンプボタンのイベントリスナーを、一度だけ設定する ---
+        if (!this._jumpButtonListenerAttached) {
+            this.attachJumpButtonListener();
+        }
+    }
+    
+    /**
+     * onSetupCompleteはBaseGameSceneのフローのために残すが、
+     * リアルタイム編集に対応するため、ここでは何もしない。
+     * 必要な処理はすべてupdateメソッド内で行う。
+     */
+    onSetupComplete() {
+        // (このメソッドは空にするか、ログを出すだけにする)
+        console.log("[JumpScene] onSetupComplete called. Initialization will occur in the update loop.");
+    }
+
 
   
     /**
