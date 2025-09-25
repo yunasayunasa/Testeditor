@@ -96,21 +96,64 @@ export default class JumpScene extends BaseGameScene {
     }
     
     /**
-     * ★★★ 修正版 ★★★
-     * ジャンプボタンのリスナーを、重複しないように一度だけ設定する。
+     * ★★★ リアルタイム編集に対応したメインループ (最終FIX版) ★★★
+     */
+    update(time, delta) {
+        super.update(time, delta);
+        
+        if (this.player && !this.player.active) {
+            this.player = null;
+            this.playerController = null;
+        }
+
+        if (!this.player) {
+            this.setupPlayerAndCamera();
+        }
+        
+        // ★ attachJumpButtonListenerは、playerControllerが見つかってから呼び出す方が安全
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+            this.attachJumpButtonListener(); // ここに移動
+        }
+    }
+    
+    // ... (setupPlayerAndCameraは変更なし) ...
+    
+    /**
+     * ★★★ hasListenersエラーを修正した最終FIX版 ★★★
+     * ジャンプボタンのリスナーを、重複しないように安全に設定する。
      */
     attachJumpButtonListener() {
+        // --- 1. 必要なオブジェクトを取得 ---
         const uiScene = this.scene.get('UIScene');
         const jumpButton = uiScene?.uiElements?.get('jump_button');
         
-        if (jumpButton && !jumpButton.hasListeners('button_pressed')) {
-            jumpButton.on('button_pressed', () => {
-                // ★ リスナー内部では、常に最新のplayerControllerを参照する
-                if (this.playerController) {
-                    this.playerController.jump();
-                }
-            }, this);
-            console.log("[JumpScene] Jump button listener attached.");
+        // --- ガード節: ボタンがなければ何もしない ---
+        if (!jumpButton) {
+            return;
+        }
+
+        // ▼▼▼【ここがエラーを解決する核心部分です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 2. リスナーが重複しないように、まず既存のリスナーをすべてクリアする ---
+        //    'button_pressed'というイベントに登録されている全リスナーを削除します。
+        jumpButton.off('button_pressed');
+
+        // --- 3. 新しいリスナーを1つだけ登録する ---
+        jumpButton.on('button_pressed', () => {
+            // リスナー内部では、常に最新のplayerControllerを参照します。
+            // (updateループで毎フレーム更新されているため、常に最新が保証される)
+            if (this.playerController) {
+                this.playerController.jump();
+            }
+        }, this);
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // ★ ログは初回だけでいいので、フラグで管理する
+        if (!this._jumpButtonListenerAttached) {
+            this._jumpButtonListenerAttached = true;
+            console.log("[JumpScene] Jump button listener is now active.");
         }
     }
     /**
@@ -122,26 +165,7 @@ export default class JumpScene extends BaseGameScene {
         this.attachJumpButtonListener();
     }
 
-  update(time, delta) {
-        super.update(time, delta);
-        
-        // --- 毎フレーム、playerControllerへの参照が有効か確認する ---
-        // (オブジェクトがIDEで削除・再作成された場合に対応するための安全装置)
-        if (this.player && !this.player.active) {
-            this.player = null;
-            this.playerController = null;
-        }
-
-        // --- 参照がなければ、再取得を試みる ---
-        if (!this.player) {
-            this.setupPlayerAndCamera();
-        }
-        
-        // --- 参照があれば、更新処理を実行 ---
-        if (this.playerController) {
-            this.playerController.updateWithJoystick(this.joystick);
-        }
-    }
+ 
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
