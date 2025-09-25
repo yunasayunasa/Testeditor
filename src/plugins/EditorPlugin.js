@@ -187,12 +187,18 @@ updatePropertyPanel() {
 
             if (uiRegistry) {
                 for (const key in uiRegistry) {
-                    // ★ instanceof を使うことで、継承関係も正しく判定できる
-                    if (this.selectedObject instanceof uiRegistry[key].component) {
+                    // ▼▼▼【ここがエラーを解決する修正です】▼▼▼
+                    // --------------------------------------------------------------------
+                    // ★★★ 1. uiRegistry[key].component が有効な関数(クラス)であるか、まずチェック ★★★
+                    const componentClass = uiRegistry[key]?.component;
+
+                    if (typeof componentClass === 'function' && this.selectedObject instanceof componentClass) {
                         isUiComponent = true;
                         registryKey = key;
                         break;
                     }
+                    // --------------------------------------------------------------------
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                 }
             }
             if (this.selectedObject instanceof Phaser.GameObjects.Text) {
@@ -200,8 +206,7 @@ updatePropertyPanel() {
             }
 
             // --- Step 2: UIを順番に生成していく ---
-
-            // --- 共通ヘッダーUI ---
+            // (共通ヘッダーUIは変更なし)
             this.safeCreateUI(this.createArrayToolSection);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
             this.safeCreateUI(this.createNameInput);
@@ -211,9 +216,7 @@ updatePropertyPanel() {
             
             // --- 種類別の専用UI ---
             if (isUiComponent) {
-                // ★ UIコンポーネントの場合
-                console.log(`[EditorPlugin] '${registryKey || 'Text'}' is a UI component. Building UI...`);
-                
+                // (UIコンポーネントの場合のロジックは変更なし)
                 if (this.selectedObject instanceof Phaser.GameObjects.Text) {
                     this.safeCreateUI(this.createTextPropertiesUI);
                 } else if (registryKey?.includes('button')) {
@@ -221,14 +224,11 @@ updatePropertyPanel() {
                 } else if (registryKey?.includes('bar')) {
                     this.safeCreateUI(this.createUIBarPropertiesUI);
                 }
-                
             } else {
                 // ★ UIコンポーネントではない、通常のゲームオブジェクトの場合
                 this.safeCreateUI(this.createPhysicsSection);
                 this.editorPropsContainer.appendChild(document.createElement('hr'));
 
-                // ▼▼▼【ここが修正の核心です】▼▼▼
-                // --------------------------------------------------------------------
                 // 1. もしオブジェクトがSpriteなら、「アニメーション設定」ボタンを表示
                 if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
                     this.safeCreateUI(this.createAnimationSection);
@@ -242,11 +242,10 @@ updatePropertyPanel() {
                     this.editorPropsContainer.appendChild(convertButton);
                     this.editorPropsContainer.appendChild(document.createElement('hr'));
                 }
-                // --------------------------------------------------------------------
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             }
 
             // --- すべてのオブジェクトで共通のUI ---
+            // (createTransformInputs, createEventSectionなどは変更なし)
             this.safeCreateUI(this.createTransformInputs);
             this.safeCreateUI(this.createDepthInput);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
