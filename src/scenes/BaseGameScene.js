@@ -768,21 +768,40 @@ handleCollision(sourceObject, targetObject, pair) {
      * @param {string} layerName - 所属するレイヤー名
      * @returns {Phaser.GameObjects.GameObject}
      */
-    _addObjectFromEditorCore(createLayout, newName, layerName) {
-        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-        
-        const newObject = this.createObjectFromLayout(createLayout);
-        
-        this.applyProperties(newObject, {
-            name: newName,
-            x: Math.round(centerX), 
-            y: Math.round(centerY),
-            layer: layerName
-        });
-        
-        return newObject;
+   // in src/scenes/BaseGameScene.js
+
+/**
+ * ★★★ 二段階初期化を呼び出す最終FIX版 ★★★
+ * エディタからオブジェクトを追加するための中核ロジック。
+ */
+_addObjectFromEditorCore(createLayout, newName, layerName) {
+    const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+    const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+    
+    // --- 1. まず、生成するオブジェクトの完全なレイアウトデータを作成 ---
+    const newObjectLayout = {
+        ...createLayout, // { texture, type } などの情報
+        name: newName,
+        x: Math.round(centerX), 
+        y: Math.round(centerY),
+        layer: layerName
+    };
+    
+    // --- 2. GameObjectのインスタンスを生成 ---
+    const newGameObject = this.createObjectFromLayout(newObjectLayout);
+
+    if (newGameObject) {
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // 3. 【第一段階】構築フェーズを実行
+        this.applyProperties(newGameObject, newObjectLayout);
+
+        // 4. 【第二段階】初期化フェーズを実行
+        this.initComponentsAndEvents(newGameObject);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
+    
+    return newGameObject;
+}
 
     /**
      * addObjectFromEditor のデフォルト実装。
