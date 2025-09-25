@@ -73,34 +73,75 @@ export default class JumpScene extends BaseGameScene {
         return super._addObjectFromEditorCore({ texture: assetKey, type: type }, newName, layerName);
     }
 
-  
-    /**
-     * ★★★ 以下のメソッドで、既存の onSetupComplete を完全に置き換えてください ★★★
+  /**
+     * ★★★ 新しいヘルパーメソッド ★★★
+     * プレイヤーとカメラのセットアップ処理を分離・共通化する。
+     * onSetupCompleteとupdateの両方から呼び出せるようにする。
      */
-    onSetupComplete() {
-        // ★★★ プレイヤーの参照取得は、ここで行うのが最も確実 ★★★
-        this.player = this.children.list.find(obj => obj.getData('group') === 'player');
+    setupPlayerAndCamera() {
+        // children.getByNameは少し重いので、playerが既に見つかっていれば実行しない
+        if (this.player && this.player.active) return;
+
+        this.player = this.children.getByName('player');
         
         if (this.player) {
+            console.log("[JumpScene] Player object found or re-acquired.");
             this.playerController = this.player.components?.PlayerController;
-            this.player.setFixedRotation(); 
-        }
-        
-        // --- ジャンプボタンのイベント処理をここで行う ---
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene) {
-            const jumpButton = uiScene.uiElements.get('jump_button');
-            if (jumpButton) {
-                jumpButton.on('button_pressed', () => {
-                    if (this.playerController) {
-                        this.playerController.jump();
-                    }
-                }, this);
+            this.player.setFixedRotation();
+            
+            if (this.cameras.main && !this.cameras.main.isFollowing) {
+                this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
             }
         }
     }
+    
+    /**
+     * ★★★ 修正版 ★★★
+     * ジャンプボタンのリスナーを、重複しないように一度だけ設定する。
+     */
+    attachJumpButtonListener() {
+        const uiScene = this.scene.get('UIScene');
+        const jumpButton = uiScene?.uiElements?.get('jump_button');
+        
+        if (jumpButton && !jumpButton.hasListeners('button_pressed')) {
+            jumpButton.on('button_pressed', () => {
+                // ★ リスナー内部では、常に最新のplayerControllerを参照する
+                if (this.playerController) {
+                    this.playerController.jump();
+                }
+            }, this);
+            console.log("[JumpScene] Jump button listener attached.");
+        }
+    }
+    /**
+     * onSetupCompleteはJSONロード時の初期化の起点として機能する。
+     */
+    onSetupComplete() {
+        console.log("[JumpScene] onSetupComplete called.");
+        this.setupPlayerAndCamera();
+        this.attachJumpButtonListener();
+    }
 
-  
+  update(time, delta) {
+        super.update(time, delta);
+        
+        // --- 毎フレーム、playerControllerへの参照が有効か確認する ---
+        // (オブジェクトがIDEで削除・再作成された場合に対応するための安全装置)
+        if (this.player && !this.player.active) {
+            this.player = null;
+            this.playerController = null;
+        }
+
+        // --- 参照がなければ、再取得を試みる ---
+        if (!this.player) {
+            this.setupPlayerAndCamera();
+        }
+        
+        // --- 参照があれば、更新処理を実行 ---
+        if (this.playerController) {
+            this.playerController.updateWithJoystick(this.joystick);
+        }
+    }
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する
      * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
