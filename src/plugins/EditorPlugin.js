@@ -133,147 +133,156 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
    // in EditorPlugin.js
 
-    /**
-     * ★★★ 完全版 ★★★
-     * プロパティパネルを更新する。
-     * 複数選択、単体選択、レイヤー選択、無選択の4つの状態を正しく処理する。
-     */
-    updatePropertyPanel() {
-        // --- ガード節1: 多重実行防止 ---
-        if (this._isUpdatingPanel) return;
-        this._isUpdatingPanel = true;
+    // in src/plugins/EditorPlugin.js
 
-        try {
-            // --- ガード節2: 必須DOM要素の確認 ---
-            if (!this.editorPropsContainer || !this.editorTitle) {
-                console.warn("[EditorPlugin] Property panel DOM elements not found. Aborting update.");
-                return; // returnの前に必ずフラグを戻す
+/**
+ * ★★★ アニメーションボタン復活・最終確定版 ★★★
+ * プロパティパネルを更新する。
+ * 複数選択、単体選択、レイヤー選択、無選択の4つの状態を正しく処理する。
+ */
+updatePropertyPanel() {
+    // --- ガード節1: 多重実行防止 ---
+    if (this._isUpdatingPanel) return;
+    this._isUpdatingPanel = true;
+
+    try {
+        // --- ガード節2: 必須DOM要素の確認 ---
+        if (!this.editorPropsContainer || !this.editorTitle) {
+            console.warn("[EditorPlugin] Property panel DOM elements not found. Aborting update.");
+            return;
+        }
+        
+        // --- UIクリア ---
+        this.editorPropsContainer.innerHTML = '';
+
+        // --- 状態確認: 選択オブジェクトが破棄されていないか ---
+        if (this.selectedObject && (!this.selectedObject.scene || !this.selectedObject.active)) {
+            this.selectedObject = null;
+        }
+        if (this.selectedObjects && this.selectedObjects.length > 0) {
+            this.selectedObjects = this.selectedObjects.filter(obj => obj && obj.active);
+            if (this.selectedObjects.length === 0) {
+                this.deselectAll();
+                return;
             }
+        }
+        
+        // ================================================================
+        // --- ケース1：複数オブジェクト選択中 ---
+        // ================================================================
+        if (this.selectedObjects && this.selectedObjects.length > 0) {
+            this.editorTitle.innerText = `${this.selectedObjects.length} objects selected`;
+            this.safeCreateUI(this.createMultiSelectUI);
+        }  
+        // ================================================================
+        // --- ケース2：単体オブジェクト選択中 ---
+        // ================================================================
+        else if (this.selectedObject) {
+            this.editorTitle.innerText = `編集中: ${this.selectedObject.name}`;
             
-            // --- UIクリア ---
-            this.editorPropsContainer.innerHTML = '';
+            // --- Step 1: オブジェクトの種類を判定する ---
+            const uiRegistry = this.game.registry.get('uiRegistry');
+            let isUiComponent = false;
+            let registryKey = null;
 
-            // --- 状態確認: 選択オブジェクトが破棄されていないか ---
-            if (this.selectedObject && (!this.selectedObject.scene || !this.selectedObject.active)) {
-                this.selectedObject = null;
-            }
-            if (this.selectedObjects && this.selectedObjects.length > 0) {
-                this.selectedObjects = this.selectedObjects.filter(obj => obj && obj.active);
-                if (this.selectedObjects.length === 0) {
-                    // グループ内のオブジェクトが全て消えた場合
-                    this.deselectAll(); // 選択解除処理を呼ぶのが安全
-                    return; // deselectAllが再度updatePropertyPanelを呼ぶのでここで終了
-                }
-            }
-            
-            // ================================================================
-            // --- ケース1：複数オブジェクト選択中 ---
-            // ================================================================
-            if (this.selectedObjects && this.selectedObjects.length > 0) {
-                this.editorTitle.innerText = `${this.selectedObjects.length} objects selected`;
-                this.safeCreateUI(this.createMultiSelectUI); // 専用UIを生成
-            }  
-        　　 // ================================================================
-            // --- ケース2：単体オブジェクト選択中 ---
-            // ================================================================
-            else if (this.selectedObject) {
-                this.editorTitle.innerText = `編集中: ${this.selectedObject.name}`;
-                
-                // --- Step 1: オブジェクトの種類を判定する ---
-                const uiRegistry = this.game.registry.get('uiRegistry');
-                const objectType = this.selectedObject.constructor;
-                let isUiComponent = false;
-                let registryKey = null; // どのUI定義に一致したかを保持
-
-                if (uiRegistry) {
-                    for (const key in uiRegistry) {
-                        if (uiRegistry[key].component === objectType) {
-                            isUiComponent = true;
-                            registryKey = key;
-                            break;
-                        }
+            if (uiRegistry) {
+                for (const key in uiRegistry) {
+                    // ★ instanceof を使うことで、継承関係も正しく判定できる
+                    if (this.selectedObject instanceof uiRegistry[key].component) {
+                        isUiComponent = true;
+                        registryKey = key;
+                        break;
                     }
                 }
-                // Phaser標準テキストもUIコンポーネントとみなす
+            }
+            if (this.selectedObject instanceof Phaser.GameObjects.Text) {
+                isUiComponent = true;
+            }
+
+            // --- Step 2: UIを順番に生成していく ---
+
+            // --- 共通ヘッダーUI ---
+            this.safeCreateUI(this.createArrayToolSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            this.safeCreateUI(this.createNameInput);
+            this.safeCreateUI(this.createLayerSelect);
+            this.safeCreateUI(this.createGroupInput);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            
+            // --- 種類別の専用UI ---
+            if (isUiComponent) {
+                // ★ UIコンポーネントの場合
+                console.log(`[EditorPlugin] '${registryKey || 'Text'}' is a UI component. Building UI...`);
+                
                 if (this.selectedObject instanceof Phaser.GameObjects.Text) {
-                    isUiComponent = true;
+                    this.safeCreateUI(this.createTextPropertiesUI);
+                } else if (registryKey?.includes('button')) {
+                    this.safeCreateUI(this.createUIButtonPropertiesUI);
+                } else if (registryKey?.includes('bar')) {
+                    this.safeCreateUI(this.createUIBarPropertiesUI);
                 }
-
-                // --- Step 2: 判定結果に基づいて、UIを順番に生成していく ---
-
-                // --- 共通ヘッダーUI ---
-                this.safeCreateUI(this.createArrayToolSection);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                this.safeCreateUI(this.createNameInput);
-                this.safeCreateUI(this.createLayerSelect);
-                this.safeCreateUI(this.createGroupInput);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
                 
-                // --- 種類別の専用UI ---
-                if (isUiComponent) {
-                    // ★ UIコンポーネントの場合
-                    console.log(`[EditorPlugin] '${registryKey || 'Text'}' is a UI component. Building UI...`);
-                    
-                    if (this.selectedObject instanceof Phaser.GameObjects.Text) {
-                        this.safeCreateUI(this.createTextPropertiesUI);
-                    } else if (registryKey && registryKey.includes('button')) {
-                        this.safeCreateUI(this.createUIButtonPropertiesUI);
-                    } else if (registryKey && registryKey.includes('bar')) {
-                        this.safeCreateUI(this.createUIBarPropertiesUI);
-                    }
-                    // 他のカスタムUI用の else if をここに追加できる
-                    
-                } else {
-                    // ★ ゲームオブジェクトの場合
-                    this.safeCreateUI(this.createPhysicsSection);
-                    this.editorPropsContainer.appendChild(document.createElement('hr'));
-                    if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
+            } else {
+                // ★ UIコンポーネントではない、通常のゲームオブジェクトの場合
+                this.safeCreateUI(this.createPhysicsSection);
+                this.editorPropsContainer.appendChild(document.createElement('hr'));
+
+                // ▼▼▼【ここが修正の核心です】▼▼▼
+                // --------------------------------------------------------------------
+                // 1. もしオブジェクトがSpriteなら、「アニメーション設定」ボタンを表示
+                if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
                     this.safeCreateUI(this.createAnimationSection);
                     this.editorPropsContainer.appendChild(document.createElement('hr'));
                 }
-                    if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
-                        this.safeCreateUI(this.createAnimationSection);
-                        this.editorPropsContainer.appendChild(document.createElement('hr'));
-                    }
+                // 2. もしオブジェクトがImageなら、「スプライトに変換」ボタンを表示
+                else if (this.selectedObject instanceof Phaser.GameObjects.Image) {
+                    const convertButton = document.createElement('button');
+                    convertButton.innerText = 'スプライトに変換してアニメーションを設定';
+                    convertButton.onclick = () => { this.convertImageToSprite(); };
+                    this.editorPropsContainer.appendChild(convertButton);
+                    this.editorPropsContainer.appendChild(document.createElement('hr'));
                 }
-
-                // --- すべてのオブジェクトで共通のUI ---
-                this.safeCreateUI(this.createTransformInputs);
-                this.safeCreateUI(this.createDepthInput);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                this.safeCreateUI(this.createEventSection);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                this.safeCreateUI(this.createComponentSection);
-                this.editorPropsContainer.appendChild(document.createElement('hr'));
-                
-                // --- 共通フッターUI ---
-                this.safeCreateUI(this.createExportButton);
-                this.safeCreateUI(this.createExportPrefabButton);
-                this.safeCreateUI(this.createDeleteObjectButton);
-            } 
-        
-            // ================================================================
-            // --- ケース3：レイヤー選択中 ---
-            // ================================================================
-            else if (this.selectedLayer) {
-                this.editorTitle.innerText = `Editing Layer: ${this.selectedLayer.name}`;
-                this.safeCreateUI(this.createLayerPropertiesUI);
-            } 
-            // ================================================================
-            // --- ケース4：何も選択されていない ---
-            // ================================================================
-            else {
-                this.editorTitle.innerText = 'No Object Selected';
+                // --------------------------------------------------------------------
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             }
 
-        } catch (error) {
-            console.error("%c[updatePropertyPanel] UNEXPECTED FATAL CRASH:", "color: red; font-size: 1.2em;", error);
+            // --- すべてのオブジェクトで共通のUI ---
+            this.safeCreateUI(this.createTransformInputs);
+            this.safeCreateUI(this.createDepthInput);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            this.safeCreateUI(this.createEventSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            this.safeCreateUI(this.createComponentSection);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+            
+            // --- 共通フッターUI ---
+            this.safeCreateUI(this.createExportButton);
+            this.safeCreateUI(this.createExportPrefabButton);
+            this.safeCreateUI(this.createDeleteObjectButton);
         } 
-        finally {
-            // --- 最後に必ずフラグを戻す ---
-            this._isUpdatingPanel = false;
+    
+        // ================================================================
+        // --- ケース3：レイヤー選択中 ---
+        // ================================================================
+        else if (this.selectedLayer) {
+            this.editorTitle.innerText = `Editing Layer: ${this.selectedLayer.name}`;
+            this.safeCreateUI(this.createLayerPropertiesUI);
+        } 
+        // ================================================================
+        // --- ケース4：何も選択されていない ---
+        // ================================================================
+        else {
+            this.editorTitle.innerText = 'No Object Selected';
         }
+
+    } catch (error) {
+        console.error("%c[updatePropertyPanel] UNEXPECTED FATAL CRASH:", "color: red; font-size: 1.2em;", error);
+    } 
+    finally {
+        // --- 最後に必ずフラグを戻す ---
+        this._isUpdatingPanel = false;
     }
+}
 
     // 動的UI系
 
