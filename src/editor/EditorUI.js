@@ -1190,65 +1190,99 @@ addNodeToEventData(tagName, targetVslData) {
     }
 }
 
-   /**
-     * ★★★ 新規メソッド ★★★
-     * VSLトリガー編集UIを構築・再描画する
-     * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
-     */
-    populateVslTriggerEditor(activeEvent) {
-        const select = document.getElementById('vsl-trigger-select');
-        const contextContainer = document.getElementById('vsl-trigger-context');
-        if (!select || !contextContainer || !this.editingObject) return;
+  // in src/editor/EditorUI.js
 
-        // --- イベントが選択されていない場合は、UIを隠すか無効化する ---
-        if (!activeEvent) {
-            select.innerHTML = '';
-            contextContainer.innerHTML = '';
-            return;
-        }
+/**
+ * ★★★ onStateChangeとonDirectionChangeを復活させた最終FIX版 ★★★
+ * VSLトリガー編集UIを構築・再描画する
+ * @param {object | null} activeEvent - 現在アクティブなイベントのデータ
+ */
+populateVslTriggerEditor(activeEvent) {
+    const select = document.getElementById('vsl-trigger-select');
+    const contextContainer = document.getElementById('vsl-trigger-context');
+    if (!select || !contextContainer || !this.editingObject) return;
 
-        // --- 1. ドロップダウンの中身を生成 ---
+    if (!activeEvent) {
         select.innerHTML = '';
-        const availableTriggers = ['onClick', 'onReady', 'onCollide_Start', 'onStomp', 'onHit', 'onOverlap_Start', 'onOverlap_End'];
-        availableTriggers.forEach(triggerName => {
-            const option = document.createElement('option');
-            option.value = triggerName;
-            option.innerText = triggerName;
-            if (triggerName === activeEvent.trigger) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
+        contextContainer.innerHTML = '';
+        return;
+    }
+
+    // --- 1. ドロップダウンの中身を生成 ---
+    select.innerHTML = '';
+
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    // 利用可能なトリガーのリストに、不足していた2つを追加します。
+    const availableTriggers = [
+        'onClick', 
+        'onReady', 
+        'onCollide_Start', 
+        'onStomp', 
+        'onHit', 
+        'onOverlap_Start', 
+        'onOverlap_End',
+        'onStateChange',      // ★★★ これを復活させる ★★★
+        'onDirectionChange'   // ★★★ これを復活させる ★★★
+    ];
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    availableTriggers.forEach(triggerName => {
+        const option = document.createElement('option');
+        option.value = triggerName;
+        option.innerText = triggerName;
+        if (triggerName === activeEvent.trigger) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+    
+    // --- 2. ドロップダウンが変更されたときの処理 ---
+    select.onchange = () => {
+        activeEvent.trigger = select.value;
+        // トリガーが変更されたら、関連性のない古いコンテキスト情報をクリアする
+        delete activeEvent.targetGroup; 
+        delete activeEvent.condition;   // ★ conditionもクリアする
+
+        const allEvents = this.editingObject.getData('events');
+        this.editingObject.setData('events', allEvents);
         
-        // --- 2. ドロップダウンが変更されたときの処理 ---
-        select.onchange = () => {
-            activeEvent.trigger = select.value;
-            delete activeEvent.targetGroup; // 不要なコンテキスト情報を削除
-            
+        this.buildVslTabs(); 
+        this.populateVslTriggerEditor(activeEvent); // ★ UIを再描画してコンテキスト入力欄を更新
+    };
+
+    // --- 3. コンテキスト入力欄（相手のグループや条件式）を生成 ---
+    contextContainer.innerHTML = '';
+    
+    // a) 衝突・接触系のトリガーの場合
+    if (['onCollide_Start', 'onStomp', 'onHit', 'onOverlap_Start', 'onOverlap_End'].includes(activeEvent.trigger)) {
+        const label = document.createElement('label');
+        label.innerText = '相手のグループ: ';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = activeEvent.targetGroup || '';
+        input.onchange = () => {
+            activeEvent.targetGroup = input.value;
             const allEvents = this.editingObject.getData('events');
             this.editingObject.setData('events', allEvents);
-            
-            // ★ 変更をUIに反映するために、タブとトリガーUIを再描画
-            this.buildVslTabs(); 
-            this.populateVslTriggerEditor(activeEvent);
         };
-
-        // --- 3. コンテキスト入力欄（相手のグループなど）を生成 ---
-        contextContainer.innerHTML = '';
-        if (['onCollide_Start', 'onStomp', 'onHit', 'onOverlap_Start', 'onOverlap_End'].includes(activeEvent.trigger)) {
-            const label = document.createElement('label');
-            label.innerText = '相手のグループ: ';
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = activeEvent.targetGroup || '';
-            input.onchange = () => {
-                activeEvent.targetGroup = input.value;
-                const allEvents = this.editingObject.getData('events');
-                this.editingObject.setData('events', allEvents);
-            };
-            contextContainer.append(label, input);
-        }
+        contextContainer.append(label, input);
     }
+    // b) 状態・向き変化のトリガーの場合
+    else if (['onStateChange', 'onDirectionChange'].includes(activeEvent.trigger)) {
+        const label = document.createElement('label');
+        label.innerText = '条件(Condition): ';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = "e.g., state === 'walk'";
+        input.value = activeEvent.condition || '';
+        input.onchange = () => {
+            activeEvent.condition = input.value;
+            const allEvents = this.editingObject.getData('events');
+            this.editingObject.setData('events', allEvents);
+        };
+        contextContainer.append(label, input);
+    }
+}
 
 
     buildNodeContent(nodeElement, nodeData) {
