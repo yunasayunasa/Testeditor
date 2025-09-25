@@ -159,6 +159,82 @@
     </ol>
     <p>これで完成です！<br><code>TextDisplayComponent</code>を使ったスコア表示も、全く同じ手順で作成できます。このコンポーネントシステムを使いこなせば、あなたのゲームのUIは無限の可能性を秘めることになります。</p>
 <hr>
+    <h1>8. キャラクターに命を吹き込む：イベントとアニメーションの連携</h1>
+        <p>オブジェクトを動かすだけでは、キャラクターはただの「動く絵」にすぎません。Odyssey Engineの真髄は、プレイヤーの操作や状況の変化に応じて、キャラクターが生きているかのように振る舞う<strong>「インタラクティブな存在」</strong>へと昇華させることにあります。</p>
+        <p>その連携を実現するのが、<strong><code>PlayerController</code>コンポーネント</strong>と<strong>イベントエディタ</strong>です。</p>
+
+        <h3>8.1. 基本的な考え方：「脳」と「神経」と「体」</h3>
+        <p>キャラクターの挙動は、3種類の要素の連携で考えます。</p>
+        <ol>
+            <li><strong>脳 (PlayerController Component)</strong>: キー入力やジョイスティック操作を受け取り、「今は歩いている」「左を向いた」といったキャラクターの内部的な<strong>「状態(state)」</strong>と<strong>「向き(direction)」</strong>を判断します。そして、変化があった瞬間に「状態が変わったぞ！」「向きが変わったぞ！」という信号（イベント）を発信します。</li>
+            <li><strong>神経 (Event Editor)</strong>: 「脳」から発信された信号を受け取り、その信号が特定の条件（例：「状態が'walk'に変わった」）に一致するかどうかを判断し、一致した場合に「体」へ具体的な命令を伝達します。</li>
+            <li><strong>体 (GameObject & VSL Tags)</strong>: 「神経」からの命令を受け取り、<code>[anim_play]</code>タグでアニメーションを再生したり、<code>[set_flip_x]</code>タグでスプライトを反転させたりといった、実際の見た目の変化を実行します。</li>
+        </ol>
+        <p>この3つをエディタ上で設定することで、プログラミングを一切せずに、複雑なキャラクター制御を実現できます。</p>
+
+        <h3>8.2. イベントトリガー・リファレンス</h3>
+        <p><code>PlayerController</code>は、特定の状況で以下のイベントを自動的に発火させます。イベントエディタでこれらのトリガーを選択し、キャラクターの挙動を構築します。</p>
+
+        <h4><code>[onStateChange]</code> - 状態変化トリガー</h4>
+        <p>キャラクターの行動状態が変化した瞬間に発火します。<code>PlayerController</code>は内部的に<code>idle</code>, <code>walk</code>, <code>jump_up</code>, <code>fall_down</code>といった状態を持っており、このイベントはその切り替わりを検知します。</p>
+        <p>このトリガーを選択すると、以下の「条件(Condition)」が利用できます。</p>
+        <ul>
+            <li><strong>条件(Condition)</strong>: 変化後の新しい状態が何であるかを判定するための式を記述します。特別な変数<strong><code>state</code></strong>が使えます。
+                <ul>
+                    <li>例: <code>state === 'walk'</code> （状態が'walk'になった場合）</li>
+                    <li>例: <code>state === 'idle'</code> （状態が'idle'になった場合）</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h4><code>[onDirectionChange]</code> - 向き変化トリガー</h4>
+        <p>キャラクターが左右の向きを変えた瞬間に発火します。</p>
+        <p>このトリガーを選択すると、以下の「条件(Condition)」が利用できます。</p>
+        <ul>
+            <li><strong>条件(Condition)</strong>: 変化後の新しい向きが何であるかを判定するための式を記述します。特別な変数<strong><code>direction</code></strong>が使えます。
+                <ul>
+                    <li>例: <code>direction === 'left'</code> （左を向いた場合）</li>
+                    <li>例: <code>direction === 'right'</code> （右を向いた場合）</li>
+                </ul>
+            </li>
+        </ul>
+        
+        <h3>8.3. 実践チュートリアル：歩き、止まり、向きを変えるキャラクターを作ろう</h3>
+        <p><strong>前提:</strong> <code>player</code>オブジェクトに<code>PlayerController</code>がアタッチされ、<code>player_idle</code>と<code>player_walk</code>という名前のアニメーションが作成済みであること。</p>
+        <ol>
+            <li><strong>脳を載せる</strong>: IDEモードで<code>player</code>オブジェクトを選択し、「Add Component」から<code>PlayerController</code>をアタッチします。（既にアタッチ済みの場合は不要）</li>
+            <li><strong>神経を繋ぐ（歩行）</strong>:
+                <ol>
+                    <li>プロパティパネルから<strong>「イベント・エディタを開く」</strong>をクリックし、<strong>「+」</strong>ボタンで新しいイベントを作成します。</li>
+                    <li>トリガーを<code>onStateChange</code>、条件を<code>state === 'walk'</code>に設定します。</li>
+                    <li>VSLキャンバスに<code>[anim_play]</code>ノードを追加し、<code>key</code>パラメータに<code>player_walk</code>と入力します。</li>
+                </ol>
+            </li>
+            <li><strong>神経を繋ぐ（待機）</strong>:
+                <ol>
+                    <li>再度<strong>「+」</strong>ボタンでイベントを追加します。</li>
+                    <li>トリガーを<code>onStateChange</code>、条件を<code>state === 'idle'</code>に設定します。</li>
+                    <li>VSLキャンバスに<code>[anim_play]</code>ノードを追加し、<code>key</code>パラメータに<code>player_idle</code>と入力します。</li>
+                </ol>
+            </li>
+             <li><strong>神経を繋ぐ（左向き）</strong>:
+                <ol>
+                    <li><strong>「+」</strong>ボタンでイベントを追加します。</li>
+                    <li>トリガーを<code>onDirectionChange</code>、条件を<code>direction === 'left'</code>に設定します。</li>
+                    <li>VSLキャンバスに<code>[set_flip_x]</code>ノードを追加し、<code>flip</code>パラメータを<code>true</code>（チェックを入れる）に設定します。</li>
+                </ol>
+            </li>
+             <li><strong>神経を繋ぐ（右向き）</strong>:
+                <ol>
+                    <li><strong>「+」</strong>ボタンでイベントを追加します。</li>
+                    <li>トリガーを<code>onDirectionChange</code>、条件を<code>direction === 'right'</code>に設定します。</li>
+                    <li>VSLキャンバスに<code>[set_flip_x]</code>ノードを追加し、<code>flip</code>パラメータを<code>false</code>（チェックを外す）に設定します。</li>
+                </ol>
+            </li>
+            <li><strong>テストする</strong>: プレイモードに切り替え、キーボードの左右キーを押してみてください。キャラクターが操作に合わせてアニメーションし、向きを変えれば成功です。</li>
+        </ol>
+        <p>これで完成です！<br>この仕組みを応用すれば、ジャンプや攻撃など、あらゆるアクションに対応した生き生きとしたキャラクターを、エディタ上の操作だけで作り上げることができます。</p>
+    <hr>
 <h1>アクションタグ・リファレンス</h1>
 <p>イベントに応じて、オブジェクトに様々なアクションを実行させるための命令です。</p>
 

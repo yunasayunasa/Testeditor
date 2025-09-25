@@ -228,6 +228,10 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
                     this.safeCreateUI(this.createPhysicsSection);
                     this.editorPropsContainer.appendChild(document.createElement('hr'));
                     if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
+                    this.safeCreateUI(this.createAnimationSection);
+                    this.editorPropsContainer.appendChild(document.createElement('hr'));
+                }
+                    if (this.selectedObject instanceof Phaser.GameObjects.Sprite) {
                         this.safeCreateUI(this.createAnimationSection);
                         this.editorPropsContainer.appendChild(document.createElement('hr'));
                     }
