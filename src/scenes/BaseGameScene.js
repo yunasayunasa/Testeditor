@@ -15,6 +15,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.layoutDataKey = null;
         this.componentsToUpdate = [];
         this._deferredActions = []; 
+        this.joystick = null; 
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -35,7 +36,20 @@ export default class BaseGameScene extends Phaser.Scene {
         }
     }
 
-
+/**
+     * ★★★ 新規追加 ★★★
+     * エディタからジョイスティックを追加するためのプレースホルダー（空の器）。
+     * ジョイスティックを必要とするシーン（JumpSceneなど）は、このメソッドをオーバーライドして
+     * 具体的な生成ロジックを実装する。
+     */
+    addJoystickFromEditor(isFromEditor = true) {
+        // BaseGameSceneの時点では、何もしない。
+        // これにより、ジョイスティックが不要なシーンでエラーが出るのを防ぐ。
+        if (isFromEditor) {
+            alert(`このシーンタイプ (${this.scene.key}) は、ジョイスティックの追加に対応していません。`);
+        }
+        console.warn(`[BaseGameScene] addJoystickFromEditor was called on a scene that does not support it.`);
+    }
 /**
  * JSONデータに基づいてシーンの初期化を開始する。
  * create()メソッドから呼び出されることを想定。

@@ -2025,16 +2025,19 @@ createComponentSection() {
         const scene = this.selectedObject.scene;
         const sceneKey = scene.scene.key;
         
-       const sceneLayoutData = {
-        // 1. ジョイスティックが存在するかどうかのフラグを追加
-        //    シーンに `joystick` プロパティがあり、それがnullでなければtrue
-        hasJoystick: !!scene.joystick, 
+      // ▼▼▼【ここがハードコードを排除する核心です】▼▼▼
+    // --------------------------------------------------------------------
+    // 1. 現在アクティブな「ゲームプレイシーン」への参照を取得する
+    const gameScene = this.getActiveGameScene();
 
+    const sceneLayoutData = {
+        // 2. そのゲームシーンが存在し、かつ `joystick` プロパティを持っていればtrue
+        hasJoystick: !!(gameScene && gameScene.joystick), 
+        
         layers: this.layerStates,
         objects: [],
         animations: []
     };
-        
 
         if (this.editableObjects.has(sceneKey)) {
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);

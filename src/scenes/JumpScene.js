@@ -158,15 +158,28 @@ export default class JumpScene extends BaseGameScene {
             console.log("[JumpScene] Jump button listener is now active.");
         }
     }
-    /**
-     * onSetupCompleteはJSONロード時の初期化の起点として機能する。
-     */
-    onSetupComplete() {
-        console.log("[JumpScene] onSetupComplete called.");
-        this.setupPlayerAndCamera();
-        this.attachJumpButtonListener();
+   onSetupComplete() {
+    console.log("[JumpScene] onSetupComplete called.");
+
+    // --- 1. JSONデータを読み込む (キーは動的に決定) ---
+    const keyToLoad = this.layoutDataKey || this.scene.key;
+    const layoutData = this.cache.json.get(keyToLoad);
+
+    // --- 2. 読み込んだデータに基づいてジョイスティックを再生成 ---
+    if (layoutData && layoutData.hasJoystick) {
+        this.addJoystickFromEditor(false); 
+    } else {
+        // (IDEモードでないならデフォルトで表示、などのロジックはここに)
+        const isDebug = new URLSearchParams(window.location.search).has('debug');
+        if (!isDebug) {
+             this.addJoystickFromEditor(false);
+        }
     }
 
+    // --- 3. プレイヤーとカメラのセットアップ (変更なし) ---
+    this.setupPlayerAndCamera(); // ★ onSetupComplete内でヘルパーを呼ぶ形に統一
+    this.attachJumpButtonListener();
+}
       /**
      * ★★★ 復活・確定版 ★★★
      * EditorUIからの要求に応じて、シーンにジョイスティックを生成する。
