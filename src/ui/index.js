@@ -1,5 +1,31 @@
 // src/ui/index.js (最終確定・完成版)
+// --- 1. ジョイスティック生成関数を、uiRegistryの外で独立した関数として定義する ---
 
+/**
+ * ジョイスティックをシーンに追加するための、独立したファクトリ関数。
+ * @param {Phaser.Scene} scene - 追加先のシーン
+ * @returns {object | null} 生成されたジョイスティックオブジェクト
+ */
+const createJoystickFromEditor = (scene) => {
+    if (scene.joystick) {
+        alert('ジョイスティックは既にシーンに存在します。');
+        return scene.joystick;
+    }
+    const joystickPlugin = scene.plugins.get('rexvirtualjoystickplugin');
+    if (!joystickPlugin) {
+        alert('エラー: Virtual Joystick Pluginがロードされていません。');
+        return null;
+    }
+    console.log("[uiRegistry] joystick.addFromEditor: Creating new joystick...");
+    scene.joystick = joystickPlugin.add(scene, {
+        x: 150,
+        y: scene.cameras.main.height - 150,
+        radius: 100,
+        base: scene.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
+        thumb: scene.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+    });
+    return scene.joystick;
+};
 /**
  * uiRegistry
  * 
@@ -49,44 +75,12 @@ export const uiRegistry = {
         path: './ui/JumpButton.js',
         groups: ['controls', 'action']
     },
-     'joystick': {
-        // pathやcomponentは不要。addFromEditorがすべての生成ロジックを担う。
-        groups: ['controls', 'action'], // JumpButtonと同じコントロール系グループに所属させる
-        
-        /**
-         * EditorUIのアセットブラウザから追加されたときに呼び出される、カスタムファクトリ関数。
-         * @param {Phaser.Scene} scene - 追加先のシーン (JumpSceneなど)
-         * @returns {object | null} 生成されたジョイスティックオブジェクト、または失敗時にnull
-         */
-        addFromEditor: (scene) => {
-            // シーンに既にjoystickプロパティが存在する場合は、重複して生成しない
-            if (scene.joystick) {
-                alert('ジョイスティックは既にシーンに存在します。');
-                return scene.joystick; // 既存のものを返す
-            }
-            
-            // 必要なプラグインが利用可能かチェック
-            const joystickPlugin = scene.plugins.get('rexvirtualjoystickplugin');
-            if (!joystickPlugin) {
-                alert('エラー: Virtual Joystick Pluginがロードされていません。');
-                return null;
-            }
-
-            console.log("[uiRegistry] joystick.addFromEditor: Creating new joystick...");
-            
-            // ジョイスティックを生成し、シーンのプロパティとして保持させる
-            scene.joystick = joystickPlugin.add(scene, {
-                x: 150,
-                y: scene.cameras.main.height - 150,
-                radius: 100,
-                // ジョイスティックの各パーツはUIなので、カメラに追従させ、常に最前面に表示する
-                base: scene.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
-                thumb: scene.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
-            });
-            
-            return scene.joystick;
-        }
+   // --- 2. joystickの定義で、先ほど定義した独立関数を「参照」する ---
+    'joystick': {
+        groups: ['controls', 'action'],
+        addFromEditor: createJoystickFromEditor // ★ アロー関数ではなく、関数の名前を直接指定
     },
+      
 
     'message_window': { 
         path: './ui/MessageWindow.js', 
