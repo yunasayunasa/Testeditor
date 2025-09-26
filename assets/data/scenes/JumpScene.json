@@ -1,4 +1,5 @@
 {
+  "hasJoystick": true,
   "layers": [
     {
       "name": "Foreground",
@@ -163,7 +164,7 @@
     {
       "name": "player",
       "type": "initialize",
-      "x": 402,
+      "x": 605,
       "y": 224,
       "depth": 20,
       "scaleX": 0.58,
