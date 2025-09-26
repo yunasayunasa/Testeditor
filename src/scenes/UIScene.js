@@ -498,7 +498,19 @@ onSceneTransition(newSceneKey) {
  * ★★★ return漏れを修正した最終・完全・確定FIX版 ★★★
  * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
  */
+// in src/scenes/UIScene.js
+
+/**
+ * ★★★ シーン名のハードコードを排除した、真の最終確定FIX版 ★★★
+ * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
+ */
 addUiComponentFromEditor(registryKey, newName) {
+    // 1. Textの場合は、専用メソッドに処理を移譲して即座に終了
+    if (registryKey === 'Text') {
+        return this.addTextUiFromEditor(newName);
+    }
+
+    // 2. uiRegistryから定義を取得
     const uiRegistry = this.registry.get('uiRegistry');
     if (!uiRegistry) return null;
 
@@ -508,13 +520,27 @@ addUiComponentFromEditor(registryKey, newName) {
         return null;
     }
 
-    // --- 1. カスタム生成関数(addFromEditor)があるかチェック ---
+    // 3. カスタム生成関数(addFromEditor)があるかチェック
     if (typeof definition.addFromEditor === 'function') {
         // --- ケースA: ジョイスティックのような特殊なUIの場合 ---
         console.log(`[UIScene] Delegating UI creation to custom factory for '${registryKey}'...`);
         
-        const gameScene = this.scene.get('JumpScene') || this.scene.get('GameScene');
+        // ▼▼▼【ここがハードコードを排除する核心部分です】▼▼▼
+        // --------------------------------------------------------------------
+        // a) 現在アクティブな全シーンのリストを取得
+        const activeScenes = this.scene.manager.getScenes(true);
+        
+        // b) リストから「システム系」のシーンを除外して、最初のゲームシーンを見つける
+        const gameScene = activeScenes.find(scene => 
+            scene.scene.key !== 'UIScene' && 
+            scene.scene.key !== 'SystemScene' && 
+            scene.scene.key !== 'PreloadScene'
+        );
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         if (gameScene) {
+            // c) 見つかったゲームシーンを引数にしてカスタム関数を実行
             return definition.addFromEditor(gameScene, newName);
         } else {
             console.error(`[UIScene] Could not find a target game scene for '${registryKey}'.`);
@@ -522,12 +548,11 @@ addUiComponentFromEditor(registryKey, newName) {
         }
     }
 
-    // --- ケースB: 従来のクラスベースのUIの場合 (カスタム関数がなかった場合のみ実行される) ---
+    // --- 4. 従来のクラスベースのUIの場合 ---
     if (!definition.component) {
         console.error(`[UIScene] UI definition for key '${registryKey}' is missing a 'component' class.`);
         return null;
     }
-
     const stateManager = this.registry.get('stateManager');
     const params = {
         ...(definition.params || {}),
