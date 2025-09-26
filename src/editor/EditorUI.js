@@ -556,7 +556,7 @@ export default class EditorUI {
 // in src/editor/EditorUI.js
 
 /**
- * ★★★ UIの追加先シーンを正しく判定する最終完成版 ★★★
+ * ★★★ UISceneに全権委任する、最もシンプルな最終完成版 ★★★
  */
 onAddButtonClicked = () => {
     if (!this.selectedAssetKey) {
@@ -567,58 +567,33 @@ onAddButtonClicked = () => {
     let newObjectOrObjects = null;
     const newName = `${this.selectedAssetKey.toLowerCase()}_${Date.now()}`;
 
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    // --------------------------------------------------------------------
     if (this.selectedAssetType === 'ui') {
         // --- ケースA: UIアセットの場合 ---
-        const uiRegistry = this.game.registry.get('uiRegistry');
-        const uiDef = uiRegistry?.[this.selectedAssetKey];
-
-        if (!uiDef) {
-            alert(`UI[${this.selectedAssetKey}]の定義がuiRegistryに見つかりません。`);
-            return;
-        }
-
-        // 1. カスタム生成関数(addFromEditor)があるかチェック
-        if (typeof uiDef.addFromEditor === 'function') {
-            // ジョイスティックのような特殊なUIの場合
-            // ゲームシーンをターゲットにする
-            const targetScene = this.getActiveGameScene();
-            if (targetScene) {
-                newObjectOrObjects = uiDef.addFromEditor(targetScene, newName);
-            } else {
-                alert("ジョイスティックを追加するためのアクティブなゲームシーンが見つかりません。");
-            }
+        // ★ とにかくUISceneの専門部署に依頼する！
+        const uiScene = this.game.scene.getScene('UIScene');
+        if (uiScene && typeof uiScene.addUiComponentFromEditor === 'function') {
+            newObjectOrObjects = uiScene.addUiComponentFromEditor(this.selectedAssetKey, newName);
         } else {
-            // ボタンやバーのような通常のUIの場合
-            // ★★★ ターゲットは必ず UIScene にする ★★★
-            const targetScene = this.game.scene.getScene('UIScene');
-            if (targetScene && typeof targetScene.addUiComponentFromEditor === 'function') {
-                newObjectOrObjects = targetScene.addUiComponentFromEditor(this.selectedAssetKey, newName);
-            } else {
-                alert("UIコンポーネントを追加するためのUISceneが見つからないか、addUiComponentFromEditorメソッドがありません。");
-            }
+            alert("UISceneまたはそのaddUiComponentFromEditorメソッドが見つかりません。");
         }
 
     } else {
-        // --- ケースB: ゲームオブジェクトアセットの場合 (画像、プレハブなど) ---
-        const targetScene = this.getActiveGameScene();
-        if (!targetScene) {
+        // --- ケースB: ゲームオブジェクトアセットの場合 ---
+        const gameScene = this.getActiveGameScene();
+        if (!gameScene) {
             alert("アセットを追加するためのアクティブなゲームシーンが見つかりません。");
             return;
         }
 
-        if ((this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') && typeof targetScene.addObjectFromEditor === 'function') {
-            newObjectOrObjects = targetScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+        if ((this.selectedAssetType === 'image' || this.selectedAssetType === 'spritesheet') && typeof gameScene.addObjectFromEditor === 'function') {
+            newObjectOrObjects = gameScene.addObjectFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
         } 
-        else if ((this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') && typeof targetScene.addPrefabFromEditor === 'function') {
-            newObjectOrObjects = targetScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
+        else if ((this.selectedAssetType === 'prefab' || this.selectedAssetType === 'GroupPrefab') && typeof gameScene.addPrefabFromEditor === 'function') {
+            newObjectOrObjects = gameScene.addPrefabFromEditor(this.selectedAssetKey, newName, this.activeLayerName);
         }
     }
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // --- 新しく生成されたオブジェクトを選択状態にする ---
+    // --- オブジェクト選択処理 (変更なし) ---
     if (newObjectOrObjects && this.plugin) {
         if (newObjectOrObjects instanceof Phaser.GameObjects.GameObject) {
             if (Array.isArray(newObjectOrObjects)) {

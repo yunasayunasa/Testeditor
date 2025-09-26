@@ -490,57 +490,64 @@ onSceneTransition(newSceneKey) {
         }
     }
 
-     /**
-     * ★★★ 最終FIX版 ★★★
-     * エディタからの要求に応じて、新しいUIコンポーネントを生成・追加する
-     * @param {string} registryKey - uiRegistryのキー ('menu_button', 'player_hp_bar'など)
-     * @param {string} newName - 新しいUIオブジェクトに付ける名前
-     */
-    addUiComponentFromEditor(registryKey, newName) {
-        // ▼▼▼【ここが核心の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        // テキストの場合は、これまで通り専用メソッドを呼び出す
-        if (registryKey === 'Text') {
-            return this.addTextUiFromEditor(newName);
-        }
+    // in src/scenes/UIScene.js
 
-        const uiRegistry = this.registry.get('uiRegistry');
-        const stateManager = this.registry.get('stateManager');
-        if (!uiRegistry || !stateManager) return null;
+/**
+ * ★★★ カスタム関数(addFromEditor)に対応した最終完成版 ★★★
+ * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
+ */
+addUiComponentFromEditor(registryKey, newName) {
+    const uiRegistry = this.registry.get('uiRegistry');
+    if (!uiRegistry) return null;
 
-        // --- 1. 指定されたキーで、uiRegistryから「設計図」を直接取得 ---
-        const definition = uiRegistry[registryKey];
+    const definition = uiRegistry[registryKey];
+    if (!definition) {
+        console.error(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry.`);
+        return null;
+    }
 
-        if (!definition || !definition.component) {
-            console.error(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry.`);
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    // --- 1. カスタム生成関数(addFromEditor)があるかチェック ---
+    if (typeof definition.addFromEditor === 'function') {
+        // --- ケースA: ジョイスティックのような特殊なUIの場合 ---
+        console.log(`[UIScene] Delegating UI creation to custom factory for '${registryKey}'...`);
+        
+        // ★ ジョイスティックの追加先はゲームシーンなので、それを探す
+        const gameScene = this.scene.get('JumpScene') || this.scene.get('GameScene'); // より柔軟に
+        if (gameScene) {
+            // カスタム関数を、正しいシーンを引数にして呼び出す
+            return definition.addFromEditor(gameScene, newName);
+        } else {
+            console.error(`[UIScene] Could not find a target game scene for '${registryKey}'.`);
             return null;
         }
-
-        // --- 2. デフォルトのパラメータを準備 ---
-        const centerX = this.scale.width / 2;
-        const centerY = this.scale.height / 2;
-        // ★★★ definition.params を最優先で使う ★★★
-        const params = {
-            ...definition.params,
-            x: centerX,
-            y: centerY,
-            name: newName,
-            stateManager: stateManager
-        };
-
-        // --- 3. クラスから新しいインスタンスを生成 ---
-        const UiComponentClass = definition.component;
-        const newUiElement = new UiComponentClass(this, params);
-
-        // --- 4. シーンに登録し、編集可能にする ---
-        this.registerUiElement(newName, newUiElement, params);
-        newUiElement.setData('registryKey', registryKey);
-        console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
-
-        return newUiElement;
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // --- ケースB: 従来のクラスベースのUIの場合 ---
+    if (!definition.component) {
+        console.error(`[UIScene] UI definition for key '${registryKey}' is missing a 'component' class.`);
+        return null;
+    }
+
+    const stateManager = this.registry.get('stateManager');
+    const params = {
+        ...(definition.params || {}),
+        x: this.scale.width / 2,
+        y: this.scale.height / 2,
+        name: newName,
+        stateManager: stateManager
+    };
+
+    const UiComponentClass = definition.component;
+    const newUiElement = new UiComponentClass(this, params);
+
+    this.registerUiElement(newName, newUiElement, params);
+    newUiElement.setData('registryKey', registryKey);
+    console.log(`[UIScene] UI Component '${newName}' from key '${registryKey}' added.`);
+
+    return newUiElement;
+}
      /**
      * ★★★ 新規メソッド ★★★
      * エディタから、新しいテキストUIオブジェクトを生成する
