@@ -2025,11 +2025,16 @@ createComponentSection() {
         const scene = this.selectedObject.scene;
         const sceneKey = scene.scene.key;
         
-        const sceneLayoutData = {
-            layers: this.layerStates,
-            objects: [],
-            animations: [] // animationsは常に配列として初期化
-        };
+       const sceneLayoutData = {
+        // 1. ジョイスティックが存在するかどうかのフラグを追加
+        //    シーンに `joystick` プロパティがあり、それがnullでなければtrue
+        hasJoystick: !!scene.joystick, 
+
+        layers: this.layerStates,
+        objects: [],
+        animations: []
+    };
+        
 
         if (this.editableObjects.has(sceneKey)) {
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);

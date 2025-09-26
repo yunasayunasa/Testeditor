@@ -31,29 +31,31 @@ export default class JumpScene extends BaseGameScene {
         // 2. カメラの境界設定は、物理エンジンとは無関係なので、そのまま使える
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
         // ★★★ ここまで ★★★
+  // initSceneWithData を呼び出す「前」に、JSONデータを先読みする
 
+    // 1. 読み込むべきJSONのキーを決定する
+    const keyToLoad = this.layoutDataKey || this.scene.key;
+    const layoutData = this.cache.json.get(keyToLoad);
+
+    // 2. JSONデータ内に hasJoystick: true のフラグがあれば、ジョイスティックを生成
+    if (layoutData && layoutData.hasJoystick) {
+        console.log("[JumpScene] Joystick found in layout data. Re-creating joystick...");
+        
+        // ★ addJoystickFromEditorを、シーン自身の初期化のために再利用する
+        //    (ただし、アラートは出ないように少し改修すると、より良い)
+        this.addJoystickFromEditor(); 
+    } else {
+        // デバッグモードでない、かつJSONにもない場合は、従来のロジックで生成
+        const isDebug = new URLSearchParams(window.location.search).has('debug');
+        if (!isDebug) {
+             this.addJoystickFromEditor(); // 常に表示する場合
+        }
+    
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
       const uiScene = this.scene.get('UIScene');
 
-    /*    // --- 2. ゲーム開始時には、メッセージウィンドウは不要なので非表示にする ---
-        if (uiScene) {
-            uiScene.setElementVisible('message_window', false);
-        }*/
-     // --------------------------------------------------------------------
-        // --- デバッグモードでない時だけ、ジョイスティックを生成する ---
-        const isDebug = new URLSearchParams(window.location.search).has('debug');
-
-       if (!isDebug) {
-            this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
-                x: 150, y: 550, radius: 100,
-                base: this.add.circle(0, 0, 100, 0x888888, 0.5),
-                thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8),
-            });
-        } else {
-            // デバッグモードの時は、joystickをnullのままにしておく
-            this.joystick = null;
-        }
+   
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
@@ -170,12 +172,11 @@ export default class JumpScene extends BaseGameScene {
      * EditorUIからの要求に応じて、シーンにジョイスティックを生成する。
      * 冪等性（何度呼ばれても安全であること）を保証する。
      */
-    addJoystickFromEditor() {
-        // --- 1. 既にジョイスティックが存在する場合は、何もしない ---
-        if (this.joystick && this.joystick.scene) {
-            alert('ジョイスティックは既にシーンに存在します。');
-            return;
-        }
+    addJoystickFromEditor(isFromEditor = true) { // ★ 引数を追加
+    if (this.joystick && this.joystick.scene) {
+        if (isFromEditor) alert('ジョイスティックは既にシーンに存在します。');
+        return;
+    }
 
         // --- 2. 必要なプラグインが利用可能かチェック ---
         const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
@@ -198,8 +199,9 @@ export default class JumpScene extends BaseGameScene {
 
         // --- 4. 成功したことをユーザーに伝える ---
         // (アラートは少し煩わしいので、コンソールログの方が良いかもしれません)
-        console.log("ジョイスティックがシーンに追加されました。");
-    }
+        if (isFromEditor) console.log("ジョイスティックがシーンに追加されました。");
+}
+    
 
  
     /**
