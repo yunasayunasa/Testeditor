@@ -164,10 +164,10 @@
       "name": "player",
       "type": "initialize",
       "x": 402,
-      "y": 320,
+      "y": 224,
       "depth": 20,
-      "scaleX": 0.1,
-      "scaleY": 0.1,
+      "scaleX": 0.58,
+      "scaleY": 0.58,
       "angle": 0,
       "alpha": 1,
       "group": "player",
@@ -190,141 +190,17 @@
           "targetGroup": "bg"
         }
       ],
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {}
+        }
+      ],
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
       "texture": "bgtest2",
-      "physics": {
-        "isStatic": false,
-        "isSensor": false,
-        "gravityScale": 1,
-        "friction": 0.1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "bgtest4_1758555036555",
-      "type": "initialize",
-      "x": 883,
-      "y": 273,
-      "depth": 0,
-      "scaleX": 0.71,
-      "scaleY": 0.71,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1758555056626",
-          "trigger": "onStomp",
-          "nodes": [
-            {
-              "id": "node_1758555067039",
-              "type": "state_transition",
-              "params": {
-                "to": "追跡",
-                "target": "source"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "targetGroup": "floor"
-        },
-        {
-          "id": "event_1758586281192",
-          "trigger": "onCollide_Start",
-          "nodes": [
-            {
-              "id": "node_1758586293069",
-              "type": "destroy",
-              "params": {
-                "target": "source"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "targetGroup": "player"
-        }
-      ],
-      "components": [
-        {
-          "type": "StateMachineComponent",
-          "params": {}
-        }
-      ],
-      "data": {
-        "stateMachine": {
-          "initialState": "idle",
-          "states": {
-            "idle": {
-              "onEnter": {
-                "nodes": [],
-                "connections": []
-              },
-              "onUpdate": {
-                "nodes": [
-                  {
-                    "id": "node_1758586306793",
-                    "type": "tween",
-                    "params": {
-                      "property": "angle",
-                      "to": "300",
-                      "time": 10000,
-                      "ease": "Linear",
-                      "yoyo": "true",
-                      "loop": -1
-                    },
-                    "x": 50,
-                    "y": 50
-                  }
-                ],
-                "connections": []
-              },
-              "onExit": {
-                "nodes": [],
-                "connections": []
-              }
-            },
-            "追跡": {
-              "onEnter": {
-                "nodes": [],
-                "connections": []
-              },
-              "onUpdate": {
-                "nodes": [
-                  {
-                    "id": "node_1758585498855",
-                    "type": "move_to_target",
-                    "params": {
-                      "target": "player",
-                      "speed": 2
-                    },
-                    "x": 50,
-                    "y": 50
-                  }
-                ],
-                "connections": []
-              },
-              "onExit": {
-                "nodes": [],
-                "connections": []
-              }
-            }
-          }
-        },
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "texture": "bgtest4",
       "physics": {
         "isStatic": false,
         "isSensor": false,
