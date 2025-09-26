@@ -492,8 +492,10 @@ onSceneTransition(newSceneKey) {
 
     // in src/scenes/UIScene.js
 
+// in src/scenes/UIScene.js
+
 /**
- * ★★★ カスタム関数(addFromEditor)に対応した最終完成版 ★★★
+ * ★★★ return漏れを修正した最終・完全・確定FIX版 ★★★
  * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
  */
 addUiComponentFromEditor(registryKey, newName) {
@@ -506,25 +508,21 @@ addUiComponentFromEditor(registryKey, newName) {
         return null;
     }
 
-    // ▼▼▼【ここが修正の核心です】▼▼▼
     // --- 1. カスタム生成関数(addFromEditor)があるかチェック ---
     if (typeof definition.addFromEditor === 'function') {
         // --- ケースA: ジョイスティックのような特殊なUIの場合 ---
         console.log(`[UIScene] Delegating UI creation to custom factory for '${registryKey}'...`);
         
-        // ★ ジョイスティックの追加先はゲームシーンなので、それを探す
-        const gameScene = this.scene.get('JumpScene') || this.scene.get('GameScene'); // より柔軟に
+        const gameScene = this.scene.get('JumpScene') || this.scene.get('GameScene');
         if (gameScene) {
-            // カスタム関数を、正しいシーンを引数にして呼び出す
             return definition.addFromEditor(gameScene, newName);
         } else {
             console.error(`[UIScene] Could not find a target game scene for '${registryKey}'.`);
             return null;
         }
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // --- ケースB: 従来のクラスベースのUIの場合 ---
+    // --- ケースB: 従来のクラスベースのUIの場合 (カスタム関数がなかった場合のみ実行される) ---
     if (!definition.component) {
         console.error(`[UIScene] UI definition for key '${registryKey}' is missing a 'component' class.`);
         return null;
