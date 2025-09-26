@@ -1,4 +1,5 @@
 {
+  "hasJoystick": true,
   "layers": [
     {
       "name": "Foreground",
@@ -34,8 +35,8 @@
     {
       "name": "message_window",
       "type": "MessageWindow",
-      "x": 640,
-      "y": 600,
+      "x": 609,
+      "y": 142,
       "depth": 9998,
       "scaleX": 1,
       "scaleY": 1,
@@ -44,7 +45,7 @@
       "group": "jump_button",
       "data": {},
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、268 回目ですね。」"
+      "label": "「このゲームを起動するのは、270 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -268,6 +269,66 @@
           "ascent": 24.984375,
           "descent": 7.875,
           "fontSize": 32.859375
+        }
+      }
+    },
+    {
+      "name": "coin_hud_1758876131085",
+      "type": "CoinHud",
+      "x": 640,
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "data": {},
+      "registryKey": "coin_hud"
+    },
+    {
+      "name": "text_1758876133229",
+      "type": "initialize",
+      "x": 640,
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "data": {},
+      "registryKey": "Text",
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
         }
       }
     }

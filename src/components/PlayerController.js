@@ -51,11 +51,16 @@ export default class PlayerController {
             this.gameObject.emit('onDirectionChange', this.direction);
         }
         
-        const currentVelocityX = body.velocity.x;
-        if (moveX !== 0 && Math.abs(currentVelocityX) < this.maxSpeed) {
-            // ★★★ this.target を this.gameObject に変更 ★★★
-            this.gameObject.applyForce({ x: moveX * this.moveForce, y: 0 });
-        }
+        // applyForceをやめて、setVelocityで直接速度を制御する
+
+    // 1. 新しいX方向の速度を計算する
+    const newVelocityX = moveX * this.maxSpeed;
+
+    // 2. Y方向の速度は現在のものを維持する（ジャンプ中に落下が止まらないように）
+    const currentVelocityY = body.velocity.y;
+
+    // 3. 計算した速度を物理ボディに直接設定する
+    this.gameObject.setVelocity(newVelocityX, currentVelocityY);
 
         const isOnGround = this.checkIsOnGround();
 
