@@ -165,6 +165,42 @@ export default class JumpScene extends BaseGameScene {
         this.attachJumpButtonListener();
     }
 
+      /**
+     * ★★★ 復活・確定版 ★★★
+     * EditorUIからの要求に応じて、シーンにジョイスティックを生成する。
+     * 冪等性（何度呼ばれても安全であること）を保証する。
+     */
+    addJoystickFromEditor() {
+        // --- 1. 既にジョイスティックが存在する場合は、何もしない ---
+        if (this.joystick && this.joystick.scene) {
+            alert('ジョイスティックは既にシーンに存在します。');
+            return;
+        }
+
+        // --- 2. 必要なプラグインが利用可能かチェック ---
+        const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
+        if (!joystickPlugin) {
+            alert('エラー: Virtual Joystick Pluginがロードされていません。');
+            return;
+        }
+
+        console.log("[JumpScene] Adding joystick from editor request...");
+
+        // --- 3. ジョイスティックを生成・設定 ---
+        this.joystick = joystickPlugin.add(this, {
+            x: 150,
+            y: this.cameras.main.height - 150, // カメラの表示範囲の左下に配置
+            radius: 100,
+            // ジョイスティックの各パーツはUIなので、カメラをスクロールしても動かないようにし、常に最前面に表示
+            base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
+            thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+        });
+
+        // --- 4. 成功したことをユーザーに伝える ---
+        // (アラートは少し煩わしいので、コンソールログの方が良いかもしれません)
+        console.log("ジョイスティックがシーンに追加されました。");
+    }
+
  
     /**
      * シーン終了時に、全GameObjectのコンポーネントを破棄する

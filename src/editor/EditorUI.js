@@ -464,6 +464,19 @@ export default class EditorUI {
                 this.assetListContainer.appendChild(itemDiv);
             }
 
+            // b) 「ジョイスティック」追加ボタンを特別に生成する
+        const joystickItemDiv = document.createElement('div');
+        joystickItemDiv.className = 'asset-item';
+        joystickItemDiv.dataset.assetKey = 'joystick';
+        joystickItemDiv.innerHTML = `<span class="asset-preview">🕹️</span><span>ジョイスティック</span>`;
+        joystickItemDiv.addEventListener('click', () => {
+            this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
+            joystickItemDiv.classList.add('selected');
+            this.selectedAssetKey = 'joystick';
+            this.selectedAssetType = 'ui_special'; // ★ 通常のUIと区別するための特別なタイプ
+        });
+        this.assetListContainer.appendChild(joystickItemDiv);
+
             // ★ テキスト追加ボタンは専用の処理があるので、別途生成する
             const textItemDiv = document.createElement('div');
             textItemDiv.className = 'asset-item';
@@ -556,7 +569,7 @@ export default class EditorUI {
 // in src/editor/EditorUI.js
 
 /**
- * ★★★ UISceneに全権委任する、最もシンプルな最終完成版 ★★★
+ * ★★★ ジョイスティックを「特殊なゲーム要素」として扱う最終FIX版 ★★★
  */
 onAddButtonClicked = () => {
     if (!this.selectedAssetKey) {
@@ -564,12 +577,28 @@ onAddButtonClicked = () => {
         return;
     }
     
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    // --------------------------------------------------------------------
+    // --- 1. ジョイスティックが選択された場合の、特別な早期リターン処理 ---
+    if (this.selectedAssetKey === 'joystick' && this.selectedAssetType === 'ui_special') {
+        const gameScene = this.getActiveGameScene();
+        if (gameScene && typeof gameScene.addJoystickFromEditor === 'function') {
+            gameScene.addJoystickFromEditor();
+            // ジョイスティックは特殊なコントロールなので、追加後に選択状態にはしない
+        } else {
+            alert("ジョイスティックを追加できるアクティブなゲームシーンが見つかりません。");
+        }
+        return; // ★ ジョイスティックの処理は、ここで完全に終了させる
+    }
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // --- 2. これまで通りの、通常のオブジェクト追加処理 ---
     let newObjectOrObjects = null;
     const newName = `${this.selectedAssetKey.toLowerCase()}_${Date.now()}`;
 
     if (this.selectedAssetType === 'ui') {
-        // --- ケースA: UIアセットの場合 ---
-        // ★ とにかくUISceneの専門部署に依頼する！
+        // UIアセットはUISceneに追加する
         const uiScene = this.game.scene.getScene('UIScene');
         if (uiScene && typeof uiScene.addUiComponentFromEditor === 'function') {
             newObjectOrObjects = uiScene.addUiComponentFromEditor(this.selectedAssetKey, newName);
@@ -578,7 +607,7 @@ onAddButtonClicked = () => {
         }
 
     } else {
-        // --- ケースB: ゲームオブジェクトアセットの場合 ---
+        // ゲームオブジェクトアセットはゲームシーンに追加する
         const gameScene = this.getActiveGameScene();
         if (!gameScene) {
             alert("アセットを追加するためのアクティブなゲームシーンが見つかりません。");
@@ -593,8 +622,8 @@ onAddButtonClicked = () => {
         }
     }
 
-    // --- オブジェクト選択処理 (変更なし) ---
-    if (newObjectOrObjects && this.plugin) {
+    // --- 3. オブジェクト選択処理 (変更なし) ---
+    if (newObjectOrObjects && this.plugin && (newObjectOrObjects instanceof Phaser.GameObjects.GameObject)) {
         if (newObjectOrObjects instanceof Phaser.GameObjects.GameObject) {
             if (Array.isArray(newObjectOrObjects)) {
                 this.plugin.selectMultipleObjects(newObjectOrObjects);

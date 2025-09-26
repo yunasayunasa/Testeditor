@@ -490,105 +490,57 @@ onSceneTransition(newSceneKey) {
         }
     }
 
-    // in src/scenes/UIScene.js
-
-// in src/scenes/UIScene.js
-
-/**
- * ★★★ return漏れを修正した最終・完全・確定FIX版 ★★★
- * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
- */
-// in src/scenes/UIScene.js
-
-/**
- * ★★★ シーン名のハードコードを排除した、真の最終確定FIX版 ★★★
- * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
- */
-addUiComponentFromEditor(registryKey, newName) {
-    if (registryKey === 'joystick') {
-        console.group("--- [DEBUG] Joystick Creation Attempt ---");
-        
-        const registry = this.registry.get('uiRegistry');
-        console.log("1. Got uiRegistry from Phaser Registry:", registry);
-        
-        const joystickDef = registry ? registry['joystick'] : undefined;
-        console.log("2. Got 'joystick' definition from uiRegistry:", joystickDef);
-        
-        if (joystickDef) {
-            console.log("3. Type of 'addFromEditor' property is:", typeof joystickDef.addFromEditor);
-            console.log("4. Is it a function?", typeof joystickDef.addFromEditor === 'function');
-        } else {
-            console.error("CRITICAL: 'joystick' key does not exist in the uiRegistry object!");
+     /**
+     * ★★★ 最終FIX版 ★★★
+     * エディタからの要求に応じて、新しいUIコンポーネントを生成・追加する
+     * @param {string} registryKey - uiRegistryのキー ('menu_button', 'player_hp_bar'など)
+     * @param {string} newName - 新しいUIオブジェクトに付ける名前
+     */
+    addUiComponentFromEditor(registryKey, newName) {
+        // ▼▼▼【ここが核心の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // テキストの場合は、これまで通り専用メソッドを呼び出す
+        if (registryKey === 'Text') {
+            return this.addTextUiFromEditor(newName);
         }
-        
-        console.groupEnd();
-    }
-    // 1. Textの場合は、専用メソッドに処理を移譲して即座に終了
-    if (registryKey === 'Text') {
-        return this.addTextUiFromEditor(newName);
-    }
 
-    // 2. uiRegistryから定義を取得
-    const uiRegistry = this.registry.get('uiRegistry');
-    if (!uiRegistry) return null;
+        const uiRegistry = this.registry.get('uiRegistry');
+        const stateManager = this.registry.get('stateManager');
+        if (!uiRegistry || !stateManager) return null;
 
-    const definition = uiRegistry[registryKey];
-    if (!definition) {
-        console.error(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry.`);
-        return null;
-    }
+        // --- 1. 指定されたキーで、uiRegistryから「設計図」を直接取得 ---
+        const definition = uiRegistry[registryKey];
 
-    // 3. カスタム生成関数(addFromEditor)があるかチェック
-    if (typeof definition.addFromEditor === 'function') {
-        // --- ケースA: ジョイスティックのような特殊なUIの場合 ---
-        console.log(`[UIScene] Delegating UI creation to custom factory for '${registryKey}'...`);
-        
-        // ▼▼▼【ここがハードコードを排除する核心部分です】▼▼▼
-        // --------------------------------------------------------------------
-        // a) 現在アクティブな全シーンのリストを取得
-        const activeScenes = this.scene.manager.getScenes(true);
-        
-        // b) リストから「システム系」のシーンを除外して、最初のゲームシーンを見つける
-        const gameScene = activeScenes.find(scene => 
-            scene.scene.key !== 'UIScene' && 
-            scene.scene.key !== 'SystemScene' && 
-            scene.scene.key !== 'PreloadScene'
-        );
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        if (gameScene) {
-            // c) 見つかったゲームシーンを引数にしてカスタム関数を実行
-            return definition.addFromEditor(gameScene, newName);
-        } else {
-            console.error(`[UIScene] Could not find a target game scene for '${registryKey}'.`);
+        if (!definition || !definition.component) {
+            console.error(`[UIScene] UI definition for key '${registryKey}' not found in uiRegistry.`);
             return null;
         }
+
+        // --- 2. デフォルトのパラメータを準備 ---
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+        // ★★★ definition.params を最優先で使う ★★★
+        const params = {
+            ...definition.params,
+            x: centerX,
+            y: centerY,
+            name: newName,
+            stateManager: stateManager
+        };
+
+        // --- 3. クラスから新しいインスタンスを生成 ---
+        const UiComponentClass = definition.component;
+        const newUiElement = new UiComponentClass(this, params);
+
+        // --- 4. シーンに登録し、編集可能にする ---
+        this.registerUiElement(newName, newUiElement, params);
+        newUiElement.setData('registryKey', registryKey);
+        console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
+
+        return newUiElement;
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-
-    // --- 4. 従来のクラスベースのUIの場合 ---
-    if (!definition.component) {
-        console.error(`[UIScene] UI definition for key '${registryKey}' is missing a 'component' class.`);
-        return null;
-    }
-    const stateManager = this.registry.get('stateManager');
-    const params = {
-        ...(definition.params || {}),
-        x: this.scale.width / 2,
-        y: this.scale.height / 2,
-        name: newName,
-        stateManager: stateManager
-    };
-
-    const UiComponentClass = definition.component;
-    const newUiElement = new UiComponentClass(this, params);
-
-    this.registerUiElement(newName, newUiElement, params);
-    newUiElement.setData('registryKey', registryKey);
-    console.log(`[UIScene] UI Component '${newName}' from key '${registryKey}' added.`);
-
-    return newUiElement;
-}
      /**
      * ★★★ 新規メソッド ★★★
      * エディタから、新しいテキストUIオブジェクトを生成する
