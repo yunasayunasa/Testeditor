@@ -49,24 +49,44 @@ export const uiRegistry = {
         path: './ui/JumpButton.js',
         groups: ['controls', 'action']
     },
-      if (registryKey === 'joystick') {
-        console.group("--- [DEBUG] Joystick Creation Attempt ---");
+     'joystick': {
+        // pathやcomponentは不要。addFromEditorがすべての生成ロジックを担う。
+        groups: ['controls', 'action'], // JumpButtonと同じコントロール系グループに所属させる
         
-        const registry = this.registry.get('uiRegistry');
-        console.log("1. Got uiRegistry from Phaser Registry:", registry);
-        
-        const joystickDef = registry ? registry['joystick'] : undefined;
-        console.log("2. Got 'joystick' definition from uiRegistry:", joystickDef);
-        
-        if (joystickDef) {
-            console.log("3. Type of 'addFromEditor' property is:", typeof joystickDef.addFromEditor);
-            console.log("4. Is it a function?", typeof joystickDef.addFromEditor === 'function');
-        } else {
-            console.error("CRITICAL: 'joystick' key does not exist in the uiRegistry object!");
+        /**
+         * EditorUIのアセットブラウザから追加されたときに呼び出される、カスタムファクトリ関数。
+         * @param {Phaser.Scene} scene - 追加先のシーン (JumpSceneなど)
+         * @returns {object | null} 生成されたジョイスティックオブジェクト、または失敗時にnull
+         */
+        addFromEditor: (scene) => {
+            // シーンに既にjoystickプロパティが存在する場合は、重複して生成しない
+            if (scene.joystick) {
+                alert('ジョイスティックは既にシーンに存在します。');
+                return scene.joystick; // 既存のものを返す
+            }
+            
+            // 必要なプラグインが利用可能かチェック
+            const joystickPlugin = scene.plugins.get('rexvirtualjoystickplugin');
+            if (!joystickPlugin) {
+                alert('エラー: Virtual Joystick Pluginがロードされていません。');
+                return null;
+            }
+
+            console.log("[uiRegistry] joystick.addFromEditor: Creating new joystick...");
+            
+            // ジョイスティックを生成し、シーンのプロパティとして保持させる
+            scene.joystick = joystickPlugin.add(scene, {
+                x: 150,
+                y: scene.cameras.main.height - 150,
+                radius: 100,
+                // ジョイスティックの各パーツはUIなので、カメラに追従させ、常に最前面に表示する
+                base: scene.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
+                thumb: scene.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+            });
+            
+            return scene.joystick;
         }
-        
-        console.groupEnd();
-    }
+    },
 
     'message_window': { 
         path: './ui/MessageWindow.js', 

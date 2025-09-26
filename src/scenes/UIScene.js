@@ -505,6 +505,24 @@ onSceneTransition(newSceneKey) {
  * EditorUIからの依頼に基づき、レジストリからUIコンポーネントを生成・追加する。
  */
 addUiComponentFromEditor(registryKey, newName) {
+    if (registryKey === 'joystick') {
+        console.group("--- [DEBUG] Joystick Creation Attempt ---");
+        
+        const registry = this.registry.get('uiRegistry');
+        console.log("1. Got uiRegistry from Phaser Registry:", registry);
+        
+        const joystickDef = registry ? registry['joystick'] : undefined;
+        console.log("2. Got 'joystick' definition from uiRegistry:", joystickDef);
+        
+        if (joystickDef) {
+            console.log("3. Type of 'addFromEditor' property is:", typeof joystickDef.addFromEditor);
+            console.log("4. Is it a function?", typeof joystickDef.addFromEditor === 'function');
+        } else {
+            console.error("CRITICAL: 'joystick' key does not exist in the uiRegistry object!");
+        }
+        
+        console.groupEnd();
+    }
     // 1. Textの場合は、専用メソッドに処理を移譲して即座に終了
     if (registryKey === 'Text') {
         return this.addTextUiFromEditor(newName);
