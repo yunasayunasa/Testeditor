@@ -28,6 +28,7 @@
       "angle": 0,
       "alpha": 1,
       "group": "jump_button",
+      "data": {},
       "registryKey": "jump_button"
     },
     {
@@ -41,8 +42,9 @@
       "angle": 0,
       "alpha": 1,
       "group": "jump_button",
+      "data": {},
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、171 回目ですね。」"
+      "label": "「このゲームを起動するのは、268 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -54,6 +56,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "data": {},
       "registryKey": "menu_button",
       "text": "MENU",
       "style": {
@@ -84,9 +87,9 @@
         "wordWrapCallbackScope": null,
         "wordWrapUseAdvanced": false,
         "metrics": {
-          "ascent": 28.09375,
-          "descent": 8.859375,
-          "fontSize": 36.953125
+          "ascent": 26,
+          "descent": 7,
+          "fontSize": 33
         }
       }
     },
@@ -100,6 +103,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "data": {},
       "registryKey": "bottom_panel"
     },
     {
@@ -111,7 +115,8 @@
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 0,
+      "alpha": 1,
+      "data": {},
       "registryKey": "Text",
       "text": "New Text",
       "style": {
@@ -157,7 +162,7 @@
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 0,
+      "alpha": 1,
       "components": [
         {
           "type": "WatchVariableComponent",
@@ -170,6 +175,7 @@
           "params": {}
         }
       ],
+      "data": {},
       "registryKey": "Text",
       "text": "100",
       "style": {
@@ -215,7 +221,7 @@
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 0,
+      "alpha": 1,
       "components": [
         {
           "type": "WatchVariableComponent",
@@ -228,6 +234,7 @@
           "params": {}
         }
       ],
+      "data": {},
       "registryKey": "Text",
       "text": "100",
       "style": {
