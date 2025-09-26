@@ -50,7 +50,7 @@ export default class JumpScene extends BaseGameScene {
         if (!isDebug) {
              this.addJoystickFromEditor(); // 常に表示する場合
         }
-    
+    }
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
       const uiScene = this.scene.get('UIScene');
