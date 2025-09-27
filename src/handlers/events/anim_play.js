@@ -28,7 +28,7 @@ anim_play.define = {
     description: 'スプライトの特定のアニメーションを再生します。',
     params: [
         {
-            key: 'name',
+            key: 'key',
             type: 'string',
             label: 'アニメーション名',
             defaultValue: ''

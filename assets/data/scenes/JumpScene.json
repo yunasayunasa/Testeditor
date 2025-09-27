@@ -21,8 +21,8 @@
     {
       "name": "cg01_2",
       "type": "initialize",
-      "x": 211,
-      "y": 644,
+      "x": 488,
+      "y": 672,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -162,70 +162,6 @@
       "texture": "bgtest3"
     },
     {
-      "name": "player",
-      "type": "initialize",
-      "x": 236,
-      "y": 366,
-      "depth": 0,
-      "scaleX": 0.6,
-      "scaleY": 0.6,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "group": "player",
-      "events": [
-        {
-          "id": "event_1758967478522",
-          "trigger": "onStateChange",
-          "nodes": [
-            {
-              "id": "node_1758967519303",
-              "type": "anim_play",
-              "params": {
-                "key": "anila_walk"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "condition": "state === 'walk'"
-        }
-      ],
-      "components": [
-        {
-          "type": "PlayerController",
-          "params": {
-            "moveSpeed": 10
-          }
-        },
-        {
-          "type": "Scrollable",
-          "params": {}
-        },
-        {
-          "type": "Interactor",
-          "params": {}
-        }
-      ],
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "texture": "tartman_normal",
-      "physics": {
-        "isStatic": false,
-        "isSensor": false,
-        "gravityScale": 1,
-        "friction": 0.1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
       "name": "tartman_run_1758964419196",
       "type": "initialize",
       "x": 617,
@@ -254,22 +190,74 @@
       "texture": "__DEFAULT"
     },
     {
-      "name": "anila_normal_1758964555572",
+      "name": "player",
       "type": "initialize",
-      "x": 1032,
-      "y": 278,
+      "x": 377,
+      "y": 423,
       "depth": 0,
-      "scaleX": 0.38,
-      "scaleY": 0.38,
+      "scaleX": 0.29,
+      "scaleY": 0.29,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
-      "events": [],
+      "group": "player",
+      "events": [
+        {
+          "id": "event_1758968408399",
+          "trigger": "onStateChange",
+          "nodes": [
+            {
+              "id": "node_1758968443135",
+              "type": "anim_play",
+              "params": {
+                "name": "anila_walk"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "condition": "state === 'walk'"
+        },
+        {
+          "id": "event_1758968459025",
+          "trigger": "onStateChange",
+          "nodes": [
+            {
+              "id": "node_1758968459025_vxwvx",
+              "type": "anim_play",
+              "params": {
+                "name": "anila_idle"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "condition": "state === 'idle'"
+        }
+      ],
+      "components": [
+        {
+          "type": "PlayerController",
+          "params": {}
+        },
+        {
+          "type": "Scrollable",
+          "params": {}
+        },
+        {
+          "type": "Interactor",
+          "params": {}
+        }
+      ],
+      "animation_data": {
+        "default": "anila_walk"
+      },
       "data": {
-        "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "anila_normal",
+      "texture": "anila_walk",
       "physics": {
         "isStatic": false,
         "isSensor": false,
@@ -281,21 +269,6 @@
           "mask": 4294967295
         }
       }
-    },
-    {
-      "name": "anila_walk_1758967070163",
-      "type": "initialize",
-      "x": 640,
-      "y": 365,
-      "depth": 0,
-      "scaleX": 0.4,
-      "scaleY": 0.4,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "data": {},
-      "texture": "anila_walk"
     }
   ],
   "animations": [
@@ -308,6 +281,16 @@
       },
       "frameRate": 4,
       "repeat": -1
+    },
+    {
+      "key": "anila_idle",
+      "texture": "anila_walk",
+      "frames": {
+        "start": 0,
+        "end": 0
+      },
+      "frameRate": 1,
+      "repeat": 0
     }
   ]
 }

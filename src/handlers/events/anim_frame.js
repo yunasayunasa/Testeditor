@@ -51,7 +51,7 @@ anim_frame.define = {
     description: 'スプライトを、特定のアニメーションの指定フレームで静止させます。',
     params: [
         {
-            key: 'name',
+            key: 'key',
             type: 'string', // 将来的にはシーンに登録済みのアニメーションキーをリスト表示したい
             label: 'アニメーション名',
             defaultValue: ''
