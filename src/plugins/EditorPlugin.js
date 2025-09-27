@@ -1059,6 +1059,13 @@ createMatterPropertiesUI(gameObject) {
             }
         }
     });
+    this.createCheckbox(this.editorPropsContainer, '回転を固定', gameObject.body.fixedRotation, (isChecked) => {
+    if (this.selectedObject?.body) {
+        this.selectedObject.setFixedRotation(isChecked);
+        // ★ 永続化のためにデータもセットする
+        this.selectedObject.setData('fixedRotation', isChecked);
+    }
+});
 
     // --- 重力スケール ---
     if (!body.ignoreGravity) {
@@ -2520,40 +2527,42 @@ createAnimationList() {
 
    // in src/plugins/EditorPlugin.js
 
-convertImageToSprite() {
-    if (!this.selectedObject || !(this.selectedObject instanceof Phaser.GameObjects.Image)) return;
-    const oldImage = this.selectedObject;
-    const scene = oldImage.scene;
+// in src/plugins/EditorPlugin.js
 
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    const properties = {
-        name: oldImage.name, x: oldImage.x, y: oldImage.y, scaleX: oldImage.scaleX,
-        scaleY: oldImage.scaleY, angle: oldImage.angle, alpha: oldImage.alpha,
-        visible: oldImage.visible, depth: oldImage.depth,
-        texture: oldImage.texture.key, // ★★★ テクスチャキーを明示的に引き継ぐ ★★★
-        layer: oldImage.getData('layer'),
-        group: oldImage.getData('group')
-        // ★ 他にも引き継ぎたいデータがあればここに追加
-    };
+/**
+ * ★★★ 二段階初期化を活用した、データ損失のない最終FIX版 ★★★
+ * 選択中のImageオブジェクトを、すべてのプロパティを維持したままSpriteオブジェクトに変換する。
+ */
+convertImageToSprite() {
+    const oldImage = this.selectedObject;
+    if (!oldImage || !(oldImage instanceof Phaser.GameObjects.Image)) return;
+
+    const scene = oldImage.scene;
+    if (!scene || typeof scene.extractLayoutFromObject !== 'function') return;
+
+    console.log(`[EditorPlugin] Converting Image '${oldImage.name}' to Sprite...`);
+
+    // --- 1. 既存のオブジェクトから、すべての情報をレイアウトデータとして抽出 ---
+    const layout = scene.extractLayoutFromObject(oldImage);
+
+    // --- 2. タイプだけを 'Sprite' に上書き ---
+    layout.type = 'Sprite';
     
+    // --- 3. 古いオブジェクトをシーンから安全に削除 ---
     const sceneKey = scene.scene.key;
     if (this.editableObjects.has(sceneKey)) {
         this.editableObjects.get(sceneKey).delete(oldImage);
     }
-
-    // ★★★ 既存のオブジェクトを破棄する前に、新しいレイアウトデータを作成 ★★★
-    const newLayout = scene.extractLayoutFromObject(oldImage);
-    newLayout.type = 'Sprite'; // タイプをSpriteに変更
-
     oldImage.destroy();
 
-    // ★★★ 新しい二段階初期化フローで、完璧に再生成する ★★★
-    const newSprite = scene.createObjectFromLayout(newLayout);
-    scene.applyProperties(newSprite, newLayout);
-    scene.initComponentsAndEvents(newSprite); // ★ これを呼び出すのが重要
+    // --- 4. 新しいレイアウトデータを使って、二段階初期化でオブジェクトを完璧に再生成 ---
+    const newSprite = scene.createObjectFromLayout(layout);
+    scene.applyProperties(newSprite, layout);
+    scene.initComponentsAndEvents(newSprite);
 
+    // --- 5. 新しく生成されたスプライトを選択状態にし、UIを更新 ---
     this.selectSingleObject(newSprite);
-    this.openAnimationEditor(); // 最後にエディタを開く
+    this.openAnimationEditor(); // アニメーションエディタを即座に開く
 }
 
  /*openEventEditor() {

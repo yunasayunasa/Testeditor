@@ -361,7 +361,9 @@ applyProperties(gameObject, layout) {
             gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
             gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01);
             gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
-            
+            if (phys.fixedRotation !== undefined) {
+        gameObject.setFixedRotation(phys.fixedRotation);
+    }
             // スケール問題を解決するコード
             gameObject.setData('shape', phys.shape || 'rectangle');
             if (phys.shape === 'circle') {
@@ -1049,6 +1051,7 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
             layout.physics = {
                 isStatic: body.isStatic,
                 isSensor: body.isSensor,
+                fixedRotation: body.fixedRotation, // ★ 回転固定の状態を保存
                 shape: gameObject.getData('shape') || 'rectangle',
                 ignoreGravity: gameObject.getData('ignoreGravity') === true,
                 friction: body.friction,
