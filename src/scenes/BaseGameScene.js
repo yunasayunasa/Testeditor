@@ -384,64 +384,61 @@ applyProperties(gameObject, layout) {
      * オブジェクトにイベントリスナーとエディタ機能を設定する (構文修正・最終完成版)
      * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
      */
-    applyEventsAndEditorFunctions(gameObject, eventsData) {
-        const events = eventsData || [];
-        gameObject.setData('events', events);
+   // in src/scenes/BaseGameScene.js
+
+/**
+ * ★★★ イベントリスナー登録を復活させた、真の最終完成版 ★★★
+ * オブジェクトにイベントリスナーとエディタ機能を設定する。
+ */
+applyEventsAndEditorFunctions(gameObject, eventsData) {
+    const events = eventsData || [];
+    gameObject.setData('events', events);
+    
+    // --- 1. まず、過去に登録した可能性のあるリスナーをすべてクリアする ---
+    //    これにより、再初期化（initComponentsAndEvents）の際にリスナーが重複するのを防ぐ。
+    gameObject.off('pointerdown');
+    gameObject.off('onStateChange');
+    gameObject.off('onDirectionChange');
+
+    // --- 2. データに基づいて、新しいリスナーを設定していく ---
+    events.forEach(eventData => {
         
-      /*  // --- 既存のゲームプレイ用リスナーを全てクリア ---
-        gameObject.off('pointerdown');
-        gameObject.off('onStateChange');
-        gameObject.off('onDirectionChange');
-
-        // --- 新しいリスナーを設定 ---
-        events.forEach(eventData => {
-            
-         
-
-
-            // --- 'onClick' トリガーの処理 ---
-            if (eventData.trigger === 'onClick') {
-                gameObject.on('pointerdown', () => {
-                    // ▼▼▼【ここを、このように完全に書き換えます】▼▼▼
-                    // --------------------------------------------------------------------
-                    
-                    // ★★★ 1. EditorPluginへの参照を取得 ★★★
-                     const currentMode = this.registry.get('editor_mode');
-                    
-                    if (currentMode === 'play') {
-                        if (this.actionInterpreter) {
-                            this.actionInterpreter.run(gameObject, eventData, gameObject);
-                        }
-                    }
-                    // --------------------------------------------------------------------
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                });
-            }
-              // --- 'onStateChange' トリガーの処理 ---
-            if (eventData.trigger === 'onStateChange') {
-                gameObject.on('onStateChange', (newState, oldState) => {
-                    // ★ 変数名を state, oldState で統一
-                    this.evaluateConditionAndRun(gameObject, eventData, { state: newState, oldState: oldState });
-                });
-            }
-            
-            // --- 'onDirectionChange' トリガーの処理 ---
-            if (eventData.trigger === 'onDirectionChange') {
-                gameObject.on('onDirectionChange', (newDirection) => {
-                    // ★ 変数名を direction で統一
-                    this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
-                });
-            }
-            
-        });*/ // ★★★ ここが、forEach ループの正しい閉じ括弧です ★★★
-
-        // ★★★ 3. makeEditableの呼び出しは、ここではなくapplyPropertiesの最後で行うのがより安全 ★★★
-        // (ただし、現状のままでも、次のステップで解決します)
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            editor.makeEditable(gameObject, this);
+        // --- 'onClick' トリガーの処理 ---
+        // (これはプレイモードでのみ発火するよう、リスナー内部で判定)
+        if (eventData.trigger === 'onClick') {
+            gameObject.on('pointerdown', () => {
+                const currentMode = this.registry.get('editor_mode');
+                if (currentMode === 'play' && this.actionInterpreter) {
+                    this.actionInterpreter.run(gameObject, eventData, gameObject);
+                }
+            });
         }
+          
+        // --- 'onStateChange' トリガーの処理 ---
+        if (eventData.trigger === 'onStateChange') {
+            gameObject.on('onStateChange', (newState, oldState) => {
+                // 条件を評価し、満たされればActionInterpreterを実行するヘルパーを呼び出す
+                this.evaluateConditionAndRun(gameObject, eventData, { state: newState, oldState: oldState });
+            });
+        }
+        
+        // --- 'onDirectionChange' トリガーの処理 ---
+        if (eventData.trigger === 'onDirectionChange') {
+            gameObject.on('onDirectionChange', (newDirection) => {
+                this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
+            });
+        }
+
+        // ★ 他のカスタムイベントトリガー（onDamageなど）も、必要であればここに追加する
+    });
+
+    // --- 3. 最後に、エディタ用のインタラクティブ設定を行う ---
+    // (これはゲームプレイのリスナーとは独立している)
+    const editor = this.plugins.get('EditorPlugin');
+    if (editor && editor.isEnabled) {
+        editor.makeEditable(gameObject, this);
     }
+}
  // in src/scenes/BaseGameScene.js
 
 /**
