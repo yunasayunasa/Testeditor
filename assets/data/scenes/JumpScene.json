@@ -191,6 +191,7 @@
         }
       ],
       "data": {
+        "ignoreGravity": false,
         "shape": "rectangle"
       },
       "texture": "tartman_normal",
@@ -216,10 +217,9 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "animation_data": {
-        "default": null
-      },
-      "data": {}
+      "events": [],
+      "data": {},
+      "texture": "__DEFAULT"
     },
     {
       "name": "anila_walk_1758964517325",
@@ -231,10 +231,9 @@
       "scaleY": 0.38,
       "angle": 0,
       "alpha": 1,
-      "animation_data": {
-        "default": null
-      },
-      "data": {}
+      "events": [],
+      "data": {},
+      "texture": "__DEFAULT"
     },
     {
       "name": "anila_normal_1758964555572",
@@ -249,6 +248,7 @@
       "layer": "Gameplay",
       "events": [],
       "data": {
+        "ignoreGravity": false,
         "shape": "rectangle"
       },
       "texture": "anila_normal",
@@ -263,7 +263,33 @@
           "mask": 4294967295
         }
       }
+    },
+    {
+      "name": "anila_walk_1758967070163",
+      "type": "initialize",
+      "x": 640,
+      "y": 365,
+      "depth": 0,
+      "scaleX": 0.4,
+      "scaleY": 0.4,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "data": {},
+      "texture": "anila_walk"
     }
   ],
-  "animations": []
+  "animations": [
+    {
+      "key": "anila_walk",
+      "texture": "anila_walk",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 4,
+      "repeat": -1
+    }
+  ]
 }
