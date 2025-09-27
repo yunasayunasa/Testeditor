@@ -210,7 +210,7 @@
               "id": "node_1758968443135",
               "type": "anim_play",
               "params": {
-                "name": "anila_walk"
+                "key": "anila_walk"
               },
               "x": 50,
               "y": 50
@@ -227,7 +227,7 @@
               "id": "node_1758968459025_vxwvx",
               "type": "anim_play",
               "params": {
-                "name": "anila_idle"
+                "key": "anila_idle"
               },
               "x": 50,
               "y": 50

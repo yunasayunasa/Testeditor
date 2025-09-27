@@ -2061,7 +2061,19 @@ createComponentSection() {
                     components: gameObject.getData('components'),
                     animation_data: gameObject.getData('animation_data')
                 };
-
+   // 1. イベントデータの自動修復
+            if (objData.events && Array.isArray(objData.events)) {
+                objData.events.forEach(event => {
+                    if (event.nodes && Array.isArray(event.nodes)) {
+                        event.nodes.forEach(node => {
+                            if (node.type === 'anim_play' && node.params && node.params.name !== undefined) {
+                                node.params.key = node.params.name;
+                                delete node.params.name;
+                            }
+                        });
+                    }
+                });
+            }
                 // --- "data" ブロックを新設し、カスタムデータをすべてここにまとめる ---
 objData.data = {};
 
@@ -2126,17 +2138,9 @@ if (gameObject.body) {
               // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
         
-           // --- 4. アニメーションデータの抽出 (forループの外) ---
+             // --- 4. アニメーションデータの抽出 (forループの外) ---
     if (sceneKey !== 'UIScene') {
-        // ▼▼▼【ここだけを、正しいAPI呼び出しに修正します】▼▼▼
-        // --------------------------------------------------------------------
-        // ゲーム全体(グローバル)のアニメーションマネージャーから、すべてのアニメーション定義を取得
-        // getAnims()ではなく、animsプロパティ(Map)のvalues()を使う
         const allGlobalAnims = Array.from(this.pluginManager.game.anims.anims.values());
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
         sceneLayoutData.animations = allGlobalAnims.map(anim => ({
             key: anim.key,
             texture: anim.frames[0]?.textureKey,
