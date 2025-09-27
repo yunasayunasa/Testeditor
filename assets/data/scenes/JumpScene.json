@@ -20,7 +20,7 @@
   "objects": [
     {
       "name": "cg01_2",
-      "type": "initialize",
+      "type": "Image",
       "x": 465,
       "y": 672,
       "depth": 0,
@@ -48,7 +48,7 @@
     },
     {
       "name": "cg01_3",
-      "type": "initialize",
+      "type": "Image",
       "x": 966,
       "y": 497,
       "depth": 0,
@@ -83,7 +83,7 @@
     },
     {
       "name": "bgtest3_1758338452766",
-      "type": "initialize",
+      "type": "Image",
       "x": 640,
       "y": 360,
       "depth": 19,
@@ -98,7 +98,7 @@
     },
     {
       "name": "bgtest4_1758338485276",
-      "type": "initialize",
+      "type": "Image",
       "x": 600,
       "y": 333,
       "depth": 20,
@@ -131,7 +131,7 @@
     },
     {
       "name": "bgtest3_1758338618267",
-      "type": "initialize",
+      "type": "Image",
       "x": 640,
       "y": 360,
       "depth": 20,
@@ -163,7 +163,7 @@
     },
     {
       "name": "tartman_run_1758964419196",
-      "type": "initialize",
+      "type": "Image",
       "x": 617,
       "y": 1167,
       "depth": 0,
@@ -177,7 +177,7 @@
     },
     {
       "name": "anila_walk_1758964517325",
-      "type": "initialize",
+      "type": "Image",
       "x": 850,
       "y": 1296,
       "depth": 0,
@@ -191,8 +191,8 @@
     },
     {
       "name": "player",
-      "type": "initialize",
-      "x": 381,
+      "type": "Sprite",
+      "x": 480,
       "y": 423,
       "depth": 0,
       "scaleX": 0.29,
