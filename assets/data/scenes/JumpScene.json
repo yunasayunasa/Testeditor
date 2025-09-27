@@ -164,7 +164,7 @@
     {
       "name": "player",
       "type": "initialize",
-      "x": 303,
+      "x": 236,
       "y": 366,
       "depth": 0,
       "scaleX": 0.6,
@@ -173,7 +173,25 @@
       "alpha": 1,
       "layer": "Gameplay",
       "group": "player",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1758967478522",
+          "trigger": "onStateChange",
+          "nodes": [
+            {
+              "id": "node_1758967519303",
+              "type": "anim_play",
+              "params": {
+                "name": "anila_walk"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "condition": "s.g. state === ‘walk’"
+        }
+      ],
       "components": [
         {
           "type": "PlayerController",
@@ -276,9 +294,6 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "animation_data": {
-        "default": "anila_walk"
-      },
       "data": {},
       "texture": "anila_walk"
     }
