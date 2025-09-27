@@ -276,6 +276,9 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "animation_data": {
+        "default": "anila_walk"
+      },
       "data": {},
       "texture": "anila_walk"
     }
