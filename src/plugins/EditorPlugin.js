@@ -2126,42 +2126,44 @@ if (gameObject.body) {
               // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
         
-         // --- 4. アニメーションデータの抽出 (forループの外) ---
+           // --- 4. アニメーションデータの抽出 (forループの外) ---
     if (sceneKey !== 'UIScene') {
+        // ▼▼▼【ここだけを、正しいAPI呼び出しに修正します】▼▼▼
+        // --------------------------------------------------------------------
         // ゲーム全体(グローバル)のアニメーションマネージャーから、すべてのアニメーション定義を取得
-        const allGlobalAnims = this.pluginManager.game.anims.getAnims();
+        // getAnims()ではなく、animsプロパティ(Map)のvalues()を使う
+        const allGlobalAnims = Array.from(this.pluginManager.game.anims.anims.values());
 
-        // フィルタリングせずに、すべてのグローバルアニメーションを書き出し対象とする
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         sceneLayoutData.animations = allGlobalAnims.map(anim => ({
             key: anim.key,
             texture: anim.frames[0]?.textureKey,
-            // フレームのパース方法は、あなたの元のコードの形式を維持
             frames: { 
                 start: anim.frames[0]?.frame.name, 
                 end: anim.frames[anim.frames.length - 1]?.frame.name 
             },
             frameRate: anim.frameRate,
             repeat: anim.repeat
-        })).filter(animData => animData.texture); // 不正なデータ(テクスチャがない)だけは除外
+        })).filter(animData => animData.texture);
     } else {
-        // UISceneの場合はanimationsプロパティを削除してJSONを綺麗にする
         delete sceneLayoutData.animations;
     }
 
-        // --- 5. JSONに変換して出力 (forループの外) ---
-        try {
-            const jsonString = JSON.stringify(sceneLayoutData, null, 2);
-            console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
-            console.log(jsonString);
-            navigator.clipboard.writeText(jsonString).then(() => {
-                alert(`Layout for ${sceneKey} copied to clipboard!`);
-            });
-        } catch (error) {
-            console.error("[EditorPlugin] FAILED to stringify layout data.", error);
-            alert("Failed to export layout. Check the console for a critical error.");
-        }
+    // --- 5. JSONに変換して出力 (forループの外) ---
+    try {
+        const jsonString = JSON.stringify(sceneLayoutData, null, 2);
+        console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
+        console.log(jsonString);
+        navigator.clipboard.writeText(jsonString).then(() => {
+            alert(`Layout for ${sceneKey} copied to clipboard!`);
+        });
+    } catch (error) {
+        console.error("[EditorPlugin] FAILED to stringify layout data.", error);
+        alert("Failed to export layout. Check the console for a critical error.");
     }
-
+}
     /**
      * ★★★ 新規メソッド ★★★
      * 現在選択されている単一のオブジェクトを、プレハブ用のJSONとしてエクスポートする。
@@ -2324,6 +2326,12 @@ if (gameObject.body) {
  * ★★★ グローバルアニメーションとして作成する最終FIX版 ★★★
  * アニメーションエディタ内に、新しいアニメーションを作成するためのUIフォームを生成する。
  */
+c// in src/plugins/EditorPlugin.js
+
+/**
+ * ★★★ グローバルアニメーションとして作成する最終FIX版 ★★★
+ * アニメーションエディタ内に、新しいアニメーションを作成するためのUIフォームを生成する。
+ */
 createAnimationCreationForm() {
     const form = document.createElement('div');
     form.style.border = '1px solid #444';
@@ -2335,7 +2343,6 @@ createAnimationCreationForm() {
     title.style.marginTop = '0';
     form.appendChild(title);
 
-    // --- UI要素の生成 ---
     const animKeyInput = document.createElement('input');
     animKeyInput.type = 'text';
     animKeyInput.placeholder = 'アニメーション名 (例: walk)';
@@ -2359,35 +2366,30 @@ createAnimationCreationForm() {
     const createBtn = document.createElement('button');
     createBtn.innerText = '作成';
     
-    // --- 「作成」ボタンのクリック処理 ---
     createBtn.onclick = () => {
-        // --- ユーザーからの入力を取得 ---
-        const textureKey = this.selectedObject.texture.key;
+        const textureKey = this.selectedObject?.texture?.key;
         const animKey = animKeyInput.value;
         const framesStr = framesInput.value;
         const frameRate = parseInt(frameRateInput.value);
         const repeat = repeatCheckbox.checked ? -1 : 0;
 
-        // --- 入力チェック ---
         if (!animKey || !framesStr || !frameRate || !textureKey) {
-            alert('テクスチャが設定されたオブジェクトを選択し、全ての項目を入力してください。');
+            alert('テクスチャが設定されたスプライトを選択し、全ての項目を入力してください。');
             return;
         }
 
-        // --- アニメーションの作成 ---
-        // シーン(scene.anims)ではなく、ゲーム全体(this.game.anims)のアニメーションマネージャーを取得
+        // ★★★ ゲーム全体(グローバル)のアニメーションマネージャーを取得 ★★★
         const animManager = this.pluginManager.game.anims;
         
-        // 既存のアニメーションがあれば上書き確認
         if (animManager.exists(animKey)) {
             if (!confirm(`アニメーションキー '${animKey}' は既に存在します。上書きしますか？`)) {
                 return;
             }
-            animManager.remove(animKey); // 既存のものを削除
+            animManager.remove(animKey);
         }
 
         try {
-            // フレーム番号文字列を解析してフレーム配列を生成
+            // generateFrameNumbersはシーンのコンテキストが必要なため、シーンのアニメーションマネージャーから呼び出す
             const frames = this.selectedObject.scene.anims.generateFrameNumbers(textureKey, {
                 frames: this.parseFrameString(framesStr)
             });
@@ -2401,9 +2403,7 @@ createAnimationCreationForm() {
             });
             
             console.log(`[EditorPlugin] Global animation '${animKey}' created/updated successfully.`);
-            
-            // UIをリフレッシュして、新しいアニメーションをリストに表示
-            this.openAnimationEditor();
+            this.openAnimationEditor(); // UIをリフレッシュ
             
         } catch (error) {
             console.error(`アニメーションの作成に失敗しました: `, error);
@@ -2422,6 +2422,13 @@ createAnimationCreationForm() {
  * アニメーションエディタ内に、現在選択中のスプライトに関連する、
  * 登録済みのアニメーションのリストを生成する。
  */
+// in src/plugins/EditorPlugin.js
+
+/**
+ * ★★★ グローバルアニメーションを参照する最終FIX版 ★★★
+ * アニメーションエディタ内に、現在選択中のスプライトに関連する、
+ * 登録済みのアニメーションのリストを生成する。
+ */
 createAnimationList() {
     const container = document.createElement('div');
     const title = document.createElement('h4');
@@ -2434,10 +2441,10 @@ createAnimationList() {
     }
 
     const currentTextureKey = this.selectedObject.texture.key;
-    // ★ シーン(scene.anims)ではなく、ゲーム全体(this.game.anims)からアニメーションリストを取得
-    const allAnims = this.pluginManager.game.anims.getAnims();
+    
+    // ★★★ ゲーム全体(グローバル)のアニメーションマネージャーからアニメーションリストを取得する、正しい方法 ★★★
+    const allAnims = Array.from(this.pluginManager.game.anims.anims.values());
 
-    // 選択中のテクスチャに一致するアニメーションをフィルタリング
     const filteredAnims = allAnims.filter(anim =>
         anim.frames && anim.frames.length > 0 && anim.frames[0].textureKey === currentTextureKey
     );
@@ -2457,11 +2464,11 @@ createAnimationList() {
     
             const playBtn = document.createElement('button');
             playBtn.innerText = '再生';
-            playBtn.onclick = () => { if (this.selectedObject.play) this.selectedObject.play(anim.key); };
+            playBtn.onclick = () => { if (this.selectedObject?.play) this.selectedObject.play(anim.key); };
     
             const stopBtn = document.createElement('button');
             stopBtn.innerText = '停止';
-            stopBtn.onclick = () => { if (this.selectedObject.stop) this.selectedObject.stop(); };
+            stopBtn.onclick = () => { if (this.selectedObject?.stop) this.selectedObject.stop(); };
     
             const setDefaultBtn = document.createElement('button');
             setDefaultBtn.innerText = 'デフォルトに設定';
