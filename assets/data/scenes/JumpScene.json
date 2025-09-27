@@ -182,14 +182,14 @@
               "id": "node_1758967519303",
               "type": "anim_play",
               "params": {
-                "name": "anila_walk"
+                "key": "anila_walk"
               },
               "x": 50,
               "y": 50
             }
           ],
           "connections": [],
-          "condition": "s.g. state === ‘walk’"
+          "condition": "state === 'walk'"
         }
       ],
       "components": [
