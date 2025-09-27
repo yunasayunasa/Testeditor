@@ -12,7 +12,10 @@
      "next_arrow": "assets/images/next_arrow.png",
     "roger_normal": "assets/images/roger_normal.png",
    
-"tileset_terrain": "assets/images/tileset_terrain.png" ,
+".tileset_terrain": "assets/images/tileset_terrain.png" ,
+
+ "anila_normal": "assets/images/anila_normal.png",
+ "tartman_normal": "assets/images/tartman_normal.png",
 
   "bgtest": "assets/images/bgtest.jpg" ,
   "bgtest2": "assets/images/bgtest2.png" ,
@@ -26,6 +29,16 @@
       "path": "assets/images/walk.png",
       "frameWidth": 102,
       "frameHeight": 115
+    },
+    "anila_walk": {
+      "path": "assets/images/anila_walk.png",
+      "frameWidth": 718,
+      "frameHeight": 632
+    },
+     "tartman_run": {
+      "path": "assets/images/tartman_run.png",
+      "frameWidth": 245,
+      "frameHeight": 292
     }
   },
 
