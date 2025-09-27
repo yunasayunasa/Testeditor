@@ -21,7 +21,7 @@
     {
       "name": "cg01_2",
       "type": "initialize",
-      "x": 488,
+      "x": 465,
       "y": 672,
       "depth": 0,
       "scaleX": 1,
@@ -49,8 +49,8 @@
     {
       "name": "cg01_3",
       "type": "initialize",
-      "x": 1067,
-      "y": 474,
+      "x": 966,
+      "y": 497,
       "depth": 0,
       "scaleX": 0.49,
       "scaleY": 0.49,
@@ -192,7 +192,7 @@
     {
       "name": "player",
       "type": "initialize",
-      "x": 377,
+      "x": 381,
       "y": 423,
       "depth": 0,
       "scaleX": 0.29,
@@ -251,10 +251,8 @@
           "params": {}
         }
       ],
-      "animation_data": {
-        "default": "anila_walk"
-      },
       "data": {
+        "ignoreGravity": false,
         "shape": "rectangle"
       },
       "texture": "anila_walk",
