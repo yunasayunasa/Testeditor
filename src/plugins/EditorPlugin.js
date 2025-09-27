@@ -2046,15 +2046,31 @@ createComponentSection() {
         animations: []
     };
 
+      // in src/plugins/EditorPlugin.js -> exportLayoutToJson
+
+        // ▼▼▼【ここから下を、あなたのコードと置き換えてください】▼▼▼
         if (this.editableObjects.has(sceneKey)) {
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
             
             for (const gameObject of liveObjects) {
                 if (!gameObject.name) continue;
 
+                // 1. instanceof を使って、オブジェクトの型を安全に判定する
+                let objectType;
+                if (gameObject instanceof Phaser.GameObjects.Sprite) {
+                    objectType = 'Sprite';
+                } else if (gameObject instanceof Phaser.GameObjects.Text) {
+                    objectType = 'Text';
+                } else if (gameObject instanceof Phaser.GameObjects.Image) {
+                    objectType = 'Image';
+                } else {
+                    objectType = gameObject.constructor.name; // フォールバック
+                }
+
+                // 2. あなたの既存のデータ構築ロジックを開始
                 const objData = {
                     name: gameObject.name,
-                    type: gameObject.constructor.name,
+                    type: objectType, // ★ 判定した安全な型を使う
                     x: Math.round(gameObject.x),
                     y: Math.round(gameObject.y),
                     depth: gameObject.depth,
@@ -2068,41 +2084,38 @@ createComponentSection() {
                     components: gameObject.getData('components'),
                     animation_data: gameObject.getData('animation_data')
                 };
-   // 1. イベントデータの自動修復
-            if (objData.events && Array.isArray(objData.events)) {
-                objData.events.forEach(event => {
-                    if (event.nodes && Array.isArray(event.nodes)) {
-                        event.nodes.forEach(node => {
-                            if (node.type === 'anim_play' && node.params && node.params.name !== undefined) {
-                                node.params.key = node.params.name;
-                                delete node.params.name;
-                            }
-                        });
-                    }
-                });
-            }
-                // --- "data" ブロックを新設し、カスタムデータをすべてここにまとめる ---
-objData.data = {};
+    
+                // 3. イベントデータの自動修復
+                if (objData.events && Array.isArray(objData.events)) {
+                    objData.events.forEach(event => {
+                        if (event.nodes && Array.isArray(event.nodes)) {
+                            event.nodes.forEach(node => {
+                                if (node.type === 'anim_play' && node.params && node.params.name !== undefined) {
+                                    node.params.key = node.params.name;
+                                    delete node.params.name;
+                                }
+                            });
+                        }
+                    });
+                }
 
-// a) StateMachineデータを取得して保存
-const smData = gameObject.getData('stateMachine');
-if (smData) {
-    objData.data.stateMachine = smData;
-}
+                // 4. "data" ブロックの構築
+                objData.data = {};
+                const smData = gameObject.getData('stateMachine');
+                if (smData) {
+                    objData.data.stateMachine = smData;
+                }
+                if (gameObject.body) {
+                    objData.data.ignoreGravity = gameObject.getData('ignoreGravity');
+                    objData.data.shape = gameObject.getData('shape');
+                }
 
-// b) ignoreGravity, shape などの物理関連カスタムデータもここに移動
-if (gameObject.body) {
-    objData.data.ignoreGravity = gameObject.getData('ignoreGravity');
-    objData.data.shape = gameObject.getData('shape');
-}
-// ----------
-
-                // ★★★ もし、エクスポート対象がUISceneのオブジェクトなら、registryKeyを追加 ★★★
+                // 5. UISceneの特別処理
                 if (sceneKey === 'UIScene') {
                     objData.registryKey = gameObject.getData('registryKey');
                 }
 
-                // --- 固有プロパティの抽出 ---
+                // 6. 固有プロパティの抽出
                 if (gameObject.texture && gameObject.texture.key) {
                     objData.texture = gameObject.texture.key;
                 }
@@ -2120,15 +2133,13 @@ if (gameObject.body) {
                     objData.label = gameObject.textObject.text;
                 }
                 
-                // --- 物理ボディの抽出 ---
+                // 7. 物理ボディの抽出
                 if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
                         isSensor: body.isSensor,
-                   //    ignoreGravity: gameObject.getData('ignoreGravity') === true,
                         gravityScale: body.gravityScale.y,
-                       // shape: gameObject.getData('shape') || 'rectangle', 
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
                         collisionFilter: {
@@ -2138,13 +2149,12 @@ if (gameObject.body) {
                     };
                 }
                 
+                // 8. 最終的なオブジェクトデータを配列に追加
                 sceneLayoutData.objects.push(objData);
 
-            } // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-              // ★★★ ここが、forループの正しい閉じ括弧です ★★★
-              // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+            } // ここが for ループの終わりです
         }
-        
+        // ▲▲▲▲▲【ここまでの内容で、既存のforループブロックを置き換えてください】▲▲▲▲▲
              // --- 4. アニメーションデータの抽出 (forループの外) ---
     if (sceneKey !== 'UIScene') {
         const allGlobalAnims = Array.from(this.pluginManager.game.anims.anims.values());
