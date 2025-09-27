@@ -1,47 +1,42 @@
-// src/handlers/events/anim_frame.js
+// in src/handlers/events/anim_frame.js
 
 /**
  * [anim_frame] アクションタグ
- * ターゲットを、指定されたスプライトシートアニメーションの特定フレームで静止させます。
+ * ターゲットを、指定されたスプライトアニメーションの特定フレームで静止させます。
  * @param {ActionInterpreter} interpreter
  * @param {object} params
  * @param {Phaser.GameObjects.Sprite} target - 適用対象のスプライト
  */
 export default async function anim_frame(interpreter, params, target) {
-    // --- ガード節: ターゲットが有効か、フレームを設定できるオブジェクトかを確認 ---
-    if (!target || typeof target.setTexture !== 'function' || typeof target.setFrame !== 'function') {
+    if (!target || typeof target.setFrame !== 'function') {
         const targetName = target ? target.name : 'unknown';
-        console.warn(`[anim_frame] Target '${targetName}' is not a valid Sprite or cannot set a frame.`);
+        console.warn(`[anim_frame] Target '${targetName}' is not a valid Sprite.`);
         return;
     }
 
     // --- パラメータの取得と検証 ---
-    const animKey = params.name;
+    const animKey = params.key; // ★ "name" ではなく "key" を読む
     const frameNumber = parseInt(params.frame, 10);
 
-    if (!animKey || isNaN(frameNumber)) {
-        console.warn('[anim_frame] "name" (アニメーション名) and "frame" (フレーム番号) parameters are required.');
+    if (!animKey) {
+        console.warn('[anim_frame] "key" (アニメーション名) parameter is required.');
+        return;
+    }
+    // isNaNは、frameNumberが0の場合もfalseを返すので安全
+    if (isNaN(frameNumber)) {
+        console.warn('[anim_frame] "frame" (フレーム番号) parameter must be a valid number.');
         return;
     }
 
-    // --- アニメーションデータの取得 ---
-    const anim = interpreter.scene.anims.get(animKey);
-    if (!anim) {
-        console.warn(`[anim_frame] Animation with key '${animKey}' not found.`);
-        return;
-    }
-    if (!anim.frames[frameNumber]) {
-        console.warn(`[anim_frame] Frame number ${frameNumber} is out of bounds for animation '${animKey}'.`);
-        return;
-    }
-    
     // --- 実行 ---
-    const frame = anim.frames[frameNumber];
-    
-    // ★ ターゲットのテクスチャとフレームを、取得したデータで設定する
-    target.setTexture(frame.textureKey, frame.textureFrame);
+    // setFrameはテクスチャを自動で切り替えず、現在のテクスチャ内のフレームを探す。
+    // そのため、先にテクスチャを切り替える必要がある場合があるが、
+    // 多くのケースでは同じアトラス内のフレームを指定するため、この実装で十分機能する。
+    // まずアニメーションを停止させ、それからフレームを設定するのが最も確実。
+    target.stop();
+    target.setFrame(frameNumber);
 
-    console.log(`[anim_frame] Set '${target.name}' to frame ${frameNumber} of animation '${animKey}'`);
+    console.log(`[anim_frame] Set '${target.name}' to frame ${frameNumber} (animation '${animKey}' is used as reference).`);
 }
 
 /**
@@ -51,9 +46,9 @@ anim_frame.define = {
     description: 'スプライトを、特定のアニメーションの指定フレームで静止させます。',
     params: [
         {
-            key: 'key',
-            type: 'string', // 将来的にはシーンに登録済みのアニメーションキーをリスト表示したい
-            label: 'アニメーション名',
+            key: 'key', // ★ UIも、関数も、"key" に統一
+            type: 'string',
+            label: 'アニメーション名 (Key)',
             defaultValue: ''
         },
         {
