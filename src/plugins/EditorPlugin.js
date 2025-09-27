@@ -2126,30 +2126,27 @@ if (gameObject.body) {
               // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         }
         
-        // --- 4. アニメーションデータの抽出 (forループの外) ---
-        if (sceneKey !== 'UIScene' && scene.anims) {
-            // (この部分はあなたの元のコードのままで完璧です)
-            sceneLayoutData.animations = scene.anims.anims.getArray()
-                .filter(anim => {
-                    if (!anim.frames[0]) return false;
-                    const sceneObjects = this.editableObjects.get(sceneKey);
-                    if (!sceneObjects) return false;
-                    return Array.from(sceneObjects).some(go => go.texture && go.texture.key === anim.frames[0].textureKey);
-                })
-                .map(anim => ({
-                    key: anim.key,
-                    texture: anim.frames[0].textureKey,
-                    frames: { 
-                        start: anim.frames[0].frame.name, 
-                        end: anim.frames[anim.frames.length - 1].frame.name 
-                    },
-                    frameRate: anim.frameRate,
-                    repeat: anim.repeat
-                }));
-        } else {
-            // UISceneの場合はanimationsプロパティを削除してJSONを綺麗にする
-            delete sceneLayoutData.animations;
-        }
+         // --- 4. アニメーションデータの抽出 (forループの外) ---
+    if (sceneKey !== 'UIScene') {
+        // ゲーム全体(グローバル)のアニメーションマネージャーから、すべてのアニメーション定義を取得
+        const allGlobalAnims = this.pluginManager.game.anims.getAnims();
+
+        // フィルタリングせずに、すべてのグローバルアニメーションを書き出し対象とする
+        sceneLayoutData.animations = allGlobalAnims.map(anim => ({
+            key: anim.key,
+            texture: anim.frames[0]?.textureKey,
+            // フレームのパース方法は、あなたの元のコードの形式を維持
+            frames: { 
+                start: anim.frames[0]?.frame.name, 
+                end: anim.frames[anim.frames.length - 1]?.frame.name 
+            },
+            frameRate: anim.frameRate,
+            repeat: anim.repeat
+        })).filter(animData => animData.texture); // 不正なデータ(テクスチャがない)だけは除外
+    } else {
+        // UISceneの場合はanimationsプロパティを削除してJSONを綺麗にする
+        delete sceneLayoutData.animations;
+    }
 
         // --- 5. JSONに変換して出力 (forループの外) ---
         try {
@@ -2321,97 +2318,151 @@ if (gameObject.body) {
         this.pluginManager.game.input.enabled = true;
     }
 
-    createAnimationCreationForm() {
-        const form = document.createElement('div');
-        form.style.border = '1px solid #444';
-        form.style.padding = '10px';
-        form.style.marginBottom = '15px';
+   // in src/plugins/EditorPlugin.js
 
-        const title = document.createElement('h4');
-        title.innerText = '新しいアニメーションを作成';
-        title.style.marginTop = '0';
-        form.appendChild(title);
+/**
+ * ★★★ グローバルアニメーションとして作成する最終FIX版 ★★★
+ * アニメーションエディタ内に、新しいアニメーションを作成するためのUIフォームを生成する。
+ */
+createAnimationCreationForm() {
+    const form = document.createElement('div');
+    form.style.border = '1px solid #444';
+    form.style.padding = '10px';
+    form.style.marginBottom = '15px';
 
-        const animKeyInput = document.createElement('input');
-        animKeyInput.type = 'text';
-        animKeyInput.placeholder = 'アニメーション名 (例: walk)';
+    const title = document.createElement('h4');
+    title.innerText = '新しいアニメーションを作成';
+    title.style.marginTop = '0';
+    form.appendChild(title);
 
-        const framesInput = document.createElement('input');
-        framesInput.type = 'text';
-        framesInput.placeholder = 'フレーム番号 (例: 0-7 or 0,2,4)';
+    // --- UI要素の生成 ---
+    const animKeyInput = document.createElement('input');
+    animKeyInput.type = 'text';
+    animKeyInput.placeholder = 'アニメーション名 (例: walk)';
 
-        const frameRateInput = document.createElement('input');
-        frameRateInput.type = 'number';
-        frameRateInput.value = 10;
-        frameRateInput.placeholder = 'フレームレート';
+    const framesInput = document.createElement('input');
+    framesInput.type = 'text';
+    framesInput.placeholder = 'フレーム番号 (例: 0-7 or 0,2,4)';
 
-        const repeatCheckbox = document.createElement('input');
-        repeatCheckbox.type = 'checkbox';
-        repeatCheckbox.checked = true;
-        const repeatLabel = document.createElement('label');
-        repeatLabel.innerText = ' ループ再生';
-        repeatLabel.appendChild(repeatCheckbox);
+    const frameRateInput = document.createElement('input');
+    frameRateInput.type = 'number';
+    frameRateInput.value = 10;
+    frameRateInput.placeholder = 'フレームレート';
 
-        const createBtn = document.createElement('button');
-        createBtn.innerText = '作成';
-        createBtn.onclick = () => {
-            const scene = this.selectedObject.scene;
-            const textureKey = this.selectedObject.texture.key;
-            const animKey = animKeyInput.value;
-            const framesStr = framesInput.value;
-            const frameRate = parseInt(frameRateInput.value);
-            const repeat = repeatCheckbox.checked ? -1 : 0;
+    const repeatCheckbox = document.createElement('input');
+    repeatCheckbox.type = 'checkbox';
+    repeatCheckbox.checked = true;
+    const repeatLabel = document.createElement('label');
+    repeatLabel.innerText = ' ループ再生';
+    repeatLabel.appendChild(repeatCheckbox);
 
-            if (!animKey || !framesStr || !frameRate) {
-                alert('全ての項目を入力してください。');
+    const createBtn = document.createElement('button');
+    createBtn.innerText = '作成';
+    
+    // --- 「作成」ボタンのクリック処理 ---
+    createBtn.onclick = () => {
+        // --- ユーザーからの入力を取得 ---
+        const textureKey = this.selectedObject.texture.key;
+        const animKey = animKeyInput.value;
+        const framesStr = framesInput.value;
+        const frameRate = parseInt(frameRateInput.value);
+        const repeat = repeatCheckbox.checked ? -1 : 0;
+
+        // --- 入力チェック ---
+        if (!animKey || !framesStr || !frameRate || !textureKey) {
+            alert('テクスチャが設定されたオブジェクトを選択し、全ての項目を入力してください。');
+            return;
+        }
+
+        // --- アニメーションの作成 ---
+        // シーン(scene.anims)ではなく、ゲーム全体(this.game.anims)のアニメーションマネージャーを取得
+        const animManager = this.pluginManager.game.anims;
+        
+        // 既存のアニメーションがあれば上書き確認
+        if (animManager.exists(animKey)) {
+            if (!confirm(`アニメーションキー '${animKey}' は既に存在します。上書きしますか？`)) {
                 return;
             }
+            animManager.remove(animKey); // 既存のものを削除
+        }
 
-            const frames = scene.anims.generateFrameNumbers(textureKey, {
+        try {
+            // フレーム番号文字列を解析してフレーム配列を生成
+            const frames = this.selectedObject.scene.anims.generateFrameNumbers(textureKey, {
                 frames: this.parseFrameString(framesStr)
             });
 
-            scene.anims.create({
-                key: animKey, frames: frames, frameRate: frameRate, repeat: repeat
+            // ★ グローバルなアニメーションマネージャーにcreateする
+            animManager.create({
+                key: animKey,
+                frames: frames,
+                frameRate: frameRate,
+                repeat: repeat
             });
-            this.openAnimationEditor(); // Refresh editor
-        };
+            
+            console.log(`[EditorPlugin] Global animation '${animKey}' created/updated successfully.`);
+            
+            // UIをリフレッシュして、新しいアニメーションをリストに表示
+            this.openAnimationEditor();
+            
+        } catch (error) {
+            console.error(`アニメーションの作成に失敗しました: `, error);
+            alert(`アニメーションの作成に失敗しました。\nフレーム番号の指定が正しいか、コンソールを確認してください。`);
+        }
+    };
 
-        form.append(animKeyInput, framesInput, frameRateInput, repeatLabel, createBtn);
-        return form;
+    form.append(animKeyInput, framesInput, frameRateInput, repeatLabel, createBtn);
+    return form;
+}
+
+   // in src/plugins/EditorPlugin.js
+
+/**
+ * ★★★ グローバルアニメーションを参照する最終FIX版 ★★★
+ * アニメーションエディタ内に、現在選択中のスプライトに関連する、
+ * 登録済みのアニメーションのリストを生成する。
+ */
+createAnimationList() {
+    const container = document.createElement('div');
+    const title = document.createElement('h4');
+    title.innerText = '登録済みアニメーション';
+    container.appendChild(title);
+
+    if (!this.selectedObject || !this.selectedObject.scene || !this.selectedObject.texture?.key) {
+        container.innerHTML += '<p>アニメーションを一覧表示するには、テクスチャが設定されたスプライトを選択してください。</p>';
+        return container;
     }
 
-    createAnimationList() {
-        const container = document.createElement('div');
-        const title = document.createElement('h4');
-        title.innerText = '登録済みアニメーション';
-        container.appendChild(title);
+    const currentTextureKey = this.selectedObject.texture.key;
+    // ★ シーン(scene.anims)ではなく、ゲーム全体(this.game.anims)からアニメーションリストを取得
+    const allAnims = this.pluginManager.game.anims.getAnims();
 
-        if (!this.selectedObject || !this.selectedObject.scene) return container;
-        const scene = this.selectedObject.scene;
-        const currentTextureKey = this.selectedObject.texture.key;
-        const allAnims = scene.anims.anims.getArray();
+    // 選択中のテクスチャに一致するアニメーションをフィルタリング
+    const filteredAnims = allAnims.filter(anim =>
+        anim.frames && anim.frames.length > 0 && anim.frames[0].textureKey === currentTextureKey
+    );
 
-        allAnims.forEach(anim => {
-            if (!anim.frames || anim.frames.length === 0 || anim.frames[0].textureKey !== currentTextureKey) return;
-
+    if (filteredAnims.length === 0) {
+        container.innerHTML += `<p>このテクスチャ (${currentTextureKey}) を使ったアニメーションはまだありません。</p>`;
+    } else {
+        filteredAnims.forEach(anim => {
             const div = document.createElement('div');
             div.style.marginBottom = '5px';
             div.style.display = 'flex';
             div.style.alignItems = 'center';
-
+    
             const infoSpan = document.createElement('span');
             infoSpan.innerText = `キー: ${anim.key}`;
             infoSpan.style.marginRight = '10px';
-
+    
             const playBtn = document.createElement('button');
             playBtn.innerText = '再生';
             playBtn.onclick = () => { if (this.selectedObject.play) this.selectedObject.play(anim.key); };
-
+    
             const stopBtn = document.createElement('button');
             stopBtn.innerText = '停止';
             stopBtn.onclick = () => { if (this.selectedObject.stop) this.selectedObject.stop(); };
-
+    
             const setDefaultBtn = document.createElement('button');
             setDefaultBtn.innerText = 'デフォルトに設定';
             setDefaultBtn.onclick = () => {
@@ -2419,14 +2470,28 @@ if (gameObject.body) {
                     let animData = this.selectedObject.getData('animation_data') || {};
                     animData.default = anim.key;
                     this.selectedObject.setData('animation_data', animData);
+                    alert(`'${anim.key}' をデフォルトアニメーションに設定しました。`);
                 }
             };
-
-            div.append(infoSpan, playBtn, stopBtn, setDefaultBtn);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerText = '×';
+            deleteBtn.title = `Delete animation '${anim.key}'`;
+            deleteBtn.style.backgroundColor = '#666';
+            deleteBtn.onclick = () => {
+                if (confirm(`本当にグローバルアニメーション '${anim.key}' を削除しますか？\nこの操作は取り消せません。`)) {
+                    this.pluginManager.game.anims.remove(anim.key);
+                    this.openAnimationEditor(); // UIをリフレッシュ
+                }
+            };
+    
+            div.append(infoSpan, playBtn, stopBtn, setDefaultBtn, deleteBtn);
             container.appendChild(div);
         });
-        return container;
     }
+    
+    return container;
+}
 
     parseFrameString(str) {
         const parts = str.split(',');
@@ -2442,27 +2507,43 @@ if (gameObject.body) {
         return frames;
     }
 
-    convertImageToSprite() {
-        if (!this.selectedObject || !(this.selectedObject instanceof Phaser.GameObjects.Image)) return;
-        const oldImage = this.selectedObject;
-        const scene = oldImage.scene;
-        const properties = {
-            name: oldImage.name, x: oldImage.x, y: oldImage.y, scaleX: oldImage.scaleX,
-            scaleY: oldImage.scaleY, angle: oldImage.angle, alpha: oldImage.alpha,
-            visible: oldImage.visible, depth: oldImage.depth, texture: oldImage.texture.key
-        };
-        const sceneKey = scene.scene.key;
-        if (this.editableObjects.has(sceneKey)) {
-            this.editableObjects.get(sceneKey).delete(oldImage);
-        }
-        oldImage.destroy();
-        const newSprite = scene.add.sprite(properties.x, properties.y, properties.texture);
-        Object.assign(newSprite, properties);
-        newSprite.setData('animation_data', { default: null });
-        this.makeEditable(newSprite, scene);
-        this.selectedObject = newSprite;
-        this.openAnimationEditor();
+   // in src/plugins/EditorPlugin.js
+
+convertImageToSprite() {
+    if (!this.selectedObject || !(this.selectedObject instanceof Phaser.GameObjects.Image)) return;
+    const oldImage = this.selectedObject;
+    const scene = oldImage.scene;
+
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    const properties = {
+        name: oldImage.name, x: oldImage.x, y: oldImage.y, scaleX: oldImage.scaleX,
+        scaleY: oldImage.scaleY, angle: oldImage.angle, alpha: oldImage.alpha,
+        visible: oldImage.visible, depth: oldImage.depth,
+        texture: oldImage.texture.key, // ★★★ テクスチャキーを明示的に引き継ぐ ★★★
+        layer: oldImage.getData('layer'),
+        group: oldImage.getData('group')
+        // ★ 他にも引き継ぎたいデータがあればここに追加
+    };
+    
+    const sceneKey = scene.scene.key;
+    if (this.editableObjects.has(sceneKey)) {
+        this.editableObjects.get(sceneKey).delete(oldImage);
     }
+
+    // ★★★ 既存のオブジェクトを破棄する前に、新しいレイアウトデータを作成 ★★★
+    const newLayout = scene.extractLayoutFromObject(oldImage);
+    newLayout.type = 'Sprite'; // タイプをSpriteに変更
+
+    oldImage.destroy();
+
+    // ★★★ 新しい二段階初期化フローで、完璧に再生成する ★★★
+    const newSprite = scene.createObjectFromLayout(newLayout);
+    scene.applyProperties(newSprite, newLayout);
+    scene.initComponentsAndEvents(newSprite); // ★ これを呼び出すのが重要
+
+    this.selectSingleObject(newSprite);
+    this.openAnimationEditor(); // 最後にエディタを開く
+}
 
  /*openEventEditor() {
         if (!this.selectedObject) {
