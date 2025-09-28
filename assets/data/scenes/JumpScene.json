@@ -22,7 +22,7 @@
       "name": "cg01_2",
       "type": "Image",
       "x": 465,
-      "y": 672,
+      "y": 550,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -192,8 +192,8 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 472,
-      "y": 421,
+      "x": 605,
+      "y": 305,
       "depth": 0,
       "scaleX": 0.29,
       "scaleY": 0.29,
@@ -271,8 +271,8 @@
     {
       "name": "tartman_run_1759034347112",
       "type": "Sprite",
-      "x": 995,
-      "y": 274,
+      "x": 954,
+      "y": 305,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -280,10 +280,101 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "animation_data": {
-        "default": "tartman_idle"
-      },
+      "components": [
+        {
+          "type": "StateMachineComponent",
+          "params": {}
+        },
+        {
+          "type": "NpcController",
+          "params": {}
+        }
+      ],
       "data": {
+        "stateMachine": {
+          "initialState": "idle",
+          "states": {
+            "idle": {
+              "onEnter": {
+                "nodes": [
+                  {
+                    "id": "node_1759038240428",
+                    "type": "wait",
+                    "params": {
+                      "time": 2000
+                    },
+                    "x": 50,
+                    "y": 50
+                  }
+                ],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [
+                  {
+                    "id": "node_1759038330040",
+                    "type": "distance_check",
+                    "params": {
+                      "target1": "self",
+                      "target2": "player",
+                      "distance": 100
+                    },
+                    "x": 50,
+                    "y": 50
+                  },
+                  {
+                    "id": "node_1759038348207",
+                    "type": "state_transition",
+                    "params": {
+                      "to": "chase",
+                      "target": "source"
+                    },
+                    "x": 638,
+                    "y": 0
+                  },
+                  {
+                    "id": "node_1759038385208",
+                    "type": "timer_check",
+                    "params": {
+                      "duration": 2000,
+                      "id": "idle_wait"
+                    },
+                    "x": 50,
+                    "y": 419
+                  },
+                  {
+                    "id": "node_1759038555078",
+                    "type": "state_transition",
+                    "params": {
+                      "to": "decide_walk",
+                      "target": "source"
+                    },
+                    "x": 602,
+                    "y": 589
+                  }
+                ],
+                "connections": [
+                  {
+                    "fromNode": "node_1759038330040",
+                    "fromPin": "output_near",
+                    "toNode": "node_1759038348207",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1759038385208",
+                    "fromPin": "output_finished",
+                    "toNode": "node_1759038555078",
+                    "toPin": "input"
+                  }
+                ]
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            }
+          }
+        },
         "ignoreGravity": false,
         "shape": "rectangle"
       },
