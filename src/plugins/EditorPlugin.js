@@ -2118,7 +2118,8 @@ createComponentSection() {
                     group: gameObject.getData('group'),
                     events: gameObject.getData('events'),
                     components: gameObject.getData('components'),
-                    animation_data: gameObject.getData('animation_data')
+                    animation_data: gameObject.getData('animation_data'),
+                    anim_prefix: gameObject.getData('anim_prefix')
                 };
     
                 // 3. イベントデータの自動修復

@@ -330,6 +330,7 @@ applyProperties(gameObject, layout) {
     if (data.events) gameObject.setData('events', data.events);
     if (data.layer) gameObject.setData('layer', data.layer);
     if (data.group) gameObject.setData('group', data.group);
+    if (data.anim_prefix) gameObject.setData('anim_prefix', data.anim_prefix);
 
     // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
