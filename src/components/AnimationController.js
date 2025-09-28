@@ -45,22 +45,17 @@ export default class AnimationController {
     }
 
     // アニメーションを更新するメインロジック
-    updateAnimation() {
+   updateAnimation() {
         if (!this.gameObject || !this.gameObject.play) return;
         
-        // 8方向対応ロジック
+        // (flipXなどのロジックはそのまま)
         let directionSuffix = this.lastDirection;
         let flipX = false;
-        
-        // 左右対称のアニメーションなら、4方向ぶんのアニメだけで済む
-        // (up_left, left, down_left は、右向きのアニメを反転させて表現する)
         if (directionSuffix.includes('left')) {
             flipX = true;
-            directionSuffix = directionSuffix.replace('left', 'right'); // 'up_left' -> 'up_right'
+            directionSuffix = directionSuffix.replace('left', 'right');
         }
         
-        // アニメーションキーを組み立てる (例: 'player_walk_down_right')
-        // 状態がidleなら、向きは無視する設計も可能
         let animKey;
         if (this.lastState === 'idle') {
             animKey = `${this.animPrefix}_idle`;
@@ -68,15 +63,23 @@ export default class AnimationController {
             animKey = `${this.animPrefix}_${this.lastState}_${directionSuffix}`;
         }
         
-        // スプライトを反転させる
-        this.gameObject.setFlipX(flipX);
+        // ▼▼▼【ここからデバッグコード】▼▼▼
+        const currentAnim = this.gameObject.anims.getCurrentKey();
+        console.log(`[AnimationController] State: '${this.lastState}', Direction: '${this.lastDirection}'. Attempting to play key: '${animKey}'`);
+        
+        if (currentAnim === animKey) {
+            // 既に再生中なので何もしない
+            return; 
+        }
 
-        // 組み立てたキーのアニメーションを再生
-        // (もしアニメーションが存在すれば再生し、なければ警告を出すだけ)
         if (this.gameObject.anims.exists(animKey)) {
+            console.log(`%cSUCCESS: Animation key '${animKey}' found. Playing.`, 'color: green; font-weight: bold;');
+            this.gameObject.setFlipX(flipX);
             this.gameObject.play(animKey, true);
         } else {
-            // idleアニメーションもない場合は、とりあえず静止させる
+            console.error(`%cERROR: Animation key '${animKey}' NOT FOUND!`, 'color: red; font-weight: bold;');
+            
+            // フォールバック処理
             const idleKey = `${this.animPrefix}_idle`;
             if (this.gameObject.anims.exists(idleKey)) {
                 this.gameObject.play(idleKey, true);
@@ -84,6 +87,7 @@ export default class AnimationController {
                 this.gameObject.stop();
             }
         }
+        // ▲▲▲【ここまでデバッグコード】▲▲▲
     }
 
     destroy() {
