@@ -192,7 +192,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 396,
+      "x": 386,
       "y": 298,
       "depth": 0,
       "scaleX": 0.65,
@@ -201,59 +201,10 @@
       "alpha": 1,
       "layer": "Gameplay",
       "group": "player",
-      "events": [
-        {
-          "id": "event_1758968408399",
-          "trigger": "onStateChange",
-          "nodes": [
-            {
-              "id": "node_1758968443135",
-              "type": "anim_play",
-              "params": {
-                "key": "anila_walk"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "condition": "state === 'walk'"
-        },
-        {
-          "id": "event_1758968459025",
-          "trigger": "onStateChange",
-          "nodes": [
-            {
-              "id": "node_1758968459025_vxwvx",
-              "type": "anim_play",
-              "params": {
-                "key": "anila_idle"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "condition": "state === 'idle'"
-        },
-        {
-          "id": "event_1759053009036",
-          "trigger": "onDirectionChange",
-          "nodes": [
-            {
-              "id": "node_1759053055597",
-              "type": "set_flip_x",
-              "params": {
-                "value": true
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "condition": "state === ‘right’"
-        }
-      ],
+      "events": [],
+       
+       
+         
       "components": [
         {
           "type": "PlayerController",
@@ -261,10 +212,16 @@
         },
         {
           "type": "Scrollable",
-          "params": {}
+          "params": {
+            "speed": -5
+          }
         },
         {
           "type": "Interactor",
+          "params": {}
+        },
+        {
+          "type": "AnimationController",
           "params": {}
         }
       ],
@@ -286,9 +243,9 @@
       }
     },
     {
-      "name": "tartman_run_1759034347112",
+      "name": "tartman",
       "type": "Sprite",
-      "x": 974,
+      "x": 947,
       "y": 274,
       "depth": 0,
       "scaleX": 1,
@@ -305,11 +262,16 @@
         {
           "type": "NpcController",
           "params": {}
+        },
+        {
+          "type": "WanderComponent",
+          "params": {}
+        },
+        {
+          "type": "AnimationController",
+          "params": {}
         }
       ],
-      "animation_data": {
-        "default": "tartman_idle"
-      },
       "data": {
         "stateMachine": {
           "initialState": "idle",
@@ -449,31 +411,31 @@
       "repeat": 0
     },
     {
-      "key": "anila_walk",
-      "texture": "anila_walk",
-      "frames": {
-        "start": 0,
-        "end": 3
-      },
-      "frameRate": 8,
-      "repeat": -1
-    },
-    {
-      "key": "tartman_run",
-      "texture": "tartman_run",
-      "frames": {
-        "start": 1,
-        "end": 4
-      },
-      "frameRate": 10,
-      "repeat": -1
-    },
-    {
       "key": "tartman_idle",
       "texture": "tartman_run",
       "frames": {
         "start": 0,
         "end": 0
+      },
+      "frameRate": 10,
+      "repeat": -1
+    },
+    {
+      "key": "anila_walk_right",
+      "texture": "anila_walk",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 10,
+      "repeat": -1
+    },
+    {
+      "key": "tartman_walk_right",
+      "texture": "tartman_run",
+      "frames": {
+        "start": 1,
+        "end": 4
       },
       "frameRate": 10,
       "repeat": -1
