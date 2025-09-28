@@ -192,8 +192,8 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 480,
-      "y": 423,
+      "x": 541,
+      "y": 421,
       "depth": 0,
       "scaleX": 0.29,
       "scaleY": 0.29,
@@ -271,16 +271,6 @@
   ],
   "animations": [
     {
-      "key": "anila_walk",
-      "texture": "anila_walk",
-      "frames": {
-        "start": 0,
-        "end": 3
-      },
-      "frameRate": 4,
-      "repeat": -1
-    },
-    {
       "key": "anila_idle",
       "texture": "anila_walk",
       "frames": {
@@ -289,6 +279,16 @@
       },
       "frameRate": 1,
       "repeat": 0
+    },
+    {
+      "key": "anila_walk",
+      "texture": "anila_walk",
+      "frames": {
+        "start": 0,
+        "end": 3
+      },
+      "frameRate": 8,
+      "repeat": -1
     }
   ]
 }

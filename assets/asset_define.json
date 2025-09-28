@@ -33,7 +33,7 @@
     "anila_walk": {
       "path": "assets/images/anila_walk.png",
       "frameWidth": 723,
-      "frameHeight": 644
+      "frameHeight": 632
     },
      "tartman_run": {
       "path": "assets/images/tartman_run.png",
