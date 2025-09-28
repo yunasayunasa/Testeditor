@@ -192,7 +192,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 386,
+      "x": 356,
       "y": 298,
       "depth": 0,
       "scaleX": 0.65,
@@ -202,9 +202,6 @@
       "layer": "Gameplay",
       "group": "player",
       "events": [],
-       
-       
-         
       "components": [
         {
           "type": "PlayerController",
@@ -245,7 +242,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 947,
+      "x": 980,
       "y": 274,
       "depth": 0,
       "scaleX": 1,
@@ -255,10 +252,6 @@
       "layer": "Gameplay",
       "events": [],
       "components": [
-        {
-          "type": "StateMachineComponent",
-          "params": {}
-        },
         {
           "type": "NpcController",
           "params": {}
