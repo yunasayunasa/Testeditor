@@ -192,7 +192,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 541,
+      "x": 472,
       "y": 421,
       "depth": 0,
       "scaleX": 0.29,
@@ -267,6 +267,38 @@
           "mask": 4294967295
         }
       }
+    },
+    {
+      "name": "tartman_run_1759034347112",
+      "type": "Sprite",
+      "x": 995,
+      "y": 274,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "animation_data": {
+        "default": "tartman_idle"
+      },
+      "data": {
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
+      "texture": "tartman_run",
+      "physics": {
+        "isStatic": false,
+        "isSensor": false,
+        "gravityScale": 1,
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
     }
   ],
   "animations": [
@@ -288,6 +320,26 @@
         "end": 3
       },
       "frameRate": 8,
+      "repeat": -1
+    },
+    {
+      "key": "tartman_run",
+      "texture": "tartman_run",
+      "frames": {
+        "start": 1,
+        "end": 4
+      },
+      "frameRate": 10,
+      "repeat": -1
+    },
+    {
+      "key": "tartman_idle",
+      "texture": "tartman_run",
+      "frames": {
+        "start": 0,
+        "end": 0
+      },
+      "frameRate": 10,
       "repeat": -1
     }
   ]
