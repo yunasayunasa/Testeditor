@@ -253,7 +253,7 @@ updatePropertyPanel() {
             this.editorPropsContainer.appendChild(document.createElement('hr'));
             this.safeCreateUI(this.createComponentSection);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
-            
+            this.safeCreateUI(this.createAnimationPrefixInput);
             // --- 共通フッターUI ---
             this.safeCreateUI(this.createExportButton);
             this.safeCreateUI(this.createExportPrefabButton);
@@ -283,6 +283,42 @@ updatePropertyPanel() {
     }
 }
 
+/**
+ * ★★★ 新規追加 ★★★
+ * アニメーションのプレフィックス名を設定するためのUIを生成する。
+ */
+createAnimationPrefixInput() {
+    const target = this.selectedObject;
+    // Sprite または Image の場合のみ表示する
+    if (!(target instanceof Phaser.GameObjects.Sprite || target instanceof Phaser.GameObjects.Image)) {
+        return;
+    }
+
+    const row = document.createElement('div');
+    const label = document.createElement('label');
+    label.innerText = 'Anim Prefix: ';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'e.g., tartman, slime';
+    // 現在設定されている anim_prefix データを取得して表示
+    input.value = target.getData('anim_prefix') || '';
+    
+    // 値が変更されたら、オブジェクトのデータとして保存する
+    input.addEventListener('input', (e) => {
+        if (this.selectedObject) {
+            this.selectedObject.setData('anim_prefix', e.target.value);
+            // AnimationControllerがもし存在すれば、prefixを更新してあげるとより親切
+            const animController = this.selectedObject.components?.AnimationController;
+            if (animController) {
+                animController.animPrefix = e.target.value;
+            }
+        }
+    });
+
+    row.append(label, input);
+    this.editorPropsContainer.appendChild(row);
+}
     // 動的UI系
 
      /**

@@ -1,14 +1,13 @@
-// in src/components/AnimationController.js (新規作成)
-
 export default class AnimationController {
     constructor(scene, owner, params = {}) {
         this.gameObject = owner;
 
-        // --- アニメーション名の命名規則を定義 ---
-        // 例: 'player_walk_down', 'slime_idle_right'
-        // プレフィックス(player, slimeなど)は、オブジェクトの名前に由来すると便利
-        this.animPrefix = params.prefix || owner.name.split('_')[0]; 
-        
+        // ▼▼▼【ここが最後の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // 優先順位 1: paramsで 'prefix' が明示的に指定されていれば、それを最優先で使う。
+        // 優先順位 2: paramsになければ、オブジェクトのカスタムデータ 'anim_prefix' を参照する。
+        // 優先順位 3: それもなければ、最終手段としてオブジェクト名の最初の部分を使う。
+        this.animPrefix = params.prefix || owner.getData('anim_prefix') || owner.name.split('_')[0]; 
         // --- イベントリスナーを登録 ---
         if (this.gameObject.on) {
             this.gameObject.on('onStateChange', this.handleStateChange, this);
