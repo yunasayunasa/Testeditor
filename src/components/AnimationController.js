@@ -1,4 +1,4 @@
-e// in src/components/AnimationController.js
+// in src/components/AnimationController.js
 
 export default class AnimationController {
     constructor(scene, owner, params = {}) {
