@@ -82,3 +82,14 @@ export default class AnimationController {
         }
     }
 }
+
+/*
+アニメーションキーの命名規則:
+アニメーションキーは、必ず**[プレフィックス]_[状態]_[向き]**という形式で命名しなければならない。
+例: player_walk_right, slime_idle_down
+（idleのように向きがないものは[プレフィックス]_[状態]）
+アニメーションの対称性:
+左向きのアニメーション（walk_leftなど）は作らず、右向きのアニメーション（walk_right）を**setFlipX(true)で反転させて表現する**ことを基本とする。
+（左右非対称なキャラクターの場合は、AnimationControllerを少し改造して、walk_leftも個別に再生できるようにすることも可能です）
+コンポーネントの依存関係:
+AnimationControllerは、同じオブジェクトにPlayerControllerやNpcControllerのような、onStateChangeとonDirectionChangeイベントを発火させるコンポーネントが存在することを前提とする。*/
