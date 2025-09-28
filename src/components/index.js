@@ -8,6 +8,7 @@ import FlashEffect from './FlashEffect.js';
 import StateMachineComponent from './StateMachineComponent.js'; 
 import NpcController from './NpcController.js';
 import WanderComponent from './WanderComponent.js'; 
+import AnimationController from './AnimationController.js';
 
 //UI系
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
@@ -26,6 +27,9 @@ FlashEffect,
 StateMachineComponent,
 NpcController,
 WanderComponent,
+AnimationController,
+
+    
 
     //UI系
     WatchVariableComponent,
