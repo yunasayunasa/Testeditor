@@ -192,11 +192,11 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 605,
-      "y": 305,
+      "x": 396,
+      "y": 298,
       "depth": 0,
-      "scaleX": 0.29,
-      "scaleY": 0.29,
+      "scaleX": 0.65,
+      "scaleY": 0.65,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -235,6 +235,23 @@
           ],
           "connections": [],
           "condition": "state === 'idle'"
+        },
+        {
+          "id": "event_1759053009036",
+          "trigger": "onDirectionChange",
+          "nodes": [
+            {
+              "id": "node_1759053055597",
+              "type": "set_flip_x",
+              "params": {
+                "value": true
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "condition": "state === ‘right’"
         }
       ],
       "components": [
@@ -271,8 +288,8 @@
     {
       "name": "tartman_run_1759034347112",
       "type": "Sprite",
-      "x": 954,
-      "y": 305,
+      "x": 974,
+      "y": 274,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -290,6 +307,9 @@
           "params": {}
         }
       ],
+      "animation_data": {
+        "default": "tartman_idle"
+      },
       "data": {
         "stateMachine": {
           "initialState": "idle",
@@ -367,6 +387,31 @@
                     "toPin": "input"
                   }
                 ]
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            },
+            "decide_walk": {
+              "onEnter": {
+                "nodes": [
+                  {
+                    "id": "node_1759053159541",
+                    "type": "timer_check",
+                    "params": {
+                      "duration": 1000,
+                      "id": "Walk_timer"
+                    },
+                    "x": 50,
+                    "y": 50
+                  }
+                ],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [],
+                "connections": []
               },
               "onExit": {
                 "nodes": [],

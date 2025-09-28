@@ -59,9 +59,8 @@ async run(source, eventData, collidedTarget = null) {
     while (currentNodeData) {
       
     // パラメータやコンテキスト情報をログに出力
-    console.log("Params:", currentNodeData.params);
-    console.log("Source:", this.currentSource.name);
-    if(this.currentTarget) console.log("Target:", this.currentTarget.name);
+  
+    if(this.currentTarget) 
         const handler = this.tagHandlers[currentNodeData.type];
         let nextPinName = 'output';
 
