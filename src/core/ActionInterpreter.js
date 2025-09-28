@@ -57,9 +57,7 @@ async run(source, eventData, collidedTarget = null) {
     if (!currentNodeData) return;
 
     while (currentNodeData) {
-        console.log(`%c[ActionInterpreter] Executing node: [${currentNodeData.type}]`, 'color: yellow;');
-         console.groupCollapsed(`[VSL] Executing: [${currentNodeData.type}] (ID: ${currentNodeData.id})`);
-    
+      
     // パラメータやコンテキスト情報をログに出力
     console.log("Params:", currentNodeData.params);
     console.log("Source:", this.currentSource.name);
@@ -88,8 +86,7 @@ async run(source, eventData, collidedTarget = null) {
                 }
                 
                 nextPinName = result ? 'output_true' : 'output_false';
-                console.log(`  > Expression "${expression}" evaluated to ${result}. Next pin: ${nextPinName}`);
-
+               
             } else {
                 // ▼▼▼【ここが変数名修正箇所】▼▼▼
                 // --- その他の全てのタグ ---
@@ -164,7 +161,7 @@ findTarget(targetId, scene, source, collidedTarget) {
         if (playerObject) {
             // c) 見つかったplayerオブジェクトを、シーンのカスタムプロパティとして保存（キャッシュ）
             scene._playerCache = playerObject;
-            console.log(`[findTarget] Caching 'player' object for scene '${scene.scene.key}'.`);
+          
         }
         
         return playerObject;
