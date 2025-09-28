@@ -60,7 +60,7 @@ async run(source, eventData, collidedTarget = null) {
       
     // パラメータやコンテキスト情報をログに出力
   
-    if(this.currentTarget) 
+    if(this.currentTarget);
         const handler = this.tagHandlers[currentNodeData.type];
         let nextPinName = 'output';
 
