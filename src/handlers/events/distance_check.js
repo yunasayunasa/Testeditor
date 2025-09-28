@@ -13,13 +13,11 @@ export default async function distance_check(interpreter, params, target) {
     const obj2 = interpreter.findTarget(targetId2, interpreter.scene, source);
 
     // ▼▼▼【ここからがデバッグログ】▼▼▼
-    console.groupCollapsed(`[distance_check] | ${source.name}`);
-    
+   
     if (!obj1 || !obj2) {
         console.error("比較対象のオブジェクトが見つかりません。");
-        console.log("Target 1 ID:", targetId1, "-> Found:", !!obj1);
-        console.log("Target 2 ID:", targetId2, "-> Found:", !!obj2);
-        console.groupEnd();
+       
+       
         return 'output_far'; // エラー時は「遠い」として扱う
     }
 
@@ -27,11 +25,7 @@ export default async function distance_check(interpreter, params, target) {
     const isNear = currentDistance < threshold;
     const resultPin = isNear ? 'output_near' : 'output_far';
 
-    console.log(`比較: '${obj1.name}' vs '${obj2.name}'`);
-    console.log(`現在の距離: ${currentDistance.toFixed(2)}`);
-    console.log(`しきい値: ${threshold}`);
-    console.log(`結果: ${isNear ? '近い (near)' : '遠い (far)'}`);
-    console.groupEnd();
+    
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     return resultPin;
