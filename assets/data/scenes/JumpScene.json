@@ -192,7 +192,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 356,
+      "x": 405,
       "y": 298,
       "depth": 0,
       "scaleX": 0.65,
@@ -222,6 +222,7 @@
           "params": {}
         }
       ],
+      "anim_prefix": "anila",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
@@ -242,7 +243,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 918,
+      "x": 917,
       "y": 274,
       "depth": 0,
       "scaleX": 1,
@@ -265,6 +266,7 @@
           "params": {}
         }
       ],
+      "anim_prefix": "tartman",
       "data": {
         "stateMachine": {
           "initialState": "idle",
