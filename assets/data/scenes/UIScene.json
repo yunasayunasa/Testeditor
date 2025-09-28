@@ -1,5 +1,5 @@
 {
-  "hasJoystick": true,
+  "hasJoystick": false,
   "layers": [
     {
       "name": "Foreground",
@@ -35,8 +35,8 @@
     {
       "name": "message_window",
       "type": "MessageWindow",
-      "x": 600,
-      "y": 600,
+      "x": 646,
+      "y": 577,
       "depth": 9998,
       "scaleX": 1,
       "scaleY": 1,
@@ -45,13 +45,13 @@
       "group": "jump_button",
       "data": {},
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、378 回目ですね。」"
+      "label": "「ようこそ！これは、あなたと一緒に作ったゲームエンジンのチュートリアルです。」"
     },
     {
       "name": "menu_button",
-      "type": "MenuButton",
-      "x": 259,
-      "y": 101,
+      "type": "Text",
+      "x": 117,
+      "y": 46,
       "depth": 10,
       "scaleX": 1,
       "scaleY": 1,

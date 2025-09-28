@@ -1,23 +1,36 @@
+e// in src/components/AnimationController.js
+
 export default class AnimationController {
     constructor(scene, owner, params = {}) {
         this.gameObject = owner;
 
-        // ▼▼▼【ここが最後の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        // 優先順位 1: paramsで 'prefix' が明示的に指定されていれば、それを最優先で使う。
-        // 優先順位 2: paramsになければ、オブジェクトのカスタムデータ 'anim_prefix' を参照する。
-        // 優先順位 3: それもなければ、最終手段としてオブジェクト名の最初の部分を使う。
         this.animPrefix = params.prefix || owner.getData('anim_prefix') || owner.name.split('_')[0]; 
-        // --- イベントリスナーを登録 ---
+        
+        console.log(`[AnimationController] Initialized for '${owner.name}'. Using animation prefix: '${this.animPrefix}'`);
+        
+        // --- 1. 内部状態を先に保持 ---
+        this.lastState = 'idle';
+        this.lastDirection = 'right';
+
+        // --- 2. イベントリスナーを登録 ---
         if (this.gameObject.on) {
             this.gameObject.on('onStateChange', this.handleStateChange, this);
             this.gameObject.on('onDirectionChange', this.handleDirectionChange, this);
         }
 
-        // --- 現在の状態を保持 ---
-        this.lastState = 'idle';
-        this.lastDirection = 'right';
+        // ▼▼▼【これが最後の修正です】▼▼▼
+        // --------------------------------------------------------------------
+        // --- 3. 初期状態のアニメーションを即座に適用する ---
+        //    少し遅延させて呼び出すことで、他のコンポーネントの準備が整うのを待つ
+        setTimeout(() => {
+            if (this.gameObject && this.gameObject.active) {
+                this.updateAnimation();
+            }
+        }, 0);
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
+    
 
     // stateが変化したときに呼ばれる
     handleStateChange(newState, oldState) {
