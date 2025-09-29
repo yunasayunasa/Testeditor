@@ -120,12 +120,8 @@ initSceneWithData() {
 }
 
 // ▼▼▼【そして、このメソッドをクラス内のどこかに追加してください】▼▼▼
-// (initSceneWithData の直後あたりが分かりやすいです)
+// in src/scenes/BaseGameScene.js
 
-/**
- * レイアウトデータ内のanimations配列に基づいて、アニメーションを生成する
- * @param {object} layoutData - シーンのレイアウトJSONデータ
- */
 createAnimationsFromLayout(layoutData) {
     if (!layoutData.animations || !Array.isArray(layoutData.animations)) {
         return; // animations配列がなければ何もしない
@@ -137,6 +133,7 @@ createAnimationsFromLayout(layoutData) {
             return;
         }
 
+        // アニメーションを生成
         this.anims.create({
             key: animData.key,
             frames: this.anims.generateFrameNumbers(animData.texture, { 
@@ -146,11 +143,13 @@ createAnimationsFromLayout(layoutData) {
             frameRate: animData.frameRate,
             repeat: animData.repeat
         });
-        console.log(`%c[${this.scene.key}] Animation created: '${animData.key}'`, 'color: cyan;');
-    });
-     // ▼▼▼【デバッグコード追加】▼▼▼
+
+        // ▼▼▼【ここが修正箇所です】▼▼▼
+        // animData.key を直接使います
         const createdAnim = this.anims.get(animData.key);
         console.log(`[BaseGameScene] VERIFY: Animation '${animData.key}' was just created. Is it accessible?`, createdAnim ? 'YES' : 'NO');
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    });
 }
 
 // ... (deferAction や buildSceneFromLayout などの他のメソッドはそのまま) ...
