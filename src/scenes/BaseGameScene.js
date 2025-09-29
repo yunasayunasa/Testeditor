@@ -520,20 +520,24 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
  * @param {string} componentType - 追加するコンポーネントのクラス名 (例: 'StateMachineComponent')
  * @param {object} [params={}] - コンポーネントのコンストラクタに渡すパラメータ
  */
+// in src/scenes/BaseGameScene.js
+
 /**
- * ★★★ JSONロードとリアルタイム編集の両シナリオに対応した最終完成版 ★★★
- * ターゲットオブジェクトにコンポーネントを追加し、適切に初期化する。
+ * ★★★【start()ライフサイクル分離・最終確定版】★★★
+ * ターゲットオブジェクトにコンポーネントを追加し、インスタンスを返す。
+ * このメソッドは、コンポーネントのインスタンス化にのみ責任を持つ。
+ * start()やinit()の呼び出しは、上位のメソッド(initComponentsAndEvents)に委ねる。
  */
 addComponent(target, componentType, params = {}) {
     if (target.components && target.components[componentType]) {
         console.warn(`[BaseGameScene] Component '${componentType}' already exists on '${target.name}'.`);
-        return;
+        return target.components[componentType]; // 既存のインスタンスを返す
     }
 
     const ComponentClass = ComponentRegistry[componentType];
     if (!ComponentClass) {
         console.warn(`[BaseGameScene] Unknown component: '${componentType}'`);
-        return;
+        return null;
     }
 
     const componentInstance = new ComponentClass(this, target, params);
@@ -546,45 +550,9 @@ addComponent(target, componentType, params = {}) {
         this.updatableComponents.add(componentInstance);
     }
     
-    // ▼▼▼【ここが2つのシナリオを統合する核心部分です】▼▼▼
-    if (componentType === 'StateMachineComponent' && typeof componentInstance.init === 'function') {
-        
-        // --- 1. まず、オブジェクトにデータが既にセットされているか確認 ---
-        // (JSONからロードされた場合は、ここにデータが入っているはず)
-        let existingData = target.getData('stateMachine');
-
-        if (existingData) {
-            // --- ケースA: データが存在する場合 (JSONロード時) ---
-            console.log(`%c[BaseGameScene] Initializing StateMachine for '${target.name}' with existing data from JSON.`, 'color: lightblue');
-            componentInstance.init(existingData);
-
-        } else {
-            // --- ケースB: データが存在しない場合 (リアルタイム追加時) ---
-            console.log(`%c[BaseGameScene] Initializing StateMachine for '${target.name}' with new default data.`, 'color: skyblue');
-            
-            // 2. デフォルトの骨格データを作成する
-            const defaultStateData = {
-                initialState: 'idle',
-                states: {
-                    'idle': { 
-                        onEnter: { "nodes": [], "connections": [] },
-                        onUpdate: { "nodes": [], "connections": [] }, // ★ onUpdateを追加
-                        onExit: { "nodes": [], "connections": [] }   // ★ onExitを追加
-                    }
-                }
-            };
-            
-            // 3. 作成したデータをオブジェクトにセットする
-            target.setData('stateMachine', defaultStateData);
-            
-            // 4. そのデフォルトデータでコンポーネントを初期化する
-            componentInstance.init(defaultStateData);
-        }
-    } 
-    else if (typeof componentInstance.start === 'function') {
-        // --- その他のコンポーネントは、従来通りstartメソッドを呼び出す ---
-        componentInstance.start();
-    }
+    // ▼▼▼【start()やinit()の呼び出しを、ここから全て削除！】▼▼▼
+    // StateMachineComponentの特殊な初期化も、ここでは行わない。
+    // その責務はinitComponentsAndEventsに移譲する。
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const currentData = target.getData('components') || [];
@@ -595,8 +563,11 @@ addComponent(target, componentType, params = {}) {
 
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled && typeof editor.onComponentAdded === 'function') {
-        editor.onComponentAdded(target, componentType, params);
+        editor.onComponent-Added(target, componentType, params);
     }
+    
+    // ★★★ 生成したインスタンスを返す ★★★
+    return componentInstance;
 }
     /**
      * ★★★ updateメソッドを、この内容に置き換える ★★★
