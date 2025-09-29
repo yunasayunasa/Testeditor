@@ -1432,6 +1432,23 @@ createComponentSection() {
                 reattachComponent();
             });
         }
+       else if (componentDef.type === 'WanderComponent') {
+            this.createRangeInput(paramsContainer, '歩行時間(ms)', componentDef.params.walkDuration ?? 3000, 500, 10000, 100, (newValue) => {
+                componentDef.params.walkDuration = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+            this.createRangeInput(paramsContainer, '待機時間(ms)', componentDef.params.waitDuration ?? 2000, 500, 10000, 100, (newValue) => {
+                componentDef.params.waitDuration = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+            this.createCheckbox(paramsContainer, '8方向移動', componentDef.params.is8Way ?? false, (newValue) => {
+                componentDef.params.is8Way = newValue;
+                this.selectedObject.setData('components', attachedComponents);
+                reattachComponent();
+            });
+        }
 
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲

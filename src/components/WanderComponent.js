@@ -1,46 +1,59 @@
-// in src/components/WanderComponent.js
+// in src/components/WanderComponent.js (8方向対応・最終FIX版)
 
 export default class WanderComponent {
     constructor(scene, owner, params = {}) {
         this.gameObject = owner;
-        this.npcController = owner.components.NpcController; // ★ NpcControllerが必須
+        this.npcController = null;
         
-        // パラメータで徘徊の性格を調整
-        this.walkDuration = params.walkDuration || 3000; // 3秒歩く
-        this.waitDuration = params.waitDuration || 2000; // 2秒待つ
+        this.walkDuration = params.walkDuration || 3000;
+        this.waitDuration = params.waitDuration || 2000;
+        // ★ 8方向徘徊用のフラグを追加
+        this.is8Way = params.is8Way || false;
 
         this.timer = 0;
-        this.state = 'WAITING'; // 'WAITING' or 'WALKING'
+        this.state = 'WAITING';
     }
 
     start() {
-        // コンポーネントが開始されたら、最初の待機タイマーをセット
+        this.npcController = this.gameObject.components.NpcController;
+        if (!this.npcController) {
+            console.error(`[WanderComponent] ERROR: 'NpcController' component is required on '${this.gameObject.name}'!`);
+            return;
+        }
         this.timer = this.gameObject.scene.time.now + this.waitDuration;
     }
 
     update() {
         if (!this.npcController) return;
 
-        // --- 現在時刻が、設定したタイマー時刻を過ぎたら ---
         if (this.gameObject.scene.time.now > this.timer) {
             if (this.state === 'WAITING') {
-                // --- 待機時間が終わったら、歩き始める ---
                 this.state = 'WALKING';
-                // 次のタイマーを「歩行時間」でセット
                 this.timer = this.gameObject.scene.time.now + this.walkDuration;
                 
-                // NpcControllerに「歩け」と命令する
-                const direction = Math.random() < 0.5 ? -1 : 1;
-                this.npcController.move(direction * this.npcController.moveSpeed);
-                
-            } else { // WALKING
-                // --- 歩行時間が終わったら、待機し始める ---
-                this.state = 'WAITING';
-                // 次のタイマーを「待機時間」でセット
-                this.timer = this.gameObject.scene.time.now + this.waitDuration;
+                // ▼▼▼【ここが8方向対応の核心です】▼▼▼
+                let vx = 0;
+                let vy = 0;
+                const speed = this.npcController.moveSpeed;
 
-                // NpcControllerに「止まれ」と命令する
-                this.npcController.move(0);
+                if (this.is8Way) {
+                    // --- ケースA: 8方向モードの場合 ---
+                    const angle = Phaser.Math.RND.angle(); // 0-360度のランダムな角度
+                    const vec = new Phaser.Math.Vector2().setAngle(Phaser.Math.DegToRad(angle));
+                    vx = vec.x * speed;
+                    vy = vec.y * speed;
+                } else {
+                    // --- ケースB: 従来の左右2方向モードの場合 ---
+                    const direction = Math.random() < 0.5 ? -1 : 1;
+                    vx = direction * speed;
+                }
+                this.npcController.move(vx, vy); // ★ NpcControllerも (vx, vy) を受け取れるように
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+            } else { // WALKING
+                this.state = 'WAITING';
+                this.timer = this.gameObject.scene.time.now + this.waitDuration;
+                this.npcController.stop(); // ★ stop()メソッドがあると便利
             }
         }
     }
