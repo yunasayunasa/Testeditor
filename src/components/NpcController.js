@@ -18,25 +18,22 @@ export default class NpcController {
         // this.coyoteTimeThreshold, this.lastGroundedTime
         // this.keyboardEnabled, this.cursors
     }
+   // updateは削除する。NpcControllerは自律的に動かず、命令を待つだけにする。
+    // update(time, delta) { /* ... */ }
 
-    /**
-     * ★★★ 新しい、外部から命令を受け取るためのメソッド ★★★
-     * ステートマシンなどから呼び出されることを想定。
-     * @param {number} vx - X方向の目標速度
-     * @param {number} vy - Y方向の目標速度 (通常は0か、物理演算に任せる)
-     */
+    // moveメソッドが、イベント発火の責任も持つ
     move(vx = 0, vy = 0) {
-        if (!this.gameObject || !this.gameObject.body || !this.gameObject.active) {
-            return;
-        }
+        if (!this.gameObject || !this.gameObject.body) return;
+        this.gameObject.setVelocity(vx, vy); // Y方向も受け取れるように
         
-        // 1. 物理ボディに速度を設定する
-        //    Y方向の速度は、現在の物理演算結果を維持するのが一般的
-        //    (ジャンプや落下を妨げないため)
-        this.gameObject.setVelocity(vx, this.gameObject.body.velocity.y);
-
-        // 2. 速度に基づいて、アニメーション用の内部状態を更新し、イベントを発火させる
-        this.updateAnimationTriggers(vx, this.gameObject.body.velocity.y);
+        // ★★★ 速度が設定された「直後」に、アニメ用の状態を判定・発火する ★★★
+        this.updateAnimationTriggers(vx, vy);
+    }
+    
+    stop() {
+        if (!this.gameObject || !this.gameObject.body) return;
+        this.gameObject.setVelocity(0, 0);
+        this.updateAnimationTriggers(0, 0); // ★ 停止時もイベント発火
     }
     
     /**

@@ -23,37 +23,30 @@ export default class WanderComponent {
         this.timer = this.gameObject.scene.time.now + this.waitDuration;
     }
 
-    update() {
+  update() {
         if (!this.npcController) return;
-
         if (this.gameObject.scene.time.now > this.timer) {
             if (this.state === 'WAITING') {
                 this.state = 'WALKING';
                 this.timer = this.gameObject.scene.time.now + this.walkDuration;
                 
-                // ▼▼▼【ここが8方向対応の核心です】▼▼▼
-                let vx = 0;
-                let vy = 0;
+                let vx = 0, vy = 0;
                 const speed = this.npcController.moveSpeed;
-
                 if (this.is8Way) {
-                    // --- ケースA: 8方向モードの場合 ---
-                    const angle = Phaser.Math.RND.angle(); // 0-360度のランダムな角度
+                    const angle = Phaser.Math.RND.angle();
                     const vec = new Phaser.Math.Vector2().setAngle(Phaser.Math.DegToRad(angle));
                     vx = vec.x * speed;
                     vy = vec.y * speed;
                 } else {
-                    // --- ケースB: 従来の左右2方向モードの場合 ---
-                    const direction = Math.random() < 0.5 ? -1 : 1;
-                    vx = direction * speed;
+                    vx = (Math.random() < 0.5 ? -1 : 1) * speed;
                 }
-                this.npcController.move(vx, vy); // ★ NpcControllerも (vx, vy) を受け取れるように
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+                // ★ NpcControllerのmoveを呼び出すだけ
+                this.npcController.move(vx, vy);
             } else { // WALKING
                 this.state = 'WAITING';
                 this.timer = this.gameObject.scene.time.now + this.waitDuration;
-                this.npcController.move(0, 0); 
+                // ★ NpcControllerのstopを呼び出すだけ
+                this.npcController.stop();
             }
         }
     }

@@ -1289,94 +1289,73 @@ createMatterPropertiesUI(gameObject) {
 createComponentSection() {
     const title = document.createElement('h4');
     title.innerText = 'Components';
-    title.style.margin = '10px 0 5px 0';
     this.editorPropsContainer.appendChild(title);
     
     const attachedComponents = this.selectedObject.getData('components') || [];
-  // 1. StateMachineComponentを持っているかチェック
-    const hasStateMachine = attachedComponents.some(c => c.type === 'StateMachineComponent');
+    const targetObject = this.selectedObject;
 
-    // 2. もし持っていたら、専用のボタンを表示する
+    // --- 1. 特別なアクションボタンを先に表示する ---
+    const hasStateMachine = attachedComponents.some(c => c.type === 'StateMachineComponent');
     if (hasStateMachine) {
         const sm_button = document.createElement('button');
         sm_button.innerText = 'ステートマシン・エディタを開く';
-        sm_button.style.backgroundColor = '#4a8a4a'; // 分かりやすいように緑色に
-        sm_button.style.marginBottom = '10px'; // 下に少し余白
-        
+        sm_button.style.backgroundColor = '#4a8a4a';
+        sm_button.style.width = '100%';
+        sm_button.style.marginBottom = '10px';
         sm_button.onclick = () => {
-            // ★ EditorUIに、モーダルを開くよう「依頼」する
             if (this.editorUI) {
-                this.editorUI.openStateMachineEditor(this.selectedObject);
+                this.editorUI.openStateMachineEditor(targetObject);
             }
         };
         this.editorPropsContainer.appendChild(sm_button);
     }
-    // --- 各コンポーネントのUIを生成 ---
+
+    // --- 2. 各コンポーネントのパラメータ編集UIを、動的に生成する ---
     attachedComponents.forEach((componentDef, index) => {
+        // コンテナとヘッダーの作成
         const containerDiv = document.createElement('div');
-        containerDiv.style.flexDirection = 'column';
-        containerDiv.style.alignItems = 'flex-start';
         containerDiv.style.border = '1px solid #444';
         containerDiv.style.padding = '8px';
         containerDiv.style.marginBottom = '8px';
-        
         const headerDiv = document.createElement('div');
-        headerDiv.style.width = '100%';
+        headerDiv.style.display = 'flex';
         headerDiv.style.justifyContent = 'space-between';
-        
+        headerDiv.style.alignItems = 'center';
         const compTitle = document.createElement('strong');
         compTitle.innerText = componentDef.type;
-        
         const removeBtn = document.createElement('button');
         removeBtn.innerText = '×';
-        removeBtn.style.width = '25px';
-        removeBtn.style.padding = '2px';
-        removeBtn.style.backgroundColor = '#666';
         removeBtn.onclick = () => {
             if (confirm(`Component '${componentDef.type}' を削除しますか？`)) {
-                const currentComps = this.selectedObject.getData('components') || [];
+        const currentComps = targetObject.getData('components') || [];
                 currentComps.splice(index, 1);
-                this.selectedObject.setData('components', currentComps);
-
-                // ★ 古いインスタンスを破棄
-                if (this.selectedObject.components && this.selectedObject.components[componentDef.type]?.destroy) {
-                    this.selectedObject.components[componentDef.type].destroy();
-                    delete this.selectedObject.components[componentDef.type];
+                targetObject.setData('components', currentComps);
+                if (targetObject.scene?.initComponentsAndEvents) {
+                    targetObject.scene.initComponentsAndEvents(targetObject);
                 }
-                
                 this.updatePropertyPanel();
             }
         };
         headerDiv.append(compTitle, removeBtn);
         containerDiv.appendChild(headerDiv);
-       
+        
+        // パラメータUIのコンテナ
         const paramsContainer = document.createElement('div');
+        paramsContainer.style.display = 'block'; // 横並びを防ぐ
         containerDiv.appendChild(paramsContainer);
-  // 1. ComponentRegistryから、コンポーネントのクラス定義を取得
+
         const ComponentClass = ComponentRegistry[componentDef.type];
-        if (!ComponentClass) {
-            paramsContainer.innerText = `Error: Component '${componentDef.type}' not found in registry.`;
-            this.editorPropsContainer.appendChild(containerDiv);
-            return; // 次のコンポーネントへ
-        }
+        if (!ComponentClass) { return; }
 
-        // 2. クラス定義から、静的な`define`プロパティを取得
+        // `define`プロパティを読み込んでUIを生成
         const define = ComponentClass.define;
-
-        // 3. `define.params`が存在し、配列である場合のみ、UIを生成するループを実行
         if (define && Array.isArray(define.params)) {
             define.params.forEach(paramDef => {
-                
-                // 4. `paramDef`の`type`に応じて、適切なUI生成ヘルパーを呼び出す
-                //    (createRangeInput, createCheckboxなどは、あなたが既に持っているヘルパーです)
                 const currentValue = componentDef.params[paramDef.key] ?? paramDef.defaultValue;
-                
                 const onValueChange = (newValue) => {
                     componentDef.params[paramDef.key] = newValue;
-                    // ★ `target`ではなく、`targetObject` (this.selectedObject) を使う
                     targetObject.setData('components', attachedComponents);
-
-                    if (targetObject.scene && typeof targetObject.scene.initComponentsAndEvents === 'function') {
+                    if (targetObject.scene?.initComponentsAndEvents) {
                         targetObject.scene.initComponentsAndEvents(targetObject);
                     }
                 };
@@ -1385,18 +1364,16 @@ createComponentSection() {
                     this.createRangeInput(paramsContainer, paramDef.label, currentValue, paramDef.min, paramDef.max, paramDef.step, onValueChange);
                 } else if (paramDef.type === 'checkbox') {
                     this.createCheckbox(paramsContainer, paramDef.label, currentValue, onValueChange);
-                } else { // デフォルトはテキスト入力
+                } else {
                     this.createTextInput(paramsContainer, paramDef.label, currentValue, onValueChange);
                 }
             });
         }
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+        
         this.editorPropsContainer.appendChild(containerDiv);
     });
 
-    // --- 「コンポーネントを追加」ドロップダウンの処理 (変更なし) ---
+    // --- 3. 「コンポーネントを追加」ドロップダウンの表示 (変更なし) ---
     const availableComponents = Object.keys(ComponentRegistry).filter(name => !attachedComponents.some(c => c.type === name));
     if (availableComponents.length > 0) {
         const select = document.createElement('select');
@@ -1404,33 +1381,20 @@ createComponentSection() {
         availableComponents.forEach(compName => {
             select.innerHTML += `<option value="${compName}">${compName}</option>`;
         });
-        
-      select.onchange = (e) => {
-    const compToAdd = e.target.value;
-    if (!compToAdd) return;
-    
-    // --- 1. まず、永続化するデータだけを更新する ---
-    const currentComps = this.selectedObject.getData('components') || [];
-    currentComps.push({ type: compToAdd, params: {} });
-    this.selectedObject.setData('components', currentComps);
-    
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    // --- 2. addComponentを直接呼ばず、完全な再初期化をシーンに依頼する ---
-    const targetScene = this.selectedObject.scene;
-    if (targetScene && typeof targetScene.initComponentsAndEvents === 'function') {
-        console.log(`[EditorPlugin] Requesting re-initialization for '${this.selectedObject.name}' after adding component.`);
-        targetScene.initComponentsAndEvents(this.selectedObject);
-    }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // --- 3. 最後にUIを更新 ---
-    this.updatePropertyPanel();
-};
-        
+        select.onchange = (e) => {
+            const compToAdd = e.target.value;
+            if (!compToAdd) return;
+            const currentComps = targetObject.getData('components') || [];
+            currentComps.push({ type: compToAdd, params: {} });
+            targetObject.setData('components', currentComms);
+            if (targetObject.scene?.initComponentsAndEvents) {
+                targetObject.scene.initComponentsAndEvents(targetObject);
+            }
+            this.updatePropertyPanel();
+        };
         this.editorPropsContainer.appendChild(select);
     }
 }
-
     createExportButton() {
         const button = document.createElement('button');
         button.innerText = 'エクスポート レイアウト (to Console)';
