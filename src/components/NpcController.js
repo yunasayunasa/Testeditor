@@ -18,22 +18,41 @@ export default class NpcController {
         // this.coyoteTimeThreshold, this.lastGroundedTime
         // this.keyboardEnabled, this.cursors
     }
-   // updateは削除する。NpcControllerは自律的に動かず、命令を待つだけにする。
-    // update(time, delta) { /* ... */ }
+    /**
+     * ★★★ updateメソッドを復活させる ★★★
+     * BaseGameSceneから毎フレーム呼び出され、物理状態を監視してイベントを発火する。
+     */
+    update(time, delta) {
+        if (!this.gameObject?.body?.velocity) return;
 
-    // moveメソッドが、イベント発火の責任も持つ
-    move(vx = 0, vy = 0) {
-        if (!this.gameObject || !this.gameObject.body) return;
-        this.gameObject.setVelocity(vx, vy); // Y方向も受け取れるように
+        const vx = this.gameObject.body.velocity.x;
+        const vy = this.gameObject.body.velocity.y;
+
+        const oldState = this.state;
+        if (vy < -0.1) this.state = 'jump_up';
+        else if (vy > 0.1) this.state = 'fall_down';
+        else if (Math.abs(vx) > 0.1) this.state = 'walk';
+        else this.state = 'idle';
+
+        if (this.state !== oldState) {
+            this.gameObject.emit('onStateChange', this.state, oldState);
+        }
         
-        // ★★★ 速度が設定された「直後」に、アニメ用の状態を判定・発火する ★★★
-        this.updateAnimationTriggers(vx, vy);
+        const oldDirection = this.direction;
+        if (vx < -0.1) this.direction = 'left';
+        else if (vx > 0.1) this.direction = 'right';
+        
+        if (this.direction !== oldDirection) {
+            this.gameObject.emit('onDirectionChange', this.direction, oldDirection);
+        }
     }
-    
+
+    // move, stop, faceメソッドは「速度を変える」ことだけに専念する
+    move(vx = 0, vy = 0) {
+        if (this.gameObject?.body) this.gameObject.setVelocity(vx, vy);
+    }
     stop() {
-        if (!this.gameObject || !this.gameObject.body) return;
-        this.gameObject.setVelocity(0, 0);
-        this.updateAnimationTriggers(0, 0); // ★ 停止時もイベント発火
+        if (this.gameObject?.body) this.gameObject.setVelocity(0, 0);
     }
     
     /**
