@@ -58,3 +58,28 @@ export default class WanderComponent {
         }
     }
 }
+
+WanderComponent.define = {
+    params: [
+        { 
+            key: 'walkDuration',
+            type: 'range',
+            label: '歩行時間(ms)',
+            min: 500, max: 10000, step: 100,
+            defaultValue: 3000
+        },
+        { 
+            key: 'waitDuration', 
+            type: 'range',
+            label: '待機時間(ms)',
+            min: 500, max: 10000, step: 100,
+            defaultValue: 2000 
+        },
+        { 
+            key: 'is8Way',
+            type: 'checkbox',
+            label: '8方向移動',
+            defaultValue: false
+        }
+    ]
+};

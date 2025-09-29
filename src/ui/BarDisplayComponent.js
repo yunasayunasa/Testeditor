@@ -44,3 +44,14 @@ export default class BarDisplayComponent {
         this.gameObject.off('onValueChanged', this.updateBar, this);
     }
 }
+
+BarDisplayComponent.define = {
+    params: [
+        { 
+            key: 'maxValueVariable',
+            type: 'text',
+            label: '最大値の変数',
+            defaultValue: ''
+        }
+    ]
+};

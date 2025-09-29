@@ -46,3 +46,16 @@ export default class Scrollable {
         }
     }
 }
+Scrollable.define = {
+    params: [
+        { 
+            key: 'speed',
+            type: 'range', // UIはスライダー
+            label: 'speed',
+            min: -20,
+            max: 20,
+            step: 0.5,
+            defaultValue: -5
+        }
+    ]
+};

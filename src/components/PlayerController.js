@@ -129,3 +129,19 @@ export default class PlayerController {
     
     destroy() { /* ... */ }
 }
+
+PlayerController.define = {
+    params: [
+        { 
+            key: 'moveSpeed',
+            type: 'range',
+            label: 'moveSpeed',
+            min: 1,
+            max: 20,
+            step: 0.5,
+            defaultValue: 4
+        }
+        // ★ 将来的にジャンプ力などもパラメータにしたくなったら、ここに追加する
+        // { key: 'jumpVelocity', type: 'range', ... }
+    ]
+};

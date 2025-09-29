@@ -41,3 +41,14 @@ export default class TextDisplayComponent {
         this.gameObject.off('onValueChanged', this.updateText, this);
     }
 }
+
+TextDisplayComponent.define = {
+    params: [
+        { 
+            key: 'template',
+            type: 'text',
+            label: '表示テンプレート',
+            defaultValue: '{value}'
+        }
+    ]
+};

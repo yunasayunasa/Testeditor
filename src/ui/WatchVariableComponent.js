@@ -76,3 +76,13 @@ export default class WatchVariableComponent {
         console.log(`[WatchVariableComponent] for ${this.gameObject.name} destroyed.`);
     }
 }
+WatchVariableComponent.define = {
+    params: [
+        { 
+            key: 'variable',
+            type: 'text', // UIはテキスト入力欄
+            label: '監視する変数',
+            defaultValue: '' // デフォルトは空文字
+        }
+    ]
+};

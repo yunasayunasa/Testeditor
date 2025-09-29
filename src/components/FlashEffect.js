@@ -40,3 +40,32 @@ export default class FlashEffect {
         this.gameObject.off('onHit', this.playEffect, this);
     }
 }
+
+FlashEffect.define = {
+    params: [
+        { 
+            key: 'texture',
+            type: 'text',
+            label: 'テクスチャ',
+            defaultValue: 'spark'
+        },
+        { 
+            key: 'scale',
+            type: 'range',
+            label: '拡大率',
+            min: 0.1,
+            max: 5,
+            step: 0.1,
+            defaultValue: 1.0
+        },
+        { 
+            key: 'duration',
+            type: 'range',
+            label: '表示時間(ms)',
+            min: 50,
+            max: 2000,
+            step: 50,
+            defaultValue: 200
+        }
+    ]
+};

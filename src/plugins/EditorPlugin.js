@@ -1352,106 +1352,43 @@ createComponentSection() {
        
         const paramsContainer = document.createElement('div');
         containerDiv.appendChild(paramsContainer);
+  // 1. ComponentRegistryから、コンポーネントのクラス定義を取得
+        const ComponentClass = ComponentRegistry[componentDef.type];
+        if (!ComponentClass) {
+            paramsContainer.innerText = `Error: Component '${componentDef.type}' not found in registry.`;
+            this.editorPropsContainer.appendChild(containerDiv);
+            return; // 次のコンポーネントへ
+        }
 
-        // ▼▼▼【ここからが、完成版のパラメータ編集ロジックです】▼▼▼
+        // 2. クラス定義から、静的な`define`プロパティを取得
+        const define = ComponentClass.define;
+
+        // 3. `define.params`が存在し、配列である場合のみ、UIを生成するループを実行
+        if (define && Array.isArray(define.params)) {
+            define.params.forEach(paramDef => {
+                
+                // 4. `paramDef`の`type`に応じて、適切なUI生成ヘルパーを呼び出す
+                //    (createRangeInput, createCheckboxなどは、あなたが既に持っているヘルパーです)
+                const currentValue = componentDef.params[paramDef.key] ?? paramDef.defaultValue;
+                
+                const onValueChange = (newValue) => {
+                    componentDef.params[paramDef.key] = newValue;
+                    target.setData('components', attachedComponents);
+                    // 安全のために常に全コンポーネントを再初期化
+                    target.scene.initComponentsAndEvents(target);
+                };
+
+                if (paramDef.type === 'range') {
+                    this.createRangeInput(paramsContainer, paramDef.label, currentValue, paramDef.min, paramDef.max, paramDef.step, onValueChange);
+                } else if (paramDef.type === 'checkbox') {
+                    this.createCheckbox(paramsContainer, paramDef.label, currentValue, onValueChange);
+                } else { // デフォルトはテキスト入力
+                    this.createTextInput(paramsContainer, paramDef.label, currentValue, onValueChange);
+                }
+            });
+        }
         // --------------------------------------------------------------------
-
-        // ★★★ 「再アタッチ」ヘルパー関数を定義 ★★★
-        const reattachComponent = () => {
-            const scene = this.selectedObject.scene;
-            if (scene && typeof scene.addComponent === 'function') {
-                if (this.selectedObject.components && this.selectedObject.components[componentDef.type]?.destroy) {
-                    this.selectedObject.components[componentDef.type].destroy();
-                }
-                scene.addComponent(this.selectedObject, componentDef.type, componentDef.params);
-                console.log(`[EditorPlugin] Re-attached component '${componentDef.type}' with new params.`);
-            }
-        };
-
-        // --- 各コンポーネントのUIを、統一されたルールで生成 ---
-        
-        if (componentDef.type === 'WatchVariableComponent') {
-            this.createTextInput(paramsContainer, '監視する変数', componentDef.params.variable || '', (newValue) => {
-                componentDef.params.variable = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-        }
-        
-        else if (componentDef.type === 'BarDisplayComponent') {
-            this.createTextInput(paramsContainer, '最大値の変数', componentDef.params.maxValueVariable || '', (newValue) => {
-                componentDef.params.maxValueVariable = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-        }
-          
-        else if (componentDef.type === 'TextDisplayComponent') {
-            this.createTextInput(paramsContainer, '表示テンプレート', componentDef.params.template || '{value}', (newValue) => {
-                componentDef.params.template = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-        }
-        
-        else if (componentDef.type === 'Scrollable') {
-            this.createRangeInput(paramsContainer, 'speed', componentDef.params.speed ?? -5, -20, 20, 0.5, (newValue) => {
-                componentDef.params.speed = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                // Scrollableは、インスタンスのプロパティを直接更新するだけでもOK
-                if (this.selectedObject.components?.Scrollable) {
-                    this.selectedObject.components.Scrollable.scrollSpeed = newValue;
-                }
-            });
-        }
-        
-        else if (componentDef.type === 'PlayerController') {
-            this.createRangeInput(paramsContainer, 'moveSpeed', componentDef.params.moveSpeed ?? 4, 1, 20, 0.5, (newValue) => {
-                componentDef.params.moveSpeed = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                if (this.selectedObject.components?.PlayerController) {
-                    this.selectedObject.components.PlayerController.moveSpeed = newValue;
-                }
-            });
-        }
-
-        else if (componentDef.type === 'FlashEffect') {
-            this.createTextInput(paramsContainer, 'テクスチャ', componentDef.params.texture || 'spark', (val) => {
-                componentDef.params.texture = val;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-            this.createRangeInput(paramsContainer, '拡大率', componentDef.params.scale ?? 1.0, 0.1, 5, 0.1, (val) => {
-                componentDef.params.scale = val;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-            this.createRangeInput(paramsContainer, '表示時間', componentDef.params.duration ?? 200, 50, 2000, 50, (val) => {
-                componentDef.params.duration = val;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-        }
-       else if (componentDef.type === 'WanderComponent') {
-            this.createRangeInput(paramsContainer, '歩行時間(ms)', componentDef.params.walkDuration ?? 3000, 500, 10000, 100, (newValue) => {
-                componentDef.params.walkDuration = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-            this.createRangeInput(paramsContainer, '待機時間(ms)', componentDef.params.waitDuration ?? 2000, 500, 10000, 100, (newValue) => {
-                componentDef.params.waitDuration = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-            this.createCheckbox(paramsContainer, '8方向移動', componentDef.params.is8Way ?? false, (newValue) => {
-                componentDef.params.is8Way = newValue;
-                this.selectedObject.setData('components', attachedComponents);
-                reattachComponent();
-            });
-        }
-
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         this.editorPropsContainer.appendChild(containerDiv);
     });
