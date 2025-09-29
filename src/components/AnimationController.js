@@ -12,25 +12,21 @@ export default class AnimationController {
         this.lastState = 'idle';
         this.lastDirection = 'right';
 
-        // --- 2. イベントリスナーを登録 ---
+        
+
+       
+    }
+    start() {
+        // --- イベントリスナーをここで登録 ---
         if (this.gameObject.on) {
             this.gameObject.on('onStateChange', this.handleStateChange, this);
             this.gameObject.on('onDirectionChange', this.handleDirectionChange, this);
         }
 
-        // ▼▼▼【これが最後の修正です】▼▼▼
-        // --------------------------------------------------------------------
-        // --- 3. 初期状態のアニメーションを即座に適用する ---
-        //    少し遅延させて呼び出すことで、他のコンポーネントの準備が整うのを待つ
-        setTimeout(() => {
-            if (this.gameObject && this.gameObject.active) {
-                this.updateAnimation();
-            }
-        }, 0);
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // --- 初期状態のアニメーションを即座に適用する ---
+        // このstart()メソッドが呼ばれる時点では、アニメーションは全て登録済みのはず
+        this.updateAnimation();
     }
-    
 
     // stateが変化したときに呼ばれる
     handleStateChange(newState, oldState) {
