@@ -36,45 +36,59 @@ export default class AnimationController {
         }
     }
 
-    updateAnimation() {
-        // ★★★ 安全装置を追加 ★★★
-        if (!this.gameObject || !this.gameObject.active || !this.scene) return;
-        
-        let directionSuffix = this.lastDirection;
-        let flipX = false;
-        
-        if (directionSuffix.includes('left')) {
-            flipX = true;
-            directionSuffix = directionSuffix.replace('left', 'right');
-        }
-        
-        let animKey;
-        if (this.lastState === 'idle') {
-            animKey = `${this.animPrefix}_idle`;
-        } else {
-            animKey = `${this.animPrefix}_${this.lastState}_${directionSuffix}`;
-        }
+    // in src/components/AnimationController.js
 
-        const currentAnimKey = this.gameObject.anims.currentAnim ? this.gameObject.anims.currentAnim.key : null;
-        if (currentAnimKey === animKey) {
-            return; 
-        }
+updateAnimation() {
+    if (!this.gameObject || !this.gameObject.active || !this.scene) return;
+    
+    // ▼▼▼【ここからが最終修正版です】▼▼▼
+    
+    let animKey;
+    let flipX = this.lastDirection.includes('left'); // ★ 1. 左向きならflipXをtrueに
 
-        // ★★★ シーンのアニメーションマネージャーを直接参照して存在確認 ★★★
-        if (this.scene.anims.exists(animKey)) {
-            this.gameObject.setFlipX(flipX);
-            this.gameObject.play(animKey, true);
+    // ★ 2. アニメーションキーは、常に'right'（あるいは向きなし）で組み立てる
+    if (this.lastState === 'idle') {
+        animKey = `${this.animPrefix}_idle`;
+    } else {
+        // lastDirectionから'left'や'right'を取り除いた純粋な向きを取得
+        // (将来の'up', 'down'のため)
+        const pureDirection = this.lastDirection.replace('left', '').replace('right', '').trim();
+        
+        if (pureDirection) {
+             // up_right, down_rightのようなキーを想定
+            animKey = `${this.animPrefix}_${this.lastState}_${pureDirection}_right`;
         } else {
-            console.error(`[AnimationController] ERROR: Animation key '${animKey}' NOT FOUND in scene '${this.scene.scene.key}'!`);
-            
-            const idleKey = `${this.animPrefix}_idle`;
-            if (currentAnimKey !== idleKey && this.scene.anims.exists(idleKey)) {
-                this.gameObject.play(idleKey, true);
-            } else {
-                this.gameObject.stop();
-            }
+            // ただの 'walk' -> walk_right
+            animKey = `${this.animPrefix}_${this.lastState}_right`;
         }
     }
+
+    const currentAnimKey = this.gameObject.anims.currentAnim ? this.gameObject.anims.currentAnim.key : null;
+    
+    // ★ 3. 再生しようとしているアニメとスプライトの向きが同じなら、何もしない
+    if (currentAnimKey === animKey && this.gameObject.flipX === flipX) {
+        return; 
+    }
+
+    if (this.scene.anims.exists(animKey)) {
+        // ★ 4. アニメーションを再生する"前"に、向きを確定させる
+        this.gameObject.setFlipX(flipX);
+        this.gameObject.play(animKey, true);
+    } else {
+        // フォールバック処理（idleを探す）
+        const idleKey = `${this.animPrefix}_idle`;
+        if (this.scene.anims.exists(idleKey)) {
+            // idleアニメーションの場合でも、向きは反映させる
+            this.gameObject.setFlipX(flipX);
+            if (currentAnimKey !== idleKey) {
+                this.gameObject.play(idleKey, true);
+            }
+        } else {
+            this.gameObject.stop();
+        }
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 
     destroy() {
         if (this.gameObject && this.gameObject.off) {
