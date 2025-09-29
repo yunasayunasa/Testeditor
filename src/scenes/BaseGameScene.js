@@ -213,10 +213,10 @@ createAnimationsFromLayout(layoutData) {
  * ★★★ 二段階初期化を実装した最終FIX版 ★★★
  * レイアウトデータからシーンのオブジェクトを構築・初期化する。
  */
-// in src/scenes/BaseGameScene.js
+/// in src/scenes/BaseGameScene.js
 
 /**
- * ★★★【start()ライフサイクル対応・二段階初期化 最終FIX版】★★★
+ * ★★★【最終確定版 Ver2.0】★★★
  * レイアウトデータからシーンのオブジェクトを構築・初期化する。
  */
 buildSceneFromLayout(layoutData) {
@@ -228,47 +228,29 @@ buildSceneFromLayout(layoutData) {
     if (this.editorUI && layoutData.layers) {
         this.editorUI.setLayers(layoutData.layers);
     }
-    
-    // アニメーション生成ロジックはinitSceneWithDataに集約されているので、ここでは不要
-    // (もし残っていたら重複なので削除してOK)
 
     const allGameObjects = [];
-    // ★★★ 全てのstart()を持つコンポーネントを集めるための、巨大な配列 ★★★
-    const allComponentsToStart = [];
 
     if (layoutData.objects) {
         for (const layout of layoutData.objects) {
             const gameObject = this.createObjectFromLayout(layout);
             if (gameObject) {
-                // 【第一段階】構築フェーズを実行
+                // 【第一段階】構築
                 this.applyProperties(gameObject, layout);
-
-                // ▼▼▼【ここが重要！】▼▼▼
-                // 【第二段階】初期化フェーズを実行し、start()を持つコンポーネントを受け取る
-                const componentsFromThisObject = this.initComponentsAndEvents(gameObject);
+                // 【第二段階】初期化（start()の呼び出しまでを含む）
+                this.initComponentsAndEvents(gameObject);
                 
-                // 受け取ったコンポーネントを巨大な配列に結合する
-                allComponentsToStart.push(...componentsFromThisObject);
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
                 allGameObjects.push(gameObject);
             }
         }
     }
 
-    // ▼▼▼【ここがクライマックス！】▼▼▼
-    // --------------------------------------------------------------------
-    // --- 全てのオブジェクトとコンポーネントの準備が整った、最後の最後でstart()を呼び出す ---
-    console.log(`%c[BaseGameScene] Starting ${allComponentsToStart.length} components...`, 'color: orange; font-weight: bold;');
-    allComponentsToStart.forEach(component => {
-        try {
-            component.start();
-        } catch (e) {
-            console.error(`Error during start() of component on object '${component.gameObject.name}':`, e);
-        }
-    });
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▼▼▼【start()を呼び出すコードをここから削除】▼▼▼
+    // 責務がinitComponentsAndEventsに移動したため、このブロックは不要
+    /*
+    console.log(`%c[BaseGameScene] Starting ${allComponentsToStart.length} components...`);
+    allComponentsToStart.forEach(component => { ... });
+    */
 
     this.finalizeSetup(allGameObjects);
 }
@@ -321,10 +303,13 @@ buildSceneFromLayout(layoutData) {
 
 // in src/scenes/BaseGameScene.js
 
+/// in src/scenes/BaseGameScene.js
+
 /**
- * ★★★【最終確定版】★★★
- * 構築が完了したGameObjectに対し、コンポーネントとイベントをアタッチし、初期化する。
- * updateリストへの登録と、最新のparamsデータの参照を保証する。
+ * ★★★【最終確定版 Ver2.0】★★★
+ * GameObjectのコンポーネントとイベントを（再）初期化する。
+ * このメソッド内でstart()の呼び出しまでを完結させる。
+ * @param {Phaser.GameObjects.GameObject} gameObject - 初期化する対象オブジェクト
  */
 initComponentsAndEvents(gameObject) {
     const componentsToStart = [];
@@ -333,7 +318,6 @@ initComponentsAndEvents(gameObject) {
     if (gameObject.components) {
         for (const key in gameObject.components) {
             const component = gameObject.components[key];
-            // ★★★ updateリストからも削除する ★★★
             if (this.updatableComponents.has(component)) {
                 this.updatableComponents.delete(component);
             }
@@ -344,20 +328,16 @@ initComponentsAndEvents(gameObject) {
     }
     gameObject.components = {};
 
-    // --- 2. データからコンポーネント定義を読み込み、追加・初期化する ---
-    // ★★★ gameObject.getData()から最新の定義を取得する ★★★
+    // --- 2. データからコンポーネント定義を読み込み、新しいインスタンスを追加 ---
     const componentsData = gameObject.getData('components');
     if (componentsData) {
         for (const compData of componentsData) {
-            // ★★★ compData.params を渡すことで、最新のパラメータが使われる ★★★
             const componentInstance = this.addComponent(gameObject, compData.type, compData.params);
             
             if (componentInstance) {
-                // ▼▼▼【ここにupdateリストへの登録処理を移動】▼▼▼
                 if (typeof componentInstance.update === 'function') {
                     this.updatableComponents.add(componentInstance);
                 }
-                
                 if (typeof componentInstance.start === 'function') {
                     componentsToStart.push(componentInstance);
                 }
@@ -374,10 +354,23 @@ initComponentsAndEvents(gameObject) {
     if (editor && editor.isEnabled) {
         editor.makeEditable(gameObject, this);
     }
+    
+    // ▼▼▼【ここが修正の核心！】▼▼▼
+    // --- 5. 収集したコンポーネントのstart()を、このメソッド内で呼び出す ---
+    if (componentsToStart.length > 0) {
+        console.log(`%c[initComponentsAndEvents] Starting ${componentsToStart.length} components for '${gameObject.name}'...`, 'color: orange;');
+        componentsToStart.forEach(component => {
+            try {
+                component.start();
+            } catch (e) {
+                console.error(`Error during start() of component on object '${component.gameObject.name}':`, e);
+            }
+        });
+    }
 
-    return componentsToStart;
+    // ★★★ このメソッドは何も返さなくて良くなる ★★★
+    // return componentsToStart; // ← この行は不要
 }
-
 /**
  * ★★★【第一段階：構築】最終FIX版 ★★★
  * GameObjectのインスタンスに対し、レイアウトデータに基づいて基本的なプロパティを設定する。
