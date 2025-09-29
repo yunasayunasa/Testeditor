@@ -1386,7 +1386,7 @@ createComponentSection() {
             if (!compToAdd) return;
             const currentComps = targetObject.getData('components') || [];
             currentComps.push({ type: compToAdd, params: {} });
-            targetObject.setData('components', currentComms);
+            targetObject.setData('components', currentComps);
             if (targetObject.scene?.initComponentsAndEvents) {
                 targetObject.scene.initComponentsAndEvents(targetObject);
             }
