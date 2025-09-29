@@ -50,72 +50,107 @@ export default class BaseGameScene extends Phaser.Scene {
         }
         console.warn(`[BaseGameScene] addJoystickFromEditor was called on a scene that does not support it.`);
     }
+// in src/scenes/BaseGameScene.js
+
+// ... (他のメソッドやimport文はそのまま) ...
+
 /**
- * JSONデータに基づいてシーンの初期化を開始する。
- * create()メソッドから呼び出されることを想定。
+ * JSONデータに基づいてシーンの初期化を開始する (データキー動-的選択版)
  */
-  /**
-     * JSONデータに基づいてシーンの初期化を開始する (データキー動的選択版)
-     */
-    initSceneWithData() {
-          // ★★★ SystemSceneのイベントバスを取得 ★★★
-        const systemEvents = this.scene.get('SystemScene').events;
+initSceneWithData() {
+    // ★★★ SystemSceneのイベントバスを取得 ★★★
+    const systemEvents = this.scene.get('SystemScene').events;
 
-        // ★★★ "start_tutorial" イベントをリッスンする ★★★
-        // (リスナーが重複登録されないよう、念のため一度offにしてからonする)
-        systemEvents.off('start_tutorial', this.handleStartTutorial, this);
-        systemEvents.on('start_tutorial', this.handleStartTutorial, this);
-        // ▼▼▼【ここからが修正の核心です】▼▼▼
+    // ★★★ "start_tutorial" イベントをリッスンする ★★★
+    systemEvents.off('start_tutorial', this.handleStartTutorial, this);
+    systemEvents.on('start_tutorial', this.handleStartTutorial, this);
+
+    // --- 1. 読み込むべきJSONのキーを決定する ---
+    const keyToLoad = this.layoutDataKey || this.scene.key;
+
+    console.log(`[${this.scene.key}] Attempting to build layout from JSON key: '${keyToLoad}'`);
+
+    // --- 2. 決定したキーを使って、キャッシュからJSONデータを取得 ---
+    const layoutData = this.cache.json.get(keyToLoad);
+
+    // --- 3. JSONデータが存在するかチェック ---
+    if (layoutData) {
+        
+        // ▼▼▼【ここに追加します！】▼▼▼
         // --------------------------------------------------------------------
-        // --- 1. 読み込むべきJSONのキーを決定する ---
-        // initで渡されたlayoutDataKeyがあればそれを使い、なければシーン自身のキーをフォールバックとして使う
-        const keyToLoad = this.layoutDataKey || this.scene.key;
-
-        console.log(`[${this.scene.key}] Attempting to build layout from JSON key: '${keyToLoad}'`);
-
-        // --- 2. 決定したキーを使って、キャッシュからJSONデータを取得 ---
-        const layoutData = this.cache.json.get(keyToLoad);
+        // --- 4. (重要) オブジェクトをビルドする"前"にアニメーションを生成 ---
+        this.createAnimationsFromLayout(layoutData); 
         // --------------------------------------------------------------------
-   
-// --- 物理エンジン更新前のイベントを捕捉する ---
-this.matter.world.on('beforeupdate', (event) => {
-    // このシーンの物理エンジンインスタンスを取得
-    const engine = this.matter.world.engine;
-    // ワールドの重力ベクトルを取得 (例: { x: 0, y: 1 })
-    const gravity = engine.gravity;
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        // --- 5. JSONデータに基づいてオブジェクト群をビルド ---
+        this.buildSceneFromLayout(layoutData);
 
-    for (const gameObject of this.children.list) {
-        if (gameObject.body && gameObject.getData('ignoreGravity') === true) {
-            
-            // ▼▼▼【ここをより強力な方法に書き換える】▼▼▼
-
-            // 1. このボディにかかる重力加速度を計算する
-            //    (ボディの質量 * ワールドの重力)
-            const bodyGravity = {
-                x: gameObject.body.mass * gravity.x * gravity.scale,
-                y: gameObject.body.mass * gravity.y * gravity.scale
-            };
-
-            // 2. その重力を完全に打ち消す、真逆の力を計算する
-            const counterForce = {
-                x: -bodyGravity.x,
-                y: -bodyGravity.y
-            };
-
-            // 3. Matter.jsの公式APIを使って、この力をボディに適用する
-            Phaser.Physics.Matter.Matter.Body.applyForce(
-                gameObject.body,      // 対象のボディ
-                gameObject.body.position, // 力の中心点 (ボディの中心)
-                counterForce          // 適用する力ベクトル
-            );
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        }
+    } else {
+        // JSONデータが見つからなかった場合の警告
+        console.warn(`[${this.scene.key}] No layout data found for JSON key: '${keyToLoad}'`);
+        // オブジェクトがなくてもシーンの準備完了を通知する必要がある
+        this.finalizeSetup();
     }
-});
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    this.buildSceneFromLayout(layoutData);
+    // --- 物理エンジン更新前のイベントを捕捉する ---
+    // (この部分はinitSceneWithDataの最後にあるのが適切です)
+    this.matter.world.on('beforeupdate', (event) => {
+        const engine = this.matter.world.engine;
+        const gravity = engine.gravity;
+
+        for (const gameObject of this.children.list) {
+            if (gameObject.body && gameObject.getData('ignoreGravity') === true) {
+                const bodyGravity = {
+                    x: gameObject.body.mass * gravity.x * gravity.scale,
+                    y: gameObject.body.mass * gravity.y * gravity.scale
+                };
+                const counterForce = {
+                    x: -bodyGravity.x,
+                    y: -bodyGravity.y
+                };
+                Phaser.Physics.Matter.Matter.Body.applyForce(
+                    gameObject.body,
+                    gameObject.body.position,
+                    counterForce
+                );
+            }
+        }
+    });
 }
+
+// ▼▼▼【そして、このメソッドをクラス内のどこかに追加してください】▼▼▼
+// (initSceneWithData の直後あたりが分かりやすいです)
+
+/**
+ * レイアウトデータ内のanimations配列に基づいて、アニメーションを生成する
+ * @param {object} layoutData - シーンのレイアウトJSONデータ
+ */
+createAnimationsFromLayout(layoutData) {
+    if (!layoutData.animations || !Array.isArray(layoutData.animations)) {
+        return; // animations配列がなければ何もしない
+    }
+
+    layoutData.animations.forEach(animData => {
+        if (this.anims.exists(animData.key)) {
+            console.warn(`Animation with key '${animData.key}' already exists. Skipping creation.`);
+            return;
+        }
+
+        this.anims.create({
+            key: animData.key,
+            frames: this.anims.generateFrameNumbers(animData.texture, { 
+                start: animData.frames.start, 
+                end: animData.frames.end 
+            }),
+            frameRate: animData.frameRate,
+            repeat: animData.repeat
+        });
+        console.log(`%c[${this.scene.key}] Animation created: '${animData.key}'`, 'color: cyan;');
+    });
+}
+
+// ... (deferAction や buildSceneFromLayout などの他のメソッドはそのまま) ...
   // ★★★ 遅延実行キューにアクションを追加するための新しいメソッド ★★★
     deferAction(action) {
         this._deferredActions.push(action);
