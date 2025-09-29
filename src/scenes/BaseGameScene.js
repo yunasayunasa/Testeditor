@@ -148,6 +148,9 @@ createAnimationsFromLayout(layoutData) {
         });
         console.log(`%c[${this.scene.key}] Animation created: '${animData.key}'`, 'color: cyan;');
     });
+     // ▼▼▼【デバッグコード追加】▼▼▼
+        const createdAnim = this.anims.get(animData.key);
+        console.log(`[BaseGameScene] VERIFY: Animation '${animData.key}' was just created. Is it accessible?`, createdAnim ? 'YES' : 'NO');
 }
 
 // ... (deferAction や buildSceneFromLayout などの他のメソッドはそのまま) ...

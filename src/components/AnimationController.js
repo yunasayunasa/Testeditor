@@ -22,10 +22,18 @@ export default class AnimationController {
             this.gameObject.on('onStateChange', this.handleStateChange, this);
             this.gameObject.on('onDirectionChange', this.handleDirectionChange, this);
         }
+  // ▼▼▼【ここから究極のデバッグコード】▼▼▼
+    console.log(`[AnimationController | DEBUG] Attempting to play initial animation for '${this.gameObject.name}'...`);
+    console.log('[AnimationController | DEBUG] >> Is my gameObject a Sprite?', this.gameObject.constructor.name);
+    console.log('[AnimationController | DEBUG] >> Which scene do I belong to?', this.gameObject.scene.scene.key);
+    console.log('[AnimationController | DEBUG] >> Does my scene have the anims?', this.gameObject.scene.anims.get(`${this.animPrefix}_idle`));
+    console.log('[AnimationController | DEBUG] >> Does my OWN anims property have the anims?', this.gameObject.anims.get(`${this.animPrefix}_idle`));
 
-        // --- 初期状態のアニメーションを即座に適用する ---
-        // このstart()メソッドが呼ばれる時点では、アニメーションは全て登録済みのはず
-        this.updateAnimation();
+    // ★★★ この行でブラウザが一時停止します ★★★
+    debugger; 
+
+    this.updateAnimation();
+    
     }
 
     // stateが変化したときに呼ばれる
