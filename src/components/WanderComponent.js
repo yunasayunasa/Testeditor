@@ -53,7 +53,7 @@ export default class WanderComponent {
             } else { // WALKING
                 this.state = 'WAITING';
                 this.timer = this.gameObject.scene.time.now + this.waitDuration;
-                this.npcController.stop(); // ★ stop()メソッドがあると便利
+                this.npcController.move(0, 0); 
             }
         }
     }

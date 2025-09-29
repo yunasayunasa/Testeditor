@@ -1373,9 +1373,12 @@ createComponentSection() {
                 
                 const onValueChange = (newValue) => {
                     componentDef.params[paramDef.key] = newValue;
-                    target.setData('components', attachedComponents);
-                    // 安全のために常に全コンポーネントを再初期化
-                    target.scene.initComponentsAndEvents(target);
+                    // ★ `target`ではなく、`targetObject` (this.selectedObject) を使う
+                    targetObject.setData('components', attachedComponents);
+
+                    if (targetObject.scene && typeof targetObject.scene.initComponentsAndEvents === 'function') {
+                        targetObject.scene.initComponentsAndEvents(targetObject);
+                    }
                 };
 
                 if (paramDef.type === 'range') {
