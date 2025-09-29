@@ -13,7 +13,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.actionInterpreter = null;
         this.keyPressEvents = new Map();
         this.layoutDataKey = null;
-        this.componentsToUpdate = [];
+        this.updatableComponents = new Set(); 
         this._deferredActions = []; 
         this.joystick = null; 
     }
@@ -322,21 +322,19 @@ buildSceneFromLayout(layoutData) {
 // in src/scenes/BaseGameScene.js
 
 /**
- * ★★★【start()ライフサイクル対応版】★★★
- * 構築が完了したGameObjectに対し、コンポーネントとイベントをアタッチする。
- * コンポーネントのインスタンス化のみを行い、start()の呼び出しはbuildSceneFromLayoutに委ねる。
- * @param {Phaser.GameObjects.GameObject} gameObject - 初期化する対象オブジェクト
- * @returns {Array<object>} start()メソッドを持つコンポー-ネントインスタンスの配列
+ * ★★★【最終確定版】★★★
+ * 構築が完了したGameObjectに対し、コンポーネントとイベントをアタッチし、初期化する。
+ * updateリストへの登録と、最新のparamsデータの参照を保証する。
  */
 initComponentsAndEvents(gameObject) {
-    // start()を持つコンポーネントを収集するための配列
     const componentsToStart = [];
 
     // --- 1. 既存のコンポーネントインスタンスを破棄 ---
     if (gameObject.components) {
         for (const key in gameObject.components) {
             const component = gameObject.components[key];
-            if (this.updatableComponents && this.updatableComponents.has(component)) {
+            // ★★★ updateリストからも削除する ★★★
+            if (this.updatableComponents.has(component)) {
                 this.updatableComponents.delete(component);
             }
             if (component && typeof component.destroy === 'function') {
@@ -347,15 +345,22 @@ initComponentsAndEvents(gameObject) {
     gameObject.components = {};
 
     // --- 2. データからコンポーネント定義を読み込み、追加・初期化する ---
+    // ★★★ gameObject.getData()から最新の定義を取得する ★★★
     const componentsData = gameObject.getData('components');
     if (componentsData) {
         for (const compData of componentsData) {
+            // ★★★ compData.params を渡すことで、最新のパラメータが使われる ★★★
             const componentInstance = this.addComponent(gameObject, compData.type, compData.params);
             
-            // ▼▼▼【ここが重要！】▼▼▼
-            // startメソッドを持つコンポーネントを収集する
-            if (componentInstance && typeof componentInstance.start === 'function') {
-                componentsToStart.push(componentInstance);
+            if (componentInstance) {
+                // ▼▼▼【ここにupdateリストへの登録処理を移動】▼▼▼
+                if (typeof componentInstance.update === 'function') {
+                    this.updatableComponents.add(componentInstance);
+                }
+                
+                if (typeof componentInstance.start === 'function') {
+                    componentsToStart.push(componentInstance);
+                }
             }
         }
     }
@@ -370,7 +375,6 @@ initComponentsAndEvents(gameObject) {
         editor.makeEditable(gameObject, this);
     }
 
-    // ★★★ 収集したコンポーネントのリストを返す ★★★
     return componentsToStart;
 }
 
@@ -547,10 +551,7 @@ addComponent(target, componentType, params = {}) {
     if (!target.components) target.components = {};
     target.components[componentType] = componentInstance;
 
-    if (typeof componentInstance.update === 'function') {
-        if (!this.updatableComponents) this.updatableComponents = new Set();
-        this.updatableComponents.add(componentInstance);
-    }
+   
     
     // ▼▼▼【start()やinit()の呼び出しを、ここから全て削除！】▼▼▼
     // StateMachineComponentの特殊な初期化も、ここでは行わない。
