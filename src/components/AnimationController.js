@@ -44,51 +44,64 @@ export default class AnimationController {
         this.updateAnimation();
     }
 
-    // アニメーションを更新するメインロジック
-   updateAnimation() {
-        if (!this.gameObject || !this.gameObject.play) return;
-        
-        // (flipXなどのロジックはそのまま)
-        let directionSuffix = this.lastDirection;
-        let flipX = false;
-        if (directionSuffix.includes('left')) {
-            flipX = true;
-            directionSuffix = directionSuffix.replace('left', 'right');
-        }
-        
-        let animKey;
-        if (this.lastState === 'idle') {
-            animKey = `${this.animPrefix}_idle`;
-        } else {
-            animKey = `${this.animPrefix}_${this.lastState}_${directionSuffix}`;
-        }
-        
-        // ▼▼▼【ここからデバッグコード】▼▼▼
-        const currentAnim = this.gameObject.anims.getCurrentKey();
-        console.log(`[AnimationController] State: '${this.lastState}', Direction: '${this.lastDirection}'. Attempting to play key: '${animKey}'`);
-        
-        if (currentAnim === animKey) {
-            // 既に再生中なので何もしない
-            return; 
-        }
+    // in src/components/AnimationController.js
 
-        if (this.gameObject.anims.exists(animKey)) {
-            console.log(`%cSUCCESS: Animation key '${animKey}' found. Playing.`, 'color: green; font-weight: bold;');
-            this.gameObject.setFlipX(flipX);
-            this.gameObject.play(animKey, true);
-        } else {
-            console.error(`%cERROR: Animation key '${animKey}' NOT FOUND!`, 'color: red; font-weight: bold;');
-            
-            // フォールバック処理
-            const idleKey = `${this.animPrefix}_idle`;
-            if (this.gameObject.anims.exists(idleKey)) {
-                this.gameObject.play(idleKey, true);
-            } else {
-                this.gameObject.stop();
-            }
-        }
-        // ▲▲▲【ここまでデバッグコード】▲▲▲
+// ... (constructorや他のメソッドはそのまま) ...
+
+// アニメーションを更新するメインロजिक
+updateAnimation() {
+    if (!this.gameObject || !this.gameObject.scene || !this.gameObject.active || !this.gameObject.play) return;
+    
+    let directionSuffix = this.lastDirection;
+    let flipX = false;
+    
+    if (directionSuffix.includes('left')) {
+        flipX = true;
+        directionSuffix = directionSuffix.replace('left', 'right');
     }
+    
+    let animKey;
+    if (this.lastState === 'idle') {
+        animKey = `${this.animPrefix}_idle`;
+    } else {
+        animKey = `${this.animPrefix}_${this.lastState}_${directionSuffix}`;
+    }
+    
+    // ▼▼▼【ここから修正版デバッグコード】▼▼▼
+    
+    // 安全に現在のアニメーションキーを取得する
+    const currentAnimKey = this.gameObject.anims.currentAnim ? this.gameObject.anims.currentAnim.key : null;
+    
+    // ログを出力して状況を把握する
+    // console.log(`[AnimationController] State: '${this.lastState}', Direction: '${this.lastDirection}'. Attempting to play key: '${animKey}'`);
+    
+    // 再生しようとしているアニメーションが、既に再生中のものと同じなら、何もしない
+    if (currentAnimKey === animKey) {
+        return; 
+    }
+
+    // 目的のアニメーションが存在するかチェック
+    if (this.gameObject.anims.exists(animKey)) {
+        // console.log(`%cSUCCESS: Animation key '${animKey}' found. Playing.`, 'color: green; font-weight: bold;');
+        this.gameObject.setFlipX(flipX);
+        this.gameObject.play(animKey, true);
+    } else {
+        // 存在しない場合、エラーをコンソールに出力
+        console.error(`%c[AnimationController] ERROR: Animation key '${animKey}' NOT FOUND!`, 'color: red; font-weight: bold;');
+        
+        // 代わりにアイドルアニメーションを再生しようと試みる (フォールバック)
+        const idleKey = `${this.animPrefix}_idle`;
+        if (currentAnimKey !== idleKey && this.gameObject.anims.exists(idleKey)) {
+            this.gameObject.play(idleKey, true);
+        } else if (!this.gameObject.anims.exists(idleKey)) {
+            // アイドルすらない場合はアニメーションを停止
+            this.gameObject.stop();
+        }
+    }
+    // ▲▲▲【ここまで修正版デバッグコード】▲▲▲
+}
+
+// ... (destroyメソッドなどはそのまま) ...
 
     destroy() {
         // コンポーネントが破棄されるときに、リスナーを解除する
