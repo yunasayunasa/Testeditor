@@ -82,15 +82,7 @@ export default class Interactor {
         }
     }
 
-   onInteract() {
-        if (!this.closestInteractable) return;
-        console.log(`[Interactor] Interact command fired for '${this.closestInteractable.name}'`);
-        const events = this.closestInteractable.getData('events') || [];
-        for (const eventData of events) {
-            if (eventData.trigger === 'onInteract') {
-                this.scene.actionInterpreter.run(this.closestInteractable, eventData, this.gameObject);
-            }
-        }
+  
 /**
  * ★★★ ActionInterpreterを正しく取得する最終FIX版 ★★★
  * インタラクトキー、またはUIボタンが押されたときに呼ばれる。
@@ -119,7 +111,7 @@ onInteract() {
     }
     // --------------------------------------------------------------------
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-}    }
+}  
 
     destroy() {
         if (this.interactIcon) {
