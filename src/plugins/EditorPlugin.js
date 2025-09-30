@@ -390,6 +390,18 @@ createAnimationPrefixInput() {
             labelRow.appendChild(labelInput);
             this.editorPropsContainer.appendChild(labelRow);
         }
+          // --- ラベル(label)の編集UI ---
+    if (target.textObject && typeof target.setText === 'function') {
+        this.createTextInput(this.editorPropsContainer, 'Label', target.textObject.text, (newValue) => {
+            target.setText(newValue);
+        });
+    }
+    
+    // --- スケール(scale)の編集UI ---
+    this.createRangeInput(this.editorPropsContainer, 'Scale', target.scaleX, 0.5, 3, 0.05, (newValue) => {
+        // ★ setVisualScaleではなく、Phaser標準のsetScaleを直接呼び出す
+        target.setScale(newValue);
+    });
         
         // ★ 将来的に、ここで「クリックされた時に実行するアクション」を編集するUIを追加する
         // (イベントエディタを呼び出すボタンなど)

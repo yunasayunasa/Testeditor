@@ -75,7 +75,21 @@ export default class Button extends Container {
         // インタラクティブエリアも更新
         this.setInteractive();
     }
+     /** ★★★ 新規メソッド：スケールを変更する ★★★ */
+    setVisualScale(scaleX, scaleY) {
+        // コンテナ自体のスケールを変更
+        this.setScale(scaleX, scaleY ?? scaleX); // YがなければXと同じ値を使う
+    }
     
+    /** ★★★ 新規メソッド：背景テクスチャを変更する ★★★ */
+    setBackgroundTexture(textureKey) {
+        // Graphicsではなく、Imageを背景として使っている場合
+        // if (this.background instanceof Phaser.GameObjects.Image) {
+        //     this.background.setTexture(textureKey);
+        // }
+        // Graphicsを使っている場合は、色を変えるのが一般的
+        // この機能は、ボタンの構造によって実装が変わります
+    }
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
      * 背景の形状を描画する処理を、再利用可能なメソッドとして分離
