@@ -45,6 +45,14 @@ export const uiRegistry = {
         groups: ['ui_element', 'action'], // 特定のシーンに依存しない、汎用UIグループ
         params: { label: 'Button' }
     },
+    'interact_button': {
+        path: './ui/InteractButton.js', // ★ 新しいクラスのパス
+        groups: ['controls', 'action'],   // 'controls'グループに所属させる
+        params: { 
+            label: '調べる', // デフォルトのラベル
+            shape: 'circle' // デフォルトの形状
+        }
+    },
 
     'jump_button': { 
         path: './ui/JumpButton.js',
