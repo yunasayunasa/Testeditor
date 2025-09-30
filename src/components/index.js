@@ -10,6 +10,8 @@ import NpcController from './NpcController.js';
 import WanderComponent from './WanderComponent.js'; 
 import AnimationController from './AnimationController.js';
 import ChaseComponent from './ChaseComponent.js'; 
+import ReturnHomeComponent from './ReturnHomeComponent.js';
+
 
 //UI系
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
@@ -30,7 +32,7 @@ NpcController,
 WanderComponent,
 AnimationController,
 ChaseComponent,
-
+ReturnHomeComponent,
 
     
 
