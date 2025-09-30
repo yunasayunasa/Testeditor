@@ -80,13 +80,20 @@ export default class ReturnHomeComponent {
             alpha: 1,
             duration: this.fadeInDuration,
             ease: 'Power2',
-            onComplete: () => {
-                // --- 4. 帰宅完了 ---
-                this.isReturning = false;
-                console.log(`[ReturnHome] '${this.gameObject.name}' has returned home.`);
-            }
-        });
-    }
+             onComplete: () => {
+            this.isReturning = false;
+            console.log(`[ReturnHome] '${this.gameObject.name}' has returned home.`);
+
+            // ▼▼▼【ここが修正の核心です】▼▼▼
+            // 「私の支配は終わった」というイベントをブロードキャストする
+            this.gameObject.emit('onAiBehaviorChange', {
+                source: 'ReturnHomeComponent',
+                active: false // 支配を終了したことを示す
+            });
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        }
+    });
+}
 
     // このコンポーネントはupdateループを必要としない
 }
