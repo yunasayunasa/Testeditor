@@ -6,6 +6,7 @@ export default class WanderComponent {
         this.npcController = null;
         this.timer = 0;
         this.state = 'WAITING';
+        this.isSuppressed = false; // 他のAIコンポーネントによって抑制されているか
         // constructorでは、paramsをプロパティに保存しない！
     }
 
@@ -14,6 +15,7 @@ export default class WanderComponent {
         if (!this.npcController) {
             console.error(`[WanderComponent] ERROR: 'NpcController' component is required!`);
             return;
+               this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
         }
 
         // ▼▼▼【ここが修正の核心】▼▼▼
@@ -22,7 +24,24 @@ export default class WanderComponent {
         const waitDuration = myParams.waitDuration ?? 2000;
         this.timer = this.gameObject.scene.time.now + waitDuration;
     }
+  /** ★★★ 新しいイベントハンドラ ★★★ */
+    handleBehaviorChange(event) {
+        if (!this.npcController || this.isSuppressed) return;
 
+        // イベントの発信源が自分自身なら、何もしない
+        if (event.source === 'WanderComponent') return;
+
+        // 他のコンポーネントがアクティブになったら、自分は抑制される
+        if (event.active) {
+            this.isSuppressed = true;
+            this.npcController.stop(); // 念のため動きを止める
+        } else {
+            this.isSuppressed = false;
+            // 抑制が解除されたら、再び待機から始める
+            this.state = 'WAITING';
+            this.timer = this.gameObject.scene.time.now + this.waitDuration;
+        }
+    }
     update() {
         if (!this.npcController) return;
 
@@ -65,7 +84,11 @@ export default class WanderComponent {
         const allComponentsData = this.gameObject.getData('components') || [];
         const myComponentData = allComponentsData.find(c => c.type === 'WanderComponent');
         return myComponentData ? myComponentData.params : {};
+    }destroy() {
+        // ★★★ destroyでリスナーを解除する ★★★
+        this.gameObject.off('onAiBehaviorChange', this.handleBehaviorChange, this);
     }
+
 }
 
 WanderComponent.define = {
