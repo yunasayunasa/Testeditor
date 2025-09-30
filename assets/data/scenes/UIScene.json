@@ -1,5 +1,5 @@
 {
-  "hasJoystick": false,
+  "hasJoystick": true,
   "layers": [
     {
       "name": "Foreground",
@@ -45,7 +45,7 @@
       "group": "jump_button",
       "data": {},
       "registryKey": "message_window",
-      "label": "「ようこそ！これは、あなたと一緒に作ったゲームエンジンのチュートリアルです。」"
+      "label": "「このゲームを起動するのは、441 回目ですね。」"
     },
     {
       "name": "menu_button",
@@ -106,6 +106,20 @@
       "alpha": 1,
       "data": {},
       "registryKey": "bottom_panel"
+    },
+    {
+      "name": "interact_button_1759238969243",
+      "type": "InteractButton",
+      "x": 1009,
+      "y": 652,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "data": {},
+      "registryKey": "interact_button",
+      "label": "調べる"
     }
   ]
 }
