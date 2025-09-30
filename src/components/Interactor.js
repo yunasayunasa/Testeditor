@@ -82,7 +82,7 @@ export default class Interactor {
         }
     }
 
-    onInteract() {
+   onInteract() {
         if (!this.closestInteractable) return;
         console.log(`[Interactor] Interact command fired for '${this.closestInteractable.name}'`);
         const events = this.closestInteractable.getData('events') || [];
@@ -91,7 +91,35 @@ export default class Interactor {
                 this.scene.actionInterpreter.run(this.closestInteractable, eventData, this.gameObject);
             }
         }
+/**
+ * ★★★ ActionInterpreterを正しく取得する最終FIX版 ★★★
+ * インタラクトキー、またはUIボタンが押されたときに呼ばれる。
+ */
+onInteract() {
+    if (!this.closestInteractable) return;
+
+    console.log(`[Interactor] Interact command fired for '${this.closestInteractable.name}'`);
+    
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    // --------------------------------------------------------------------
+    // 1. グローバルなレジストリから、ActionInterpreterのインスタンスを取得する
+    const actionInterpreter = this.scene.registry.get('actionInterpreter');
+    if (!actionInterpreter) {
+        console.error("[Interactor] CRITICAL: ActionInterpreter not found in scene registry!");
+        return;
     }
+
+    // 2. 最も近いオブジェクトの 'onInteract' イベントを発火させる
+    const events = this.closestInteractable.getData('events') || [];
+    for (const eventData of events) {
+        if (eventData.trigger === 'onInteract') {
+            // ★ 取得した actionInterpreter の run メソッドを呼び出す
+            actionInterpreter.run(this.closestInteractable, eventData, this.gameObject);
+        }
+    }
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}    }
 
     destroy() {
         if (this.interactIcon) {
