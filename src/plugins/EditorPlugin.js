@@ -1378,7 +1378,10 @@ createComponentSection() {
                     this.createCheckbox(paramsContainer, paramDef.label, currentValue, onValueChange);
                    }   else if (paramDef.type === 'select') {
                     this.createSelect(paramsContainer, paramDef.label, currentValue, paramDef.options, onValueChange);
-                
+                        }     else if (paramDef.type === 'color') {
+    // ★ 新しいヘルパーメソッドを呼び出す
+    this.createColorInput(paramsContainer, paramDef.label, currentValue, onValueChange);
+
                 } else {
                     this.createTextInput(paramsContainer, paramDef.label, currentValue, onValueChange);
                 }
@@ -1417,7 +1420,29 @@ createComponentSection() {
         button.addEventListener('click', () => this.exportLayoutToJson());
         this.editorPropsContainer.appendChild(button);
     }
+// in src/plugins/EditorPlugin.js (クラス内のどこか)
 
+/** ★★★ 新規追加 ★★★
+ * カラーピッカー入力欄を生成するヘルパーメソッド
+ */
+createColorInput(container, label, initialValue, callback) {
+    const row = document.createElement('div');
+    const labelEl = document.createElement('label');
+    labelEl.innerText = label + ' ';
+
+    const input = document.createElement('input');
+    input.type = 'color';
+    // カラーピッカーは'#rrggbb'形式を扱うので、'0x'形式から変換する
+    input.value = '#' + initialValue.toString(16).padStart(6, '0');
+
+    input.addEventListener('input', () => {
+        // ユーザーが色を選んだら、'#rrggbb'形式を'0xrrggbb'形式に変換してコールバック
+        callback('0x' + input.value.substring(1));
+    });
+
+    row.append(labelEl, input);
+    container.appendChild(row);
+}
     /**
      * ★★★ 以下のメソッドで、既存の createDeleteObjectButton を完全に置き換えてください ★★★
      */
@@ -2766,7 +2791,14 @@ convertImageToSprite() {
         const triggerSelect = document.createElement('select');
         
         // ★★★ 全ての利用可能なトリガーをリスト化 ★★★
-        const availableTriggers = ['onClick', 'onReady',  'onOverlap_Start', 'onOverlap_End', 'onCollide_Start','onInteract', 'onStomp', 'onHit', 'onStateChange', 'onDirectionChange'];
+       const availableTriggers = [
+    'onClick', 'onReady', 
+    'onCollide_Start', 'onStomp', 'onHit', 
+    'onOverlap_Start', 'onOverlap_End',
+    'onStateChange', 'onDirectionChange',
+    'onInteract' // ★★★ この一行をリストの末尾に追加 ★★★
+];
+availableTriggers.sort(); // アルファベット順にソートすると見やすい
         availableTriggers.forEach(t => {
             const option = document.createElement('option');
             option.value = t;
