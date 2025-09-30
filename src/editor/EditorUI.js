@@ -1261,7 +1261,8 @@ populateVslTriggerEditor(activeEvent) {
         'onOverlap_Start', 
         'onOverlap_End',
         'onStateChange',      // ★★★ これを復活させる ★★★
-        'onDirectionChange'   // ★★★ これを復活させる ★★★
+        'onDirectionChange',  // ★★★ これを復活させる ★★★
+        'onInteract'
     ];
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
