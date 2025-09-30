@@ -1567,23 +1567,18 @@ createColorInput(container, label, initialValue, callback) {
         // --- タップ情報を記録するための変数をGameObjectに持たせる ---
        gameObject.setData('lastTap', 0);
 
-        gameObject.on('pointerdown', (pointer) => {
-            // ★★★ 1. グローバルレジストリから、現在のモードを取得 ★★★
-            const currentMode = this.game.registry.get('editor_mode');
+            gameObject.on('pointerdown', (pointer) => {
+    const currentMode = this.game.registry.get('editor_mode');
+    
+    // プレイモードの場合は、Buttonが発火させた'onClick'などの処理に任せる
+    if (currentMode === 'play') {
+        return;
+    }
 
-            // --- ケースA: プレイモードの場合 ---
-            if (currentMode === 'play') {
-                const events = gameObject.getData('events') || [];
-                events.forEach(eventData => {
-                    if (eventData.trigger === 'onClick') {
-                        // ★ ActionInterpreterは、シーンが持っている
-                        if (scene.actionInterpreter) {
-                            scene.actionInterpreter.run(gameObject, eventData, gameObject);
-                        }
-                    }
-                });
-                return; // プレイモードの処理はここで終わり
-            }
+    // ▼▼▼【ここが誤爆を防ぐ核心です】▼▼▼
+    // エディットモード（'select'など）でクリックされた場合は、
+    // これ以降のイベント（Buttonの'onClick'など）が発火しないように、伝播を止める
+    pointer.event.stopPropagation();
             // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
           const layerName = gameObject.getData('layer');
             const layer = this.layerStates.find(l => l.name === layerName);

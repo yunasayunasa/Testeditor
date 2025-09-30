@@ -45,12 +45,9 @@ export default class Button extends Container {
         
         // --- 6. イベントリスナー ---
         this.on('pointerdown', () => {
-            const editorPlugin = this.scene.plugins.get('EditorPlugin');
-            // ★ プレイモードの判定は、EditorPluginが責任を持つ方が安全
-            if (!editorPlugin || !editorPlugin.isEnabled || editorPlugin.currentMode === 'play') {
-                this.emit('onClick', this);
-                this.scene.tweens.add({ targets: this, scale: 0.95, duration: 80, yoyo: true });
-            }
+            // モード判定はしない！ とにかく'onClick'を発火させる
+            this.emit('onClick', this);
+            this.scene.tweens.add({ targets: this, scale: 0.95, duration: 80, yoyo: true });
         });
         
         this.on('pointerover', () => this.background.setAlpha(1));
