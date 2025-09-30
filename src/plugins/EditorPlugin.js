@@ -1364,6 +1364,9 @@ createComponentSection() {
                     this.createRangeInput(paramsContainer, paramDef.label, currentValue, paramDef.min, paramDef.max, paramDef.step, onValueChange);
                 } else if (paramDef.type === 'checkbox') {
                     this.createCheckbox(paramsContainer, paramDef.label, currentValue, onValueChange);
+                   }   else if (paramDef.type === 'select') {
+                    this.createSelect(paramsContainer, paramDef.label, currentValue, paramDef.options, onValueChange);
+                
                 } else {
                     this.createTextInput(paramsContainer, paramDef.label, currentValue, onValueChange);
                 }
