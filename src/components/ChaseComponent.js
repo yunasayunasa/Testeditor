@@ -182,6 +182,8 @@ ChaseComponent.define = {
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         { key: 'visionAngle', type: 'range', label: '視野角(度)', min: 10, max: 360, step: 5, defaultValue: 90 },
-        // ... (以降のパラメータは変更なし) ...
+              { key: 'detectionRadius', type: 'range', label: '索敵半径', min: 50, max: 1000, step: 10, defaultValue: 250 },
+        { key: 'giveUpRadius', type: 'range', label: '追跡を諦める距離', min: 100, max: 2000, step: 10, defaultValue: 500 },
+        { key: 'chaseSpeed', type: 'range', label: '追跡速度', min: 1, max: 10, step: 0.5, defaultValue: 3 }
     ]
 };
