@@ -192,7 +192,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 405,
+      "x": 286,
       "y": 298,
       "depth": 0,
       "scaleX": 0.65,
@@ -243,7 +243,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 917,
+      "x": 983,
       "y": 274,
       "depth": 0,
       "scaleX": 1,
@@ -263,6 +263,16 @@
         },
         {
           "type": "AnimationController",
+          "params": {}
+        },
+        {
+          "type": "ChaseComponent",
+          "params": {
+            "detectionType": "vision"
+          }
+        },
+        {
+          "type": "ReturnHomeComponent",
           "params": {}
         }
       ],
