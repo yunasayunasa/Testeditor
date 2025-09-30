@@ -6,48 +6,44 @@ export default class WanderComponent {
         this.npcController = null;
         this.timer = 0;
         this.state = 'WAITING';
-        this.isSuppressed = false; // 他のAIコンポーネントによって抑制されているか
+         this.enabled = true; // ★ isSuppressedからenabledに名前を変更
         // constructorでは、paramsをプロパティに保存しない！
     }
 
-    start() {
+     start() {
         this.npcController = this.gameObject.components.NpcController;
         if (!this.npcController) {
-            console.error(`[WanderComponent] ERROR: 'NpcController' component is required!`);
-            return;
-               this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
+            console.error(`[WanderComponent] ERROR: 'NpcController' is required on '${this.gameObject.name}'. Disabling.`);
+            this.enabled = false;
+            return; // 依存コンポーネントがなければ、ここで終了
         }
 
-        // ▼▼▼【ここが修正の核心】▼▼▼
-        // start()が実行された時点の最新のパラメータを取得する
+        // ★★★ イベントリスナーの登録を、正しい場所に移動 ★★★
+        this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
+
         const myParams = this.getCurrentParams();
         const waitDuration = myParams.waitDuration ?? 2000;
         this.timer = this.gameObject.scene.time.now + waitDuration;
     }
-  /** ★★★ 新しいイベントハンドラ ★★★ */
-    handleBehaviorChange(event) {
-        if (!this.npcController || this.isSuppressed) return;
-
-        // イベントの発信源が自分自身なら、何もしない
+  handleBehaviorChange(event) {
         if (event.source === 'WanderComponent') return;
+        // 他のコンポーネントがアクティブになったら自分は無効に、そうでなければ有効になる
+        this.enabled = !event.active;
 
-        // 他のコンポーネントがアクティブになったら、自分は抑制される
-        if (event.active) {
-            this.isSuppressed = true;
-            this.npcController.stop(); // 念のため動きを止める
+        if (!this.enabled) {
+            this.npcController.stop(); // 抑制されたら、動きを止める
         } else {
-            this.isSuppressed = false;
-            // 抑制が解除されたら、再び待機から始める
+            // 活動再開時は、待機状態からリスタート
             this.state = 'WAITING';
-            this.timer = this.gameObject.scene.time.now + this.waitDuration;
+            const myParams = this.getCurrentParams();
+            const waitDuration = myParams.waitDuration ?? 2000;
+            this.timer = this.gameObject.scene.time.now + waitDuration;
         }
     }
-    update() {
-        if (!this.npcController) return;
+     update() {
+        if (!this.npcController || !this.enabled) return;
 
         if (this.gameObject.scene.time.now > this.timer) {
-            // ▼▼▼【ここも同様に修正】▼▼▼
-            // updateが実行される時点の最新のパラメータを取得する
             const myParams = this.getCurrentParams();
             const walkDuration = myParams.walkDuration ?? 3000;
             const waitDuration = myParams.waitDuration ?? 2000;
@@ -57,17 +53,17 @@ export default class WanderComponent {
                 this.state = 'WALKING';
                 this.timer = this.gameObject.scene.time.now + walkDuration;
                 
-                let vx = 0;
-                // ★ NpcControllerのmoveSpeedも、常に最新のものを参照する
+                let vx = 0; let vy = 0;
                 const speed = this.npcController.moveSpeed;
-
                 if (is8Way) {
-                    // (8方向のロジックは変更なし)
+                    const angle = Phaser.Math.RND.angle();
+                    const vec = new Phaser.Math.Vector2().setAngle(Phaser.Math.DegToRad(angle));
+                    vx = vec.x * speed;
+                    vy = vec.y * speed;
                 } else {
                     vx = (Math.random() < 0.5 ? -1 : 1) * speed;
                 }
-                this.npcController.move(vx);
-                
+                this.npcController.move(vx, vy);
             } else { // WALKING
                 this.state = 'WAITING';
                 this.timer = this.gameObject.scene.time.now + waitDuration;
@@ -75,22 +71,18 @@ export default class WanderComponent {
             }
         }
     }
-
-    /**
-     * ★★★ 新規ヘルパーメソッド ★★★
-     * gameObjectのデータから、自分自身の最新のパラメータ定義を取得する
-     */
-    getCurrentParams() {
-        const allComponentsData = this.gameObject.getData('components') || [];
-        const myComponentData = allComponentsData.find(c => c.type === 'WanderComponent');
-        return myComponentData ? myComponentData.params : {};
-    }destroy() {
-        // ★★★ destroyでリスナーを解除する ★★★
-        this.gameObject.off('onAiBehaviorChange', this.handleBehaviorChange, this);
+   getCurrentParams() {
+        const allCompsData = this.gameObject.getData('components') || [];
+        const myData = allCompsData.find(c => c.type === 'WanderComponent');
+        return myData ? myData.params : {};
     }
-
+    
+    destroy() {
+        if (this.gameObject?.off) {
+            this.gameObject.off('onAiBehaviorChange', this.handleBehaviorChange, this);
+        }
+    }
 }
-
 WanderComponent.define = {
     params: [
         { 

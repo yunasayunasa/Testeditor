@@ -26,29 +26,21 @@ export default class ReturnHomeComponent {
      * ★★★ ChaseComponentから呼び出される、このコンポーネントの心臓部 ★★★
      * 帰宅プロセスを開始する。
      */
-    startReturning() {
-        // 既に帰宅中なら何もしない
+   startReturning() {
         if (this.isReturning) return;
         this.isReturning = true;
+        this.gameObject.emit('onAiBehaviorChange', { source: 'ReturnHomeComponent', active: true });
+        console.log(`[ReturnHome] '${this.gameObject.name}' starting to return.`);
 
-        console.log(`[ReturnHome] '${this.gameObject.name}' is starting to return home.`);
-
-        // --- 1. フェードアウトのTweenを開始 ---
+        // 物理ボディを一時的に無効化（壁などに引っかからないように）
+        if (this.gameObject.body) this.gameObject.body.enable = false;
+        
         this.scene.tweens.add({
             targets: this.gameObject,
             alpha: 0,
             duration: this.fadeOutDuration,
-            ease: 'Power2',
             onComplete: () => {
-                // --- 2. Tween完了後、オブジェクトを非アクティブ＆非表示にする ---
-                this.gameObject.setActive(false).setVisible(false);
-                
-                // 物理ボディも無効化して、他のオブジェクトと衝突しないようにする
-                if (this.gameObject.body) {
-                    this.gameObject.body.enable = false;
-                }
-
-                // --- 3. 一定時間待ってから、リポップ処理を呼び出す ---
+                this.gameObject.setVisible(false); // 見えなくするだけ
                 this.scene.time.delayedCall(this.repopDelay, this.repopAtHome, [], this);
             }
         });
@@ -58,42 +50,23 @@ export default class ReturnHomeComponent {
      * 初期位置に再出現（リポップ）させる処理
      */
     repopAtHome() {
-        console.log(`[ReturnHome] '${this.gameObject.name}' is repoping at home.`);
-        
-        // --- 1. 記憶しておいた「故郷」の座標に、瞬時に移動させる ---
+        console.log(`[ReturnHome] '${this.gameObject.name}' repoping.`);
         this.gameObject.setPosition(this.homePosition.x, this.homePosition.y);
-        
-        // 物理ボディも座標に追従させる
-        if (this.gameObject.body) {
-            // setPositionはボディの中心を移動させるので、これでOK
-        }
+        this.gameObject.setVisible(true); // 再び見えるように
+        if (this.gameObject.body) this.gameObject.body.enable = true;
 
-        // --- 2. オブジェクトを再びアクティブ＆表示状態に戻す ---
-        this.gameObject.setActive(true).setVisible(true);
-        if (this.gameObject.body) {
-            this.gameObject.body.enable = true;
-        }
-
-        // --- 3. フェードインのTweenを開始 ---
         this.scene.tweens.add({
             targets: this.gameObject,
             alpha: 1,
             duration: this.fadeInDuration,
-            ease: 'Power2',
-             onComplete: () => {
-            this.isReturning = false;
-            console.log(`[ReturnHome] '${this.gameObject.name}' has returned home.`);
-
-            // ▼▼▼【ここが修正の核心です】▼▼▼
-            // 「私の支配は終わった」というイベントをブロードキャストする
-            this.gameObject.emit('onAiBehaviorChange', {
-                source: 'ReturnHomeComponent',
-                active: false // 支配を終了したことを示す
-            });
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        }
-    });
-}
+            onComplete: () => {
+                this.isReturning = false;
+                // 「私の仕事は終わった」とブロードキャスト
+                this.gameObject.emit('onAiBehaviorChange', { source: 'ReturnHomeComponent', active: false });
+                console.log(`[ReturnHome] '${this.gameObject.name}' has returned.`);
+            }
+        });
+    }
 
     // このコンポーネントはupdateループを必要としない
 }

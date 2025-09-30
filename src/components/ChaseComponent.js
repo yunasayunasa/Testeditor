@@ -1,66 +1,54 @@
 // in src/components/ChaseComponent.js
-
 export default class ChaseComponent {
-
     constructor(scene, owner, params = {}) {
         this.gameObject = owner;
         this.scene = owner.scene;
-        
-        // --- 依存コンポーネントへの参照 ---
         this.npcController = null;
         this.returnHome = null;
-
-        // --- IDEで編集可能なパラメータ ---
         this.targetGroup = params.targetGroup || 'player';
         this.detectionType = params.detectionType || 'distance';
         this.visionAngle = params.visionAngle || 90;
         this.detectionRadius = params.detectionRadius || 250;
         this.giveUpRadius = params.giveUpRadius || 500;
         this.chaseSpeed = params.chaseSpeed || 3;
-        
-        // --- 内部状態 ---
-        this.state = 'IDLE'; // 'IDLE' (監視中), 'CHASING' (追跡中)
+        this.state = 'IDLE';
         this.chaseTarget = null;
-        
-        // --- 視覚化用のGraphicsオブジェクト ---
         this.visionCone = null;
+        this.enabled = true; // ★ 自身の有効/無効フラグ
     }
 
-    /**
-     * すべてのコンポーネントが生成された後に呼び出される。
-     * 依存関係の解決と、視覚化オブジェクトの生成を行う。
-     */
     start() {
         this.npcController = this.gameObject.components.NpcController;
-        if (!this.npcController) {
-            console.error(`[ChaseComponent] ERROR: 'NpcController' is required on '${this.gameObject.name}'. This component will be disabled.`);
-            this.enabled = false;
-        }
+        if (!this.npcController) { this.enabled = false; return; }
         
         this.returnHome = this.gameObject.components.ReturnHomeComponent;
 
-        // IDEモード（?debug=true）の時だけ、視覚化オブジェクトを生成する
         const isDebug = new URLSearchParams(window.location.search).has('debug');
         if (isDebug) {
-            // 深度をキャラクターより少し手前に設定すると、他のオブジェクトに隠れにくい
             this.visionCone = this.scene.add.graphics().setDepth(this.gameObject.depth + 1);
+        }
+        
+        // ★★★ イベントリスナーを登録 ★★★
+        this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
+    }
+
+    handleBehaviorChange(event) {
+        if (event.source === 'ChaseComponent') return;
+        this.enabled = !event.active;
+        if (!this.enabled && this.visionCone) {
+            this.visionCone.clear(); // 抑制されたら視界を消す
         }
     }
 
-    /**
-     * BaseGameSceneから毎フレーム呼び出される、メインの更新ループ。
-     */
     update(time, delta) {
-        if (!this.npcController || !this.gameObject.active || this.enabled === false) {
+        if (!this.npcController || !this.gameObject.active || !this.enabled) {
             return;
         }
         
-        // IDEモードであれば、毎フレーム視界を描画・更新する
         if (this.visionCone) {
             this.drawVisionCone();
         }
-
-        // --- 1. 追跡ターゲットの検索と状態更新 ---
+        
         if (!this.chaseTarget || !this.chaseTarget.active) {
             this.chaseTarget = this.findClosestTarget();
         }
@@ -70,25 +58,19 @@ export default class ChaseComponent {
         }
         
         const distanceToTarget = Phaser.Math.Distance.BetweenPoints(this.gameObject, this.chaseTarget);
-        let canDetectTarget = (this.detectionType === 'vision')
+        const canDetectTarget = (this.detectionType === 'vision')
             ? this.isTargetInVision(this.chaseTarget, this.detectionRadius)
             : distanceToTarget < this.detectionRadius;
 
-        // --- 2. 状態遷移ロジック (ヒステリシス対応) ---
         switch (this.state) {
             case 'IDLE':
-                if (canDetectTarget) {
-                    this.startChasing();
-                }
+                if (canDetectTarget) this.startChasing();
                 break;
             case 'CHASING':
-                if (distanceToTarget > this.giveUpRadius) {
-                    this.stopChasing();
-                }
+                if (distanceToTarget > this.giveUpRadius) this.stopChasing();
                 break;
         }
 
-        // --- 3. 行動実行ロジック ---
         if (this.state === 'CHASING') {
             const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, this.chaseTarget);
             const vx = Math.cos(angle) * this.chaseSpeed;
@@ -133,60 +115,28 @@ export default class ChaseComponent {
         this.visionCone.fillPath();
     }
 
-    /**
-     * 追跡を開始する。他の行動コンポーネントにイベントで通知する。
-     */
-    startChasing() {
+   startChasing() {
         if (this.state === 'CHASING') return;
         this.state = 'CHASING';
         this.gameObject.emit('onAiBehaviorChange', { source: 'ChaseComponent', active: true });
-        console.log(`[ChaseComponent] ${this.gameObject.name} started chasing ${this.chaseTarget.name}.`);
     }
 
-    /**
-     * 追跡を停止する。他の行動コンポーネントにイベントで通知する。
-     */
     stopChasing() {
         if (this.state === 'IDLE') return;
         this.state = 'IDLE';
         this.npcController.stop();
         this.gameObject.emit('onAiBehaviorChange', { source: 'ChaseComponent', active: false });
-        console.log(`[ChaseComponent] ${this.gameObject.name} stopped chasing.`);
 
         if (this.returnHome?.startReturning) {
             this.returnHome.startReturning();
         }
     }
 
-    /**
-     * シーンから最も近いターゲットを探す。
-     */
-    findClosestTarget() {
-        let closestTarget = null;
-        let minDistance = Infinity;
-
-        if (typeof this.scene.getObjectsByGroup === 'function') {
-            const targets = this.scene.getObjectsByGroup(this.targetGroup);
-            for (const target of targets) {
-                const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, target);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestTarget = target;
-                }
-            }
-        }
-        return closestTarget;
-    }
-    
-    /**
-     * コンポーネントが破棄される際に、視覚化オブジェクトも安全に破棄する。
-     */
     destroy() {
-        if (this.visionCone) {
-            this.visionCone.destroy();
-            this.visionCone = null;
+        if (this.visionCone) this.visionCone.destroy();
+        if (this.gameObject?.off) {
+            this.gameObject.off('onAiBehaviorChange', this.handleBehaviorChange, this);
         }
-        // このコンポーネントはイベントをリッスンしていないので、off()は不要
     }
 }
 

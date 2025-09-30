@@ -127,7 +127,7 @@ export default class PlayerController {
         return false;
     }
     
-    destroy() { /* ... */ }
+    destroy() {  }
 }
 
 PlayerController.define = {
