@@ -431,9 +431,7 @@ applyProperties(gameObject, layout) {
 
     // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
-    if (this.lights.active && (gameObject instanceof Phaser.GameObjects.Image || gameObject instanceof Phaser.GameObjects.Sprite)) {
-        gameObject.setPipeline('Light2D');
-    }
+    
     // --- 3. 見た目（Transform）に関するプロパティを設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
