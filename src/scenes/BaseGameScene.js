@@ -72,6 +72,33 @@ initSceneWithData() {
 
     // --- 2. 決定したキーを使って、キャッシュからJSONデータを取得 ---
     const layoutData = this.cache.json.get(keyToLoad);
+     // --- 2. シーン設定(scene_settings)ブロックが存在すれば、それを先に適用する ---
+    if (layoutData && layoutData.scene_settings) {
+        console.log(`[BaseGameScene] Found 'scene_settings' in layout data. Applying...`);
+        const settings = layoutData.scene_settings;
+
+        // a) 背景色の設定
+        if (settings.backgroundColor) {
+            // 文字列の色コードをPhaserが扱える色オブジェクトに変換
+            const color = Phaser.Display.Color.ValueToColor(settings.backgroundColor);
+            this.cameras.main.setBackgroundColor(color);
+        }
+
+        // b) 重力の設定
+        if (settings.gravity && settings.gravity.y !== undefined) {
+            this.matter.world.gravity.y = settings.gravity.y;
+        }
+
+        // c) ライティングの設定
+        if (settings.lighting) {
+            if (settings.lighting.enabled) {
+                this.lights.enable();
+                // 環境光が指定されていれば設定、なければデフォルトの暗い色
+                const ambient = settings.lighting.ambientColor || '0x111111';
+                this.lights.setAmbientColor(Phaser.Display.Color.ValueToColor(ambient).color);
+            }
+        }
+    }
 
     // --- 3. JSONデータが存在するかチェック ---
     if (layoutData) {

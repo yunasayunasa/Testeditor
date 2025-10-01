@@ -1,4 +1,15 @@
-{
+
+  {
+  "scene_settings": {
+    "backgroundColor": "0x4488cc",
+    "gravity": {
+      "y": 0.5
+    },
+    "lighting": {
+      "enabled": true,
+      "ambientColor": "0x111111"
+    }
+  },
   "hasJoystick": true,
   "layers": [
     {
