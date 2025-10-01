@@ -197,7 +197,7 @@ export default class JumpScene extends BaseGameScene {
     if (torchObject) {
        
         
-        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 300); // ★ 半径を少し広げる
+        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 900); // ★ 半径を少し広げる
         torchLight.setColor(0xffaa33); // オレンジ色
         torchLight.setIntensity(1.5);  // ★ 光を強くする
     }
