@@ -14,7 +14,7 @@ export default class Interactor {
         
         this.closestInteractable = null;
         this.interactIcon = null;
-
+this.enabled = true; // ★★★ enabledフラグを追加 ★★★
         this.interactKey.on('down', this.onInteract, this);
         this.scene.events.on('interact_button_pressed', this.onInteract, this);
     }
@@ -26,6 +26,15 @@ export default class Interactor {
     }
 
     update(time, delta) {
+           // ▼▼▼【この一行をupdateの先頭に追加】▼▼▼
+        if (!this.enabled) {
+            // もし無効化されていたら、アイコンを消して処理を中断
+            if (this.closestInteractable && this.interactIcon) {
+                this.scene.tweens.add({ targets: this.interactIcon, alpha: 0, duration: 200 });
+            }
+            this.closestInteractable = null;
+            return;
+        }
         const candidates = this.scene.getObjectsByGroup(this.targetGroup);
         let closest = null;
         let minDistance = this.interactionRadius;

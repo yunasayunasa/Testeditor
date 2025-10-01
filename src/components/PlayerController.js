@@ -127,6 +127,80 @@ export default class PlayerController {
         return false;
     }
     
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * 隠れる/出るを切り替える、VSLから呼び出されるための窓口。
+     * @param {Phaser.GameObjects.GameObject} hidingSpot - インタラクトした隠れ場所オブジェクト
+     */
+    toggleHiding(hidingSpot) {
+        if (this.state === 'hiding') {
+            this.unhide();
+        } else {
+            this.hide(hidingSpot);
+        }
+    }
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * 「隠れる」アクションの具体的な処理。
+     */
+    hide(hidingSpot) {
+        if (this.state === 'hiding') return; // 既に隠れていれば何もしない
+        console.log(`[PlayerController] Hiding in '${hidingSpot.name}'`);
+
+        // 1. 状態を'hiding'に変更 (これでPlayerControllerのupdateは動きを止める)
+        //    (changeStateヘルパーがあれば、それを使うのが良い)
+        const oldState = this.state;
+        this.state = 'hiding';
+        this.gameObject.emit('onStateChange', 'hiding', oldState);
+        
+        // 2. プレイヤーを見えなくし、当たり判定を消す
+        this.gameObject.setAlpha(0.5); // 半透明にして、どこにいるか分かるようにするのも良い
+        if (this.gameObject.body) {
+            this.gameObject.body.enable = false; // 物理的に存在しなくなる
+        }
+        
+        // 3. 敵から見えなくなるように、グループを変更
+        this.gameObject.setData('originalGroup', this.gameObject.getData('group'));
+        this.gameObject.setData('group', 'hidden');
+
+        // 4. (オプション) 隠れている間、他のコンポーネントを無効化
+        if (this.gameObject.components.Interactor) {
+            this.gameObject.components.Interactor.enabled = false; // 隠れている間は、更なるインタラクトはできない
+        }
+    }
+
+    /**
+     * ★★★ 新規追加 ★★★
+     * 「出る」アクションの具体的な処理。
+     */
+    unhide() {
+        if (this.state !== 'hiding') return;
+        console.log(`[PlayerController] Unhiding...`);
+
+        this.gameObject.setAlpha(1);
+        if (this.gameObject.body) {
+            this.gameObject.body.enable = true;
+        }
+        
+        // グループを元に戻す
+        const originalGroup = this.gameObject.getData('originalGroup');
+        if (originalGroup) {
+            this.gameObject.setData('group', originalGroup);
+        }
+        
+        // (オプション) 無効化したコンポーネントを有効化
+        if (this.gameObject.components.Interactor) {
+            this.gameObject.components.Interactor.enabled = true;
+        }
+
+        // 状態を'idle'に戻す
+        const oldState = this.state;
+        this.state = 'idle';
+        this.gameObject.emit('onStateChange', 'idle', oldState);
+    }
+
     destroy() {  }
 }
 

@@ -42,6 +42,7 @@ import distance_check from './distance_check.js';
 import move_to_target from './move_to_target.js';
 import timer_check from './timer_check.js';
 import fire_scene_event from './fire_scene_event.js';
+import toggle_hiding from './toggle_hiding.js';
 
 
 
@@ -88,8 +89,8 @@ export const eventTagHandlers = {
 'distance_check': distance_check,
    'move_to_target': move_to_target,
    'timer_check': timer_check,
-   'fire_scene_event':fire_scene_event
-
+   'fire_scene_event':fire_scene_event,
+'toggle_hiding':toggle_hiding
 
 
 };
