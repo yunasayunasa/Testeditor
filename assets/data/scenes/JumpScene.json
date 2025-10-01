@@ -225,6 +225,7 @@
     },
     {
       "name": "tartman",
+      "group":"enemy",
       "type": "Sprite",
       "x": 1427,
       "y": 574,

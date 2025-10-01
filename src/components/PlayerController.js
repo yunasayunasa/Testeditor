@@ -163,26 +163,35 @@ export default class PlayerController {
         
         // 2. プレイヤーを見えなくし、当たり判定を消す
         this.gameObject.setAlpha(0.5); // 半透明にして、どこにいるか分かるようにするのも良い
-        if (this.gameObject.body) {
-        // 1. 現在の衝突カテゴリを記憶しておく
-        this.gameObject.setData('originalCategory', this.gameObject.body.collisionFilter.category);
-        
-        // 2. 物理カテゴリを「HIDDEN」に変更する
-        //    (physics_defineから値を取得)
-        const physicsDefine = this.scene.registry.get('physics_define');
-        const hiddenCategory = physicsDefine.categories.HIDDEN;
-        
-        // ★ これで、誰とも衝突しなくなる（マスクが0なので）
-        this.gameObject.setCollisionCategory(hiddenCategory);
-        this.gameObject.setCollidesWith(0); // ★ 誰とも衝突しないようにマスクを0に
-    }
-        
-        // 3. 敵から見えなくなるように、グループを変更
-        this.gameObject.setData('originalGroup', this.gameObject.getData('group'));
-        this.gameObject.setData('group', 'hidden');
+        // ▼▼▼【見た目の制御：Depthを下げる】▼▼▼
+    // --------------------------------------------------------------------
+    // 1. 現在のdepthを記憶しておく
+    this.gameObject.setData('originalDepth', this.gameObject.depth);
+    // 2. 隠れ場所オブジェクトよりも、一段階だけ奥に描画する
+    this.gameObject.setDepth(hidingSpot.depth - 1);
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-       
+    // ▼▼▼【物理の制御：敵だけをすり抜ける】▼▼▼
+    // --------------------------------------------------------------------
+    if (this.gameObject.body) {
+        // 1. 現在の衝突マスクを記憶しておく
+        this.gameObject.setData('originalCollisionMask', this.gameObject.body.collisionFilter.mask);
+        
+        const physicsDefine = this.scene.registry.get('physics_define');
+        // 2. 現在のマスクから、「ENEMY」カテゴリとの衝突ビットだけを取り除く
+        const enemyCategory = physicsDefine.categories.ENEMY;
+        const newMask = this.gameObject.body.collisionFilter.mask & ~enemyCategory;
+        
+        // 3. 新しいマスクを設定
+        this.gameObject.setCollidesWith(newMask);
     }
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // 敵の「索敵」からも除外する
+    this.gameObject.setData('group', 'hidden');
+}
 
     /**
      * ★★★ 新規追加 ★★★
@@ -193,32 +202,31 @@ export default class PlayerController {
         console.log(`[PlayerController] Unhiding...`);
 
         this.gameObject.setAlpha(1);
-        if (this.gameObject.body) {
-        // 1. 記憶しておいた元のカテゴリに戻す
-        const originalCategory = this.gameObject.getData('originalCategory');
-        if (originalCategory) {
-            this.gameObject.setCollisionCategory(originalCategory);
+      // ▼▼▼【見た目の制御：Depthを元に戻す】▼▼▼
+    const originalDepth = this.gameObject.getData('originalDepth');
+    if (originalDepth !== undefined) {
+        this.gameObject.setDepth(originalDepth);
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-            // ★★★ 衝突相手も元に戻す ★★★
-            // ここでは単純に「すべて」と衝突するように設定する。
-            // より厳密には、元のマスクを記憶しておく必要がある。
-            const allCategories = 0xFFFFFFFF; // 全てのビットが立ったマスク
-            this.gameObject.setCollidesWith(allCategories);
+    // ▼▼▼【物理の制御：衝突判定を元に戻す】▼▼▼
+    if (this.gameObject.body) {
+        const originalMask = this.gameObject.getData('originalCollisionMask');
+        if (originalMask !== undefined) {
+            this.gameObject.setCollidesWith(originalMask);
         }
     }
-        // グループを元に戻す
-        const originalGroup = this.gameObject.getData('originalGroup');
-        if (originalGroup) {
-            this.gameObject.setData('group', originalGroup);
-        }
-        
-       
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // 状態を'idle'に戻す
-        const oldState = this.state;
-        this.state = 'idle';
-        this.gameObject.emit('onStateChange', 'idle', oldState);
+    const originalGroup = this.gameObject.getData('originalGroup');
+    if (originalGroup) {
+        this.gameObject.setData('group', originalGroup);
     }
+    
+    const oldState = this.state;
+    this.state = 'idle';
+    this.gameObject.emit('onStateChange', 'idle', oldState);
+}
 
     destroy() { this.scene.events.off('update', this.update, this); }
 }
