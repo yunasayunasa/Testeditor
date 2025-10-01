@@ -97,9 +97,16 @@ this.enabled = true; // ★★★ enabledフラグを追加 ★★★
  * インタラクトキー、またはUIボタンが押されたときに呼ばれる。
  */
 onInteract() {
-    if (!this.closestInteractable) return;
-
-    console.log(`[Interactor] Interact command fired for '${this.closestInteractable.name}'`);
+    // ▼▼▼【ここからデバッグログを追加】▼▼▼
+    console.group(`%c[DEBUG] Interactor.onInteract Fired!`, 'color: cyan; font-weight: bold;');
+    
+    if (!this.closestInteractable) {
+        console.log("Status: No interactable object in range. Aborting.");
+        console.groupEnd();
+        return;
+    }
+    console.log(`Status: Closest interactable is '${this.closestInteractable.name}'.`);
+    console.log("Action: Finding 'onInteract' trigger in its events data...");
     
     // ▼▼▼【ここが修正の核心です】▼▼▼
     // --------------------------------------------------------------------
