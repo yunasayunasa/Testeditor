@@ -1,13 +1,35 @@
 import { ComponentRegistry } from '../components/index.js';
-/**
+/**､
  * データ駆動型ゲームシーンの基底クラス。
  * JSONレイアウトファイルに基づいてシーンを構築し、
  * インゲームエディタとの連携機能を提供する。
  */
 export default class BaseGameScene extends Phaser.Scene {
 
+    /**
+     * ★★★ 物理エンジン設定をマージする、真の最終FIX版 ★★★
+     */
     constructor(config) {
-        super(config);
+        // --- 1. 継承先(JumpSceneなど)から渡されたconfigオブジェクトを準備 ---
+        //    (例: { key: 'JumpScene' })
+        const sceneConfig = { ...config };
+
+        // --- 2. このシーン（および全継承先）がMatter.jsを使うことを宣言 ---
+        //    既存のphysics設定を上書きせず、なければ追加する
+        if (!sceneConfig.physics) {
+            sceneConfig.physics = {
+                default: 'matter',
+                matter: {
+                    // ここで、このエンジンを使う全シーンの「デフォルトの重力」を設定できる
+                    gravity: { y: 1 },
+                    // 開発中はデバッグ表示を有効にすると非常に便利
+                    debug: new URLSearchParams(window.location.search).has('debug')
+                }
+            };
+        }
+
+        // --- 3. 完成した設定オブジェクトで、Phaser.Sceneのコンストラクタを呼び出す ---
+        super(sceneConfig);
         // このクラスで定義されている他のプロパティは変更なし
         this.dynamicColliders = [];
         this.actionInterpreter = null;
