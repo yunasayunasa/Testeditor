@@ -6,30 +6,8 @@ import { ComponentRegistry } from '../components/index.js';
  */
 export default class BaseGameScene extends Phaser.Scene {
 
-    /**
-     * ★★★ 物理エンジン設定をマージする、真の最終FIX版 ★★★
-     */
     constructor(config) {
-        // --- 1. 継承先(JumpSceneなど)から渡されたconfigオブジェクトを準備 ---
-        //    (例: { key: 'JumpScene' })
-        const sceneConfig = { ...config };
-
-        // --- 2. このシーン（および全継承先）がMatter.jsを使うことを宣言 ---
-        //    既存のphysics設定を上書きせず、なければ追加する
-        if (!sceneConfig.physics) {
-            sceneConfig.physics = {
-                default: 'matter',
-                matter: {
-                    // ここで、このエンジンを使う全シーンの「デフォルトの重力」を設定できる
-                    gravity: { y: 1 },
-                    // 開発中はデバッグ表示を有効にすると非常に便利
-                    debug: new URLSearchParams(window.location.search).has('debug')
-                }
-            };
-        }
-
-        // --- 3. 完成した設定オブジェクトで、Phaser.Sceneのコンストラクタを呼び出す ---
-        super(sceneConfig);
+        super(config);
         // このクラスで定義されている他のプロパティは変更なし
         this.dynamicColliders = [];
         this.actionInterpreter = null;
@@ -38,6 +16,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.updatableComponents = new Set(); 
         this._deferredActions = []; 
         this.joystick = null; 
+        this._sceneSettingsApplied = false;
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -57,16 +36,7 @@ export default class BaseGameScene extends Phaser.Scene {
             console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
         }
     }
- /**
-     * ★★★ これを追加 ★★★
-     * Phaserのライフサイクルフック。
-     * 継承先のシーン（JumpSceneなど）は、このメソッドをオーバーライドし、
-     * 最後に initSceneWithData() を呼び出すことを想定する。
-     */
-    create() {
-        // BaseGameScene自身は、createでは何もしない。
-        // しかし、このメソッドが存在することが、Phaserの初期化プロセスを安定させる。
-    }
+ 
 /**
      * ★★★ 新規追加 ★★★
      * エディタからジョイスティックを追加するためのプレースホルダー（空の器）。
@@ -81,10 +51,36 @@ export default class BaseGameScene extends Phaser.Scene {
         }
         console.warn(`[BaseGameScene] addJoystickFromEditor was called on a scene that does not support it.`);
     }
-// in src/scenes/BaseGameScene.js
+// in src/scenes/BaseGameScene.js (クラス内のどこかに追加)
 
-// ... (他のメソッドやimport文はそのまま) ...
+/** ★★★ 新設 ★★★
+ * JSONデータからシーン設定を読み込み、適用する。
+ */
+applySceneSettings() {
+    const keyToLoad = this.layoutDataKey || this.scene.key;
+    const layoutData = this.cache.json.get(keyToLoad);
 
+    if (layoutData && layoutData.scene_settings) {
+        console.log(`[BaseGameScene] Applying 'scene_settings' in the first update frame...`);
+        const settings = layoutData.scene_settings;
+
+        if (settings.backgroundColor) {
+            this.cameras.main.setBackgroundColor(settings.backgroundColor);
+        }
+
+        // ★★★ updateフレームなら、this.matter.worldは100%存在する ★★★
+        if (settings.gravity && settings.gravity.y !== undefined) {
+            this.matter.world.gravity.y = settings.gravity.y;
+        }
+
+        if (settings.lighting && settings.lighting.enabled) {
+            this.lights.enable();
+            if (settings.lighting.ambientColor) {
+                this.lights.setAmbientColor(Phaser.Display.Color.ValueToColor(settings.lighting.ambientColor).color);
+            }
+        }
+    }
+}
 /**
  * JSONデータに基づいてシーンの初期化を開始する (データキー動-的選択版)
  */
@@ -103,33 +99,7 @@ initSceneWithData() {
 
     // --- 2. 決定したキーを使って、キャッシュからJSONデータを取得 ---
     const layoutData = this.cache.json.get(keyToLoad);
-     // --- 2. シーン設定(scene_settings)ブロックが存在すれば、それを先に適用する ---
-    if (layoutData && layoutData.scene_settings) {
-        console.log(`[BaseGameScene] Found 'scene_settings' in layout data. Applying...`);
-        const settings = layoutData.scene_settings;
-
-        // a) 背景色の設定
-        if (settings.backgroundColor) {
-            // 文字列の色コードをPhaserが扱える色オブジェクトに変換
-            const color = Phaser.Display.Color.ValueToColor(settings.backgroundColor);
-            this.cameras.main.setBackgroundColor(color);
-        }
-
-        // b) 重力の設定
-        if (settings.gravity && settings.gravity.y !== undefined) {
-            this.matter.world.gravity.y = settings.gravity.y;
-        }
-
-        // c) ライティングの設定
-        if (settings.lighting) {
-            if (settings.lighting.enabled) {
-                this.lights.enable();
-                // 環境光が指定されていれば設定、なければデフォルトの暗い色
-                const ambient = settings.lighting.ambientColor || '0x111111';
-                this.lights.setAmbientColor(Phaser.Display.Color.ValueToColor(ambient).color);
-            }
-        }
-    }
+     
 
     // --- 3. JSONデータが存在するかチェック ---
     if (layoutData) {
@@ -628,6 +598,10 @@ addComponent(target, componentType, params = {}) {
      * 遅延実行キューの処理を追加
      */
     update(time, delta) {
+        if (!this._sceneSettingsApplied) {
+        this.applySceneSettings();
+        this._sceneSettingsApplied = true;
+    }
         // ▼▼▼【ここからが修正の核心】▼▼▼
         // --- 1. 遅延実行キューに溜まったアクションをすべて実行 ---
         if (this._deferredActions.length > 0) {

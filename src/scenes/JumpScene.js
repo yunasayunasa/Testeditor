@@ -13,7 +13,7 @@ export default class JumpScene extends BaseGameScene {
 
   create() {
         console.log("[JumpScene] Create started.");
-        super.create();
+        
     
         this.cameras.main.setBackgroundColor('#4488cc');
            //    'true'を指定すると、外側から内側に向かって暗くなるビネットになる
