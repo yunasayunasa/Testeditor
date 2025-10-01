@@ -8,7 +8,7 @@ export default class JumpScene extends BaseGameScene {
         super({ key: 'JumpScene' });
         this.joystick = null;
         this.playerController = null; // ★ playerControllerもnullで初期化
-        
+        this.lightSources = [];
     }
 
   create() {
