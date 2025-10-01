@@ -8,7 +8,7 @@ export default class JumpScene extends BaseGameScene {
         super({ key: 'JumpScene' });
         this.joystick = null;
         this.playerController = null; // ★ playerControllerもnullで初期化
-        this.lightSources = [];
+        
     }
 
   create() {
@@ -17,15 +17,15 @@ export default class JumpScene extends BaseGameScene {
     
         this.cameras.main.setBackgroundColor('#4488cc');
            //    'true'を指定すると、外側から内側に向かって暗くなるビネットになる
-   const vignetteEffect = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.7, true);
+   /* const vignetteEffect = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.7, true);
 
     // --- 2. (オプション) ビネットの見た目を調整 ---
     //    内側の明るい円の半径 (0.0 ～ 1.0)
     vignetteEffect.radius = 0.8; 
     //    ビネットの強さ (0.0 ～ 1.0)
-    vignetteEffect.strength = 0.5; 
+    vignetteEffect.strength = 0.6; 
     
-    console.log("[JumpScene] Vignette effect applied to the main camera.");
+    console.log("[JumpScene] Vignette effect applied to the main camera.");*/
         const soundManager = this.registry.get('soundManager');
         if (soundManager) soundManager.playBgm('bgm_action');
 
@@ -120,11 +120,7 @@ export default class JumpScene extends BaseGameScene {
         if (!this.player) {
             this.setupPlayerAndCamera();
         }
-        for (const source of this.lightSources) {
-            if (source.object.active) {
-                source.light.setPosition(source.object.x, source.object.y);
-            }
-        }
+        
         // ★ attachJumpButtonListenerは、playerControllerが見つかってから呼び出す方が安全
         if (this.playerController) {
           
@@ -197,19 +193,14 @@ export default class JumpScene extends BaseGameScene {
     });
 
     // --- 2. 「光源」オブジェクトを探して、ライトを追加 ---
-    const torchObjects = this.getObjectsByGroup('torch'); 
-
-        for (const torchObject of torchObjects) {
-            const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 200);
-            torchLight.setColor(0xffcc55);
-            torchLight.setIntensity(2.0);
-
-            // ★ 追従させるために、オブジェクトとライトのペアを配列に保存
-            this.lightSources.push({
-                object: torchObject,
-                light: torchLight
-            });
-        }
+    const torchObject = this.children.getByName('torch');
+    if (torchObject) {
+       
+        
+        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 300); // ★ 半径を少し広げる
+        torchLight.setColor(0xffaa33); // オレンジ色
+        torchLight.setIntensity(1.5);  // ★ 光を強くする
+    }
 
     // --- 3. プレイヤーとカメラのセットアップ (変更なし) ---
     this.setupPlayerAndCamera(); // ★ onSetupComplete内でヘルパーを呼ぶ形に統一
