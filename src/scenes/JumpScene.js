@@ -195,7 +195,8 @@ export default class JumpScene extends BaseGameScene {
     // --- 2. 「光源」オブジェクトを探して、ライトを追加 ---
     const torchObject = this.children.getByName('torch');
     if (torchObject) {
-        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 300); // ★ 半径を少し広げる
+        torchObject.setBlendMode(Phaser.BlendModes.ADD);
+        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 900); // ★ 半径を少し広げる
         torchLight.setColor(0xffaa33); // オレンジ色
         torchLight.setIntensity(2.5);  // ★ 光を強くする
     }
