@@ -163,10 +163,18 @@ export default class PlayerController {
         
         // 2. プレイヤーを見えなくし、当たり判定を消す
         this.gameObject.setAlpha(0.5); // 半透明にして、どこにいるか分かるようにするのも良い
-         this.gameObject.setData('lastPosition', { x: this.gameObject.x, y: this.gameObject.y }); // 元の位置を記憶
-    this.gameObject.setPosition(-1000, -1000); // 画面外の安全な場所へワープ
-    if (this.gameObject.body) {
-        this.gameObject.body.enable = false;
+        if (this.gameObject.body) {
+        // 1. 現在の衝突カテゴリを記憶しておく
+        this.gameObject.setData('originalCategory', this.gameObject.body.collisionFilter.category);
+        
+        // 2. 物理カテゴリを「HIDDEN」に変更する
+        //    (physics_defineから値を取得)
+        const physicsDefine = this.scene.registry.get('physics_define');
+        const hiddenCategory = physicsDefine.categories.HIDDEN;
+        
+        // ★ これで、誰とも衝突しなくなる（マスクが0なので）
+        this.gameObject.setCollisionCategory(hiddenCategory);
+        this.gameObject.setCollidesWith(0); // ★ 誰とも衝突しないようにマスクを0に
     }
         
         // 3. 敵から見えなくなるように、グループを変更
@@ -185,12 +193,18 @@ export default class PlayerController {
         console.log(`[PlayerController] Unhiding...`);
 
         this.gameObject.setAlpha(1);
-         const lastPosition = this.gameObject.getData('lastPosition');
-    if (lastPosition) {
-        this.gameObject.setPosition(lastPosition.x, lastPosition.y); // 記憶した位置に戻る
-    }
-    if (this.gameObject.body) {
-        this.gameObject.body.enable = true;
+        if (this.gameObject.body) {
+        // 1. 記憶しておいた元のカテゴリに戻す
+        const originalCategory = this.gameObject.getData('originalCategory');
+        if (originalCategory) {
+            this.gameObject.setCollisionCategory(originalCategory);
+
+            // ★★★ 衝突相手も元に戻す ★★★
+            // ここでは単純に「すべて」と衝突するように設定する。
+            // より厳密には、元のマスクを記憶しておく必要がある。
+            const allCategories = 0xFFFFFFFF; // 全てのビットが立ったマスク
+            this.gameObject.setCollidesWith(allCategories);
+        }
     }
         // グループを元に戻す
         const originalGroup = this.gameObject.getData('originalGroup');
