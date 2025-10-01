@@ -134,12 +134,7 @@ export default class PlayerController {
     }
     
 
-    /**
-     * ★★★ 新規追加 ★★★
-     * 隠れる/出るを切り替える、VSLから呼び出されるための窓口。
-     * @param {Phaser.GameObjects.GameObject} hidingSpot - インタラクトした隠れ場所オブジェクト
-     */
-   toggleHiding(hidingSpot) {
+    toggleHiding(hidingSpot) {
     // ▼▼▼【ここからデバッグログを追加】▼▼▼
     console.group(`%c[DEBUG] PlayerController.toggleHiding Called!`, 'color: lightgreen; font-weight: bold;');
     console.log(`Current state is: '${this.state}'`);

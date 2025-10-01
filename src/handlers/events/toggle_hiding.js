@@ -1,29 +1,32 @@
 // in src/handlers/events/toggle_hiding.js
 
-/**
- * [toggle_hiding]
- * 'player'オブジェクトの'PlayerController'コンポーネントが持つ、
- * 'toggleHiding'メソッドを呼び出す、専用タグ。
- */
 export default async function toggle_hiding(interpreter, params, target) {
-    // 1. シーンから'player'オブジェクトを探す
+    // ▼▼▼【ここからデバッグログを追加】▼▼▼
+    console.group(`%c[DEBUG] [toggle_hiding] Tag Handler Executed!`, 'color: yellow; font-weight: bold;');
+    
     const player = interpreter.scene.children.getByName('player');
     if (!player) {
-        console.warn(`[toggle_hiding] 'player' object not found in the scene.`);
+        console.error("CRITICAL: 'player' object not found in the scene.");
+        console.groupEnd();
         return;
     }
+    console.log(`Status: Found 'player' object.`);
 
-    // 2. プレイヤーから'PlayerController'コンポーネントを取得
     const playerController = player.components?.PlayerController;
     if (!playerController || typeof playerController.toggleHiding !== 'function') {
-        console.warn(`[toggle_hiding] 'PlayerController' or its 'toggleHiding' method not found on 'player'.`);
+        console.error(`CRITICAL: 'PlayerController' or 'toggleHiding' method not found on 'player'.`);
+        console.groupEnd();
         return;
     }
+    console.log(`Status: Found 'PlayerController' and 'toggleHiding' method.`);
+    console.log(`Action: Calling playerController.toggleHiding() with target '${target.name}'...`);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // 3. toggleHidingメソッドを呼び出す
-    //    引数として、このイベントの発生源（target、つまり隠れ場所オブジェクト）を渡す
     playerController.toggleHiding(target);
+    
+    console.groupEnd();
 }
+// ...
 
 toggle_hiding.define = {
     description: 'プレイヤーの隠れる/出る状態を切り替えます。',

@@ -92,10 +92,6 @@ this.enabled = true; // ★★★ enabledフラグを追加 ★★★
     }
 
   
-/**
- * ★★★ ActionInterpreterを正しく取得する最終FIX版 ★★★
- * インタラクトキー、またはUIボタンが押されたときに呼ばれる。
- */
 onInteract() {
     // ▼▼▼【ここからデバッグログを追加】▼▼▼
     console.group(`%c[DEBUG] Interactor.onInteract Fired!`, 'color: cyan; font-weight: bold;');
@@ -107,27 +103,23 @@ onInteract() {
     }
     console.log(`Status: Closest interactable is '${this.closestInteractable.name}'.`);
     console.log("Action: Finding 'onInteract' trigger in its events data...");
-    
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    // --------------------------------------------------------------------
-    // 1. グローバルなレジストリから、ActionInterpreterのインスタンスを取得する
-    const actionInterpreter = this.scene.registry.get('actionInterpreter');
-    if (!actionInterpreter) {
-        console.error("[Interactor] CRITICAL: ActionInterpreter not found in scene registry!");
-        return;
-    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // 2. 最も近いオブジェクトの 'onInteract' イベントを発火させる
     const events = this.closestInteractable.getData('events') || [];
+    let foundInteractEvent = false;
     for (const eventData of events) {
         if (eventData.trigger === 'onInteract') {
-            // ★ 取得した actionInterpreter の run メソッドを呼び出す
-            actionInterpreter.run(this.closestInteractable, eventData, this.gameObject);
+            foundInteractEvent = true;
+            console.log("Action: 'onInteract' trigger found! Requesting ActionInterpreter to run...");
+            this.scene.registry.get('actionInterpreter').run(this.closestInteractable, eventData, this.gameObject);
         }
     }
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-}  
+
+    if (!foundInteractEvent) {
+        console.warn(`Warning: No 'onInteract' trigger found on '${this.closestInteractable.name}'.`);
+    }
+    console.groupEnd();
+}
 
     destroy() {
         if (this.interactIcon) {
