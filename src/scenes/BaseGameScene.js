@@ -35,7 +35,16 @@ export default class BaseGameScene extends Phaser.Scene {
             console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
         }
     }
-
+ /**
+     * ★★★ これを追加 ★★★
+     * Phaserのライフサイクルフック。
+     * 継承先のシーン（JumpSceneなど）は、このメソッドをオーバーライドし、
+     * 最後に initSceneWithData() を呼び出すことを想定する。
+     */
+    create() {
+        // BaseGameScene自身は、createでは何もしない。
+        // しかし、このメソッドが存在することが、Phaserの初期化プロセスを安定させる。
+    }
 /**
      * ★★★ 新規追加 ★★★
      * エディタからジョイスティックを追加するためのプレースホルダー（空の器）。
