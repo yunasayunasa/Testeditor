@@ -189,12 +189,7 @@ export default class JumpScene extends BaseGameScene {
         }
     }
        // --- 1. 「照らされる」オブジェクトを設定 ---
-    //    シーン上のすべてのImageとSpriteに、ライティングを適用する
-    this.children.list.forEach(child => {
-        if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
-            child.setPipeline('Light2D');
-        }
-    });
+   
 
     // --- 2. 「光源」オブジェクトを探して、ライトを追加 ---
     const torchObjects = this.getObjectsByGroup('torch'); 
