@@ -17,20 +17,28 @@ export default class ChaseComponent {
         this.enabled = true; // ★ 自身の有効/無効フラグ
     }
 
-    start() {
-        this.npcController = this.gameObject.components.NpcController;
-        if (!this.npcController) { this.enabled = false; return; }
-        
-        this.returnHome = this.gameObject.components.ReturnHomeComponent;
-
-        const isDebug = new URLSearchParams(window.location.search).has('debug');
-        if (isDebug) {
-            this.visionCone = this.scene.add.graphics().setDepth(this.gameObject.depth + 1);
-        }
-        
-        // ★★★ イベントリスナーを登録 ★★★
-        this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
+   /**
+ * ★★★ イベントリスナー登録をデバッグ判定の外に出した、真の最終FIX版 ★★★
+ */
+start() {
+    this.npcController = this.gameObject.components.NpcController;
+    if (!this.npcController) {
+        console.error(`[ChaseComponent] ERROR: 'NpcController' is required on '${this.gameObject.name}'. Disabling.`);
+        this.enabled = false;
+        return; // 依存コンポーネントがなければ、ここで終了
     }
+    
+    this.returnHome = this.gameObject.components.ReturnHomeComponent;
+
+    // --- 1. イベントリスナーの登録は、モードに関わらず常に行う ---
+    this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
+
+    // --- 2. 視覚化オブジェクトの生成は、デバッグモードの時だけ行う ---
+    const isDebug = new URLSearchParams(window.location.search).has('debug');
+    if (isDebug) {
+        this.visionCone = this.scene.add.graphics().setDepth(this.gameObject.depth + 1);
+    }
+}
 
     handleBehaviorChange(event) {
         if (event.source === 'ChaseComponent') return;
