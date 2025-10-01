@@ -36,7 +36,10 @@ export default class BaseGameScene extends Phaser.Scene {
             console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
         }
     }
- 
+ create() {
+        // このメソッドは、継承先（JumpSceneなど）で super.create() として
+        // 呼び出されることを想定していますが、中身は空で構いません。
+    }
 /**
      * ★★★ 新規追加 ★★★
      * エディタからジョイスティックを追加するためのプレースホルダー（空の器）。
