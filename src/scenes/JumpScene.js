@@ -201,7 +201,7 @@ export default class JumpScene extends BaseGameScene {
 
         for (const torchObject of torchObjects) {
             const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 200);
-            torchLight.setColor(0xffaa33);
+            torchLight.setColor(0xffcc55);
             torchLight.setIntensity(2.0);
 
             // ★ 追従させるために、オブジェクトとライトのペアを配列に保存
