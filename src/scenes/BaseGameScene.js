@@ -72,9 +72,9 @@ applySceneSettings() {
         }
 
         // ★★★ updateフレームなら、this.matter.worldは100%存在する ★★★
-        if (settings.gravity && settings.gravity.y !== undefined) {
+        /*if (settings.gravity && settings.gravity.y !== undefined) {
             this.matter.world.gravity.y = settings.gravity.y;
-        }
+        }*/
 
         if (settings.lighting && settings.lighting.enabled) {
             this.lights.enable();
