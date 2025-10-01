@@ -120,7 +120,11 @@ export default class JumpScene extends BaseGameScene {
         if (!this.player) {
             this.setupPlayerAndCamera();
         }
-        
+        for (const source of this.lightSources) {
+            if (source.object.active) {
+                source.light.setPosition(source.object.x, source.object.y);
+            }
+        }
         // ★ attachJumpButtonListenerは、playerControllerが見つかってから呼び出す方が安全
         if (this.playerController) {
           
