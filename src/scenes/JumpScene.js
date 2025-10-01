@@ -114,7 +114,7 @@ export default class JumpScene extends BaseGameScene {
         
         // ★ attachJumpButtonListenerは、playerControllerが見つかってから呼び出す方が安全
         if (this.playerController) {
-            this.playerController.updateWithJoystick(this.joystick);
+          
             this.attachJumpButtonListener(); // ここに移動
         }
     }

@@ -8,7 +8,7 @@ export default class PlayerController {
     constructor(scene, target, params = {}) {
         this.scene = scene;
         this.gameObject = target; // ★★★ this.target を this.gameObject に変更 ★★★
-        
+         this.scene.events.on('update', this.update, this);
         this.moveForce = params.moveForce || 0.01;
         this.maxSpeed = params.maxSpeed || 5;
         this.jumpVelocity = params.jumpVelocity || -10;
@@ -23,8 +23,13 @@ export default class PlayerController {
         this.direction = 'right';
     }
 
-    updateWithJoystick(joystick) {
-         if (this.state === 'hiding') return;
+    update(time, delta) {
+        const joystick = this.scene.joystick; // ★ シーンから直接取得
+
+        if (this.state === 'hiding') {
+            if (this.gameObject?.body) this.gameObject.setVelocity(0, 0);
+            return;
+        }
         // ★★★ this.target を this.gameObject に変更 ★★★
         if (!this.gameObject || !this.gameObject.body || !this.gameObject.active) {
             this.changeState('idle');
@@ -166,10 +171,7 @@ export default class PlayerController {
         this.gameObject.setData('originalGroup', this.gameObject.getData('group'));
         this.gameObject.setData('group', 'hidden');
 
-        // 4. (オプション) 隠れている間、他のコンポーネントを無効化
-        if (this.gameObject.components.Interactor) {
-            this.gameObject.components.Interactor.enabled = false; // 隠れている間は、更なるインタラクトはできない
-        }
+       
     }
 
     /**
@@ -191,10 +193,7 @@ export default class PlayerController {
             this.gameObject.setData('group', originalGroup);
         }
         
-        // (オプション) 無効化したコンポーネントを有効化
-        if (this.gameObject.components.Interactor) {
-            this.gameObject.components.Interactor.enabled = true;
-        }
+       
 
         // 状態を'idle'に戻す
         const oldState = this.state;
@@ -202,7 +201,7 @@ export default class PlayerController {
         this.gameObject.emit('onStateChange', 'idle', oldState);
     }
 
-    destroy() {  }
+    destroy() { this.scene.events.off('update', this.update, this); }
 }
 
 PlayerController.define = {

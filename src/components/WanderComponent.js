@@ -41,7 +41,7 @@ export default class WanderComponent {
         }
     }
      update() {
-        if (!this.npcController || !this.enabled) return;
+         if (!this.npcController || !this.enabled) return; // ★ enabledでガードするだけでOK
 
         if (this.gameObject.scene.time.now > this.timer) {
             const myParams = this.getCurrentParams();
