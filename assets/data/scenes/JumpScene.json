@@ -7,7 +7,7 @@
     },
     "lighting": {
       "enabled": true,
-      "ambientColor": "0x000001"
+      "ambientColor": "0x1a1a1a"
     }
   },
   "hasJoystick": true,
