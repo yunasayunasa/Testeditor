@@ -149,88 +149,60 @@ export default class PlayerController {
     console.groupEnd();
 }
 
-    /**
-     * ★★★ 新規追加 ★★★
-     * 「隠れる」アクションの具体的な処理。
-     */
-    hide(hidingSpot) {
-        if (this.state === 'hiding') return; // 既に隠れていれば何もしない
-        console.log(`[PlayerController] Hiding in '${hidingSpot.name}'`);
+    /// in src/components/PlayerController.js
 
-        // 1. 状態を'hiding'に変更 (これでPlayerControllerのupdateは動きを止める)
-        //    (changeStateヘルパーがあれば、それを使うのが良い)
-        const oldState = this.state;
-        this.state = 'hiding';
-        this.gameObject.emit('onStateChange', 'hiding', oldState);
-        
-        // 2. プレイヤーを見えなくし、当たり判定を消す
-        this.gameObject.setAlpha(0.5); // 半透明にして、どこにいるか分かるようにするのも良い
-        // ▼▼▼【見た目の制御：Depthを下げる】▼▼▼
+hide(hidingSpot) {
+    if (this.state === 'hiding') return;
+    const oldState = this.state;
+    this.state = 'hiding';
+    this.gameObject.emit('onStateChange', 'hiding', oldState);
+    
+    // ▼▼▼【ここが修正の核心です】▼▼▼
     // --------------------------------------------------------------------
-    // 1. 現在のdepthを記憶しておく
-    this.gameObject.setData('originalDepth', this.gameObject.depth);
-    // 2. 隠れ場所オブジェクトよりも、一段階だけ奥に描画する
-    this.gameObject.setDepth(hidingSpot.depth - 1);
+    // 復元情報を、gameObject.dataではなく、this（コンポーネント自身）に保存する
+    this.originalDepth = this.gameObject.depth;
+    this.originalCollisionMask = this.gameObject.body ? this.gameObject.body.collisionFilter.mask : 0xFFFFFFFF;
+    this.originalGroup = this.gameObject.getData('group');
     // --------------------------------------------------------------------
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // ▼▼▼【物理の制御：敵だけをすり抜ける】▼▼▼
-    // --------------------------------------------------------------------
+    // --- 見た目の変更 ---
+    this.gameObject.setDepth(hidingSpot.depth - 1);
+
+    // --- 物理の変更 ---
     if (this.gameObject.body) {
-        // 1. 現在の衝突マスクを記憶しておく
-        this.gameObject.setData('originalCollisionMask', this.gameObject.body.collisionFilter.mask);
-        
         const physicsDefine = this.scene.registry.get('physics_define');
-        // 2. 現在のマスクから、「ENEMY」カテゴリとの衝突ビットだけを取り除く
         const enemyCategory = physicsDefine.categories.ENEMY;
-        const newMask = this.gameObject.body.collisionFilter.mask & ~enemyCategory;
-        
-        // 3. 新しいマスクを設定
+        const newMask = this.originalCollisionMask & ~enemyCategory;
         this.gameObject.setCollidesWith(newMask);
     }
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // 敵の「索敵」からも除外する
+    
+    // --- 索敵の変更 ---
     this.gameObject.setData('group', 'hidden');
 }
 
-    /**
-     * ★★★ 新規追加 ★★★
-     * 「出る」アクションの具体的な処理。
-     */
-    unhide() {
-        if (this.state !== 'hiding') return;
-        console.log(`[PlayerController] Unhiding...`);
-
-        this.gameObject.setAlpha(1);
-      // ▼▼▼【見た目の制御：Depthを元に戻す】▼▼▼
-     const originalDepth = this.gameObject.getData('originalDepth');
-    if (originalDepth !== undefined) {
-        // ★★★ この setDepth の呼び出しを追加 ★★★
-        this.gameObject.setDepth(originalDepth);
+unhide() {
+    if (this.state !== 'hiding') return;
+    
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    // --------------------------------------------------------------------
+    // gameObject.dataからではなく、this（コンポーネント自身）から復元情報を取得する
+    if (this.originalDepth !== undefined) {
+        this.gameObject.setDepth(this.originalDepth);
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // ▼▼▼【物理の制御：衝突判定を元に戻す】▼▼▼
-    if (this.gameObject.body) {
-        const originalMask = this.gameObject.getData('originalCollisionMask');
-        if (originalMask !== undefined) {
-            this.gameObject.setCollidesWith(originalMask);
-        }
+    if (this.gameObject.body && this.originalCollisionMask !== undefined) {
+        this.gameObject.setCollidesWith(this.originalCollisionMask);
     }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    const originalGroup = this.gameObject.getData('originalGroup');
-    if (originalGroup) {
-        this.gameObject.setData('group', originalGroup);
+    if (this.originalGroup) {
+        this.gameObject.setData('group', this.originalGroup);
     }
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     
     const oldState = this.state;
     this.state = 'idle';
     this.gameObject.emit('onStateChange', 'idle', oldState);
 }
-
     destroy() { this.scene.events.off('update', this.update, this); }
 }
 
