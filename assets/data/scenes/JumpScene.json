@@ -7,7 +7,7 @@
     },
     "lighting": {
       "enabled": true,
-      "ambientColor": "0x111111"
+      "ambientColor": "0x000001"
     }
   },
   "hasJoystick": true,
@@ -29,6 +29,13 @@
     }
   ],
   "objects": [
+    {
+          "name": "torch",
+          "type": "Image",
+          "texture": "cg01",
+          "x": 640,
+          "y": 360
+      },
     {
       "name": "cg01_3",
       "type": "Image",
