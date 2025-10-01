@@ -151,30 +151,26 @@ export default class PlayerController {
 
     /// in src/components/PlayerController.js
 
+// in src/components/PlayerController.js
+
 hide(hidingSpot) {
     if (this.state === 'hiding') return;
     const oldState = this.state;
     this.state = 'hiding';
     this.gameObject.emit('onStateChange', 'hiding', oldState);
     
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    // --------------------------------------------------------------------
-    // 復元情報を、gameObject.dataではなく、this（コンポーネント自身）に保存する
-    this.originalDepth = this.gameObject.depth;
-    this.originalCollisionMask = this.gameObject.body ? this.gameObject.body.collisionFilter.mask : 0xFFFFFFFF;
-    this.originalGroup = this.gameObject.getData('group');
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    // --- 見た目の変更 ---
-    this.gameObject.setDepth(hidingSpot.depth - 1);
-
-    // --- 物理の変更 ---
+    // ▼▼▼【見た目の制御：半透明にする】▼▼▼
+    this.gameObject.setAlpha(0.5); 
+    
+    // --- 物理の制御 ---
     if (this.gameObject.body) {
+        this.gameObject.setData('originalCollisionMask', this.gameObject.body.collisionFilter.mask);
         const physicsDefine = this.scene.registry.get('physics_define');
-        const enemyCategory = physicsDefine.categories.ENEMY;
-        const newMask = this.originalCollisionMask & ~enemyCategory;
-        this.gameObject.setCollidesWith(newMask);
+        const enemyCategory = physicsDefine?.categories.ENEMY;
+        if (enemyCategory) {
+            const newMask = this.gameObject.body.collisionFilter.mask & ~enemyCategory;
+            this.gameObject.setCollidesWith(newMask);
+        }
     }
     
     // --- 索敵の変更 ---
@@ -184,20 +180,20 @@ hide(hidingSpot) {
 unhide() {
     if (this.state !== 'hiding') return;
     
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    // --------------------------------------------------------------------
-    // gameObject.dataからではなく、this（コンポーネント自身）から復元情報を取得する
-    if (this.originalDepth !== undefined) {
-        this.gameObject.setDepth(this.originalDepth);
+    // ▼▼▼【見た目の制御：不透明に戻す】▼▼▼
+    this.gameObject.setAlpha(1); 
+    
+    // --- 物理の制御を元に戻す ---
+    if (this.gameObject.body) {
+        const originalMask = this.gameObject.getData('originalCollisionMask');
+        if (originalMask !== undefined) {
+            this.gameObject.setCollidesWith(originalMask);
+        }
     }
-    if (this.gameObject.body && this.originalCollisionMask !== undefined) {
-        this.gameObject.setCollidesWith(this.originalCollisionMask);
-    }
-    if (this.originalGroup) {
-        this.gameObject.setData('group', this.originalGroup);
-    }
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // --- 索敵グループを元に戻す ---
+    // ★ 'originalGroup'は'player'のはずなので、直接設定する方が安全
+    this.gameObject.setData('group', 'player');
     
     const oldState = this.state;
     this.state = 'idle';
