@@ -24,6 +24,7 @@ export default class PlayerController {
     }
 
     updateWithJoystick(joystick) {
+         if (this.state === 'hiding') return;
         // ★★★ this.target を this.gameObject に変更 ★★★
         if (!this.gameObject || !this.gameObject.body || !this.gameObject.active) {
             this.changeState('idle');
