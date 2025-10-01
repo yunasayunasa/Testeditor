@@ -193,13 +193,19 @@ export default class JumpScene extends BaseGameScene {
     });
 
     // --- 2. 「光源」オブジェクトを探して、ライトを追加 ---
-    const torchObject = this.children.getByName('torch');
-    if (torchObject) {
-        torchObject.setBlendMode(Phaser.BlendModes.ADD);
-        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 300); // ★ 半径を少し広げる
-        torchLight.setColor(0xffaa33); // オレンジ色
-        torchLight.setIntensity(1.5);  // ★ 光を強くする
-    }
+    const torchObjects = this.getObjectsByGroup('torch'); 
+
+        for (const torchObject of torchObjects) {
+            const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 200);
+            torchLight.setColor(0xffaa33);
+            torchLight.setIntensity(2.0);
+
+            // ★ 追従させるために、オブジェクトとライトのペアを配列に保存
+            this.lightSources.push({
+                object: torchObject,
+                light: torchLight
+            });
+        }
 
     // --- 3. プレイヤーとカメラのセットアップ (変更なし) ---
     this.setupPlayerAndCamera(); // ★ onSetupComplete内でヘルパーを呼ぶ形に統一
