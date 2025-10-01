@@ -163,9 +163,11 @@ export default class PlayerController {
         
         // 2. プレイヤーを見えなくし、当たり判定を消す
         this.gameObject.setAlpha(0.5); // 半透明にして、どこにいるか分かるようにするのも良い
-        if (this.gameObject.body) {
-            this.gameObject.body.enable = false; // 物理的に存在しなくなる
-        }
+         this.gameObject.setData('lastPosition', { x: this.gameObject.x, y: this.gameObject.y }); // 元の位置を記憶
+    this.gameObject.setPosition(-1000, -1000); // 画面外の安全な場所へワープ
+    if (this.gameObject.body) {
+        this.gameObject.body.enable = false;
+    }
         
         // 3. 敵から見えなくなるように、グループを変更
         this.gameObject.setData('originalGroup', this.gameObject.getData('group'));
@@ -183,10 +185,13 @@ export default class PlayerController {
         console.log(`[PlayerController] Unhiding...`);
 
         this.gameObject.setAlpha(1);
-        if (this.gameObject.body) {
-            this.gameObject.body.enable = true;
-        }
-        
+         const lastPosition = this.gameObject.getData('lastPosition');
+    if (lastPosition) {
+        this.gameObject.setPosition(lastPosition.x, lastPosition.y); // 記憶した位置に戻る
+    }
+    if (this.gameObject.body) {
+        this.gameObject.body.enable = true;
+    }
         // グループを元に戻す
         const originalGroup = this.gameObject.getData('originalGroup');
         if (originalGroup) {

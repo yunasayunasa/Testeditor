@@ -64,7 +64,12 @@ start() {
             if (this.state === 'CHASING') this.stopChasing();
             return;
         }
-        
+        // --- 追跡中でも、ターゲットが'hidden'グループになったら、見失ったとみなす ---
+    if (this.state === 'CHASING' && this.chaseTarget.getData('group') === 'hidden') {
+        this.stopChasing();
+        this.chaseTarget = null; // ターゲット参照を完全にクリア
+        return; // このフレームの残りの処理は中断
+    }
         const distanceToTarget = Phaser.Math.Distance.BetweenPoints(this.gameObject, this.chaseTarget);
         const canDetectTarget = (this.detectionType === 'vision')
             ? this.isTargetInVision(this.chaseTarget, this.detectionRadius)
@@ -95,7 +100,7 @@ start() {
         if (distance > radius) return false;
 
         const angleToTarget = Phaser.Math.RadToDeg(Phaser.Math.Angle.BetweenPoints(this.gameObject, target));
-        const currentFacingAngle = (this.npcController.direction === 'left') ? 180 : 0;
+        const currentFacingAngle = (this.gameObject.flipX === true) ? 180 : 0; // trueなら左向き(180度)
         const angleDifference = Phaser.Math.Angle.ShortestBetween(currentFacingAngle, angleToTarget);
 
         return Math.abs(angleDifference) <= this.visionAngle / 2;
