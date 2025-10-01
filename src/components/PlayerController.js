@@ -203,8 +203,9 @@ export default class PlayerController {
 
         this.gameObject.setAlpha(1);
       // ▼▼▼【見た目の制御：Depthを元に戻す】▼▼▼
-    const originalDepth = this.gameObject.getData('originalDepth');
+     const originalDepth = this.gameObject.getData('originalDepth');
     if (originalDepth !== undefined) {
+        // ★★★ この setDepth の呼び出しを追加 ★★★
         this.gameObject.setDepth(originalDepth);
     }
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲

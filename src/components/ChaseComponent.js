@@ -96,15 +96,19 @@ start() {
      * ターゲットが自身の前方視野角かつ索敵半径内にいるかを判定する。
      */
     isTargetInVision(target, radius) {
-        const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, target);
-        if (distance > radius) return false;
+    const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, target);
+    if (distance > radius) return false;
 
-        const angleToTarget = Phaser.Math.RadToDeg(Phaser.Math.Angle.BetweenPoints(this.gameObject, target));
-        const currentFacingAngle = (this.gameObject.flipX === true) ? 180 : 0; // trueなら左向き(180度)
-        const angleDifference = Phaser.Math.Angle.ShortestBetween(currentFacingAngle, angleToTarget);
+    const angleToTarget = Phaser.Math.RadToDeg(Phaser.Math.Angle.BetweenPoints(this.gameObject, target));
+    
+    // ▼▼▼【ここを NpcController.direction に統一】▼▼▼
+    const currentFacingAngle = (this.npcController.direction === 'left') ? 180 : 0;
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    
+    const angleDifference = Phaser.Math.Angle.ShortestBetween(currentFacingAngle, angleToTarget);
 
-        return Math.abs(angleDifference) <= this.visionAngle / 2;
-    }
+    return Math.abs(angleDifference) <= this.visionAngle / 2;
+}
 
     /**
      * IDEモード時に、視界の扇形を描画する。
