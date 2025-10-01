@@ -182,7 +182,27 @@
       "alpha": 1,
       "layer": "Gameplay",
       "group": "player",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1759315288106",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1759315295335",
+              "type": "vignette",
+              "params": {
+                "mode": "on",
+                "alpha": 0.7,
+                "time": 1000,
+                "texture": "vignette_overlay"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
       "components": [
         {
           "type": "PlayerController",
@@ -226,7 +246,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1399,
+      "x": 1293,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -239,11 +259,15 @@
       "components": [
         {
           "type": "NpcController",
-          "params": {}
+          "params": {
+            "moveSpeed": 12
+          }
         },
         {
           "type": "WanderComponent",
-          "params": {}
+          "params": {
+            "walkDuration": 6800
+          }
         },
         {
           "type": "AnimationController",
@@ -254,7 +278,8 @@
           "params": {
             "detectionType": "vision",
             "visionAngle": 60,
-            "detectionRadius": 500
+            "detectionRadius": 500,
+            "chaseSpeed": 5.5
           }
         },
         {
