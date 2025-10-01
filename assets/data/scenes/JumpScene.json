@@ -63,11 +63,9 @@
           "trigger": "onInteract",
           "nodes": [
             {
-              "id": "node_1759238997569",
-              "type": "destroy",
-              "params": {
-                "target": "source"
-              },
+              "id": "node_1759277863246",
+              "type": "toggle_hiding",
+              "params": {},
               "x": 50,
               "y": 50
             }
@@ -203,7 +201,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 428,
+      "x": 392,
       "y": 298,
       "depth": 0,
       "scaleX": 0.65,
@@ -256,7 +254,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1545,
+      "x": 1547,
       "y": 574,
       "depth": 0,
       "scaleX": 1,
