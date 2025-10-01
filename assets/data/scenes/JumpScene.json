@@ -46,7 +46,7 @@
         }
       ],
       "data": {
-        "ignoreGravity": true,
+        "ignoreGravity": false,
         "shape": "rectangle"
       },
       "texture": "cg01",
@@ -173,7 +173,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 392,
+      "x": 439,
       "y": 625,
       "depth": 0,
       "scaleX": 0.65,
@@ -225,16 +225,16 @@
     },
     {
       "name": "tartman",
-      "group":"enemy",
       "type": "Sprite",
-      "x": 1427,
-      "y": 574,
+      "x": 1399,
+      "y": 609,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
+      "group": "enemy",
       "events": [],
       "components": [
         {
@@ -252,7 +252,9 @@
         {
           "type": "ChaseComponent",
           "params": {
-            "detectionType": "vision"
+            "detectionType": "vision",
+            "visionAngle": 60,
+            "detectionRadius": 500
           }
         },
         {
