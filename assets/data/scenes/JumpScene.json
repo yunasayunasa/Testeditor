@@ -19,38 +19,10 @@
   ],
   "objects": [
     {
-      "name": "cg01_2",
-      "type": "Image",
-      "x": 465,
-      "y": 550,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [],
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "texture": "cg01",
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
       "name": "cg01_3",
       "type": "Image",
-      "x": 966,
-      "y": 497,
+      "x": 820,
+      "y": 616,
       "depth": 0,
       "scaleX": 0.49,
       "scaleY": 0.49,
@@ -74,13 +46,13 @@
         }
       ],
       "data": {
-        "ignoreGravity": false,
+        "ignoreGravity": true,
         "shape": "rectangle"
       },
       "texture": "cg01",
       "physics": {
         "isStatic": true,
-        "isSensor": false,
+        "isSensor": true,
         "gravityScale": 1,
         "friction": 1,
         "restitution": 0,
@@ -202,7 +174,7 @@
       "name": "player",
       "type": "Sprite",
       "x": 392,
-      "y": 298,
+      "y": 625,
       "depth": 0,
       "scaleX": 0.65,
       "scaleY": 0.65,
@@ -254,7 +226,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1547,
+      "x": 1427,
       "y": 574,
       "depth": 0,
       "scaleX": 1,
