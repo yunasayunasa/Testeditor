@@ -459,15 +459,7 @@ applyProperties(gameObject, layout) {
     // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
     
-    // ★★★ ここにパイプライン設定を移動・追加 ★★★
-    // Light2DパイプラインはWebGLでのみ利用可能なので、レンダラーのタイプをチェック
-    if (this.game.renderer.type === Phaser.WEBGL) {
-        // ImageかSpriteのインスタンスであれば、パイプラインを設定
-        // （将来的には、JSONで個別に設定できるようにしても良い）
-        if (gameObject instanceof Phaser.GameObjects.Image || gameObject instanceof Phaser.GameObjects.Sprite) {
-            gameObject.setPipeline('Light2D');
-        }
-    }
+   
     
     // --- 3. 見た目（Transform）に関するプロパティを設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
@@ -633,37 +625,31 @@ addComponent(target, componentType, params = {}) {
     // ★★★ 生成したインスタンスを返す ★★★
     return componentInstance;
 }
-  // in BaseGameScene.js -> update()
 update(time, delta) {
+    // --- 0. (重要) シーンの初期設定と光源の遅延生成 ---
     if (!this._sceneSettingsApplied) {
         this._sceneSettingsApplied = true;
+
+        // a. シーン全体の設定を適用 (ここで this.lights.enable() が呼ばれる)
         this.applySceneSettings();
         
-        if (this._lightSourcesToCreate.length > 0) {
-            console.log(`%c[BaseGameScene] Processing ${this._lightSourcesToCreate.length} queued light sources...`, 'color: green');
-            
-            // ▼▼▼【ここを .active に修正】▼▼▼
-            console.log(`[Debug] Inside light creation loop. Is lights active? ->`, this.lights.active);
+        // ★★★ b. (新) ライトマネージャーが有効になった後、全オブジェクトにパイプラインを設定 ★★★
+        if (this.lights.active) {
+            this.children.list.forEach(child => {
+                if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
+                    child.setPipeline('Light2D');
+                }
+            });
+            console.log(`[BaseGameScene] Applied 'Light2D' pipeline to all eligible objects.`);
+        }
 
+        // c. 待ちリストに溜まった光源をすべて生成する (既存のコード)
+        if (this._lightSourcesToCreate.length > 0) {
+            // ... (このブロックの中身は変更なし) ...
             this._lightSourcesToCreate.forEach(gameObject => {
-                // ▼▼▼【ここが修正の核心です！！！】▼▼▼
                 if (this.lights.active && gameObject.active) {
-                    const lightType = gameObject.getData('lightType') || 'point';
-                    const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
-                    const lightRadius = gameObject.getData('lightRadius') || 100;
-                    const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
-                    const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
-                    const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-                    let newLight;
-                    if (lightType === 'point') {
-                        newLight = this.lights.addPointLight(
-                            gameObject.x + lightOffsetX,
-                            gameObject.y + lightOffsetY,
-                            lightColor,
-                            lightRadius,
-                            lightIntensity
-                        );
-                    }
+                    // ... (光源生成ロジック) ...
+                    let newLight = this.lights.addPointLight(/*...*/);
                     if (newLight) {
                         gameObject.lightSource = newLight;
                         console.log(`%c[BaseGameScene] Successfully created light for '${gameObject.name}'`, 'color: lightgreen; font-weight: bold;');
@@ -696,28 +682,19 @@ update(time, delta) {
                 component.update(time, delta);
             });
         }
-        // ★★★ この追従ロジックが最後に必要です ★★★
+       // --- 3. 光源追従ロジック (既存のコード) ---
+    // このループはここに存在し続ける必要があります
     this.children.list.forEach(gameObject => {
-        // GameObjectにlightSourceプロパティがあり、それがPhaserのLightインスタンスであることを確認
         if (gameObject.lightSource instanceof Phaser.GameObjects.Light) {
-            
-            // ▼▼▼ デバッグログを追加して、毎フレーム実行されているか確認 ▼▼▼
             if (gameObject.name === 'torch') {
-                console.log(`[Tracking Light] Torch at (${gameObject.x}, ${gameObject.y}). Light at (${gameObject.lightSource.x}, ${gameObject.lightSource.y})`);
+                // 毎フレーム、コンソールに座標が出力されるか確認してください
+                console.log(`[Tracking Light] Torch at (${Math.round(gameObject.x)}, ${Math.round(gameObject.y)}). Light at (${Math.round(gameObject.lightSource.x)}, ${Math.round(gameObject.lightSource.y)})`);
             }
-
-            // オブジェクトがアクティブで、シーンに属している場合のみ更新
             if (gameObject.active && gameObject.scene === this) {
                 const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
                 const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-                
                 gameObject.lightSource.x = gameObject.x + lightOffsetX;
                 gameObject.lightSource.y = gameObject.y + lightOffsetY;
-            } else {
-                if (gameObject.lightSource) {
-                    gameObject.lightSource.destroy();
-                    gameObject.lightSource = null;
-                }
             }
         }
     });

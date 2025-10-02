@@ -185,25 +185,8 @@ onSetupComplete() {
         }
     }
 
-    // --- 1. 「照らされる」オブジェクトを設定 ---
-    //    シーン上のすべてのImageとSpriteに、ライティングを適用する
-    this.children.list.forEach(child => {
-        if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
-            child.setPipeline('Light2D');
-        }
-    });
-
-    // ▼▼▼【ここを削除またはコメントアウトします】▼▼▼
-    /*
-    // --- 2. 「光源」オブジェクトを探して、ライトを追加 ---
-    const torchObject = this.children.getByName('torch');
-    if (torchObject) {
-        const torchLight = this.lights.addLight(torchObject.x, torchObject.y, 1800); // ★ 半径を少し広げる
-        torchLight.setColor(0xffaa33); // オレンジ色
-        torchLight.setIntensity(5.5);  // ★ 光を強くする
-    }
-    */
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+   
+    
 
     // --- 3. プレイヤーとカメラのセットアップ (変更なし) ---
     this.setupPlayerAndCamera(); // ★ onSetupComplete内でヘルパーを呼ぶ形に統一
