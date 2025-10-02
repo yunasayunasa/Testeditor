@@ -411,10 +411,12 @@ initComponentsAndEvents(gameObject) {
             }
         });
     }
-if (gameObject.name === 'torch') { // トーチオブジェクトの場合にログを出す
+ if (gameObject.name === 'torch') {
     console.log(`[Debug] Checking 'torch' for light source data...`);
     console.log(`[Debug] isLightSource:`, gameObject.getData('isLightSource'));
-    console.log(`[Debug] this.lights.enabled:`, this.lights.enabled);
+    
+    // ▼▼▼【ここを .active に修正】▼▼▼
+    console.log(`[Debug] this.lights.active:`, this.lights.active);
 }
    if (gameObject.getData('isLightSource') === true) {
     // ▼▼▼【ここが修正の核心】▼▼▼
@@ -623,25 +625,19 @@ addComponent(target, componentType, params = {}) {
 }
   // in BaseGameScene.js -> update()
 update(time, delta) {
-    // --- 0. (重要) シーンの初期設定と光源の遅延生成 ---
     if (!this._sceneSettingsApplied) {
-        
-        // ★★★ フラグを最初に立てる ★★★
         this._sceneSettingsApplied = true;
-
-        // a. シーン全体の設定を適用 (ここで this.lights.enable() が呼ばれるはず)
         this.applySceneSettings();
         
-        // b. 待ちリストに溜まった光源をすべて生成する
         if (this._lightSourcesToCreate.length > 0) {
             console.log(`%c[BaseGameScene] Processing ${this._lightSourcesToCreate.length} queued light sources...`, 'color: green');
             
-            // ▼▼▼【デバッグログをここに追加】▼▼▼
-            console.log(`[Debug] Inside light creation loop. Is lights enabled? ->`, this.lights.enabled);
+            // ▼▼▼【ここを .active に修正】▼▼▼
+            console.log(`[Debug] Inside light creation loop. Is lights active? ->`, this.lights.active);
 
             this._lightSourcesToCreate.forEach(gameObject => {
-                if (this.lights.enabled && gameObject.active) {
-                    // (光源生成のコードは変更なし)
+                // ▼▼▼【ここが修正の核心です！！！】▼▼▼
+                if (this.lights.active && gameObject.active) {
                     const lightType = gameObject.getData('lightType') || 'point';
                     const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
                     const lightRadius = gameObject.getData('lightRadius') || 100;
@@ -660,11 +656,10 @@ update(time, delta) {
                     }
                     if (newLight) {
                         gameObject.lightSource = newLight;
-                        console.log(`[BaseGameScene] Successfully created light for '${gameObject.name}'`);
+                        console.log(`%c[BaseGameScene] Successfully created light for '${gameObject.name}'`, 'color: lightgreen; font-weight: bold;');
                     }
                 }
             });
-            // c. 処理が終わったらリストを空にする
             this._lightSourcesToCreate = [];
         }
     }
