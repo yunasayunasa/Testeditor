@@ -13,7 +13,7 @@ import ChaseComponent from './ChaseComponent.js';
 import ReturnHomeComponent from './ReturnHomeComponent.js';
 import LightComponent from './LightComponent.js';
 import VignetteComponent from './VignetteComponent.js'; 
-
+import FogComponent from './FogComponent.js';
 
 
 //UI系
@@ -38,6 +38,7 @@ ChaseComponent,
 ReturnHomeComponent,
 LightComponent,
 VignetteComponent,    
+FogComponent, 
 
     //UI系
     WatchVariableComponent,
