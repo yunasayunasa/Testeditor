@@ -406,20 +406,7 @@ initComponentsAndEvents(gameObject) {
             }
         });
     }
- if (gameObject.name === 'torch') {
-    console.log(`[Debug] Checking 'torch' for light source data...`);
-    console.log(`[Debug] isLightSource:`, gameObject.getData('isLightSource'));
-    
-    // ▼▼▼【ここを .active に修正】▼▼▼
-    console.log(`[Debug] this.lights.active:`, this.lights.active);
-}
-   if (gameObject.getData('isLightSource') === true) {
-    // ▼▼▼【ここが修正の核心】▼▼▼
-    // すぐにライトを生成せず、"待ちリスト"に追加する
-    this._lightSourcesToCreate.push(gameObject);
-    console.log(`[BaseGameScene] Queued '${gameObject.name}' for light creation.`);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-}
+ 
 
     // ★★★ このメソッドは何も返さなくて良くなる ★★★
     // return componentsToStart; // ← この行は不要
