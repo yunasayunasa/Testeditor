@@ -974,91 +974,57 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
             return newGameObject;
         }
     }
-    /**
-     * ★★★ 新規・最終実装 ★★★
-     * 始点オブジェクトを元に、終点までの矩形範囲をオブジェクトで塗りつぶす。
-     * @param {Phaser.GameObjects.GameObject} sourceObject - 塗りつぶしの元となるブラシオブジェクト
-     * @param {{x: number, y: number}} endPoint - クリックされた終点のワールド座標
-     */
    // in BaseGameScene.js
 
-  // in BaseGameScene.js
+fillObjectRange(sourceObject, endPoint) {
+    if (!sourceObject || !sourceObject.scene) return;
 
-    /**
-     * ★★★ 最終完成版・改 ★★★
-     * 座標計算の基準点を修正し、コンテナに正しい入力エリアを設定する。
-     */
-   // in BaseGameScene.js
+    // --- 1. グリッドとループ範囲の計算 (変更なし) ---
+    const gridWidth = sourceObject.displayWidth;
+    const gridHeight = sourceObject.displayHeight;
+    const startGridX = Math.round(sourceObject.x / gridWidth);
+    const startGridY = Math.round(sourceObject.y / gridHeight);
+    const endGridX = Math.round(endPoint.x / gridWidth);
+    const endGridY = Math.round(endPoint.y / gridHeight);
+    const fromX = Math.min(startGridX, endGridX);
+    const toX = Math.max(startGridX, endGridX);
+    const fromY = Math.min(startGridY, endGridY);
+    const toY = Math.max(startGridY, endGridY);
 
-   // in BaseGameScene.js
+    // --- 2. 複製元レイアウトの作成 (変更なし) ---
+    const sourceLayout = this.extractLayoutFromObject(sourceObject);
+    
+    // --- 3. グループIDの生成 (変更なし) ---
+    const groupId = `fill_group_${Phaser.Math.RND.uuid()}`;
+    
+    // --- 4. 矩形範囲をループして、オブジェクトを配置 ---
+    for (let gx = fromX; gx <= toX; gx++) {
+        for (let gy = fromY; gy <= toY; gy++) {
+            const newLayout = { ...sourceLayout };
+            newLayout.x = gx * gridWidth + (sourceLayout.originX === 0 ? 0 : gridWidth / 2); // 原点を考慮
+            newLayout.y = gy * gridHeight + (sourceLayout.originY === 0 ? 0 : gridHeight / 2);
+            newLayout.name = `${sourceLayout.name}_${gx}_${gy}`;
+            newLayout.group = groupId;
 
-    /**
-     * ★★★ 究極の最終FIX版・改5 ★★★
-     * Containerに直接子オブジェクトを追加し、原点を補正する。
-     */
-    fillObjectRange(sourceObject, endPoint) {
-        if (!sourceObject || !sourceObject.scene) return;
-
-        // --- 1. グリッドとループ範囲の計算 (変更なし) ---
-        const gridWidth = sourceObject.displayWidth;
-        const gridHeight = sourceObject.displayHeight;
-        const startGridX = Math.round(sourceObject.x / gridWidth);
-        const startGridY = Math.round(sourceObject.y / gridHeight);
-        const endGridX = Math.round(endPoint.x / gridWidth);
-        const endGridY = Math.round(endPoint.y / gridHeight);
-        const fromX = Math.min(startGridX, endGridX);
-        const toX = Math.max(startGridX, endGridX);
-        const fromY = Math.min(startGridY, endGridY);
-        const toY = Math.max(startGridY, endGridY);
-
-        // --- 2. 複製元レイアウトの作成 (変更なし) ---
-        const sourceLayout = this.extractLayoutFromObject(sourceObject);
-        delete sourceLayout.physics; // 子オブジェクトは物理ボディを持たない
-
-        // --- 3. このグループのための一意なIDを生成 ---
-        const groupId = `fill_group_${Phaser.Math.RND.uuid()}`;
-        console.log(`[BaseGameScene | Final Design] Creating new group with ID: ${groupId}`);
-        
-        // --- 4. 矩形範囲をループして、オブジェクトを配置 ---
-        for (let gx = fromX; gx <= toX; gx++) {
-            for (let gy = fromY; gy <= toY; gy++) {
-                
-                const newLayout = { ...sourceLayout };
-                
-                newLayout.x = gx * gridWidth + gridWidth / 2;
-                newLayout.y = gy * gridHeight + gridHeight / 2;
-                newLayout.name = `${sourceLayout.name}_${gx}_${gy}`;
-                
-                // ★★★ すべてのオブジェクトに、同じグループIDをデータとして設定 ★★★
-                newLayout.group = groupId;
-
-                // ★★★ 物理ボディも、各オブジェクトが個別に持つ ★★★
-                if (newLayout.physics) {
-                    newLayout.physics.width = sourceLayout.displayWidth; // スケールを考慮したサイズ
-                    newLayout.physics.height = sourceLayout.displayHeight;
-                }
-                
-                const newGameObject = this.createObjectFromLayout(newLayout);
-                if (newGameObject) {
-                    this.applyProperties(newGameObject, newLayout);
-                }
+            const newGameObject = this.createObjectFromLayout(newLayout);
+            if (newGameObject) {
+                // ★ 第一段階：プロパティ適用
+                this.applyProperties(newGameObject, newLayout);
+                // ★★★ 第二段階：コンポーネントとイベントの初期化（これが抜けていた！） ★★★
+                this.initComponentsAndEvents(newGameObject);
             }
         }
+    }
 
-       // --- 5. ブラシを破棄 ---
+    // --- 5. ブラシを破棄し、選択を解除 ---
     sourceObject.destroy();
-    
-    // ★★★ 6. (新) EditorPluginに選択解除を依頼する ★★★
     const editor = this.plugins.get('EditorPlugin');
     if (editor) {
-        // 即時呼び出すと他のイベントと競合する可能性があるので、
-        // 次のフレームで安全に実行させる
         this.time.delayedCall(10, () => {
             editor.deselectAll();
         });
     }
 }
-// in src/scenes/BaseGameScene.js
 
     /**
      * ★★★ 新規ヘルパーメソッド ★★★
