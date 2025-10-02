@@ -625,22 +625,29 @@ addComponent(target, componentType, params = {}) {
 update(time, delta) {
     // --- 0. (重要) シーンの初期設定と光源の遅延生成 ---
     if (!this._sceneSettingsApplied) {
-        // a. シーン全体の設定を適用 (ここで this.lights.enable() が呼ばれる)
+        
+        // ★★★ フラグを最初に立てる ★★★
+        this._sceneSettingsApplied = true;
+
+        // a. シーン全体の設定を適用 (ここで this.lights.enable() が呼ばれるはず)
         this.applySceneSettings();
         
         // b. 待ちリストに溜まった光源をすべて生成する
         if (this._lightSourcesToCreate.length > 0) {
             console.log(`%c[BaseGameScene] Processing ${this._lightSourcesToCreate.length} queued light sources...`, 'color: green');
+            
+            // ▼▼▼【デバッグログをここに追加】▼▼▼
+            console.log(`[Debug] Inside light creation loop. Is lights enabled? ->`, this.lights.enabled);
+
             this._lightSourcesToCreate.forEach(gameObject => {
-                // isLightSourceは既にチェック済みなので、ここでは this.lights.enabled だけ確認
                 if (this.lights.enabled && gameObject.active) {
+                    // (光源生成のコードは変更なし)
                     const lightType = gameObject.getData('lightType') || 'point';
                     const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
                     const lightRadius = gameObject.getData('lightRadius') || 100;
                     const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
                     const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
                     const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-
                     let newLight;
                     if (lightType === 'point') {
                         newLight = this.lights.addPointLight(
@@ -651,7 +658,6 @@ update(time, delta) {
                             lightIntensity
                         );
                     }
-                    
                     if (newLight) {
                         gameObject.lightSource = newLight;
                         console.log(`[BaseGameScene] Successfully created light for '${gameObject.name}'`);
