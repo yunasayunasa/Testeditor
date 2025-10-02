@@ -94,9 +94,7 @@ applySceneSettings() {
             if (settings.lighting.ambientColor) {
                 this.lights.setAmbientColor(Phaser.Display.Color.ValueToColor(settings.lighting.ambientColor).color);
             }
-            if (settings.lighting.lightCount) {
-                this.lights.setMaxLights(settings.lighting.lightCount);
-            }
+           
         }
     }
 }
