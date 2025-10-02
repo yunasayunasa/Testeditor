@@ -405,10 +405,15 @@ initComponentsAndEvents(gameObject) {
             }
         });
     }
-
+if (gameObject.name === 'torch') { // トーチオブジェクトの場合にログを出す
+    console.log(`[Debug] Checking 'torch' for light source data...`);
+    console.log(`[Debug] isLightSource:`, gameObject.getData('isLightSource'));
+    console.log(`[Debug] this.lights.enabled:`, this.lights.enabled);
+}
     // ★★★ ここに光源生成のロジックを追加！ ★★★
     // GameObjectが光源を持つデータを持っているかチェック
     if (gameObject.getData('isLightSource') === true && this.lights.enabled) {
+          console.log(`%c[BaseGameScene] Found light source data for '${gameObject.name}'. Creating light...`, 'color: lightblue');
         const lightType = gameObject.getData('lightType') || 'point';
         const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
         const lightRadius = gameObject.getData('lightRadius') || 100;
