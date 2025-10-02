@@ -1,13 +1,13 @@
-
-  {
+{
   "scene_settings": {
     "backgroundColor": "0x44ffcc",
     "gravity": {
       "y": 0.5
     },
-    "lighting": {
+   "lighting": {
       "enabled": true,
-      "ambientColor": "0x000000"
+      "ambientColor": "0x000000",
+      "lightCount": 10
     }
   },
   "hasJoystick": true,
@@ -29,13 +29,24 @@
     }
   ],
   "objects": [
-    {
-          "name": "torch",
-          "type": "Image",
-          "texture": "cg01",
-          "x": 640,
-          "y": 360
-      },
+    { 
+      "name": "torch",
+      "type": "Image",
+      "texture": "cg01",
+      "x": 640,
+      "y": 360,
+      "depth": 10,
+      "layer": "Foreground",
+      "data": {
+        "isLightSource": true,
+        "lightType": "point",
+        "lightColor": "0xFFFF88",
+        "lightRadius": 250,
+        "lightIntensity": 0.08,
+        "lightOffsetX": 0,
+        "lightOffsetY": -30
+      }
+    }, 
     {
       "name": "cg01_3",
       "type": "Image",

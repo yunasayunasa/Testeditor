@@ -406,6 +406,35 @@ initComponentsAndEvents(gameObject) {
         });
     }
 
+    // ★★★ ここに光源生成のロジックを追加！ ★★★
+    // GameObjectが光源を持つデータを持っているかチェック
+    if (gameObject.getData('isLightSource') === true && this.lights.enabled) {
+        const lightType = gameObject.getData('lightType') || 'point';
+        const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
+        const lightRadius = gameObject.getData('lightRadius') || 100;
+        const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
+        const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
+        const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
+
+        let newLight;
+        if (lightType === 'point') {
+            newLight = this.lights.addPointLight(
+                gameObject.x + lightOffsetX,
+                gameObject.y + lightOffsetY,
+                lightColor,
+                lightRadius,
+                lightIntensity
+            );
+        }
+        // 他のライトタイプ (spot, ambientなど) もここに追加可能
+        // else if (lightType === 'spot') { ... }
+
+        if (newLight) {
+            gameObject.lightSource = newLight; // GameObjectに光源インスタンスを紐付ける
+            console.log(`[BaseGameScene] Added ${lightType} light to object '${gameObject.name}'`);
+        }
+    }
+
     // ★★★ このメソッドは何も返さなくて良くなる ★★★
     // return componentsToStart; // ← この行は不要
 }
@@ -634,6 +663,28 @@ addComponent(target, componentType, params = {}) {
                 component.update(time, delta);
             });
         }
+         // ★★★ ここに光源追従のロジックを追加！ ★★★
+    this.children.list.forEach(gameObject => {
+        // GameObjectにlightSourceプロパティがあり、それがPhaserのLightインスタンスであることを確認
+        if (gameObject.lightSource instanceof Phaser.GameObjects.Light) {
+            // オブジェクトがアクティブで、シーンに属している場合のみ更新
+            if (gameObject.active && gameObject.scene === this) {
+                const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
+                const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
+                
+                gameObject.lightSource.x = gameObject.x + lightOffsetX;
+                gameObject.lightSource.y = gameObject.y + lightOffsetY;
+            } else {
+                // オブジェクトが非アクティブになったり破棄されたら、光源も破棄
+                // (GameObjectが破棄される際にlightSourceも破棄されるようにするのが理想的ですが、
+                //  ここでは確実な対応としてupdateループでチェックします)
+                if (gameObject.lightSource) {
+                    gameObject.lightSource.destroy();
+                    gameObject.lightSource = null; // 参照をクリア
+                }
+            }
+        }
+    });
     }
 
 
