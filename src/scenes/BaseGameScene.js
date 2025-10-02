@@ -630,10 +630,10 @@ update(time, delta) {
     if (!this._sceneSettingsApplied) {
         this._sceneSettingsApplied = true;
 
-        // a. シーン全体の設定を適用 (ここで this.lights.enable() が呼ばれる)
+        // a. シーン全体の設定を適用
         this.applySceneSettings();
         
-        // ★★★ b. (新) ライトマネージャーが有効になった後、全オブジェクトにパイプラインを設定 ★★★
+        // b. ライトマネージャーが有効になった後、全オブジェクトにパイプラインを設定
         if (this.lights.active) {
             this.children.list.forEach(child => {
                 if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
@@ -643,16 +643,35 @@ update(time, delta) {
             console.log(`[BaseGameScene] Applied 'Light2D' pipeline to all eligible objects.`);
         }
 
-        // c. 待ちリストに溜まった光源をすべて生成する (既存のコード)
+        // c. 待ちリストに溜まった光源をすべて生成する
         if (this._lightSourcesToCreate.length > 0) {
-            // ... (このブロックの中身は変更なし) ...
-            this._lightSourcesToCreate.forEach(gameObject => {
-                if (this.lights.active && gameObject.active) {
-                    // ... (光源生成ロジック) ...
-                    let newLight = this.lights.addPointLight(/*...*/);
+            this._lightSourcesToCreate.forEach(queuedObject => {
+                // ▼▼▼【ここが修正の核心です！！！】▼▼▼
+                // 待ちリストのオブジェクト名を使って、シーンから最新のインスタンスを取得し直す
+                const gameObject = this.children.getByName(queuedObject.name);
+                
+                // 最新のインスタンスが見つかり、ライトが有効なら処理を続行
+                if (gameObject && this.lights.active) {
+                    const lightType = gameObject.getData('lightType') || 'point';
+                    const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
+                    const lightRadius = gameObject.getData('lightRadius') || 100;
+                    const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
+                    const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
+                    const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
+                    
+                    // ★★★ 最新のgameObjectの座標を使って光源を生成 ★★★
+                    let newLight = this.lights.addPointLight(
+                        gameObject.x + lightOffsetX,
+                        gameObject.y + lightOffsetY,
+                        lightColor,
+                        lightRadius,
+                        lightIntensity
+                    );
+                    
                     if (newLight) {
+                        // ★★★ 最新のgameObjectにlightSourceを紐付ける ★★★
                         gameObject.lightSource = newLight;
-                        console.log(`%c[BaseGameScene] Successfully created light for '${gameObject.name}'`, 'color: lightgreen; font-weight: bold;');
+                        console.log(`%c[BaseGameScene] Successfully created light for '${gameObject.name}' at (${Math.round(newLight.x)}, ${Math.round(newLight.y)})`, 'color: lightgreen; font-weight: bold;');
                     }
                 }
             });
