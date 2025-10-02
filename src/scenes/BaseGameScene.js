@@ -17,6 +17,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this._deferredActions = []; 
         this.joystick = null; 
         this._sceneSettingsApplied = false;
+         this._lightSourcesToCreate = []; // ★★★ この行を追加 ★★★
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -61,15 +62,13 @@ export default class BaseGameScene extends Phaser.Scene {
  */
 // applySceneSettings() メソッド内
 applySceneSettings() {
-    // ★★★ メソッドの先頭で、一度だけ実行されるようにフラグを立てる ★★★
-    if (this._sceneSettingsApplied) return;
-    this._sceneSettingsApplied = true;
+  
 
     const keyToLoad = this.layoutDataKey || this.scene.key;
     const layoutData = this.cache.json.get(keyToLoad);
 
     if (layoutData && layoutData.scene_settings) {
-        console.log(`[BaseGameScene] Applying 'scene_settings'...`); // ログメッセージを修正
+        console.log(`[BaseGameScene] Applying 'scene_settings' in the first update frame...`); // メッセージを戻す
         const settings = layoutData.scene_settings;
 
         if (settings.backgroundColor) {
@@ -120,8 +119,7 @@ initSceneWithData() {
 
     // --- 3. JSONデータが存在するかチェック ---
     if (layoutData) {
-         // --- 4. (重要) オブジェクトをビルドする"前"にシーン全体の設定を適用 ---
-        this.applySceneSettings(); // ★★★ このメソッドをここに移動 ★★★
+       
         // ▼▼▼【ここに追加します！】▼▼▼
         // --------------------------------------------------------------------
         // --- 4. (重要) オブジェクトをビルドする"前"にアニメーションを生成 ---
@@ -418,35 +416,13 @@ if (gameObject.name === 'torch') { // トーチオブジェクトの場合にロ
     console.log(`[Debug] isLightSource:`, gameObject.getData('isLightSource'));
     console.log(`[Debug] this.lights.enabled:`, this.lights.enabled);
 }
-    // ★★★ ここに光源生成のロジックを追加！ ★★★
-    // GameObjectが光源を持つデータを持っているかチェック
-    if (gameObject.getData('isLightSource') === true && this.lights.enabled) {
-          console.log(`%c[BaseGameScene] Found light source data for '${gameObject.name}'. Creating light...`, 'color: lightblue');
-        const lightType = gameObject.getData('lightType') || 'point';
-        const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
-        const lightRadius = gameObject.getData('lightRadius') || 100;
-        const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
-        const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
-        const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-
-        let newLight;
-        if (lightType === 'point') {
-            newLight = this.lights.addPointLight(
-                gameObject.x + lightOffsetX,
-                gameObject.y + lightOffsetY,
-                lightColor,
-                lightRadius,
-                lightIntensity
-            );
-        }
-        // 他のライトタイプ (spot, ambientなど) もここに追加可能
-        // else if (lightType === 'spot') { ... }
-
-        if (newLight) {
-            gameObject.lightSource = newLight; // GameObjectに光源インスタンスを紐付ける
-            console.log(`[BaseGameScene] Added ${lightType} light to object '${gameObject.name}'`);
-        }
-    }
+   if (gameObject.getData('isLightSource') === true) {
+    // ▼▼▼【ここが修正の核心】▼▼▼
+    // すぐにライトを生成せず、"待ちリスト"に追加する
+    this._lightSourcesToCreate.push(gameObject);
+    console.log(`[BaseGameScene] Queued '${gameObject.name}' for light creation.`);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 
     // ★★★ このメソッドは何も返さなくて良くなる ★★★
     // return componentsToStart; // ← この行は不要
@@ -645,11 +621,47 @@ addComponent(target, componentType, params = {}) {
     // ★★★ 生成したインスタンスを返す ★★★
     return componentInstance;
 }
-    /**
-     * ★★★ updateメソッドを、この内容に置き換える ★★★
-     * 遅延実行キューの処理を追加
-     */
-    update(time, delta) {
+  // in BaseGameScene.js -> update()
+update(time, delta) {
+    // --- 0. (重要) シーンの初期設定と光源の遅延生成 ---
+    if (!this._sceneSettingsApplied) {
+        // a. シーン全体の設定を適用 (ここで this.lights.enable() が呼ばれる)
+        this.applySceneSettings();
+        
+        // b. 待ちリストに溜まった光源をすべて生成する
+        if (this._lightSourcesToCreate.length > 0) {
+            console.log(`%c[BaseGameScene] Processing ${this._lightSourcesToCreate.length} queued light sources...`, 'color: green');
+            this._lightSourcesToCreate.forEach(gameObject => {
+                // isLightSourceは既にチェック済みなので、ここでは this.lights.enabled だけ確認
+                if (this.lights.enabled && gameObject.active) {
+                    const lightType = gameObject.getData('lightType') || 'point';
+                    const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
+                    const lightRadius = gameObject.getData('lightRadius') || 100;
+                    const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
+                    const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
+                    const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
+
+                    let newLight;
+                    if (lightType === 'point') {
+                        newLight = this.lights.addPointLight(
+                            gameObject.x + lightOffsetX,
+                            gameObject.y + lightOffsetY,
+                            lightColor,
+                            lightRadius,
+                            lightIntensity
+                        );
+                    }
+                    
+                    if (newLight) {
+                        gameObject.lightSource = newLight;
+                        console.log(`[BaseGameScene] Successfully created light for '${gameObject.name}'`);
+                    }
+                }
+            });
+            // c. 処理が終わったらリストを空にする
+            this._lightSourcesToCreate = [];
+        }
+    }
        
         // ▼▼▼【ここからが修正の核心】▼▼▼
         // --- 1. 遅延実行キューに溜まったアクションをすべて実行 ---
