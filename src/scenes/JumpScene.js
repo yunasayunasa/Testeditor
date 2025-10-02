@@ -177,14 +177,7 @@ export default class JumpScene extends BaseGameScene {
         this.addJoystickFromEditor(false);
     }
 
-    // ★★★ 2. (最重要) 全てのオブジェクトの準備が整ったこのタイミングで、パイプラインを設定 ★★★
-    console.log("--- Applying Light2D Pipeline to all objects NOW. ---");
-    this.children.list.forEach(child => {
-        if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
-            child.setPipeline('Light2D');
-            console.log(`Pipeline set for: ${child.name}`);
-        }
-    });
+   
 
     // --- 3. プレイヤーとカメラのセットアップ ---
     this.setupPlayerAndCamera();

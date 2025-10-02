@@ -626,36 +626,46 @@ addComponent(target, componentType, params = {}) {
     return componentInstance;
 }
 update(time, delta) {
-    // --- 0. シーンの初期設定と光源の遅延生成 ---
+    // --- 0. シーンの初期設定と「簡易光源」の遅延生成 ---
     if (!this._sceneSettingsApplied) {
         this._sceneSettingsApplied = true;
 
+        // a. シーン設定を適用（lights.enable() はもう不要なのでコメントアウトしてもOK）
         this.applySceneSettings();
         
+        // b. 待ちリストに溜まった「簡易光源」をすべて生成する
         if (this._lightSourcesToCreate.length > 0) {
             this._lightSourcesToCreate.forEach(queuedObject => {
                 const gameObject = this.children.getByName(queuedObject.name);
-                if (gameObject && this.lights.active) {
-                    const lightType = gameObject.getData('lightType') || 'point';
-                    const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
+                if (gameObject) {
+                    const lightColor = Phaser.Display.Color.ValueToColor(gameObject.getData('lightColor') || '0xFFFFFF');
                     const lightRadius = gameObject.getData('lightRadius') || 100;
-                    const lightIntensity = gameObject.getData('lightIntensity') || 0.05;
-                    const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
-                    const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-                    
-                    let newLight = this.lights.addPointLight(
-                        gameObject.x + lightOffsetX,
-                        gameObject.y + lightOffsetY,
-                        lightColor,
-                        lightRadius,
-                        lightIntensity
-                    );
-                    
-                    if (newLight) {
-                        gameObject.lightSource = newLight;
-                        console.log(`%c[BaseGameScene] Light attached to '${gameObject.name}'. Inspect the object below.`, 'color: cyan; font-weight: bold;');
-                        console.log(gameObject); // ★ オブジェクト自体をログに出力
+                    const lightIntensity = gameObject.getData('lightIntensity') || 0.5; // 強度を0-1の範囲に
+
+                    // ★★★ ここが新しいロジック ★★★
+                    // グラデーションの円形テクスチャを動的に生成
+                    const textureKey = `light_gradient_${lightRadius}`;
+                    if (!this.textures.exists(textureKey)) {
+                        const graphics = this.make.graphics();
+                        graphics.fillStyle(0xffffff, 1.0); // 白で描画
+                        graphics.fillCircle(lightRadius, lightRadius, lightRadius);
+                        graphics.generateTexture(textureKey, lightRadius * 2, lightRadius * 2);
+                        graphics.destroy();
                     }
+
+                    // そのテクスチャを使ってImageオブジェクトを作成
+                    const lightSprite = this.add.image(gameObject.x, gameObject.y, textureKey);
+                    
+                    // ★★★ 最も重要な設定 ★★★
+                    lightSprite.setBlendMode('ADD'); // ブレンドモードを加算に
+                    lightSprite.setTint(lightColor.color); // 光の色を設定
+                    lightSprite.setAlpha(lightIntensity); // 光の強度をアルファ値で表現
+                    lightSprite.setDepth(gameObject.depth + 1); // 光源オブジェクトより少し手前に表示
+
+                    // ★★★ lightSourceとしてこのImageを紐付ける ★★★
+                    gameObject.lightSource = lightSprite;
+                    
+                    console.log(`%c[BaseGameScene] Simple light attached to '${gameObject.name}'.`, 'color: orange; font-weight: bold;');
                 }
             });
             this._lightSourcesToCreate = [];
@@ -678,17 +688,14 @@ update(time, delta) {
         });
     }
 
-    // --- 3. 光源追従ロジック ---
+   // --- 3. 光源追従ロジック (lightSource が Image になってもそのまま動く) ---
     this.children.list.forEach(gameObject => {
-        if (gameObject.lightSource instanceof Phaser.GameObjects.Light) {
-            // ★★★ 追従ログを強化 ★★★
-            const oldX = Math.round(gameObject.lightSource.x);
-            const newX = Math.round(gameObject.x + (gameObject.getData('lightOffsetX') || 0));
-            if (oldX !== newX) {
-                 console.log(`[Tracking] Updating light for '${gameObject.name}'. From ${oldX} to ${newX}`);
-            }
-            gameObject.lightSource.x = gameObject.x + (gameObject.getData('lightOffsetX') || 0);
-            gameObject.lightSource.y = gameObject.y + (gameObject.getData('lightOffsetY') || 0);
+        // ★★★ lightSource の型チェックを緩める ★★★
+        if (gameObject.lightSource && gameObject.lightSource.scene) { 
+            const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
+            const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
+            gameObject.lightSource.x = gameObject.x + lightOffsetX;
+            gameObject.lightSource.y = gameObject.y + lightOffsetY;
         }
     });
 }
