@@ -211,6 +211,7 @@
       "alpha": 1,
       "layer": "Gameplay",
       "group": "player",
+      
       "events": [
         {
           "id": "event_1759315288106",
@@ -257,7 +258,16 @@
       "anim_prefix": "anila",
       "data": {
         "ignoreGravity": false,
-        "shape": "rectangle"
+        "shape": "rectangle",
+         "isLightSource": true,
+    "lightType": "spot",          
+    "lightColor": "0xFFFFFF",      
+    "lightRadius": 400,           
+    "lightIntensity": 0.4,         
+    "lightAngle": 0,             
+    "lightConeAngle": 45,          
+    "lightOffsetX": 20,            
+    "lightOffsetY": 0    
       },
       "texture": "anila_walk",
       "physics": {

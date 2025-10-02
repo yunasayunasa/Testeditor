@@ -17,7 +17,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this._deferredActions = []; 
         this.joystick = null; 
         this._sceneSettingsApplied = false;
-         this._lightSourcesToCreate = []; // ★★★ この行を追加 ★★★
+       
     }
      /**
      * ★★★ 新規メソッド ★★★
@@ -40,6 +40,7 @@ export default class BaseGameScene extends Phaser.Scene {
  create() {
         // このメソッドは、継承先（JumpSceneなど）で super.create() として
         // 呼び出されることを想定していますが、中身は空で構いません。
+        this.applySceneSettings(); 
     }
 /**
      * ★★★ 新規追加 ★★★
@@ -87,14 +88,8 @@ applySceneSettings() {
             }
         }
         
-        // ★★★ ライティング設定 (ここが重要) ★★★
-        if (settings.lighting && settings.lighting.enabled) {
-            this.lights.enable(); // ★★★ ここでライトマネージャーが有効化される ★★★
-            if (settings.lighting.ambientColor) {
-                this.lights.setAmbientColor(Phaser.Display.Color.ValueToColor(settings.lighting.ambientColor).color);
-            }
-           
-        }
+       
+        
     }
 }
 /**
@@ -627,50 +622,7 @@ addComponent(target, componentType, params = {}) {
 }
 update(time, delta) {
     // --- 0. シーンの初期設定と「簡易光源」の遅延生成 ---
-    if (!this._sceneSettingsApplied) {
-        this._sceneSettingsApplied = true;
-
-        // a. シーン設定を適用（lights.enable() はもう不要なのでコメントアウトしてもOK）
-        this.applySceneSettings();
-        
-        // b. 待ちリストに溜まった「簡易光源」をすべて生成する
-        if (this._lightSourcesToCreate.length > 0) {
-            this._lightSourcesToCreate.forEach(queuedObject => {
-                const gameObject = this.children.getByName(queuedObject.name);
-                if (gameObject) {
-                    const lightColor = Phaser.Display.Color.ValueToColor(gameObject.getData('lightColor') || '0xFFFFFF');
-                    const lightRadius = gameObject.getData('lightRadius') || 100;
-                    const lightIntensity = gameObject.getData('lightIntensity') || 0.5; // 強度を0-1の範囲に
-
-                    // ★★★ ここが新しいロジック ★★★
-                    // グラデーションの円形テクスチャを動的に生成
-                    const textureKey = `light_gradient_${lightRadius}`;
-                    if (!this.textures.exists(textureKey)) {
-                        const graphics = this.make.graphics();
-                        graphics.fillStyle(0xffffff, 1.0); // 白で描画
-                        graphics.fillCircle(lightRadius, lightRadius, lightRadius);
-                        graphics.generateTexture(textureKey, lightRadius * 2, lightRadius * 2);
-                        graphics.destroy();
-                    }
-
-                    // そのテクスチャを使ってImageオブジェクトを作成
-                    const lightSprite = this.add.image(gameObject.x, gameObject.y, textureKey);
-                    
-                    // ★★★ 最も重要な設定 ★★★
-                    lightSprite.setBlendMode('ADD'); // ブレンドモードを加算に
-                    lightSprite.setTint(lightColor.color); // 光の色を設定
-                    lightSprite.setAlpha(lightIntensity); // 光の強度をアルファ値で表現
-                    lightSprite.setDepth(gameObject.depth + 1); // 光源オブジェクトより少し手前に表示
-
-                    // ★★★ lightSourceとしてこのImageを紐付ける ★★★
-                    gameObject.lightSource = lightSprite;
-                    
-                    console.log(`%c[BaseGameScene] Simple light attached to '${gameObject.name}'.`, 'color: orange; font-weight: bold;');
-                }
-            });
-            this._lightSourcesToCreate = [];
-        }
-    }
+   
 
     // --- 1. 遅延実行キューの処理 ---
     if (this._deferredActions.length > 0) {
@@ -688,16 +640,6 @@ update(time, delta) {
         });
     }
 
-   // --- 3. 光源追従ロジック (lightSource が Image になってもそのまま動く) ---
-    this.children.list.forEach(gameObject => {
-        // ★★★ lightSource の型チェックを緩める ★★★
-        if (gameObject.lightSource && gameObject.lightSource.scene) { 
-            const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
-            const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-            gameObject.lightSource.x = gameObject.x + lightOffsetX;
-            gameObject.lightSource.y = gameObject.y + lightOffsetY;
-        }
-    });
 }
 
 
