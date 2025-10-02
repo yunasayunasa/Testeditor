@@ -459,6 +459,16 @@ applyProperties(gameObject, layout) {
     // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
     
+    // ★★★ ここにパイプライン設定を移動・追加 ★★★
+    // Light2DパイプラインはWebGLでのみ利用可能なので、レンダラーのタイプをチェック
+    if (this.game.renderer.type === Phaser.WEBGL) {
+        // ImageかSpriteのインスタンスであれば、パイプラインを設定
+        // （将来的には、JSONで個別に設定できるようにしても良い）
+        if (gameObject instanceof Phaser.GameObjects.Image || gameObject instanceof Phaser.GameObjects.Sprite) {
+            gameObject.setPipeline('Light2D');
+        }
+    }
+    
     // --- 3. 見た目（Transform）に関するプロパティを設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX || 1, data.scaleY || 1);
@@ -686,10 +696,16 @@ update(time, delta) {
                 component.update(time, delta);
             });
         }
-         // ★★★ ここに光源追従のロジックを追加！ ★★★
+        // ★★★ この追従ロジックが最後に必要です ★★★
     this.children.list.forEach(gameObject => {
         // GameObjectにlightSourceプロパティがあり、それがPhaserのLightインスタンスであることを確認
         if (gameObject.lightSource instanceof Phaser.GameObjects.Light) {
+            
+            // ▼▼▼ デバッグログを追加して、毎フレーム実行されているか確認 ▼▼▼
+            if (gameObject.name === 'torch') {
+                console.log(`[Tracking Light] Torch at (${gameObject.x}, ${gameObject.y}). Light at (${gameObject.lightSource.x}, ${gameObject.lightSource.y})`);
+            }
+
             // オブジェクトがアクティブで、シーンに属している場合のみ更新
             if (gameObject.active && gameObject.scene === this) {
                 const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
@@ -698,17 +714,14 @@ update(time, delta) {
                 gameObject.lightSource.x = gameObject.x + lightOffsetX;
                 gameObject.lightSource.y = gameObject.y + lightOffsetY;
             } else {
-                // オブジェクトが非アクティブになったり破棄されたら、光源も破棄
-                // (GameObjectが破棄される際にlightSourceも破棄されるようにするのが理想的ですが、
-                //  ここでは確実な対応としてupdateループでチェックします)
                 if (gameObject.lightSource) {
                     gameObject.lightSource.destroy();
-                    gameObject.lightSource = null; // 参照をクリア
+                    gameObject.lightSource = null;
                 }
             }
         }
     });
-    }
+}
 
 
  
