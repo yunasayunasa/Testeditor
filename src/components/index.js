@@ -12,6 +12,9 @@ import AnimationController from './AnimationController.js';
 import ChaseComponent from './ChaseComponent.js'; 
 import ReturnHomeComponent from './ReturnHomeComponent.js';
 import LightComponent from './LightComponent.js';
+import VignetteComponent from './VignetteComponent.js'; 
+
+
 
 //UI系
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
@@ -34,7 +37,7 @@ AnimationController,
 ChaseComponent,
 ReturnHomeComponent,
 LightComponent,
-    
+VignetteComponent,    
 
     //UI系
     WatchVariableComponent,
