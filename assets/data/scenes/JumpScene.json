@@ -42,7 +42,7 @@
         "lightType": "point",
         "lightColor": "0xFFFF88",
         "lightRadius": 250,
-        "lightIntensity": 0.08,
+        "lightIntensity": 0.3,
         "lightOffsetX": 0,
         "lightOffsetY": -30
       }
