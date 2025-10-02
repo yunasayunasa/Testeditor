@@ -46,44 +46,57 @@ export default class LightComponent {
         return myData ? { ...defaultParams, ...myData.params } : defaultParams;
     }
 
-    updateTexture(params) {
-        let textureKey;
-        const radius = Math.max(1, params.radius); // 半径が0以下にならないように
+    // in LightComponent.js
+
+updateTexture(params) {
+    let textureKey;
+    const radius = Math.max(1, params.radius);
+
+    if (params.type === 'spot') {
+        const coneAngle = Phaser.Math.Clamp(params.coneAngle, 1, 359); // 角度を安全な範囲に
+        textureKey = `spotlight_texture_${radius}_${coneAngle}`; // ★ グラデーションをやめ、シンプルなテクスチャ名に
+    } else { // 'point'
+        textureKey = `light_gradient_${radius}`;
+    }
+
+    if (this.lastTextureKey === textureKey) {
+        return;
+    }
+
+    if (!this.scene.textures.exists(textureKey)) {
+        const graphics = this.scene.make.graphics();
+        const diameter = radius * 2;
 
         if (params.type === 'spot') {
-            const coneAngle = params.coneAngle;
-            textureKey = `spotlight_gradient_${radius}_${coneAngle}`;
+            // --- ▼▼▼ スポットライト描画ロジック修正 ▼▼▼ ---
+            const coneRadian = Phaser.Math.DegToRad(params.coneAngle / 2);
+
+            // 1. まず真っ白な扇形を描画する
+            graphics.fillStyle(0xffffff, 1.0);
+            graphics.slice(radius, radius, radius, -coneRadian, coneRadian, false);
+            graphics.fillPath();
+
+            // 2. (オプション) 縁を少しぼかすための簡単なグラデーション
+            //    PhaserのGraphicsだけでは綺麗な放射状グラデーションは難しいので、
+            //    まずは単色で確実に表示させることを優先します。
+            
         } else { // 'point'
-            textureKey = `light_gradient_${radius}`;
+            graphics.fillStyle(0xffffff, 1.0);
+            graphics.fillCircle(radius, radius, radius);
         }
-
-        // 必要なテクスチャが前回と同じなら何もしない
-        if (this.lastTextureKey === textureKey) {
-            return;
-        }
-
-        if (!this.scene.textures.exists(textureKey)) {
-            const graphics = this.scene.make.graphics();
-            if (params.type === 'spot') {
-                const coneRadian = Phaser.Math.DegToRad(params.coneAngle / 2);
-                // グラデーション付きの扇形（中心から外側へ暗くなる）
-                const gradient = graphics.fillGradientStyle(0xffffff, 0xffffff, 0x000000, 0x000000, 1, 1, 0, 0);
-                graphics.beginPath();
-                graphics.moveTo(radius, radius);
-                graphics.arc(radius, radius, radius, -coneRadian, coneRadian, false);
-                graphics.closePath();
-                graphics.fillPath();
-            } else { // 'point'
-                graphics.fillStyle(0xffffff, 1.0);
-                graphics.fillCircle(radius, radius, radius);
-            }
-            graphics.generateTexture(textureKey, radius * 2, radius * 2);
-            graphics.destroy();
-        }
-
-        this.lightSprite.setTexture(textureKey);
-        this.lastTextureKey = textureKey;
+        graphics.generateTexture(textureKey, diameter, diameter);
+        graphics.destroy();
     }
+
+    this.lightSprite.setTexture(textureKey);
+    // スポットライトの場合、テクスチャの中心が扇の頂点になるように原点を設定
+    if (params.type === 'spot') {
+        this.lightSprite.setOrigin(0.5, 0.5);
+    } else {
+        this.lightSprite.setOrigin(0.5, 0.5);
+    }
+    this.lastTextureKey = textureKey;
+}
 
     applyParams(params) {
         if (!this.lightSprite) return;
