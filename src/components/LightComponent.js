@@ -1,0 +1,140 @@
+// src/components/LightComponent.js
+
+export default class LightComponent {
+
+    constructor(scene, owner, params = {}) {
+        this.scene = scene;
+        this.gameObject = owner;
+        this.lightSprite = null;
+        this.lastTextureKey = null; // テクスチャの再生成を制御するためのフラグ
+    }
+
+    start() {
+        // start時点ではスプライトの器だけ作る
+        this.lightSprite = this.scene.add.image(this.gameObject.x, this.gameObject.y, '__DEFAULT');
+        this.lightSprite.setBlendMode('ADD');
+        this.lightSprite.setDepth(this.gameObject.depth + 1);
+
+        // 初回更新
+        this.update();
+    }
+
+    update() {
+        if (!this.gameObject.scene) return;
+
+        const params = this.getCurrentParams();
+        
+        // 1. 光源テクスチャを生成・更新
+        this.updateTexture(params);
+
+        // 2. 光源スプライトのプロパティを適用
+        this.applyParams(params);
+
+        // 3. 光源の位置と角度を親オブジェクトに追従
+        this.updateTransform(params);
+    }
+
+    getCurrentParams() {
+        const allCompsData = this.gameObject.getData('components') || [];
+        const myData = allCompsData.find(c => c.type === 'LightComponent');
+        
+        const defaultParams = LightComponent.define.params.reduce((acc, p) => {
+            acc[p.key] = p.defaultValue;
+            return acc;
+        }, {});
+
+        return myData ? { ...defaultParams, ...myData.params } : defaultParams;
+    }
+
+    updateTexture(params) {
+        let textureKey;
+        const radius = Math.max(1, params.radius); // 半径が0以下にならないように
+
+        if (params.type === 'spot') {
+            const coneAngle = params.coneAngle;
+            textureKey = `spotlight_gradient_${radius}_${coneAngle}`;
+        } else { // 'point'
+            textureKey = `light_gradient_${radius}`;
+        }
+
+        // 必要なテクスチャが前回と同じなら何もしない
+        if (this.lastTextureKey === textureKey) {
+            return;
+        }
+
+        if (!this.scene.textures.exists(textureKey)) {
+            const graphics = this.scene.make.graphics();
+            if (params.type === 'spot') {
+                const coneRadian = Phaser.Math.DegToRad(params.coneAngle / 2);
+                // グラデーション付きの扇形（中心から外側へ暗くなる）
+                const gradient = graphics.fillGradientStyle(0xffffff, 0xffffff, 0x000000, 0x000000, 1, 1, 0, 0);
+                graphics.beginPath();
+                graphics.moveTo(radius, radius);
+                graphics.arc(radius, radius, radius, -coneRadian, coneRadian, false);
+                graphics.closePath();
+                graphics.fillPath();
+            } else { // 'point'
+                graphics.fillStyle(0xffffff, 1.0);
+                graphics.fillCircle(radius, radius, radius);
+            }
+            graphics.generateTexture(textureKey, radius * 2, radius * 2);
+            graphics.destroy();
+        }
+
+        this.lightSprite.setTexture(textureKey);
+        this.lastTextureKey = textureKey;
+    }
+
+    applyParams(params) {
+        if (!this.lightSprite) return;
+
+        const newColor = Phaser.Display.Color.ValueToColor(params.color).color;
+        if (this.lightSprite.tintTopLeft !== newColor) {
+            this.lightSprite.setTint(newColor);
+        }
+
+        if (this.lightSprite.alpha !== params.intensity) {
+            this.lightSprite.setAlpha(params.intensity);
+        }
+    }
+    
+    updateTransform(params) {
+        if (!this.lightSprite) return;
+        
+        const offset = new Phaser.Math.Vector2(params.offsetX, params.offsetY).rotate(Phaser.Math.DegToRad(this.gameObject.angle));
+        this.lightSprite.x = this.gameObject.x + offset.x;
+        this.lightSprite.y = this.gameObject.y + offset.y;
+        
+        if (params.type === 'spot') {
+            const baseAngle = params.angle;
+            this.lightSprite.angle = this.gameObject.angle + baseAngle;
+
+            if (this.gameObject.flipX) {
+                this.lightSprite.angle = this.gameObject.angle - baseAngle + 180;
+            }
+        } else {
+            this.lightSprite.angle = 0; // ポイントライトは回転しない
+        }
+    }
+
+    destroy() {
+        if (this.lightSprite) {
+            this.lightSprite.destroy();
+            this.lightSprite = null;
+        }
+    }
+}
+
+LightComponent.define = {
+    params: [
+        { key: 'type', type: 'select', label: 'Type', options: ['point', 'spot'], defaultValue: 'point' },
+        { key: 'color', type: 'color', label: 'Color', defaultValue: '0xffffff' },
+        { key: 'radius', type: 'range', label: 'Radius', min: 0, max: 1000, step: 10, defaultValue: 100 },
+        { key: 'intensity', type: 'range', label: 'Intensity', min: 0, max: 1, step: 0.01, defaultValue: 0.5 },
+        { key: 'offsetX', type: 'range', label: 'Offset X', min: -200, max: 200, step: 1, defaultValue: 0 },
+        { key: 'offsetY', type: 'range', label: 'Offset Y', min: -200, max: 200, step: 1, defaultValue: 0 },
+        // --- Spot Light Only Params ---
+        { key: 'angle', type: 'range', label: 'Angle (Spot)', min: -180, max: 180, step: 1, defaultValue: 0 },
+        { key: 'coneAngle', type: 'range', label: 'Cone (Spot)', min: 1, max: 180, step: 1, defaultValue: 45 },
+    ]
+};
