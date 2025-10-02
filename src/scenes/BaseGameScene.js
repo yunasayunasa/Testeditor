@@ -1045,9 +1045,19 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
             }
         }
 
-        // --- 5. ブラシを破棄 ---
-        sourceObject.destroy();
+       // --- 5. ブラシを破棄 ---
+    sourceObject.destroy();
+    
+    // ★★★ 6. (新) EditorPluginに選択解除を依頼する ★★★
+    const editor = this.plugins.get('EditorPlugin');
+    if (editor) {
+        // 即時呼び出すと他のイベントと競合する可能性があるので、
+        // 次のフレームで安全に実行させる
+        this.time.delayedCall(10, () => {
+            editor.deselectAll();
+        });
     }
+}
 // in src/scenes/BaseGameScene.js
 
     /**
