@@ -59,6 +59,7 @@ export default class BaseGameScene extends Phaser.Scene {
 /** ★★★ 新設 ★★★
  * JSONデータからシーン設定を読み込み、適用する。
  */
+// applySceneSettings() メソッド内
 applySceneSettings() {
     const keyToLoad = this.layoutDataKey || this.scene.key;
     const layoutData = this.cache.json.get(keyToLoad);
@@ -71,10 +72,16 @@ applySceneSettings() {
             this.cameras.main.setBackgroundColor(settings.backgroundColor);
         }
 
-        // ★★★ updateフレームなら、this.matter.worldは100%存在する ★★★
-        /*if (settings.gravity && settings.gravity.y !== undefined) {
-            this.matter.world.gravity.y = settings.gravity.y;
-        }*/
+        // ★★★ 重力設定の修正 ★★★
+        if (settings.gravity && settings.gravity.enabled !== undefined) {
+            // this.matter.world.engine.gravity に直接アクセスする
+            // enabled が false なら重力をゼロに設定
+            this.matter.world.engine.gravity.x = settings.gravity.enabled ? (settings.gravity.x || 0) : 0;
+            this.matter.world.engine.gravity.y = settings.gravity.enabled ? (settings.gravity.y || 0) : 0;
+            // scale も重要なので設定可能にする
+            this.matter.world.engine.gravity.scale = settings.gravity.enabled ? (settings.gravity.scale !== undefined ? settings.gravity.scale : 0.001) : 0;
+            console.log(`[BaseGameScene] Gravity set to X: ${this.matter.world.engine.gravity.x}, Y: ${this.matter.world.engine.gravity.y}, Scale: ${this.matter.world.engine.gravity.scale}`);
+        }
 
         if (settings.lighting && settings.lighting.enabled) {
             this.lights.enable();
