@@ -626,31 +626,15 @@ addComponent(target, componentType, params = {}) {
     return componentInstance;
 }
 update(time, delta) {
-    // --- 0. (重要) シーンの初期設定と光源の遅延生成 ---
+    // --- 0. シーンの初期設定と光源の遅延生成 ---
     if (!this._sceneSettingsApplied) {
         this._sceneSettingsApplied = true;
 
-        // a. シーン全体の設定を適用
         this.applySceneSettings();
         
-        // b. ライトマネージャーが有効になった後、全オブジェクトにパイプラインを設定
-        if (this.lights.active) {
-            this.children.list.forEach(child => {
-                if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
-                    child.setPipeline('Light2D');
-                }
-            });
-            console.log(`[BaseGameScene] Applied 'Light2D' pipeline to all eligible objects.`);
-        }
-
-        // c. 待ちリストに溜まった光源をすべて生成する
         if (this._lightSourcesToCreate.length > 0) {
             this._lightSourcesToCreate.forEach(queuedObject => {
-                // ▼▼▼【ここが修正の核心です！！！】▼▼▼
-                // 待ちリストのオブジェクト名を使って、シーンから最新のインスタンスを取得し直す
                 const gameObject = this.children.getByName(queuedObject.name);
-                
-                // 最新のインスタンスが見つかり、ライトが有効なら処理を続行
                 if (gameObject && this.lights.active) {
                     const lightType = gameObject.getData('lightType') || 'point';
                     const lightColor = parseInt(gameObject.getData('lightColor') || '0xFFFFFF', 16);
@@ -659,7 +643,6 @@ update(time, delta) {
                     const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
                     const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
                     
-                    // ★★★ 最新のgameObjectの座標を使って光源を生成 ★★★
                     let newLight = this.lights.addPointLight(
                         gameObject.x + lightOffsetX,
                         gameObject.y + lightOffsetY,
@@ -669,52 +652,43 @@ update(time, delta) {
                     );
                     
                     if (newLight) {
-                        // ★★★ 最新のgameObjectにlightSourceを紐付ける ★★★
                         gameObject.lightSource = newLight;
-                        console.log(`%c[BaseGameScene] Successfully created light for '${gameObject.name}' at (${Math.round(newLight.x)}, ${Math.round(newLight.y)})`, 'color: lightgreen; font-weight: bold;');
+                        console.log(`%c[BaseGameScene] Light attached to '${gameObject.name}'. Inspect the object below.`, 'color: cyan; font-weight: bold;');
+                        console.log(gameObject); // ★ オブジェクト自体をログに出力
                     }
                 }
             });
             this._lightSourcesToCreate = [];
         }
     }
-       
-        // ▼▼▼【ここからが修正の核心】▼▼▼
-        // --- 1. 遅延実行キューに溜まったアクションをすべて実行 ---
-        if (this._deferredActions.length > 0) {
-            // キューのコピーを作成して、ループ中にキューが変更されても影響を受けないようにする
-            const actionsToRun = [...this._deferredActions];
-            // 元のキューは空にする
-            this._deferredActions.length = 0;
-            
-            actionsToRun.forEach(action => action());
-        }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // --- 2. 既存のコンポーネント更新ループ ---
-        if (this.updatableComponents) {
-            this.updatableComponents.forEach(component => {
-                if (!component.gameObject.scene || !component.gameObject.active) {
-                    this.updatableComponents.delete(component);
-                    return;
-                }
+    // --- 1. 遅延実行キューの処理 ---
+    if (this._deferredActions.length > 0) {
+        const actionsToRun = [...this._deferredActions];
+        this._deferredActions.length = 0;
+        actionsToRun.forEach(action => action());
+    }
+
+    // --- 2. コンポーネント更新ループ ---
+    if (this.updatableComponents) {
+        this.updatableComponents.forEach(component => {
+            if (component.gameObject.scene && component.gameObject.active) {
                 component.update(time, delta);
-            });
-        }
-       // --- 3. 光源追従ロジック (既存のコード) ---
-    // このループはここに存在し続ける必要があります
+            }
+        });
+    }
+
+    // --- 3. 光源追従ロジック ---
     this.children.list.forEach(gameObject => {
         if (gameObject.lightSource instanceof Phaser.GameObjects.Light) {
-            if (gameObject.name === 'torch') {
-                // 毎フレーム、コンソールに座標が出力されるか確認してください
-                console.log(`[Tracking Light] Torch at (${Math.round(gameObject.x)}, ${Math.round(gameObject.y)}). Light at (${Math.round(gameObject.lightSource.x)}, ${Math.round(gameObject.lightSource.y)})`);
+            // ★★★ 追従ログを強化 ★★★
+            const oldX = Math.round(gameObject.lightSource.x);
+            const newX = Math.round(gameObject.x + (gameObject.getData('lightOffsetX') || 0));
+            if (oldX !== newX) {
+                 console.log(`[Tracking] Updating light for '${gameObject.name}'. From ${oldX} to ${newX}`);
             }
-            if (gameObject.active && gameObject.scene === this) {
-                const lightOffsetX = gameObject.getData('lightOffsetX') || 0;
-                const lightOffsetY = gameObject.getData('lightOffsetY') || 0;
-                gameObject.lightSource.x = gameObject.x + lightOffsetX;
-                gameObject.lightSource.y = gameObject.y + lightOffsetY;
-            }
+            gameObject.lightSource.x = gameObject.x + (gameObject.getData('lightOffsetX') || 0);
+            gameObject.lightSource.y = gameObject.y + (gameObject.getData('lightOffsetY') || 0);
         }
     });
 }

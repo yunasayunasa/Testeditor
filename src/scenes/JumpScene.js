@@ -167,29 +167,27 @@ export default class JumpScene extends BaseGameScene {
             console.log("[JumpScene] Jump button listener is now active.");
         }
     }
-  // in JumpScene.js
-onSetupComplete() {
-    console.log("[JumpScene] onSetupComplete called.");
+ onSetupComplete() {
+    console.log("[JumpScene] onSetupComplete called. This is the final step in setup.");
 
-    // --- 1. JSONデータを読み込む (キーは動的に決定) ---
+    // --- 1. ジョイスティックのセットアップ ---
     const keyToLoad = this.layoutDataKey || this.scene.key;
     const layoutData = this.cache.json.get(keyToLoad);
-
-    // --- 2. 読み込んだデータに基づいてジョイスティックを再生成 ---
     if (layoutData && layoutData.hasJoystick) {
         this.addJoystickFromEditor(false);
-    } else {
-        const isDebug = new URLSearchParams(window.location.search).has('debug');
-        if (!isDebug) {
-            this.addJoystickFromEditor(false);
-        }
     }
 
-   
-    
+    // ★★★ 2. (最重要) 全てのオブジェクトの準備が整ったこのタイミングで、パイプラインを設定 ★★★
+    console.log("--- Applying Light2D Pipeline to all objects NOW. ---");
+    this.children.list.forEach(child => {
+        if (child instanceof Phaser.GameObjects.Image || child instanceof Phaser.GameObjects.Sprite) {
+            child.setPipeline('Light2D');
+            console.log(`Pipeline set for: ${child.name}`);
+        }
+    });
 
-    // --- 3. プレイヤーとカメラのセットアップ (変更なし) ---
-    this.setupPlayerAndCamera(); // ★ onSetupComplete内でヘルパーを呼ぶ形に統一
+    // --- 3. プレイヤーとカメラのセットアップ ---
+    this.setupPlayerAndCamera();
     this.attachJumpButtonListener();
 }
       /**
