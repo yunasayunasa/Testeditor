@@ -61,32 +61,41 @@ export default class BaseGameScene extends Phaser.Scene {
  */
 // applySceneSettings() メソッド内
 applySceneSettings() {
+    // ★★★ メソッドの先頭で、一度だけ実行されるようにフラグを立てる ★★★
+    if (this._sceneSettingsApplied) return;
+    this._sceneSettingsApplied = true;
+
     const keyToLoad = this.layoutDataKey || this.scene.key;
     const layoutData = this.cache.json.get(keyToLoad);
 
     if (layoutData && layoutData.scene_settings) {
-        console.log(`[BaseGameScene] Applying 'scene_settings' in the first update frame...`);
+        console.log(`[BaseGameScene] Applying 'scene_settings'...`); // ログメッセージを修正
         const settings = layoutData.scene_settings;
 
         if (settings.backgroundColor) {
             this.cameras.main.setBackgroundColor(settings.backgroundColor);
         }
 
-        // ★★★ 重力設定の修正 ★★★
-        if (settings.gravity && settings.gravity.enabled !== undefined) {
-            // this.matter.world.engine.gravity に直接アクセスする
-            // enabled が false なら重力をゼロに設定
-            this.matter.world.engine.gravity.x = settings.gravity.enabled ? (settings.gravity.x || 0) : 0;
-            this.matter.world.engine.gravity.y = settings.gravity.enabled ? (settings.gravity.y || 0) : 0;
-            // scale も重要なので設定可能にする
-            this.matter.world.engine.gravity.scale = settings.gravity.enabled ? (settings.gravity.scale !== undefined ? settings.gravity.scale : 0.001) : 0;
-            console.log(`[BaseGameScene] Gravity set to X: ${this.matter.world.engine.gravity.x}, Y: ${this.matter.world.engine.gravity.y}, Scale: ${this.matter.world.engine.gravity.scale}`);
+        // 重力設定 (initSceneWithDataから呼ばれるならthis.matter.worldは存在するはず)
+        if (this.matter && this.matter.world && settings.gravity) {
+            if (settings.gravity.enabled !== undefined) {
+                this.matter.world.engine.gravity.x = settings.gravity.enabled ? (settings.gravity.x || 0) : 0;
+                this.matter.world.engine.gravity.y = settings.gravity.enabled ? (settings.gravity.y || 0) : 0;
+                this.matter.world.engine.gravity.scale = settings.gravity.enabled ? (settings.gravity.scale !== undefined ? settings.gravity.scale : 0.001) : 0;
+            } else if (settings.gravity.y !== undefined) {
+                // 下位互換性のため、yのみの指定も受け付ける
+                this.matter.world.engine.gravity.y = settings.gravity.y;
+            }
         }
-
+        
+        // ★★★ ライティング設定 (ここが重要) ★★★
         if (settings.lighting && settings.lighting.enabled) {
-            this.lights.enable();
+            this.lights.enable(); // ★★★ ここでライトマネージャーが有効化される ★★★
             if (settings.lighting.ambientColor) {
                 this.lights.setAmbientColor(Phaser.Display.Color.ValueToColor(settings.lighting.ambientColor).color);
+            }
+            if (settings.lighting.lightCount) {
+                this.lights.setMaxLights(settings.lighting.lightCount);
             }
         }
     }
@@ -113,7 +122,8 @@ initSceneWithData() {
 
     // --- 3. JSONデータが存在するかチェック ---
     if (layoutData) {
-        
+         // --- 4. (重要) オブジェクトをビルドする"前"にシーン全体の設定を適用 ---
+        this.applySceneSettings(); // ★★★ このメソッドをここに移動 ★★★
         // ▼▼▼【ここに追加します！】▼▼▼
         // --------------------------------------------------------------------
         // --- 4. (重要) オブジェクトをビルドする"前"にアニメーションを生成 ---
@@ -642,10 +652,7 @@ addComponent(target, componentType, params = {}) {
      * 遅延実行キューの処理を追加
      */
     update(time, delta) {
-        if (!this._sceneSettingsApplied) {
-        this.applySceneSettings();
-        this._sceneSettingsApplied = true;
-    }
+       
         // ▼▼▼【ここからが修正の核心】▼▼▼
         // --- 1. 遅延実行キューに溜まったアクションをすべて実行 ---
         if (this._deferredActions.length > 0) {
