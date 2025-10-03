@@ -98,35 +98,38 @@
         </div> <!-- /#overlay-controls -->
 
 
-        <!-- (C) Bottom Panel: タイルマップエディタ -->
-       <div id="bottom-panel">
-            <div id="tilemap-editor-panel">
-             <!---   Tool Selection Area 
-                <div id="tools-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Tools</div>
-                    <div class="panel-section-content">
-                        <button class="tool-button active" title="Brush (B)"><img src="editor_icons/brush.svg" alt="Brush"></button>
-                        <button class="tool-button" title="Eraser (E)"><img src="editor_icons/eraser.svg" alt="Eraser"></button>
-                        <button class="tool-button" title="Fill (F)"><img src="editor_icons/fill.svg" alt="Fill"></button>
+        <!-- Tilemap Editor Modal -->
+<div id="tilemap-editor-overlay" class="modal-overlay">
+    <div class="modal-window wide">
+        <div class="modal-header">
+            <h3>Tilemap Editor</h3>
+            <button id="tilemap-editor-close-btn">&times;</button>
+        </div>
+        <div class="modal-content" style="display: flex;">
+            <!-- 左ペイン: タイルマップリスト -->
+            <div id="tilemap-list-panel" style="width: 200px; border-right: 1px solid #444;">
+                <h4>Tilemaps</h4>
+                <div id="tilemap-list-container">
+                    <!-- JSでタイルマップのリストを生成 -->
+                </div>
+            </div>
+            <!-- 右ペイン: プレビューと操作パネル -->
+            <div id="tilemap-preview-panel" style="flex-grow: 1; display: flex; flex-direction: column;">
+                <div id="tilemap-preview-header">
+                    <span id="selected-tilemap-name">No tilemap selected</span>
+                </div>
+                <div id="tilemap-preview-wrapper" style="overflow: auto; flex-grow: 1;">
+                    <div id="tilemap-preview-content">
+                         <!-- JSでタイルマップ画像とクロップ用のUIを生成 -->
                     </div>
                 </div>
-                 Layer Management Area 
-                <div id="layers-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Layers</div>
-                    <div class="panel-section-content">
-                        < Layer list is dynamically generated here 
-                    </div>
-                </div>--->
-          <!---     Tileset Display Area---
-                <div id="tileset-panel" class="bottom-panel-section">
-                    <div class="panel-section-header">Tileset</div>
-                    <div id="tileset-preview" class="panel-section-content">
-                    <!---   Tileset image and selection highlight are displayed here --
-                    </div>
-                    <button id="add-tile-button" class="panel-footer-button">タイルを追加</button>
-                </div>-->
+                <div id="tilemap-action-panel">
+                    <button id="crop-and-place-btn">Crop and Place</button>
+                </div>
             </div>
-        </div>  
+        </div>
+    </div>
+</div> 
 
 
         <!-- (D) Modal Windows -->
@@ -267,4 +270,5 @@
     <script type="module" src="src/main.js"></script>
 
 </body>
+
 </html>
