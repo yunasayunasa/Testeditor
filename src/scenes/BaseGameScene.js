@@ -562,45 +562,49 @@ applyProperties(gameObject, layout) {
     // ▼▼▼ ここからが、物理ボディ生成の最後の正直です ▼▼▼
     // --------------------------------------------------------------------
     // --- 5. 物理ボディの生成と設定 (完全手動モード) ---
-    if (data.physics) {
+   if (data.physics) {
         const phys = data.physics;
 
-        // --- 5a. 既存のボディがあれば、完全に削除 ---
-        if (gameObject.body) {
-            this.matter.world.remove(gameObject.body);
-        }
+        if (gameObject.body) this.matter.world.remove(gameObject.body);
 
-        // --- 5b. スケール適用後の、最終的な表示サイズと位置を取得 ---
         const bodyWidth = gameObject.displayWidth;
         const bodyHeight = gameObject.displayHeight;
         const bodyX = gameObject.x;
         const bodyY = gameObject.y;
 
-        // --- 5c. Matter.jsのネイティブ関数で、ボディを「手動で」作成 ---
-        const newBody = this.matter.bodies.rectangle(bodyX, bodyY, bodyWidth, bodyHeight, {
-            isStatic: phys.isStatic,
-            isSensor: phys.isSensor
-        });
+        const shape = gameObject.getData('shape') || 'rectangle';
+        let newBody;
+        if (shape === 'circle') {
+            const radius = Math.min(bodyWidth, bodyHeight) / 2;
+            newBody = this.matter.bodies.circle(bodyX, bodyY, radius, { isStatic: phys.isStatic, isSensor: phys.isSensor });
+        } else {
+            newBody = this.matter.bodies.rectangle(bodyX, bodyY, bodyWidth, bodyHeight, { isStatic: phys.isStatic, isSensor: phys.isSensor });
+        }
         
-        // --- 5d. 作成したボディを、物理ワールドに「手動で」追加 ---
-        this.matter.world.add(newBody);
+        // ★★★ ここからが修正の核心です ★★★
+        // --- 5. Matter.jsのネイティブプロパティを「直接」設定 ---
+        const MatterBody = Phaser.Physics.Matter.Matter.Body;
+        
+        // 摩擦 (friction)
+        MatterBody.set(newBody, 'friction', phys.friction ?? 0.1);
+        // 空気抵抗 (frictionAir)
+        MatterBody.set(newBody, 'frictionAir', phys.frictionAir ?? 0.01);
+        // 反発 (restitution)
+        MatterBody.set(newBody, 'restitution', phys.restitution ?? 0);
+        // 回転固定 (inertia)
+        if (phys.fixedRotation) {
+            MatterBody.setInertia(newBody, Infinity);
+        }
 
-        // --- 5e. GameObjectに、このボディへの参照を手動で設定 ---
+        // --- 6. ボディとGameObjectを関連付ける ---
+        this.matter.world.add(newBody);
         gameObject.body = newBody;
-        
-        // --- 5f. ボディ側に、GameObjectへの参照を手動で設定 ---
         newBody.gameObject = gameObject;
         
-        // --- 5g. その他の物理プロパティを適用 ---
-        gameObject.setFriction(phys.friction ?? 0.1);
-        gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
-        gameObject.setBounce(phys.restitution ?? 0);
-        if (phys.fixedRotation !== undefined) {
-            gameObject.setFixedRotation(phys.fixedRotation);
-            gameObject.setData('fixedRotation', phys.fixedRotation);
-        }
+        // --- 7. 永続化用のデータを設定 ---
+        gameObject.setData('fixedRotation', phys.fixedRotation === true);
         gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-        gameObject.setData('shape', phys.shape || 'rectangle');
+        gameObject.setData('shape', shape);
     }
     // --------------------------------------------------------------------
     
