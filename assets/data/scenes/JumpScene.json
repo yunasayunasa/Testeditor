@@ -21,8 +21,8 @@
     {
       "name": "torch",
       "type": "Image",
-      "x": 640,
-      "y": 360,
+      "x": 352,
+      "y": 263,
       "depth": 10,
       "scaleX": 1,
       "scaleY": 1,
@@ -30,8 +30,8 @@
       "alpha": 1,
       "layer": "Foreground",
       "events": [],
-      "data": {},
-      "texture": "cg01"
+      "texture": "cg01",
+      "data": {}
     },
     {
       "name": "cg01_3",
@@ -60,11 +60,11 @@
           "connections": []
         }
       ],
+      "texture": "cg01",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "cg01",
       "physics": {
         "isStatic": true,
         "isSensor": true,
@@ -90,8 +90,8 @@
       "alpha": 0,
       "layer": "Gameplay",
       "events": [],
-      "data": {},
-      "texture": "bgtest3"
+      "texture": "bgtest3",
+      "data": {}
     },
     {
       "name": "bgtest4_1758338485276",
@@ -123,8 +123,8 @@
           "connections": []
         }
       ],
-      "data": {},
-      "texture": "bgtest4"
+      "texture": "bgtest4",
+      "data": {}
     },
     {
       "name": "bgtest3_1758338618267",
@@ -155,8 +155,8 @@
           "connections": []
         }
       ],
-      "data": {},
-      "texture": "bgtest3"
+      "texture": "bgtest3",
+      "data": {}
     },
     {
       "name": "tartman_run_1758964419196",
@@ -169,8 +169,8 @@
       "angle": 0,
       "alpha": 1,
       "events": [],
-      "data": {},
-      "texture": "__DEFAULT"
+      "texture": "__DEFAULT",
+      "data": {}
     },
     {
       "name": "anila_walk_1758964517325",
@@ -183,8 +183,8 @@
       "angle": 0,
       "alpha": 1,
       "events": [],
-      "data": {},
-      "texture": "__DEFAULT"
+      "texture": "__DEFAULT",
+      "data": {}
     },
     {
       "name": "player",
@@ -242,11 +242,11 @@
         }
       ],
       "anim_prefix": "anila",
+      "texture": "anila_walk",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "anila_walk",
       "physics": {
         "isStatic": false,
         "isSensor": false,
@@ -311,6 +311,7 @@
         }
       ],
       "anim_prefix": "tartman",
+      "texture": "tartman_run",
       "data": {
         "stateMachine": {
           "initialState": "idle",
@@ -424,7 +425,6 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tartman_run",
       "physics": {
         "isStatic": false,
         "isSensor": false,
@@ -450,11 +450,11 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "texture": "__MISSING",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -480,11 +480,11 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "texture": "__MISSING",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -510,11 +510,11 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "texture": "__MISSING",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -540,11 +540,11 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "texture": "__MISSING",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
@@ -570,11 +570,42 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "texture": "__MISSING",
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759486113533",
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
+    },
+    {
+      "name": "tileset_terrain_chunk_1759487675324",
+      "type": "Image",
+      "x": 805,
+      "y": 537,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "textureData": "",
+      "data": {
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
+      "texture": "tileset_terrain_chunk_1759487675324",
       "physics": {
         "isStatic": true,
         "isSensor": false,
