@@ -13,40 +13,45 @@ export default class PreloadScene extends Phaser.Scene {
         this.loadingText = null;
     }
 
-    preload() {
-        console.log("PreloadScene: 起動。全アセットのロードを開始します。");
-        
-        // --- 1. ロード画面UIの表示 ---
-        this.setupLoadingUI();
-          this.load.plugin('rexvirtualjoystickplugin', 'src/plugins/rexvirtualjoystickplugin.min.js', true);
-        // --- 2. 最初に asset_define.json のみロード ---
-        this.load.json('asset_define', 'assets/asset_define.json');
-        //this.load.script('ui_definitions', 'src/ui/index.js');
-        this.load.json('physics_define', 'assets/data/physics_define.json');
+   preload() {
+    console.log("PreloadScene: 起動。");
 
-        this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
-    }
+    // --- 1. ロード画面UIと必須プラグイン/ファイルを予約 ---
+    this.setupLoadingUI();
+    this.load.plugin('rexvirtualjoystickplugin', 'src/plugins/rexvirtualjoystickplugin.min.js', true);
+    this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
+    this.load.json('physics_define', 'assets/data/physics_define.json');
+
+    // --- 2. 最初に asset_define.json のみロードを開始 ---
+    this.load.json('asset_define', 'assets/asset_define.json');
+
+    // ★★★ ここからが修正の核心 ★★★
+    // preload()の最後に、ロードの完了を待つリスナーを設定
+    // これにより、preload()で予約したファイルが全てロードされたら create() が呼ばれる
+}
 
     create() {
-        console.log("PreloadScene: create開始。アセット定義を解析します。");
-        
-        // --- 3. コアマネージャーの初期化 ---
-        this.registry.set('configManager', new ConfigManager());
-        this.registry.set('stateManager', new StateManager());
-this.registry.set('physics_define', this.cache.json.get('physics_define'));
-        const assetDefine = this.cache.json.get('asset_define');
-       
-        this.registry.set('ComponentRegistry', ComponentRegistry);
-        console.log("[PreloadScene] ComponentRegistry has been registered globally.");
-        // --- 4. asset_define.json に基づいてロードキューを構築 ---
-        this.buildLoadQueue(assetDefine);
+    console.log("PreloadScene: create開始。アセット定義を解析します。");
+    
+    // ★ この時点では、preload()で予約したファイルは全てロード完了していることが保証される
+    const assetDefine = this.cache.json.get('asset_define');
+    
+    // --- 3. コアマネージャーの初期化 ---
+    this.registry.set('configManager', new ConfigManager());
+    this.registry.set('stateManager', new StateManager());
+    this.registry.set('physics_define', this.cache.json.get('physics_define'));
+    this.registry.set('ComponentRegistry', ComponentRegistry);
 
-        // --- 5. 全てのロードが完了した後の処理を定義 ---
-        this.load.once('complete', () => this.onLoadComplete(assetDefine));
-        
-        // --- 6. ロードを開始 ---
-        this.load.start();
-    }
+    // --- 4. asset_define.json に基づいて「第二段階」のロードキューを構築 ---
+    // この buildLoadQueue は、画像やサウンドなど、重量級のアセットをキューに追加する
+    this.buildLoadQueue(assetDefine);
+
+    // --- 5. 「第二段階」のロードが全て完了した後の処理を定義 ---
+    this.load.once('complete', () => this.onLoadComplete(assetDefine));
+    
+    // --- 6. 「第二段階」のロードを開始 ---
+    this.load.start();
+}
 
     /**
      * ロード画面のUIをセットアップする
