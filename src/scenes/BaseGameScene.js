@@ -229,34 +229,49 @@ createAnimationsFromLayout(layoutData) {
 addCroppedTilemapChunk(tilemapKey, cropRect) {
     if (cropRect.width <= 0 || cropRect.height <= 0) return null;
 
-    // 1. 一時的なRenderTextureを作成
-    const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
-    const tempImage = this.add.image(0, 0, tilemapKey).setOrigin(0, 0).setVisible(false);
-    rt.draw(tempImage, -cropRect.x, -cropRect.y);
-    tempImage.destroy();
+    // --- ステップA：見た目の生成 (Graphics + CanvasTexture 方式) ---
 
-    // ★★★ ここが、RenderTextureから同期的にBase64を取得する「最後の」方法です ★★★
-    // 2. RenderTextureの内部canvasから、直接 toDataURL() を呼び出す
-    const base64Data = rt.canvas.toDataURL();
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // 1. クロップサイズと同じ大きさの、非表示のGraphicsオブジェクトを作成
+    const graphics = this.add.graphics().setVisible(false);
 
-    // 3. 使い終わったRenderTextureを破棄
-    rt.destroy();
+    // 2. このGraphicsに、タイルマップテクスチャの一部を描画
+    //    (Graphicsはテクスチャの一部を描画する機能を持たないため、
+    //     一時的なImageオブジェクトのフレームをカットして描画するハックを使う)
+    const tempImage = this.add.image(0, 0, tilemapKey)
+        .setOrigin(0, 0)
+        .setVisible(false)
+        .setCrop(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
+    
+    // 3. Graphicsに、クロップした一時Imageを描画する
+    //    (これにより、Graphicsの内部Canvasにピクセルデータが転送される)
+    graphics.blit(tempImage, 0, 0, cropRect.width, cropRect.height);
 
-    // 4. Base64データから新しいテクスチャを生成
+    // 4. 新しいテクスチャキーを生成
     const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
-    this.textures.addBase64(newTextureKey, base64Data);
+    
+    // 5. Graphicsの描画内容から、新しいテクスチャを生成
+    graphics.generateTexture(newTextureKey, cropRect.width, cropRect.height);
 
-    // 5. 新しいテクスチャでImageオブジェクトを作成
+    // 6. Graphicsの内部Canvasから、直接Base64データを取得
+    const base64Data = graphics.canvas.toDataURL();
+    
+    // 7. 使い終わった一時オブジェクトを全て破棄
+    tempImage.destroy();
+    graphics.destroy();
+
+
+    // --- これ以降の処理は、成功したロジックをそのまま使う ---
+
+    // 8. 新しいテクスチャでImageオブジェクトを作成
     const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
     const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
     const chunkImage = this.add.image(centerX, centerY, newTextureKey);
     chunkImage.name = `${tilemapKey}_chunk_${Date.now()}`;
 
-    // 6. 生成したBase64データを、オブジェクト自身に保存する
+    // 9. 生成したBase64データを、オブジェクト自身に保存する
     chunkImage.setData('textureData', base64Data);
 
-    // 7. 物理ボディの生成と初期化
+    // 10. 物理ボディの生成と初期化
     const layout = {
         name: chunkImage.name, type: 'Image',
         x: Math.round(centerX), y: Math.round(centerY),
