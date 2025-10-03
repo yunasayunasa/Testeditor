@@ -263,7 +263,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 2118,
+      "x": 1832,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -439,10 +439,10 @@
       }
     },
     {
-      "name": "tileset_terrain_chunk_1759488550698",
+      "name": "tileset_terrain_chunk_1759488889311",
       "type": "Image",
-      "x": 875,
-      "y": 532,
+      "x": 730,
+      "y": 552,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,

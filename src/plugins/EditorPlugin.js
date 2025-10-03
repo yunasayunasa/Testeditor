@@ -2041,7 +2041,7 @@ createColorInput(container, label, initialValue, callback) {
      * 現在のシーンレイアウトをJSON形式でエクスポートする。
      * UISceneとBaseGameSceneの両方に対応した、最終確定版。
      */
-    exportLayoutToJson() {
+  async  exportLayoutToJson() {
         if (!this.selectedObject || !this.selectedObject.scene) {
             alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
             return;
@@ -2157,13 +2157,22 @@ createColorInput(container, label, initialValue, callback) {
                 // 6. 固有プロパティの抽出
                 // 固有プロパティの抽出
                 if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
-    const textureKey = gameObject.texture.key;
-    if (textureKey.includes('_chunk_')) {
-        objData.textureData = this.game.textures.getBase64(textureKey);
-    } else {
-        objData.texture = textureKey;
-    }
-}
+                    const textureKey = gameObject.texture.key;
+                    
+                    if (textureKey.includes('_chunk_')) {
+                        
+                        // ▼▼▼ 非同期処理 ▼▼▼
+                        objData.textureData = await new Promise(resolve => {
+                            this.game.textures.getBase64(textureKey, (base64Data) => {
+                                resolve(base64Data);
+                            });
+                        });
+                        // ▲▲▲ 非同期処理 ▲▲▲
+
+                    } else {
+                        objData.texture = textureKey;
+                    }
+                }
 
 // --- 6b. その他の固有プロパティを抽出 ---
 if (typeof gameObject.text === 'string') {
