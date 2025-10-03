@@ -1,15 +1,4 @@
 {
-  "scene_settings": {
-    "backgroundColor": "0x44ffcc",
-    "gravity": {
-      "y": 0.5
-    },
-   "lighting": {
-      "enabled": true,
-      "ambientColor": "0x000000",
-      "lightCount": 10
-    }
-  },
   "hasJoystick": true,
   "layers": [
     {
@@ -29,24 +18,21 @@
     }
   ],
   "objects": [
-    { 
+    {
       "name": "torch",
       "type": "Image",
-      "texture": "cg01",
       "x": 640,
       "y": 360,
       "depth": 10,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "layer": "Foreground",
-      "data": {
-        "isLightSource": true,
-        "lightType": "point",
-        "lightColor": "0xFFFF88",
-        "lightRadius": 250,
-        "lightIntensity": 0.3,
-        "lightOffsetX": 0,
-        "lightOffsetY": -30
-      }
-    }, 
+      "events": [],
+      "data": {},
+      "texture": "cg01"
+    },
     {
       "name": "cg01_3",
       "type": "Image",
@@ -202,7 +188,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 439,
+      "x": 1326,
       "y": 625,
       "depth": 0,
       "scaleX": 0.65,
@@ -211,7 +197,6 @@
       "alpha": 1,
       "layer": "Gameplay",
       "group": "player",
-      
       "events": [
         {
           "id": "event_1759315288106",
@@ -258,16 +243,7 @@
       "anim_prefix": "anila",
       "data": {
         "ignoreGravity": false,
-        "shape": "rectangle",
-         "isLightSource": true,
-    "lightType": "spot",          
-    "lightColor": "0xFFFFFF",      
-    "lightRadius": 400,           
-    "lightIntensity": 0.4,         
-    "lightAngle": 0,             
-    "lightConeAngle": 45,          
-    "lightOffsetX": 20,            
-    "lightOffsetY": 0    
+        "shape": "rectangle"
       },
       "texture": "anila_walk",
       "physics": {
@@ -285,7 +261,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1293,
+      "x": 2232,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -324,6 +300,12 @@
         {
           "type": "ReturnHomeComponent",
           "params": {}
+        },
+        {
+          "type": "DetectionAreaComponent",
+          "params": {
+            "radius": 440
+          }
         }
       ],
       "anim_prefix": "tartman",
