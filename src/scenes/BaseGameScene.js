@@ -224,35 +224,55 @@ createAnimationsFromLayout(layoutData) {
  * @param {string} tilemapKey - 元となるタイルマップのアセットキー
  * @param {{x: number, y: number, width: number, height: number}} cropRect - クロップする矩形範囲
  */
+// in BaseGameScene.js
+
 addCroppedTilemapChunk(tilemapKey, cropRect) {
     console.log(`[BaseGameScene] Adding cropped chunk from '${tilemapKey}'`, cropRect);
 
-    // --- ステップA：見た目の生成 ---
+    // --- ステップA：見た目の生成 (RenderTexture -> Camera.copy 方式に変更) ---
     
-    // 1. 一時的なRenderTextureを作成
-    const rt = this.make.renderTexture({
-        width: cropRect.width,
-        height: cropRect.height
-    }, false); // false = メモリ上だけで、シーンには追加しない
+    // ガード節: クロップ範囲が不正なら中止
+    if (cropRect.width <= 0 || cropRect.height <= 0) {
+        console.error("[BaseGameScene] Invalid crop rectangle.", cropRect);
+        return null;
+    }
 
-    // 2. RenderTextureに、タイルマップの指定範囲だけを描画
-    // (第3,4引数が描画先のX,Y、第5,6引数が描画元のX,Y)
-    rt.draw(tilemapKey, 0, 0, cropRect.x, cropRect.y);
+    // 1. 一時的なRenderTextureをクロップサイズで作成
+    const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
 
-    // 3. RenderTextureから新しいテクスチャキーを生成
+    // 2. 一時的な非表示のImageオブジェクトを、元のタイルマップテクスチャで作成
+    //    (カメラのコピー機能は、シーン上のオブジェクトを対象とするため)
+    const tempImage = this.add.image(0, 0, tilemapKey).setOrigin(0, 0).setVisible(false);
+
+    // ★★★ ここが新しい核心部分 ★★★
+    // 3. RenderTextureの内部カメラを使って、一時Imageの指定領域だけをコピーする
+    rt.camera.copy(
+        cropRect.x,      // コピー元のX座標
+        cropRect.y,      // コピー元のY座標
+        cropRect.width,  // コピーする幅
+        cropRect.height, // コピーする高さ
+        0,               // コピー先のX座標 (RenderTextureの左上)
+        0,               // コピー先のY座標 (RenderTextureの左上)
+        true,            // true = 引数の対象をカメラ全体ではなく、シーン上の全オブジェクトにする
+        tempImage        // コピー対象のオブジェクトを明示的に指定
+    );
+    // ★★★★★★★★★★★★★★★★★★★
+
+    // 4. 使い終わった一時Imageは即座に破棄
+    tempImage.destroy();
+
+    // 5. RenderTextureから新しいテクスチャキーを生成
     const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
     rt.saveTexture(newTextureKey);
-    
-    // 4. 生成したテクスチャを使ってImageオブジェクトを作成
+    rt.destroy();
+
+    // 6. 生成したテクスチャを使って最終的なImageオブジェクトを作成
     const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
     const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
     const chunkImage = this.add.image(centerX, centerY, newTextureKey);
     chunkImage.name = `${tilemapKey}_chunk_${Date.now()}`;
 
-
-    // --- ステップB & C：物理ボディの生成と合体 ---
-
-    // 1. JSONレイアウトオブジェクトを擬似的に作成
+    // ... (以降の物理ボディ生成と初期化は変更なし) ...
     const layout = {
         name: chunkImage.name,
         type: 'Image',
@@ -261,20 +281,13 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
         y: centerY,
         layer: this.editorUI?.activeLayerName || 'Gameplay',
         physics: {
-            isStatic: true, // タイルマップの断片は静的ボディ
-            width: cropRect.width,  // ★ クロップした幅
-            height: cropRect.height // ★ クロップした高さ
+            isStatic: true,
+            width: cropRect.width,
+            height: cropRect.height
         }
     };
     
-    // 2. 既存の applyProperties を再利用して物理ボディを生成・適用
-    //    (applyProperties内でmatter.add.gameObjectが呼ばれる)
     this.applyProperties(chunkImage, layout);
-
-
-    // --- ステップD：初期化 ---
-
-    // 既存の initComponentsAndEvents を呼び出して、エディタで選択・操作可能にする
     this.initComponentsAndEvents(chunkImage);
 
     console.log(`[BaseGameScene] Cropped chunk '${chunkImage.name}' created successfully.`);
