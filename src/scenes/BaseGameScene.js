@@ -226,52 +226,30 @@ createAnimationsFromLayout(layoutData) {
  */
 // in BaseGameScene.js
 
+// ★★★ 既存の addCroppedTilemapChunk を、この内容で完全に置き換える ★★★
 addCroppedTilemapChunk(tilemapKey, cropRect) {
     if (cropRect.width <= 0 || cropRect.height <= 0) return null;
 
-    // --- ステップA：見た目の生成 (Graphics + CanvasTexture 方式) ---
-
-    // 1. クロップサイズと同じ大きさの、非表示のGraphicsオブジェクトを作成
-    const graphics = this.add.graphics().setVisible(false);
-
-    // 2. このGraphicsに、タイルマップテクスチャの一部を描画
-    //    (Graphicsはテクスチャの一部を描画する機能を持たないため、
-    //     一時的なImageオブジェクトのフレームをカットして描画するハックを使う)
-    const tempImage = this.add.image(0, 0, tilemapKey)
-        .setOrigin(0, 0)
-        .setVisible(false)
-        .setCrop(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-    
-    // 3. Graphicsに、クロップした一時Imageを描画する
-    //    (これにより、Graphicsの内部Canvasにピクセルデータが転送される)
-    graphics.blit(tempImage, 0, 0, cropRect.width, cropRect.height);
-
-    // 4. 新しいテクスチャキーを生成
-    const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
-    
-    // 5. Graphicsの描画内容から、新しいテクスチャを生成
-    graphics.generateTexture(newTextureKey, cropRect.width, cropRect.height);
-
-    // 6. Graphicsの内部Canvasから、直接Base64データを取得
-    const base64Data = graphics.canvas.toDataURL();
-    
-    // 7. 使い終わった一時オブジェクトを全て破棄
+    // 1. RenderTexture で新しいテクスチャを生成（この方法は確実）
+    const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
+    const tempImage = this.add.image(0, 0, tilemapKey).setOrigin(0, 0).setVisible(false).setCrop(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
+    rt.draw(tempImage, 0, 0); // ★ 座標オフセットなしで、クロップ済みの画像を描画
     tempImage.destroy();
-    graphics.destroy();
+    
+    const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
+    rt.saveTexture(newTextureKey);
+    rt.destroy();
 
-
-    // --- これ以降の処理は、成功したロジックをそのまま使う ---
-
-    // 8. 新しいテクスチャでImageオブジェクトを作成
+    // 2. Imageオブジェクトを生成
     const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
     const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
     const chunkImage = this.add.image(centerX, centerY, newTextureKey);
-    chunkImage.name = `${tilemapKey}_chunk_${Date.now()}`;
+    chunkImage.name = newTextureKey; // 名前もユニークに
 
-    // 9. 生成したBase64データを、オブジェクト自身に保存する
-    chunkImage.setData('textureData', base64Data);
+    // ★★★ 3. 永続化のための「設計図」をオブジェクトに保存 ★★★
+    chunkImage.setData('cropSource', { key: tilemapKey, rect: cropRect });
 
-    // 10. 物理ボディの生成と初期化
+    // 4. 物理ボディと初期化
     const layout = {
         name: chunkImage.name, type: 'Image',
         x: Math.round(centerX), y: Math.round(centerY),
@@ -281,9 +259,41 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
     this.applyProperties(chunkImage, layout);
     this.initComponentsAndEvents(chunkImage);
 
-    console.log(`[BaseGameScene] Cropped chunk '${chunkImage.name}' created with embedded texture data.`);
-    
     return chunkImage;
+}
+
+// ★★★ 既存の createObjectFromLayout を、この内容で完全に置き換える ★★★
+createObjectFromLayout(layout) {
+    // ★★★ 1. もし cropSource があれば、それを元にオブジェクトを再生成する ★★★
+    if (layout.cropSource) {
+        // addCroppedTilemapChunk とほぼ同じロジックでテクスチャをその場で再生成
+        const { key, rect } = layout.cropSource;
+        const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
+        const tempImage = this.add.image(0, 0, key).setOrigin(0, 0).setVisible(false).setCrop(rect.x, rect.y, rect.width, rect.height);
+        rt.draw(tempImage, 0, 0);
+        tempImage.destroy();
+        
+        const newTextureKey = `${key}_chunk_${Date.now()}_${Math.random()}`;
+        rt.saveTexture(newTextureKey);
+        rt.destroy();
+
+        // layout.texture を、今作った新しいテクスチャキーで上書き
+        layout.texture = newTextureKey;
+    }
+
+    // ★★★ 2. これまで通りのオブジェクト生成ロジックを実行 ★★★
+    let textureKey = layout.texture || '__DEFAULT';
+    
+    if (layout.type === 'Text') {
+        const style = layout.style || { fontSize: '32px', fill: '#fff' };
+        const textObject = new Phaser.GameObjects.Text(this, 0, 0, layout.text || '', style);
+        // ... (影の設定など)
+        return textObject;
+    }
+    if (layout.type === 'Sprite') {
+        return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
+    }
+    return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
 }
     /**
      * ★★★ 修正版 ★★★
