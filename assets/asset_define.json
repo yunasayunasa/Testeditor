@@ -79,8 +79,17 @@
         "stage2.json",
         "JumpScene.json"
       ]
+    },
+     "//": "--- ここにタイルセット用の定義を追加 ---",
+    "tilesets": {
+      "path": "assets/tilesets/",
+      "type": "image",
+      "list": [
+        "dungeon_tileset.png",
+        "outside_tileset.png"
+      ]
     }
   }
 }
-
+ 
   

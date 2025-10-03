@@ -219,12 +219,29 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
                 });
             }
         }
-        // --- 3. 他のタイプのアセットも、必要であればここに追加 ---
-        // (例: 音声ファイルなども、将来的にアセットブラウザで扱いたくなった場合)
-       
-        this.registry.set('asset_list', assetList);
-        console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
+       // --- file_lists を処理して、タイルマップを見つけ出す ---
+    if (assetDefine.file_lists) {
+        for (const groupKey in assetDefine.file_lists) {
+            // "tilesets" という名前のグループを見つけたら...
+            if (groupKey === 'tilesets') {
+                const group = assetDefine.file_lists[groupKey];
+                if (group.path && Array.isArray(group.list)) {
+                    for (const filename of group.list) {
+                        const key = filename.split('.')[0]; // 'dungeon_tileset.png' -> 'dungeon_tileset'
+                        assetList.push({
+                            key: key,
+                            type: 'tilemap', // ★ タイプを 'tilemap' として登録
+                            path: group.path + filename
+                        });
+                    }
+                }
+            }
+        }
     }
+    
+    this.registry.set('asset_list', assetList);
+    console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
+}
     /**
      * キャラクター定義オブジェクトを生成する
      */
