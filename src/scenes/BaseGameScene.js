@@ -562,47 +562,49 @@ applyProperties(gameObject, layout) {
     // ▼▼▼ ここからが、物理ボディ生成の最後の正直です ▼▼▼
     // --------------------------------------------------------------------
     // --- 5. 物理ボディの生成と設定 (完全手動モード) ---
-   if (data.physics) {
+    if (data.physics) {
         const phys = data.physics;
 
+        // 5a. 既存のボディがあれば削除
         if (gameObject.body) this.matter.world.remove(gameObject.body);
 
+        // 5b. スケール適用後の最終的な表示サイズを取得
         const bodyWidth = gameObject.displayWidth;
         const bodyHeight = gameObject.displayHeight;
-        const bodyX = gameObject.x;
-        const bodyY = gameObject.y;
 
+        // 5c. ボディの形状オプションを定義
         const shape = gameObject.getData('shape') || 'rectangle';
-        let newBody;
+        let shapeOptions;
         if (shape === 'circle') {
-            const radius = Math.min(bodyWidth, bodyHeight) / 2;
-            newBody = this.matter.bodies.circle(bodyX, bodyY, radius, { isStatic: phys.isStatic, isSensor: phys.isSensor });
+            shapeOptions = {
+                type: 'circle',
+                radius: Math.min(bodyWidth, bodyHeight) / 2
+            };
         } else {
-            newBody = this.matter.bodies.rectangle(bodyX, bodyY, bodyWidth, bodyHeight, { isStatic: phys.isStatic, isSensor: phys.isSensor });
-        }
-        
-        // ★★★ ここからが修正の核心です ★★★
-        // --- 5. Matter.jsのネイティブプロパティを「直接」設定 ---
-        const MatterBody = Phaser.Physics.Matter.Matter.Body;
-        
-        // 摩擦 (friction)
-        MatterBody.set(newBody, 'friction', phys.friction ?? 0.1);
-        // 空気抵抗 (frictionAir)
-        MatterBody.set(newBody, 'frictionAir', phys.frictionAir ?? 0.01);
-        // 反発 (restitution)
-        MatterBody.set(newBody, 'restitution', phys.restitution ?? 0);
-        // 回転固定 (inertia)
-        if (phys.fixedRotation) {
-            MatterBody.setInertia(newBody, Infinity);
+            shapeOptions = {
+                type: 'rectangle',
+                width: bodyWidth,
+                height: bodyHeight
+            };
         }
 
-        // --- 6. ボディとGameObjectを関連付ける ---
-        this.matter.world.add(newBody);
-        gameObject.body = newBody;
-        newBody.gameObject = gameObject;
+        // ★★★ 5d. setBodyメソッドを使って、ボディを生成・アタッチ ★★★
+        // このメソッドは、ヘルパーメソッド(setFriction等)を追加してくれます。
+        gameObject.setBody(shapeOptions, {
+            isStatic: phys.isStatic,
+            isSensor: phys.isSensor
+        });
         
-        // --- 7. 永続化用のデータを設定 ---
-        gameObject.setData('fixedRotation', phys.fixedRotation === true);
+        // ★★★ 5e. これで、setFrictionなどのヘルパーが使えるようになる ★★★
+        gameObject.setFriction(phys.friction ?? 0.1);
+        gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
+        gameObject.setBounce(phys.restitution ?? 0);
+        
+        if (phys.fixedRotation !== undefined) {
+            gameObject.setFixedRotation(phys.fixedRotation);
+            gameObject.setData('fixedRotation', phys.fixedRotation);
+        }
+
         gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
         gameObject.setData('shape', shape);
     }
