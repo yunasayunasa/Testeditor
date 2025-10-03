@@ -226,28 +226,23 @@ createAnimationsFromLayout(layoutData) {
  */
 addCroppedTilemapChunk(tilemapKey, cropRect) {
     console.log(`[BaseGameScene] Adding cropped chunk from '${tilemapKey}'`, cropRect);
-    
+
     // --- ステップA：見た目の生成 ---
     
-    // ★★★ 描画元のテクスチャオブジェクトをキーで取得 ★★★
-    const sourceTexture = this.textures.get(tilemapKey);
-    if (!sourceTexture) {
-        console.error(`[BaseGameScene] Source texture '${tilemapKey}' not found.`);
-        return null;
-    }
-
     // 1. 一時的なRenderTextureを作成
-    const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
+    const rt = this.make.renderTexture({
+        width: cropRect.width,
+        height: cropRect.height
+    }, false); // false = メモリ上だけで、シーンには追加しない
 
     // 2. RenderTextureに、タイルマップの指定範囲だけを描画
-    // ★★★ 描画元として、キーではなくテクスチャオブジェクトを渡す ★★★
-    rt.draw(sourceTexture, 0, 0, cropRect.width, cropRect.height, cropRect.x, cropRect.y);
+    // (第3,4引数が描画先のX,Y、第5,6引数が描画元のX,Y)
+    rt.draw(tilemapKey, 0, 0, cropRect.x, cropRect.y);
 
     // 3. RenderTextureから新しいテクスチャキーを生成
     const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
     rt.saveTexture(newTextureKey);
-    rt.destroy(); // ★ RenderTextureは使い終わったら破棄する
-
+    
     // 4. 生成したテクスチャを使ってImageオブジェクトを作成
     const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
     const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
