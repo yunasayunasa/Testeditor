@@ -562,51 +562,48 @@ applyProperties(gameObject, layout) {
     // ▼▼▼ ここからが、物理ボディ生成の最後の正直です ▼▼▼
     // --------------------------------------------------------------------
     // --- 5. 物理ボディの生成と設定 (完全手動モード) ---
-    if (data.physics) {
+   if (data.physics) {
         const phys = data.physics;
+        const MatterBody = Phaser.Physics.Matter.Matter.Body;
 
-        // 5a. 既存のボディがあれば削除
+        // --- 5a. 既存のボディがあれば削除 ---
         if (gameObject.body) this.matter.world.remove(gameObject.body);
-
-        // 5b. スケール適用後の最終的な表示サイズを取得
-        const bodyWidth = gameObject.displayWidth;
-        const bodyHeight = gameObject.displayHeight;
-
-        // 5c. ボディの形状オプションを定義
-        const shape = gameObject.getData('shape') || 'rectangle';
-        let shapeOptions;
-        if (shape === 'circle') {
-            shapeOptions = {
-                type: 'circle',
-                radius: Math.min(bodyWidth, bodyHeight) / 2
-            };
-        } else {
-            shapeOptions = {
-                type: 'rectangle',
-                width: bodyWidth,
-                height: bodyHeight
-            };
-        }
-
-        // ★★★ 5d. setBodyメソッドを使って、ボディを生成・アタッチ ★★★
-        // このメソッドは、ヘルパーメソッド(setFriction等)を追加してくれます。
-        gameObject.setBody(shapeOptions, {
+        
+        // --- 5b. this.matter.add.gameObject を使って、ボディを生成・アタッチ ---
+        // ★ これにより、setFrictionなどのヘルパーメソッドがGameObjectに生える
+        this.matter.add.gameObject(gameObject, {
             isStatic: phys.isStatic,
             isSensor: phys.isSensor
         });
-        
-        // ★★★ 5e. これで、setFrictionなどのヘルパーが使えるようになる ★★★
-        gameObject.setFriction(phys.friction ?? 0.1);
-        gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
-        gameObject.setBounce(phys.restitution ?? 0);
-        
-        if (phys.fixedRotation !== undefined) {
-            gameObject.setFixedRotation(phys.fixedRotation);
-            gameObject.setData('fixedRotation', phys.fixedRotation);
-        }
 
-        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-        gameObject.setData('shape', shape);
+        if (gameObject.body) {
+            // --- 5c. 形状を適用 ---
+            const shape = phys.shape || 'rectangle';
+            if (shape === 'circle') {
+                // setCircleはスケール適用前の半径を期待するので、基本サイズから計算
+                const radius = (gameObject.width + gameObject.height) / 4;
+                gameObject.setCircle(radius);
+            } else {
+                gameObject.setRectangle();
+            }
+
+            // --- 5d. スケールを物理ボディに「直接」適用 ---
+            // ★ これが全てのズレを解決する核心
+            MatterBody.scale(gameObject.body, gameObject.scaleX, gameObject.scaleY);
+
+            // --- 5e. これで、setFrictionなどのヘルパーが安全に使えるようになる ---
+            gameObject.setFriction(phys.friction ?? 0.1);
+            gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
+            gameObject.setBounce(phys.restitution ?? 0);
+            
+            if (phys.fixedRotation !== undefined) {
+                gameObject.setFixedRotation(phys.fixedRotation);
+                gameObject.setData('fixedRotation', phys.fixedRotation);
+            }
+    
+            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+            gameObject.setData('shape', shape);
+        }
     }
     // --------------------------------------------------------------------
     
