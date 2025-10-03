@@ -2222,15 +2222,20 @@ createColorInput(container, label, initialValue, callback) {
                 }
 
                 // 4. "data" ブロックの構築
-                objData.data = {};
-                const smData = gameObject.getData('stateMachine');
-                if (smData) {
-                    objData.data.stateMachine = smData;
-                }
-                if (gameObject.body) {
-                    objData.data.ignoreGravity = gameObject.getData('ignoreGravity');
-                    objData.data.shape = gameObject.getData('shape');
-                }
+               objData.data = gameObject.getData();
+
+// ただし、いくつかのデータは専用のトップレベルプロパティに保存するので、
+// dataブロックからは削除して重複を防ぐ
+if (objData.data) {
+    delete objData.data.group;
+    delete objData.data.layer;
+    delete objData.data.components;
+    delete objData.data.events;
+    delete objData.data.anim_prefix;
+    delete objData.data.cropSource;
+    delete objData.data.textureData;
+    delete objData.data.fixedRotation;
+}
 
                 // 5. UISceneの特別処理
                 if (sceneKey === 'UIScene') {
