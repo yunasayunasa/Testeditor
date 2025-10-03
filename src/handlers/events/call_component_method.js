@@ -52,7 +52,7 @@ call_component_method.define = {
     description: 'オブジェクトのコンポーネントが持つメソッドを呼び出します。',
     params: [
         { key: 'target', type: 'string', label: '対象オブジェクト', defaultValue: 'self' },
-        { key: 'component', type: 'string', label: 'コンポーネント名', required: true },
+        { key: 'component', type: 'component_select', label: 'コンポーネント名', required: true },
         { key: 'method', type: 'string', label: 'メソッド名', required: true },
         { key: 'params', type: 'string', label: '引数(JSON配列/オブジェクト)', defaultValue: '[]' }
     ]

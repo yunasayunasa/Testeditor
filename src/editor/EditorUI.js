@@ -1572,7 +1572,10 @@ populateVslTriggerEditor(activeEvent) {
         
         if (handler && handler.define && Array.isArray(handler.define.params)) {
             handler.define.params.forEach(paramDef => {
-                if (paramDef.type === 'asset_key') {
+                  if (paramDef.type === 'component_select') { // ★ 新しいタイプを追加
+            this.createNodeComponentSelect(paramsContainer, nodeData, paramDef.key, paramDef.label);
+        }
+        else if (paramDef.type === 'asset_key') {
                     this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
                 } else if (paramDef.type === 'select') {
                     this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
@@ -1873,7 +1876,58 @@ createNodeSelectInput(container, nodeData, paramKey, label, defaultValue, option
     container.appendChild(row);
 }
 
+// in EditorUI.js
 
+/**
+ * ★★★ 新設（シンプル版）★★★
+ * VSLノード内に、ComponentRegistryに登録されている全てのコンポーネントを
+ * 選択するためのドロップダウンを生成する
+ */
+createNodeComponentSelect(container, nodeData, paramKey, label) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    const labelEl = document.createElement('label');
+    labelEl.innerText = `${label}: `;
+    
+    const select = document.createElement('select');
+    
+    // --- 1. グローバルなComponentRegistryを取得 ---
+    const componentRegistry = this.game.registry.get('ComponentRegistry');
+    if (!componentRegistry) {
+        // レジストリが見つからない場合はエラーメッセージを表示
+        row.innerText = "Error: ComponentRegistry not found.";
+        container.appendChild(row);
+        return;
+    }
+
+    const componentNames = Object.keys(componentRegistry).sort(); // アルファベット順にソート
+
+    // --- 2. ドロップダウンの選択肢を生成 ---
+    // 空の選択肢を追加
+    const placeholder = document.createElement('option');
+    placeholder.value = "";
+    placeholder.innerText = "Select Component...";
+    select.appendChild(placeholder);
+
+    componentNames.forEach(compName => {
+        const option = document.createElement('option');
+        option.value = compName;
+        option.innerText = compName;
+        if (nodeData.params?.[paramKey] === compName) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+
+    // --- 3. 変更イベントのリスナーを設定 (変更なし) ---
+    select.addEventListener('change', () => {
+        if (!this.plugin) return;
+        this.plugin.updateNodeParam(nodeData, paramKey, select.value, false);
+    });
+    
+    row.append(labelEl, select);
+    container.appendChild(row);
+}
 /**
  * ★★★ データ欠損防止策を施した最終版 ★★★
  * アセット選択用のドロップダウンを生成する
