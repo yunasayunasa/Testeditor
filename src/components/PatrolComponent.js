@@ -127,7 +127,7 @@ export default class PatrolComponent {
     }
 }
 
-PPatrolComponent.define = {
+PatrolComponent.define = {
     params: [
         // ★ 'pathGroup' を 'startWaypoint' に変更
         { key: 'startWaypoint', type: 'text', label: 'Start Waypoint', defaultValue: 'waypoint_A_01' },
