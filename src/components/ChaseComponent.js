@@ -35,6 +35,28 @@ export default class ChaseComponent {
         // ★ DetectionAreaComponentが発するイベントをリッスンする
         this.gameObject.on('onAreaEnter', this.onTargetDetected, this);
         this.gameObject.on('onAreaLeave', this.onTargetLost, this);
+        this.scene.time.delayedCall(500, () => {
+        console.group("%c[PHYSICS DEBUG] Body Inspection", "color: red; font-size: 1.5em;");
+
+        // 1. センサーボディを調べる
+        const detectionArea = this.gameObject.components.DetectionAreaComponent;
+        if (detectionArea && detectionArea.sensorBody) {
+            console.log("▼ SENSOR BODY ▼", detectionArea.sensorBody);
+            console.log("SENSOR collisionFilter:", detectionArea.sensorBody.collisionFilter);
+        } else {
+            console.error("Sensor body NOT FOUND on this object!");
+        }
+
+        // 2. プレイヤーボディを調べる
+        const player = this.scene.children.getByName('player');
+        if (player && player.body) {
+            console.log("▼ PLAYER BODY ▼", player.body);
+            console.log("PLAYER collisionFilter:", player.body.collisionFilter);
+        } else {
+            console.error("Player body NOT FOUND in the scene!");
+        }
+        console.groupEnd();
+    });
     }
 
     handleBehaviorChange(event) {
