@@ -2157,29 +2157,29 @@ createColorInput(container, label, initialValue, callback) {
                 // 6. 固有プロパティの抽出
                 // 固有プロパティの抽出
                 if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
-                    const textureKey = gameObject.texture.key;
-                    
-                    if (textureKey.includes('_chunk_')) {
-                        // クロップタイルの場合：Base64に変換
-                        objData.textureData = this.game.textures.getBase64(textureKey);
-                    } else {
-                        // 通常のテクスチャの場合：キーを保存
-                        objData.texture = textureKey;
-                    }
-                }
-                if (typeof gameObject.text === 'string') {
-                    objData.text = gameObject.text;
-                }
-                if (gameObject.style) {
-                    objData.style = gameObject.style.toJSON();
-                }
-                if (gameObject.watchVariable) {
-                    objData.watchVariable = gameObject.watchVariable;
-                    objData.maxVariable = gameObject.maxVariable;
-                }
-                if (gameObject.textObject) {
-                    objData.label = gameObject.textObject.text;
-                }
+    const textureKey = gameObject.texture.key;
+    if (textureKey.includes('_chunk_')) {
+        objData.textureData = this.game.textures.getBase64(textureKey);
+    } else {
+        objData.texture = textureKey;
+    }
+}
+
+// --- 6b. その他の固有プロパティを抽出 ---
+if (typeof gameObject.text === 'string') {
+    objData.text = gameObject.text;
+}
+if (gameObject.style) {
+    objData.style = gameObject.style.toJSON();
+}
+if (gameObject.watchVariable) {
+    objData.watchVariable = gameObject.watchVariable;
+    objData.maxVariable = gameObject.maxVariable;
+}
+if (gameObject.textObject) {
+    objData.label = gameObject.textObject.text;
+}
+
                 
                 // 7. 物理ボディの抽出
                 if (gameObject.body) {

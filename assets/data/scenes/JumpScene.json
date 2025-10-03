@@ -21,8 +21,8 @@
     {
       "name": "torch",
       "type": "Image",
-      "x": 598,
-      "y": 257,
+      "x": 512,
+      "y": 236,
       "depth": 10,
       "scaleX": 1,
       "scaleY": 1,
@@ -439,10 +439,10 @@
       }
     },
     {
-      "name": "tileset_terrain_chunk_1759487973473",
+      "name": "tileset_terrain_chunk_1759488550698",
       "type": "Image",
-      "x": 1066,
-      "y": 599,
+      "x": 875,
+      "y": 532,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -455,7 +455,6 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759487973473",
       "physics": {
         "isStatic": true,
         "isSensor": false,
