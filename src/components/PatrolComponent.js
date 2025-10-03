@@ -6,68 +6,63 @@ export default class PatrolComponent {
         this.scene = scene;
         this.npcController = null;
         
-        this.waypoints = [];          // 巡回地点のオブジェクト配列
-        this.currentWaypointIndex = 0;
-        this.state = 'PATROLLING';    // 'PATROLLING' or 'WAITING'
+        this.currentWaypoint = null; // ★ 現在のターゲットウェイポイント
+        this.state = 'PATROLLING';
         this.waitTimer = 0;
         this.enabled = true;
     }
 
-   // in src/components/PatrolComponent.js
+    start() {
+        this.npcController = this.gameObject.components.NpcController;
+        if (!this.npcController) { this.enabled = false; return; }
 
-start() {
-    this.npcController = this.gameObject.components.NpcController;
-    if (!this.npcController) {
-        console.error(`[PatrolComponent] ERROR: 'NpcController' is required. Disabling.`);
-        this.enabled = false;
-        return;
+        this.scene.time.delayedCall(0, () => {
+            const params = this.getCurrentParams();
+            
+            // ★ パトロールの「開始地点」となるウェイポイントを探す
+            this.currentWaypoint = this.scene.children.getByName(params.startWaypoint);
+
+            if (!this.currentWaypoint) {
+                console.warn(`[PatrolComponent] Start waypoint '${params.startWaypoint}' not found. Disabling.`);
+                this.enabled = false;
+            } else {
+                console.log(`[PatrolComponent] Patrolling enabled. Starting at '${this.currentWaypoint.name}'.`);
+            }
+        }, [], this);
+
+        this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
     }
 
-    // ★★★ ここからが修正の核心 ★★★
-    // ----------------------------------------------------------------
-    // ウェイポイントの検索を、次のフレームで実行するように予約する
-    this.scene.time.delayedCall(0, () => {
-        // このコールバックの中では、シーンの全てが準備完了している
+    update(time, delta) {
+        if (!this.enabled || !this.currentWaypoint) return;
 
-        const params = this.getCurrentParams();
-        
-        // 堅牢なウェイポイント取得ロジック
-        this.waypoints = this.scene.children.list
-            .filter(obj => obj.getData('group') === params.pathGroup)
-            .sort((a, b) => a.name.localeCompare(b.name));
+        if (this.state === 'PATROLLING') {
+            const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, this.currentWaypoint);
+            const params = this.getCurrentParams();
 
-        if (this.waypoints.length === 0) {
-            console.warn(`[PatrolComponent] No waypoints found for group '${params.pathGroup}'. Disabling.`);
-            this.enabled = false;
-            return; // delayedCallの中なので、ここでreturnしても安全
-        } else {
-             console.log(`[PatrolComponent] Found ${this.waypoints.length} waypoints for group '${params.pathGroup}'. Patrolling enabled.`);
-        }
+            if (distance < params.arrivalThreshold) {
+                // --- 到着時の処理 ---
+                this.npcController.stop();
+                this.state = 'WAITING';
+                this.waitTimer = time + params.waitTime;
+                
+                // ★ 現在のウェイポイントから、次のウェイポイントの名前を取得
+                const nextWaypointName = this.currentWaypoint.getData('nextWaypoint');
 
-        // イベントリスナーの登録も、ウェイポイントが見つかった後に行う
-        this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
-
-    }, [], this);
-    // ----------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-}
-
-  update(time, delta) {
-    if (!this.enabled || this.waypoints.length === 0) return;
-
-    if (this.state === 'PATROLLING') {
-        const targetWaypoint = this.waypoints[this.currentWaypointIndex];
-        const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, targetWaypoint);
-        
-        const params = this.getCurrentParams();
-
-        if (distance < params.arrivalThreshold) {
-            this.npcController.stop();
-            this.state = 'WAITING';
-            this.waitTimer = time + params.waitTime;
-            this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
-        } else {
-            const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, targetWaypoint);
+                if (nextWaypointName) {
+                    // ★ 次のウェイポイントをシーンから名前で検索
+                    this.currentWaypoint = this.scene.children.getByName(nextWaypointName);
+                    if (!this.currentWaypoint) {
+                        console.warn(`[PatrolComponent] Next waypoint '${nextWaypointName}' not found. Stopping patrol.`);
+                        this.enabled = false;
+                    }
+                } else {
+                    console.log(`[PatrolComponent] End of patrol path reached. Stopping.`);
+                    this.enabled = false;
+                }
+            } else {
+                // --- 移動中の処理 (変更なし) ---
+                const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, this.currentWaypoint);
             let vx = 0;
             let vy = 0;
             const speed = this.npcController.moveSpeed;
@@ -132,12 +127,12 @@ start() {
     }
 }
 
-PatrolComponent.define = {
+PPatrolComponent.define = {
     params: [
-        { key: 'pathGroup', type: 'text', label: 'Path Group', defaultValue: 'patrol_path_A' },
+        // ★ 'pathGroup' を 'startWaypoint' に変更
+        { key: 'startWaypoint', type: 'text', label: 'Start Waypoint', defaultValue: 'waypoint_A_01' },
         { key: 'waitTime', type: 'range', label: 'Wait Time (ms)', min: 0, max: 10000, step: 100, defaultValue: 2000 },
         { key: 'arrivalThreshold', type: 'range', label: 'Arrival Threshold', min: 5, max: 100, step: 1, defaultValue: 10 },
-        // --- ▼▼▼ 8軸対応パラメータを追加 ▼▼▼ ---
         { key: 'is8Way', type: 'checkbox', label: '8-Way Movement', defaultValue: true }
     ]
 };
