@@ -225,62 +225,53 @@ createAnimationsFromLayout(layoutData) {
  * @param {{x: number, y: number, width: number, height: number}} cropRect - クロップする矩形範囲
  */
 // in BaseGameScene.js
-
-// in BaseGameScene.js
+// 既存の addCroppedTilemapChunk を、この内容で「完全に」置き換えてください
 
 addCroppedTilemapChunk(tilemapKey, cropRect) {
-    console.log(`[BaseGameScene] Adding cropped chunk from '${tilemapKey}'`, cropRect);
+    if (cropRect.width <= 0 || cropRect.height <= 0) return null;
 
-    if (cropRect.width <= 0 || cropRect.height <= 0) {
-        console.error("[BaseGameScene] Invalid crop rectangle.", cropRect);
-        return null;
-    }
-
-    // --- ステップA：見た目の生成 (正しいRenderTexture.draw方式) ---
-
-    // 1. 一時的なRenderTextureを作成
+    // 1. RenderTextureを作成
     const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
-
-    // 2. 一時的な非表示のImageオブジェクトを、元のタイルマップテクスチャで作成
-    //    drawの対象として使うため
     const tempImage = this.add.image(0, 0, tilemapKey).setOrigin(0, 0).setVisible(false);
 
-    // ★★★ ここが正しいRenderTextureの使い方 ★★★
-    // 3. RenderTextureに、tempImageの「一部」を描画する
-    //    まず、描画対象をtempImageに設定
-    rt.draw(
-        tempImage,
-        -cropRect.x, // 描画先のX座標。マイナスにすることで、ソースのX座標が0になる
-        -cropRect.y  // 描画先のY座標。マイナスにすることで、ソースのY座標が0になる
-    );
-    // ★★★★★★★★★★★★★★★★★★★★★★★
-
-    // 4. 使い終わった一時Imageは即座に破棄
+    // 2. 正しい方法でクロップ描画
+    rt.draw(tempImage, -cropRect.x, -cropRect.y);
     tempImage.destroy();
 
-    // 5. RenderTextureから新しいテクスチャキーを生成
-    const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
-    rt.saveTexture(newTextureKey);
-    rt.destroy();
+    // ★★★ ここからが新しい核心部分 ★★★
+    // 3. RenderTextureから「直接」Base64データを取得する
+    rt.getBase64((base64Data) => {
+        // このコールバックは、Base64の準備ができたら非同期で呼ばれる
 
-    // 6. 生成したテクスチャを使って最終的なImageオブジェクトを作成
-    const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-    const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-    const chunkImage = this.add.image(centerX, centerY, newTextureKey);
-    chunkImage.name = `${tilemapKey}_chunk_${Date.now()}`;
+        // 4. Base64データから新しいテクスチャを生成
+        const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
+        this.textures.addBase64(newTextureKey, base64Data);
 
-    // ... (以降の物理ボディ生成と初期化は変更なし) ...
-    const layout = {
-        name: chunkImage.name, type: 'Image', texture: newTextureKey,
-        x: centerX, y: centerY,
-        layer: this.editorUI?.activeLayerName || 'Gameplay',
-        physics: { isStatic: true, width: cropRect.width, height: cropRect.height }
-    };
-    this.applyProperties(chunkImage, layout);
-    this.initComponentsAndEvents(chunkImage);
+        // 5. 新しいテクスチャでImageオブジェクトを作成
+        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+        const chunkImage = this.add.image(centerX, centerY, newTextureKey);
+        chunkImage.name = `${tilemapKey}_chunk_${Date.now()}`;
 
-    console.log(`[BaseGameScene] Cropped chunk '${chunkImage.name}' created successfully.`);
-    return chunkImage;
+        // ★★★ 6. 生成したBase64データを、オブジェクト自身に保存する ★★★
+        chunkImage.setData('textureData', base64Data);
+
+        // 7. 物理ボディの生成と初期化
+        const layout = {
+            name: chunkImage.name, type: 'Image',
+            x: centerX, y: centerY,
+            layer: this.editorUI?.activeLayerName || 'Gameplay',
+            physics: { isStatic: true, width: cropRect.width, height: cropRect.height }
+        };
+        this.applyProperties(chunkImage, layout);
+        this.initComponentsAndEvents(chunkImage);
+
+        console.log(`[BaseGameScene] Cropped chunk '${chunkImage.name}' created with embedded texture data.`);
+    });
+    // ★★★★★★★★★★★★★★★★★★★★★★
+
+    // RenderTextureは非同期処理が終わる前に破棄してしまうとデータが壊れるので、ここでは破棄しない
+    // rt.destroy(); // ◀ この行は削除またはコメントアウト
 }
     /**
      * ★★★ 修正版 ★★★

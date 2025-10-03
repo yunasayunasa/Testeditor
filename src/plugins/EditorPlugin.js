@@ -2156,24 +2156,20 @@ createColorInput(container, label, initialValue, callback) {
 
                 // 6. 固有プロパティの抽出
                 // 固有プロパティの抽出
-                if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
-                    const textureKey = gameObject.texture.key;
-                    
-                    if (textureKey.includes('_chunk_')) {
-                        
-                        // ▼▼▼ 非同期処理 ▼▼▼
-                        objData.textureData = await new Promise(resolve => {
-                            this.game.textures.getBase64(textureKey, (base64Data) => {
-                                resolve(base64Data);
-                            });
-                        });
-                        // ▲▲▲ 非同期処理 ▲▲▲
-
-                    } else {
-                        objData.texture = textureKey;
-                    }
-                }
-
+               if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
+    const textureKey = gameObject.texture.key;
+    
+    // ★★★ ここが新しいロジック ★★★
+    const embeddedData = gameObject.getData('textureData');
+    if (embeddedData) {
+        // もしオブジェクトが自身のtextureDataを持っているなら、それを採用する
+        objData.textureData = embeddedData;
+    } else if (!textureKey.includes('_chunk_')) {
+        // 通常のテクスチャの場合
+        objData.texture = textureKey;
+    }
+    // _chunk_ だが embeddedData がない場合は、何も出力しない（エラーケース）
+}
 // --- 6b. その他の固有プロパティを抽出 ---
 if (typeof gameObject.text === 'string') {
     objData.text = gameObject.text;
