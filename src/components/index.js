@@ -14,7 +14,7 @@ import ReturnHomeComponent from './ReturnHomeComponent.js';
 import LightComponent from './LightComponent.js';
 import VignetteComponent from './VignetteComponent.js'; 
 import FogComponent from './FogComponent.js';
-
+import DetectionAreaComponent from './DetectionAreaComponent.js';
 
 //UI系
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
@@ -39,6 +39,9 @@ ReturnHomeComponent,
 LightComponent,
 VignetteComponent,    
 FogComponent, 
+DetectionAreaComponent,
+
+
 
     //UI系
     WatchVariableComponent,
