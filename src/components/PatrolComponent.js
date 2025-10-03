@@ -23,11 +23,9 @@ export default class PatrolComponent {
 
         const params = this.getCurrentParams();
         
-        // 1. シーンからウェイポイントを取得してソートする
-        if (this.scene.getObjectsByGroup) {
-            this.waypoints = this.scene.getObjectsByGroup(params.pathGroup)
-                .sort((a, b) => a.name.localeCompare(b.name)); // 名前順 (A1, A2, A3...)
-        }
+        this.waypoints = this.scene.children.list
+        .filter(obj => obj.getData('group') === params.pathGroup)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
         if (this.waypoints.length === 0) {
             console.warn(`[PatrolComponent] No waypoints found for group '${params.pathGroup}'. Disabling.`);
