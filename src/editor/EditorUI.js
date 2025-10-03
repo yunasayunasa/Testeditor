@@ -290,6 +290,8 @@ selectTilemap(tilemapKey) {
     newImgElement.src = assetInfo.path;
     newImgElement.style.display = 'block'; // 画像の下に余分なスペースができるのを防ぐ
     newImgElement.style.maxWidth = 'none'; // コンテナの幅に縮小されないように
+// ★★★ ドラッグを無効化する属性を追加 ★★★
+newImgElement.draggable = false;
 
     // 3. 新しく作成した<img>要素をDOMに追加
     this.tilemapPreviewContent.appendChild(newImgElement);

@@ -589,5 +589,17 @@ body.modal-open canvas, body.modal-open #editor-root { pointer-events: none;  }
     cursor: pointer;
 }
 #crop-and-place-btn:hover { background-color: #1177bb; }
+
+/* style.css の末尾あたりに追加 */
+
+#tilemap-preview-content img {
+    -webkit-user-drag: none; /* Chrome, Safari, Opera */
+    -khtml-user-drag: none; /* Konqueror HTML */
+    -moz-user-drag: none; /* Firefox */
+    -o-user-drag: none; /* Opera versions < 12 */
+    user-drag: none; /* Standard */
+    
+    pointer-events: none; /* 画像自体がポインターイベントを拾わないようにする */
+}
 /* ... .vsl-toolbar, .vsl-canvas-wrapper などのスタイルは
    イベントエディタのものと共通化できるはず ... */
