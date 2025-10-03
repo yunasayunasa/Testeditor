@@ -111,28 +111,44 @@ export default class DetectionAreaComponent {
         Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorShape, Phaser.Math.DegToRad(facingAngle));
     }
     
-    drawDebugShape() {
-        this.debugGraphics.clear();
-        if (!this.sensorShape) return;
+   // in src/components/DetectionAreaComponent.js
 
-        this.debugGraphics.save();
-        this.debugGraphics.translate(this.sensorShape.position.x, this.sensorShape.position.y);
-        this.debugGraphics.rotate(this.sensorShape.angle);
+drawDebugShape() {
+    this.debugGraphics.clear();
+    if (!this.sensorShape) return;
 
-        this.sensorShape.parts.forEach((part, i) => {
-            if (i === 0 && this.sensorShape.parts.length > 1) return;
-            const vertices = part.vertices;
-            this.debugGraphics.fillStyle(0xff0000, 0.2);
-            this.debugGraphics.beginPath();
-            this.debugGraphics.moveTo(vertices[0].x - part.position.x, vertices[0].y - part.position.y);
-            for (let j = 1; j < vertices.length; j++) {
-                this.debugGraphics.lineTo(vertices[j].x - part.position.x, vertices[j].y - part.position.y);
-            }
-            this.debugGraphics.closePath();
-            this.debugGraphics.fillPath();
-        });
-        this.debugGraphics.restore();
-    }
+    // ★★★ ここからが修正箇所 ★★★
+    
+    // 1. 現在のトランスフォーム状態を保存
+    this.debugGraphics.save();
+
+    // 2. Graphicsオブジェクトの描画基点を、センサーの位置と角度に設定
+    this.debugGraphics.translate(this.sensorShape.position.x, this.sensorShape.position.y);
+    this.debugGraphics.rotate(this.sensorShape.angle);
+
+    // 3. 各パーツを「原点(0,0)中心」で描画
+    this.sensorShape.parts.forEach((part, i) => {
+        // 複合ボディの最初の要素は、全パーツをまとめるための中心点なので描画しない
+        if (i === 0 && this.sensorShape.parts.length > 1) return;
+        
+        const vertices = part.vertices;
+        this.debugGraphics.fillStyle(0xff0000, 0.2);
+        this.debugGraphics.beginPath();
+
+        // 各頂点を、パーツ自身の中心からの相対座標で描画
+        this.debugGraphics.moveTo(vertices[0].x - part.position.x, vertices[0].y - part.position.y);
+        for (let j = 1; j < vertices.length; j++) {
+            this.debugGraphics.lineTo(vertices[j].x - part.position.x, vertices[j].y - part.position.y);
+        }
+        this.debugGraphics.closePath();
+        this.debugGraphics.fillPath();
+    });
+
+    // 4. トランスフォーム状態を、保存した時点のものに戻す
+    this.debugGraphics.restore();
+    
+    // ★★★ ここまでが修正箇所 ★★★
+}
 
     getCurrentParams() {
         const allCompsData = this.gameObject.getData('components') || [];
