@@ -565,45 +565,38 @@ applyProperties(gameObject, layout) {
    if (data.physics) {
         const phys = data.physics;
         const MatterBody = Phaser.Physics.Matter.Matter.Body;
-
+        
         // --- 5a. 既存のボディがあれば削除 ---
         if (gameObject.body) this.matter.world.remove(gameObject.body);
+
+        // --- 5b. スケール適用後の最終的な表示サイズと位置を取得 ---
+        const bodyWidth = gameObject.displayWidth;
+        const bodyHeight = gameObject.displayHeight;
+        const bodyX = gameObject.x;
+        const bodyY = gameObject.y;
         
-        // --- 5b. this.matter.add.gameObject を使って、ボディを生成・アタッチ ---
-        // ★ これにより、setFrictionなどのヘルパーメソッドがGameObjectに生える
-        this.matter.add.gameObject(gameObject, {
+        // --- 5c. Matter.jsネイティブ関数でボディを作成 ---
+        const newBody = this.matter.bodies.rectangle(bodyX, bodyY, bodyWidth, bodyHeight, {
             isStatic: phys.isStatic,
             isSensor: phys.isSensor
         });
-
-        if (gameObject.body) {
-            // --- 5c. 形状を適用 ---
-            const shape = phys.shape || 'rectangle';
-            if (shape === 'circle') {
-                // setCircleはスケール適用前の半径を期待するので、基本サイズから計算
-                const radius = (gameObject.width + gameObject.height) / 4;
-                gameObject.setCircle(radius);
-            } else {
-                gameObject.setRectangle();
-            }
-
-            // --- 5d. スケールを物理ボディに「直接」適用 ---
-            // ★ これが全てのズレを解決する核心
-            MatterBody.scale(gameObject.body, gameObject.scaleX, gameObject.scaleY);
-
-            // --- 5e. これで、setFrictionなどのヘルパーが安全に使えるようになる ---
-            gameObject.setFriction(phys.friction ?? 0.1);
-            gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
-            gameObject.setBounce(phys.restitution ?? 0);
-            
-            if (phys.fixedRotation !== undefined) {
-                gameObject.setFixedRotation(phys.fixedRotation);
-                gameObject.setData('fixedRotation', phys.fixedRotation);
-            }
-    
-            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-            gameObject.setData('shape', shape);
+        
+        // --- 5d. ネイティブプロパティを直接設定 ---
+        MatterBody.set(newBody, 'friction', phys.friction ?? 0.1);
+        MatterBody.set(newBody, 'frictionAir', phys.frictionAir ?? 0.01);
+        MatterBody.set(newBody, 'restitution', phys.restitution ?? 0);
+        if (phys.fixedRotation) {
+            MatterBody.setInertia(newBody, Infinity);
         }
+
+        // ★★★ 5e. GameObjectをMatterImage/Spriteに「変換」し、ボディを合体させる ★★★
+        const matterGameObject = this.matter.add.gameObject(gameObject, {});
+        matterGameObject.setExistingBody(newBody);
+        
+        // 5f. 永続化用データを設定
+        matterGameObject.setData('fixedRotation', phys.fixedRotation === true);
+        matterGameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+        matterGameObject.setData('shape', phys.shape || 'rectangle');
     }
     // --------------------------------------------------------------------
     
