@@ -1,4 +1,4 @@
-// src/components/DetectionAreaComponent.js (グループ名判定への完全移行版)
+// src/components/DetectionAreaComponent.js
 
 export default class DetectionAreaComponent {
 
@@ -21,7 +21,10 @@ export default class DetectionAreaComponent {
     }
 
     update() {
-        if (!this.gameObject.active) return;
+        if (!this.gameObject.active) {
+            if (this.debugGraphics) this.debugGraphics.clear();
+            return;
+        }
 
         const params = this.getCurrentParams();
         
@@ -40,14 +43,13 @@ export default class DetectionAreaComponent {
             const body = collision.bodyA === this.sensorShape ? collision.bodyB : collision.bodyA;
             const targetObject = body.gameObject;
 
-            if (targetObject && targetObject.getData('group') === params.targetGroup) {
+            if (targetObject && targetObject !== this.gameObject && targetObject.getData('group') === params.targetGroup) {
                 currentFrameDetections.add(targetObject);
 
                 // 新しく検知したオブジェクトか？
                 if (!this.detectedObjects.has(targetObject)) {
                     // onAreaEnterを発行
                     this.gameObject.emit('onAreaEnter', targetObject);
-                    console.log(`%c[EVENT EMIT] '${this.gameObject.name}' detected '${targetObject.name}' entering.`, 'color: lime;');
                 }
             }
         });
@@ -57,7 +59,6 @@ export default class DetectionAreaComponent {
             if (!currentFrameDetections.has(oldObject)) {
                 // onAreaLeaveを発行
                 this.gameObject.emit('onAreaLeave', oldObject);
-                 console.log(`%c[EVENT EMIT] '${this.gameObject.name}' detected '${oldObject.name}' leaving.`, 'color: orange;');
             }
         });
 
@@ -66,7 +67,7 @@ export default class DetectionAreaComponent {
 
         // 6. デバッグ表示の更新
         if (this.debugGraphics) {
-            this.drawDebugShape(params);
+            this.drawDebugShape();
         }
     }
     
@@ -76,7 +77,6 @@ export default class DetectionAreaComponent {
             this.sensorShape = this.scene.matter.bodies.circle(0, 0, params.radius, { isSensor: true });
         } else if (params.type === 'cone') {
             const { radius, coneAngle, segments } = params;
-            // (扇形ボディの生成ロジックは以前と同じ)
             const angleStep = coneAngle / segments;
             const parts = [];
             for (let i = 0; i < segments; i++) {
@@ -93,31 +93,45 @@ export default class DetectionAreaComponent {
         }
 
         // センサーの位置と角度を親オブジェクトに合わせる
-        const offset = new Phaser.Math.Vector2(params.offsetX, params.offsetY).rotate(Phaser.Math.DegToRad(this.gameObject.angle));
+        const npcController = this.gameObject.components.NpcController;
+        
+        let facingAngle = this.gameObject.angle; // デフォルトはgameObjectの角度
+        if (npcController) {
+            if (npcController.direction === 'left') facingAngle = 180;
+            else if (npcController.direction === 'right') facingAngle = 0;
+            else if (npcController.direction === 'up') facingAngle = -90;
+            else if (npcController.direction === 'down') facingAngle = 90;
+        }
+
+        const offset = new Phaser.Math.Vector2(params.offsetX, params.offsetY).rotate(Phaser.Math.DegToRad(facingAngle));
         const newX = this.gameObject.x + offset.x;
         const newY = this.gameObject.y + offset.y;
-        let newAngle = this.gameObject.angle;
-        if (params.type === 'cone' && this.gameObject.flipX) newAngle += 180;
         
         Phaser.Physics.Matter.Matter.Body.setPosition(this.sensorShape, { x: newX, y: newY });
-        Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorShape, Phaser.Math.DegToRad(newAngle));
+        Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorShape, Phaser.Math.DegToRad(facingAngle));
     }
     
-    drawDebugShape(params) {
-        this.debugGraphics.clear().fillStyle(0xff0000, 0.2);
+    drawDebugShape() {
+        this.debugGraphics.clear();
+        if (!this.sensorShape) return;
+
+        this.debugGraphics.save();
+        this.debugGraphics.translate(this.sensorShape.position.x, this.sensorShape.position.y);
+        this.debugGraphics.rotate(this.sensorShape.angle);
+
         this.sensorShape.parts.forEach((part, i) => {
-            // 最初の'Circle Body'は無視
             if (i === 0 && this.sensorShape.parts.length > 1) return;
-            
             const vertices = part.vertices;
+            this.debugGraphics.fillStyle(0xff0000, 0.2);
             this.debugGraphics.beginPath();
-            this.debugGraphics.moveTo(vertices[0].x, vertices[0].y);
+            this.debugGraphics.moveTo(vertices[0].x - part.position.x, vertices[0].y - part.position.y);
             for (let j = 1; j < vertices.length; j++) {
-                this.debugGraphics.lineTo(vertices[j].x, vertices[j].y);
+                this.debugGraphics.lineTo(vertices[j].x - part.position.x, vertices[j].y - part.position.y);
             }
             this.debugGraphics.closePath();
             this.debugGraphics.fillPath();
         });
+        this.debugGraphics.restore();
     }
 
     getCurrentParams() {
@@ -129,11 +143,10 @@ export default class DetectionAreaComponent {
 
     destroy() {
         if (this.debugGraphics) this.debugGraphics.destroy();
-        // 物理ワールドからボディを削除する必要はなくなった
+        this.detectedObjects.clear();
     }
 }
 
-// defineプロパティは変更なし
 DetectionAreaComponent.define = {
     params: [
         { key: 'type', type: 'select', label: 'Type', options: ['circle', 'cone'], defaultValue: 'circle' },

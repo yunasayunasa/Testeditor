@@ -46,22 +46,18 @@ export default class PatrolComponent {
             this.state = 'WAITING';
             this.waitTimer = time + params.waitTime;
             
-            // ★ とりあえず、次のウェイポイントを探しに行く
+            // ★★★ 次のウェイポイントを探しに行く処理をここで行う ★★★
             const nextWaypointName = this.currentWaypoint.getData('nextWaypoint');
             if (nextWaypointName) {
                 const nextWaypoint = this.scene.children.getByName(nextWaypointName);
                 if (nextWaypoint) {
-                    this.currentWaypoint = nextWaypoint; // 次のターゲットを設定
+                    this.currentWaypoint = nextWaypoint; // 次のターゲットを「予約」する
                 } else {
-                    // 名前は指定されているのに、オブジェクトが見つからない場合
-                    this.currentWaypoint = null; // ターゲットを失う
-                    console.warn(`[PatrolComponent] Next waypoint '${nextWaypointName}' not found. Stopping patrol.`);
+                    this.currentWaypoint = null;
                 }
             } else {
-                // nextWaypointが設定されていない場合
-                this.currentWaypoint = null; // ターゲットを失う
+                this.currentWaypoint = null;
             }
-
         } else {
                 // --- 移動中の処理 (変更なし) ---
                 const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, this.currentWaypoint);
