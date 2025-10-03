@@ -533,37 +533,8 @@ applyProperties(gameObject, layout) {
 
     // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
-    let finalTextureKey = layout.texture;
+   
 
-    // --- 2a. もし cropSource があれば、テクスチャをその場で再生成 ---
-    if (layout.cropSource) {
-        try {
-            const { key, rect } = layout.cropSource;
-            if (rect.width > 0 && rect.height > 0) {
-                const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
-                const tempImage = this.add.image(-9999, -9999, key).setOrigin(0, 0).setCrop(rect.x, rect.y, rect.width, rect.height);
-                rt.draw(tempImage, 0, 0);
-                tempImage.destroy();
-                
-                const newTextureKey = `${key}_chunk_restored_${Date.now()}`;
-                rt.saveTexture(newTextureKey);
-                rt.destroy();
-                
-                // ★ 最終的に使うテクスチャキーを、再生成したものに上書き
-                finalTextureKey = newTextureKey;
-                // ★ 永続化のための「設計図」を、ロードしたオブジェクトにも再設定
-                gameObject.setData('cropSource', layout.cropSource);
-            }
-        } catch (e) {
-            console.error("Failed to recreate texture from cropSource:", e);
-            finalTextureKey = '__DEFAULT';
-        }
-    }
-
-    // --- 2b. 最終的に決定したテクスチャをオブジェクトに適用 ---
-    if (finalTextureKey && gameObject.setTexture) {
-        gameObject.setTexture(finalTextureKey);
-    }
    
     
     // --- 3. 見た目（Transform）に関するプロパティを設定 ---
@@ -577,7 +548,26 @@ applyProperties(gameObject, layout) {
     } else if (data.texture) {
         gameObject.setTexture(data.texture);
     }
-    
+        let finalTextureKey = layout.texture;
+    if (layout.cropSource) {
+        // (クロップテクスチャの再生成ロジックは変更なし)
+        try {
+            const { key, rect } = layout.cropSource;
+            if (rect.width > 0 && rect.height > 0) {
+                const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
+                const tempImage = this.add.image(-9999, -9999, key).setOrigin(0, 0).setCrop(rect.x, rect.y, rect.width, rect.height);
+                rt.draw(tempImage, 0, 0);
+                tempImage.destroy();
+                const newTextureKey = `${key}_chunk_restored_${Date.now()}`;
+                rt.saveTexture(newTextureKey);
+                rt.destroy();
+                finalTextureKey = newTextureKey;
+            }
+        } catch (e) { console.error("Failed to recreate texture from cropSource:", e); finalTextureKey = '__DEFAULT'; }
+    }
+    if (finalTextureKey && gameObject.setTexture) {
+        gameObject.setTexture(finalTextureKey);
+    }
     // --- 4. 物理ボディの生成と設定 ---
     if (data.physics) {
         const phys = data.physics;
