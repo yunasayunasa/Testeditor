@@ -21,8 +21,8 @@
     {
       "name": "torch",
       "type": "Image",
-      "x": 352,
-      "y": 263,
+      "x": 598,
+      "y": 257,
       "depth": 10,
       "scaleX": 1,
       "scaleY": 1,
@@ -36,8 +36,8 @@
     {
       "name": "cg01_3",
       "type": "Image",
-      "x": 887,
-      "y": 803,
+      "x": 1103,
+      "y": 221,
       "depth": 0,
       "scaleX": 0.49,
       "scaleY": 0.49,
@@ -263,7 +263,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1264,
+      "x": 2118,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -439,160 +439,10 @@
       }
     },
     {
-      "name": "tileset_terrain_chunk_1759485187536",
+      "name": "tileset_terrain_chunk_1759487973473",
       "type": "Image",
-      "x": 1326,
-      "y": 360,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "texture": "__MISSING",
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "tileset_terrain_chunk_1759485205665",
-      "type": "Image",
-      "x": 1351,
-      "y": 400,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "texture": "__MISSING",
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "tileset_terrain_chunk_1759485232050",
-      "type": "Image",
-      "x": 1029,
-      "y": 387,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "texture": "__MISSING",
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "tileset_terrain_chunk_1759485245665",
-      "type": "Image",
-      "x": 1205,
-      "y": 422,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "texture": "__MISSING",
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "tileset_terrain_chunk_1759486113533",
-      "type": "Image",
-      "x": 925,
-      "y": 360,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "texture": "__MISSING",
-      "data": {
-        "ignoreGravity": false,
-        "shape": "rectangle"
-      },
-      "physics": {
-        "isStatic": true,
-        "isSensor": false,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      }
-    },
-    {
-      "name": "tileset_terrain_chunk_1759487675324",
-      "type": "Image",
-      "x": 805,
-      "y": 537,
+      "x": 1066,
+      "y": 599,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -605,7 +455,7 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759487675324",
+      "texture": "tileset_terrain_chunk_1759487973473",
       "physics": {
         "isStatic": true,
         "isSensor": false,

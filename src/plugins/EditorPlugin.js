@@ -2155,8 +2155,17 @@ createColorInput(container, label, initialValue, callback) {
                 }
 
                 // 6. 固有プロパティの抽出
-                if (gameObject.texture && gameObject.texture.key) {
-                    objData.texture = gameObject.texture.key;
+                // 固有プロパティの抽出
+                if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
+                    const textureKey = gameObject.texture.key;
+                    
+                    if (textureKey.includes('_chunk_')) {
+                        // クロップタイルの場合：Base64に変換
+                        objData.textureData = this.game.textures.getBase64(textureKey);
+                    } else {
+                        // 通常のテクスチャの場合：キーを保存
+                        objData.texture = textureKey;
+                    }
                 }
                 if (typeof gameObject.text === 'string') {
                     objData.text = gameObject.text;
