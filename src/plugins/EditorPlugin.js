@@ -2041,7 +2041,7 @@ createColorInput(container, label, initialValue, callback) {
      * 現在のシーンレイアウトをJSON形式でエクスポートする。
      * UISceneとBaseGameSceneの両方に対応した、最終確定版。
      */
-  async  exportLayoutToJson() {
+   exportLayoutToJson() {
         if (!this.selectedObject || !this.selectedObject.scene) {
             alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
             return;
@@ -2156,20 +2156,15 @@ createColorInput(container, label, initialValue, callback) {
 
                 // 6. 固有プロパティの抽出
                 // 固有プロパティの抽出
-               if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
-    const textureKey = gameObject.texture.key;
-    
-    // ★★★ ここが新しいロジック ★★★
-    const embeddedData = gameObject.getData('textureData');
-    if (embeddedData) {
-        // もしオブジェクトが自身のtextureDataを持っているなら、それを採用する
-        objData.textureData = embeddedData;
-    } else if (!textureKey.includes('_chunk_')) {
-        // 通常のテクスチャの場合
-        objData.texture = textureKey;
-    }
-    // _chunk_ だが embeddedData がない場合は、何も出力しない（エラーケース）
-}
+              const cropSourceData = gameObject.getData('cropSource');
+                if (cropSourceData) {
+                    // もしクロップ情報を持っていれば、それを保存
+                    objData.cropSource = cropSourceData;
+                } 
+                else if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
+                    // 通常のテクスチャの場合
+                    objData.texture = gameObject.texture.key;
+                }
 // --- 6b. その他の固有プロパティを抽出 ---
 if (typeof gameObject.text === 'string') {
     objData.text = gameObject.text;

@@ -224,32 +224,31 @@ createAnimationsFromLayout(layoutData) {
  * @param {string} tilemapKey - 元となるタイルマップのアセットキー
  * @param {{x: number, y: number, width: number, height: number}} cropRect - クロップする矩形範囲
  */
-// in BaseGameScene.js
+// in src/scenes/BaseGameScene.js
 
 // ★★★ 既存の addCroppedTilemapChunk を、この内容で完全に置き換える ★★★
 addCroppedTilemapChunk(tilemapKey, cropRect) {
     if (cropRect.width <= 0 || cropRect.height <= 0) return null;
 
-    // 1. RenderTexture で新しいテクスチャを生成（この方法は確実）
+    // --- 1. テクスチャをその場で生成するコアロジック ---
     const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
-    const tempImage = this.add.image(0, 0, tilemapKey).setOrigin(0, 0).setVisible(false).setCrop(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
-    rt.draw(tempImage, 0, 0); // ★ 座標オフセットなしで、クロップ済みの画像を描画
+    // ★★★ setVisible(false) をやめ、画面外に配置して描画させる ★★★
+    const tempImage = this.add.image(-9999, -9999, tilemapKey).setOrigin(0, 0).setCrop(cropRect.x, cropRect.y, cropRect.width, cropRect.height);
+    rt.draw(tempImage, 0, 0);
     tempImage.destroy();
     
     const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
     rt.saveTexture(newTextureKey);
     rt.destroy();
 
-    // 2. Imageオブジェクトを生成
+    // --- 2. オブジェクトを生成し、永続化用のデータを設定 ---
     const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
     const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
     const chunkImage = this.add.image(centerX, centerY, newTextureKey);
-    chunkImage.name = newTextureKey; // 名前もユニークに
-
-    // ★★★ 3. 永続化のための「設計図」をオブジェクトに保存 ★★★
+    chunkImage.name = newTextureKey;
     chunkImage.setData('cropSource', { key: tilemapKey, rect: cropRect });
 
-    // 4. 物理ボディと初期化
+    // --- 3. 物理ボディと初期化 ---
     const layout = {
         name: chunkImage.name, type: 'Image',
         x: Math.round(centerX), y: Math.round(centerY),
@@ -264,30 +263,34 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
 
 // ★★★ 既存の createObjectFromLayout を、この内容で完全に置き換える ★★★
 createObjectFromLayout(layout) {
-    // ★★★ 1. もし cropSource があれば、それを元にオブジェクトを再生成する ★★★
+    // --- 1. もし cropSource があれば、それを元にテクスチャを「再生成」する ---
     if (layout.cropSource) {
-        // addCroppedTilemapChunk とほぼ同じロジックでテクスチャをその場で再生成
-        const { key, rect } = layout.cropSource;
-        const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
-        const tempImage = this.add.image(0, 0, key).setOrigin(0, 0).setVisible(false).setCrop(rect.x, rect.y, rect.width, rect.height);
-        rt.draw(tempImage, 0, 0);
-        tempImage.destroy();
-        
-        const newTextureKey = `${key}_chunk_${Date.now()}_${Math.random()}`;
-        rt.saveTexture(newTextureKey);
-        rt.destroy();
+        try {
+            const { key, rect } = layout.cropSource;
+            if (rect.width > 0 && rect.height > 0) {
+                const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
+                const tempImage = this.add.image(-9999, -9999, key).setOrigin(0, 0).setCrop(rect.x, rect.y, rect.width, rect.height);
+                rt.draw(tempImage, 0, 0);
+                tempImage.destroy();
+                
+                const newTextureKey = `${key}_chunk_${Date.now()}_${Math.random()}`;
+                rt.saveTexture(newTextureKey);
+                rt.destroy();
 
-        // layout.texture を、今作った新しいテクスチャキーで上書き
-        layout.texture = newTextureKey;
+                layout.texture = newTextureKey;
+            }
+        } catch (e) {
+            console.error("Failed to recreate texture from cropSource:", e);
+        }
     }
 
-    // ★★★ 2. これまで通りのオブジェクト生成ロジックを実行 ★★★
-    let textureKey = layout.texture || '__DEFAULT';
+    // --- 2. これまで通りのオブジェクト生成ロジックを実行 ---
+    const textureKey = layout.texture || '__DEFAULT';
     
     if (layout.type === 'Text') {
         const style = layout.style || { fontSize: '32px', fill: '#fff' };
         const textObject = new Phaser.GameObjects.Text(this, 0, 0, layout.text || '', style);
-        // ... (影の設定など)
+        if (style.shadow && style.shadow.color) { textObject.setShadow(style.shadow.offsetX, style.shadow.offsetY, style.shadow.color, style.shadow.blur); }
         return textObject;
     }
     if (layout.type === 'Sprite') {
