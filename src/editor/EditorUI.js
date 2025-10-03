@@ -302,6 +302,8 @@ newImgElement.draggable = false;
 
 // in EditorUI.js
 
+// in EditorUI.js
+
 initCropSelection() {
     this.cropRect = { x: 0, y: 0, width: 0, height: 0 };
     let isDragging = false;
@@ -314,21 +316,17 @@ initCropSelection() {
     selectionBox.style.pointerEvents = 'none';
     this.tilemapPreviewContent.appendChild(selectionBox);
 
-    // ★★★ 座標変換のためのヘルパー関数を定義 ★★★
+    // ★★★ 座標変換のためのヘルパー関数を「正しい方法」で定義 ★★★
     const getLocalCoordinates = (pointer) => {
-        // 1. Phaserのスケールマネージャーを取得
-        const scaleManager = this.game.scale;
-        // 2. ブラウザ座標(pointer.pageX, pageY)を、Phaserのゲームキャンバス座標に変換
-        const gamePoint = scaleManager.transformCoordinates(pointer.pageX, pointer.pageY);
-        
-        // 3. プレビューコンテナのDOM上での位置を取得
+        // 1. プレビューコンテナのDOM上での位置と、親のスクロール量を取得
         const contentRect = this.tilemapPreviewContent.getBoundingClientRect();
-        
-        // 4. ゲームキャンバス座標から、プレビューコンテナのDOM上の開始位置を引く
-        //    これにより、コンテナ内でのローカル座標が得られる
-        //    (コンテナ自体のスクロール量も加味する)
-        const localX = gamePoint.x - contentRect.left + this.tilemapPreviewContent.parentElement.scrollLeft;
-        const localY = gamePoint.y - contentRect.top + this.tilemapPreviewContent.parentElement.scrollTop;
+        const scrollLeft = this.tilemapPreviewContent.parentElement.scrollLeft;
+        const scrollTop = this.tilemapPreviewContent.parentElement.scrollTop;
+
+        // 2. ブラウザウィンドウ全体でのマウスポインタ座標から、
+        //    コンテナの開始位置を引くことで、コンテナ内での相対座標を計算
+        const localX = pointer.pageX - contentRect.left + scrollLeft;
+        const localY = pointer.pageY - contentRect.top + scrollTop;
         
         return { x: localX, y: localY };
     };
@@ -381,7 +379,6 @@ initCropSelection() {
     this.tilemapPreviewContent.onpointerup = stopDrag;
     this.tilemapPreviewContent.onpointerleave = stopDrag;
 }
-
 
 onCropAndPlace = () => {
     if (!this.selectedTilemapKey) {
