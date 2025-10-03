@@ -303,6 +303,9 @@ newImgElement.draggable = false;
 // in EditorUI.js
 // 既存の initCropSelection を、この内容で「完全に」置き換えてください
 
+// in EditorUI.js
+// 既存の initCropSelection を、この内容で「完全に」置き換えてください
+
 initCropSelection() {
     this.cropRect = { x: 0, y: 0, width: 0, height: 0 };
     let isDragging = false;
@@ -367,6 +370,8 @@ initCropSelection() {
     };
 
     this.tilemapPreviewContent.onpointerup = stopDrag;
+    this.tilemapPreviewContent.onpointerleave = stopDrag;
+}
 onCropAndPlace = () => {
     if (!this.selectedTilemapKey) {
         alert('Please select a tilemap first.');
