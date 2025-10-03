@@ -134,7 +134,32 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
    // in EditorPlugin.js
 
     // in src/plugins/EditorPlugin.js
+/**
+* タイルマップ用メソッド
+*/
+// in EditorPlugin.js
 
+/**
+ * ★★★ 新設 ★★★
+ * EditorUIからの依頼で、クロップされたタイルマップ断片の配置をゲームシーンに指示する
+ * @param {string} tilemapKey - 元となるタイルマップのアセットキー
+ * @param {{x: number, y: number, width: number, height: number}} cropRect - クロップする矩形範囲
+ */
+placeCroppedTilemap(tilemapKey, cropRect) {
+    const scene = this.getActiveGameScene();
+    if (!scene) {
+        alert("Cannot place tilemap chunk: No active game scene found.");
+        return;
+    }
+
+    if (typeof scene.addCroppedTilemapChunk !== 'function') {
+        alert("Error: The active scene does not support adding cropped tilemap chunks.");
+        return;
+    }
+
+    // ゲームシーンの専門メソッドに処理を丸投げする
+    scene.addCroppedTilemapChunk(tilemapKey, cropRect);
+}
 /**
  * ★★★ アニメーションボタン復活・最終確定版 ★★★
  * プロパティパネルを更新する。
