@@ -44,6 +44,7 @@ import timer_check from './timer_check.js';
 import fire_scene_event from './fire_scene_event.js';
 import toggle_hiding from './toggle_hiding.js';
 
+import call_component_method from './call_component_method.js';
 
 
 
@@ -90,7 +91,8 @@ export const eventTagHandlers = {
    'move_to_target': move_to_target,
    'timer_check': timer_check,
    'fire_scene_event':fire_scene_event,
-'toggle_hiding':toggle_hiding
+'toggle_hiding':toggle_hiding,
+'call_component_method': call_component_method
 
 
 };
