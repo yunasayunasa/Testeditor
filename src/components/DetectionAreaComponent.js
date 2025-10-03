@@ -113,14 +113,19 @@ export default class DetectionAreaComponent {
                     continue;
                 }
 
-                if (event.name === 'collisionactive') {
-                    // onAreaEnterは一度だけ発行したいので、フラグを管理する
-                    const memoryKey = `detected_${targetObject.id}`;
-                    if (!this.gameObject.getData(memoryKey)) {
-                        this.gameObject.setData(memoryKey, true);
-                        this.gameObject.emit('onAreaEnter', targetObject);
-                    }
+                
+            // ▼▼▼ ここからデバッグログ ▼▼▼
+            if (event.name === 'collisionactive') {
+                const memoryKey = `detected_${targetObject.id}`;
+                if (!this.gameObject.getData(memoryKey)) {
+                    this.gameObject.setData(memoryKey, true);
+
+                    // ★★★ 強力なデバッグログ ★★★
+                    console.log(`%c[EVENT EMIT] '${this.gameObject.name}' is emitting 'onAreaEnter' for target '${targetObject.name}'!`, 'color: lime; font-size: 1.2em; font-weight: bold;');
+                    
+                    this.gameObject.emit('onAreaEnter', targetObject);
                 }
+            }
                 else if (event.name === 'collisionend') {
                     this.gameObject.setData(`detected_${targetObject.id}`, false);
                     this.gameObject.emit('onAreaLeave', targetObject);
