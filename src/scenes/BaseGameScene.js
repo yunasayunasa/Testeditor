@@ -519,19 +519,19 @@ applyProperties(gameObject, layout) {
     const data = layout || {};
     gameObject.name = data.name || 'untitled';
 
-    // --- 1. すべてのカスタムデータをGameObjectのデータマネージャーに保存する ---
+    // --- 1. カスタムデータ保存 (変更なし) ---
     if (data.data) for (const key in data.data) gameObject.setData(key, data.data[key]);
     if (data.components) gameObject.setData('components', data.components);
     if (data.events) gameObject.setData('events', data.events);
     if (data.layer) gameObject.setData('layer', data.layer);
     if (data.group) gameObject.setData('group', data.group);
     if (data.anim_prefix) gameObject.setData('anim_prefix', data.anim_prefix);
-    if (data.cropSource) gameObject.setData('cropSource', data.cropSource); // cropSourceも保存
+    if (data.cropSource) gameObject.setData('cropSource', data.cropSource);
 
-    // --- 2. シーンにオブジェクトを追加 ---
+    // --- 2. シーンに追加 (変更なし) ---
     this.add.existing(gameObject);
     
-    // --- 3. テクスチャを最優先で設定 ---
+    // --- 3. テクスチャ設定 (変更なし) ---
     let finalTextureKey = data.texture;
     if (data.cropSource) {
         try {
@@ -552,66 +552,46 @@ applyProperties(gameObject, layout) {
         gameObject.setTexture(finalTextureKey);
     }
     
-    // --- 4. 次に、Transformプロパティを全て適用する ---
+    // --- 4. Transformプロパティ設定 (変更なし) ---
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
     
-    // ▼▼▼ ここから下が、物理ボディ生成の最終確定ロジックです ▼▼▼
+    // ▼▼▼ ここからが、物理ボディ生成の最後の正直です ▼▼▼
     // --------------------------------------------------------------------
-    // --- 5. 最後に、全てのプロパティが確定した状態で、物理ボディを生成する ---
+    // --- 5. 物理ボディの生成と設定 ---
     if (data.physics) {
         const phys = data.physics;
 
-        // --- 5a. 既存のボディがあれば、完全に削除 ---
+        // 5a. 「スケール1.0」の状態で、テクスチャ本来のサイズでボディを生成
+        this.matter.add.gameObject(gameObject, {
+            isStatic: phys.isStatic,
+            isSensor: phys.isSensor
+        });
+        
         if (gameObject.body) {
-            this.matter.world.remove(gameObject.body);
+            // 5b. Matter.jsのネイティブ関数 Body.scale を使って、ボディのサイズを直接スケールさせる
+            const MatterBody = Phaser.Physics.Matter.Matter.Body;
+            MatterBody.scale(gameObject.body, data.scaleX ?? 1, data.scaleY ?? 1);
+
+            // 5c. その他の物理プロパティを適用
+            gameObject.setFriction(phys.friction ?? 0.1);
+            gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
+            gameObject.setBounce(phys.restitution ?? 0);
+            
+            if (phys.fixedRotation !== undefined) {
+                gameObject.setFixedRotation(phys.fixedRotation);
+                gameObject.setData('fixedRotation', phys.fixedRotation);
+            }
+
+            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+            gameObject.setData('shape', phys.shape || 'rectangle');
         }
-
-        // --- 5b. スケール適用後の、最終的な表示サイズを取得 ---
-        const bodyWidth = gameObject.displayWidth;
-        const bodyHeight = gameObject.displayHeight;
-
-        // --- 5c. Matter.jsのネイティブ関数で、ボディを「手動で」作成 ---
-        let newBody;
-        const shape = gameObject.getData('shape') || 'rectangle';
-
-        if (shape === 'circle') {
-            // 円の場合は、幅と高さの小さい方を直径として半径を計算
-            const radius = Math.min(bodyWidth, bodyHeight) / 2;
-            newBody = this.matter.bodies.circle(gameObject.x, gameObject.y, radius, {
-                isStatic: phys.isStatic,
-                isSensor: phys.isSensor
-            });
-        } else { // rectangle
-            newBody = this.matter.bodies.rectangle(gameObject.x, gameObject.y, bodyWidth, bodyHeight, {
-                isStatic: phys.isStatic,
-                isSensor: phys.isSensor
-            });
-        }
-        
-        // --- 5d. 作成したボディを、GameObjectに「合体」させる ---
-        gameObject.setExistingBody(newBody); // setExistingBodyがワールドへの追加も行う
-        
-        // --- 5e. その他の物理プロパティを適用 ---
-        gameObject.setFriction(phys.friction ?? 0.1);
-        gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
-        gameObject.setBounce(phys.restitution ?? 0);
-        
-        if (phys.fixedRotation !== undefined) {
-            gameObject.setFixedRotation(phys.fixedRotation);
-            gameObject.setData('fixedRotation', phys.fixedRotation);
-        }
-
-        // --- 5f. 無視していた他のデータも設定 ---
-        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-        gameObject.setData('shape', shape);
     }
     // --------------------------------------------------------------------
-    // ▲▲▲ ここまでが、物理ボディ生成の最終確定ロジックです ▲▲▲
-
+    
     return gameObject;
 }
     
