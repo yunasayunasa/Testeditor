@@ -89,6 +89,10 @@ export default class EditorUI {
         this.vslCanvas = document.getElementById('vsl-canvas');
         this.vslTabs = document.getElementById('vsl-tabs');
         this.smEditorOverlay = document.getElementById('sm-editor-overlay');
+          this.tilemapEditorOverlay = document.getElementById('tilemap-editor-overlay');
+    this.tilemapListContainer = document.getElementById('tilemap-list-container');
+    this.selectedTilemapName = document.getElementById('selected-tilemap-name');
+    this.tilemapPreviewContent = document.getElementById('tilemap-preview-content');
     }
 
   
@@ -110,8 +114,10 @@ export default class EditorUI {
        document.getElementById('add-asset-button')?.addEventListener('click', this.onAddButtonClicked);
     document.getElementById('add-text-button')?.addEventListener('click', this.onAddTextClicked);
     document.getElementById('select-mode-btn')?.addEventListener('click', () => this.setEditorMode('select'));
-    document.getElementById('tilemap-mode-btn')?.addEventListener('click', () => this.setEditorMode('tilemap'));
+    document.getElementById('tilemap-mode-btn')?.addEventListener('click', this.openTilemapEditor);
     document.getElementById('add-layer-btn')?.addEventListener('click', this.addNewLayer);
+    document.getElementById('tilemap-editor-close-btn')?.addEventListener('click', this.closeTilemapEditor);
+    document.getElementById('crop-and-place-btn')?.addEventListener('click', this.onCropAndPlace);
     document.getElementById('event-editor-close-btn')?.addEventListener('click', this.closeEventEditor);
     document.getElementById('sm-editor-close-btn')?.addEventListener('click', this.closeStateMachineEditor);
         // --- レイヤーリスト（イベント委譲） ---
