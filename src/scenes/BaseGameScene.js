@@ -261,30 +261,13 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
     return chunkImage;
 }
 
-// ★★★ 既存の createObjectFromLayout を、この内容で完全に置き換える ★★★
+// in src/scenes/BaseGameScene.js
+// ★★★ 既存の createObjectFromLayout を、このシンプルな内容で「完全に」置き換える ★★★
+
 createObjectFromLayout(layout) {
-    // --- 1. もし cropSource があれば、それを元にテクスチャを「再生成」する ---
-    if (layout.cropSource) {
-        try {
-            const { key, rect } = layout.cropSource;
-            if (rect.width > 0 && rect.height > 0) {
-                const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
-                const tempImage = this.add.image(-9999, -9999, key).setOrigin(0, 0).setCrop(rect.x, rect.y, rect.width, rect.height);
-                rt.draw(tempImage, 0, 0);
-                tempImage.destroy();
-                
-                const newTextureKey = `${key}_chunk_${Date.now()}_${Math.random()}`;
-                rt.saveTexture(newTextureKey);
-                rt.destroy();
-
-                layout.texture = newTextureKey;
-            }
-        } catch (e) {
-            console.error("Failed to recreate texture from cropSource:", e);
-        }
-    }
-
-    // --- 2. これまで通りのオブジェクト生成ロジックを実行 ---
+    // このメソッドは、どのテクスチャを使うかの決定はせず、
+    // とにかくオブジェクトの「器」を作ることに専念する。
+    
     const textureKey = layout.texture || '__DEFAULT';
     
     if (layout.type === 'Text') {
@@ -296,6 +279,7 @@ createObjectFromLayout(layout) {
     if (layout.type === 'Sprite') {
         return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
     }
+    // デフォルトはImage
     return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
 }
     /**
@@ -549,7 +533,37 @@ applyProperties(gameObject, layout) {
 
     // --- 2. シーンにオブジェクトを追加 ---
     this.add.existing(gameObject);
-    
+    let finalTextureKey = layout.texture;
+
+    // --- 2a. もし cropSource があれば、テクスチャをその場で再生成 ---
+    if (layout.cropSource) {
+        try {
+            const { key, rect } = layout.cropSource;
+            if (rect.width > 0 && rect.height > 0) {
+                const rt = this.make.renderTexture({ width: rect.width, height: rect.height }, false);
+                const tempImage = this.add.image(-9999, -9999, key).setOrigin(0, 0).setCrop(rect.x, rect.y, rect.width, rect.height);
+                rt.draw(tempImage, 0, 0);
+                tempImage.destroy();
+                
+                const newTextureKey = `${key}_chunk_restored_${Date.now()}`;
+                rt.saveTexture(newTextureKey);
+                rt.destroy();
+                
+                // ★ 最終的に使うテクスチャキーを、再生成したものに上書き
+                finalTextureKey = newTextureKey;
+                // ★ 永続化のための「設計図」を、ロードしたオブジェクトにも再設定
+                gameObject.setData('cropSource', layout.cropSource);
+            }
+        } catch (e) {
+            console.error("Failed to recreate texture from cropSource:", e);
+            finalTextureKey = '__DEFAULT';
+        }
+    }
+
+    // --- 2b. 最終的に決定したテクスチャをオブジェクトに適用 ---
+    if (finalTextureKey && gameObject.setTexture) {
+        gameObject.setTexture(finalTextureKey);
+    }
    
     
     // --- 3. 見た目（Transform）に関するプロパティを設定 ---
