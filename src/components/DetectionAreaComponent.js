@@ -111,31 +111,31 @@ export default class DetectionAreaComponent {
         Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorShape, Phaser.Math.DegToRad(facingAngle));
     }
     
-   drawDebugShape() {
+   // in src/components/DetectionAreaComponent.js
+
+drawDebugShape() {
     this.debugGraphics.clear();
     if (!this.sensorShape) return;
 
-    // Graphicsの描画基点を設定
-    this.debugGraphics.setTranslation(this.sensorShape.position.x, this.sensorShape.position.y);
-    this.debugGraphics.setRotation(this.sensorShape.angle);
+    // ★★★ エラーの出る回転処理を全て削除 ★★★
+    // ★★★ ワールド座標で直接描画する、最も単純な方法 ★★★
+    
+    this.debugGraphics.fillStyle(0xff0000, 0.2);
 
+    // 各パーツをループして、その「ワールド座標」の頂点を直接描画する
     this.sensorShape.parts.forEach((part, i) => {
+        // 複合ボディの最初の要素(中心点)は描画しない
         if (i === 0 && this.sensorShape.parts.length > 1) return;
         
         const vertices = part.vertices;
-        this.debugGraphics.fillStyle(0xff0000, 0.2);
         this.debugGraphics.beginPath();
-        this.debugGraphics.moveTo(vertices[0].x - part.position.x, vertices[0].y - part.position.y);
+        this.debugGraphics.moveTo(vertices[0].x, vertices[0].y);
         for (let j = 1; j < vertices.length; j++) {
-            this.debugGraphics.lineTo(vertices[j].x - part.position.x, vertices[j].y - part.position.y);
+            this.debugGraphics.lineTo(vertices[j].x, vertices[j].y);
         }
         this.debugGraphics.closePath();
         this.debugGraphics.fillPath();
     });
-
-    // 描画が終わったら基点をリセット
-    this.debugGraphics.setTranslation(0, 0);
-    this.debugGraphics.setRotation(0);
 }
 
     getCurrentParams() {
