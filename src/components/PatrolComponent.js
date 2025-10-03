@@ -39,38 +39,55 @@ export default class PatrolComponent {
         this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
     }
 
-    update(time, delta) {
-        if (!this.enabled || this.waypoints.length === 0) return;
+  update(time, delta) {
+    if (!this.enabled || this.waypoints.length === 0) return;
 
-        if (this.state === 'PATROLLING') {
-            const targetWaypoint = this.waypoints[this.currentWaypointIndex];
-            const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, targetWaypoint);
+    if (this.state === 'PATROLLING') {
+        const targetWaypoint = this.waypoints[this.currentWaypointIndex];
+        const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, targetWaypoint);
+        
+        const params = this.getCurrentParams();
+
+        if (distance < params.arrivalThreshold) {
+            this.npcController.stop();
+            this.state = 'WAITING';
+            this.waitTimer = time + params.waitTime;
+            this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+        } else {
+            const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, targetWaypoint);
+            let vx = 0;
+            let vy = 0;
+            const speed = this.npcController.moveSpeed;
             
-            const params = this.getCurrentParams();
-
-            // ウェイポイントに到着したら
-            if (distance < params.arrivalThreshold) {
-                this.npcController.stop();
-                this.state = 'WAITING';
-                this.waitTimer = time + params.waitTime;
-                
-                // 次のウェイポイントへ
-                this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+            // --- ▼▼▼ ここからが8軸対応のロジック ▼▼▼ ---
+            if (params.is8Way) {
+                // 8方向移動の場合：角度をそのまま速度ベクトルに変換
+                vx = Math.cos(angle) * speed;
+                vy = Math.sin(angle) * speed;
             } else {
-                // ターゲットに向かって移動
-                const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, targetWaypoint);
-                const vx = Math.cos(angle) * this.npcController.moveSpeed;
-                const vy = Math.sin(angle) * this.npcController.moveSpeed;
-                this.npcController.move(vx, vy);
+                // 4方向移動（水平・垂直）の場合
+                const angleDeg = Phaser.Math.RadToDeg(angle);
+                if (Math.abs(angleDeg) < 45 || Math.abs(angleDeg) > 135) {
+                    // 左右の移動を優先
+                    vx = (Math.abs(angleDeg) < 45) ? speed : -speed;
+                    vy = 0;
+                } else {
+                    // 上下の移動を優先
+                    vx = 0;
+                    vy = (angleDeg > 0) ? speed : -speed;
+                }
             }
-        } 
-        else if (this.state === 'WAITING') {
-            // 待機時間が終了したらパトロール再開
-            if (time > this.waitTimer) {
-                this.state = 'PATROLLING';
-            }
+            // --- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ ---
+            
+            this.npcController.move(vx, vy);
+        }
+    } 
+    else if (this.state === 'WAITING') {
+        if (time > this.waitTimer) {
+            this.state = 'PATROLLING';
         }
     }
+}
 
     handleBehaviorChange(event) {
         // 自分自身が発行したイベントは無視
@@ -107,5 +124,7 @@ PatrolComponent.define = {
         { key: 'pathGroup', type: 'text', label: 'Path Group', defaultValue: 'patrol_path_A' },
         { key: 'waitTime', type: 'range', label: 'Wait Time (ms)', min: 0, max: 10000, step: 100, defaultValue: 2000 },
         { key: 'arrivalThreshold', type: 'range', label: 'Arrival Threshold', min: 5, max: 100, step: 1, defaultValue: 10 },
+        // --- ▼▼▼ 8軸対応パラメータを追加 ▼▼▼ ---
+        { key: 'is8Way', type: 'checkbox', label: '8-Way Movement', defaultValue: true }
     ]
 };
