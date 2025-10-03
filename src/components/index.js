@@ -15,6 +15,9 @@ import LightComponent from './LightComponent.js';
 import VignetteComponent from './VignetteComponent.js'; 
 import FogComponent from './FogComponent.js';
 import DetectionAreaComponent from './DetectionAreaComponent.js';
+import PatrolComponent from './PatrolComponent.js';
+
+
 
 //UI系
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
@@ -40,7 +43,7 @@ LightComponent,
 VignetteComponent,    
 FogComponent, 
 DetectionAreaComponent,
-
+PatrolComponent,
 
 
     //UI系
