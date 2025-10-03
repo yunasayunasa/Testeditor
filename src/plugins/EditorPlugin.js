@@ -1132,13 +1132,14 @@ createMatterPropertiesUI(gameObject) {
             }
         }
     });
-    this.createCheckbox(this.editorPropsContainer, '回転を固定', gameObject.body.fixedRotation, (isChecked) => {
+   this.createCheckbox(this.editorPropsContainer, '回転を固定', gameObject.getData('fixedRotation') === true, (isChecked) => {
     if (this.selectedObject?.body) {
         this.selectedObject.setFixedRotation(isChecked);
         // ★ 永続化のためにデータもセットする
         this.selectedObject.setData('fixedRotation', isChecked);
     }
 });
+
 
     // --- 重力スケール ---
     if (!body.ignoreGravity) {
