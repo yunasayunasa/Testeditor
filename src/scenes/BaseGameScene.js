@@ -226,37 +226,34 @@ createAnimationsFromLayout(layoutData) {
  */
 // in BaseGameScene.js
 
+// in BaseGameScene.js
+
 addCroppedTilemapChunk(tilemapKey, cropRect) {
     console.log(`[BaseGameScene] Adding cropped chunk from '${tilemapKey}'`, cropRect);
 
-    // --- ステップA：見た目の生成 (RenderTexture -> Camera.copy 方式に変更) ---
-    
-    // ガード節: クロップ範囲が不正なら中止
     if (cropRect.width <= 0 || cropRect.height <= 0) {
         console.error("[BaseGameScene] Invalid crop rectangle.", cropRect);
         return null;
     }
 
-    // 1. 一時的なRenderTextureをクロップサイズで作成
+    // --- ステップA：見た目の生成 (正しいRenderTexture.draw方式) ---
+
+    // 1. 一時的なRenderTextureを作成
     const rt = this.make.renderTexture({ width: cropRect.width, height: cropRect.height }, false);
 
     // 2. 一時的な非表示のImageオブジェクトを、元のタイルマップテクスチャで作成
-    //    (カメラのコピー機能は、シーン上のオブジェクトを対象とするため)
+    //    drawの対象として使うため
     const tempImage = this.add.image(0, 0, tilemapKey).setOrigin(0, 0).setVisible(false);
 
-    // ★★★ ここが新しい核心部分 ★★★
-    // 3. RenderTextureの内部カメラを使って、一時Imageの指定領域だけをコピーする
-    rt.camera.copy(
-        cropRect.x,      // コピー元のX座標
-        cropRect.y,      // コピー元のY座標
-        cropRect.width,  // コピーする幅
-        cropRect.height, // コピーする高さ
-        0,               // コピー先のX座標 (RenderTextureの左上)
-        0,               // コピー先のY座標 (RenderTextureの左上)
-        true,            // true = 引数の対象をカメラ全体ではなく、シーン上の全オブジェクトにする
-        tempImage        // コピー対象のオブジェクトを明示的に指定
+    // ★★★ ここが正しいRenderTextureの使い方 ★★★
+    // 3. RenderTextureに、tempImageの「一部」を描画する
+    //    まず、描画対象をtempImageに設定
+    rt.draw(
+        tempImage,
+        -cropRect.x, // 描画先のX座標。マイナスにすることで、ソースのX座標が0になる
+        -cropRect.y  // 描画先のY座標。マイナスにすることで、ソースのY座標が0になる
     );
-    // ★★★★★★★★★★★★★★★★★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★
 
     // 4. 使い終わった一時Imageは即座に破棄
     tempImage.destroy();
@@ -274,19 +271,11 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
 
     // ... (以降の物理ボディ生成と初期化は変更なし) ...
     const layout = {
-        name: chunkImage.name,
-        type: 'Image',
-        texture: newTextureKey,
-        x: centerX,
-        y: centerY,
+        name: chunkImage.name, type: 'Image', texture: newTextureKey,
+        x: centerX, y: centerY,
         layer: this.editorUI?.activeLayerName || 'Gameplay',
-        physics: {
-            isStatic: true,
-            width: cropRect.width,
-            height: cropRect.height
-        }
+        physics: { isStatic: true, width: cropRect.width, height: cropRect.height }
     };
-    
     this.applyProperties(chunkImage, layout);
     this.initComponentsAndEvents(chunkImage);
 
