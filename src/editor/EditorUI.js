@@ -301,8 +301,7 @@ newImgElement.draggable = false;
 }
 
 // in EditorUI.js
-
-// in EditorUI.js
+// 既存の initCropSelection を、この内容で「完全に」置き換えてください
 
 initCropSelection() {
     this.cropRect = { x: 0, y: 0, width: 0, height: 0 };
@@ -316,26 +315,24 @@ initCropSelection() {
     selectionBox.style.pointerEvents = 'none';
     this.tilemapPreviewContent.appendChild(selectionBox);
 
-    // ★★★ 座標変換のためのヘルパー関数を「正しい方法」で定義 ★★★
-    const getLocalCoordinates = (pointer) => {
-        // 1. プレビューコンテナのDOM上での位置と、親のスクロール量を取得
-        const contentRect = this.tilemapPreviewContent.getBoundingClientRect();
-        const scrollLeft = this.tilemapPreviewContent.parentElement.scrollLeft;
-        const scrollTop = this.tilemapPreviewContent.parentElement.scrollTop;
+    // ★★★ スケール補正のための計算 ★★★
+    const scaleManager = this.game.scale;
+    // ゲームの基本サイズと、現在のキャンバスの実際の表示サイズから、倍率を計算
+    const scaleX = scaleManager.baseSize.width / scaleManager.width;
+    const scaleY = scaleManager.baseSize.height / scaleManager.height;
 
-        // 2. ブラウザウィンドウ全体でのマウスポインタ座標から、
-        //    コンテナの開始位置を引くことで、コンテナ内での相対座標を計算
-        const localX = pointer.pageX - contentRect.left + scrollLeft;
-        const localY = pointer.pageY - contentRect.top + scrollTop;
-        
-        return { x: localX, y: localY };
+    const getScaledCoordinates = (event) => {
+        // offsetX/Yに、計算した倍率を掛ける
+        const x = event.offsetX * scaleX;
+        const y = event.offsetY * scaleY;
+        return { x, y };
     };
 
     this.tilemapPreviewContent.onpointerdown = (e) => {
         isDragging = true;
-        const localCoords = getLocalCoordinates(e);
-        startX = localCoords.x;
-        startY = localCoords.y;
+        const coords = getScaledCoordinates(e);
+        startX = coords.x;
+        startY = coords.y;
         
         selectionBox.style.left = startX + 'px';
         selectionBox.style.top = startY + 'px';
@@ -346,9 +343,9 @@ initCropSelection() {
 
     this.tilemapPreviewContent.onpointermove = (e) => {
         if (!isDragging) return;
-        const localCoords = getLocalCoordinates(e);
-        const currentX = localCoords.x;
-        const currentY = localCoords.y;
+        const coords = getScaledCoordinates(e);
+        const currentX = coords.x;
+        const currentY = coords.y;
 
         const x = Math.min(startX, currentX);
         const y = Math.min(startY, currentY);
@@ -359,27 +356,17 @@ initCropSelection() {
         selectionBox.style.top = y + 'px';
         selectionBox.style.width = width + 'px';
         selectionBox.style.height = height + 'px';
+        
+        // 選択範囲をリアルタイムで保存
+        this.cropRect = { x, y, width, height };
     };
 
-    const stopDrag = (e) => {
-        if (!isDragging) return;
+    const stopDrag = () => {
         isDragging = false;
-
-        const localCoords = getLocalCoordinates(e);
-        const endX = localCoords.x;
-        const endY = localCoords.y;
-        this.cropRect = {
-            x: Math.round(Math.min(startX, endX)),
-            y: Math.round(Math.min(startY, endY)),
-            width: Math.round(Math.abs(startX - endX)),
-            height: Math.round(Math.abs(startY - endY))
-        };
+        // 最終的な値は onpointermove ですでに保存されている
     };
 
     this.tilemapPreviewContent.onpointerup = stopDrag;
-    this.tilemapPreviewContent.onpointerleave = stopDrag;
-}
-
 onCropAndPlace = () => {
     if (!this.selectedTilemapKey) {
         alert('Please select a tilemap first.');
