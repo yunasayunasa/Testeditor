@@ -279,6 +279,9 @@ updatePropertyPanel() {
             this.safeCreateUI(this.createComponentSection);
             this.editorPropsContainer.appendChild(document.createElement('hr'));
             this.safeCreateUI(this.createAnimationPrefixInput);
+            this.editorPropsContainer.appendChild(document.createElement('hr'));
+this.safeCreateUI(this.createCustomDataSection);
+this.editorPropsContainer.appendChild(document.createElement('hr'));
             // --- 共通フッターUI ---
             this.safeCreateUI(this.createExportButton);
             this.safeCreateUI(this.createExportPrefabButton);
@@ -307,7 +310,87 @@ updatePropertyPanel() {
         this._isUpdatingPanel = false;
     }
 }
+// in src/plugins/EditorPlugin.js
 
+/**
+ * ★★★ 新設 ★★★
+ * オブジェクトの汎用カスタムデータを編集するためのUIを生成する
+ */
+createCustomDataSection() {
+    const title = document.createElement('h4');
+    title.innerText = 'カスタムデータ';
+    title.style.margin = '10px 0 5px 0';
+    this.editorPropsContainer.appendChild(title);
+
+    const dataContainer = document.createElement('div');
+    dataContainer.style.display = 'flex';
+    dataContainer.style.flexDirection = 'column';
+    dataContainer.style.gap = '5px';
+    
+    const target = this.selectedObject;
+
+    // --- 既存のデータを表示 ---
+    // 'data.values' には、setDataで設定された全てのキーと値が入っている
+    for (const key in target.data.values) {
+        // groupやlayerなど、専用UIがあるものは除外する
+        if (['group', 'layer', 'anim_prefix', 'components', 'events', 'cropSource', 'textureData', 'fixedRotation', 'ignoreGravity', 'shape'].includes(key)) {
+            continue;
+        }
+
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.gap = '5px';
+
+        const keyInput = document.createElement('input');
+        keyInput.type = 'text';
+        keyInput.value = key;
+        keyInput.disabled = true; // キーは編集不可
+        keyInput.style.flex = '1';
+
+        const valueInput = document.createElement('input');
+        valueInput.type = 'text';
+        valueInput.value = target.data.values[key];
+        valueInput.style.flex = '2';
+        valueInput.addEventListener('input', (e) => {
+            // 値が変更されたら、setDataで更新
+            target.setData(key, e.target.value);
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.innerText = '×';
+        removeBtn.style.width = 'auto';
+        removeBtn.onclick = () => {
+            if (confirm(`カスタムデータ '${key}' を削除しますか？`)) {
+                target.data.remove(key); // データマネージャーから削除
+                this.updatePropertyPanel(); // UIを再描画
+            }
+        };
+
+        row.append(keyInput, valueInput, removeBtn);
+        dataContainer.appendChild(row);
+    }
+
+    this.editorPropsContainer.appendChild(dataContainer);
+
+    // --- 新しいデータを追加するボタン ---
+    const addButton = document.createElement('button');
+    addButton.innerText = 'カスタムデータを追加';
+    addButton.style.marginTop = '10px';
+    addButton.style.backgroundColor = '#444';
+    addButton.onclick = () => {
+        const newKey = prompt('追加するデータの「キー」を入力してください (例: nextWaypoint):');
+        if (newKey && !target.data.has(newKey)) {
+            const newValue = prompt(`キー '${newKey}' に設定する「値」を入力してください:`);
+            if (newValue !== null) {
+                target.setData(newKey, newValue);
+                this.updatePropertyPanel(); // UIを再描画
+            }
+        } else if (newKey) {
+            alert(`キー '${newKey}' は既に使用されています。`);
+        }
+    };
+    this.editorPropsContainer.appendChild(addButton);
+}
 /**
  * ★★★ 新規追加 ★★★
  * アニメーションのプレフィックス名を設定するためのUIを生成する。

@@ -23,7 +23,7 @@ export default class ChaseComponent {
     start() {
         this.npcController = this.gameObject.components.NpcController;
         if (!this.npcController) {
-            console.error(`[ChaseComponent] ERROR: 'NpcController' is required on '${this.gameObject.name}'. Disabling.`);
+          
             this.enabled = false;
             return;
         }
@@ -44,7 +44,7 @@ export default class ChaseComponent {
             console.log("▼ SENSOR BODY ▼", detectionArea.sensorBody);
             console.log("SENSOR collisionFilter:", detectionArea.sensorBody.collisionFilter);
         } else {
-            console.error("Sensor body NOT FOUND on this object!");
+           
         }
 
         // 2. プレイヤーボディを調べる
