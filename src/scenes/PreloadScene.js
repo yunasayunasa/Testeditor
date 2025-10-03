@@ -96,19 +96,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
                 }
             }
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-if (assetDefine.tilemaps) {
-        for (const key in assetDefine.tilemaps) {
-            const tilemap = assetDefine.tilemaps[key];
-            if (tilemap.type === 'image') {
-                this.load.image(key, tilemap.path);
-                console.log(`[PreloadScene] Queued: tilemap (image) - key='${key}', path='${tilemap.path}'`);
-            }
-            // else if (tilemap.type === 'tiled_json') {
-            //     this.load.tilemapTiledJSON(key, tilemap.path);
-            // }
-        }
-    }
+   
 
         // file_lists の処理 (これは変更なし)
         if (assetDefine.file_lists) {
@@ -233,16 +221,7 @@ if (assetDefine.tilemaps) {
         }
         // --- 3. 他のタイプのアセットも、必要であればここに追加 ---
         // (例: 音声ファイルなども、将来的にアセットブラウザで扱いたくなった場合)
-        // ---4.タイルマップ用リスト
-if (assetDefine.tilemaps) {
-        for (const key in assetDefine.tilemaps) {
-            assetList.push({ 
-                key: key, 
-                type: 'tilemap', // ★ typeを'tilemap'として登録
-                path: assetDefine.tilemaps[key].path 
-            });
-        }
-    }
+       
         this.registry.set('asset_list', assetList);
         console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
     }
