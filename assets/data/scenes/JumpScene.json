@@ -68,6 +68,7 @@
       "physics": {
         "isStatic": true,
         "isSensor": true,
+        "fixedRotation": false,
         "gravityScale": 1,
         "friction": 1,
         "restitution": 0,
@@ -188,7 +189,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 925,
+      "x": 529,
       "y": 625,
       "depth": 0,
       "scaleX": 0.65,
@@ -249,6 +250,7 @@
       "physics": {
         "isStatic": false,
         "isSensor": false,
+        "fixedRotation": true,
         "gravityScale": 1,
         "friction": 0.1,
         "restitution": 0,
@@ -261,7 +263,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1495,
+      "x": 1264,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -426,6 +428,7 @@
       "physics": {
         "isStatic": false,
         "isSensor": false,
+        "fixedRotation": true,
         "gravityScale": 1,
         "friction": 0.1,
         "restitution": 0,
@@ -451,10 +454,11 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759485187535",
+      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
+        "fixedRotation": false,
         "gravityScale": 1,
         "friction": 1,
         "restitution": 0,
@@ -480,10 +484,11 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759485205665",
+      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
+        "fixedRotation": false,
         "gravityScale": 1,
         "friction": 1,
         "restitution": 0,
@@ -509,10 +514,11 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759485232050",
+      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
+        "fixedRotation": false,
         "gravityScale": 1,
         "friction": 1,
         "restitution": 0,
@@ -538,10 +544,41 @@
         "ignoreGravity": false,
         "shape": "rectangle"
       },
-      "texture": "tileset_terrain_chunk_1759485245665",
+      "texture": "__MISSING",
       "physics": {
         "isStatic": true,
         "isSensor": false,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      }
+    },
+    {
+      "name": "tileset_terrain_chunk_1759486113533",
+      "type": "Image",
+      "x": 925,
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "data": {
+        "ignoreGravity": false,
+        "shape": "rectangle"
+      },
+      "texture": "tileset_terrain_chunk_1759486113533",
+      "physics": {
+        "isStatic": true,
+        "isSensor": false,
+        "fixedRotation": false,
         "gravityScale": 1,
         "friction": 1,
         "restitution": 0,
