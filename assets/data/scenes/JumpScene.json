@@ -21,8 +21,8 @@
     {
       "name": "test_a",
       "type": "Image",
-      "x": 1083,
-      "y": 542,
+      "x": 1111,
+      "y": 589,
       "depth": 10,
       "scaleX": 1,
       "scaleY": 1,
@@ -33,7 +33,7 @@
       "texture": "cg01",
       "data": {
         "nextWaypoint": "test_b",
-        "lastTap": 1759507316253
+        "lastTap": 1759509178781
       }
     },
     {
@@ -78,8 +78,9 @@
       },
       "data": {
         "nextWaypoint": "test_a",
-        "lastTap": 1759507296801,
-        "overlap_tartman": true
+        "lastTap": 0,
+        "overlap_tartman": false,
+        "overlap_player": false
       }
     },
     {
@@ -201,7 +202,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 266,
+      "x": 405,
       "y": 625,
       "depth": 0,
       "scaleX": 0.65,
@@ -268,13 +269,14 @@
         }
       },
       "data": {
-        "lastTap": 0
+        "lastTap": 1759509311119,
+        "overlap_test_b": false
       }
     },
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1928,
+      "x": 1310,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -311,9 +313,17 @@
         {
           "type": "PatrolComponent",
           "params": {
-            "waitTime": 400,
-            "arrivalThreshold": 30,
+            "waitTime": 8600,
+            "arrivalThreshold": 100,
             "startWaypoint": "test_b"
+          }
+        },
+        {
+          "type": "DetectionAreaComponent",
+          "params": {
+            "type": "cone",
+            "radius": 370,
+            "offsetX": 142
           }
         }
       ],
@@ -332,9 +342,9 @@
         }
       },
       "data": {
-        "lastTap": 1759507294224,
+        "lastTap": 1759509359501,
         "nextWaypoint": "test_a",
-        "overlap_test_b": true,
+        "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828
       }
