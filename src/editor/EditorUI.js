@@ -258,32 +258,43 @@ buildTilemapList() {
 }
     // in EditorUI.js (続き)
 
+// in EditorUI.js
+
 selectTilemap(tilemapKey) {
     if (!this.tilemapPreviewContent || !this.selectedTilemapName) return;
 
     this.selectedTilemapKey = tilemapKey;
 
+    // --- プレビューエリアを一度クリア ---
+    this.tilemapPreviewContent.innerHTML = '';
+
     if (!tilemapKey) {
         this.selectedTilemapName.innerText = 'No tilemap selected';
-        this.tilemapPreviewContent.innerHTML = '';
         return;
     }
 
     this.selectedTilemapName.innerText = `Selected: ${tilemapKey}`;
 
-    // タイルマップ画像を取得
-    const texture = this.game.textures.get(tilemapKey);
-    if (!texture || !texture.source[0]) {
-        this.tilemapPreviewContent.innerHTML = 'Error: Texture not found.';
+    // ★★★ ここからが修正の核心 ★★★
+    // 1. グローバルアセットリストから、選択されたタイルマップの情報を探す
+    const assetList = this.game.registry.get('asset_list');
+    const assetInfo = assetList.find(asset => asset.key === tilemapKey && asset.type === 'tilemap');
+
+    if (!assetInfo || !assetInfo.path) {
+        this.tilemapPreviewContent.innerHTML = `Error: Asset path not found for '${tilemapKey}'.`;
         return;
     }
-    const imgElement = texture.source[0].image;
 
-    // プレビューエリアをクリアし、画像を追加
-    this.tilemapPreviewContent.innerHTML = '';
-    this.tilemapPreviewContent.appendChild(imgElement.cloneNode());
+    // 2. Phaserの内部参照ではなく、アセットのパス(URL)を使って新しい<img>要素を作成する
+    const newImgElement = document.createElement('img');
+    newImgElement.src = assetInfo.path;
+    newImgElement.style.display = 'block'; // 画像の下に余分なスペースができるのを防ぐ
+    newImgElement.style.maxWidth = 'none'; // コンテナの幅に縮小されないように
+
+    // 3. 新しく作成した<img>要素をDOMに追加
+    this.tilemapPreviewContent.appendChild(newImgElement);
     
-    // 矩形選択機能を初期化
+    // 4. 矩形選択機能を初期化
     this.initCropSelection();
 }
 
