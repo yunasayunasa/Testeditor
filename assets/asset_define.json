@@ -42,12 +42,7 @@
     }
   },
 
-   "//": "--- ここからタイルマップ定義 ---",
-  "tilemaps": {
-    "my_tileset": {
-      "type": "image",
-      "path": "assets/images/tileset_terrain.png"
-    },
+  
   "sounds": {
 "popopo": "assets/gyakuten_popopo.mp3",
 "cafe": "assets/cafe.mp3",
@@ -87,5 +82,5 @@
     }
   }
 }
-}
+
   
