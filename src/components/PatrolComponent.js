@@ -33,34 +33,36 @@ export default class PatrolComponent {
         this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
     }
 
-    update(time, delta) {
-        if (!this.enabled || !this.currentWaypoint) return;
+   update(time, delta) {
+    if (!this.enabled || !this.currentWaypoint) return;
 
-        if (this.state === 'PATROLLING') {
-            const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, this.currentWaypoint);
-            const params = this.getCurrentParams();
+    if (this.state === 'PATROLLING') {
+        const distance = Phaser.Math.Distance.BetweenPoints(this.gameObject, this.currentWaypoint);
+        const params = this.getCurrentParams();
 
-            if (distance < params.arrivalThreshold) {
-                // --- 到着時の処理 ---
-                this.npcController.stop();
-                this.state = 'WAITING';
-                this.waitTimer = time + params.waitTime;
-                
-                // ★ 現在のウェイポイントから、次のウェイポイントの名前を取得
-                const nextWaypointName = this.currentWaypoint.getData('nextWaypoint');
-
-                if (nextWaypointName) {
-                    // ★ 次のウェイポイントをシーンから名前で検索
-                    this.currentWaypoint = this.scene.children.getByName(nextWaypointName);
-                    if (!this.currentWaypoint) {
-                        console.warn(`[PatrolComponent] Next waypoint '${nextWaypointName}' not found. Stopping patrol.`);
-                        this.enabled = false;
-                    }
+        // ウェイポイントに到着したら
+        if (distance < params.arrivalThreshold) {
+            this.npcController.stop();
+            this.state = 'WAITING';
+            this.waitTimer = time + params.waitTime;
+            
+            // ★ とりあえず、次のウェイポイントを探しに行く
+            const nextWaypointName = this.currentWaypoint.getData('nextWaypoint');
+            if (nextWaypointName) {
+                const nextWaypoint = this.scene.children.getByName(nextWaypointName);
+                if (nextWaypoint) {
+                    this.currentWaypoint = nextWaypoint; // 次のターゲットを設定
                 } else {
-                    console.log(`[PatrolComponent] End of patrol path reached. Stopping.`);
-                    this.enabled = false;
+                    // 名前は指定されているのに、オブジェクトが見つからない場合
+                    this.currentWaypoint = null; // ターゲットを失う
+                    console.warn(`[PatrolComponent] Next waypoint '${nextWaypointName}' not found. Stopping patrol.`);
                 }
             } else {
+                // nextWaypointが設定されていない場合
+                this.currentWaypoint = null; // ターゲットを失う
+            }
+
+        } else {
                 // --- 移動中の処理 (変更なし) ---
                 const angle = Phaser.Math.Angle.BetweenPoints(this.gameObject, this.currentWaypoint);
             let vx = 0;
@@ -92,7 +94,16 @@ export default class PatrolComponent {
     } 
     else if (this.state === 'WAITING') {
         if (time > this.waitTimer) {
-            this.state = 'PATROLLING';
+            // ★★★ 待機時間が終わった後、ここで再度次のウェイポイントを探す ★★★
+            if (this.currentWaypoint) {
+                // 次の目的地が設定されていれば、パトロール再開
+                this.state = 'PATROLLING';
+            } else {
+                // 待機時間が終わっても、次の目的地が見つからない場合
+                // （ここでパトロールを終了させるか、あるいは最初の地点に戻るか、仕様次第）
+                console.log(`[PatrolComponent] End of path reached and no next waypoint found after waiting.`);
+                this.enabled = false;
+            }
         }
     }
 }
