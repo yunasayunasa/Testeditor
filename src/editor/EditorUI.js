@@ -311,7 +311,7 @@ initCropSelection() {
     let isDragging = false;
     let startX = 0;
     let startY = 0;
-
+const previewWrapper = this.tilemapPreviewContent.parentElement; // スクロールを持つ親要素
     const selectionBox = document.createElement('div');
     selectionBox.style.position = 'absolute';
     selectionBox.style.border = '2px dashed #00ffff';
@@ -333,6 +333,7 @@ initCropSelection() {
 
     this.tilemapPreviewContent.onpointerdown = (e) => {
         isDragging = true;
+        previewWrapper.style.overflow = 'hidden'; // ★ ドラッグ開始時にスクロールを無効化
         const coords = getScaledCoordinates(e);
         startX = coords.x;
         startY = coords.y;
@@ -365,7 +366,9 @@ initCropSelection() {
     };
 
     const stopDrag = () => {
+        if (!isDragging) return;
         isDragging = false;
+        previewWrapper.style.overflow = 'auto'; // ★ ドラッグ終了時にスクロールを有効化
         // 最終的な値は onpointermove ですでに保存されている
     };
 

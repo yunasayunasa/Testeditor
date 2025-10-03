@@ -2157,6 +2157,7 @@ createColorInput(container, label, initialValue, callback) {
                     objData.physics = {
                         isStatic: body.isStatic,
                         isSensor: body.isSensor,
+                        fixedRotation: gameObject.getData('fixedRotation') || false, // ★ この行を追加
                         gravityScale: body.gravityScale.y,
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
@@ -2288,6 +2289,7 @@ createColorInput(container, label, initialValue, callback) {
             prefabData.physics = {
                 isStatic: body.isStatic,
                 isSensor: body.isSensor,
+                fixedRotation: gameObject.getData('fixedRotation') || false, // ★ この行を追加
                 ignoreGravity: gameObject.getData('ignoreGravity') === true,
                 gravityScale: body.gravityScale.y,
                 shape: gameObject.getData('shape') || 'rectangle', 

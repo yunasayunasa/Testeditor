@@ -536,6 +536,11 @@ applyProperties(gameObject, layout) {
             gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
             if (phys.isSensor) gameObject.setSensor(true);
             gameObject.setStatic(phys.isStatic || false);
+            if (phys.fixedRotation !== undefined) {
+        gameObject.setFixedRotation(phys.fixedRotation);
+        // 永続化データを元に、再度setDataしておく
+        gameObject.setData('fixedRotation', phys.fixedRotation); 
+    }
             gameObject.setFriction(phys.friction !== undefined ? phys.friction : 0.1);
             gameObject.setFrictionAir(phys.frictionAir !== undefined ? phys.frictionAir : 0.01);
             gameObject.setBounce(phys.restitution !== undefined ? phys.restitution : 0);
