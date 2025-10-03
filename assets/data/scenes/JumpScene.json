@@ -19,10 +19,10 @@
   ],
   "objects": [
     {
-      "name": "waypoint_A_01",
+      "name": "test_a",
       "type": "Image",
-      "x": 767,
-      "y": 515,
+      "x": 1083,
+      "y": 542,
       "depth": 10,
       "scaleX": 1,
       "scaleY": 1,
@@ -30,10 +30,14 @@
       "alpha": 1,
       "layer": "Foreground",
       "events": [],
-      "texture": "cg01"
+      "texture": "cg01",
+      "data": {
+        "nextWaypoint": "test_b",
+        "lastTap": 1759507316253
+      }
     },
     {
-      "name": "waypoint_A_02",
+      "name": "test_b",
       "type": "Image",
       "x": 1928,
       "y": 642,
@@ -71,6 +75,11 @@
           "category": 1,
           "mask": 4294967295
         }
+      },
+      "data": {
+        "nextWaypoint": "test_a",
+        "lastTap": 1759507296801,
+        "overlap_tartman": true
       }
     },
     {
@@ -85,7 +94,10 @@
       "alpha": 0,
       "layer": "Gameplay",
       "events": [],
-      "texture": "bgtest3"
+      "texture": "bgtest3",
+      "data": {
+        "lastTap": 0
+      }
     },
     {
       "name": "bgtest4_1758338485276",
@@ -117,7 +129,10 @@
           "connections": []
         }
       ],
-      "texture": "bgtest4"
+      "texture": "bgtest4",
+      "data": {
+        "lastTap": 0
+      }
     },
     {
       "name": "bgtest3_1758338618267",
@@ -148,7 +163,10 @@
           "connections": []
         }
       ],
-      "texture": "bgtest3"
+      "texture": "bgtest3",
+      "data": {
+        "lastTap": 0
+      }
     },
     {
       "name": "tartman_run_1758964419196",
@@ -161,7 +179,9 @@
       "angle": 0,
       "alpha": 1,
       "events": [],
-      "texture": "__DEFAULT"
+      "data": {
+        "lastTap": 0
+      }
     },
     {
       "name": "anila_walk_1758964517325",
@@ -174,7 +194,9 @@
       "angle": 0,
       "alpha": 1,
       "events": [],
-      "texture": "__DEFAULT"
+      "data": {
+        "lastTap": 0
+      }
     },
     {
       "name": "player",
@@ -244,12 +266,15 @@
           "category": 1,
           "mask": 4294967295
         }
+      },
+      "data": {
+        "lastTap": 0
       }
     },
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 767,
+      "x": 1928,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -286,8 +311,9 @@
         {
           "type": "PatrolComponent",
           "params": {
-            "waitTime": 1000,
-            "arrivalThreshold": 30
+            "waitTime": 400,
+            "arrivalThreshold": 30,
+            "startWaypoint": "test_b"
           }
         }
       ],
@@ -304,6 +330,13 @@
           "category": 1,
           "mask": 4294967295
         }
+      },
+      "data": {
+        "lastTap": 1759507294224,
+        "nextWaypoint": "test_a",
+        "overlap_test_b": true,
+        "dragStartX": 1927.9999999999998,
+        "dragStartY": 609.0911424572828
       }
     }
   ],
