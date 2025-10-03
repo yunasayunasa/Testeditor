@@ -561,34 +561,46 @@ applyProperties(gameObject, layout) {
     
     // ▼▼▼ ここからが、物理ボディ生成の最後の正直です ▼▼▼
     // --------------------------------------------------------------------
-    // --- 5. 物理ボディの生成と設定 ---
+    // --- 5. 物理ボディの生成と設定 (完全手動モード) ---
     if (data.physics) {
         const phys = data.physics;
 
-        // 5a. 「スケール1.0」の状態で、テクスチャ本来のサイズでボディを生成
-        this.matter.add.gameObject(gameObject, {
+        // --- 5a. 既存のボディがあれば、完全に削除 ---
+        if (gameObject.body) {
+            this.matter.world.remove(gameObject.body);
+        }
+
+        // --- 5b. スケール適用後の、最終的な表示サイズと位置を取得 ---
+        const bodyWidth = gameObject.displayWidth;
+        const bodyHeight = gameObject.displayHeight;
+        const bodyX = gameObject.x;
+        const bodyY = gameObject.y;
+
+        // --- 5c. Matter.jsのネイティブ関数で、ボディを「手動で」作成 ---
+        const newBody = this.matter.bodies.rectangle(bodyX, bodyY, bodyWidth, bodyHeight, {
             isStatic: phys.isStatic,
             isSensor: phys.isSensor
         });
         
-        if (gameObject.body) {
-            // 5b. Matter.jsのネイティブ関数 Body.scale を使って、ボディのサイズを直接スケールさせる
-            const MatterBody = Phaser.Physics.Matter.Matter.Body;
-            MatterBody.scale(gameObject.body, data.scaleX ?? 1, data.scaleY ?? 1);
+        // --- 5d. 作成したボディを、物理ワールドに「手動で」追加 ---
+        this.matter.world.add(newBody);
 
-            // 5c. その他の物理プロパティを適用
-            gameObject.setFriction(phys.friction ?? 0.1);
-            gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
-            gameObject.setBounce(phys.restitution ?? 0);
-            
-            if (phys.fixedRotation !== undefined) {
-                gameObject.setFixedRotation(phys.fixedRotation);
-                gameObject.setData('fixedRotation', phys.fixedRotation);
-            }
-
-            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-            gameObject.setData('shape', phys.shape || 'rectangle');
+        // --- 5e. GameObjectに、このボディへの参照を手動で設定 ---
+        gameObject.body = newBody;
+        
+        // --- 5f. ボディ側に、GameObjectへの参照を手動で設定 ---
+        newBody.gameObject = gameObject;
+        
+        // --- 5g. その他の物理プロパティを適用 ---
+        gameObject.setFriction(phys.friction ?? 0.1);
+        gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
+        gameObject.setBounce(phys.restitution ?? 0);
+        if (phys.fixedRotation !== undefined) {
+            gameObject.setFixedRotation(phys.fixedRotation);
+            gameObject.setData('fixedRotation', phys.fixedRotation);
         }
+        gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+        gameObject.setData('shape', phys.shape || 'rectangle');
     }
     // --------------------------------------------------------------------
     
