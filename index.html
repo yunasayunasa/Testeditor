@@ -98,40 +98,44 @@
         </div> <!-- /#overlay-controls -->
 
 
-        <!-- Tilemap Editor Modal -->
-<div id="tilemap-editor-overlay" class="modal-overlay">
-    <div class="modal-window wide">
-        <div class="modal-header">
-            <h3>Tilemap Editor</h3>
-            <button id="tilemap-editor-close-btn">&times;</button>
-        </div>
-        <div class="modal-content" style="display: flex;">
-            <!-- 左ペイン: タイルマップリスト -->
-            <div id="tilemap-list-panel" style="width: 200px; border-right: 1px solid #444;">
-                <h4>Tilemaps</h4>
-                <div id="tilemap-list-container">
-                    <!-- JSでタイルマップのリストを生成 -->
+    <!-- (C) Bottom Panel: タイルマップエディタ -->
+        <!-- ★★★ このブロックを完全に削除 ★★★ -->
+
+
+        <!-- (D) Modal Windows -->
+        
+        <!-- ▼▼▼ ここに新しいタイルマップモーダルを追加 ▼▼▼ -->
+        <div id="tilemap-editor-overlay" class="modal-overlay">
+            <div class="modal-window wide"> <!-- wideクラスで幅広に -->
+                <div class="modal-header">
+                    <h3>Tilemap Editor</h3>
+                    <button id="tilemap-editor-close-btn" class="modal-close-btn">&times;</button>
                 </div>
-            </div>
-            <!-- 右ペイン: プレビューと操作パネル -->
-            <div id="tilemap-preview-panel" style="flex-grow: 1; display: flex; flex-direction: column;">
-                <div id="tilemap-preview-header">
-                    <span id="selected-tilemap-name">No tilemap selected</span>
-                </div>
-                <div id="tilemap-preview-wrapper" style="overflow: auto; flex-grow: 1;">
-                    <div id="tilemap-preview-content">
-                         <!-- JSでタイルマップ画像とクロップ用のUIを生成 -->
+                <div class="modal-content" id="tilemap-editor-body">
+                    <!-- 左ペイン: タイルマップリスト -->
+                    <div id="tilemap-list-panel">
+                        <h4>Tilemaps</h4>
+                        <div id="tilemap-list-container">
+                            <!-- JSでタイルマップのリストを生成 -->
+                        </div>
+                    </div>
+                    <!-- 右ペイン: プレビューと操作パネル -->
+                    <div id="tilemap-preview-panel">
+                        <div id="tilemap-preview-header">
+                            <span id="selected-tilemap-name">No tilemap selected</span>
+                        </div>
+                        <div id="tilemap-preview-wrapper">
+                            <div id="tilemap-preview-content">
+                                <!-- JSでタイルマップ画像とクロップ用のUIを生成 -->
+                            </div>
+                        </div>
+                        <div id="tilemap-action-panel">
+                            <button id="crop-and-place-btn">Crop Selection & Place</button>
+                        </div>
                     </div>
                 </div>
-                <div id="tilemap-action-panel">
-                    <button id="crop-and-place-btn">Crop and Place</button>
-                </div>
             </div>
         </div>
-    </div>
-</div> 
-
-
         <!-- (D) Modal Windows -->
         <!-- Animation Editor Modal -->
         <div id="anim-editor-overlay" class="modal-overlay">
@@ -272,3 +276,4 @@
 </body>
 
 </html>
+
