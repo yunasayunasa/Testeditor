@@ -13,29 +13,44 @@ export default class PatrolComponent {
         this.enabled = true;
     }
 
-    start() {
-        this.npcController = this.gameObject.components.NpcController;
-        if (!this.npcController) {
-            console.error(`[PatrolComponent] ERROR: 'NpcController' is required. Disabling.`);
-            this.enabled = false;
-            return;
-        }
+   // in src/components/PatrolComponent.js
+
+start() {
+    this.npcController = this.gameObject.components.NpcController;
+    if (!this.npcController) {
+        console.error(`[PatrolComponent] ERROR: 'NpcController' is required. Disabling.`);
+        this.enabled = false;
+        return;
+    }
+
+    // ★★★ ここからが修正の核心 ★★★
+    // ----------------------------------------------------------------
+    // ウェイポイントの検索を、次のフレームで実行するように予約する
+    this.scene.time.delayedCall(0, () => {
+        // このコールバックの中では、シーンの全てが準備完了している
 
         const params = this.getCurrentParams();
         
+        // 堅牢なウェイポイント取得ロジック
         this.waypoints = this.scene.children.list
-        .filter(obj => obj.getData('group') === params.pathGroup)
-        .sort((a, b) => a.name.localeCompare(b.name));
+            .filter(obj => obj.getData('group') === params.pathGroup)
+            .sort((a, b) => a.name.localeCompare(b.name));
 
         if (this.waypoints.length === 0) {
             console.warn(`[PatrolComponent] No waypoints found for group '${params.pathGroup}'. Disabling.`);
             this.enabled = false;
-            return;
+            return; // delayedCallの中なので、ここでreturnしても安全
+        } else {
+             console.log(`[PatrolComponent] Found ${this.waypoints.length} waypoints for group '${params.pathGroup}'. Patrolling enabled.`);
         }
 
-        // 2. イベントリスナーを登録
+        // イベントリスナーの登録も、ウェイポイントが見つかった後に行う
         this.gameObject.on('onAiBehaviorChange', this.handleBehaviorChange, this);
-    }
+
+    }, [], this);
+    // ----------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 
   update(time, delta) {
     if (!this.enabled || this.waypoints.length === 0) return;
