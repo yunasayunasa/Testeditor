@@ -1,177 +1,139 @@
-// src/components/DetectionAreaComponent.js
+// src/components/DetectionAreaComponent.js (グループ名判定への完全移行版)
 
 export default class DetectionAreaComponent {
 
     constructor(scene, owner, params = {}) {
         this.scene = scene;
         this.gameObject = owner;
-        this.sensorBody = null; // このコンポーネントが管理する物理ボディ
+        this.sensorShape = null; // 判定に使うMatter.jsのボディ形状
+        this.detectedObjects = new Set(); // 現在検知しているオブジェクトのセット
+        this.debugGraphics = null; // デバッグ表示用のGraphicsオブジェクト
     }
 
     start() {
-        const params = this.getCurrentParams();
-
-        // センサー用の物理ボディを作成
-        this.createSensorBody(params);
-
-        // --- イベントを発行するためのリスナーを設定 ---
-        // センサーボディが何かに触れたらずっと呼ばれる
-        this.scene.matter.world.on('collisionactive', this.handleCollision, this);
-        // センサーボディから何かが離れたら呼ばれる
-        this.scene.matter.world.on('collisionend', this.handleCollision, this);
+        // デバッグ表示用のGraphicsを準備
+        const isDebug = new URLSearchParams(window.location.search).has('debug');
+        if (isDebug) {
+            this.debugGraphics = this.scene.add.graphics().setDepth(this.gameObject.depth + 10);
+        }
+        
+        // 最初のupdateでセンサー形状が作られる
     }
 
     update() {
-        if (!this.sensorBody) return;
+        if (!this.gameObject.active) return;
 
         const params = this.getCurrentParams();
-
-        // 毎フレーム、センサーの位置と角度を親オブジェクトに追従させる
-        const offset = new Phaser.Math.Vector2(params.offsetX, params.offsetY).rotate(Phaser.Math.DegToRad(this.gameObject.angle));
-        const newX = this.gameObject.x + offset.x;
-        const newY = this.gameObject.y + offset.y;
         
-        let newAngle = this.gameObject.angle;
-        if (params.type === 'cone') {
-            if (this.gameObject.flipX) {
-                newAngle += 180;
-            }
-        }
+        // 1. センサーの形状と位置を更新
+        this.updateSensorShape(params);
+        if (!this.sensorShape) return;
 
-        Phaser.Physics.Matter.Matter.Body.setPosition(this.sensorBody, { x: newX, y: newY });
-        Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorBody, Phaser.Math.DegToRad(newAngle));
+        // 2. センサーと重なっているオブジェクトをMatter.jsエンジンに問い合わせる
+        const allBodies = this.scene.matter.world.getAllBodies();
+        const foundBodies = Phaser.Physics.Matter.Matter.Query.collides(this.sensorShape, allBodies);
+
+        const currentFrameDetections = new Set();
+
+        // 3. 見つかったオブジェクトをフィルタリング
+        foundBodies.forEach(collision => {
+            const body = collision.bodyA === this.sensorShape ? collision.bodyB : collision.bodyA;
+            const targetObject = body.gameObject;
+
+            if (targetObject && targetObject.getData('group') === params.targetGroup) {
+                currentFrameDetections.add(targetObject);
+
+                // 新しく検知したオブジェクトか？
+                if (!this.detectedObjects.has(targetObject)) {
+                    // onAreaEnterを発行
+                    this.gameObject.emit('onAreaEnter', targetObject);
+                    console.log(`%c[EVENT EMIT] '${this.gameObject.name}' detected '${targetObject.name}' entering.`, 'color: lime;');
+                }
+            }
+        });
+
+        // 4. 範囲からいなくなったオブジェクトを特定
+        this.detectedObjects.forEach(oldObject => {
+            if (!currentFrameDetections.has(oldObject)) {
+                // onAreaLeaveを発行
+                this.gameObject.emit('onAreaLeave', oldObject);
+                 console.log(`%c[EVENT EMIT] '${this.gameObject.name}' detected '${oldObject.name}' leaving.`, 'color: orange;');
+            }
+        });
+
+        // 5. 検知状態を更新
+        this.detectedObjects = currentFrameDetections;
+
+        // 6. デバッグ表示の更新
+        if (this.debugGraphics) {
+            this.drawDebugShape(params);
+        }
     }
-
-    createSensorBody(params) {
-        const { type, radius, targetGroup } = params;
-        const physicsDefine = this.scene.registry.get('physics_define');
-
-        // ターゲットのカテゴリ値を取得 (e.g., 'player' -> 2)
-        const targetCategory = physicsDefine?.categories?.[targetGroup];
-
-        if (targetCategory === undefined) {
-             console.warn(`[DetectionAreaComponent] Category for group '${targetGroup}' not found in physics_define.json. Sensor will not work.`);
-             return; // ターゲットカテゴリがなければセンサーを作らない
-        }
-        
-        const bodyOptions = {
-            isSensor: true,
-            isStatic: true,
-            label: `${this.gameObject.name}_detection_area`,
-            collisionFilter: {
-                // センサー自身のカテゴリを、ターゲットと衝突可能なものに設定
-                // 全てのカテゴリ値と衝突できるように、-1 (全て) を設定するのが最も確実
-                category: -1, 
-                // 衝突相手として、playerカテゴリ(2)だけを指定
-                mask: targetCategory
-            }
-        };
-
-        if (type === 'circle') {
-            this.sensorBody = this.scene.matter.bodies.circle(this.gameObject.x, this.gameObject.y, radius, bodyOptions);
-        } 
-        else if (type === 'cone') {
-            const { coneAngle, segments } = params;
+    
+    updateSensorShape(params) {
+        // センサー形状を再生成（パラメータ変更に対応するため）
+        if (params.type === 'circle') {
+            this.sensorShape = this.scene.matter.bodies.circle(0, 0, params.radius, { isSensor: true });
+        } else if (params.type === 'cone') {
+            const { radius, coneAngle, segments } = params;
+            // (扇形ボディの生成ロジックは以前と同じ)
             const angleStep = coneAngle / segments;
             const parts = [];
-
             for (let i = 0; i < segments; i++) {
                 const angle = -coneAngle / 2 + i * angleStep + angleStep / 2;
                 const rad = Phaser.Math.DegToRad(angle);
-
-                // 各パーツにも衝突フィルタを設定
-                const partOptions = { 
-                    isSensor: true,
-                    collisionFilter: bodyOptions.collisionFilter
-                };
-
-                const part = Phaser.Physics.Matter.Matter.Bodies.trapezoid(
-                    radius * 0.5 * Math.cos(rad),
-                    radius * 0.5 * Math.sin(rad),
-                    radius, 
-                    radius * Math.tan(Phaser.Math.DegToRad(angleStep/2)) * 2,
-                    0, // slope
-                    partOptions
-                );
+                const part = Phaser.Physics.Matter.Matter.Bodies.trapezoid(radius*0.5*Math.cos(rad), radius*0.5*Math.sin(rad), radius, radius*Math.tan(Phaser.Math.DegToRad(angleStep/2))*2, 0, { isSensor: true });
                 Phaser.Physics.Matter.Matter.Body.rotate(part, rad);
                 parts.push(part);
             }
-            // 複数のパーツを合体させて一つの複合ボディにする
-            this.sensorBody = Phaser.Physics.Matter.Matter.Body.create({ parts: parts, ...bodyOptions });
+            this.sensorShape = Phaser.Physics.Matter.Matter.Body.create({ parts: parts, isSensor: true });
+        } else {
+            this.sensorShape = null;
+            return;
         }
 
-        if (this.sensorBody) {
-            this.scene.matter.world.add(this.sensorBody);
-            
-            // デバッグ表示用の設定
-            const isDebug = new URLSearchParams(window.location.search).has('debug');
-            if (isDebug) {
-                this.sensorBody.render.fillStyle = 'rgba(255, 0, 0, 0.2)';
-                this.sensorBody.render.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-                this.sensorBody.render.lineWidth = 2;
-            }
-        }
+        // センサーの位置と角度を親オブジェクトに合わせる
+        const offset = new Phaser.Math.Vector2(params.offsetX, params.offsetY).rotate(Phaser.Math.DegToRad(this.gameObject.angle));
+        const newX = this.gameObject.x + offset.x;
+        const newY = this.gameObject.y + offset.y;
+        let newAngle = this.gameObject.angle;
+        if (params.type === 'cone' && this.gameObject.flipX) newAngle += 180;
+        
+        Phaser.Physics.Matter.Matter.Body.setPosition(this.sensorShape, { x: newX, y: newY });
+        Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorShape, Phaser.Math.DegToRad(newAngle));
     }
-
-    handleCollision(event) {
-        // 全ての衝突ペアをチェック
-        for (const pair of event.pairs) {
-            let otherBody = null;
-            if (pair.bodyA === this.sensorBody) otherBody = pair.bodyB;
-            if (pair.bodyB === this.sensorBody) otherBody = pair.bodyA;
-
-            if (otherBody && otherBody.gameObject) {
-                const targetObject = otherBody.gameObject;
-                const params = this.getCurrentParams();
-                
-                // ターゲットグループが一致するか再確認
-                if (params.targetGroup && targetObject.getData('group') !== params.targetGroup) {
-                    continue;
-                }
-
-                if (event.name === 'collisionactive') {
-                    // onAreaEnterは一度だけ発行したいので、フラグを管理する
-                    const memoryKey = `detected_${this.gameObject.id}_${targetObject.id}`;
-                    if (!this.scene.registry.get(memoryKey)) {
-                        this.scene.registry.set(memoryKey, true);
-
-                        console.log(`%c[EVENT EMIT] '${this.gameObject.name}' is emitting 'onAreaEnter' for target '${targetObject.name}'!`, 'color: lime; font-size: 1.2em; font-weight: bold;');
-                        this.gameObject.emit('onAreaEnter', targetObject);
-                    }
-                }
-                else if (event.name === 'collisionend') {
-                    const memoryKey = `detected_${this.gameObject.id}_${targetObject.id}`;
-                    this.scene.registry.set(memoryKey, false);
-
-                    this.gameObject.emit('onAreaLeave', targetObject);
-                }
+    
+    drawDebugShape(params) {
+        this.debugGraphics.clear().fillStyle(0xff0000, 0.2);
+        this.sensorShape.parts.forEach((part, i) => {
+            // 最初の'Circle Body'は無視
+            if (i === 0 && this.sensorShape.parts.length > 1) return;
+            
+            const vertices = part.vertices;
+            this.debugGraphics.beginPath();
+            this.debugGraphics.moveTo(vertices[0].x, vertices[0].y);
+            for (let j = 1; j < vertices.length; j++) {
+                this.debugGraphics.lineTo(vertices[j].x, vertices[j].y);
             }
-        }
+            this.debugGraphics.closePath();
+            this.debugGraphics.fillPath();
+        });
     }
 
     getCurrentParams() {
         const allCompsData = this.gameObject.getData('components') || [];
         const myData = allCompsData.find(c => c.type === 'DetectionAreaComponent');
-        
-        const defaultParams = DetectionAreaComponent.define.params.reduce((acc, p) => {
-            acc[p.key] = p.defaultValue;
-            return acc;
-        }, {});
-
+        const defaultParams = DetectionAreaComponent.define.params.reduce((acc, p) => ({...acc, [p.key]: p.defaultValue}), {});
         return myData ? { ...defaultParams, ...myData.params } : defaultParams;
     }
 
     destroy() {
-        if (this.sensorBody) {
-            this.scene.matter.world.remove(this.sensorBody);
-            this.sensorBody = null;
-        }
-        // グローバルなイベントリスナーを解除
-        this.scene.matter.world.off('collisionactive', this.handleCollision, this);
-        this.scene.matter.world.off('collisionend', this.handleCollision, this);
+        if (this.debugGraphics) this.debugGraphics.destroy();
+        // 物理ワールドからボディを削除する必要はなくなった
     }
 }
 
+// defineプロパティは変更なし
 DetectionAreaComponent.define = {
     params: [
         { key: 'type', type: 'select', label: 'Type', options: ['circle', 'cone'], defaultValue: 'circle' },
@@ -179,7 +141,6 @@ DetectionAreaComponent.define = {
         { key: 'targetGroup', type: 'text', label: 'Target Group', defaultValue: 'player' },
         { key: 'offsetX', type: 'range', label: 'Offset X', min: -200, max: 200, step: 1, defaultValue: 0 },
         { key: 'offsetY', type: 'range', label: 'Offset Y', min: -200, max: 200, step: 1, defaultValue: 0 },
-        // --- Cone Only Params ---
         { key: 'coneAngle', type: 'range', label: 'Cone Angle', min: 1, max: 359, step: 1, defaultValue: 60 },
         { key: 'segments', type: 'range', label: 'Cone Segments', min: 1, max: 12, step: 1, defaultValue: 5 },
     ]
