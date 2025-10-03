@@ -27,38 +27,50 @@ export default class DetectionAreaComponent {
         const params = this.getCurrentParams();
 
         // 毎フレーム、センサーの位置と角度を親オブジェクトに追従させる
-        const newX = this.gameObject.x + params.offsetX;
-        const newY = this.gameObject.y + params.offsetY;
+        const offset = new Phaser.Math.Vector2(params.offsetX, params.offsetY).rotate(Phaser.Math.DegToRad(this.gameObject.angle));
+        const newX = this.gameObject.x + offset.x;
+        const newY = this.gameObject.y + offset.y;
         
-        // 角度も設定
         let newAngle = this.gameObject.angle;
-        if (params.type === 'cone' && this.gameObject.flipX) {
-            newAngle += 180;
+        if (params.type === 'cone') {
+            if (this.gameObject.flipX) {
+                newAngle += 180;
+            }
         }
 
-        // Matter.Body.setPositionとsetAngleで更新
         Phaser.Physics.Matter.Matter.Body.setPosition(this.sensorBody, { x: newX, y: newY });
         Phaser.Physics.Matter.Matter.Body.setAngle(this.sensorBody, Phaser.Math.DegToRad(newAngle));
     }
-    
-    // in DetectionAreaComponent.js
-
-// ... (updateメソッドの後に追加)
 
     createSensorBody(params) {
-        const { type, radius } = params;
+        const { type, radius, targetGroup } = params;
+        const physicsDefine = this.scene.registry.get('physics_define');
+
+        // ターゲットのカテゴリ値を取得 (e.g., 'player' -> 2)
+        const targetCategory = physicsDefine?.categories?.[targetGroup];
+
+        if (targetCategory === undefined) {
+             console.warn(`[DetectionAreaComponent] Category for group '${targetGroup}' not found in physics_define.json. Sensor will not work.`);
+             return; // ターゲットカテゴリがなければセンサーを作らない
+        }
+        
         const bodyOptions = {
-            isSensor: true,  // センサーにする
-            isStatic: true,  // 動かないように（親に追従させるため）
-            label: `${this.gameObject.name}_detection_area`
+            isSensor: true,
+            isStatic: true,
+            label: `${this.gameObject.name}_detection_area`,
+            collisionFilter: {
+                // センサー自身のカテゴリを、ターゲットと衝突可能なものに設定
+                // 全てのカテゴリ値と衝突できるように、-1 (全て) を設定するのが最も確実
+                category: -1, 
+                // 衝突相手として、playerカテゴリ(2)だけを指定
+                mask: targetCategory
+            }
         };
 
         if (type === 'circle') {
-            // --- 円形センサー ---
             this.sensorBody = this.scene.matter.bodies.circle(this.gameObject.x, this.gameObject.y, radius, bodyOptions);
         } 
         else if (type === 'cone') {
-            // --- 扇形センサー (複数の三角形/台形パーツで近似) ---
             const { coneAngle, segments } = params;
             const angleStep = coneAngle / segments;
             const parts = [];
@@ -67,14 +79,19 @@ export default class DetectionAreaComponent {
                 const angle = -coneAngle / 2 + i * angleStep + angleStep / 2;
                 const rad = Phaser.Math.DegToRad(angle);
 
-                // 三角形を生成してパーツ配列に追加
+                // 各パーツにも衝突フィルタを設定
+                const partOptions = { 
+                    isSensor: true,
+                    collisionFilter: bodyOptions.collisionFilter
+                };
+
                 const part = Phaser.Physics.Matter.Matter.Bodies.trapezoid(
                     radius * 0.5 * Math.cos(rad),
                     radius * 0.5 * Math.sin(rad),
                     radius, 
                     radius * Math.tan(Phaser.Math.DegToRad(angleStep/2)) * 2,
                     0, // slope
-                    { isSensor: true }
+                    partOptions
                 );
                 Phaser.Physics.Matter.Matter.Body.rotate(part, rad);
                 parts.push(part);
@@ -84,20 +101,19 @@ export default class DetectionAreaComponent {
         }
 
         if (this.sensorBody) {
-            // 作成したボディを物理ワールドに追加
             this.scene.matter.world.add(this.sensorBody);
-            // デバッグ用に色を付ける（後で削除）
-            this.sensorBody.render.fillStyle = 'rgba(255, 0, 0, 0.2)';
-            this.sensorBody.render.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-            this.sensorBody.render.lineWidth = 2;
+            
+            // デバッグ表示用の設定
+            const isDebug = new URLSearchParams(window.location.search).has('debug');
+            if (isDebug) {
+                this.sensorBody.render.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                this.sensorBody.render.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                this.sensorBody.render.lineWidth = 2;
+            }
         }
     }
 
-    // in DetectionAreaComponent.js
-
-// ... (createSensorBodyメソッドの後に追加)
-
-    handleCollision(event, pair) {
+    handleCollision(event) {
         // 全ての衝突ペアをチェック
         for (const pair of event.pairs) {
             let otherBody = null;
@@ -108,26 +124,25 @@ export default class DetectionAreaComponent {
                 const targetObject = otherBody.gameObject;
                 const params = this.getCurrentParams();
                 
-                // ターゲットグループが一致するかチェック
+                // ターゲットグループが一致するか再確認
                 if (params.targetGroup && targetObject.getData('group') !== params.targetGroup) {
                     continue;
                 }
 
-                
-            // ▼▼▼ ここからデバッグログ ▼▼▼
-            if (event.name === 'collisionactive') {
-                const memoryKey = `detected_${targetObject.id}`;
-                if (!this.gameObject.getData(memoryKey)) {
-                    this.gameObject.setData(memoryKey, true);
+                if (event.name === 'collisionactive') {
+                    // onAreaEnterは一度だけ発行したいので、フラグを管理する
+                    const memoryKey = `detected_${this.gameObject.id}_${targetObject.id}`;
+                    if (!this.scene.registry.get(memoryKey)) {
+                        this.scene.registry.set(memoryKey, true);
 
-                    // ★★★ 強力なデバッグログ ★★★
-                    console.log(`%c[EVENT EMIT] '${this.gameObject.name}' is emitting 'onAreaEnter' for target '${targetObject.name}'!`, 'color: lime; font-size: 1.2em; font-weight: bold;');
-                    
-                    this.gameObject.emit('onAreaEnter', targetObject);
+                        console.log(`%c[EVENT EMIT] '${this.gameObject.name}' is emitting 'onAreaEnter' for target '${targetObject.name}'!`, 'color: lime; font-size: 1.2em; font-weight: bold;');
+                        this.gameObject.emit('onAreaEnter', targetObject);
+                    }
                 }
-            }
                 else if (event.name === 'collisionend') {
-                    this.gameObject.setData(`detected_${targetObject.id}`, false);
+                    const memoryKey = `detected_${this.gameObject.id}_${targetObject.id}`;
+                    this.scene.registry.set(memoryKey, false);
+
                     this.gameObject.emit('onAreaLeave', targetObject);
                 }
             }
