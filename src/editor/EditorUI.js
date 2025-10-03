@@ -201,6 +201,167 @@ export default class EditorUI {
         
         this.createPauseToggle();
     }
+    /*
+    **
+    **タイルマップ用メソッド群
+    **
+    **/
+    // in EditorUI.js (クラス内のどこかに追加)
+
+// --- ▼▼▼ タイルマップエディタ関連の新しいメソッド群 ▼▼▼ ---
+
+openTilemapEditor = () => {
+    if (!this.tilemapEditorOverlay) return;
+
+    this.game.input.enabled = false;
+    this.buildTilemapList();
+    this.selectTilemap(null); // 初期状態では何も選択されていない
+    this.tilemapEditorOverlay.style.display = 'flex';
+}
+
+closeTilemapEditor = () => {
+    if (!this.tilemapEditorOverlay) return;
+    
+    this.tilemapEditorOverlay.style.display = 'none';
+    this.game.input.enabled = true;
+}
+
+buildTilemapList() {
+    if (!this.tilemapListContainer) return;
+    this.tilemapListContainer.innerHTML = '';
+
+    const assetList = this.game.registry.get('asset_list');
+    const tilemapAssets = assetList.filter(asset => asset.type === 'tilemap');
+
+    if (tilemapAssets.length === 0) {
+        this.tilemapListContainer.innerText = 'No tilemaps found.';
+        return;
+    }
+
+    tilemapAssets.forEach(asset => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'tilemap-list-item';
+        itemDiv.innerText = asset.key;
+        itemDiv.dataset.tilemapKey = asset.key;
+        
+        itemDiv.addEventListener('click', () => {
+            // 他のアイテムのアクティブ状態を解除
+            this.tilemapListContainer.querySelectorAll('.tilemap-list-item.active').forEach(el => el.classList.remove('active'));
+            // クリックされたアイテムをアクティブに
+            itemDiv.classList.add('active');
+            // プレビュー表示メソッドを呼び出し
+            this.selectTilemap(asset.key);
+        });
+        
+        this.tilemapListContainer.appendChild(itemDiv);
+    });
+}
+    // in EditorUI.js (続き)
+
+selectTilemap(tilemapKey) {
+    if (!this.tilemapPreviewContent || !this.selectedTilemapName) return;
+
+    this.selectedTilemapKey = tilemapKey;
+
+    if (!tilemapKey) {
+        this.selectedTilemapName.innerText = 'No tilemap selected';
+        this.tilemapPreviewContent.innerHTML = '';
+        return;
+    }
+
+    this.selectedTilemapName.innerText = `Selected: ${tilemapKey}`;
+
+    // タイルマップ画像を取得
+    const texture = this.game.textures.get(tilemapKey);
+    if (!texture || !texture.source[0]) {
+        this.tilemapPreviewContent.innerHTML = 'Error: Texture not found.';
+        return;
+    }
+    const imgElement = texture.source[0].image;
+
+    // プレビューエリアをクリアし、画像を追加
+    this.tilemapPreviewContent.innerHTML = '';
+    this.tilemapPreviewContent.appendChild(imgElement.cloneNode());
+    
+    // 矩形選択機能を初期化
+    this.initCropSelection();
+}
+
+initCropSelection() {
+    this.cropRect = { x: 0, y: 0, width: 0, height: 0 };
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    const selectionBox = document.createElement('div');
+    selectionBox.style.position = 'absolute';
+    selectionBox.style.border = '2px dashed #00ffff';
+    selectionBox.style.pointerEvents = 'none'; // これがないとドラッグの邪魔になる
+    this.tilemapPreviewContent.appendChild(selectionBox);
+
+    this.tilemapPreviewContent.onpointerdown = (e) => {
+        isDragging = true;
+        // preview-content内での相対座標を取得
+        startX = e.offsetX;
+        startY = e.offsetY;
+        selectionBox.style.left = startX + 'px';
+        selectionBox.style.top = startY + 'px';
+        selectionBox.style.width = '0px';
+        selectionBox.style.height = '0px';
+    };
+
+    this.tilemapPreviewContent.onpointermove = (e) => {
+        if (!isDragging) return;
+        const currentX = e.offsetX;
+        const currentY = e.offsetY;
+
+        const x = Math.min(startX, currentX);
+        const y = Math.min(startY, currentY);
+        const width = Math.abs(startX - currentX);
+        const height = Math.abs(startY - currentY);
+
+        selectionBox.style.left = x + 'px';
+        selectionBox.style.top = y + 'px';
+        selectionBox.style.width = width + 'px';
+        selectionBox.style.height = height + 'px';
+
+        // 選択範囲を保存
+        this.cropRect = { x, y, width, height };
+    };
+
+    this.tilemapPreviewContent.onpointerup = (e) => {
+        isDragging = false;
+    };
+    this.tilemapPreviewContent.onpointerleave = (e) => {
+        isDragging = false;
+    };
+}
+// in EditorUI.js (続き)
+
+onCropAndPlace = () => {
+    if (!this.selectedTilemapKey) {
+        alert('Please select a tilemap first.');
+        return;
+    }
+    if (this.cropRect.width === 0 || this.cropRect.height === 0) {
+        alert('Please drag a rectangle on the tilemap to select an area.');
+        return;
+    }
+
+    console.log(`Cropping '${this.selectedTilemapKey}' at`, this.cropRect);
+
+    // EditorPluginに処理を依頼
+    this.plugin.placeCroppedTilemap(this.selectedTilemapKey, this.cropRect);
+    
+    // 処理が終わったらモーダルを閉じる
+    this.closeTilemapEditor();
+}
+
+/**タイルマップメソッド群ここまで
+**
+****************/
+    
+    
      /**
      * ★★★ 新規メソッド ★★★
      * エディタ全体のグローバルなモードを設定し、UIとプラグインの状態を同期させる
