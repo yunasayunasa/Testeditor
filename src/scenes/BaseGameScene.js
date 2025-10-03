@@ -368,8 +368,32 @@ buildSceneFromLayout(layoutData) {
      * @param {object} layout - 単一オブジェクトのレイアウト定義。
      * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト。
      */
-    createObjectFromLayout(layout) {
-        // ▼▼▼【ここからが修正箇所です】▼▼▼
+   createObjectFromLayout(layout) {
+    // ★★★ ここからが永続化のための修正 ★★★
+
+    // 1. テクスチャキーを決定する
+    let textureKey = layout.texture || '__DEFAULT';
+
+    // 1a. もしBase64データ(textureData)があれば、それを使ってテクスチャを動的に復元
+    if (layout.textureData) {
+        // ユニークなキーを生成
+        const newTextureKey = `chunk_restored_${Date.now()}_${Math.random()}`;
+        
+        // 既に同じBase64からテクスチャが生成されていないかチェック（超最適化）
+        const existingTexture = this.textures.get(newTextureKey);
+        if (!existingTexture) {
+             try {
+                this.textures.addBase64(newTextureKey, layout.textureData);
+                textureKey = newTextureKey;
+                console.log(`[Import] Restored texture from Base64 data with key '${newTextureKey}'.`);
+             } catch (e) {
+                console.error(`[Import] Failed to restore texture from Base64 data.`, e);
+                textureKey = '__DEFAULT';
+             }
+        } else {
+            textureKey = newTextureKey;
+        }
+    }
         
         // --- ケース1: タイプが 'Text' の場合 ---
            if (layout.type === 'Text') {
@@ -401,7 +425,7 @@ buildSceneFromLayout(layoutData) {
         }
 
         // --- ケース3: デフォルト (Image) の場合 (変更なし) ---
-        const textureKey = layout.texture || '__DEFAULT';
+        
         return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
         
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲

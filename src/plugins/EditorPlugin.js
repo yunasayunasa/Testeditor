@@ -2103,6 +2103,26 @@ createColorInput(container, label, initialValue, callback) {
                     animation_data: gameObject.getData('animation_data'),
                     anim_prefix: gameObject.getData('anim_prefix')
                 };
+                if (gameObject.texture && gameObject.texture.key) {
+                    const textureKey = gameObject.texture.key;
+
+                    // もし、テクスチャ名に "_chunk_" が含まれていたら...
+                    if (textureKey.includes('_chunk_')) {
+                        try {
+                            // そのテクスチャをBase64形式の文字列に変換
+                            const base64Data = this.game.textures.getBase64(textureKey);
+                            // JSONには 'textureData' というキーで保存
+                            objData.textureData = base64Data;
+                        } catch (e) {
+                            console.error(`Failed to convert texture '${textureKey}' to Base64.`, e);
+                        }
+                    } 
+                    // 通常のテクスチャなら...
+                    else {
+                        // JSONには 'texture' というキーで保存
+                        objData.texture = textureKey;
+                    }
+                }
     
                 // 3. イベントデータの自動修復
                 if (objData.events && Array.isArray(objData.events)) {
