@@ -213,6 +213,73 @@ createAnimationsFromLayout(layoutData) {
             block_input: false
         });
     }
+    /*
+    **タイルマップメソッド
+*/
+// in BaseGameScene.js
+
+/**
+ * ★★★ 新設 ★★★
+ * タイルマップの一部をクロップし、物理ボディを持つオブジェクトとしてシーンに配置する
+ * @param {string} tilemapKey - 元となるタイルマップのアセットキー
+ * @param {{x: number, y: number, width: number, height: number}} cropRect - クロップする矩形範囲
+ */
+addCroppedTilemapChunk(tilemapKey, cropRect) {
+    console.log(`[BaseGameScene] Adding cropped chunk from '${tilemapKey}'`, cropRect);
+
+    // --- ステップA：見た目の生成 ---
+    
+    // 1. 一時的なRenderTextureを作成
+    const rt = this.make.renderTexture({
+        width: cropRect.width,
+        height: cropRect.height
+    }, false); // false = メモリ上だけで、シーンには追加しない
+
+    // 2. RenderTextureに、タイルマップの指定範囲だけを描画
+    // (第3,4引数が描画先のX,Y、第5,6引数が描画元のX,Y)
+    rt.draw(tilemapKey, 0, 0, cropRect.x, cropRect.y);
+
+    // 3. RenderTextureから新しいテクスチャキーを生成
+    const newTextureKey = `${tilemapKey}_chunk_${Date.now()}`;
+    rt.saveTexture(newTextureKey);
+    
+    // 4. 生成したテクスチャを使ってImageオブジェクトを作成
+    const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+    const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+    const chunkImage = this.add.image(centerX, centerY, newTextureKey);
+    chunkImage.name = `${tilemapKey}_chunk_${Date.now()}`;
+
+
+    // --- ステップB & C：物理ボディの生成と合体 ---
+
+    // 1. JSONレイアウトオブジェクトを擬似的に作成
+    const layout = {
+        name: chunkImage.name,
+        type: 'Image',
+        texture: newTextureKey,
+        x: centerX,
+        y: centerY,
+        layer: this.editorUI?.activeLayerName || 'Gameplay',
+        physics: {
+            isStatic: true, // タイルマップの断片は静的ボディ
+            width: cropRect.width,  // ★ クロップした幅
+            height: cropRect.height // ★ クロップした高さ
+        }
+    };
+    
+    // 2. 既存の applyProperties を再利用して物理ボディを生成・適用
+    //    (applyProperties内でmatter.add.gameObjectが呼ばれる)
+    this.applyProperties(chunkImage, layout);
+
+
+    // --- ステップD：初期化 ---
+
+    // 既存の initComponentsAndEvents を呼び出して、エディタで選択・操作可能にする
+    this.initComponentsAndEvents(chunkImage);
+
+    console.log(`[BaseGameScene] Cropped chunk '${chunkImage.name}' created successfully.`);
+    return chunkImage;
+}
     /**
      * ★★★ 修正版 ★★★
      * エディタからの要求に応じて、新しいテキストオブジェクトを生成する。
