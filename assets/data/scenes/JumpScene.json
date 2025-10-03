@@ -189,7 +189,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 227,
+      "x": 529,
       "y": 625,
       "depth": 0,
       "scaleX": 0.65,
@@ -439,13 +439,13 @@
       }
     },
     {
-      "name": "tileset_terrain_chunk_1759492364148",
+      "name": "tileset_terrain_chunk_1759488889311",
       "type": "Image",
-      "x": 664,
-      "y": 547,
+      "x": 730,
+      "y": 552,
       "depth": 0,
-      "scaleX": 1.09,
-      "scaleY": 1.09,
+      "scaleX": 1,
+      "scaleY": 1,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -454,15 +454,6 @@
       "data": {
         "ignoreGravity": false,
         "shape": "rectangle"
-      },
-      "cropSource": {
-        "key": "tileset_terrain",
-        "rect": {
-          "x": 94,
-          "y": 109,
-          "width": 170,
-          "height": 219
-        }
       },
       "physics": {
         "isStatic": true,

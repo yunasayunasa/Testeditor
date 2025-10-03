@@ -552,51 +552,50 @@ applyProperties(gameObject, layout) {
         gameObject.setTexture(finalTextureKey);
     }
     
-    // --- 4. Transformプロパティ設定 (変更なし) ---
+     // --- 4. 物理ボディ以外のTransformプロパティを設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
-    gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
+    // ★★★ スケールは、物理ボディを作った「後」で設定する ★★★
+    // gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1); 
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
     
-    // ▼▼▼ ここからが、物理ボディ生成の最後の正直です ▼▼▼
+    // ▼▼▼ これが、物理ボディ生成の最後の正直・最終版です ▼▼▼
     // --------------------------------------------------------------------
-    // --- 5. 物理ボディの生成と設定 (完全手動モード) ---
-   if (data.physics) {
+    if (data.physics) {
         const phys = data.physics;
-        const MatterBody = Phaser.Physics.Matter.Matter.Body;
         
         // --- 5a. 既存のボディがあれば削除 ---
         if (gameObject.body) this.matter.world.remove(gameObject.body);
-
-        // --- 5b. スケール適用後の最終的な表示サイズと位置を取得 ---
-        const bodyWidth = gameObject.displayWidth;
-        const bodyHeight = gameObject.displayHeight;
-        const bodyX = gameObject.x;
-        const bodyY = gameObject.y;
         
-        // --- 5c. Matter.jsネイティブ関数でボディを作成 ---
-        const newBody = this.matter.bodies.rectangle(bodyX, bodyY, bodyWidth, bodyHeight, {
+        // --- 5b. matter.add.gameObject を呼び出して、ボディを生成・アタッチ ---
+        // この時点では、gameObjectのスケールは1.0なので、テクスチャ本来のサイズでボディが作られる
+        this.matter.add.gameObject(gameObject, {
             isStatic: phys.isStatic,
             isSensor: phys.isSensor
         });
-        
-        // --- 5d. ネイティブプロパティを直接設定 ---
-        MatterBody.set(newBody, 'friction', phys.friction ?? 0.1);
-        MatterBody.set(newBody, 'frictionAir', phys.frictionAir ?? 0.01);
-        MatterBody.set(newBody, 'restitution', phys.restitution ?? 0);
-        if (phys.fixedRotation) {
-            MatterBody.setInertia(newBody, Infinity);
-        }
 
-        // ★★★ 5e. GameObjectをMatterImage/Spriteに「変換」し、ボディを合体させる ★★★
-        const matterGameObject = this.matter.add.gameObject(gameObject, {});
-        matterGameObject.setExistingBody(newBody);
-        
-        // 5f. 永続化用データを設定
-        matterGameObject.setData('fixedRotation', phys.fixedRotation === true);
-        matterGameObject.setData('ignoreGravity', phys.ignoreGravity === true);
-        matterGameObject.setData('shape', phys.shape || 'rectangle');
+        if (gameObject.body) {
+            // --- 5c. ボディが作られた「後」で、表示オブジェクトと物理ボディの両方にスケールを適用 ---
+            // ★ setScale は、内部で物理ボディのスケーリングも行ってくれる
+            gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
+
+            // --- 5d. これで、setFrictionなどのヘルパーが安全に使える ---
+            gameObject.setFriction(phys.friction ?? 0.1);
+            gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
+            gameObject.setBounce(phys.restitution ?? 0);
+            
+            if (phys.fixedRotation !== undefined) {
+                gameObject.setFixedRotation(phys.fixedRotation);
+                gameObject.setData('fixedRotation', phys.fixedRotation);
+            }
+    
+            gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
+            gameObject.setData('shape', phys.shape || 'rectangle');
+        }
+    } else {
+        // 物理ボディがない場合は、ここでスケールを設定
+        gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
     }
     // --------------------------------------------------------------------
     
