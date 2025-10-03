@@ -253,8 +253,8 @@
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
+          "category": 2,
+          "mask": -1
         }
       }
     },
