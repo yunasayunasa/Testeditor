@@ -2120,36 +2120,26 @@ createColorInput(container, label, initialValue, callback) {
     }
   // src/plugins/EditorPlugin.js
 
-    /**
-     * 現在のシーンレイアウトをJSON形式でエクスポートする。
-     * UISceneとBaseGameSceneの両方に対応した、最終確定版。
-     */
-   exportLayoutToJson() {
-        if (!this.selectedObject || !this.selectedObject.scene) {
-            alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
-            return;
-        }
+   // in src/plugins/EditorPlugin.js
 
-        const scene = this.selectedObject.scene;
-        const sceneKey = scene.scene.key;
-        
-      // ▼▼▼【ここがハードコードを排除する核心です】▼▼▼
-    // --------------------------------------------------------------------
-    // 1. 現在アクティブな「ゲームプレイシーン」への参照を取得する
+exportLayoutToJson() {
+    if (!this.selectedObject || !this.selectedObject.scene) {
+        alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
+        return;
+    }
+
+    const scene = this.selectedObject.scene;
+    const sceneKey = scene.scene.key;
     const gameScene = this.getActiveGameScene();
 
     const sceneLayoutData = {
-        // 2. そのゲームシーンが存在し、かつ `joystick` プロパティを持っていればtrue
         hasJoystick: !!(gameScene && gameScene.joystick), 
-        
         layers: this.layerStates,
         objects: [],
         animations: []
     };
 
-      // in src/plugins/EditorPlugin.js -> exportLayoutToJson
-
-        // ▼▼▼【ここから下を、あなたのコードと置き換えてください】▼▼▼
+    try {
         if (this.editableObjects.has(sceneKey)) {
             const liveObjects = Array.from(this.editableObjects.get(sceneKey)).filter(go => go && go.scene);
             
@@ -2158,20 +2148,15 @@ createColorInput(container, label, initialValue, callback) {
 
                 // 1. instanceof を使って、オブジェクトの型を安全に判定する
                 let objectType;
-                if (gameObject instanceof Phaser.GameObjects.Sprite) {
-                    objectType = 'Sprite';
-                } else if (gameObject instanceof Phaser.GameObjects.Text) {
-                    objectType = 'Text';
-                } else if (gameObject instanceof Phaser.GameObjects.Image) {
-                    objectType = 'Image';
-                } else {
-                    objectType = gameObject.constructor.name; // フォールバック
-                }
+                if (gameObject instanceof Phaser.GameObjects.Sprite) objectType = 'Sprite';
+                else if (gameObject instanceof Phaser.GameObjects.Text) objectType = 'Text';
+                else if (gameObject instanceof Phaser.GameObjects.Image) objectType = 'Image';
+                else objectType = gameObject.constructor.name;
 
-                // 2. あなたの既存のデータ構築ロジックを開始
+                // 2. objDataの骨格を定義
                 const objData = {
                     name: gameObject.name,
-                    type: objectType, // ★ 判定した安全な型を使う
+                    type: objectType,
                     x: Math.round(gameObject.x),
                     y: Math.round(gameObject.y),
                     depth: gameObject.depth,
@@ -2179,35 +2164,36 @@ createColorInput(container, label, initialValue, callback) {
                     scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
                     angle: Math.round(gameObject.angle),
                     alpha: parseFloat(gameObject.alpha.toFixed(2)),
-                    layer: gameObject.getData('layer'),
-                    group: gameObject.getData('group'),
-                    events: gameObject.getData('events'),
-                    components: gameObject.getData('components'),
-                    animation_data: gameObject.getData('animation_data'),
-                    anim_prefix: gameObject.getData('anim_prefix')
                 };
-                if (gameObject.texture && gameObject.texture.key) {
-                    const textureKey = gameObject.texture.key;
 
-                    // もし、テクスチャ名に "_chunk_" が含まれていたら...
-                    if (textureKey.includes('_chunk_')) {
-                        try {
-                            // そのテクスチャをBase64形式の文字列に変換
-                            const base64Data = this.game.textures.getBase64(textureKey);
-                            // JSONには 'textureData' というキーで保存
-                            objData.textureData = base64Data;
-                        } catch (e) {
-                            console.error(`Failed to convert texture '${textureKey}' to Base64.`, e);
-                        }
-                    } 
-                    // 通常のテクスチャなら...
-                    else {
-                        // JSONには 'texture' というキーで保存
-                        objData.texture = textureKey;
-                    }
+                // 3. 永続化が必要な「全カスタムデータ」を取得
+                const allCustomData = { ...gameObject.data.values };
+
+                // 4. トップレベルに保存するプロパティを allCustomData から分離
+                objData.layer = allCustomData.layer;
+                objData.group = allCustomData.group;
+                objData.events = allCustomData.events;
+                objData.components = allCustomData.components;
+                objData.animation_data = allCustomData.animation_data;
+                objData.anim_prefix = allCustomData.anim_prefix;
+                
+                delete allCustomData.layer;
+                delete allCustomData.group;
+                delete allCustomData.events;
+                delete allCustomData.components;
+                delete allCustomData.animation_data;
+                delete allCustomData.anim_prefix;
+
+                // 5. テクスチャ/クロップ情報を処理 & dataから削除
+                const cropSourceData = allCustomData.cropSource;
+                if (cropSourceData) {
+                    objData.cropSource = cropSourceData;
+                    delete allCustomData.cropSource;
+                } else if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
+                    objData.texture = gameObject.texture.key;
                 }
-    
-                // 3. イベントデータの自動修復
+                
+                // 6. イベントデータの自動修復
                 if (objData.events && Array.isArray(objData.events)) {
                     objData.events.forEach(event => {
                         if (event.nodes && Array.isArray(event.nodes)) {
@@ -2221,61 +2207,26 @@ createColorInput(container, label, initialValue, callback) {
                     });
                 }
 
-                // 4. "data" ブロックの構築
-               objData.data = gameObject.getData();
-
-// ただし、いくつかのデータは専用のトップレベルプロパティに保存するので、
-// dataブロックからは削除して重複を防ぐ
-if (objData.data) {
-    delete objData.data.group;
-    delete objData.data.layer;
-    delete objData.data.components;
-    delete objData.data.events;
-    delete objData.data.anim_prefix;
-    delete objData.data.cropSource;
-    delete objData.data.textureData;
-    delete objData.data.fixedRotation;
-}
-
-                // 5. UISceneの特別処理
+                // 7. UISceneの特別処理
                 if (sceneKey === 'UIScene') {
-                    objData.registryKey = gameObject.getData('registryKey');
+                    objData.registryKey = allCustomData.registryKey;
+                    delete allCustomData.registryKey;
                 }
-
-                // 6. 固有プロパティの抽出
-                // 固有プロパティの抽出
-              const cropSourceData = gameObject.getData('cropSource');
-                if (cropSourceData) {
-                    // もしクロップ情報を持っていれば、それを保存
-                    objData.cropSource = cropSourceData;
-                } 
-                else if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
-                    // 通常のテクスチャの場合
-                    objData.texture = gameObject.texture.key;
-                }
-// --- 6b. その他の固有プロパティを抽出 ---
-if (typeof gameObject.text === 'string') {
-    objData.text = gameObject.text;
-}
-if (gameObject.style) {
-    objData.style = gameObject.style.toJSON();
-}
-if (gameObject.watchVariable) {
-    objData.watchVariable = gameObject.watchVariable;
-    objData.maxVariable = gameObject.maxVariable;
-}
-if (gameObject.textObject) {
-    objData.label = gameObject.textObject.text;
-}
-
                 
-                // 7. 物理ボディの抽出
+                // 8. その他の固有プロパティを抽出
+                if (typeof gameObject.text === 'string') objData.text = gameObject.text;
+                if (gameObject.style) objData.style = gameObject.style.toJSON();
+                if (gameObject.watchVariable) objData.watchVariable = gameObject.watchVariable;
+                if (gameObject.maxVariable) objData.maxVariable = gameObject.maxVariable;
+                if (gameObject.textObject) objData.label = gameObject.textObject.text;
+
+                // 9. 物理ボディの抽出 & 物理関連データをdataから削除
                 if (gameObject.body) {
                     const body = gameObject.body;
                     objData.physics = {
                         isStatic: body.isStatic,
                         isSensor: body.isSensor,
-                        fixedRotation: gameObject.getData('fixedRotation') || false, // ★ この行を追加
+                        fixedRotation: allCustomData.fixedRotation || false,
                         gravityScale: body.gravityScale.y,
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
@@ -2284,39 +2235,44 @@ if (gameObject.textObject) {
                             mask: body.collisionFilter.mask
                         }
                     };
+                    delete allCustomData.fixedRotation;
+                    delete allCustomData.ignoreGravity;
+                    delete allCustomData.shape;
                 }
+
+                // 10. 残ったものを、全て 'data' ブロックに格納
+                objData.data = allCustomData;
                 
-                // 8. 最終的なオブジェクトデータを配列に追加
+                // 11. 最終的なオブジェクトデータを配列に追加
                 sceneLayoutData.objects.push(objData);
-
-            } // ここが for ループの終わりです
+            }
         }
-        // ▲▲▲▲▲【ここまでの内容で、既存のforループブロックを置き換えてください】▲▲▲▲▲
-             // --- 4. アニメーションデータの抽出 (forループの外) ---
-    if (sceneKey !== 'UIScene') {
-        const allGlobalAnims = Array.from(this.pluginManager.game.anims.anims.values());
-        sceneLayoutData.animations = allGlobalAnims.map(anim => ({
-            key: anim.key,
-            texture: anim.frames[0]?.textureKey,
-            frames: { 
-                start: anim.frames[0]?.frame.name, 
-                end: anim.frames[anim.frames.length - 1]?.frame.name 
-            },
-            frameRate: anim.frameRate,
-            repeat: anim.repeat
-        })).filter(animData => animData.texture);
-    } else {
-        delete sceneLayoutData.animations;
-    }
-
-    // --- 5. JSONに変換して出力 (forループの外) ---
-    try {
+    
+        // アニメーションデータの抽出
+        if (sceneKey !== 'UIScene') {
+            const allGlobalAnims = Array.from(this.pluginManager.game.anims.anims.values());
+            sceneLayoutData.animations = allGlobalAnims.map(anim => ({
+                key: anim.key,
+                texture: anim.frames[0]?.textureKey,
+                frames: { 
+                    start: anim.frames[0]?.frame.name, 
+                    end: anim.frames[anim.frames.length - 1]?.frame.name 
+                },
+                frameRate: anim.frameRate,
+                repeat: anim.repeat
+            })).filter(animData => animData.texture);
+        } else {
+            delete sceneLayoutData.animations;
+        }
+    
+        // JSONに変換して出力
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
         console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
         console.log(jsonString);
         navigator.clipboard.writeText(jsonString).then(() => {
             alert(`Layout for ${sceneKey} copied to clipboard!`);
         });
+
     } catch (error) {
         console.error("[EditorPlugin] FAILED to stringify layout data.", error);
         alert("Failed to export layout. Check the console for a critical error.");
