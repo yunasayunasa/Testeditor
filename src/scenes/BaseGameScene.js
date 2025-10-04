@@ -533,6 +533,7 @@ applyProperties(gameObject, layout) {
     if (data.data) for (const key in data.data) gameObject.setData(key, data.data[key]);
     if (data.isYSortable) {
         gameObject.setData('isYSortable', true);
+        
     }
     if (data.components) gameObject.setData('components', data.components);
     if (data.events) gameObject.setData('events', data.events);
@@ -544,6 +545,7 @@ applyProperties(gameObject, layout) {
         // 重複して追加しないようにチェック
         if (!this.ySortableObjects.includes(gameObject)) {
             this.ySortableObjects.push(gameObject);
+            console.log(`%c[Y-Sort] Added '${gameObject.name}' to the sortable list.`, 'color: orange');
         }
     }
 
@@ -756,13 +758,27 @@ update(time, delta) {
             }
         });
     }
+    // ★★★ Yソート処理 ★★★
     if (this.ySortEnabled) {
-            for (const obj of this.ySortableObjects) {
-                if (obj.active) { // オブジェクトが有効な場合のみ更新
-                    obj.setDepth(Math.round(obj.y));
+        // デバッグ用に、変更があったオブジェクトだけをログに出力
+        let logOutput = "";
+
+        for (const obj of this.ySortableObjects) {
+            if (obj.active) {
+                const newDepth = Math.round(obj.y);
+                // depthが実際に変更された場合のみログを記録
+                if (obj.depth !== newDepth) {
+                    const oldDepth = obj.depth;
+                    obj.setDepth(newDepth);
+                    logOutput += `[Y-Sort] ${obj.name}: depth ${oldDepth} -> ${newDepth} (y: ${Math.round(obj.y)})\n`;
                 }
             }
         }
+        // 変更があった場合のみ、コンソールにまとめて出力
+        if (logOutput) {
+            console.log(logOutput);
+        }
+    }
 
 }
 
