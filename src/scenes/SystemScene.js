@@ -375,6 +375,7 @@ handleCloseOverlay_StateMachine(data) {
         } else {
              console.log(`[SystemScene] シーン[${data.returnTo}]の入力はもともと有効だったので、何もしません。`);
         }
+        this.isTimeStopped = false;
     }
 
    /**
