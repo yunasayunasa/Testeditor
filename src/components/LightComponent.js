@@ -130,6 +130,10 @@ updateTexture(params) {
         }
     }
 
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
     destroy() {
         if (this.lightSprite) {
             this.lightSprite.destroy();
@@ -139,6 +143,7 @@ updateTexture(params) {
 }
 
 LightComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { key: 'type', type: 'select', label: 'Type', options: ['point', 'spot'], defaultValue: 'point' },
         { key: 'color', type: 'color', label: 'Color', defaultValue: '0xffffff' },

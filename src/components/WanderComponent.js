@@ -76,6 +76,11 @@ export default class WanderComponent {
         const myData = allCompsData.find(c => c.type === 'WanderComponent');
         return myData ? myData.params : {};
     }
+
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
     
     destroy() {
         if (this.gameObject?.off) {
@@ -84,7 +89,9 @@ export default class WanderComponent {
     }
 }
 WanderComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
+        
         { 
             key: 'walkDuration',
             type: 'range',

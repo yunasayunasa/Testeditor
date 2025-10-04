@@ -1571,11 +1571,35 @@ populateVslTriggerEditor(activeEvent) {
         paramsContainer.className = 'node-params';
         
         if (handler && handler.define && Array.isArray(handler.define.params)) {
+        
+        // --- 特別扱い: call_component_method の場合 ---
+        if (nodeData.type === 'call_component_method') {
+            const currentParams = { ...nodeData.params };
+
+            // 1. Componentドロップダウンを生成
+            const componentSelectRow = this.createNodeComponentSelect(paramsContainer, nodeData, 'component', 'コンポーネント名');
+            const componentSelect = componentSelectRow.querySelector('select');
+
+            // 2. Methodドロップダウンを生成
+            const methodSelectRow = this.createNodeComponentMethodSelect(paramsContainer, nodeData, 'method', 'メソッド名', currentParams.component);
+
+            // 3. Componentドロップダウンが変更されたら、Methodドロップダウンを再生成するために、ノード全体を再描画
+            componentSelect.addEventListener('change', () => {
+                // 新しいコンポーネントが選択されたら、メソッドの選択をリセットする
+                nodeData.params.method = null;
+                this.buildNodeContent(nodeElement, nodeData);
+            });
+            
+            // 4. その他のパラメータ (target, params) を生成
+            this.createNodeTextInput(paramsContainer, nodeData, 'target', '対象オブジェクト', 'self');
+            this.createNodeTextInput(paramsContainer, nodeData, 'params', '引数(JSON)', '[]');
+            
+        } else {
+            // --- 通常のノードの場合 (既存のロジック) ---
             handler.define.params.forEach(paramDef => {
-                  if (paramDef.type === 'component_select') { // ★ 新しいタイプを追加
-            this.createNodeComponentSelect(paramsContainer, nodeData, paramDef.key, paramDef.label);
-        }
-        else if (paramDef.type === 'asset_key') {
+                if (paramDef.type === 'component_select') {
+                    this.createNodeComponentSelect(paramsContainer, nodeData, paramDef.key, paramDef.label);
+                } else if (paramDef.type === 'asset_key') {
                     this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
                 } else if (paramDef.type === 'select') {
                     this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
@@ -1586,6 +1610,7 @@ populateVslTriggerEditor(activeEvent) {
                 }
             });
         }
+    }
         
         this.createNodePositionInput(paramsContainer, nodeData, 'x');
         this.createNodePositionInput(paramsContainer, nodeData, 'y');
@@ -1627,7 +1652,56 @@ populateVslTriggerEditor(activeEvent) {
         nodeElement.appendChild(outputsContainer);
     }
    
-   
+   // in EditorUI.js (クラス内のどこかに追加)
+
+/**
+ * ★★★ 新設 ★★★
+ * VSLノード内に、選択されたコンポーネントの公開メソッドを選ぶドロップダウンを生成する
+ * @returns {HTMLElement} 生成された行要素 (イベントリスナー設定のため)
+ */
+createNodeComponentMethodSelect(container, nodeData, paramKey, label, selectedComponent) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    const labelEl = document.createElement('label');
+    labelEl.innerText = `${label}: `;
+    
+    const select = document.createElement('select');
+    
+    if (!selectedComponent) {
+        select.disabled = true;
+        select.innerHTML = '<option>コンポーネントを先に選択</option>';
+    } else {
+        const componentRegistry = this.game.registry.get('ComponentRegistry');
+        const componentClass = componentRegistry?.[selectedComponent];
+        const methods = componentClass?.define?.methods || [];
+
+        if (methods.length === 0) {
+            select.innerHTML = '<option>公開メソッドなし</option>';
+        }
+
+        methods.forEach(methodName => {
+            const option = document.createElement('option');
+            option.value = methodName;
+            option.innerText = methodName;
+            if (nodeData.params?.[paramKey] === methodName) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    }
+
+    select.addEventListener('change', () => {
+        if (this.plugin) {
+            const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+            if (isSmEditor) this.plugin.updateStateMachineNodeParam(nodeData, paramKey, select.value, false);
+            else this.plugin.updateNodeParam(nodeData, paramKey, select.value, false);
+        }
+    });
+    
+    row.append(labelEl, select);
+    container.appendChild(row);
+    return row; // ★ 連動イベントを設定するために、生成した行要素を返す
+}
 /**
  * ★★★ 既存の createNodePositionInput を、この内容に置き換える ★★★
  * ノードのX/Y座標を編集するUIを生成する (スライダー付き)
@@ -1927,6 +2001,7 @@ createNodeComponentSelect(container, nodeData, paramKey, label) {
     
     row.append(labelEl, select);
     container.appendChild(row);
+    return row;
 }
 /**
  * ★★★ データ欠損防止策を施した最終版 ★★★

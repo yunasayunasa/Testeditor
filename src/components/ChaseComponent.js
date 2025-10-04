@@ -121,6 +121,11 @@ export default class ChaseComponent {
         }
     }
 
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
+
     destroy() {
         // ★ リスナーの解除を追加
         if (this.gameObject?.off) {
@@ -133,6 +138,7 @@ export default class ChaseComponent {
 
 // ★★★ defineプロパティをシンプル化 ★★★
 ChaseComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { key: 'chaseSpeed', type: 'range', label: '追跡速度', min: 1, max: 10, step: 0.5, defaultValue: 3 }
         // 索敵関連のパラメータは全てDetectionAreaComponentに移管されるため不要

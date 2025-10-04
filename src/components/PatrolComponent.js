@@ -126,6 +126,11 @@ export default class PatrolComponent {
         const defaultParams = PatrolComponent.define.params.reduce((acc, p) => ({...acc, [p.key]: p.defaultValue}), {});
         return myData ? { ...defaultParams, ...myData.params } : defaultParams;
     }
+
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
     
     destroy() {
         if (this.gameObject?.off) {
@@ -135,6 +140,7 @@ export default class PatrolComponent {
 }
 
 PatrolComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         // ★ 'pathGroup' を 'startWaypoint' に変更
         { key: 'startWaypoint', type: 'text', label: 'Start Waypoint', defaultValue: 'waypoint_A_01' },

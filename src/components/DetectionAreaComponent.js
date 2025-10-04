@@ -145,6 +145,11 @@ drawDebugShape() {
         return myData ? { ...defaultParams, ...myData.params } : defaultParams;
     }
 
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
+
     destroy() {
         if (this.debugGraphics) this.debugGraphics.destroy();
         this.detectedObjects.clear();
@@ -152,6 +157,7 @@ drawDebugShape() {
 }
 
 DetectionAreaComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { key: 'type', type: 'select', label: 'Type', options: ['circle', 'cone'], defaultValue: 'circle' },
         { key: 'radius', type: 'range', label: 'Radius', min: 0, max: 1000, step: 10, defaultValue: 200 },

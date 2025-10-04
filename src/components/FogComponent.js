@@ -49,6 +49,11 @@ export default class FogComponent {
         this.fogRectangle.fillRect(0, 0, this.scene.cameras.main.width, this.scene.cameras.main.height);
     }
 
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
+
     destroy() {
         if (this.fogRectangle) {
             this.fogRectangle.destroy();
@@ -58,6 +63,7 @@ export default class FogComponent {
 }
 
 FogComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { 
             key: 'color', 

@@ -45,8 +45,14 @@ export default class Scrollable {
             this.camera.scrollX += scrollAmount;
         }
     }
+
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
 }
 Scrollable.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { 
             key: 'speed',

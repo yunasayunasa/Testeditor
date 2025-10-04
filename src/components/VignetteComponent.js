@@ -54,6 +54,11 @@ export default class VignetteComponent {
         }
     }
 
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
+
     destroy() {
         if (this.vignetteImage) {
             this.vignetteImage.destroy();
@@ -63,6 +68,7 @@ export default class VignetteComponent {
 }
 
 VignetteComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { 
             key: 'texture', 

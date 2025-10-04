@@ -68,6 +68,11 @@ export default class ReturnHomeComponent {
         });
     }
 
+    enable() { this.isEnabled = true; }
+    disable() { this.isEnabled = false; }
+    toggle() { this.isEnabled = !this.isEnabled; } // toggleメソッドを追加
+
+
     // このコンポーネントはupdateループを必要としない
 }
 
@@ -75,6 +80,7 @@ export default class ReturnHomeComponent {
  * IDEのプロパティパネルに表示するための自己定義
  */
 ReturnHomeComponent.define = {
+    methods: ['enable', 'disable', 'toggle'],
     params: [
         { key: 'fadeOutDuration', type: 'range', label: 'フェードアウト時間(ms)', min: 100, max: 2000, step: 50, defaultValue: 500 },
         { key: 'repopDelay', type: 'range', label: 'リポップ遅延(ms)', min: 0, max: 5000, step: 100, defaultValue: 1000 },
