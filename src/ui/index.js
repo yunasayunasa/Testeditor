@@ -40,6 +40,8 @@ export const uiRegistry = {
         params: { label: 'MENU' }
     },
 
+    
+
     'generic_button': {
         path: './ui/Button.js',
         groups: ['ui_element', 'action'], // 特定のシーンに依存しない、汎用UIグループ

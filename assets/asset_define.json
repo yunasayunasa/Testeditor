@@ -73,7 +73,8 @@
         "GameScene.json",
         "UIScene.json",
         "stage2.json",
-        "JumpScene.json"
+        "JumpScene.json",
+        "pause_menu.json"
       ]
     },
      "//": "--- ここにタイルセット用の定義を追加 ---",

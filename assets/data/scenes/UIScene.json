@@ -120,6 +120,29 @@
       "data": {},
       "registryKey": "interact_button",
       "label": "調べる"
+    },
+       {
+      "name": "debug_menu_button",
+      "registryKey": "generic_button",
+      "x": 1200,  
+      "y": 50,   
+      "label": "MENU",
+      "groups": ["debug_only"], 
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_open_pause_menu",
+          "nodes": [
+            {
+              "id": "node_open_pause_menu",
+              "type": "open_menu", 
+              "params": {
+                "layout": "pause_menu"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
