@@ -192,7 +192,7 @@ _startInitialGame(initialData) {
 
 // in SystemScene.js
 
-handleRequestOverlay_StateMachine(data) {
+/*handleRequestOverlay_StateMachine(data) {
     const { sceneKey, params } = data;
     const fromScene = this.sceneStack[this.sceneStack.length - 1]; // スタックの最後が現在のシーン
 
@@ -215,7 +215,7 @@ handleCloseOverlay_StateMachine(data) {
         this.scene.resume(sceneToResume);
         this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     }
-}
+}*/
 
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
