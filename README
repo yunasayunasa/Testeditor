@@ -444,5 +444,70 @@ distance_checkのoutput_farピンから[state_transition to="待機"]に接続�
 コンポーネントの依存関係:
 AnimationControllerは、同じオブジェクトにPlayerControllerやNpcControllerのような、onStateChangeとonDirectionChangeイベントを発火させるコンポーネントが存在することを前提とする。*/
 
+
+高度なAI設計：ステートマシンとコンポーネントの連携
+Odyssey EngineのAIは、ステートマシンと複数のAI振る舞いコンポーネントを連携させることで、高度で管理しやすい設計を可能にします。
+
+基本原則
+
+ステートマシンは「司令塔」: どの振る舞いをすべきかを決定します。
+コンポーネントは「手足」: Patrol や Chase といった具体的な振る舞いを実行します。
+原則として、同時にアクティブになる「手足」は一つだけです。
+連携の仕組み
+
+連携には、[call_component_method] VSLタグと、各コンポーネントが持つ enable() / disable() メソッドを使用します。
+
+実践ガイド：巡回(Patrol)と追跡(Chase)を切り替えるAIの作り方
+まず、敵キャラクターオブジェクトに、以下のコンポーネントをアタッチします。
+
+NpcController: 移動の基本機能を提供します。
+PatrolComponent: ウェイポイントを巡回する機能。
+DetectionAreaComponent: プレイヤーを検知する機能。
+ChaseComponent: プレイヤーを追跡する機能。
+StateMachineComponent: これら全てを制御する司令塔。
+ステートマシンエディタで、最低でも以下の2つのステートを作成します。
+
+Patrol (初期ステート)
+Chase
+各ステートの onEnter フックで、そのステートでアクティブになるべきコンポーネントを enable し、休むべきコンポーネントを disable します。
+
+Patrol ステートの onEnter:
+
+役割: パトロールを開始し、追跡は停止させる。
+VSL:
+code
+Vsl
+[call_component_method component="PatrolComponent" method="enable"]
+[call_component_method component="ChaseComponent" method="disable"]
+Chase ステートの onEnter:
+
+役割: 追跡を開始し、パトロールは中断させる。
+VSL:
+code
+Vsl
+[call_component_method component="ChaseComponent" method="enable"]
+[call_component_method component="PatrolComponent" method="disable"]
+(注: ChaseComponent の startChasing のような、enable 以上の処理を行うメソッドを呼び出すのがより適切です)
+
+各ステートの onUpdate で、状態が変わる「きっかけ」を監視します。
+
+Patrol ステートの onUpdate:
+
+役割: 索敵範囲（DetectionAreaComponent）にプレイヤーが入ったら、Chase ステートに遷移する。
+実装:
+敵オブジェクトに、onAreaEnter をトリガーとするイベントを作成します。（イベントエディタを使用）
+そのイベントのVSLグラフで、[state_transition to="Chase"] アクションを実行します。
+Chase ステートの onUpdate:
+
+役割: 索敵範囲からプレイヤーが出たら、Patrol ステートに戻る。
+実装:
+敵オブジェクトに、onAreaLeave をトリガーとする別のイベントを作成します。
+そのイベントのVSLグラフで、[state_transition to="Patrol"] アクションを実行します。
+なぜ onUpdate ではなくイベントを使うのか？
+DetectionAreaComponent が発する onAreaEnter/onAreaLeave イベントをトリガーにすることで、onUpdate で毎フレーム「プレイヤーは範囲内にいるか？」をチェックする必要がなくなり、より効率的でイベント駆動な設計になります。
+
+この連携方法により、各コンポーネントは自分の役割に集中でき、ステートマシンはAI全体の振る舞いを視覚的に分かりやすく管理することができます。
+
+
 このマニュアルが、あなたの創造の旅の信頼できる羅針盤となることを願っています。
 さあ、あなただけの物語を始めましょう！
