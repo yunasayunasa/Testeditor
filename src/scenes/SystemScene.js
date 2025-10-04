@@ -14,6 +14,8 @@ export default class SystemScene extends Phaser.Scene {
          this._isTimeStopped = false;
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
+        this.gameState = 'INITIALIZING';
+    this.sceneStack = [];
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
     get isTimeStopped() {
@@ -205,6 +207,10 @@ _startInitialGame(initialData) {
 
         // --- 2. 新しい「ゲームシーン」を起動し、完了を待つ ---
         this._startAndMonitorScene(to, params);
+
+        this.gameState = 'GAMEPLAY'; // JumpSceneなどはGAMEPLAY状態
+    this.sceneStack = [to];      // 戻るべき場所として記憶
+    console.log(`[State Logger] Game state changed to: ${this.gameState}`);
     }
 
 
@@ -278,6 +284,10 @@ _startInitialGame(initialData) {
             loadSlot: 0, 
             charaDefs: this.globalCharaDefs
         });
+
+        this.gameState = 'NOVEL';
+    this.sceneStack = ['GameScene'];
+    console.log(`[State Logger] Game state changed to: ${this.gameState}`);
     }
 
     /**
