@@ -1,4 +1,10 @@
 {
+    "scene_settings": {
+    "ySortEnabled": true,  
+    "backgroundColor": "0x4488cc",
+    "gravity": {
+      "enabled": true
+    }},
   "hasJoystick": true,
   "layers": [
     {
@@ -33,8 +39,8 @@
       "texture": "cg01",
       "data": {
         "nextWaypoint": "test_b",
-         "isYSortable": true,
-        "lastTap": 1759509178781
+        "isYSortable": true,
+        "lastTap": 1759585401677
       }
     },
     {
@@ -79,9 +85,9 @@
       },
       "data": {
         "nextWaypoint": "test_a",
-         "isYSortable": true,
+        "isYSortable": true,
         "lastTap": 0,
-        "overlap_tartman": false,
+        "overlap_tartman": true,
         "overlap_player": false
       }
     },
@@ -97,7 +103,7 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "texture": "bgtest3",
+      "texture": "__MISSING",
       "data": {
         "isYSortable": true,
         "lastTap": 0
@@ -133,7 +139,7 @@
           "connections": []
         }
       ],
-      "texture": "bgtest4",
+      "texture": "__MISSING",
       "data": {
         "isYSortable": true,
         "lastTap": 0
@@ -168,7 +174,7 @@
           "connections": []
         }
       ],
-      "texture": "bgtest3",
+      "texture": "__MISSING",
       "data": {
         "lastTap": 0
       }
@@ -274,15 +280,15 @@
         }
       },
       "data": {
-        "lastTap": 1759509311119,
-         "isYSortable": true,
+        "lastTap": 0,
+        "isYSortable": true,
         "overlap_test_b": false
       }
     },
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1310,
+      "x": 1838,
       "y": 609,
       "depth": 0,
       "scaleX": 0.76,
@@ -348,10 +354,10 @@
         }
       },
       "data": {
-        "lastTap": 1759509359501,
-         "isYSortable": true,
+        "lastTap": 0,
+        "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": false,
+        "overlap_test_b": true,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828
       }
