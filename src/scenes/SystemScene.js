@@ -65,8 +65,8 @@ export default class SystemScene extends Phaser.Scene {
             console.error('!!! LOG BOMB FAILED !!!', e);
         }
         console.log('--- END OF LOG BOMB ---');
-        this.events.on('request-overlay', this.handleRequestOverlay_StateMachine, this); // ★ 新しいハンドラ
-this.events.on('request-close-overlay', this.handleCloseOverlay_StateMachine, this); // ★ 新しいハンドラ
+        /*this.events.on('request-overlay', this.handleRequestOverlay_StateMachine, this); // ★ 新しいハンドラ
+this.events.on('request-close-overlay', this.handleCloseOverlay_StateMachine, this); // ★ 新しいハンドラ*/
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
        // --- 1. コアサービスの初期化 ---
