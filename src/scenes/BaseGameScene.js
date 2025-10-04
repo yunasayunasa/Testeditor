@@ -750,7 +750,7 @@ addComponent(target, componentType, params = {}) {
     
     // ★★★ 生成したインスタンスを返す ★★★
     return componentInstance;
-}
+} 
 update(time, delta) {
     // --- 0. シーンの初期設定と「簡易光源」の遅延生成 ---
    
@@ -770,27 +770,28 @@ update(time, delta) {
             }
         });
     }
-    if (this.ySortEnabled) {
-    let logOutput = "";
+    if (!this._debugOnce) {
+        console.log("--- BASEGAME SCENE UPDATE CALLED ---");
+        console.log("this.ySortEnabled:", this.ySortEnabled);
+        console.log("this.ySortableObjects:", this.ySortableObjects);
+        this._debugOnce = true;
+    }
 
-    for (const obj of this.ySortableObjects) {
-        if (obj.active) {
-            // ★★★ ここが修正の核心 ★★★
-            // もし物理ボディがあれば、その中心のY座標を基準にする
-            // なければ、通常のY座標を基準にする
-            const sortY = obj.body ? Math.round(obj.body.position.y) : Math.round(obj.y);
-            
-            if (obj.depth !== sortY) {
-                const oldDepth = obj.depth;
-                obj.setDepth(sortY);
-                logOutput += `[Y-Sort] ${obj.name}: depth ${oldDepth} -> ${sortY} (y: ${Math.round(obj.y)}, body.y: ${obj.body ? Math.round(obj.body.position.y) : 'N/A'})\n`;
+    if (this.ySortEnabled) {
+        for (const obj of this.ySortableObjects) {
+            if (obj.active) {
+                const sortY = obj.body ? Math.round(obj.body.position.y) : Math.round(obj.y);
+                if (obj.depth !== sortY) {
+                    obj.setDepth(sortY);
+
+                    // プレイヤーの時だけログを出す
+                    if(obj.name === 'player') {
+                        console.log(`[Y-Sort] player depth updated to: ${sortY}`);
+                    }
+                }
             }
         }
     }
-    if (logOutput) {
-        console.log(logOutput);
-    }
-}
 
 }
 
