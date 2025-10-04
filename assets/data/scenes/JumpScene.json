@@ -33,6 +33,7 @@
       "texture": "cg01",
       "data": {
         "nextWaypoint": "test_b",
+         "isYSortable": true,
         "lastTap": 1759509178781
       }
     },
@@ -78,6 +79,7 @@
       },
       "data": {
         "nextWaypoint": "test_a",
+         "isYSortable": true,
         "lastTap": 0,
         "overlap_tartman": false,
         "overlap_player": false
@@ -273,6 +275,7 @@
       },
       "data": {
         "lastTap": 1759509311119,
+         "isYSortable": true,
         "overlap_test_b": false
       }
     },
@@ -346,6 +349,7 @@
       },
       "data": {
         "lastTap": 1759509359501,
+         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,

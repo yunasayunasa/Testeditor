@@ -531,15 +531,21 @@ applyProperties(gameObject, layout) {
 
     // --- 1. カスタムデータ保存 (変更なし) ---
     if (data.data) for (const key in data.data) gameObject.setData(key, data.data[key]);
+    if (data.isYSortable) {
+        gameObject.setData('isYSortable', true);
+    }
     if (data.components) gameObject.setData('components', data.components);
     if (data.events) gameObject.setData('events', data.events);
     if (data.layer) gameObject.setData('layer', data.layer);
     if (data.group) gameObject.setData('group', data.group);
     if (data.anim_prefix) gameObject.setData('anim_prefix', data.anim_prefix);
     if (data.cropSource) gameObject.setData('cropSource', data.cropSource);
-     if (layout.data.isYSortable) {
-                this.ySortableObjects.push(gameObject);
-            }
+   if (gameObject.getData('isYSortable') === true) {
+        // 重複して追加しないようにチェック
+        if (!this.ySortableObjects.includes(gameObject)) {
+            this.ySortableObjects.push(gameObject);
+        }
+    }
 
     // --- 2. シーンに追加 (変更なし) ---
     this.add.existing(gameObject);
@@ -611,7 +617,7 @@ applyProperties(gameObject, layout) {
         gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
     }
     // --------------------------------------------------------------------
-    
+    console.log(this.ySortableObjects)
     return gameObject;
 }
     
