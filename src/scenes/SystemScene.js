@@ -65,7 +65,8 @@ export default class SystemScene extends Phaser.Scene {
             console.error('!!! LOG BOMB FAILED !!!', e);
         }
         console.log('--- END OF LOG BOMB ---');
-        
+        this.events.on('request-overlay', this.handleRequestOverlay_StateMachine, this); // ★ 新しいハンドラ
+this.events.on('request-close-overlay', this.handleCloseOverlay_StateMachine, this); // ★ 新しいハンドラ
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
        // --- 1. コアサービスの初期化 ---
@@ -188,6 +189,34 @@ _startInitialGame(initialData) {
     console.log("[SystemScene] Running UIScene now.");
     this.scene.run('UIScene');
 }
+
+// in SystemScene.js
+
+handleRequestOverlay_StateMachine(data) {
+    const { sceneKey, params } = data;
+    const fromScene = this.sceneStack[this.sceneStack.length - 1]; // スタックの最後が現在のシーン
+
+    if (this.gameState === 'GAMEPLAY' || this.gameState === 'NOVEL') {
+        console.log(`Pausing '${fromScene}' to open overlay '${sceneKey}'.`);
+        this.scene.pause(fromScene);
+        this.sceneStack.push(sceneKey); // 'PauseMenu' などをスタックに積む
+        this.gameState = 'MENU';
+        this.scene.launch(sceneKey, params);
+    }
+}
+
+handleCloseOverlay_StateMachine(data) {
+    const closingScene = this.sceneStack.pop(); // 'PauseMenu' をスタックから降ろす
+    const sceneToResume = this.sceneStack[this.sceneStack.length - 1]; // 'JumpScene' が現れる
+
+    if (this.gameState === 'MENU') {
+        console.log(`Stopping '${closingScene}' and resuming '${sceneToResume}'.`);
+        this.scene.stop(closingScene);
+        this.scene.resume(sceneToResume);
+        this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
+    }
+}
+
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
      * @param {object} data - { from: string, to: string, params: object, fade: object }
