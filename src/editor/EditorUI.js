@@ -1576,21 +1576,20 @@ populateVslTriggerEditor(activeEvent) {
         if (nodeData.type === 'call_component_method') {
             const currentParams = { ...nodeData.params };
 
-            // 1. Componentドロップダウンを生成
+             // 1. Componentドロップダウンを生成
             const componentSelectRow = this.createNodeComponentSelect(paramsContainer, nodeData, 'component', 'コンポーネント名');
             const componentSelect = componentSelectRow.querySelector('select');
 
-            // 2. Methodドロップダウンを生成
-            const methodSelectRow = this.createNodeComponentMethodSelect(paramsContainer, nodeData, 'method', 'メソッド名', currentParams.component);
+            // ★★★ 2. Methodドロップダウンは、nodeData をそのまま渡す ★★★
+            this.createNodeComponentMethodSelect(paramsContainer, nodeData, 'method', 'メソッド名');
 
-            // 3. Componentドロップダウンが変更されたら、Methodドロップダウンを再生成するために、ノード全体を再描画
+            // 3. 連動イベント
             componentSelect.addEventListener('change', () => {
-                // 新しいコンポーネントが選択されたら、メソッドの選択をリセットする
                 nodeData.params.method = null;
                 this.buildNodeContent(nodeElement, nodeData);
             });
             
-            // 4. その他のパラメータ (target, params) を生成
+            // 4. その他のパラメータ
             this.createNodeTextInput(paramsContainer, nodeData, 'target', '対象オブジェクト', 'self');
             this.createNodeTextInput(paramsContainer, nodeData, 'params', '引数(JSON)', '[]');
             
@@ -1659,13 +1658,18 @@ populateVslTriggerEditor(activeEvent) {
  * VSLノード内に、選択されたコンポーネントの公開メソッドを選ぶドロップダウンを生成する
  * @returns {HTMLElement} 生成された行要素 (イベントリスナー設定のため)
  */
-createNodeComponentMethodSelect(container, nodeData, paramKey, label, selectedComponent) {
+// in EditorUI.js
+// ★★★ 既存の createNodeComponentMethodSelect を、この内容で「完全に」置き換える ★★★
+
+createNodeComponentMethodSelect(container, nodeData, paramKey, label) {
     const row = document.createElement('div');
     row.className = 'node-param-row';
     const labelEl = document.createElement('label');
     labelEl.innerText = `${label}: `;
-    
     const select = document.createElement('select');
+    
+    // ★★★ nodeData.params から、選択されているコンポーネント名を取得 ★★★
+    const selectedComponent = nodeData.params?.component;
     
     if (!selectedComponent) {
         select.disabled = true;
@@ -1677,6 +1681,9 @@ createNodeComponentMethodSelect(container, nodeData, paramKey, label, selectedCo
 
         if (methods.length === 0) {
             select.innerHTML = '<option>公開メソッドなし</option>';
+        } else {
+            // 空の選択肢を追加
+            select.innerHTML = '<option value="">Select Method...</option>';
         }
 
         methods.forEach(methodName => {
@@ -1700,7 +1707,7 @@ createNodeComponentMethodSelect(container, nodeData, paramKey, label, selectedCo
     
     row.append(labelEl, select);
     container.appendChild(row);
-    return row; // ★ 連動イベントを設定するために、生成した行要素を返す
+    return row;
 }
 /**
  * ★★★ 既存の createNodePositionInput を、この内容に置き換える ★★★
