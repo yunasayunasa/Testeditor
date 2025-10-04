@@ -65,8 +65,8 @@ export default class SystemScene extends Phaser.Scene {
             console.error('!!! LOG BOMB FAILED !!!', e);
         }
         console.log('--- END OF LOG BOMB ---');
-        /*this.events.on('request-overlay', this.handleRequestOverlay_StateMachine, this); // ★ 新しいハンドラ
-this.events.on('request-close-overlay', this.handleCloseOverlay_StateMachine, this); // ★ 新しいハンドラ*/
+        this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
+    this.events.on('request-close-menu', this.handleClosePauseMenu, this);
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
        // --- 1. コアサービスの初期化 ---
@@ -189,33 +189,46 @@ _startInitialGame(initialData) {
     console.log("[SystemScene] Running UIScene now.");
     this.scene.run('UIScene');
 }
+/**
+ * ★★★ 新設：ポーズメニューを開く専用ハンドラ ★★★
+ * @param {{ from: string, sceneKey: string, params?: object }} data
+ */
+handleOpenPauseMenu(data) {
+    const fromScene = data.from;
+    const menuScene = data.sceneKey;
 
-// in SystemScene.js
-
-/*handleRequestOverlay_StateMachine(data) {
-    const { sceneKey, params } = data;
-    const fromScene = this.sceneStack[this.sceneStack.length - 1]; // スタックの最後が現在のシーン
-
-    if (this.gameState === 'GAMEPLAY' || this.gameState === 'NOVEL') {
-        console.log(`Pausing '${fromScene}' to open overlay '${sceneKey}'.`);
+    if (this.scene.isActive(fromScene)) {
+        console.log(`[SystemScene] Pausing '${fromScene}' to open menu '${menuScene}'.`);
+        
+        // 1. 背後のシーンをポーズ
         this.scene.pause(fromScene);
-        this.sceneStack.push(sceneKey); // 'PauseMenu' などをスタックに積む
+        // 2. 状態を記録
+        this.sceneStack.push(fromScene);
         this.gameState = 'MENU';
-        this.scene.launch(sceneKey, params);
+        // 3. メニューシーンを起動
+        this.scene.launch(menuScene, data.params);
     }
 }
 
-handleCloseOverlay_StateMachine(data) {
-    const closingScene = this.sceneStack.pop(); // 'PauseMenu' をスタックから降ろす
-    const sceneToResume = this.sceneStack[this.sceneStack.length - 1]; // 'JumpScene' が現れる
+/**
+ * ★★★ 新設：ポーズメニューを閉じる専用ハンドラ ★★★
+ * @param {{ from: string }} data
+ */
+handleClosePauseMenu(data) {
+    const closingMenu = data.from;
+    const sceneToResume = this.sceneStack.pop();
 
-    if (this.gameState === 'MENU') {
-        console.log(`Stopping '${closingScene}' and resuming '${sceneToResume}'.`);
-        this.scene.stop(closingScene);
+    if (sceneToResume) {
+        console.log(`[SystemScene] Closing menu '${closingMenu}' and resuming '${sceneToResume}'.`);
+
+        // 1. メニューシーンを停止
+        this.scene.stop(closingMenu);
+        // 2. 元のシーンを再開
         this.scene.resume(sceneToResume);
+        // 3. 状態を戻す
         this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     }
-}*/
+}
 
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
