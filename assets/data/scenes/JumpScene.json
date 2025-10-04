@@ -92,11 +92,12 @@
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 0,
+      "alpha": 1,
       "layer": "Gameplay",
       "events": [],
       "texture": "bgtest3",
       "data": {
+        "isYSortable": true,
         "lastTap": 0
       }
     },
@@ -109,7 +110,7 @@
       "scaleX": 0.93,
       "scaleY": 0.93,
       "angle": 0,
-      "alpha": 0,
+      "alpha": 1,
       "layer": "Gameplay",
       "events": [
         {
@@ -132,6 +133,7 @@
       ],
       "texture": "bgtest4",
       "data": {
+        "isYSortable": true,
         "lastTap": 0
       }
     },
@@ -196,6 +198,7 @@
       "alpha": 1,
       "events": [],
       "data": {
+        "isYSortable": true,
         "lastTap": 0
       }
     },

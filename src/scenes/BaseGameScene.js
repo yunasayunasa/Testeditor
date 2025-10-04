@@ -17,6 +17,8 @@ export default class BaseGameScene extends Phaser.Scene {
         this._deferredActions = []; 
         this.joystick = null; 
         this._sceneSettingsApplied = false;
+        this.ySortEnabled = false; // ★ シーンのYソートが有効かどうかのフラグ
+        this.ySortableObjects = []; // ★ Yソート対象のオブジェクトを保持する配列
        
     }
      /**
@@ -40,7 +42,15 @@ export default class BaseGameScene extends Phaser.Scene {
  create() {
         // このメソッドは、継承先（JumpSceneなど）で super.create() として
         // 呼び出されることを想定していますが、中身は空で構いません。
+        const keyToLoad = this.layoutDataKey || this.scene.key;
+        const layoutData = this.cache.json.get(keyToLoad);
+        this.ySortEnabled = layoutData?.scene_settings?.ySortEnabled === true;
+
+        if (this.ySortEnabled) {
+            console.log("[BaseGameScene] Y-Sort is enabled for this scene.");
+        }
         this.applySceneSettings(); 
+
     }
 /**
      * ★★★ 新規追加 ★★★
@@ -527,6 +537,9 @@ applyProperties(gameObject, layout) {
     if (data.group) gameObject.setData('group', data.group);
     if (data.anim_prefix) gameObject.setData('anim_prefix', data.anim_prefix);
     if (data.cropSource) gameObject.setData('cropSource', data.cropSource);
+     if (layout.data.isYSortable) {
+                this.ySortableObjects.push(gameObject);
+            }
 
     // --- 2. シーンに追加 (変更なし) ---
     this.add.existing(gameObject);
@@ -737,6 +750,13 @@ update(time, delta) {
             }
         });
     }
+    if (this.ySortEnabled) {
+            for (const obj of this.ySortableObjects) {
+                if (obj.active) { // オブジェクトが有効な場合のみ更新
+                    obj.setDepth(Math.round(obj.y));
+                }
+            }
+        }
 
 }
 
