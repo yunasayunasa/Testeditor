@@ -531,9 +531,17 @@ applyProperties(gameObject, layout) {
 
     // --- 1. カスタムデータ保存 (変更なし) ---
     if (data.data) for (const key in data.data) gameObject.setData(key, data.data[key]);
-    if (data.isYSortable) {
-        gameObject.setData('isYSortable', true);
-        
+      // --- Yソート対象リストへの追加 ---
+    if (gameObject.getData('isYSortable') === true) {
+        if (!this.ySortableObjects.includes(gameObject)) {
+            this.ySortableObjects.push(gameObject);
+            console.log(`%c[Y-Sort] Added '${gameObject.name}' to the sortable list.`, 'color: orange');
+            
+            // ★★★ ここが新しいロジック ★★★
+            // Yソート対象なら、原点を自動的に足元に設定する
+            gameObject.setOrigin(0.5, 1); 
+            console.log(`%c[Y-Sort] Set origin of '${gameObject.name}' to (0.5, 1).`, 'color: cyan');
+        }
     }
     if (data.components) gameObject.setData('components', data.components);
     if (data.events) gameObject.setData('events', data.events);
@@ -547,6 +555,10 @@ applyProperties(gameObject, layout) {
             this.ySortableObjects.push(gameObject);
             console.log(`%c[Y-Sort] Added '${gameObject.name}' to the sortable list.`, 'color: orange');
         }
+    }
+    // ★★★ もしJSONにoriginの指定があれば、そちらを優先する（上書き）★★★
+    if (data.originX !== undefined || data.originY !== undefined) {
+        gameObject.setOrigin(data.originX ?? 0.5, data.originY ?? 0.5);
     }
 
     // --- 2. シーンに追加 (変更なし) ---
