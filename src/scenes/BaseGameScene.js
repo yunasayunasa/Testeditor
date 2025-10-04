@@ -16,6 +16,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.updatableComponents = new Set(); 
         this._deferredActions = []; 
         this.joystick = null; 
+        this.sceneSettings = layoutData?.scene_settings || {}; 
         this._sceneSettingsApplied = false;
         this.ySortEnabled = false; // ★ シーンのYソートが有効かどうかのフラグ
         this.ySortableObjects = []; // ★ Yソート対象のオブジェクトを保持する配列

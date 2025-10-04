@@ -2127,12 +2127,14 @@ exportLayoutToJson() {
         alert("エクスポートするシーンのオブジェクトを、最低一つ選択してください。");
         return;
     }
+    
 
     const scene = this.selectedObject.scene;
     const sceneKey = scene.scene.key;
     const gameScene = this.getActiveGameScene();
 
     const sceneLayoutData = {
+            scene_settings: scene.sceneSettings || {},
         hasJoystick: !!(gameScene && gameScene.joystick), 
         layers: this.layerStates,
         objects: [],
@@ -2145,6 +2147,7 @@ exportLayoutToJson() {
             
             for (const gameObject of liveObjects) {
                 if (!gameObject.name) continue;
+
 
                 // 1. instanceof を使って、オブジェクトの型を安全に判定する
                 let objectType;
