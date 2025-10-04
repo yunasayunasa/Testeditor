@@ -1573,25 +1573,34 @@ populateVslTriggerEditor(activeEvent) {
         if (handler && handler.define && Array.isArray(handler.define.params)) {
         
         // --- 特別扱い: call_component_method の場合 ---
-        if (nodeData.type === 'call_component_method') {
-            const currentParams = { ...nodeData.params };
+       if (nodeData.type === 'call_component_method') {
+    // --- 特別扱い: call_component_method ---
+    
+    // 1. Componentドロップダウンを生成
+    const componentSelectRow = this.createNodeComponentSelect(paramsContainer, nodeData, 'component', 'コンポーネント名');
+    const componentSelect = componentSelectRow.querySelector('select');
 
-             // 1. Componentドロップダウンを生成
-            const componentSelectRow = this.createNodeComponentSelect(paramsContainer, nodeData, 'component', 'コンポーネント名');
-            const componentSelect = componentSelectRow.querySelector('select');
+    // 2. Methodドロップダウンを生成
+    this.createNodeComponentMethodSelect(paramsContainer, nodeData, 'method', 'メソッド名');
 
-            // ★★★ 2. Methodドロップダウンは、nodeData をそのまま渡す ★★★
-            this.createNodeComponentMethodSelect(paramsContainer, nodeData, 'method', 'メソッド名');
+    // 3. その他のパラメータを生成
+    this.createNodeTextInput(paramsContainer, nodeData, 'target', '対象オブジェクト', 'self');
+    this.createNodeTextInput(paramsContainer, nodeData, 'params', '引数(JSON)', '[]');
+    
+    // ★★★ ここからが、バグ修正の核心です ★★★
+    // 4. Componentドロップダウンが変更された時のイベントリスナー
+    componentSelect.addEventListener('change', () => {
+        // a. まず、選択された値を nodeData.params に「保存」する
+        if (!nodeData.params) nodeData.params = {};
+        nodeData.params.component = componentSelect.value;
+        
+        // b. 選択が変わったので、メソッドの選択はリセットする
+        nodeData.params.method = null; 
 
-            // 3. 連動イベント
-            componentSelect.addEventListener('change', () => {
-                nodeData.params.method = null;
-                this.buildNodeContent(nodeElement, nodeData);
-            });
-            
-            // 4. その他のパラメータ
-            this.createNodeTextInput(paramsContainer, nodeData, 'target', '対象オブジェクト', 'self');
-            this.createNodeTextInput(paramsContainer, nodeData, 'params', '引数(JSON)', '[]');
+        // c. 最後に、ノードのUI全体を再構築して、メソッドドロップダウンを更新する
+        this.buildNodeContent(nodeElement, nodeData);
+    });
+    
             
         } else {
             // --- 通常のノードの場合 (既存のロジック) ---
