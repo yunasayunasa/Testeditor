@@ -770,27 +770,27 @@ update(time, delta) {
             }
         });
     }
-    // ★★★ Yソート処理 ★★★
     if (this.ySortEnabled) {
-        // デバッグ用に、変更があったオブジェクトだけをログに出力
-        let logOutput = "";
+    let logOutput = "";
 
-        for (const obj of this.ySortableObjects) {
-            if (obj.active) {
-                const newDepth = Math.round(obj.y);
-                // depthが実際に変更された場合のみログを記録
-                if (obj.depth !== newDepth) {
-                    const oldDepth = obj.depth;
-                    obj.setDepth(newDepth);
-                    logOutput += `[Y-Sort] ${obj.name}: depth ${oldDepth} -> ${newDepth} (y: ${Math.round(obj.y)})\n`;
-                }
+    for (const obj of this.ySortableObjects) {
+        if (obj.active) {
+            // ★★★ ここが修正の核心 ★★★
+            // もし物理ボディがあれば、その中心のY座標を基準にする
+            // なければ、通常のY座標を基準にする
+            const sortY = obj.body ? Math.round(obj.body.position.y) : Math.round(obj.y);
+            
+            if (obj.depth !== sortY) {
+                const oldDepth = obj.depth;
+                obj.setDepth(sortY);
+                logOutput += `[Y-Sort] ${obj.name}: depth ${oldDepth} -> ${sortY} (y: ${Math.round(obj.y)}, body.y: ${obj.body ? Math.round(obj.body.position.y) : 'N/A'})\n`;
             }
         }
-        // 変更があった場合のみ、コンソールにまとめて出力
-        if (logOutput) {
-            console.log(logOutput);
-        }
     }
+    if (logOutput) {
+        console.log(logOutput);
+    }
+}
 
 }
 
