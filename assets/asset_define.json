@@ -16,8 +16,8 @@
 
  "anila_normal": "assets/images/anila_normal.png",
  "tartman_normal": "assets/images/tartman_normal.png",
-"mado_wood": "assets/images/mado_wood.png",
-"maptile_wood": "assets/images/maptile_wood.png",
+"mado_wood": "assets/images/mado_wood_02.png",
+"maptile_wood": "assets/images/maptile_wood_02.png",
 "taimatsu_on": "assets/images/taimatsu_on.png"
   },
    "spritesheets": {
