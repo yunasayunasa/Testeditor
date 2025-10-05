@@ -11,25 +11,17 @@ import { eventTagHandlers } from '../handlers/events/index.js';
 import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';
 
 // --- 3. scenario/index.js からインポート ---
-//    'export default { ... }' のような、デフォルトエクスポートを想定
-//    (もし違っていても、以下のconstructorで吸収できます)
-//import TagHandlers from '../handlers/index.js'; 
-// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+import { tagHandlers as scenarioTagHandlers } from '../handlers/index.js';
 
 export default class ActionInterpreter {
     constructor(game) {
         this.game = game;
         
-        // ▼▼▼【ここで、全ての形式のタグを安全に合体させます】▼▼▼
-        this.tagHandlers = {
-            // gameplay/events と system は、'tagHandlers' という名前でエクスポートされているので、そのまま展開
+       this.tagHandlers = {
             ...(eventTagHandlers || {}),
             ...(systemTagHandlers || {}),
-
-            // scenario は、デフォルトエクスポートされたオブジェクトそのものである可能性が高いので、それを展開
-           //...(TagHandlers || {})
+            ...(scenarioTagHandlers || {}) // ★ シナリオタグもマージ
         };
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         // ★ 実行のたびに更新されるプロパティ
         this.scene = null;
