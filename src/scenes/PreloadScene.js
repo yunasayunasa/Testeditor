@@ -23,7 +23,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.json('asset_define', 'assets/asset_define.json');
         //this.load.script('ui_definitions', 'src/ui/index.js');
         this.load.json('physics_define', 'assets/data/physics_define.json');
-
+this.load.json('game_flow', 'assets/data/game_flow.json');
         this.load.script('webfont', 'https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js');
     }
 

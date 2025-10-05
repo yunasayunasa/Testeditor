@@ -16,6 +16,9 @@ export default class SystemScene extends Phaser.Scene {
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
         this.gameState = 'INITIALIZING';
+        this.gameFlow = null;         // game_flow.jsonのデータを保持
+        this.currentState = null;     // 現在のゲームフローステート名 (e.g., 'Title', 'Gameplay')
+        this.previousState = null;    // 一つ前のステート名（MainMenuからの復帰などで使用）
         
     this.sceneStack = [];
     }
@@ -57,6 +60,7 @@ export default class SystemScene extends Phaser.Scene {
     }
 
     create() {
+
           console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
         try {
             console.log('this:', this);
@@ -67,6 +71,29 @@ export default class SystemScene extends Phaser.Scene {
             console.error('!!! LOG BOMB FAILED !!!', e);
         }
         console.log('--- END OF LOG BOMB ---');
+            this.gameFlow = this.cache.json.get('game_flow');
+
+    if (!this.gameFlow) {
+        console.error("CRITICAL: 'game_flow.json' not found in cache. Game cannot start.");
+        return;
+    }
+
+    // --- 2. 遷移イベントのリスナーを設定 ---
+    // ゲーム内のどこからでも 'request_game_flow_event' を発行すれば、状態遷移が試みられる
+    this.events.on('request_game_flow_event', this.handleGameFlowEvent, this);
+    
+    // --- 3. ActionInterpreterを取得 ---
+    // この時点でActionInterpreterはregistryに登録されている必要がある
+    const actionInterpreter = this.registry.get('actionInterpreter');
+
+    if (!actionInterpreter) {
+         console.error("CRITICAL: ActionInterpreter not found. State machine cannot run.");
+         return;
+    }
+
+    // --- 4. 初期ステートに遷移する ---
+    this.transitionToState(this.gameFlow.initialState);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
     this.events.on('request-close-menu', this.handleClosePauseMenu, this);
 console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
@@ -103,7 +130,7 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
                 console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
             }
         });
-        const actionInterpreter = new ActionInterpreter(this.game);
+       
         this.registry.set('actionInterpreter', actionInterpreter);
         console.log("SystemScene: ActionInterpreter has been registered globally.");
         // --------------------------------------------------------------------
@@ -546,4 +573,90 @@ _handleSimpleTransition(data) {
         const b = hex & 255;
         return [r, g, b];
     }
+
+    // src/scenes/SystemScene.js (クラス内のどこか)
+
+/**
+ * ★★★ 新設：ゲームフローステートを遷移させるための中核メソッド ★★★
+ * @param {string} newStateName - 遷移先のステート名
+ */
+transitionToState(newStateName) {
+    if (!this.gameFlow.states[newStateName]) {
+        console.error(`[GameFlow] Attempted to transition to unknown state: '${newStateName}'`);
+        return;
+    }
+
+    const actionInterpreter = this.registry.get('actionInterpreter');
+    const oldStateName = this.currentState;
+
+    console.log(`%c[GameFlow] State Transition: ${oldStateName || 'null'} -> ${newStateName}`, 'color: #7b1fa2; font-weight: bold;');
+
+    // --- 1. 現在のステートの onExit アクションを実行 ---
+    if (oldStateName && this.gameFlow.states[oldStateName].onExit) {
+        console.log(`[GameFlow] Executing onExit for state '${oldStateName}'`);
+        this.gameFlow.states[oldStateName].onExit.forEach(action => {
+            actionInterpreter.runVSLFromData(action); // 新しいヘルパーメソッドを想定
+        });
+    }
+
+    // --- 2. ステートを更新 ---
+    this.previousState = oldStateName;
+    this.currentState = newStateName;
+    
+    // gameStateプロパティも更新しておく（下位互換性のため）
+    this.gameState = newStateName;
+
+    // --- 3. 新しいステートの onEnter アクションを実行 ---
+    const newState = this.gameFlow.states[newStateName];
+    if (newState.onEnter) {
+        console.log(`[GameFlow] Executing onEnter for state '${newStateName}'`);
+        newState.onEnter.forEach(action => {
+            // @previousState のような特別な値を解決する
+            const resolvedAction = this.resolvePlaceholders(action);
+            actionInterpreter.runVSLFromData(resolvedAction);
+        });
+    }
+}
+
+/**
+ * ★★★ 新設：イベントに基づいて状態遷移を試みるハンドラ ★★★
+ * @param {string} eventName - 発生したイベント名
+ */
+handleGameFlowEvent(eventName) {
+    if (!this.currentState) return;
+
+    const currentState = this.gameFlow.states[this.currentState];
+    if (!currentState || !currentState.transitions) return;
+
+    const transition = currentState.transitions.find(t => t.event === eventName);
+
+    if (transition) {
+        console.log(`[GameFlow] Event '${eventName}' triggered transition to '${transition.target}'`);
+        
+        let targetState = transition.target;
+        // @previousState キーワードを解決
+        if (targetState === '@previousState') {
+            targetState = this.previousState || this.gameFlow.initialState; //  fallback
+        }
+
+        this.transitionToState(targetState);
+    }
+}
+
+/**
+ * ★★★ 新設ヘルパー：アクションデータ内のプレースホルダーを解決する ★★★
+ * @param {object} action - VSLアクションデータ
+ * @returns {object} 解決後のアクションデータ
+ */
+resolvePlaceholders(action) {
+    const resolvedAction = JSON.parse(JSON.stringify(action)); // Deep copy
+    if (resolvedAction.params) {
+        for (const key in resolvedAction.params) {
+            if (resolvedAction.params[key] === '@previousState') {
+                resolvedAction.params[key] = this.previousState;
+            }
+        }
+    }
+    return resolvedAction;
+}
 }

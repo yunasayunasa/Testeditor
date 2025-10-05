@@ -1,7 +1,7 @@
 // src/core/ActionInterpreter.js (グローバルサービス版)
 
 import { eventTagHandlers } from '../handlers/events/index.js';
-
+import { eventTagHandlers } from '../handlers/system/index.js';
 export default class ActionInterpreter {
     constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
         this.game = game;
@@ -172,6 +172,35 @@ findTarget(targetId, scene, source, collidedTarget) {
     return scene.children.getByName(targetId);
 }
 
+// src/core/ActionInterpreter.js (クラス内のどこか)
+
+/**
+ * ★★★ 新設 ★★★
+ * VSLのタグオブジェクト({ type, params })を直接受け取って実行する。
+ * game_flow.json からの実行に使われる。
+ * @param {object} vslData - { type: "タグ名", params: { ... } }
+ */
+async runVSLFromData(vslData) {
+    if (!vslData || !vslData.type) return;
+
+    const handler = this.tagHandlers[vslData.type];
+    if (handler) {
+        try {
+            // SystemSceneから呼ばれる場合、特定のGameObjectコンテキストはないので、
+            // interpreterの第一引数(コンテキスト)はnullで良い。
+            // interpreter.sceneはSystemSceneへの参照を持つようにする。
+            const systemScene = this.game.scene.getScene('SystemScene');
+            const tempInterpreterContext = { scene: systemScene, stop: () => {} };
+
+            await handler(tempInterpreterContext, vslData.params || {});
+
+        } catch (e) {
+            console.error(`[ActionInterpreter] Error executing VSL data:`, vslData, e);
+        }
+    } else {
+        console.warn(`[ActionInterpreter] Unknown VSL type in data: '${vslData.type}'`);
+    }
+}
 
 }
 

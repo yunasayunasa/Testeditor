@@ -1,0 +1,98 @@
+{
+  "initialState": "Title",
+  "states": {
+    "Title": {
+      "onEnter": [
+        {
+          "type": "run_scene",
+          "params": {
+            "sceneKey": "TitleScene" 
+          }
+        }
+      ],
+      "onExit": [
+        {
+          "type": "stop_scene",
+          "params": {
+            "sceneKey": "TitleScene"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "event": "start_game",
+          "target": "Gameplay"
+        }
+      ]
+    },
+    "Gameplay": {
+      "onEnter": [
+        {
+          "type": "run_scene",
+          "params": {
+            "sceneKey": "JumpScene"
+          }
+        }
+      ],
+      "onExit": [
+        {
+          "type": "stop_scene",
+          "params": {
+            "sceneKey": "JumpScene"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "event": "open_pause_menu",
+          "target": "MainMenu"
+        },
+        {
+          "event": "return_to_title",
+          "target": "Title"
+        }
+      ]
+    },
+    "MainMenu": {
+      "onEnter": [
+        {
+          "type": "pause_scene",
+          "params": {
+            "sceneKey": "@previousState"
+          }
+        },
+        {
+          "type": "launch_scene",
+          "params": {
+            "sceneKey": "OverlayScene",
+            "layoutKey": "pause_menu_layout"
+          }
+        }
+      ],
+      "onExit": [
+        {
+          "type": "stop_scene",
+          "params": {
+            "sceneKey": "OverlayScene"
+          }
+        },
+        {
+          "type": "resume_scene",
+          "params": {
+            "sceneKey": "@previousState"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "event": "close_pause_menu",
+          "target": "@previousState"
+        },
+        {
+          "event": "return_to_title_from_menu",
+          "target": "Title"
+        }
+      ]
+    }
+  }
+}
