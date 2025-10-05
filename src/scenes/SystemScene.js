@@ -463,13 +463,13 @@ _handleSimpleTransition(data) {
         // ▼▼▼【ここからがプラグイン問題を解決する核心部分】▼▼▼
         // --------------------------------------------------------------------
         // (B) シーンの準備完了後、そのシーンにジョイスティックが必要か判定する
-        if (sceneKey === 'JumpScene') {
+      /*  if (sceneKey === 'JumpScene') {
             // targetSceneはJumpSceneのインスタンスなので、メソッドを直接呼べる
             if (typeof targetScene.setupJoystick === 'function') {
                 console.log(`[SystemScene] Commanding '${sceneKey}' to set up its joystick.`);
                 targetScene.setupJoystick();
             }
-        }
+        }*/
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
