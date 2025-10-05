@@ -581,27 +581,49 @@ onSceneTransition(newSceneKey) {
      * ★★★ グローバルInterpreterを使うように修正 ★★★
      * UIオブジェクトのイベント定義に基づいて、リスナーを設定する
      */
-    applyUiEvents(uiElement) {
-        const events = uiElement.getData('events') || [];
-        
-        // 既存のリスナーをクリア
-        uiElement.off('onClick');
+    // in src/scenes/UIScene.js
 
-        events.forEach(eventData => {
-            if (eventData.trigger === 'onClick') {
-                uiElement.on('onClick', () => {
-                    // ★ 1. レジストリから、グローバルなInterpreterを取得
-                    const actionInterpreter = this.registry.get('actionInterpreter');
-                    const currentMode = this.registry.get('editor_mode');
+applyUiEvents(uiElement) {
+    const events = uiElement.getData('events') || [];
+    
+    // 既存のリスナーをクリア
+    uiElement.off('onClick');
 
-                    // ★ 2. 取得できたInterpreterを使い、モードを判定して実行
-                    if (actionInterpreter && currentMode === 'play') {
-                        actionInterpreter.run(uiElement, eventData);
-                    }
-                });
-            }
-        });
+    // ★★★ デバッグログ（ステップ1）★★★
+    // このUI要素がイベント定義を持っているか確認
+    if (events.length > 0) {
+        console.log(`[ApplyEvents] Found ${events.length} event(s) for '${uiElement.name}'. Setting up listeners...`);
+    } else if (uiElement.name === 'debug_menu_button') {
+        console.error(`[ApplyEvents] CRITICAL: '${uiElement.name}' has NO event data!`);
     }
+
+    events.forEach(eventData => {
+        if (eventData.trigger === 'onClick') {
+            uiElement.on('onClick', () => {
+                
+                // ★★★ デバッグログ（ステップ2）★★★
+                // onClickリスナーが実際に呼ばれたか確認
+                console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
+
+                const actionInterpreter = this.registry.get('actionInterpreter');
+                const currentMode = this.registry.get('editor_mode');
+
+                // ★★★ デバッグログ（ステップ3）★★★
+                // 実行条件をチェック
+                console.log(`[ApplyEvents] Checking conditions... Mode: ${currentMode}`);
+
+                if (actionInterpreter && currentMode === 'play') {
+                    // ★★★ デバッグログ（ステップ4）★★★
+                    // ActionInterpreterの実行直前
+                    console.log(`%c[ApplyEvents] Running ActionInterpreter for '${uiElement.name}'...`, 'background: #222; color: #bada55');
+                    actionInterpreter.run(uiElement, eventData);
+                } else if (currentMode !== 'play') {
+                    console.warn(`[ApplyEvents] ActionInterpreter blocked because current mode is not 'play'.`);
+                }
+            });
+        }
+    });
+}
 
 
     // in UIScene.js
