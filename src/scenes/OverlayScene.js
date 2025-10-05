@@ -339,33 +339,28 @@ if (params.events) {
 
         return textObject;
     }
- // in src/scenes/OverlayScene.js (and optionally UIScene.js)
+// in src/scenes/UIScene.js
+// ★★★ 既存の applyUiEvents を、この内容で「完全に」置き換える ★★★
 
 applyUiEvents(uiElement) {
     const events = uiElement.getData('events') || [];
     
-    uiElement.off('onClick'); // 既存リスナーのクリア
+    uiElement.off('pointerdown');
 
     events.forEach(eventData => {
         if (eventData.trigger === 'onClick') {
-            uiElement.on('onClick', () => {
-                // ★★★ ここが修正の核心 ★★★
-                // --------------------------------------------------------------------
-                // this.registry ではなく、this.scene.manager.getScene('SystemScene').registry を使う
+            uiElement.on('pointerdown', (pointer) => {
+                // エディタのUIパネル上でのクリックは無視
+                if (pointer.event.target.closest('#editor-sidebar')) return;
+
                 const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
-                if (!systemRegistry) {
-                    console.error("[ApplyEvents] CRITICAL: SystemScene registry not found.");
-                    return;
-                }
+                if (!systemRegistry) return;
                 
                 const actionInterpreter = systemRegistry.get('actionInterpreter');
-                // --------------------------------------------------------------------
                 
+                // ★★★ モードチェックを削除！常に実行する ★★★
                 if (actionInterpreter) {
-                    // プレイモードのチェックは、UIボタンでは不要なので削除
                     actionInterpreter.run(uiElement, eventData);
-                } else {
-                    console.error("[ApplyEvents] ActionInterpreter not found in SystemScene registry.");
                 }
             });
         }

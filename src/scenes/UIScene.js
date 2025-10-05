@@ -585,30 +585,28 @@ onSceneTransition(newSceneKey) {
 
 // in src/scenes/UIScene.js
 // ★★★ 既存の applyUiEvents を、この内容で「完全に」置き換える ★★★
+// in src/scenes/UIScene.js
+// ★★★ 既存の applyUiEvents を、この内容で「完全に」置き換える ★★★
 
 applyUiEvents(uiElement) {
     const events = uiElement.getData('events') || [];
     
-    // 既存の 'pointerdown' リスナーをクリア
     uiElement.off('pointerdown');
 
     events.forEach(eventData => {
         if (eventData.trigger === 'onClick') {
-            // ★ 'onClick' ではなく、'pointerdown' を直接リッスンする
             uiElement.on('pointerdown', (pointer) => {
-                
-                // ★ エディタのUI（サイドバーなど）上でのクリックは何もしない
-                if (pointer.event.target.closest('#editor-sidebar')) {
-                    return;
-                }
+                // エディタのUIパネル上でのクリックは無視
+                if (pointer.event.target.closest('#editor-sidebar')) return;
 
-                // ★ プレイモードの時だけ ActionInterpreter を実行する
-                const currentMode = this.registry.get('editor_mode');
-                if (currentMode === 'play') {
-                    const actionInterpreter = this.registry.get('actionInterpreter');
-                    if (actionInterpreter) {
-                        actionInterpreter.run(uiElement, eventData);
-                    }
+                const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+                if (!systemRegistry) return;
+                
+                const actionInterpreter = systemRegistry.get('actionInterpreter');
+                
+                // ★★★ モードチェックを削除！常に実行する ★★★
+                if (actionInterpreter) {
+                    actionInterpreter.run(uiElement, eventData);
                 }
             });
         }

@@ -1692,19 +1692,12 @@ setAllObjectsDraggable(isDraggable) {
     gameObject.off('pointerover');
     gameObject.off('pointerout');
 
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // ★★★ これが、全てを解決する、唯一の正しい修正です ★★★
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-    // プレイモードの時は、ゲームプレイ用のイベント(onClickなど)を邪魔しないように、
-    // エディタ用のリスナーを一切設定せず、ここで処理を終了する。
     const currentMode = this.game.registry.get('editor_mode');
     
     // --- プレイモードの場合 ---
     if (currentMode === 'play') {
-        // ドラッグを無効化
         scene.input.setDraggable(gameObject, false);
-        // ★何もしない。ゲームプレイ用のリスナー（applyEvents...で設定されたもの）だけが残る
+        // ★何もしない。applyUiEvents/applyEventsAndEditorFunctionsで設定されたリスナーだけが残る
         return; 
     }
     
@@ -1713,8 +1706,10 @@ setAllObjectsDraggable(isDraggable) {
     
     // ★ エディタ用の pointerdown リスナーを設定
     gameObject.on('pointerdown', (pointer) => {
-        // ★ プレイモード用のイベントが発火しないように、伝播を止める
-        pointer.event.stopPropagation();
+        // ★★★ これが全てを解決する一行 ★★★
+        // このリスナーが呼ばれたら、これ以降の 'pointerdown' リスナー
+        // (つまり、applyUiEventsで設定されたもの) が呼ばれるのを防ぐ。
+        pointer.stopPropagation();
     // --- タップ情報を記録 ---
     gameObject.setData('lastTap', 0);
 
