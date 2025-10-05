@@ -219,12 +219,12 @@
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
-          "category": 1,
+          "category": 2,
           "mask": 4294967295
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1759643776137,
         "isYSortable": true,
         "overlap_test_b": false
       }
@@ -232,7 +232,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1204,
+      "x": 1198,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
