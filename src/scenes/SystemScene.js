@@ -270,22 +270,37 @@ handleClosePauseMenu(data) {
      * ★★★ 最終FIX版 ★★★
      * [transition_scene]などから呼ばれる、最も基本的なシーン遷移
      */
-    _handleSimpleTransition(data) {
-        const { from, to, params } = data;
+   // in src/scenes/SystemScene.js
 
-        // --- 1. 古い「ゲームシーン」を停止する ---
-        // ★ 'UIScene'は絶対に停止しない
-        if (this.scene.isActive(from) && from !== 'UIScene') {
-            this.scene.stop(from);
-        }
+_handleSimpleTransition(data) {
+    const { from, to, params } = data;
 
-        // --- 2. 新しい「ゲームシーン」を起動し、完了を待つ ---
+    // ★★★ 状態の更新は、遷移が「開始」されたこのタイミングで行うのが正しい ★★★
+    this.gameState = (to === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
+    this.sceneStack = [to];
+    console.log(`[State Logger] Game state changing to: ${this.gameState}`);
+
+    // --- ここからが、安全なシーン切り替えのロジック ---
+    const sceneToStop = this.scene.get(from);
+
+    if (sceneToStop && sceneToStop.scene.isActive() && from !== 'UIScene') {
+        
+        // 1. 停止対象シーンの 'shutdown' イベントを一度だけリッスン
+        sceneToStop.events.once('shutdown', () => {
+            console.log(`[SystemScene] '${from}' has shut down. Now starting '${to}'.`);
+            
+            // 2. shutdown完了後に、新しいシーンを開始
+            this._startAndMonitorScene(to, params);
+        });
+
+        // 3. シーンの停止を命令
+        this.scene.stop(from);
+
+    } else {
+        // 停止すべきシーンがない場合（最初の起動など）は、直接新しいシーンを開始
         this._startAndMonitorScene(to, params);
-
-        this.gameState = 'GAMEPLAY'; // JumpSceneなどはGAMEPLAY状態
-    this.sceneStack = [to];      // 戻るべき場所として記憶
-    console.log(`[State Logger] Game state changed to: ${this.gameState}`);
     }
+}
 
 
     /**
