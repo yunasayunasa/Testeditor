@@ -1695,21 +1695,23 @@ setAllObjectsDraggable(isDraggable) {
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
     // ★★★ これが、全てを解決する、唯一の正しい修正です ★★★
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+const currentMode = this.game.registry.get('editor_mode');
     // プレイモードの時は、ゲームプレイ用のイベント(onClickなど)を邪魔しないように、
     // エディタ用のリスナーを一切設定せず、ここで処理を終了する。
-    const currentMode = this.game.registry.get('editor_mode');
     if (currentMode === 'play') {
-        // ドラッグも無効化しておく
+        // ドラッグを無効化
         scene.input.setDraggable(gameObject, false);
+        // ★何もしない。ゲームプレイ用のリスナー（applyEvents...で設定されたもの）だけが残る
         return; 
     }
     
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-    // --- 以下は、セレクトモードの場合にのみ実行される ---
-
+    // --- セレクトモードの場合 ---
     scene.input.setDraggable(gameObject, true);
+    
+    // ★ エディタ用の pointerdown リスナーを設定
+    gameObject.on('pointerdown', (pointer) => {
+        // ★ プレイモード用のイベントが発火しないように、伝播を止める
+        pointer.event.stopPropagation();
 
     // --- タップ情報を記録 ---
     gameObject.setData('lastTap', 0);

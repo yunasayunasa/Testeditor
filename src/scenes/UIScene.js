@@ -583,44 +583,37 @@ onSceneTransition(newSceneKey) {
      */
     // in src/scenes/UIScene.js
 
+// in src/scenes/UIScene.js
+// ★★★ 既存の applyUiEvents を、この内容で「完全に」置き換える ★★★
+
 applyUiEvents(uiElement) {
     const events = uiElement.getData('events') || [];
     
-    // 既存のリスナーをクリア
-    uiElement.off('onClick');
-
-    // ★★★ デバッグログ（ステップ1）★★★
-    // このUI要素がイベント定義を持っているか確認
-    if (events.length > 0) {
-        console.log(`[ApplyEvents] Found ${events.length} event(s) for '${uiElement.name}'. Setting up listeners...`);
-    } else if (uiElement.name === 'debug_menu_button') {
-        console.error(`[ApplyEvents] CRITICAL: '${uiElement.name}' has NO event data!`);
-    }
+    // 既存の 'pointerdown' リスナーをクリア
+    uiElement.off('pointerdown');
 
     events.forEach(eventData => {
-        console.log(`[ApplyEvents] Processing event trigger '${eventData.trigger}' for '${uiElement.name}'`);
         if (eventData.trigger === 'onClick') {
-            uiElement.on('onClick', () => {
+            // ★ 'onClick' ではなく、'pointerdown' を直接リッスンする
+            uiElement.on('pointerdown', (pointer) => {
                 
-                // ★★★ デバッグログ（ステップ2）★★★
-                // onClickリスナーが実際に呼ばれたか確認
-                console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
+                // ★ エディタのUI（サイドバーなど）上でのクリックは何もしない
+                if (pointer.event.target.closest('#editor-sidebar')) {
+                    return;
+                }
 
-                const actionInterpreter = this.registry.get('actionInterpreter');
-                 // ★★★ 'currentMode' のチェックを完全に削除 ★★★
-                if (actionInterpreter) {
-                    console.log(`%c[ApplyEvents] Running ActionInterpreter for '${uiElement.name}'...`, 'background: #222; color: #bada55');
-                    actionInterpreter.run(uiElement, eventData);
-                } else {
-                    console.error("[ApplyEvents] ActionInterpreter not found in registry.");
+                // ★ プレイモードの時だけ ActionInterpreter を実行する
+                const currentMode = this.registry.get('editor_mode');
+                if (currentMode === 'play') {
+                    const actionInterpreter = this.registry.get('actionInterpreter');
+                    if (actionInterpreter) {
+                        actionInterpreter.run(uiElement, eventData);
+                    }
                 }
             });
         }
     });
 }
-
-
-    // in UIScene.js
 
     /**
      * ★★★ 新規メソッド ★★★
