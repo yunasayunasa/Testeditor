@@ -148,12 +148,9 @@ export default class PlayerController {
     }
     console.groupEnd();
 }
+// in src/components/PlayerController.js
 
-    // in src/components/PlayerController.js
-
-// ... (constructor, start, update などは変更なし) ...
-
-// ★★★ 床との衝突を維持する、最終版 ★★★
+// ★★★ カテゴリを変更する、最終・確定版 ★★★
 hide(hidingSpot) {
     if (this.state === 'hiding') return;
     const oldState = this.state;
@@ -164,24 +161,16 @@ hide(hidingSpot) {
     
     if (this.gameObject.body) {
         const physicsDefine = this.scene.registry.get('physics_define');
-        if (physicsDefine) {
-            // ★ カテゴリは'player'のまま、衝突マスクだけを変更する
-            //   これにより、setCollisionCategoryによる予期せぬ挙動を防ぐ
-            
-            // 衝突する相手 = 'default' と 'wall' だけ
-            const newMask = 
-                (physicsDefine.categories['default'] || 0) |
-                (physicsDefine.categories['wall'] || 0);
-
-            this.gameObject.setCollidesWith(newMask);
-            console.log("[PlayerController] Physics set to HIDDEN (collides only with ground).");
+        if (physicsDefine?.categories.HIDDEN) {
+            // ★ カテゴリを'HIDDEN'に変更する
+            this.gameObject.setCollisionCategory(physicsDefine.categories.HIDDEN);
         }
     }
     
     this.gameObject.setData('group', 'hidden');
 }
 
-// ★★★ 元の衝突マスクを復元する、最終版 ★★★
+// ★★★ カテゴリを元に戻す、最終・確定版 ★★★
 unhide() {
     if (this.state !== 'hiding') return;
     
@@ -189,15 +178,9 @@ unhide() {
     
     if (this.gameObject.body) {
         const physicsDefine = this.scene.registry.get('physics_define');
-        if (physicsDefine) {
-            // ★ 元の衝突ルールに戻す
-            const originalMask = 
-                (physicsDefine.categories['default'] || 0) |
-                (physicsDefine.categories['enemy'] || 0) |
-                (physicsDefine.categories['wall'] || 0);
-
-            this.gameObject.setCollidesWith(originalMask);
-            console.log("[PlayerController] Physics restored to PLAYER.");
+        if (physicsDefine?.categories.player) {
+            // ★ カテゴリを'player'に戻す
+            this.gameObject.setCollisionCategory(physicsDefine.categories.player);
         }
     }
 

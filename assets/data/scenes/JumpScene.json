@@ -220,7 +220,7 @@
         "restitution": 0,
         "collisionFilter": {
           "category": 2,
-          "mask": 4294967295
+          "mask": 13
         }
       },
       "data": {
@@ -294,7 +294,7 @@
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
-          "mask": 4294967295
+         "mask": 4294966783
         }
       },
       "data": {
