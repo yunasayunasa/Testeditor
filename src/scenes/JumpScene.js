@@ -258,25 +258,47 @@ onSetupComplete() {
     
 
  
-    /**
-     * シーン終了時に、全GameObjectのコンポーネントを破棄する
-     * ★★★ 以下のメソッドで、既存の shutdown を完全に置き換えてください ★★★
-     */
-    shutdown() {
-        console.log("[JumpScene] Shutdown.");
-        // シーン上の全GameObjectを走査
-        if (this.children) { // シーンが正常に破棄されることを確認
-            for (const gameObject of this.children.list) {
-                if (gameObject.components) {
-                    for (const key in gameObject.components) {
-                        const component = gameObject.components[key];
-                        if (component && typeof component.destroy === 'function') {
-                            component.destroy();
-                        }
+   // in src/scenes/JumpScene.js
+
+/**
+ * ★★★ 完全なクリーンアップ処理を含む、最終確定版 ★★★
+ * シーンが停止する際にPhaserによって自動的に呼び出される
+ */
+shutdown() {
+    console.log("[JumpScene] Shutdown sequence started. Cleaning up resources...");
+
+    // 1. このシーンが登録したグローバルなキーボードイベントを解除
+    if (this.input?.keyboard) {
+        this.input.keyboard.off('keydown-M');
+    }
+
+    // 2. ジョイスティックを完全に破棄する
+    if (this.joystick) {
+        // ジョイスティックが持つUI要素(base, thumb)も破棄
+        if (this.joystick.base) this.joystick.base.destroy();
+        if (this.joystick.thumb) this.joystick.thumb.destroy();
+        this.joystick.destroy();
+        this.joystick = null;
+        console.log("[JumpScene] Joystick destroyed.");
+    }
+    
+    // 3. このシーンの全GameObjectをループし、コンポーネントのdestroyを呼び出す
+    if (this.children) {
+        for (const gameObject of this.children.list) {
+            if (gameObject.components) {
+                for (const key in gameObject.components) {
+                    const component = gameObject.components[key];
+                    // ★ PlayerControllerなどのdestroyメソッドが呼ばれる
+                    if (component && typeof component.destroy === 'function') {
+                        component.destroy();
                     }
                 }
             }
         }
-        super.shutdown();
     }
+    console.log("[JumpScene] All component destroy methods called.");
+    
+    // 4. 最後に、親クラスのshutdownを呼び出す
+    super.shutdown();
+}
 }
