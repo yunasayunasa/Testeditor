@@ -1,18 +1,32 @@
-// src/core/ActionInterpreter.js (グローバルサービス版)
+// src/core/ActionInterpreter.js
 
-import { eventTagHandlers } from '../handlers/events/index.js';
-import { TagHandlers } from '../handlers/system/index.js';
+// ▼▼▼【ここのimport文を修正・追加します】▼▼▼
+import { tagHandlers as eventsTagHandlers } from '../handlers/events/index.js'; // 'events'から'gameplay'に変更し、別名をつける
+import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';   // systemからもインポートし、別名をつける
+import { tagHandlers as scenarioTagHandlers } from '../handlers/index.js'; // (もしあれば)scenarioからもインポート
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
 export default class ActionInterpreter {
-    constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
+    constructor(game) {
         this.game = game;
-        this.tagHandlers = eventTagHandlers;
         
+        // ▼▼▼【ここで全てのtagHandlersを合体させます】▼▼▼
+        this.tagHandlers = {
+            ...eventsTagHandlers,
+            ...systemTagHandlers,
+            ...scenarioTagHandlers // (もしあれば)
+            // 将来タグが増えても、ここに追加していくだけで良い
+        };
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         // ★ 実行のたびに更新されるプロパティ
         this.scene = null;
         this.currentSource = null;
         this.currentTarget = null;
-        
     }
+
+    // ... run, findTarget, runVSLFromData メソッドは変更なし ...
+
 
     /**
      * ★★★ グローバルサービス版 ★★★
