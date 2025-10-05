@@ -339,30 +339,37 @@ if (params.events) {
 
         return textObject;
     }
-   /**
-     * ★★★ グローバルInterpreterを使うように修正 ★★★
-     * UIオブジェクトのイベント定義に基づいて、リスナーを設定する
-     */
-    applyUiEvents(uiElement) {
-        const events = uiElement.getData('events') || [];
-        
-        // 既存のリスナーをクリア
-        uiElement.off('onClick');
+ // in src/scenes/OverlayScene.js (and optionally UIScene.js)
 
-        events.forEach(eventData => {
-            if (eventData.trigger === 'onClick') {
-                uiElement.on('onClick', () => {
-                    // ★ 1. レジストリから、グローバルなInterpreterを取得
-                    const actionInterpreter = this.registry.get('actionInterpreter');
-                    const currentMode = this.registry.get('editor_mode');
+applyUiEvents(uiElement) {
+    const events = uiElement.getData('events') || [];
+    
+    uiElement.off('onClick'); // 既存リスナーのクリア
 
-                    // ★ 2. 取得できたInterpreterを使い、モードを判定して実行
-                    if (actionInterpreter && currentMode === 'play') {
-                        actionInterpreter.run(uiElement, eventData);
-                    }
-                });
-            }
-        });
-    }
+    events.forEach(eventData => {
+        if (eventData.trigger === 'onClick') {
+            uiElement.on('onClick', () => {
+                // ★★★ ここが修正の核心 ★★★
+                // --------------------------------------------------------------------
+                // this.registry ではなく、this.scene.manager.getScene('SystemScene').registry を使う
+                const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+                if (!systemRegistry) {
+                    console.error("[ApplyEvents] CRITICAL: SystemScene registry not found.");
+                    return;
+                }
+                
+                const actionInterpreter = systemRegistry.get('actionInterpreter');
+                // --------------------------------------------------------------------
+                
+                if (actionInterpreter) {
+                    // プレイモードのチェックは、UIボタンでは不要なので削除
+                    actionInterpreter.run(uiElement, eventData);
+                } else {
+                    console.error("[ApplyEvents] ActionInterpreter not found in SystemScene registry.");
+                }
+            });
+        }
+    });
+}
 
 }
