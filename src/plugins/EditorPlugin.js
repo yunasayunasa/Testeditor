@@ -1707,7 +1707,18 @@ const currentMode = this.game.registry.get('editor_mode');
     
     // プレイモードの場合は、Buttonが発火させた'onClick'などの処理に任せる
     if (currentMode === 'play') {
-        return;
+        // --- プレイモードの場合 ---
+        const events = gameObject.getData('events') || [];
+        const onClickEvent = events.find(e => e.trigger === 'onClick');
+
+        if (onClickEvent) {
+            const actionInterpreter = this.game.registry.get('actionInterpreter');
+            if (actionInterpreter) {
+                // ActionInterpreterに直接実行を依頼
+                actionInterpreter.run(gameObject, onClickEvent, null);
+            }
+        }
+        return; // エディタの選択処理は行わない
     }
 
     // ▼▼▼【ここが誤爆を防ぐ核心です】▼▼▼
