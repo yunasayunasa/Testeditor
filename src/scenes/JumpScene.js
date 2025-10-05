@@ -131,6 +131,9 @@ setupPlayerAndCamera() {
 }
     
    update(time, delta) {
+    if (!this.joystick) {
+        this.setupJoystick();
+    }
     super.update(time, delta);
     
     // プレイヤーが死んだり非アクティブになったら、参照をリセット
@@ -184,6 +187,10 @@ setupPlayerAndCamera() {
         // down: undefined,
         // left: undefined,
         // right: undefined
+             up: null,
+        down: null,
+        left: null,
+        right: null,
         });
     }
     /**
