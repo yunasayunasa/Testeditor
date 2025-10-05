@@ -598,6 +598,7 @@ applyUiEvents(uiElement) {
     }
 
     events.forEach(eventData => {
+        console.log(`[ApplyEvents] Processing event trigger '${eventData.trigger}' for '${uiElement.name}'`);
         if (eventData.trigger === 'onClick') {
             uiElement.on('onClick', () => {
                 
