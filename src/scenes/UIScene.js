@@ -607,7 +607,7 @@ applyUiEvents(uiElement) {
                 console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
 
                 const actionInterpreter = this.registry.get('actionInterpreter');
-                const currentMode = this.registry.get('editor_mode');
+               // const currentMode = this.registry.get('editor_mode');
 
                 // ★★★ デバッグログ（ステップ3）★★★
                 // 実行条件をチェック
