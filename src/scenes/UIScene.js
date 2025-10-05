@@ -611,7 +611,7 @@ applyUiEvents(uiElement) {
 
                 // ★★★ デバッグログ（ステップ3）★★★
                 // 実行条件をチェック
-                console.log(`[ApplyEvents] Checking conditions... Mode: ${currentMode}`);
+              //  console.log(`[ApplyEvents] Checking conditions... Mode: ${currentMode}`);
 /*
                 if (actionInterpreter && currentMode === 'play') {
                     // ★★★ デバッグログ（ステップ4）★★★
