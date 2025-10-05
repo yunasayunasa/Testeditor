@@ -1655,7 +1655,10 @@ createColorInput(container, label, initialValue, callback) {
             this.editableObjects.set(sceneKey, new Set());
         }
         this.editableObjects.get(sceneKey).add(gameObject);
-
+const currentMode = this.game.registry.get('editor_mode');
+    if (currentMode === 'play') {
+        return; // プレイモードなら、エディタは何もしない
+    }
         if (!gameObject.input) {
             gameObject.setInteractive();
         }

@@ -2,9 +2,7 @@
     "scene_settings": {
     "ySortEnabled": true,  
     "backgroundColor": "0x4488cc",
-    "gravity": {
-      "enabled": true
-    }},
+    },
   "hasJoystick": true,
   "layers": [
     {
