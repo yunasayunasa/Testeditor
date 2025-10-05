@@ -1,25 +1,32 @@
 // src/handlers/events/save_game.js
-
 export default async function save_game(interpreter, params) {
     const stateManager = interpreter.scene.registry.get('stateManager');
-    const slot = params.slot || 'checkpoint'; // デフォルトは'checkpoint'スロット
+    const slot = params.slot || 'checkpoint';
+    const currentScene = interpreter.scene;
 
-    if (stateManager && typeof stateManager.createSaveData === 'function') {
-        const saveData = stateManager.createSaveData();
-        
-        // 現在のシーン名も保存しておく（ロード時にどのシーンに戻るかを知るため）
-        saveData.currentScene = interpreter.scene.scene.key;
+    if (!stateManager) {
+        console.error('[save_game] StateManager not found!');
+        return;
+    }
 
+    let saveData = null;
+
+    // --- 実行中のシーンに ScenarioManager が存在するかどうかで処理を分岐 ---
+    if (currentScene.scenarioManager && typeof stateManager.getState === 'function') {
+        // ノベルシーンの場合：既存の getState を使う
+        saveData = stateManager.getState(currentScene.scenarioManager);
+    } 
+    else if (typeof stateManager.createGenericSaveData === 'function') {
+        // それ以外のシーンの場合：新しい汎用メソッドを使う
+        saveData = stateManager.createGenericSaveData(currentScene);
+    } 
+    else {
+        console.error('[save_game] No suitable save method found on StateManager.');
+        return;
+    }
+
+    if (saveData) {
         localStorage.setItem(`save_slot_${slot}`, JSON.stringify(saveData));
         console.log(`%c[SAVE GAME] Game state saved to slot '${slot}'.`, 'color: lightblue;', saveData);
-    } else {
-        console.error('[save_game] StateManager or createSaveData method not found!');
     }
 }
-
-save_game.define = {
-    description: '現在のゲームの状態（フラグや変数）を指定されたスロットに保存します。',
-    params: [
-        { key: 'slot', type: 'string', label: 'セーブスロット名', defaultValue: 'checkpoint' }
-    ]
-};

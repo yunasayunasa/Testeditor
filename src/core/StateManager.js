@@ -182,6 +182,42 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             this.emit('f-variable-changed', key, this.f[key]);
         }
     }
+
+
+    /**
+     * ★★★ 新設：汎用的なセーブデータを生成するメソッド ★★★
+     * チェックポイントなど、シナリオ状態を含まないセーブに使用します。
+     * @param {Phaser.Scene} currentScene - 現在のシーン
+     * @returns {object} セーブデータ
+     */
+    createGenericSaveData(currentScene) {
+        if (!currentScene) {
+            console.error("[StateManager] createGenericSaveData requires a reference to the current scene.");
+            return null;
+        }
+
+        const saveData = {
+            saveDate: new Date().toLocaleString('ja-JP'),
+            currentSceneKey: currentScene.scene.key,
+            variables: { 
+                f: JSON.parse(JSON.stringify(this.f))
+            }
+        };
+        return saveData;
+    }
+
+    /**
+     * ★★★ 新設：汎用的なセーブデータから変数をロードするメソッド ★★★
+     * setState とほぼ同じだが、役割を明確に分ける
+     * @param {object} saveData 
+     */
+    loadGenericData(saveData) {
+        if (saveData && saveData.variables && saveData.variables.f) {
+            // setStateのロジックをそのまま使う
+            this.setState(saveData); 
+        }
+    }
+    
      /**
      * "f.love_meter"のような文字列パスを使って、安全に変数を設定する (最終FIX版)
      * @param {string} path - "f.love_meter" のような変数パス
