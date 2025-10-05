@@ -265,36 +265,34 @@ onSetupComplete() {
  * シーンが停止する際にPhaserによって自動的に呼び出される
  */
 // in src/scenes/JumpScene.js
+// in src/scenes/JumpScene.js
 
+/**
+ * ★★★ 完全なクリーンアップ処理を含む、最終確定版 ★★★
+ * シーンが停止する際にPhaserによって自動的に呼び出される
+ */
 shutdown() {
-    console.log("[JumpScene] Shutdown sequence started. Cleaning up all resources...");
+    console.log(`%c[JumpScene] Shutdown sequence started. Cleaning up all resources...`, 'color: orange; font-weight: bold;');
 
-    // 1. このシーンが登録したキーボードイベントを解除
-    if (this.input?.keyboard) {
-        this.input.keyboard.off('keydown-M');
+    // 1. このシーンが登録した可能性のあるUIボタンのリスナーを解除
+    //    安全のため、UISceneとボタンの存在をチェックしてから解除する
+    const uiScene = this.scene.get('UIScene');
+    const jumpButton = uiScene?.uiElements?.get('jump_button');
+    if (jumpButton) {
+        jumpButton.off('button_pressed'); // このシーンが登録したリスナーを全解除
+        console.log("[JumpScene] Jump button listeners cleaned up.");
     }
-
-    // ★★★ ここからが、外部プラグインを安全に破棄するための修正 ★★★
-    // --------------------------------------------------------------------
     
-    // 2. ジョイスティックを完全に破棄する
+    // 2. ジョイスティックを完全に破棄する (最重要)
     if (this.joystick) {
+        // destroy()メソッドが、プラグインが生成した全てのDOM要素やリスナーを
+        // 内部的にクリーンアップしてくれるはずです。
         this.joystick.destroy();
-        this.joystick = null;
+        this.joystick = null; // 必ずnullで参照を断ち切る
         console.log("[JumpScene] Joystick instance destroyed.");
     }
-    
-    // 3. rexプラグイン自体を、このシーンから切り離す
-    //    これにより、プラグインが登録した可能性のある全てのシーン固有リスナーがクリーンアップされる
-    if (this.plugins.get('rexvirtualjoystickplugin')) {
-        this.plugins.remove('rexvirtualjoystickplugin');
-        console.log("[JumpScene] RexVirtualJoystickPlugin removed from scene.");
-    }
 
-    // --------------------------------------------------------------------
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-    // 4. 全てのコンポーネントのdestroyを呼び出す (変更なし)
+    // 3. 全てのコンポーネントのdestroyを呼び出す
     if (this.children) {
         for (const gameObject of this.children.list) {
             if (gameObject.components) {
@@ -306,10 +304,11 @@ shutdown() {
                 }
             }
         }
+        console.log("[JumpScene] All components destroyed.");
     }
     
-    // 5. 最後に、親クラスのshutdownを呼び出す
+    // 4. 最後に、親クラスのshutdownを呼び出す
     super.shutdown();
-    console.log("[JumpScene] Shutdown sequence complete.");
+    console.log(`%c[JumpScene] Shutdown sequence complete.`, 'color: orange; font-weight: bold;');
 }
 }
