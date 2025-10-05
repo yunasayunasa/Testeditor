@@ -1,31 +1,26 @@
-// src/handlers/events/load_game.js
+// in src/handlers/events/load_game.js
 
 export default async function load_game(interpreter, params) {
     console.group(`%c[VSL LOG] Tag [load_game] Executed!`, 'background: #222; color: #ffeb3b;');
 
     const slot = params.slot || 'checkpoint';
-    console.log(`Step 1: Attempting to load from slot '${slot}'.`);
-
     const saveDataString = localStorage.getItem(`save_slot_${slot}`);
 
     if (saveDataString) {
-        console.log(`Step 2: Save data found in localStorage.`);
         try {
             const saveData = JSON.parse(saveDataString);
-            console.log(`Step 3: JSON parsed successfully.`, saveData);
-
             const systemScene = interpreter.scene.scene.get('SystemScene');
+            
             if (systemScene) {
-                console.log(`Step 4: SystemScene found. Emitting 'request-simple-transition'.`);
+                console.log(`Step 4: SystemScene found. Emitting 'request-load-game'.`);
                 
-                // ★★★ ここを、あなたの既存のイベントに合わせる ★★★
-                systemScene.events.emit('request-simple-transition', {
-                    to: saveData.currentSceneKey,        // 保存されたシーンキーに遷移
-                    from: interpreter.scene.scene.key,
-                    params: {
-                        loadData: saveData // ★ ロードデータを渡す
-                    }
+                // ▼▼▼【ここを専用イベントに変更】▼▼▼
+                // 'request-simple-transition' ではなく、新しいイベントを発行する
+                systemScene.events.emit('request-load-game', {
+                    saveData: saveData // ★ ロードデータだけを渡す、シンプルな命令
                 });
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             } else {
                 console.error("CRITICAL: SystemScene not found!");
             }
@@ -39,6 +34,7 @@ export default async function load_game(interpreter, params) {
     console.groupEnd();
 }
 
+// define部分は変更なし
 load_game.define = {
     params: [{ key: 'slot', type: 'string', label: 'ロードスロット名', defaultValue: 'checkpoint' }]
 };

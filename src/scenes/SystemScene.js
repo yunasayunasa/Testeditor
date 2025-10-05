@@ -16,6 +16,7 @@ export default class SystemScene extends Phaser.Scene {
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
         this.gameState = 'INITIALIZING';
+        
     this.sceneStack = [];
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
@@ -79,6 +80,7 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
         console.log("SystemScene: SoundManagerを登録しました。");
 
         // --- 2. イベントリスナーの設定 ---
+         this.events.on('request-load-game', this._handleLoadGame, this); 
           this.events.on('request-scene-transition', this._startTransition, this);
            this.events.on('request-simple-transition', this._handleSimpleTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
@@ -260,6 +262,71 @@ handleClosePauseMenu(data) {
         // 3. 状態を戻す
         this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     }
+}
+/**
+ * ★★★【最重要】ゲームのロード処理を専門に扱う、新しいハンドラ ★★★
+ * @param {{ saveData: object }} data - ロードするセーブデータ
+ */
+_handleLoadGame(data) {
+    if (this.isProcessingTransition) return;
+    this.isProcessingTransition = true;
+    console.log(`%c[SystemScene] Load Game request received. Beginning cleanup...`, 'color: cyan; font-weight: bold;');
+
+    const { saveData } = data;
+    const sceneToLoad = saveData.currentSceneKey;
+    if (!sceneToLoad) {
+        console.error("Load failed: Save data does not contain a scene key.");
+        this.isProcessingTransition = false;
+        return;
+    }
+
+    // --- 1. 現在アクティブな全シーンを特定する ---
+    const scenesToStop = this.game.scene.getScenes(true)
+        .filter(scene => scene.scene.key !== 'SystemScene' && scene.scene.key !== 'PreloadScene');
+
+    let stoppedCount = 0;
+    const totalToStop = scenesToStop.length;
+    
+    if (totalToStop === 0) {
+        // 停止するシーンがなければ、直接ロード処理へ
+        this._performLoad(saveData);
+        return;
+    }
+
+    // --- 2. 特定した全てのシーンに停止を命令し、全てのshutdown完了を待つ ---
+    console.log(`[SystemScene] Stopping ${totalToStop} active scenes:`, scenesToStop.map(s => s.scene.key));
+
+    const onSceneShutdown = () => {
+        stoppedCount++;
+        console.log(`[SystemScene] Shutdown progress: ${stoppedCount} / ${totalToStop}`);
+        if (stoppedCount >= totalToStop) {
+            console.log(`%c[SystemScene] All scenes shut down. Performing load.`, 'color: cyan; font-weight: bold;');
+            this._performLoad(saveData);
+        }
+    };
+
+    scenesToStop.forEach(scene => {
+        scene.events.once('shutdown', onSceneShutdown, this);
+        this.scene.stop(scene.scene.key);
+    });
+}
+
+/**
+ * ★★★ 新設ヘルパー：実際のロード（シーン起動）処理 ★★★
+ * @param {object} saveData - ロードするセーブデータ
+ */
+_performLoad(saveData) {
+    const sceneToLoad = saveData.currentSceneKey;
+    const params = {
+        loadData: saveData
+    };
+    
+    // グローバルな状態を更新
+    this.gameState = (sceneToLoad === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
+    this.sceneStack = [sceneToLoad]; // シーンスタックもリセット
+
+    console.log(`[SystemScene] Starting new scene '${sceneToLoad}' from save data.`);
+    this._startAndMonitorScene(sceneToLoad, params);
 }
 
  /**
