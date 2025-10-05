@@ -13,7 +13,7 @@ import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';
 // --- 3. scenario/index.js からインポート ---
 //    'export default { ... }' のような、デフォルトエクスポートを想定
 //    (もし違っていても、以下のconstructorで吸収できます)
-//import scenarioTagHandlers from '../handlers/scenario/index.js'; 
+import TagHandlers from '../handlers/index.js'; 
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 export default class ActionInterpreter {
@@ -27,7 +27,7 @@ export default class ActionInterpreter {
             ...(systemTagHandlers || {}),
 
             // scenario は、デフォルトエクスポートされたオブジェクトそのものである可能性が高いので、それを展開
-          //  ...(scenarioTagHandlers || {})
+           ...(TagHandlers || {})
         };
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
