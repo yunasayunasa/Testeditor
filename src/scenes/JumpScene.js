@@ -169,6 +169,21 @@ setupPlayerAndCamera() {
             x: 150, y: this.cameras.main.height - 150, radius: 100,
             base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
             thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+            enable: true,
+        // このオプションは、プラグインがキーボードの矢印キーを
+        // 監視する機能を無効化します。
+        // これにより、ロード時にキーボード入力システムへアクセスしなくなり、
+        // エラーが完全に回避されます。
+        // キーボード操作はPlayerControllerが責任を持つので、
+        // プラグインにこの機能は不要です。
+        dir: '8dir', // or '4dir'
+        // forceMin: undefined,
+        // fixed: true,
+        // noMove: false,
+        // up: undefined,
+        // down: undefined,
+        // left: undefined,
+        // right: undefined
         });
     }
     /**
