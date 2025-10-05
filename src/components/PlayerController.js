@@ -190,7 +190,10 @@ unhide() {
     this.state = 'idle';
     this.gameObject.emit('onStateChange', 'idle', oldState);
 }
-    destroy() //{ this.scene.events.off('update', this.update, this); }
+    destroy()
+    {
+    //this.scene.events.off('update', this.update, this); 
+}
 }
 
 PlayerController.define = {
