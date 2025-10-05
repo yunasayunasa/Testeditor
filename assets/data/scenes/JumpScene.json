@@ -86,7 +86,9 @@
         "isYSortable": true,
         "lastTap": 0,
         "overlap_tartman": false,
-        "overlap_player": false
+        "overlap_player": false,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     },
     {
@@ -185,6 +187,24 @@
             }
           ],
           "connections": []
+        },
+        {
+          "id": "event_1759649855081",
+          "trigger": "onCollide_Start",
+          "nodes": [
+            {
+              "id": "node_1759649889042",
+              "type": "body_velocity",
+              "params": {
+                "x": 100,
+                "y": -10
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "targetGroup": "enemy"
         }
       ],
       "components": [
@@ -224,15 +244,17 @@
         }
       },
       "data": {
-        "lastTap": 1759644491296,
+        "lastTap": 1759649846052,
         "isYSortable": true,
-        "overlap_test_b": false
+        "overlap_test_b": false,
+        "collision_category": 2,
+        "collision_mask": 4294967295
       }
     },
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1207,
+      "x": 1200,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -298,12 +320,14 @@
         }
       },
       "data": {
-        "lastTap": 1759644479790,
+        "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,
-        "dragStartY": 609.0911424572828
+        "dragStartY": 609.0911424572828,
+        "collision_category": 4,
+        "collision_mask": 511
       }
     }
   ],
