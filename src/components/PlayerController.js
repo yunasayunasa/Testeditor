@@ -1,75 +1,72 @@
 //
 // Odyssey Engine - PlayerController Component
-// Final Architecture: With Coyote Time for Robust Jumping
-//
+// src/components/PlayerController.js
 
 export default class PlayerController {
     
     constructor(scene, target, params = {}) {
         this.scene = scene;
-        this.gameObject = target; // ★★★ this.target を this.gameObject に変更 ★★★
-      //   this.scene.events.on('update', this.update, this);
+        this.gameObject = target;
         this.moveForce = params.moveForce || 0.01;
         this.maxSpeed = params.maxSpeed || 5;
         this.jumpVelocity = params.jumpVelocity || -10;
-
         this.coyoteTimeThreshold = 100;
         this.lastGroundedTime = 0;
 
-        this.keyboardEnabled = !!scene.input.keyboard;
-        this.cursors = this.keyboardEnabled ? scene.input.keyboard.createCursorKeys() : null;
-        
+        // --- コンストラクタでは、変数を安全な初期値で定義するだけ ---
+        this.cursors = null;
+        this.keyboardEnabled = false;
+        this.isInitialized = false; // ★ 初期化済みかどうかのフラグ
+
         this.state = 'idle';
         this.direction = 'right';
     }
-
-    /**
-     * ★★★ 新設：シリアライズ処理 ★★★
-     * PlayerControllerの状態をセーブデータに書き出す。
-     * @returns {object} 保存すべき状態のオブジェクト
-     */
-    serialize() {
-        // 今のところPlayerController自体に保存すべき特別な状態はないので、
-        // 空のオブジェクトを返すだけで十分。
-        // （例：もし無敵時間などがあれば { isInvincible: this.isInvincible } のように返す）
-        return {
-            // 将来の拡張のために空のオブジェクトを返す
-        };
+serialize() {
+        return {};
     }
 
-    /**
-     * ★★★ 新設：デシリアライズ処理 ★★★
-     * セーブデータからPlayerControllerの状態を復元する。
-     * @param {object} data - serialize()が返したオブジェクト
-     */
     deserialize(data) {
-        // セーブデータから復元すべき状態があれば、ここで適用する。
-        // 今は何もしなくてよい。
-        // （例：this.isInvincible = data.isInvincible;）
+        // No state to restore for now
+    }
+    /**
+     * ★★★ 新設：安全なタイミングで呼び出すための初期化メソッド ★★★
+     */
+    initKeyboard() {
+        if (this.isInitialized) return; // 二重実行を防ぐ
+
+        if (this.scene && this.scene.input && this.scene.input.keyboard) {
+            this.keyboardEnabled = true;
+            this.cursors = this.scene.input.keyboard.createCursorKeys();
+            console.log("%c[PlayerController] Keyboard cursors initialized successfully.", 'color: lightgreen');
+        } else {
+            console.warn("[PlayerController] Keyboard input system not available during initKeyboard().");
+            this.keyboardEnabled = false;
+        }
+        this.isInitialized = true; // 初期化が完了したことを記録
     }
 
     update(time, delta) {
-          // もし、自分が所属するGameObjectが、もはやシーンに存在しない、
-    // あるいは非アクティブになっているなら、自分は「ゴースト」である。
-    // 即座に全ての処理を中断し、二度と動かないようにする。
-    if (!this.gameObject || !this.gameObject.scene || !this.gameObject.active) {
-        // (オプション) デバッグ用に、ゴーストが動こうとしたことを記録する
-        // console.warn("[PlayerController] Ghost instance detected. Halting update.");
-        return;
-    }
-        const joystick = this.scene.joystick; // ★ シーンから直接取得
+        // ★★★ updateの最初に、一度だけ初期化処理を呼び出す ★★★
+        if (!this.isInitialized) {
+            this.initKeyboard();
+        }
+        
+        // --- 以下、元のupdateメソッドの処理 ---
+        if (!this.gameObject || !this.gameObject.scene || !this.gameObject.active) {
+            return;
+        }
 
+        const joystick = this.scene.joystick;
         if (this.state === 'hiding') {
             if (this.gameObject?.body) this.gameObject.setVelocity(0, 0);
             return;
         }
-        // ★★★ this.target を this.gameObject に変更 ★★★
-        if (!this.gameObject || !this.gameObject.body || !this.gameObject.active) {
+
+        if (!this.gameObject.body) {
             this.changeState('idle');
             return;
         }
         
-        // ★★★ this.target を this.gameObject に変更 ★★★
         const body = this.gameObject.body;
         
         let moveX = 0;
@@ -86,23 +83,14 @@ export default class PlayerController {
         else if (moveX > 0) newDirection = 'right';
         if (this.direction !== newDirection) {
             this.direction = newDirection;
-            // ★★★ this.target を this.gameObject に変更 ★★★
             this.gameObject.emit('onDirectionChange', this.direction);
         }
         
-        // applyForceをやめて、setVelocityで直接速度を制御する
-
-    // 1. 新しいX方向の速度を計算する
-    const newVelocityX = moveX * this.maxSpeed;
-
-    // 2. Y方向の速度は現在のものを維持する（ジャンプ中に落下が止まらないように）
-    const currentVelocityY = body.velocity.y;
-
-    // 3. 計算した速度を物理ボディに直接設定する
-    this.gameObject.setVelocity(newVelocityX, currentVelocityY);
+        const newVelocityX = moveX * this.maxSpeed;
+        const currentVelocityY = body.velocity.y;
+        this.gameObject.setVelocity(newVelocityX, currentVelocityY);
 
         const isOnGround = this.checkIsOnGround();
-
         if (isOnGround) {
             this.lastGroundedTime = this.scene.time.now;
         }

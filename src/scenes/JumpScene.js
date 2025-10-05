@@ -130,29 +130,27 @@ setupPlayerAndCamera() {
     // --- 診断ログはここまで ---
 }
     
-    /**
-     * ★★★ リアルタイム編集に対応したメインループ (最終FIX版) ★★★
-     */
-    update(time, delta) {
-        super.update(time, delta);
-        
-        if (this.player && !this.player.active) {
-            this.player = null;
-            this.playerController = null;
-        }
+   update(time, delta) {
+    super.update(time, delta);
+    
+    // プレイヤーが死んだり非アクティブになったら、参照をリセット
+    if (this.player && !this.player.active) {
+        this.player = null;
+        this.playerController = null;
+    }
 
-        if (!this.player) {
-            this.setupPlayerAndCamera();
-        }
-        
-        // ★ attachJumpButtonListenerは、playerControllerが見つかってから呼び出す方が安全
-        if (this.playerController) {
-          
-            this.attachJumpButtonListener(); // ここに移動
-        }
+    // ★★★ ここが新しいカメラ設定の「心臓部」になる ★★★
+    // プレイヤーの参照がまだない場合、毎フレーム探しに行く
+    if (!this.player) {
+        // setupPlayerAndCameraは内部でnullチェックをしているので、何度呼んでも安全
+        this.setupPlayerAndCamera();
     }
     
-    // ... (setupPlayerAndCameraは変更なし) ...
+    // プレイヤーコントローラーが見つかっていれば、ジャンプボタンのリスナーも設定する
+    if (this.playerController) {
+        this.attachJumpButtonListener();
+    }
+}
     
     /**
      * ★★★ hasListenersエラーを修正した最終FIX版 ★★★
@@ -192,6 +190,7 @@ setupPlayerAndCamera() {
         }
     }
  // in src/scenes/JumpScene.js
+// src/scenes/JumpScene.js
 
 onSetupComplete() {
     console.log("[JumpScene] onSetupComplete called. This is the final step in setup.");
@@ -200,26 +199,20 @@ onSetupComplete() {
     if (this.loadData) {
         console.log("Restoring scene state from save data...", this.loadData);
         
-        // --- 1a. f変数を復元 ---
         const stateManager = this.registry.get('stateManager');
         if (stateManager && this.loadData.variables) {
-            // StateManagerのsetStateはf変数だけを復元するので、そのまま使える
             stateManager.setState(this.loadData); 
         }
         
-        // --- 1b. オブジェクトの状態を復元 ---
         if (this.loadData.sceneSnapshot && this.loadData.sceneSnapshot.objects) {
             for (const objectState of this.loadData.sceneSnapshot.objects) {
-                // シーンから名前でオブジェクトを検索
                 const targetObject = this.children.getByName(objectState.name);
                 if (targetObject) {
-                    // 基本的なTransform情報を復元
                     targetObject.setPosition(objectState.x, objectState.y);
                     targetObject.setScale(objectState.scaleX, objectState.scaleY);
                     targetObject.setAngle(objectState.angle);
                     targetObject.setAlpha(objectState.alpha);
                     
-                    // コンポーネントの状態を復元
                     if (targetObject.components && objectState.components) {
                         for (const compName in objectState.components) {
                             const component = targetObject.components[compName];
@@ -234,16 +227,10 @@ onSetupComplete() {
         }
     }
 
-    // --- 2. ジョイスティックのセットアップ (既存のコード) ---
-    const keyToLoad = this.layoutDataKey || this.scene.key;
-    const layoutData = this.cache.json.get(keyToLoad);
-    if (layoutData && layoutData.hasJoystick) {
-        this.addJoystickFromEditor(false);
-    }
-
-    // --- 3. プレイヤーとカメラのセットアップ (既存のコード) ---
-    this.setupPlayerAndCamera();
-    this.attachJumpButtonListener();
+    // ▼▼▼【以下の2行をコメントアウト、または削除してください】▼▼▼
+    // this.setupPlayerAndCamera();
+    // this.attachJumpButtonListener();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
       /**
      * ★★★ 復活・確定版 ★★★
