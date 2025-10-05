@@ -8,7 +8,7 @@ export default class PlayerController {
     constructor(scene, target, params = {}) {
         this.scene = scene;
         this.gameObject = target; // ★★★ this.target を this.gameObject に変更 ★★★
-         this.scene.events.on('update', this.update, this);
+      //   this.scene.events.on('update', this.update, this);
         this.moveForce = params.moveForce || 0.01;
         this.maxSpeed = params.maxSpeed || 5;
         this.jumpVelocity = params.jumpVelocity || -10;
@@ -190,7 +190,7 @@ unhide() {
     this.state = 'idle';
     this.gameObject.emit('onStateChange', 'idle', oldState);
 }
-    destroy() { this.scene.events.off('update', this.update, this); }
+    destroy() //{ this.scene.events.off('update', this.update, this); }
 }
 
 PlayerController.define = {
