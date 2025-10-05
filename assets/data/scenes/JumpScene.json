@@ -18,7 +18,7 @@
     {
       "name": "Background",
       "visible": true,
-      "locked": false
+      "locked": true
     }
   ],
   "objects": [
@@ -159,7 +159,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 410,
+      "x": 409,
       "y": 625,
       "depth": 625,
       "scaleX": 0.65,
@@ -205,6 +205,23 @@
           ],
           "connections": [],
           "targetGroup": "enemy"
+        },
+        {
+          "id": "event_1759651203732",
+          "trigger": "onOverlap_Start",
+          "nodes": [
+            {
+              "id": "node_1759651217413",
+              "type": "save_game",
+              "params": {
+                "slot": "checkpoint"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "targetGroup": "checkpoint"
         }
       ],
       "components": [
@@ -244,7 +261,7 @@
         }
       },
       "data": {
-        "lastTap": 1759649846052,
+        "lastTap": 1759651179176,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -254,7 +271,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1200,
+      "x": 1207,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -328,6 +345,36 @@
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
         "collision_mask": 511
+      }
+    },
+    {
+      "name": "checkpoint",
+      "type": "Image",
+      "x": 640,
+      "y": 651,
+      "depth": 0,
+      "scaleX": 0.46,
+      "scaleY": 0.46,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "checkpoint",
+      "events": [],
+      "texture": "clear_obj",
+      "physics": {
+        "isStatic": true,
+        "isSensor": true,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      },
+      "data": {
+        "lastTap": 0
       }
     }
   ],
