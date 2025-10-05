@@ -24,6 +24,14 @@ export default class PlayerController {
     }
 
     update(time, delta) {
+          // もし、自分が所属するGameObjectが、もはやシーンに存在しない、
+    // あるいは非アクティブになっているなら、自分は「ゴースト」である。
+    // 即座に全ての処理を中断し、二度と動かないようにする。
+    if (!this.gameObject || !this.gameObject.scene || !this.gameObject.active) {
+        // (オプション) デバッグ用に、ゴーストが動こうとしたことを記録する
+        // console.warn("[PlayerController] Ghost instance detected. Halting update.");
+        return;
+    }
         const joystick = this.scene.joystick; // ★ シーンから直接取得
 
         if (this.state === 'hiding') {
