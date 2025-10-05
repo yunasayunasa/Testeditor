@@ -24,7 +24,7 @@ export default class JumpScene extends BaseGameScene {
         console.log("[JumpScene] Create started.");
         super.create();
     
-        this.cameras.main.setBackgroundColor('#4488cc');
+     /*   this.cameras.main.setBackgroundColor('#4488cc');
            //    'true'を指定すると、外側から内側に向かって暗くなるビネットになる
    const vignetteEffect = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.7, true);
 
@@ -32,7 +32,7 @@ export default class JumpScene extends BaseGameScene {
     //    内側の明るい円の半径 (0.0 ～ 1.0)
     vignetteEffect.radius = 0.8; 
     //    ビネットの強さ (0.0 ～ 1.0)
-    vignetteEffect.strength = 0.6; 
+    vignetteEffect.strength = 0.6; */
     
     console.log("[JumpScene] Vignette effect applied to the main camera.");
         const soundManager = this.registry.get('soundManager');
