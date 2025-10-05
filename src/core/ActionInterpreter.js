@@ -3,7 +3,7 @@
 // ▼▼▼【ここのimport文を修正・追加します】▼▼▼
 import { tagHandlers as eventsTagHandlers } from '../handlers/events/index.js'; // 'events'から'gameplay'に変更し、別名をつける
 import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';   // systemからもインポートし、別名をつける
-import { tagHandlers as scenarioTagHandlers } from '../handlers/index.js'; // (もしあれば)scenarioからもインポート
+//import { tagHandlers as scenarioTagHandlers } from '../handlers/index.js'; // (もしあれば)scenarioからもインポート
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 export default class ActionInterpreter {
@@ -13,8 +13,8 @@ export default class ActionInterpreter {
         // ▼▼▼【ここで全てのtagHandlersを合体させます】▼▼▼
         this.tagHandlers = {
             ...eventsTagHandlers,
-            ...systemTagHandlers,
-            ...scenarioTagHandlers // (もしあれば)
+            ...systemTagHandlers
+           // ...scenarioTagHandlers // (もしあれば)
             // 将来タグが増えても、ここに追加していくだけで良い
         };
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
