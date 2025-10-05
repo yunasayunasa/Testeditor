@@ -131,11 +131,11 @@ setupPlayerAndCamera() {
 }
     
    update(time, delta) {
+    
+    super.update(time, delta);
     if (!this.joystick) {
         this.setupJoystick();
     }
-    super.update(time, delta);
-    
     // プレイヤーが死んだり非アクティブになったら、参照をリセット
     if (this.player && !this.player.active) {
         this.player = null;
