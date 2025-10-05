@@ -1672,90 +1672,82 @@ setAllObjectsDraggable(isDraggable) {
      * タイルマップモードでは選択できないようにガードを追加する。
      */
     makeEditable(gameObject, scene) {
-        if (!this.isEnabled) return;
-        const sceneKey = scene.scene.key;
-        if (!this.editableObjects.has(sceneKey)) {
-            this.editableObjects.set(sceneKey, new Set());
-        }
-        this.editableObjects.get(sceneKey).add(gameObject);
-const currentMode = this.game.registry.get('editor_mode');
-    if (currentMode === 'play') {
-        return; // プレイモードなら、エディタは何もしない
+    if (!this.isEnabled) return;
+    const sceneKey = scene.scene.key;
+    if (!this.editableObjects.has(sceneKey)) {
+        this.editableObjects.set(sceneKey, new Set());
     }
-        if (!gameObject.input) {
-            gameObject.setInteractive();
-        }
-        
-        // setDraggableは一度だけで良い
-        scene.input.setDraggable(gameObject);
+    this.editableObjects.get(sceneKey).add(gameObject);
 
-        // --- 既存リスナーをクリア ---
-        gameObject.off('pointerdown');
-        gameObject.off('drag');
-        gameObject.off('pointerover');
-        gameObject.off('pointerout');
-
-        
-        // ▼▼▼【ここからがダブルタップ検知のロジックです】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- タップ情報を記録するための変数をGameObjectに持たせる ---
-       gameObject.setData('lastTap', 0);
-
-            gameObject.on('pointerdown', (pointer) => {
-    const currentMode = this.game.registry.get('editor_mode');
+    if (!gameObject.input) {
+        gameObject.setInteractive();
+    }
     
-    // プレイモードの場合は、Buttonが発火させた'onClick'などの処理に任せる
+    // --- 既存リスナーをクリア ---
+    // これにより、makeEditableが複数回呼ばれても安全になる
+    gameObject.off('pointerdown');
+    gameObject.off('dragstart');
+    gameObject.off('drag');
+    gameObject.off('dragend');
+    gameObject.off('pointerover');
+    gameObject.off('pointerout');
+
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+    // ★★★ これが、全てを解決する、唯一の正しい修正です ★★★
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+    // プレイモードの時は、ゲームプレイ用のイベント(onClickなど)を邪魔しないように、
+    // エディタ用のリスナーを一切設定せず、ここで処理を終了する。
+    const currentMode = this.game.registry.get('editor_mode');
     if (currentMode === 'play') {
-        return;
+        // ドラッグも無効化しておく
+        scene.input.setDraggable(gameObject, false);
+        return; 
     }
+    
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-    // ▼▼▼【ここが誤爆を防ぐ核心です】▼▼▼
-    // エディットモード（'select'など）でクリックされた場合は、
-    // これ以降のイベント（Buttonの'onClick'など）が発火しないように、伝播を止める
-    pointer.event.stopPropagation();
-            // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
-          const layerName = gameObject.getData('layer');
-            const layer = this.layerStates.find(l => l.name === layerName);
-            // レイヤーがロックされている場合は、選択もダブルタップも一切させない
-            if (layer && layer.locked) {
-                console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
-                return; 
+    // --- 以下は、セレクトモードの場合にのみ実行される ---
+
+    scene.input.setDraggable(gameObject, true);
+
+    // --- タップ情報を記録 ---
+    gameObject.setData('lastTap', 0);
+
+    // --- pointerdown (ダブルタップ検知ロジック) ---
+    gameObject.on('pointerdown', (pointer) => {
+        // (この中のプレイモードチェックはもう不要だが、念のため残しても害はない)
+        // const currentMode = this.game.registry.get('editor_mode');
+        // if (currentMode === 'play') return;
+        
+        pointer.event.stopPropagation();
+        
+        const layerName = gameObject.getData('layer');
+        const layer = this.layerStates.find(l => l.name === layerName);
+        if (layer && layer.locked) return;
+        
+        const now = Date.now();
+        const lastTap = gameObject.getData('lastTap');
+        const diff = now - lastTap;
+        gameObject.setData('lastTap', now);
+
+        if (diff < 300) { // ダブルタップ
+            const groupId = gameObject.getData('group');
+            if (groupId && typeof scene.getObjectsByGroup === 'function') {
+                const groupObjects = scene.getObjectsByGroup(groupId);
+                this.selectMultipleObjects(groupObjects);
+            } else {
+                this.selectSingleObject(gameObject);
             }
-            const now = Date.now();
-            const lastTap = gameObject.getData('lastTap');
-            const diff = now - lastTap;
-            
-            gameObject.setData('lastTap', now);
-
-            if (diff < 300) { // ダブルタップの処理
-                const groupId = gameObject.getData('group');
-                
-                // ▼▼▼【ここからが修正箇所です】▼▼▼
-                if (groupId && typeof scene.getObjectsByGroup === 'function') {
-                    // ★ BaseGameSceneの新しいメソッドを呼び出して、グループメンバーを取得
-                    const groupObjects = scene.getObjectsByGroup(groupId);
-                    
-                    console.log(`[EditorPlugin] Double tap detected. Selecting ${groupObjects.length} objects in group: ${groupId}`);
-                    this.selectMultipleObjects(groupObjects);
-                } else {
-                    // グループがない場合は、通常通りシングルオブジェクトを選択
+        } else { // シングルタップ
+           setTimeout(() => {
+                if (gameObject.getData('lastTap') === now) {
                     this.selectSingleObject(gameObject);
                 }
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-            } else { // シングルタップの処理
-               setTimeout(() => {
-                    if (gameObject.getData('lastTap') === now) {
-                        this.selectSingleObject(gameObject);
-                    }
-                }, 300);
-            }
-        });
-        
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+            }, 300);
+        }
+    });
+    
         
         // ▼▼▼【ここからが追加修正箇所】▼▼▼
         // --------------------------------------------------------------------
