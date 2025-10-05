@@ -184,37 +184,41 @@ export default class StateManager extends Phaser.Events.EventEmitter {
     }
 
 
+   
     /**
      * ★★★ 新設：汎用的なセーブデータを生成するメソッド ★★★
      * チェックポイントなど、シナリオ状態を含まないセーブに使用します。
      * @param {Phaser.Scene} currentScene - 現在のシーン
      * @returns {object} セーブデータ
      */
-    createGenericSaveData(currentScene) {
-        if (!currentScene) {
-            console.error("[StateManager] createGenericSaveData requires a reference to the current scene.");
-            return null;
-        }
+    createSaveData(currentScene) {
+        if (!currentScene) return null;
 
         const saveData = {
             saveDate: new Date().toLocaleString('ja-JP'),
             currentSceneKey: currentScene.scene.key,
             variables: { 
                 f: JSON.parse(JSON.stringify(this.f))
-            }
+            },
+            sceneSnapshot: null
         };
+        
+        // シーンがスナップショット機能を持っていれば、それを呼び出す
+        if (typeof currentScene.createSceneSnapshot === 'function') {
+            saveData.sceneSnapshot = currentScene.createSceneSnapshot();
+        }
+        
         return saveData;
     }
 
     /**
      * ★★★ 新設：汎用的なセーブデータから変数をロードするメソッド ★★★
-     * setState とほぼ同じだが、役割を明確に分ける
      * @param {object} saveData 
      */
-    loadGenericData(saveData) {
-        if (saveData && saveData.variables && saveData.variables.f) {
-            // setStateのロジックをそのまま使う
-            this.setState(saveData); 
+    loadFromData(saveData) {
+        // setStateはf変数しか復元しないので、同じロジックでOK
+        if (saveData && saveData.variables) {
+            this.setState(saveData);
         }
     }
     

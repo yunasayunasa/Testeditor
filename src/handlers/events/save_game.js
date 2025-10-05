@@ -4,10 +4,7 @@ export default async function save_game(interpreter, params) {
     const slot = params.slot || 'checkpoint';
     const currentScene = interpreter.scene;
 
-    if (!stateManager) {
-        console.error('[save_game] StateManager not found!');
-        return;
-    }
+    if (!stateManager) return;
 
     let saveData = null;
 
@@ -16,14 +13,11 @@ export default async function save_game(interpreter, params) {
         // ノベルシーンの場合：既存の getState を使う
         saveData = stateManager.getState(currentScene.scenarioManager);
     } 
-    else if (typeof stateManager.createGenericSaveData === 'function') {
+    else if (typeof stateManager.createSaveData === 'function') {
         // それ以外のシーンの場合：新しい汎用メソッドを使う
-        saveData = stateManager.createGenericSaveData(currentScene);
+        saveData = stateManager.createSaveData(currentScene);
     } 
-    else {
-        console.error('[save_game] No suitable save method found on StateManager.');
-        return;
-    }
+    else { return; }
 
     if (saveData) {
         localStorage.setItem(`save_slot_${slot}`, JSON.stringify(saveData));
