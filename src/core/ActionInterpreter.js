@@ -1,21 +1,33 @@
 // src/core/ActionInterpreter.js
 
-// ▼▼▼【ここのimport文を修正・追加します】▼▼▼
-import { tagHandlers as eventsTagHandlers } from '../handlers/events/index.js'; // 'events'から'gameplay'に変更し、別名をつける
-import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';   // systemからもインポートし、別名をつける
-//import { tagHandlers as scenarioTagHandlers } from '../handlers/index.js'; // (もしあれば)scenarioからもインポート
-// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+// ▼▼▼【ここのimport文を、以下の内容に完全に置き換えてください】▼▼▼
+
+// --- 1. gameplay/index.js (または events/index.js) からインポート ---
+//    'export const eventTagHandlers' という形式を想定
+import { eventTagHandlers } from '../handlers/events/index.js';
+
+// --- 2. system/index.js からインポート ---
+//    'export const tagHandlers' という形式を想定
+import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';
+
+// --- 3. scenario/index.js からインポート ---
+//    'export default { ... }' のような、デフォルトエクスポートを想定
+//    (もし違っていても、以下のconstructorで吸収できます)
+import scenarioTagHandlers from '../handlers/scenario/index.js'; 
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 export default class ActionInterpreter {
     constructor(game) {
         this.game = game;
         
-        // ▼▼▼【ここで全てのtagHandlersを合体させます】▼▼▼
+        // ▼▼▼【ここで、全ての形式のタグを安全に合体させます】▼▼▼
         this.tagHandlers = {
-            ...eventsTagHandlers,
-            ...systemTagHandlers
-           // ...scenarioTagHandlers // (もしあれば)
-            // 将来タグが増えても、ここに追加していくだけで良い
+            // gameplay/events と system は、'tagHandlers' という名前でエクスポートされているので、そのまま展開
+            ...(eventTagHandlers || {}),
+            ...(systemTagHandlers || {}),
+
+            // scenario は、デフォルトエクスポートされたオブジェクトそのものである可能性が高いので、それを展開
+            ...(scenarioTagHandlers || {})
         };
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
@@ -24,9 +36,6 @@ export default class ActionInterpreter {
         this.currentSource = null;
         this.currentTarget = null;
     }
-
-    // ... run, findTarget, runVSLFromData メソッドは変更なし ...
-
 
     /**
      * ★★★ グローバルサービス版 ★★★
