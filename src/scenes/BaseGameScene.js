@@ -525,48 +525,27 @@ initComponentsAndEvents(gameObject) {
  * @param {object} layout - 単一オブジェクトのレイアウト定義
  * @returns {Phaser.GameObjects.GameObject} プロパティ適用後のオブジェクト
  */
-// in src/scenes/BaseGameScene.js
+/// in src/scenes/BaseGameScene.js
 
 applyProperties(gameObject, layout) {
     const data = layout || {};
     gameObject.name = data.name || 'untitled';
 
-    // --- 1. カスタムデータ保存 (変更なし) ---
+    // --- 1. カスタムデータ保存 ---
     if (data.data) for (const key in data.data) gameObject.setData(key, data.data[key]);
-      // --- Yソート対象リストへの追加 ---
-    if (gameObject.getData('isYSortable') === true) {
-        if (!this.ySortableObjects.includes(gameObject)) {
-            this.ySortableObjects.push(gameObject);
-            console.log(`%c[Y-Sort] Added '${gameObject.name}' to the sortable list.`, 'color: orange');
-            
-            // ★★★ ここが新しいロジック ★★★
-            // Yソート対象なら、原点を自動的に足元に設定する
-            gameObject.setOrigin(0.5, 1); 
-            console.log(`%c[Y-Sort] Set origin of '${gameObject.name}' to (0.5, 1).`, 'color: cyan');
-        }
-    }
     if (data.components) gameObject.setData('components', data.components);
     if (data.events) gameObject.setData('events', data.events);
     if (data.layer) gameObject.setData('layer', data.layer);
     if (data.group) gameObject.setData('group', data.group);
     if (data.anim_prefix) gameObject.setData('anim_prefix', data.anim_prefix);
     if (data.cropSource) gameObject.setData('cropSource', data.cropSource);
-   if (gameObject.getData('isYSortable') === true) {
-        // 重複して追加しないようにチェック
-        if (!this.ySortableObjects.includes(gameObject)) {
-            this.ySortableObjects.push(gameObject);
-            console.log(`%c[Y-Sort] Added '${gameObject.name}' to the sortable list.`, 'color: orange');
-        }
-    }
-    // ★★★ もしJSONにoriginの指定があれば、そちらを優先する（上書き）★★★
-    if (data.originX !== undefined || data.originY !== undefined) {
-        gameObject.setOrigin(data.originX ?? 0.5, data.originY ?? 0.5);
-    }
+    // Yソート対象かどうかも、まずデータとして保存
+    if (data.isYSortable) gameObject.setData('isYSortable', true);
 
-    // --- 2. シーンに追加 (変更なし) ---
+    // --- 2. シーンに追加 ---
     this.add.existing(gameObject);
     
-    // --- 3. テクスチャ設定 (変更なし) ---
+    // --- 3. テクスチャ設定 ---
     let finalTextureKey = data.texture;
     if (data.cropSource) {
         try {
@@ -587,44 +566,59 @@ applyProperties(gameObject, layout) {
         gameObject.setTexture(finalTextureKey);
     }
     
-     // --- 4. 物理ボディ以外のTransformプロパティを設定 ---
+    // --- 4. Transformプロパティ設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
-    // ★★★ スケールは、物理ボディを作った「後」で設定する ★★★
-    // gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1); 
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
-    
-    // ▼▼▼ これが、物理ボディ生成の最後の正直・最終版です ▼▼▼
-    // --------------------------------------------------------------------
+
+    // Yソート対象なら、原点を自動的に足元に設定
+    if (gameObject.getData('isYSortable') === true) {
+        gameObject.setOrigin(0.5, 1);
+        // Yソート対象リストに追加
+        if (!this.ySortableObjects.includes(gameObject)) {
+            this.ySortableObjects.push(gameObject);
+        }
+    }
+    // JSONにoriginの指定があれば、そちらを優先（上書き）
+    if (data.originX !== undefined || data.originY !== undefined) {
+        gameObject.setOrigin(data.originX ?? 0.5, data.originY ?? 0.5);
+    }
+
+    // --- 5. 物理ボディの生成と設定 ---
     if (data.physics) {
         const phys = data.physics;
         
-        // --- 5a. 既存のボディがあれば削除 ---
+        // 5a. 既存ボディがあれば削除
         if (gameObject.body) this.matter.world.remove(gameObject.body);
         
-        // --- 5b. matter.add.gameObject を呼び出して、ボディを生成・アタッチ ---
-        // この時点では、gameObjectのスケールは1.0なので、テクスチャ本来のサイズでボディが作られる
+        // 5b. ボディを生成・アタッチ (スケールはまだ1.0)
         this.matter.add.gameObject(gameObject, {
             isStatic: phys.isStatic,
             isSensor: phys.isSensor
         });
 
         if (gameObject.body) {
-            // --- 5c. ボディが作られた「後」で、表示オブジェクトと物理ボディの両方にスケールを適用 ---
-            // ★ setScale は、内部で物理ボディのスケーリングも行ってくれる
+            // 5c. ボディが作られた「後」で、スケールを適用
             gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
 
-            // --- 5d. これで、setFrictionなどのヘルパーが安全に使える ---
+            // 5d. 衝突フィルタを、JSONの定義から設定
+            if (phys.collisionFilter) {
+                gameObject.setCollisionCategory(phys.collisionFilter.category);
+                gameObject.setCollidesWith(phys.collisionFilter.mask);
+                // 永続化のために、データもセットしておく
+                gameObject.setData('collision_category', phys.collisionFilter.category);
+                gameObject.setData('collision_mask', phys.collisionFilter.mask);
+            }
+
+            // 5e. その他の物理プロパティを適用
             gameObject.setFriction(phys.friction ?? 0.1);
             gameObject.setFrictionAir(phys.frictionAir ?? 0.01);
             gameObject.setBounce(phys.restitution ?? 0);
-            
             if (phys.fixedRotation !== undefined) {
                 gameObject.setFixedRotation(phys.fixedRotation);
                 gameObject.setData('fixedRotation', phys.fixedRotation);
             }
-    
             gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
             gameObject.setData('shape', phys.shape || 'rectangle');
         }
@@ -632,8 +626,7 @@ applyProperties(gameObject, layout) {
         // 物理ボディがない場合は、ここでスケールを設定
         gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
     }
-    // --------------------------------------------------------------------
-    console.log(this.ySortableObjects)
+    
     return gameObject;
 }
     

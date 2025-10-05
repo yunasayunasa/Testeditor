@@ -1300,6 +1300,7 @@ createMatterPropertiesUI(gameObject) {
         }
         categorySelect.onchange = (e) => {
             gameObject.setCollisionCategory(parseInt(e.target.value));
+            gameObject.setData('collision_category', newCategoryValue);
             // UIも更新
             setTimeout(() => this.updatePropertyPanel(), 0);
         };
@@ -1343,6 +1344,7 @@ createMatterPropertiesUI(gameObject) {
             }
         });
         gameObject.setCollidesWith(newMask);
+        gameObject.setData('collision_mask', newMask);
     }
 
     
@@ -2270,10 +2272,10 @@ exportLayoutToJson() {
                         gravityScale: body.gravityScale.y,
                         friction: parseFloat(body.friction.toFixed(2)),
                         restitution: parseFloat(body.restitution.toFixed(2)),
-                        collisionFilter: {
-                            category: body.collisionFilter.category,
-                            mask: body.collisionFilter.mask
-                        }
+                       collisionFilter: {
+            category: gameObject.getData('collision_category') ?? body.collisionFilter.category,
+            mask: gameObject.getData('collision_mask') ?? body.collisionFilter.mask
+        }
                     };
                     delete allCustomData.fixedRotation;
                     delete allCustomData.ignoreGravity;
