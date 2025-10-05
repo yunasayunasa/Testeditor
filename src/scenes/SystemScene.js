@@ -191,25 +191,30 @@ _startInitialGame(initialData) {
     console.log("[SystemScene] Running UIScene now.");
     this.scene.run('UIScene');
 }
+// in src/scenes/SystemScene.js
+
 /**
- * ★★★ 新設：ポーズメニューを開く専用ハンドラ ★★★
- * @param {{ from: string, sceneKey: string, params?: object }} data
+ * ★★★ 新設：ポーズメニューを開く専用ハンドラ (最終修正版) ★★★
+ * @param {{ from: string, layoutKey: string, params?: object }} data
  */
 handleOpenPauseMenu(data) {
-        console.log(`%c[SYSTEM LOG] Received 'request-pause-menu' with data:`, 'color: #FF9800; font-size: 1.2em;', data);
     const fromScene = data.from;
-    const menuScene = data.sceneKey;
+    const menuLayoutKey = data.layoutKey; // ★★★ 'sceneKey' -> 'layoutKey' に修正 ★★★
+
+    // 起動するオーバーレイシーンの名前は、ここでは'OverlayScene'に固定
+    const sceneToLaunch = 'OverlayScene';
 
     if (this.scene.isActive(fromScene)) {
-        console.log(`[SystemScene] Pausing '${fromScene}' to open menu '${menuScene}'.`);
+        console.log(`[SystemScene] Pausing '${fromScene}' to open overlay '${sceneToLaunch}' with layout '${menuLayoutKey}'.`);
         
         // 1. 背後のシーンをポーズ
         this.scene.pause(fromScene);
         // 2. 状態を記録
         this.sceneStack.push(fromScene);
         this.gameState = 'MENU';
-        // 3. メニューシーンを起動
-        this.scene.launch(menuScene, data.params);
+        
+        // 3. 汎用的なOverlaySceneを起動し、どのレイアウトを使うかを渡す
+        this.scene.launch(sceneToLaunch, { layoutKey: menuLayoutKey, ...data.params });
     }
 }
 
