@@ -67,6 +67,8 @@ export default class SystemScene extends Phaser.Scene {
         console.log('--- END OF LOG BOMB ---');
         this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
     this.events.on('request-close-menu', this.handleClosePauseMenu, this);
+console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
+
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
        // --- 1. コアサービスの初期化 ---
@@ -194,6 +196,7 @@ _startInitialGame(initialData) {
  * @param {{ from: string, sceneKey: string, params?: object }} data
  */
 handleOpenPauseMenu(data) {
+        console.log(`%c[SYSTEM LOG] Received 'request-pause-menu' with data:`, 'color: #FF9800; font-size: 1.2em;', data);
     const fromScene = data.from;
     const menuScene = data.sceneKey;
 

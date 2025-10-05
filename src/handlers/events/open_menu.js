@@ -1,6 +1,7 @@
 // src/handlers/events/open_menu.js
 
 export default async function open_menu(interpreter, params) {
+    console.log(`%c[VSL LOG] Tag [open_menu] executed with params:`, 'color: #2196F3; font-size: 1.2em;', params);
     const systemScene = interpreter.scene.scene.get('SystemScene');
     const gameScene = systemScene.getActiveGameScene(); // 現在のゲームシーンを取得
 
