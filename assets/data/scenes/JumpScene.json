@@ -220,11 +220,11 @@
         "restitution": 0,
         "collisionFilter": {
           "category": 2,
-          "mask": 13
+          "mask": 4294967295
         }
       },
       "data": {
-        "lastTap": 1759643776137,
+        "lastTap": 1759644491296,
         "isYSortable": true,
         "overlap_test_b": false
       }
@@ -232,7 +232,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1198,
+      "x": 1207,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -294,11 +294,11 @@
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
-         "mask": 4294966783
+          "mask": 511
         }
       },
       "data": {
-        "lastTap": 1759642939798,
+        "lastTap": 1759644479790,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
