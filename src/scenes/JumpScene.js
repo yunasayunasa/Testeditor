@@ -42,7 +42,7 @@ export default class JumpScene extends BaseGameScene {
         // ★★★ ここまで ★★★
   // initSceneWithData を呼び出す「前」に、JSONデータを先読みする
 
-    // 1. 読み込むべきJSONのキーを決定する
+  /*  // 1. 読み込むべきJSONのキーを決定する
     const keyToLoad = this.layoutDataKey || this.scene.key;
     const layoutData = this.cache.json.get(keyToLoad);
 
@@ -59,7 +59,7 @@ export default class JumpScene extends BaseGameScene {
         if (!isDebug) {
              this.addJoystickFromEditor(); // 常に表示する場合
         }
-    }
+    }*/
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
       const uiScene = this.scene.get('UIScene');
@@ -151,7 +151,26 @@ setupPlayerAndCamera() {
         this.attachJumpButtonListener();
     }
 }
-    
+       /**
+     * ★★★ 新設：ジョイスティックをセットアップする専用メソッド ★★★
+     * このメソッドは、SystemSceneからシーンの準備完了後に呼び出される。
+     */
+    setupJoystick() {
+        if (this.joystick) return; // 既に存在すれば何もしない
+
+        const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
+        if (!joystickPlugin) {
+            console.error('CRITICAL: Virtual Joystick Plugin not loaded.');
+            return;
+        }
+
+        console.log("[JumpScene] Setting up joystick by external command...");
+        this.joystick = joystickPlugin.add(this, {
+            x: 150, y: this.cameras.main.height - 150, radius: 100,
+            base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
+            thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+        });
+    }
     /**
      * ★★★ hasListenersエラーを修正した最終FIX版 ★★★
      * ジャンプボタンのリスナーを、重複しないように安全に設定する。
@@ -283,43 +302,13 @@ onSetupComplete() {
  * シーンが停止する際にPhaserによって自動的に呼び出される
  */
 shutdown() {
-    console.log(`%c[JumpScene] Shutdown sequence started. Cleaning up all resources...`, 'color: orange; font-weight: bold;');
-
-    // 1. このシーンが登録した可能性のあるUIボタンのリスナーを解除
-    //    安全のため、UISceneとボタンの存在をチェックしてから解除する
-    const uiScene = this.scene.get('UIScene');
-    const jumpButton = uiScene?.uiElements?.get('jump_button');
-    if (jumpButton) {
-        jumpButton.off('button_pressed'); // このシーンが登録したリスナーを全解除
-        console.log("[JumpScene] Jump button listeners cleaned up.");
-    }
-    
-    // 2. ジョイスティックを完全に破棄する (最重要)
-    if (this.joystick) {
-        // destroy()メソッドが、プラグインが生成した全てのDOM要素やリスナーを
-        // 内部的にクリーンアップしてくれるはずです。
-        this.joystick.destroy();
-        this.joystick = null; // 必ずnullで参照を断ち切る
-        console.log("[JumpScene] Joystick instance destroyed.");
-    }
-
-    // 3. 全てのコンポーネントのdestroyを呼び出す
-    if (this.children) {
-        for (const gameObject of this.children.list) {
-            if (gameObject.components) {
-                for (const key in gameObject.components) {
-                    const component = gameObject.components[key];
-                    if (component && typeof component.destroy === 'function') {
-                        component.destroy();
-                    }
-                }
-            }
+        console.log("[JumpScene] Shutdown sequence started.");
+        if (this.joystick) {
+            this.joystick.destroy();
+            this.joystick = null;
+            console.log("[JumpScene] Joystick instance destroyed.");
         }
-        console.log("[JumpScene] All components destroyed.");
+        super.shutdown();
+        console.log("[JumpScene] Shutdown sequence complete.");
     }
-    
-    // 4. 最後に、親クラスのshutdownを呼び出す
-    super.shutdown();
-    console.log(`%c[JumpScene] Shutdown sequence complete.`, 'color: orange; font-weight: bold;');
-}
 }

@@ -80,7 +80,7 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
         console.log("SystemScene: SoundManagerを登録しました。");
 
         // --- 2. イベントリスナーの設定 ---
-         this.events.on('request-load-game', this._handleLoadGame, this); 
+       //  this.events.on('request-load-game', this._handleLoadGame, this); 
           this.events.on('request-scene-transition', this._startTransition, this);
            this.events.on('request-simple-transition', this._handleSimpleTransition, this);
         this.events.on('return-to-novel', this._handleReturnToNovel, this);
@@ -262,71 +262,6 @@ handleClosePauseMenu(data) {
         // 3. 状態を戻す
         this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     }
-}
-/**
- * ★★★【最重要】ゲームのロード処理を専門に扱う、新しいハンドラ ★★★
- * @param {{ saveData: object }} data - ロードするセーブデータ
- */
-_handleLoadGame(data) {
-    if (this.isProcessingTransition) return;
-    this.isProcessingTransition = true;
-    console.log(`%c[SystemScene] Load Game request received. Beginning cleanup...`, 'color: cyan; font-weight: bold;');
-
-    const { saveData } = data;
-    const sceneToLoad = saveData.currentSceneKey;
-    if (!sceneToLoad) {
-        console.error("Load failed: Save data does not contain a scene key.");
-        this.isProcessingTransition = false;
-        return;
-    }
-
-    // --- 1. 現在アクティブな全シーンを特定する ---
-    const scenesToStop = this.game.scene.getScenes(true)
-        .filter(scene => scene.scene.key !== 'SystemScene' && scene.scene.key !== 'PreloadScene');
-
-    let stoppedCount = 0;
-    const totalToStop = scenesToStop.length;
-    
-    if (totalToStop === 0) {
-        // 停止するシーンがなければ、直接ロード処理へ
-        this._performLoad(saveData);
-        return;
-    }
-
-    // --- 2. 特定した全てのシーンに停止を命令し、全てのshutdown完了を待つ ---
-    console.log(`[SystemScene] Stopping ${totalToStop} active scenes:`, scenesToStop.map(s => s.scene.key));
-
-    const onSceneShutdown = () => {
-        stoppedCount++;
-        console.log(`[SystemScene] Shutdown progress: ${stoppedCount} / ${totalToStop}`);
-        if (stoppedCount >= totalToStop) {
-            console.log(`%c[SystemScene] All scenes shut down. Performing load.`, 'color: cyan; font-weight: bold;');
-            this._performLoad(saveData);
-        }
-    };
-
-    scenesToStop.forEach(scene => {
-        scene.events.once('shutdown', onSceneShutdown, this);
-        this.scene.stop(scene.scene.key);
-    });
-}
-
-/**
- * ★★★ 新設ヘルパー：実際のロード（シーン起動）処理 ★★★
- * @param {object} saveData - ロードするセーブデータ
- */
-_performLoad(saveData) {
-    const sceneToLoad = saveData.currentSceneKey;
-    const params = {
-        loadData: saveData
-    };
-    
-    // グローバルな状態を更新
-    this.gameState = (sceneToLoad === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
-    this.sceneStack = [sceneToLoad]; // シーンスタックもリセット
-
-    console.log(`[SystemScene] Starting new scene '${sceneToLoad}' from save data.`);
-    this._startAndMonitorScene(sceneToLoad, params);
 }
 
  /**
@@ -515,27 +450,42 @@ _handleSimpleTransition(data) {
         this.isProcessingTransition = true;
         
         const targetScene = this.scene.get(sceneKey);
-        const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
+      
+    const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
 
-        // ★★★ 2. シーンの準備が完了した「後で」、すべての後処理を行う ★★★
-        targetScene.events.once(completionEvent, () => {
-            console.log(`[SystemScene] Scene '${sceneKey}' is ready. Updating UI.`);
-            
-            // (A) UISceneに通知を送る
-            const uiScene = this.scene.get('UIScene');
-            if (uiScene) {
-                uiScene.onSceneTransition(sceneKey);
+    targetScene.events.once(completionEvent, () => {
+        console.log(`[SystemScene] Scene '${sceneKey}' is ready.`);
+        
+        // (A) UISceneに通知
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene) uiScene.onSceneTransition(sceneKey);
+        
+        // ▼▼▼【ここからがプラグイン問題を解決する核心部分】▼▼▼
+        // --------------------------------------------------------------------
+        // (B) シーンの準備完了後、そのシーンにジョイスティックが必要か判定する
+        if (sceneKey === 'JumpScene') {
+            // targetSceneはJumpSceneのインスタンスなので、メソッドを直接呼べる
+            if (typeof targetScene.setupJoystick === 'function') {
+                console.log(`[SystemScene] Commanding '${sceneKey}' to set up its joystick.`);
+                targetScene.setupJoystick();
             }
-            
-            // (B) 遷移完了を宣言し、入力を有効化する
-            this.isProcessingTransition = false;
-            this.game.input.enabled = true;
-            this.events.emit('transition-complete', sceneKey);
-        });
+        }
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // ★★★ 1. シーンを起動する ★★★
-        this.scene.run(sceneKey, params);
-    }
+        // (C) カメラのフェードインと遷移完了処理
+        this.cameras.main.fadeFrom(300, 0, 0, 0, false, (camera, progress) => {
+            if (progress === 1) {
+                this.isProcessingTransition = false;
+                this.game.input.enabled = true;
+                this.events.emit('transition-complete', sceneKey);
+            }
+        });
+    });
+
+    // シーンを起動する
+    this.scene.run(sceneKey, params);
+}
     /**
      * シーン遷移が完全に完了したときの処理
      * @param {string} sceneKey - 完了したシーンのキー
