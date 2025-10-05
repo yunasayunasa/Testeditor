@@ -1,8 +1,8 @@
 {
-    "scene_settings": {
-    "ySortEnabled": true,  
+  "scene_settings": {
+    "ySortEnabled": true,
     "backgroundColor": "0x4488cc"
-    },
+  },
   "hasJoystick": true,
   "layers": [
     {
@@ -27,7 +27,7 @@
       "type": "Image",
       "x": 1111,
       "y": 589,
-      "depth": 10,
+      "depth": 589,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
@@ -38,7 +38,7 @@
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
-        "lastTap": 1759585401677
+        "lastTap": 0
       }
     },
     {
@@ -46,7 +46,7 @@
       "type": "Image",
       "x": 1928,
       "y": 642,
-      "depth": 0,
+      "depth": 642,
       "scaleX": 0.49,
       "scaleY": 0.49,
       "angle": 0,
@@ -85,62 +85,8 @@
         "nextWaypoint": "test_a",
         "isYSortable": true,
         "lastTap": 0,
-        "overlap_tartman": true,
+        "overlap_tartman": false,
         "overlap_player": false
-      }
-    },
-    {
-      "name": "bgtest3_1758338452766",
-      "type": "Image",
-      "x": 640,
-      "y": 360,
-      "depth": 19,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [],
-      "texture": "__MISSING",
-      "data": {
-        "isYSortable": true,
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "bgtest4_1758338485276",
-      "type": "Image",
-      "x": 600,
-      "y": 333,
-      "depth": 20,
-      "scaleX": 0.93,
-      "scaleY": 0.93,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1758339003956",
-          "trigger": "onReady",
-          "nodes": [
-            {
-              "id": "node_1758339008794",
-              "type": "tween",
-              "params": {
-                "to": "1",
-                "time": 500
-              },
-              "x": 50,
-              "y": 150
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "texture": "__MISSING",
-      "data": {
-        "isYSortable": true,
-        "lastTap": 0
       }
     },
     {
@@ -197,7 +143,7 @@
       "type": "Image",
       "x": 850,
       "y": 1296,
-      "depth": 0,
+      "depth": 1296,
       "scaleX": 0.38,
       "scaleY": 0.38,
       "angle": 0,
@@ -211,9 +157,9 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 405,
+      "x": 410,
       "y": 625,
-      "depth": 0,
+      "depth": 625,
       "scaleX": 0.65,
       "scaleY": 0.65,
       "angle": 0,
@@ -286,9 +232,9 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1838,
+      "x": 1204,
       "y": 609,
-      "depth": 0,
+      "depth": 609,
       "scaleX": 0.76,
       "scaleY": 0.76,
       "angle": 0,
@@ -347,15 +293,15 @@
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
-          "category": 1,
+          "category": 4,
           "mask": 4294967295
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1759642939798,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": true,
+        "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828
       }
