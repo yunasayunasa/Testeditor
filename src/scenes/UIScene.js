@@ -611,7 +611,7 @@ applyUiEvents(uiElement) {
                 // ★★★ デバッグログ（ステップ3）★★★
                 // 実行条件をチェック
                 console.log(`[ApplyEvents] Checking conditions... Mode: ${currentMode}`);
-
+/*
                 if (actionInterpreter && currentMode === 'play') {
                     // ★★★ デバッグログ（ステップ4）★★★
                     // ActionInterpreterの実行直前
@@ -619,7 +619,7 @@ applyUiEvents(uiElement) {
                     actionInterpreter.run(uiElement, eventData);
                 } else if (currentMode !== 'play') {
                     console.warn(`[ApplyEvents] ActionInterpreter blocked because current mode is not 'play'.`);
-                }
+                }*/
             });
         }
     });
