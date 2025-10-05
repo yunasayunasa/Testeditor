@@ -607,20 +607,13 @@ applyUiEvents(uiElement) {
                 console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
 
                 const actionInterpreter = this.registry.get('actionInterpreter');
-               // const currentMode = this.registry.get('editor_mode');
-
-                // ★★★ デバッグログ（ステップ3）★★★
-                // 実行条件をチェック
-              //  console.log(`[ApplyEvents] Checking conditions... Mode: ${currentMode}`);
-/*
-                if (actionInterpreter && currentMode === 'play') {
-                    // ★★★ デバッグログ（ステップ4）★★★
-                    // ActionInterpreterの実行直前
+                 // ★★★ 'currentMode' のチェックを完全に削除 ★★★
+                if (actionInterpreter) {
                     console.log(`%c[ApplyEvents] Running ActionInterpreter for '${uiElement.name}'...`, 'background: #222; color: #bada55');
                     actionInterpreter.run(uiElement, eventData);
-                } else if (currentMode !== 'play') {
-                    console.warn(`[ApplyEvents] ActionInterpreter blocked because current mode is not 'play'.`);
-                }*/
+                } else {
+                    console.error("[ApplyEvents] ActionInterpreter not found in registry.");
+                }
             });
         }
     });
