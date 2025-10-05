@@ -2,6 +2,7 @@ import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
+import OverlayScene from './OverlayScene.js'; 
 import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
 export default class SystemScene extends Phaser.Scene {
     constructor() {
@@ -174,7 +175,10 @@ _startInitialGame(initialData) {
         this.scene.add('GameScene', GameScene, false);
         console.log("[SystemScene] GameSceneを動的に追加しました。");
     }
-    
+    if (!this.scene.get('OverlayScene')) {
+        this.scene.add('OverlayScene', OverlayScene, false);
+        console.log("[SystemScene] OverlaySceneを動的に追加しました。");
+    }
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const uiScene = this.scene.get('UIScene');
