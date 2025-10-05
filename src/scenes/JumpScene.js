@@ -84,27 +84,51 @@ export default class JumpScene extends BaseGameScene {
         return super._addObjectFromEditorCore({ texture: assetKey, type: type }, newName, layerName);
     }
 
-  /**
-     * ★★★ 新しいヘルパーメソッド ★★★
-     * プレイヤーとカメラのセットアップ処理を分離・共通化する。
-     * onSetupCompleteとupdateの両方から呼び出せるようにする。
-     */
-    setupPlayerAndCamera() {
-        // children.getByNameは少し重いので、playerが既に見つかっていれば実行しない
-        if (this.player && this.player.active) return;
+ // in src/scenes/JumpScene.js
 
-        this.player = this.children.getByName('player');
+/**
+ * ★★★ 診断ログを追加した、デバッグ用の最終確定版 ★★★
+ * プレイヤーとカメラのセットアップ処理を行う。
+ */
+setupPlayerAndCamera() {
+    // このメソッドが既にプレイヤーを見つけている場合は、何もしない
+    if (this.player && this.player.active) return;
+
+    // --- ここからが診断ログです ---
+    console.group(`%c[Camera Debug] Running setupPlayerAndCamera...`, 'color: #00bcd4; font-weight: bold;');
+    
+    // 1. シーンのオブジェクトリストに 'player' という名前のオブジェクトが存在するか確認
+    const playerObjectExists = this.children.list.some(child => child.name === 'player');
+    console.log(`Step 1: Does a 'player' object exist in the scene's children list? -> ${playerObjectExists}`);
+
+    // 2. 実際に 'player' を名前で検索してみる
+    this.player = this.children.getByName('player');
+    
+    if (this.player) {
+        console.log(`%cStep 2: SUCCESS! Player object found.`, 'color: lightgreen;');
+        console.log(`Step 3: Player's current position is (x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)})`);
+
+        this.playerController = this.player.components?.PlayerController;
+        this.player.setFixedRotation();
         
-        if (this.player) {
-            console.log("[JumpScene] Player object found or re-acquired.");
-            this.playerController = this.player.components?.PlayerController;
-            this.player.setFixedRotation();
-            
-            if (this.cameras.main && !this.cameras.main.isFollowing) {
-                this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
-            }
+        // 3. カメラが既に何かを追従していないか確認
+        if (this.cameras.main && !this.cameras.main.isFollowing) {
+            console.log("Step 4: Camera is not following anything. Starting follow now...");
+            this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
+            // 追従開始後のカメラのスクロール位置をログに出す
+            this.time.delayedCall(10, () => { // 1フレーム待ってから確認
+                 console.log(`Step 5: Camera follow started. Camera scroll is now (x: ${Math.round(this.cameras.main.scrollX)}, y: ${Math.round(this.cameras.main.scrollY)})`);
+            });
+        } else {
+            console.warn("Step 4: Camera is already following an object.");
         }
+    } else {
+        console.error(`%cStep 2: FAILED! Player object could not be found via getByName('player').`, 'color: red;');
     }
+    
+    console.groupEnd();
+    // --- 診断ログはここまで ---
+}
     
     /**
      * ★★★ リアルタイム編集に対応したメインループ (最終FIX版) ★★★
