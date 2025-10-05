@@ -1,7 +1,7 @@
 // src/core/ActionInterpreter.js (グローバルサービス版)
 
 import { eventTagHandlers } from '../handlers/events/index.js';
-import { systemTagHandlers } from '../handlers/system/index.js';
+import { TagHandlers } from '../handlers/system/index.js';
 export default class ActionInterpreter {
     constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
         this.game = game;
