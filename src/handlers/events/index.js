@@ -43,7 +43,7 @@ import move_to_target from './move_to_target.js';
 import timer_check from './timer_check.js';
 import fire_scene_event from './fire_scene_event.js';
 import toggle_hiding from './toggle_hiding.js';
-
+import save_game from './save_game.js';
 import call_component_method from './call_component_method.js';
 import close_menu from './close_menu.js'; 
 import open_menu from './open_menu.js'; 
@@ -95,5 +95,9 @@ export const eventTagHandlers = {
 'toggle_hiding':toggle_hiding,
 'call_component_method': call_component_method,
 'close_menu':close_menu,
-'open_menu':open_menu
+'open_menu':open_menu,
+'save_game':save_game
+
+
+
 };
