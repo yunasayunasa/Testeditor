@@ -167,19 +167,57 @@ export default class JumpScene extends BaseGameScene {
             console.log("[JumpScene] Jump button listener is now active.");
         }
     }
- onSetupComplete() {
+ // in src/scenes/JumpScene.js
+
+onSetupComplete() {
     console.log("[JumpScene] onSetupComplete called. This is the final step in setup.");
 
-    // --- 1. ジョイスティックのセットアップ ---
+    // ★★★ 1. ロードデータがあれば、シーンの状態を復元する ★★★
+    if (this.loadData) {
+        console.log("Restoring scene state from save data...", this.loadData);
+        
+        // --- 1a. f変数を復元 ---
+        const stateManager = this.registry.get('stateManager');
+        if (stateManager && this.loadData.variables) {
+            // StateManagerのsetStateはf変数だけを復元するので、そのまま使える
+            stateManager.setState(this.loadData); 
+        }
+        
+        // --- 1b. オブジェクトの状態を復元 ---
+        if (this.loadData.sceneSnapshot && this.loadData.sceneSnapshot.objects) {
+            for (const objectState of this.loadData.sceneSnapshot.objects) {
+                // シーンから名前でオブジェクトを検索
+                const targetObject = this.children.getByName(objectState.name);
+                if (targetObject) {
+                    // 基本的なTransform情報を復元
+                    targetObject.setPosition(objectState.x, objectState.y);
+                    targetObject.setScale(objectState.scaleX, objectState.scaleY);
+                    targetObject.setAngle(objectState.angle);
+                    targetObject.setAlpha(objectState.alpha);
+                    
+                    // コンポーネントの状態を復元
+                    if (targetObject.components && objectState.components) {
+                        for (const compName in objectState.components) {
+                            const component = targetObject.components[compName];
+                            const compData = objectState.components[compName];
+                            if (component && typeof component.deserialize === 'function') {
+                                component.deserialize(compData);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // --- 2. ジョイスティックのセットアップ (既存のコード) ---
     const keyToLoad = this.layoutDataKey || this.scene.key;
     const layoutData = this.cache.json.get(keyToLoad);
     if (layoutData && layoutData.hasJoystick) {
         this.addJoystickFromEditor(false);
     }
 
-   
-
-    // --- 3. プレイヤーとカメラのセットアップ ---
+    // --- 3. プレイヤーとカメラのセットアップ (既存のコード) ---
     this.setupPlayerAndCamera();
     this.attachJumpButtonListener();
 }
