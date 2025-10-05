@@ -149,54 +149,61 @@ export default class PlayerController {
     console.groupEnd();
 }
 
-    /// in src/components/PlayerController.js
-
-// in src/components/PlayerController.js
-
+    // ★★★ 物理カテゴリの制御を追加した、最終版 ★★★
 hide(hidingSpot) {
     if (this.state === 'hiding') return;
     const oldState = this.state;
     this.state = 'hiding';
     this.gameObject.emit('onStateChange', 'hiding', oldState);
     
-    // ▼▼▼【見た目の制御：半透明にする】▼▼▼
+    // 見た目の制御
     this.gameObject.setAlpha(0.5); 
     
     // --- 物理の制御 ---
     if (this.gameObject.body) {
-        this.gameObject.setData('originalCollisionMask', this.gameObject.body.collisionFilter.mask);
         const physicsDefine = this.scene.registry.get('physics_define');
-        const enemyCategory = physicsDefine?.categories.ENEMY;
-        if (enemyCategory) {
-            const newMask = this.gameObject.body.collisionFilter.mask & ~enemyCategory;
-            this.gameObject.setCollidesWith(newMask);
+        if (physicsDefine?.categories.HIDDEN) {
+            // ★ カテゴリを'HIDDEN'に変更し、誰とも衝突しないようにマスクを0にする
+            this.gameObject.setCollisionCategory(physicsDefine.categories.HIDDEN);
+            this.gameObject.setCollidesWith(0);
+            console.log("[PlayerController] Physics set to HIDDEN (no collision).");
         }
     }
     
-    // --- 索敵の変更 ---
+    // --- 索敵グループの変更 ---
     this.gameObject.setData('group', 'hidden');
 }
 
+
+// ★★★ 物理カテゴリの制御を追加した、最終版 ★★★
 unhide() {
     if (this.state !== 'hiding') return;
     
-    // ▼▼▼【見た目の制御：不透明に戻す】▼▼▼
+    // 見た目の制御
     this.gameObject.setAlpha(1); 
     
     // --- 物理の制御を元に戻す ---
     if (this.gameObject.body) {
-        const originalMask = this.gameObject.getData('originalCollisionMask');
-        if (originalMask !== undefined) {
-            this.gameObject.setCollidesWith(originalMask);
+        const physicsDefine = this.scene.registry.get('physics_define');
+        if (physicsDefine?.categories.player) {
+            // ★ カテゴリを'player'に戻す
+            this.gameObject.setCollisionCategory(physicsDefine.categories.player);
+
+            // ★ 衝突マスクを、定義ファイルに基づいて再計算して設定
+            const collidesWithMask = 
+                (physicsDefine.categories['default'] || 0) |
+                (physicsDefine.categories['enemy'] || 0) |
+                (physicsDefine.categories['wall'] || 0); // (あなたのゲーム仕様に合わせて調整)
+            this.gameObject.setCollidesWith(collidesWithMask);
+            console.log("[PlayerController] Physics restored to PLAYER.");
         }
     }
 
     // --- 索敵グループを元に戻す ---
-    // ★ 'originalGroup'は'player'のはずなので、直接設定する方が安全
     this.gameObject.setData('group', 'player');
     
     const oldState = this.state;
-    this.state = 'idle';
+    this.state = 'idle'; // 隠れるのをやめたら、必ず'idle'状態に戻る
     this.gameObject.emit('onStateChange', 'idle', oldState);
 }
     destroy() { this.scene.events.off('update', this.update, this); }
