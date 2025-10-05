@@ -1279,47 +1279,51 @@ fillObjectRange(sourceObject, endPoint) {
  * ★★★ 新設：シーンの状態スナップショットを作成する ★★★
  * @returns {object} シーンの永続化可能な状態
  */
+// in src/scenes/BaseGameScene.js
+
+/**
+ * ★★★ 最終確定版：シーンの状態スナップショットを作成する ★★★
+ * EditorPluginに依存せず、シーン自身のオブジェクトリストを参照する。
+ * @returns {object} シーンの永続化可能な状態
+ */
 createSceneSnapshot() {
     const snapshot = {
         sceneKey: this.scene.key,
         objects: []
     };
 
-    // シーン上の全ての編集可能オブジェクトをループ
-    // (editableObjects は EditorPlugin が持っているので、そちらを参照するのが確実)
-    const editor = this.plugins.get('EditorPlugin');
-    if (editor && editor.editableObjects.has(this.scene.key)) {
-        const sceneObjects = editor.editableObjects.get(this.scene.key);
+    // ★★★ シーンの表示リスト(this.children.list)を直接ループする ★★★
+    for (const gameObject of this.children.list) {
+        // 保存すべきではないオブジェクトは除外（名前がない、アクティブでないなど）
+        if (!gameObject.active || !gameObject.name || gameObject.name.startsWith('__')) {
+            continue;
+        }
 
-        for (const gameObject of sceneObjects) {
-            if (!gameObject.active || !gameObject.name) continue;
+        // isYSortableなど、永続化したいオブジェクトの目印があれば、それもチェックできる
+        // if (!gameObject.getData('isSerializable')) continue;
 
-            const objectState = {
-                name: gameObject.name,
-                // 基本的なTransform情報を保存
-                x: Math.round(gameObject.x),
-                y: Math.round(gameObject.y),
-                scaleX: gameObject.scaleX,
-                scaleY: gameObject.scaleY,
-                angle: gameObject.angle,
-                alpha: gameObject.alpha,
-                
-                // コンポーネントの状態を保存
-                components: {}
-            };
+        const objectState = {
+            name: gameObject.name,
+            x: Math.round(gameObject.x),
+            y: Math.round(gameObject.y),
+            scaleX: gameObject.scaleX,
+            scaleY: gameObject.scaleY,
+            angle: gameObject.angle,
+            alpha: gameObject.alpha,
+            components: {}
+        };
 
-            if (gameObject.components) {
-                for (const compName in gameObject.components) {
-                    const component = gameObject.components[compName];
-                    // ★ serializeメソッドを持つコンポーネントだけを対象にする
-                    if (component && typeof component.serialize === 'function') {
-                        objectState.components[compName] = component.serialize();
-                    }
+        if (gameObject.components) {
+            for (const compName in gameObject.components) {
+                const component = gameObject.components[compName];
+                if (component && typeof component.serialize === 'function') {
+                    objectState.components[compName] = component.serialize();
                 }
             }
-            snapshot.objects.push(objectState);
         }
+        snapshot.objects.push(objectState);
     }
+    
     return snapshot;
 }
     shutdown() {
