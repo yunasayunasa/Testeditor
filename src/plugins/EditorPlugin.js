@@ -1709,7 +1709,7 @@ setAllObjectsDraggable(isDraggable) {
         // ★★★ これが全てを解決する一行 ★★★
         // このリスナーが呼ばれたら、これ以降の 'pointerdown' リスナー
         // (つまり、applyUiEventsで設定されたもの) が呼ばれるのを防ぐ。
-        pointer.stopPropagation();
+       pointer.event.stopPropagation();
     // --- タップ情報を記録 ---
     gameObject.setData('lastTap', 0);
 
