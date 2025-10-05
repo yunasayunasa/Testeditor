@@ -405,13 +405,23 @@ onCropAndPlace = () => {
      * エディタ全体のグローバルなモードを設定し、UIとプラグインの状態を同期させる
      * @param {'select' | 'play'} mode
      */
-    setGlobalEditorMode(mode) {
-        if (this.plugin.currentMode === mode) return;
+   setGlobalEditorMode(mode) {
+    if (this.plugin.currentMode === mode) return;
 
-        // --- 1. プラグインの状態を更新 ---
-        this.plugin.currentMode = mode;
-        this.game.registry.set('editor_mode', mode);
-        // --- 2. UIの見た目を更新 ---
+    // --- 1. プラグインの状態を更新 ---
+    this.plugin.currentMode = mode;
+    this.game.registry.set('editor_mode', mode);
+    
+    // --- ▼▼▼ ここからが修正の核心 ▼▼▼ ---
+    
+    // 2. プレイモードに応じて、全オブジェクトのドラッグ状態を切り替える
+    if (mode === 'play') {
+        // プレイモードに入ったら、全てのドラッグを無効化する
+        this.plugin.setAllObjectsDraggable(false);
+    } else { // 'select' mode
+        // セレクトモードに戻ったら、全てのドラッグを有効化する
+        this.plugin.setAllObjectsDraggable(true);
+    }
         const modeToggle = document.getElementById('mode-toggle-checkbox');
         const modeLabel = document.getElementById('mode-label');
         if (modeToggle) {

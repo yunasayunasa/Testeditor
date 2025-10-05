@@ -1643,6 +1643,29 @@ createColorInput(container, label, initialValue, callback) {
         row.append(labelEl, select);
         container.appendChild(row);
     }
+
+    // in src/plugins/EditorPlugin.js
+
+/**
+ * ★★★ 新設 ★★★
+ * 全ての編集可能オブジェクトのドラッグ状態を切り替える
+ * @param {boolean} isDraggable - ドラッグを有効にするか
+ */
+setAllObjectsDraggable(isDraggable) {
+    if (!this.isEnabled) return;
+
+    console.log(`[EditorPlugin] Setting all objects draggable: ${isDraggable}`);
+
+    // editableObjects は Map<string, Set> なので、全てのSetをループ
+    for (const sceneObjectSet of this.editableObjects.values()) {
+        for (const gameObject of sceneObjectSet) {
+            if (gameObject.scene && gameObject.input) {
+                // Phaserの公式な方法で、個別にドラッグを有効/無効化
+                gameObject.scene.input.setDraggable(gameObject, isDraggable);
+            }
+        }
+    }
+}
  /**
      * ★★★ 修正版 ★★★
      * ゲームオブジェクトをエディタで編集可能にする。
