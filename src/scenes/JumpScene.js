@@ -264,31 +264,42 @@ onSetupComplete() {
  * ★★★ 完全なクリーンアップ処理を含む、最終確定版 ★★★
  * シーンが停止する際にPhaserによって自動的に呼び出される
  */
-shutdown() {
-    console.log("[JumpScene] Shutdown sequence started. Cleaning up resources...");
+// in src/scenes/JumpScene.js
 
-    // 1. このシーンが登録したグローバルなキーボードイベントを解除
+shutdown() {
+    console.log("[JumpScene] Shutdown sequence started. Cleaning up all resources...");
+
+    // 1. このシーンが登録したキーボードイベントを解除
     if (this.input?.keyboard) {
         this.input.keyboard.off('keydown-M');
     }
 
+    // ★★★ ここからが、外部プラグインを安全に破棄するための修正 ★★★
+    // --------------------------------------------------------------------
+    
     // 2. ジョイスティックを完全に破棄する
     if (this.joystick) {
-        // ジョイスティックが持つUI要素(base, thumb)も破棄
-        if (this.joystick.base) this.joystick.base.destroy();
-        if (this.joystick.thumb) this.joystick.thumb.destroy();
         this.joystick.destroy();
         this.joystick = null;
-        console.log("[JumpScene] Joystick destroyed.");
+        console.log("[JumpScene] Joystick instance destroyed.");
     }
     
-    // 3. このシーンの全GameObjectをループし、コンポーネントのdestroyを呼び出す
+    // 3. rexプラグイン自体を、このシーンから切り離す
+    //    これにより、プラグインが登録した可能性のある全てのシーン固有リスナーがクリーンアップされる
+    if (this.plugins.get('rexvirtualjoystickplugin')) {
+        this.plugins.remove('rexvirtualjoystickplugin');
+        console.log("[JumpScene] RexVirtualJoystickPlugin removed from scene.");
+    }
+
+    // --------------------------------------------------------------------
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+    // 4. 全てのコンポーネントのdestroyを呼び出す (変更なし)
     if (this.children) {
         for (const gameObject of this.children.list) {
             if (gameObject.components) {
                 for (const key in gameObject.components) {
                     const component = gameObject.components[key];
-                    // ★ PlayerControllerなどのdestroyメソッドが呼ばれる
                     if (component && typeof component.destroy === 'function') {
                         component.destroy();
                     }
@@ -296,9 +307,9 @@ shutdown() {
             }
         }
     }
-    console.log("[JumpScene] All component destroy methods called.");
     
-    // 4. 最後に、親クラスのshutdownを呼び出す
+    // 5. 最後に、親クラスのshutdownを呼び出す
     super.shutdown();
+    console.log("[JumpScene] Shutdown sequence complete.");
 }
 }
