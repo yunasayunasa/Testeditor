@@ -12,6 +12,15 @@ export default class JumpScene extends BaseGameScene {
     }
 
   create() {
+    const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
+    if (joystickPlugin) {
+        this.joystick = joystickPlugin.add(this, {
+            x: 150, y: this.cameras.main.height - 150, radius: 100,
+            base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
+            thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+        });
+        console.log("[JumpScene] Joystick instance created at the beginning of create().");
+    }
         console.log("[JumpScene] Create started.");
         super.create();
     
