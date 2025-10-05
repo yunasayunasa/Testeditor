@@ -40,7 +40,10 @@ export const uiRegistry = {
         params: { label: 'MENU' }
     },
 
-    
+    'panel': { // ★ 'panel' というキーで登録
+        path: './ui/Panel.js',
+        groups: ['ui_element', 'action'],
+    },
 
     'generic_button': {
         path: './ui/Button.js',

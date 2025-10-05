@@ -226,8 +226,19 @@ handleOpenPauseMenu(data) {
  * ★★★ 新設：ポーズメニューを閉じる専用ハンドラ ★★★
  * @param {{ from: string }} data
  */
+// in src/scenes/SystemScene.js
+
 handleClosePauseMenu(data) {
-    const closingMenu = data.from;
+    console.log("handleClosePauseMenu called with data:", data);
+    const closingMenu = data.from; // 'OverlayScene' が渡される
+    
+    // ★ スタックが空でないことを確認
+    if (this.sceneStack.length === 0) {
+        console.error("[SystemScene] Close menu requested, but scene stack is empty!");
+        // 緊急脱出として、タイトルに戻るなどの処理
+        return;
+    }
+
     const sceneToResume = this.sceneStack.pop();
 
     if (sceneToResume) {
@@ -235,8 +246,17 @@ handleClosePauseMenu(data) {
 
         // 1. メニューシーンを停止
         this.scene.stop(closingMenu);
+        
         // 2. 元のシーンを再開
-        this.scene.resume(sceneToResume);
+        if (this.scene.isPaused(sceneToResume)) {
+            this.scene.resume(sceneToResume);
+        } else {
+            // もし何らかの理由でポーズされていなくても、アクティブにする
+            this.scene.run(sceneToResume);
+            this.scene.bringToTop(sceneToResume);
+            this.scene.bringToTop('UIScene'); // UISceneは常に上に
+        }
+        
         // 3. 状態を戻す
         this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     }
