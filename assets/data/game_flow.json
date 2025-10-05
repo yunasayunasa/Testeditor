@@ -1,12 +1,15 @@
 {
-  "initialState": "Title",
+  "initialState": "Novel",
   "states": {
-    "Title": {
+    "Novel": {
       "onEnter": [
         {
           "type": "run_scene",
           "params": {
-            "sceneKey": "TitleScene" 
+            "sceneKey": "GameScene",
+            "params": {
+               "startScenario": "test"
+            }
           }
         }
       ],
@@ -14,13 +17,13 @@
         {
           "type": "stop_scene",
           "params": {
-            "sceneKey": "TitleScene"
+            "sceneKey": "GameScene"
           }
         }
       ],
       "transitions": [
         {
-          "event": "start_game",
+          "event": "start_gameplay",
           "target": "Gameplay"
         }
       ]
@@ -44,53 +47,8 @@
       ],
       "transitions": [
         {
-          "event": "open_pause_menu",
-          "target": "MainMenu"
-        },
-        {
-          "event": "return_to_title",
-          "target": "Title"
-        }
-      ]
-    },
-    "MainMenu": {
-      "onEnter": [
-        {
-          "type": "pause_scene",
-          "params": {
-            "sceneKey": "@previousState"
-          }
-        },
-        {
-          "type": "launch_scene",
-          "params": {
-            "sceneKey": "OverlayScene",
-            "layoutKey": "pause_menu_layout"
-          }
-        }
-      ],
-      "onExit": [
-        {
-          "type": "stop_scene",
-          "params": {
-            "sceneKey": "OverlayScene"
-          }
-        },
-        {
-          "type": "resume_scene",
-          "params": {
-            "sceneKey": "@previousState"
-          }
-        }
-      ],
-      "transitions": [
-        {
-          "event": "close_pause_menu",
-          "target": "@previousState"
-        },
-        {
-          "event": "return_to_title_from_menu",
-          "target": "Title"
+          "event": "return_to_novel",
+          "target": "Novel"
         }
       ]
     }

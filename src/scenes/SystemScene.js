@@ -59,95 +59,67 @@ export default class SystemScene extends Phaser.Scene {
         }
     }
 
-    create() {
+    // src/scenes/SystemScene.js
 
-          console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
-        try {
-            console.log('this:', this);
-            console.log('this.scene:', this.scene);
-            console.log('this.scene.manager:', this.scene.manager);
-            console.log('this.scene.manager.events:', this.scene.manager.events);
-        } catch (e) {
-            console.error('!!! LOG BOMB FAILED !!!', e);
-        }
-        console.log('--- END OF LOG BOMB ---');
-            this.gameFlow = this.cache.json.get('game_flow');
+create() {
+    console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
+    
+    // --- 1. コアサービスの初期化（最優先） ---
+    const soundManager = new SoundManager(this.game);
+    this.registry.set('soundManager', soundManager);
+    this.input.once('pointerdown', () => soundManager.resumeContext(), this);
+    console.log("SystemScene: SoundManagerを登録しました。");
 
+    // ★★★ ActionInterpreterを、それを使う全ての処理の「前」に生成・登録する ★★★
+    const actionInterpreter = new ActionInterpreter(this.game);
+    this.registry.set('actionInterpreter', actionInterpreter);
+    console.log("SystemScene: ActionInterpreter has been registered globally.");
+
+    // --- 2. ゲームフロー・ステートマシンの初期化 ---
+    this.gameFlow = this.cache.json.get('game_flow');
     if (!this.gameFlow) {
-        console.error("CRITICAL: 'game_flow.json' not found in cache. Game cannot start.");
-        return;
+        console.error("CRITICAL: 'game_flow.json' not found. Game cannot start.");
+        return; // game_flow.jsonがないと何もできないので、ここで処理を中断
     }
-
-    // --- 2. 遷移イベントのリスナーを設定 ---
-    // ゲーム内のどこからでも 'request_game_flow_event' を発行すれば、状態遷移が試みられる
+    // ゲームフローイベントのリスナーを設定。全ての遷移はこれを経由する。
     this.events.on('request_game_flow_event', this.handleGameFlowEvent, this);
     
-    // --- 3. ActionInterpreterを取得 ---
-    // この時点でActionInterpreterはregistryに登録されている必要がある
-    const actionInterpreter = this.registry.get('actionInterpreter');
-
-    if (!actionInterpreter) {
-         console.error("CRITICAL: ActionInterpreter not found. State machine cannot run.");
-         return;
-    }
-
-    // --- 4. 初期ステートに遷移する ---
-    this.transitionToState(this.gameFlow.initialState);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
+    // --- 3. その他のイベントリスナーの設定（ポーズメニューなど） ---
+    // これらは今後、request_game_flow_event に置き換えられていく
+    this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
     this.events.on('request-close-menu', this.handleClosePauseMenu, this);
-console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
-
-        console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
-        
-       // --- 1. コアサービスの初期化 ---
-        const soundManager = new SoundManager(this.game);
-        this.registry.set('soundManager', soundManager);
-        this.input.once('pointerdown', () => soundManager.resumeContext(), this);
-        console.log("SystemScene: SoundManagerを登録しました。");
-
-        // --- 2. イベントリスナーの設定 ---
-       //  this.events.on('request-load-game', this._handleLoadGame, this); 
-          this.events.on('request-scene-transition', this._startTransition, this);
-           this.events.on('request-simple-transition', this._handleSimpleTransition, this);
-        this.events.on('return-to-novel', this._handleReturnToNovel, this);
-        this.events.on('request-overlay', this._handleRequestOverlay, this);
-        this.events.on('end-overlay', this._handleEndOverlay, this);
-          this.events.on('request-subscene', this._handleRequestSubScene, this);
-         this.events.on('request-gamemode-toggle', (mode) => {
-            const gameScene = this.scene.get('GameScene');
-            if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
-                const currentMode = gameScene.scenarioManager.mode;
-                const newMode = currentMode === mode ? 'normal' : mode;
-                gameScene.scenarioManager.setMode(newMode);
-                console.log(`モード変更: ${currentMode} -> ${newMode}`);
-            }
-        });
-         this.events.on('request-scene-resume', (sceneKey) => {
-            const targetScene = this.scene.get(sceneKey);
-            if (targetScene && targetScene.scene.isPaused()) {
-                targetScene.scene.resume();
-                console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
-            }
-        });
-       
-        this.registry.set('actionInterpreter', actionInterpreter);
-        console.log("SystemScene: ActionInterpreter has been registered globally.");
-        // --------------------------------------------------------------------
-     // ★★★ 時間を再開させるための、公式な命令を追加 ★★★
-        this.events.on('request-time-resume', () => {
-            this.isTimeStopped = false;
-        });
-        // --- 3. エディタ関連の初期化 ---
-        this.initializeEditor();
-         
-        // --- 4. 初期ゲームの起動 ---
-        if (this.initialGameData) {
-            this._startInitialGame(this.initialGameData);
-        }
-        
+    this.events.on('request-time-resume', () => { this.isTimeStopped = false; });
+    
+    // --- 4. エディタ関連の初期化 ---
+    this.initializeEditor();
+     
+    // --- 5. ゲームの起動 ---
+    // 古い _startInitialGame() を呼び出すのではなく、ステートマシンを初期ステートに遷移させることでゲームを開始する
+    
+    // 5a. まず、ゲームに必要なシーン（UISceneなど）を動的に追加する
+    if (!this.scene.get('UIScene')) {
+        this.scene.add('UIScene', UIScene, false, { physics: { matter: { enable: false } } });
+        console.log("[SystemScene] UISceneを動的に追加しました。");
     }
+    if (!this.scene.get('GameScene')) {
+        this.scene.add('GameScene', GameScene, false);
+        console.log("[SystemScene] GameSceneを動的に追加しました。");
+    }
+     if (!this.scene.get('OverlayScene')) {
+        this.scene.add('OverlayScene', OverlayScene, false);
+        console.log("[SystemScene] OverlaySceneを動的に追加しました。");
+    }
+    // JumpSceneなども必要ならここで追加する
 
+    // 5b. UISceneだけは、常に裏で動いていてほしいので、先に起動しておく
+    this.scene.run('UIScene');
+    // UISceneの準備完了を待つ必要があれば、イベントリスナーを使う
+    this.scene.get('UIScene').events.once('scene-ready', () => {
+        console.log('[SystemScene] UIScene is ready. Starting game flow.');
+        // 5c. UISceneの準備ができてから、ゲームフローを開始する
+        this.transitionToState(this.gameFlow.initialState);
+    });
+}
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
