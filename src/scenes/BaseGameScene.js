@@ -1274,17 +1274,9 @@ fillObjectRange(sourceObject, endPoint) {
         return layout;
     }
 
-    // in src/scenes/BaseGameScene.js (クラス内に新しく追加)
-
-/**
- * ★★★ 新設：シーンの状態スナップショットを作成する ★★★
- * @returns {object} シーンの永続化可能な状態
- */
-// in src/scenes/BaseGameScene.js
-
-/**
+  /**
  * ★★★ 最終確定版：シーンの状態スナップショットを作成する ★★★
- * EditorPluginに依存せず、シーン自身のオブジェクトリストを参照する。
+ * 全てのオブジェクトのTransform情報と、シリアライズ可能な全コンポーネントの状態を保存する。
  * @returns {object} シーンの永続化可能な状態
  */
 createSceneSnapshot() {
@@ -1293,15 +1285,11 @@ createSceneSnapshot() {
         objects: []
     };
 
-    // ★★★ シーンの表示リスト(this.children.list)を直接ループする ★★★
     for (const gameObject of this.children.list) {
-        // 保存すべきではないオブジェクトは除外（名前がない、アクティブでないなど）
+        // 保存すべきではない一時的なオブジェクトは除外
         if (!gameObject.active || !gameObject.name || gameObject.name.startsWith('__')) {
             continue;
         }
-
-        // isYSortableなど、永続化したいオブジェクトの目印があれば、それもチェックできる
-        // if (!gameObject.getData('isSerializable')) continue;
 
         const objectState = {
             name: gameObject.name,
@@ -1311,17 +1299,21 @@ createSceneSnapshot() {
             scaleY: gameObject.scaleY,
             angle: gameObject.angle,
             alpha: gameObject.alpha,
-            components: {}
+            components: {} // コンポーネントデータを保存する器
         };
 
+        // ▼▼▼【ここがシリアライズ処理の核心】▼▼▼
         if (gameObject.components) {
             for (const compName in gameObject.components) {
                 const component = gameObject.components[compName];
+                // serializeメソッドを持つコンポーネントだけを対象にする
                 if (component && typeof component.serialize === 'function') {
                     objectState.components[compName] = component.serialize();
                 }
             }
         }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         snapshot.objects.push(objectState);
     }
     

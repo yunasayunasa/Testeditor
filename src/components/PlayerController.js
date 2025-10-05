@@ -23,6 +23,31 @@ export default class PlayerController {
         this.direction = 'right';
     }
 
+    /**
+     * ★★★ 新設：シリアライズ処理 ★★★
+     * PlayerControllerの状態をセーブデータに書き出す。
+     * @returns {object} 保存すべき状態のオブジェクト
+     */
+    serialize() {
+        // 今のところPlayerController自体に保存すべき特別な状態はないので、
+        // 空のオブジェクトを返すだけで十分。
+        // （例：もし無敵時間などがあれば { isInvincible: this.isInvincible } のように返す）
+        return {
+            // 将来の拡張のために空のオブジェクトを返す
+        };
+    }
+
+    /**
+     * ★★★ 新設：デシリアライズ処理 ★★★
+     * セーブデータからPlayerControllerの状態を復元する。
+     * @param {object} data - serialize()が返したオブジェクト
+     */
+    deserialize(data) {
+        // セーブデータから復元すべき状態があれば、ここで適用する。
+        // 今は何もしなくてよい。
+        // （例：this.isInvincible = data.isInvincible;）
+    }
+
     update(time, delta) {
           // もし、自分が所属するGameObjectが、もはやシーンに存在しない、
     // あるいは非アクティブになっているなら、自分は「ゴースト」である。
