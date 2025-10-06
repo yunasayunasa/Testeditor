@@ -121,103 +121,59 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
 
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
-/**
- * UIレイアウト定義(UIScene.json)に基づいて、UI要素を構築・初期化する。
- * このメソッドが呼ばれるたびに、必ずレジストリから最新のuiRegistryを取得することで、
- * main.jsでの非同期なUIクラスの読み込み処理とのタイミング問題を完全に解決する。
- *
- * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
- */
-/**
- * UIレイアウト定義(UIScene.json)に基づいて、UI要素を構築・初期化する。
- * このメソッドが呼ばれるたびに、必ずレジストリから最新のuiRegistryを取得することで、
- * main.jsでの非同期なUIクラスの読み込み処理とのタイミング問題を完全に解決する。
- *
- * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
- */
-/**
- * UIレイアウト定義(UIScene.json)に基づいて、UI要素を構築・初期化する。
- * このメソッドが呼ばれるたびに、必ずレジストリから最新のuiRegistryを取得することで、
- * main.jsでの非同期なUIクラスの読み込み処理とのタイミング問題を完全に解決する。
- *
- * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
- */
 async buildUiFromLayout(layoutData) {
-    console.log("[UIScene] Starting UI build with FINAL, SAFEST routine.");
+    console.log("[UIScene] Starting UI build with FINAL routine.");
+    if (!layoutData || !layoutData.objects) return;
 
-    // layoutDataが存在しない場合は、何もせずに終了
-    if (!layoutData || !layoutData.objects) {
-        console.warn("[UIScene] No layout data or objects found to build UI.");
-        return;
-    }
-
-    // ▼▼▼【ここが最重要ポイント】▼▼▼
-    // --- メソッドが呼ばれる「まさにその瞬間」に、レジストリから最新の定義を取得する ---
     const uiRegistry = this.registry.get('uiRegistry');
     const stateManager = this.registry.get('stateManager');
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // ★ ガード節：uiRegistryが取得できなければ、UIは一切構築せず、エラーで処理を中断
-    if (!uiRegistry) {
-        console.error("[UIScene] CRITICAL: uiRegistry not found in game registry during buildUiFromLayout. UI construction aborted.");
-        return;
-    }
-
-    // layoutData.objects配列の各定義をループして、UI要素を生成
     for (const layout of layoutData.objects) {
         try {
-            // registryKey（uiRegistryのキー）またはnameプロパティを識別に使う
             const registryKey = layout.registryKey || layout.name;
-            if (!registryKey) continue; // 識別子がない定義はスキップ
+            if (!registryKey) continue;
 
             let uiElement = null;
 
             // --- Step 1: オブジェクトのインスタンスを生成 ---
-            const definition = uiRegistry[registryKey]; // ★ 最新のuiRegistryからdefinitionを取得
-
-            if (definition && definition.component) {
-                // uiRegistryにcomponentクラスが定義されている場合（カスタムUIコンポーネント）
-                const UiComponentClass = definition.component;
-                // コンストラクタにstateManagerを渡す
-                layout.stateManager = stateManager;
-                uiElement = new UiComponentClass(this, layout);
-
-            } else if (registryKey === 'Text' && uiRegistry['Text']?.component) {
-                // Phaser標準のTextオブジェクトの場合
-                const TextClass = uiRegistry['Text'].component;
-                uiElement = new TextClass(this, 0, 0, layout.text || '', layout.style || {});
+            if (registryKey === 'Text') {
+                uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
+            } else {
+                const definition = uiRegistry[registryKey];
+                if (definition && definition.component) {
+                    const UiComponentClass = definition.component;
+                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
+                    layout.stateManager = stateManager;
+                    uiElement = new UiComponentClass(this, layout);
+                }
             }
 
-            // uiElementが正常に生成されたかチェック
             if (!uiElement) {
-                console.warn(`[UIScene] Could not create UI element for '${layout.name}'. Definition or component class might be missing in uiRegistry.`);
-                continue; // 次のUI要素へ
+                console.warn(`Could not create UI element for '${layout.name}'`);
+                continue;
             }
 
             // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
             uiElement.setData('registryKey', registryKey);
-            
-            // グループ情報をlayout.jsonの定義、またはuiRegistryの定義から取得して保存
-            const groups = layout.group || (definition ? definition.groups : []);
-            uiElement.setData('group', groups);
 
-            // --- Step 3: コンポーネントのアタッチ (もし定義があれば) ---
+            // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
             if (layout.components) {
-                uiElement.setData('components', layout.components);
+                uiElement.setData('components', layout.components); // まず永続化データを保存
                 layout.components.forEach(compDef => {
                     this.addComponent(uiElement, compDef.type, compDef.params);
                 });
             }
 
-            // --- Step 4: 共通の登録・設定処理を呼び出す ---
+            // --- Step 3: 共通の登録・設定処理を呼び出す ---
+            // ★ paramsではなく、JSONから読み込んだ生の`layout`を渡すのが最も確実
             this.registerUiElement(layout.name, uiElement, layout);
 
         } catch (e) {
-            // このループ内でエラーが起きても、他のUI要素の生成が止まらないようにする
             console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
         }
     }
 }
+
 // ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**
      * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
@@ -237,85 +193,106 @@ registerUiElement(name, element, params) {
     this.add.existing(element);
     this.uiElements.set(name, element);
 
-    // ▼▼▼【ここがUI問題を解決する最終修正】▼▼▼
-    // --------------------------------------------------------------------
-    const uiRegistry = this.registry.get('uiRegistry');
-    const registryKey = params.registryKey || name; // JSONのregistryKeyを優先
-    const definition = uiRegistry ? uiRegistry[registryKey] : null;
-
-    // --- 1. グループ情報を「uiRegistry」から取得し、setDataする ---
-    const groups = definition ? definition.groups : [];
-     console.log(`%c[LOG BOMB 3] UIScene.registerUiElement: For element '${name}', setting group data:`, "color: red; font-size: 1.2em; font-weight: bold;", groups);
-    element.setData('group', groups);
-
-    // --- 2. イベント情報を「JSON(params)」から取得し、setDataする ---
-    if (params.events) {
-        element.setData('events', params.events);
-    }
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
     if (params.x !== undefined) element.x = params.x;
     if (params.y !== undefined) element.y = params.y;
     if (params.depth !== undefined) element.setDepth(params.depth);
-    
-    // --- 3. 当たり判定とインタラクティブ化 ---
+      // ▼▼▼ ログ爆弾 No.1 ▼▼▼
+        if (name === 'message_window') {
+            console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
+        }
+    if (params.group) element.setData('group', params.group);
+if (params.events) {
+        element.setData('events', params.events);
+    }
+    // --- 当たり判定 (Hit Area) の設定 ---
+    let hitArea = null;
+    let hitAreaCallback = null;
+
+    // UI要素の当たり判定サイズを決定する
+    // 優先順位: 1. params -> 2. element自身のサイズ -> 3. デフォルトサイズ
     const width = params.width || (element.width > 1 ? element.width : 200);
     const height = params.height || (element.height > 1 ? element.height : 100);
+    
+    // 当たり判定の領域と形状を設定
     element.setSize(width, height);
-    const hitArea = new Phaser.Geom.Rectangle(width / 2, height / 2, width, height);
-    element.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+    hitArea = new Phaser.Geom.Rectangle(0, 0, width, height);
+    // Containerの場合、当たり判定の中心を左上に合わせる
+    hitArea.centerX = width / 2;
+    hitArea.centerY = height / 2;
+    hitAreaCallback = Phaser.Geom.Rectangle.Contains;
 
-    // --- 4. イベントリスナーを設定 ---
-    this.applyUiEvents(element); // ★ イベントリスナーの設定をここに移動
+    // --- インタラクティブ化とエディタ登録 ---
+    // ▼▼▼【ここが修正の核心です】▼▼▼
+    
+    // 1. まず、当たり判定を引数にして setInteractive を呼び出す
+    element.setInteractive(hitArea, hitAreaCallback);
 
-    // --- 5. エディタ登録 ---
+    // 2. 次に、Phaserの入力システムにドラッグ可能であることを伝える
+    this.input.setDraggable(element);
+
+    // 3. 最後に、完全に操作可能になったオブジェクトをエディタプラグインに登録する
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled) {
         editor.makeEditable(element, this);
     }
+    this.applyUiEvents(element);
+    // (任意) デバッグ用に当たり判定を可視化する
+    // const debugRect = this.add.graphics().lineStyle(2, 0x00ff00).strokeRect(0, 0, width, height);
+    // if (element instanceof Phaser.GameObjects.Container) {
+    //     element.add(debugRect);
+    // }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
   // src/scenes/UIScene.js
 
   // src/scenes/UIScene.js
-
-// src/scenes/UIScene.js
-
-
 
 onSceneTransition(newSceneKey) {
-    if (!this.isFullyReady) {
-        this.time.delayedCall(10, () => this.onSceneTransition(newSceneKey));
-        return;
-    }
-
-    // ▼▼▼【ここからログボム】▼▼▼
-    // --- 1. registryから取得を試みる ---
-    const sceneUiVisibility = this.registry.get('sceneUiVisibility');
-    console.log("%c[LOG BOMB 2A] UIScene.onSceneTransition: Attempting to get 'sceneUiVisibility'. Result:", "color: red; font-size: 1.2em; font-weight: bold;", sceneUiVisibility);
-
-    if (!sceneUiVisibility) {
-        console.error("%c[LOG BOMB 2 ERROR] 'sceneUiVisibility' NOT FOUND IN REGISTRY!", "color: red; font-size: 1.5em;");
-        return;
-    }
-
-    // --- 2. 表示すべきグループリストを計算する ---
-    const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-    console.log(`%c[LOG BOMB 2B] UIScene.onSceneTransition: For scene '${newSceneKey}', calculated visibleGroups:`, "color: red; font-size: 1.2em; font-weight: bold;", visibleGroups);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    this.uiElements.forEach((uiElement, name) => {
-        const elementGroups = uiElement.getData('group');
-        if (elementGroups && Array.isArray(elementGroups)) {
-            const shouldBeVisible = elementGroups.some(group => visibleGroups.includes(group));
-            uiElement.setVisible(shouldBeVisible);
-        } else {
+    // ▼▼▼【ここからが、タイミング問題を解決する最終FIXです】▼▼▼
+    // --------------------------------------------------------------------
+    
+    // ★★★ メソッドが呼ばれるたびに、レジストリから最新の定義を直接取得する ★★★
+    const uiRegistry = this.registry.get('uiRegistry');
+    const sceneUiVisibility = this.registry.get('sceneUiVisibility'); 
+    
+    // ★★★ ガード節を強化 ★★★
+    if (!uiRegistry || !sceneUiVisibility) {
+        console.error(`[UIScene.onSceneTransition] CRITICAL: uiRegistry or sceneUiVisibility is not available.`);
+        // 重要なデータがないので、UIをすべて非表示にしてエラーを防ぐのが安全
+        for (const [name, uiElement] of this.uiElements.entries()) {
             uiElement.setVisible(false);
         }
-    });
+        return; // 処理を中断
+    }
+    
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    const visibleGroups = sceneUiVisibility[newSceneKey] || [];
+    console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
+
+    for (const [name, uiElement] of this.uiElements.entries()) {
+        const registryKey = uiElement.getData('registryKey');
+
+       if (registryKey) {
+            // ▼▼▼【ここを、よりシンプルで確実なロジックに統一】▼▼▼
+            const definition = uiRegistry[registryKey];
+            
+            // ★★★ definitionが存在し、groupsプロパティが配列であることだけを確認 ★★★
+            if (definition && Array.isArray(definition.groups)) {
+                // 'Text'でも'generic_button'でも、すべてのUIがこの同じロジックで処理される
+                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+                uiElement.setVisible(shouldBeVisible);
+            } else {
+                // 不明なものは非表示
+                uiElement.setVisible(false);
+            }
+        } else {
+            // keyがないものも非表示
+            uiElement.setVisible(false);
+        }
+    }
 }
-
-
      /**
      * ★★★ 新規追加 ★★★
      * 指定されたUI要素のdepth値を外部から設定するための公式な窓口

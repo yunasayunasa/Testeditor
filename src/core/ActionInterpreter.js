@@ -1,32 +1,17 @@
-// src/core/ActionInterpreter.js
+// src/core/ActionInterpreter.js (グローバルサービス版)
 
-// ▼▼▼【ここのimport文を、以下の内容に完全に置き換えてください】▼▼▼
-
-// --- 1. gameplay/index.js (または events/index.js) からインポート ---
-//    'export const eventTagHandlers' という形式を想定
 import { eventTagHandlers } from '../handlers/events/index.js';
 
-// --- 2. system/index.js からインポート ---
-//    'export const tagHandlers' という形式を想定
-import { tagHandlers as systemTagHandlers } from '../handlers/system/index.js';
-
-// --- 3. scenario/index.js からインポート ---
-import { tagHandlers as scenarioTagHandlers } from '../handlers/index.js';
-
 export default class ActionInterpreter {
-    constructor(game) {
+    constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
         this.game = game;
+        this.tagHandlers = eventTagHandlers;
         
-       this.tagHandlers = {
-            ...(eventTagHandlers || {}),
-            ...(systemTagHandlers || {}),
-            ...(scenarioTagHandlers || {}) // ★ シナリオタグもマージ
-        };
-
         // ★ 実行のたびに更新されるプロパティ
         this.scene = null;
         this.currentSource = null;
         this.currentTarget = null;
+        
     }
 
     /**
@@ -187,35 +172,5 @@ findTarget(targetId, scene, source, collidedTarget) {
     return scene.children.getByName(targetId);
 }
 
-// src/core/ActionInterpreter.js (クラス内のどこか)
-
-/**
- * ★★★ 新設 ★★★
- * VSLのタグオブジェクト({ type, params })を直接受け取って実行する。
- * game_flow.json からの実行に使われる。
- * @param {object} vslData - { type: "タグ名", params: { ... } }
- */
-async runVSLFromData(vslData) {
-    if (!vslData || !vslData.type) return;
-
-    const handler = this.tagHandlers[vslData.type];
-    if (handler) {
-        try {
-            // SystemSceneから呼ばれる場合、特定のGameObjectコンテキストはないので、
-            // interpreterの第一引数(コンテキスト)はnullで良い。
-            // interpreter.sceneはSystemSceneへの参照を持つようにする。
-            const systemScene = this.game.scene.getScene('SystemScene');
-            const tempInterpreterContext = { scene: systemScene, stop: () => {} };
-
-            await handler(tempInterpreterContext, vslData.params || {});
-
-        } catch (e) {
-            console.error(`[ActionInterpreter] Error executing VSL data:`, vslData, e);
-        }
-    } else {
-        console.warn(`[ActionInterpreter] Unknown VSL type in data: '${vslData.type}'`);
-    }
-}
 
 }
-
