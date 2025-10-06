@@ -29,7 +29,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "jump_button",
+      "group": ["controls", "action"],
       "registryKey": "jump_button",
       "data": {
         "lastTap": 0
@@ -45,7 +45,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": "jump_button",
+      "group": "game",
       "registryKey": "message_window",
       "label": "「このゲームを起動するのは、605 回目ですね。」",
       "data": {
