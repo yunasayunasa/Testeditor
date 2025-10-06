@@ -454,35 +454,41 @@ _handleSimpleTransition(data) {
      * @param {string} sceneKey - 起動するシーンのキー
      * @param {object} params - シーンに渡すデータ
      */
-    _startAndMonitorScene(sceneKey, params = {}) {
-        if (this.isProcessingTransition) { return; }
-        this.isProcessingTransition = true;
-        
-        const targetScene = this.scene.get(sceneKey);
-      
+    // src/scenes/SystemScene.js
+
+/**
+ * ★★★ UI表示問題を解決する最終確定版 ★★★
+ * シーンを起動し、完了を監視する中核ヘルパー
+ */
+_startAndMonitorScene(sceneKey, params = {}) {
+    if (this.isProcessingTransition) { return; }
+    this.isProcessingTransition = true;
+    
+    // ▼▼▼【ここが核心の修正】▼▼▼
+    // --- 1. シーンを起動する「前」に、まずUIの状態を更新する命令を出す ---
+    const uiScene = this.scene.get('UIScene');
+    if (uiScene && typeof uiScene.onSceneTransition === 'function') {
+        // UISceneが準備完了しているかに関わらず、遷移先のキーを伝える
+        console.log(`[SystemScene] Pre-notifying UIScene about transition to '${sceneKey}'.`);
+        uiScene.onSceneTransition(sceneKey);
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    const targetScene = this.scene.get(sceneKey);
     const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
 
+    // --- 2. 目的のシーンの準備完了を待つ ---
     targetScene.events.once(completionEvent, () => {
         console.log(`[SystemScene] Scene '${sceneKey}' is ready.`);
         
-        // (A) UISceneに通知
-        const uiScene = this.scene.get('UIScene');
-        if (uiScene) uiScene.onSceneTransition(sceneKey);
-        
-        // ▼▼▼【ここからがプラグイン問題を解決する核心部分】▼▼▼
-        // --------------------------------------------------------------------
-        // (B) シーンの準備完了後、そのシーンにジョイスティックが必要か判定する
-      /*  if (sceneKey === 'JumpScene') {
-            // targetSceneはJumpSceneのインスタンスなので、メソッドを直接呼べる
+        // ジョイスティックの生成命令などは、シーンの準備完了後に行う
+        if (sceneKey === 'JumpScene') {
             if (typeof targetScene.setupJoystick === 'function') {
-                console.log(`[SystemScene] Commanding '${sceneKey}' to set up its joystick.`);
                 targetScene.setupJoystick();
             }
-        }*/
-        // --------------------------------------------------------------------
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        }
 
-        // (C) カメラのフェードインと遷移完了処理
+        // --- 3. カメラのフェードインと遷移完了処理 ---
         this.cameras.main.fadeFrom(300, 0, 0, 0, false, (camera, progress) => {
             if (progress === 1) {
                 this.isProcessingTransition = false;
@@ -492,7 +498,7 @@ _handleSimpleTransition(data) {
         });
     });
 
-    // シーンを起動する
+    // --- 4. 実際にシーンを起動する ---
     this.scene.run(sceneKey, params);
 }
     /**
