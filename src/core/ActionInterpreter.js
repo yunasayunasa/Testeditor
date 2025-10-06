@@ -1,21 +1,19 @@
 // src/core/ActionInterpreter.js (グローバルサービス版)
 
-//import { eventTagHandlers } from '../handlers/events/index.js';
+import { eventTagHandlers } from '../handlers/events/index.js';
 
 export default class ActionInterpreter {
     constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
         this.game = game;
-     
+        this.tagHandlers = eventTagHandlers;
         
         // ★ 実行のたびに更新されるプロパティ
         this.scene = null;
         this.currentSource = null;
         this.currentTarget = null;
-        this.tagHandlers = {};
+        
     }
-registerTagHandlers(handlers) {
-        this.tagHandlers = { ...this.tagHandlers, ...handlers };
-    }
+
     /**
      * ★★★ グローバルサービス版 ★★★
      * @param {Phaser.GameObjects.GameObject} source - イベントを発生させたオブジェクト
@@ -37,16 +35,14 @@ registerTagHandlers(handlers) {
      */
  // in src/core/ActionInterpreter.js
 // in src/core/ActionInterpreter.js
-async run(source, eventData, context = null) {
-    if (!source) return;
-    this.scene = source.scene || source; // sourceがシーン自身なら、それをsceneとして使う
+async run(source, eventData, collidedTarget = null) {
     if (!source || !source.scene || !source.scene.scene.isActive()) return;
     if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
 
     this.scene = source.scene;
     this.currentSource = source;
-    //this.currentTarget = collidedTarget;
-    this.currentTarget = context.target;
+    this.currentTarget = collidedTarget;
+    
     const stateManager = this.scene.registry.get('stateManager');
     if (!stateManager) {
         console.error("[ActionInterpreter] StateManager not found in scene registry!");
