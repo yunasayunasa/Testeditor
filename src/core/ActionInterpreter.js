@@ -36,6 +36,8 @@ export default class ActionInterpreter {
  // in src/core/ActionInterpreter.js
 // in src/core/ActionInterpreter.js
 async run(source, eventData, context = null) {
+    if (!source) return;
+    this.scene = source.scene || source; // sourceがシーン自身なら、それをsceneとして使う
     if (!source || !source.scene || !source.scene.scene.isActive()) return;
     if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
 
