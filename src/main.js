@@ -145,3 +145,5 @@ window.onload = () => {
         game.scene.start('PreloadScene');
 
     }, this);
+
+};
