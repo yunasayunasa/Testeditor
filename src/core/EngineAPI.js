@@ -115,6 +115,30 @@ fireEvent(eventName, data = null) {
     if (!this.isReady()) return;
     this.systemScene.events.emit(eventName, data);
 }
+
+// src/core/EngineAPI.js
+/**
+ * @param {string} fromSceneKey
+ * @param {object} [params={}] ノベルシーンに渡すデータ
+ */
+requestReturnToNovel(fromSceneKey, params = {}) { // ★ params引数を追加
+    console.log(`%c[EngineAPI] Request received: returnToNovel (from: ${fromSceneKey})`, 'color: #2196F3; font-weight: bold;');
+    if (!this.isReady()) return;
+    this.systemScene.events.emit('return-to-novel', { from: fromSceneKey, params }); // ★ paramsを渡す
+}
+
+// src/core/EngineAPI.js
+
+/**
+ * 現在のオーバーレイシーンを終了するようリクエストする。
+ * @param {string} fromSceneKey オーバーレイシーン自身のキー
+ */
+requestEndOverlay(fromSceneKey) {
+    console.log(`%c[EngineAPI] Request received: endOverlay (from: ${fromSceneKey})`, 'color: #2196F3; font-weight: bold;');
+    if (!this.isReady()) return;
+    // ★ SystemSceneの 'end-overlay' イベントを呼び出す
+    this.systemScene.events.emit('end-overlay', { from: fromSceneKey });
+}
 }
 
 // シングルトンインスタンスを作成してエクスポート

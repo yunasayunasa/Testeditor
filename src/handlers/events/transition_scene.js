@@ -1,33 +1,25 @@
 // src/handlers/events/transition_scene.js
+import EngineAPI from '../../core/EngineAPI.js'; // ★ 1. インポート
 
-/**
- * [transition_scene] アクションタグ
- * 現在のシーンから、別のゲームシーンへ遷移します。
- * @param {ActionInterpreter} interpreter
- * @param {object} params
- */
 export default async function transition_scene(interpreter, params) {
     const toSceneKey = params.scene;
     if (!toSceneKey) {
         console.warn('[transition_scene] Missing required parameter: "scene".');
         return;
     }
-
     const currentScene = interpreter.scene;
     if (!currentScene) return;
 
-    const transitionData = {
-        from: currentScene.scene.key,
-        to: toSceneKey,
-        params: {
-            layoutDataKey: params.data,   // どのJSONを読み込むか
-            startScript: params.script  // どのシナリオを起動するか（GameScene用）
-        }
+    const fromSceneKey = currentScene.scene.key;
+    const transitionParams = {
+        layoutDataKey: params.data,
+        startScript: params.script
     };
     
-    // request-scene-transition ではなく、よりシンプルな request-simple-transition を使うのが望ましい
-    currentScene.scene.get('SystemScene').events.emit('request-simple-transition', transitionData);
+    // ★ 2. EngineAPIを呼び出す
+    EngineAPI.requestSimpleTransition(fromSceneKey, toSceneKey, transitionParams);
 }
+// define部分は変更なし
 
 /**
  * ★ VSLエディタ用の自己定義 ★

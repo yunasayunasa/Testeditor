@@ -1,50 +1,18 @@
-// src/handlers/scenario/overlay_end.js (ファイルパスは適宜読み替えてください)
+// src/handlers/scenario/overlay_end.js
+import EngineAPI from '../../core/EngineAPI.js'; // ★ 1. インポート
 
 /**
- * [overlay_end] タグ - オーバーレイシーンの強制終了とUIのリセット
+ * [overlay_end] タグ - 現在のオーバーレイシーンを終了するようシステムにリクエストする
  * 
  * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
  */
 export default async function handleOverlayEnd(manager) {
-    // managerから、現在実行中のシーン(NovelOverlayScene)のインスタンスを取得
-    const overlayScene = manager.scene;
+    const overlaySceneKey = manager.scene.scene.key;
+    console.log(`%c[overlay_end] Requesting system to end overlay: ${overlaySceneKey}`, "color: green; font-weight: bold;");
 
-    console.log(`%c[overlay_end] Force shutdown sequence initiated for ${overlayScene.scene.key}`, "color: red; font-weight: bold;");
-
-    // --- Step 1: 依存するシーンやサービスへの参照を確保 ---
-    const systemScene = overlayScene.scene.get('SystemScene');
-    const uiScene = overlayScene.scene.get('UIScene');
+    // ★ 2. EngineAPIにオーバーレイの終了をリクエストするだけ
+    EngineAPI.requestEndOverlay(overlaySceneKey);
     
-    if (!systemScene || !uiScene) {
-        console.error("[overlay_end] Critical error: SystemScene or UIScene not found.");
-        manager.stop(); // 念のためシナリオを止める
-        return;
-    }
-
-    // --- Step 2: シナリオエンジンのループを完全に停止させる ---
+    // ★ 3. 自身のシナリオマネージャーを停止する (これはこのタグの責務)
     manager.stop();
-
-    // --- Step 3: NovelOverlaySceneのshutdownメソッドを明示的に呼び出す ---
-    if (typeof overlayScene.shutdown === 'function') {
-        console.log(`[overlay_end] Explicitly calling shutdown() for ${overlayScene.scene.key}`);
-        // ★★★ あなたが指摘した「明示的なシャットダウン」の実行 ★★★
-        overlayScene.shutdown(); 
-    }
-
-    // --- Step 4: UIの状態を、呼び出し元のシーンの状態に強制的に戻す ---
-    console.log(`[overlay_end] Requesting UI transition back to ${overlayScene.returnTo}`);
-    uiScene.onSceneTransition(overlayScene.returnTo);
-
-    // --- Step 5: 入力がブロックされていた場合、それを解除する ---
-    if (overlayScene.inputWasBlocked) {
-        const returnScene = systemScene.scene.get(overlayScene.returnTo);
-        if (returnScene && returnScene.scene.isActive()) { 
-            returnScene.input.enabled = true; 
-            console.log(`[overlay_end] Input re-enabled for scene ${overlayScene.returnTo}`);
-        }
-    }
-    
-    // --- Step 6: 最後に、NovelOverlaySceneをPhaserの管理下から完全に停止・破棄する ---
-    console.log(`[overlay_end] Stopping scene ${overlayScene.scene.key} via scene manager.`);
-    overlayScene.scene.stop();
 }
