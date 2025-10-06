@@ -232,66 +232,47 @@ async buildUiFromLayout(layoutData) {
  * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
  * これまでの registerUiElement を、このメソッドで完全に置き換えてください。
  */
-
 registerUiElement(name, element, params) {
     element.name = name;
     this.add.existing(element);
     this.uiElements.set(name, element);
 
-    // ▼▼▼【ここからがUI問題を解決する最後の修正】▼▼▼
+    // ▼▼▼【ここがUI問題を解決する最終修正】▼▼▼
     // --------------------------------------------------------------------
-    // registryから最新のuiRegistryを「再取得」する
     const uiRegistry = this.registry.get('uiRegistry');
-    const registryKey = element.getData('registryKey') || name;
+    const registryKey = params.registryKey || name; // JSONのregistryKeyを優先
     const definition = uiRegistry ? uiRegistry[registryKey] : null;
 
-    // パラメータ、またはuiRegistryの定義から、グループ情報を取得してsetDataする
-    const groups = params.group || (definition ? definition.groups : []);
+    // --- 1. グループ情報を「uiRegistry」から取得し、setDataする ---
+    const groups = definition ? definition.groups : [];
     element.setData('group', groups);
+
+    // --- 2. イベント情報を「JSON(params)」から取得し、setDataする ---
+    if (params.events) {
+        element.setData('events', params.events);
+    }
     // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     if (params.x !== undefined) element.x = params.x;
     if (params.y !== undefined) element.y = params.y;
     if (params.depth !== undefined) element.setDepth(params.depth);
-    // --- 当たり判定 (Hit Area) の設定 ---
-    let hitArea = null;
-    let hitAreaCallback = null;
-
-    // UI要素の当たり判定サイズを決定する
-    // 優先順位: 1. params -> 2. element自身のサイズ -> 3. デフォルトサイズ
+    
+    // --- 3. 当たり判定とインタラクティブ化 ---
     const width = params.width || (element.width > 1 ? element.width : 200);
     const height = params.height || (element.height > 1 ? element.height : 100);
-    
-    // 当たり判定の領域と形状を設定
     element.setSize(width, height);
-    hitArea = new Phaser.Geom.Rectangle(0, 0, width, height);
-    // Containerの場合、当たり判定の中心を左上に合わせる
-    hitArea.centerX = width / 2;
-    hitArea.centerY = height / 2;
-    hitAreaCallback = Phaser.Geom.Rectangle.Contains;
+    const hitArea = new Phaser.Geom.Rectangle(width / 2, height / 2, width, height);
+    element.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
 
-    // --- インタラクティブ化とエディタ登録 ---
-    // ▼▼▼【ここが修正の核心です】▼▼▼
-    
-    // 1. まず、当たり判定を引数にして setInteractive を呼び出す
-    element.setInteractive(hitArea, hitAreaCallback);
+    // --- 4. イベントリスナーを設定 ---
+    this.applyUiEvents(element); // ★ イベントリスナーの設定をここに移動
 
-    // 2. 次に、Phaserの入力システムにドラッグ可能であることを伝える
-    this.input.setDraggable(element);
-
-    // 3. 最後に、完全に操作可能になったオブジェクトをエディタプラグインに登録する
+    // --- 5. エディタ登録 ---
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled) {
         editor.makeEditable(element, this);
     }
-    this.applyUiEvents(element);
-    // (任意) デバッグ用に当たり判定を可視化する
-    // const debugRect = this.add.graphics().lineStyle(2, 0x00ff00).strokeRect(0, 0, width, height);
-    // if (element instanceof Phaser.GameObjects.Container) {
-    //     element.add(debugRect);
-    // }
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
   // src/scenes/UIScene.js
 
@@ -299,18 +280,13 @@ registerUiElement(name, element, params) {
 
 // src/scenes/UIScene.js
 
+
 onSceneTransition(newSceneKey) {
-    // ★★★ 準備ができていない場合は、遅延実行を試みる ★★★
     if (!this.isFullyReady) {
-        console.warn(`[UIScene.onSceneTransition] Scene is not fully ready. Retrying in 10ms...`);
-        // 10ミリ秒後にもう一度、自分自身を呼び出す
         this.time.delayedCall(10, () => this.onSceneTransition(newSceneKey));
         return;
     }
 
-    // --- ここからが本処理 ---
-
-    // 1. 常にレジストリから最新の定義を取得する（最重要）
     const sceneUiVisibility = this.registry.get('sceneUiVisibility');
     
     // 2. ガード節：定義がなければ、UIを全て隠してエラーを防ぐ
@@ -324,22 +300,21 @@ onSceneTransition(newSceneKey) {
     const visibleGroups = sceneUiVisibility[newSceneKey] || [];
     console.log(`%c[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`, 'color: #03A9F4');
 
-    // 4. 管理している全てのUI要素をループ
     this.uiElements.forEach((uiElement, name) => {
-        // uiElementに保存された'group'データを取得
+        // ▼▼▼【ここを、setDataされた'group'を見るように戻します】▼▼▼
         const elementGroups = uiElement.getData('group');
 
-        // ★★★ ロジックを極限までシンプルにする ★★★
         if (elementGroups && Array.isArray(elementGroups)) {
-            // このUI要素が持つグループのいずれか一つでも、表示すべきグループリストに含まれているか？
             const shouldBeVisible = elementGroups.some(group => visibleGroups.includes(group));
             uiElement.setVisible(shouldBeVisible);
         } else {
-            // グループ情報を持たないUIは、原則として非表示にする
             uiElement.setVisible(false);
         }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     });
 }
+
+
      /**
      * ★★★ 新規追加 ★★★
      * 指定されたUI要素のdepth値を外部から設定するための公式な窓口
