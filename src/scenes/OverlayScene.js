@@ -2,7 +2,7 @@
 //メニューやステータス、アイテム画面やショップなどサブシーンを作るための汎用オーバーレイシーンです
 // uiRegistry は外部で定義されているので、インポートは不要な場合があります。
 // もしエラーが出る場合は、適宜 import { uiRegistry } from '../ui/index.js'; などを追加してください。
-
+import EngineAPI from '../core/EngineAPI.js'; 
 export default class OverlayScene extends Phaser.Scene {
     
     constructor() {
@@ -48,11 +48,7 @@ export default class OverlayScene extends Phaser.Scene {
      * このオーバーレイシーンを閉じるようSystemSceneに依頼する
      */
     close() {
-        const systemScene = this.scene.get('SystemScene');
-        // 先日作成した、メニューを閉じるための新しいイベントを発行
-        systemScene.events.emit('request-close-menu', {
-            from: this.scene.key // 自分のシーンキーを渡す
-        });
+       EngineAPI.requestCloseMenu(this.scene.key);
     }
 
    
