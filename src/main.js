@@ -112,24 +112,36 @@ const config = {
     }
 };
 
-window.onload = async () => {
-   const urlParams = new URLSearchParams(window.location.search);
+window.onload = () => {
+    // URLパラメータの処理だけを先に同期的に行う
+    const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('debug')) {
         document.body.classList.add('debug-mode');
-    } 
-    // ★ステップ1: 必要なデータを先に非同期で準備する
-    const processedUiRegistry = await processUiRegistry(rawUiRegistry);
-   // ★★★ 1. 処理後のuiRegistryの中身をコンソールに出力 ★★★
-    console.log("%c[main.js] Final processed uiRegistry:", "color: limegreen; font-weight: bold;", processedUiRegistry);
+    }
 
-    // Phaser Gameインスタンスを生成
+    // Phaser Gameインスタンスを先に生成する
     const game = new Phaser.Game(config);
-    
-    // ★ステップ2: ゲームインスタンスができた直後に、準備したデータを登録する
-    // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
-    game.registry.set('uiRegistry', processedUiRegistry);
-    game.registry.set('sceneUiVisibility', sceneUiVisibility);
-    game.registry.set('eventTagHandlers', eventTagHandlers);
-    
-   
-};
+
+    // ▼▼▼【ここからが、全てを解決する修正です】▼▼▼
+    // --------------------------------------------------------------------
+    // ★★★ Phaserのゲームインスタンスが完全に準備完了した後に実行するイベントリスナー ★★★
+    game.events.on('ready', async () => {
+        console.log("%c[main.js] Phaser game instance is ready.", "color: limegreen; font-weight: bold;");
+
+        // --- 1. 必要なデータを非同期で準備する ---
+        const processedUiRegistry = await processUiRegistry(rawUiRegistry);
+        console.log("%c[main.js] Final processed uiRegistry:", "color: limegreen;", processedUiRegistry);
+
+        // --- 2. 準備が完了したデータを、registryにセットする ---
+        // このタイミングであれば、どのシーンよりも確実に先にデータが登録される
+        game.registry.set('uiRegistry', processedUiRegistry);
+        game.registry.set('sceneUiVisibility', sceneUiVisibility);
+        game.registry.set('eventTagHandlers', eventTagHandlers); // これもここが安全
+
+        console.log("%c[main.js] All global data has been set in the registry.", "color: limegreen; font-weight: bold;");
+
+        // --- 3. 全ての準備が整ったので、最初のシーン（PreloadScene）を手動で開始する ---
+        // ★ configのscene配列は、もはや起動順を保証しない。ここで明示的に開始する。
+        game.scene.start('PreloadScene');
+
+    }, this);
