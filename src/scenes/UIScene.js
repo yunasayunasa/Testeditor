@@ -135,6 +135,13 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
  *
  * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
  */
+/**
+ * UIレイアウト定義(UIScene.json)に基づいて、UI要素を構築・初期化する。
+ * このメソッドが呼ばれるたびに、必ずレジストリから最新のuiRegistryを取得することで、
+ * main.jsでの非同期なUIクラスの読み込み処理とのタイミング問題を完全に解決する。
+ *
+ * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
+ */
 async buildUiFromLayout(layoutData) {
     console.log("[UIScene] Starting UI build with FINAL, SAFEST routine.");
 
@@ -211,7 +218,6 @@ async buildUiFromLayout(layoutData) {
         }
     }
 }
-
 // ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
     /**
      * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
