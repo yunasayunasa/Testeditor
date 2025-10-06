@@ -32,7 +32,7 @@ export default async function handleJump(manager, params) {
         }
         
            const fromSceneKey = manager.scene.scene.key;
-        const toSceneKey = params.storage;
+       
         
 
         // ★★★ SystemSceneを直接呼ぶ代わりにEngineAPIを呼ぶ ★★★
