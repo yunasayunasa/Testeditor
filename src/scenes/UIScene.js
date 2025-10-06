@@ -121,56 +121,92 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
 
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
+/**
+ * UIレイアウト定義(UIScene.json)に基づいて、UI要素を構築・初期化する。
+ * このメソッドが呼ばれるたびに、必ずレジストリから最新のuiRegistryを取得することで、
+ * main.jsでの非同期なUIクラスの読み込み処理とのタイミング問題を完全に解決する。
+ *
+ * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
+ */
+/**
+ * UIレイアウト定義(UIScene.json)に基づいて、UI要素を構築・初期化する。
+ * このメソッドが呼ばれるたびに、必ずレジストリから最新のuiRegistryを取得することで、
+ * main.jsでの非同期なUIクラスの読み込み処理とのタイミング問題を完全に解決する。
+ *
+ * @param {object} layoutData - UIScene.jsonから読み込まれたレイアウトデータ
+ */
 async buildUiFromLayout(layoutData) {
-    console.log("[UIScene] Starting UI build with FINAL routine.");
-    if (!layoutData || !layoutData.objects) return;
+    console.log("[UIScene] Starting UI build with FINAL, SAFEST routine.");
 
+    // layoutDataが存在しない場合は、何もせずに終了
+    if (!layoutData || !layoutData.objects) {
+        console.warn("[UIScene] No layout data or objects found to build UI.");
+        return;
+    }
+
+    // ▼▼▼【ここが最重要ポイント】▼▼▼
+    // --- メソッドが呼ばれる「まさにその瞬間」に、レジストリから最新の定義を取得する ---
     const uiRegistry = this.registry.get('uiRegistry');
     const stateManager = this.registry.get('stateManager');
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+    // ★ ガード節：uiRegistryが取得できなければ、UIは一切構築せず、エラーで処理を中断
+    if (!uiRegistry) {
+        console.error("[UIScene] CRITICAL: uiRegistry not found in game registry during buildUiFromLayout. UI construction aborted.");
+        return;
+    }
+
+    // layoutData.objects配列の各定義をループして、UI要素を生成
     for (const layout of layoutData.objects) {
         try {
+            // registryKey（uiRegistryのキー）またはnameプロパティを識別に使う
             const registryKey = layout.registryKey || layout.name;
-            if (!registryKey) continue;
+            if (!registryKey) continue; // 識別子がない定義はスキップ
 
             let uiElement = null;
 
             // --- Step 1: オブジェクトのインスタンスを生成 ---
-            if (registryKey === 'Text') {
-                uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
-            } else {
-                const definition = uiRegistry[registryKey];
-                if (definition && definition.component) {
-                    const UiComponentClass = definition.component;
-                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
-                    layout.stateManager = stateManager;
-                    uiElement = new UiComponentClass(this, layout);
-                }
+            const definition = uiRegistry[registryKey]; // ★ 最新のuiRegistryからdefinitionを取得
+
+            if (definition && definition.component) {
+                // uiRegistryにcomponentクラスが定義されている場合（カスタムUIコンポーネント）
+                const UiComponentClass = definition.component;
+                // コンストラクタにstateManagerを渡す
+                layout.stateManager = stateManager;
+                uiElement = new UiComponentClass(this, layout);
+
+            } else if (registryKey === 'Text' && uiRegistry['Text']?.component) {
+                // Phaser標準のTextオブジェクトの場合
+                const TextClass = uiRegistry['Text'].component;
+                uiElement = new TextClass(this, 0, 0, layout.text || '', layout.style || {});
             }
 
+            // uiElementが正常に生成されたかチェック
             if (!uiElement) {
-                console.warn(`Could not create UI element for '${layout.name}'`);
-                continue;
+                console.warn(`[UIScene] Could not create UI element for '${layout.name}'. Definition or component class might be missing in uiRegistry.`);
+                continue; // 次のUI要素へ
             }
 
             // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
             uiElement.setData('registryKey', registryKey);
-// ★ uiRegistryまたはlayoutから、グループ情報を取得してsetDataする
-const groups = layout.group || (uiRegistry[registryKey] ? uiRegistry[registryKey].groups : []);
-uiElement.setData('group', groups);
-            // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
+            
+            // グループ情報をlayout.jsonの定義、またはuiRegistryの定義から取得して保存
+            const groups = layout.group || (definition ? definition.groups : []);
+            uiElement.setData('group', groups);
+
+            // --- Step 3: コンポーネントのアタッチ (もし定義があれば) ---
             if (layout.components) {
-                uiElement.setData('components', layout.components); // まず永続化データを保存
+                uiElement.setData('components', layout.components);
                 layout.components.forEach(compDef => {
                     this.addComponent(uiElement, compDef.type, compDef.params);
                 });
             }
 
-            // --- Step 3: 共通の登録・設定処理を呼び出す ---
-            // ★ paramsではなく、JSONから読み込んだ生の`layout`を渡すのが最も確実
+            // --- Step 4: 共通の登録・設定処理を呼び出す ---
             this.registerUiElement(layout.name, uiElement, layout);
 
         } catch (e) {
+            // このループ内でエラーが起きても、他のUI要素の生成が止まらないようにする
             console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
         }
     }
