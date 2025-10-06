@@ -65,6 +65,7 @@ class EngineAPI {
      * @param {string} fromSceneKey 呼び出し元（メニューシーン自身）のキー
      */
     requestCloseMenu(fromSceneKey) {
+        console.log(`%c[EngineAPI] Request received: closeMenu (from: ${fromSceneKey})`, 'color: #2196F3; font-weight: bold;');
         if (!this.isReady()) return;
         this.systemScene.events.emit('request-close-menu', { from: fromSceneKey });
     }
