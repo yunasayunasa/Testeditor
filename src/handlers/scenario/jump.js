@@ -35,9 +35,9 @@ export default async function handleJump(manager, params) {
         
 
         // ★★★ SystemSceneを直接呼ぶ代わりにEngineAPIを呼ぶ ★★★
-        EngineAPI.requestJump(fromSceneKey, toSceneKey, transitionParams);
+        EngineAPI.requestSimpleTransition(fromSceneKey, toSceneKey, transitionParams);
 
-        manager.stop();
+manager.stop();
         
     } else if (params.target && params.target.startsWith('*')) {
         manager.jumpTo(params.target);

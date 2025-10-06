@@ -71,21 +71,7 @@ class EngineAPI {
         this.systemScene.events.emit('request-close-menu', { from: fromSceneKey });
     }
 
-    /**
- * [jump]タグからのシーン遷移リクエストを処理する。
- * @param {string} fromSceneKey 
- * @param {string} toSceneKey 
- * @param {object} [params={}] 
- */
-requestJump(fromSceneKey, toSceneKey, params = {}) {
-    console.log(`%c[EngineAPI] Request received: jump (from: ${fromSceneKey}, to: ${toSceneKey})`, 'color: #2196F3; font-weight: bold;');
-    if (!this.isReady()) return;
-    this.systemScene.events.emit('request-simple-transition', {
-        from: fromSceneKey,
-        to: toSceneKey,
-        params: params,
-    });
-}
+   
 
 runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
     console.log(`%c[EngineAPI] Request received: runScenarioAsOverlay (from: ${fromSceneKey}, file: ${scenarioFile})`, 'color: #2196F3; font-weight: bold;');
