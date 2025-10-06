@@ -7,17 +7,19 @@ import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポ�
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
+        
+        // --- 既存のプロパティ ---
         this.globalCharaDefs = null;
         this.isProcessingTransition = false;
         this.initialGameData = null;
-        this.novelBgmKey = null; // BGMキーの保持
-        this.editorUI = null; // EditorUIへの参照を保持
-         this._isTimeStopped = false;
-          this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
-        this.transitionData = null;
-        this.gameState = 'INITIALIZING';
-        
-    this.sceneStack = [];
+        this.editorUI = null;
+        this._isTimeStopped = false;
+
+        // ★★★ ゲームフロー・ステートマシン用のプロパティ ★★★
+        this.gameFlow = null;      // game_flow.jsonのデータを保持
+        this.gameState = null;     // 現在のステート名 (e.g., 'Title', 'Gameplay')
+        this.sceneStack = [];      // ポーズ/再開のためのシーンスタック
+        this.actionInterpreter = null; // Interpreterへの参照を保持
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
     get isTimeStopped() {
@@ -57,69 +59,90 @@ export default class SystemScene extends Phaser.Scene {
     }
 
     create() {
-          console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
-        try {
-            console.log('this:', this);
-            console.log('this.scene:', this.scene);
-            console.log('this.scene.manager:', this.scene.manager);
-            console.log('this.scene.manager.events:', this.scene.manager.events);
-        } catch (e) {
-            console.error('!!! LOG BOMB FAILED !!!', e);
-        }
-        console.log('--- END OF LOG BOMB ---');
-        this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
-    this.events.on('request-close-menu', this.handleClosePauseMenu, this);
-console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
-
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
         
-       // --- 1. コアサービスの初期化 ---
+        // --- 1. コアサービスの初期化 (変更なし) ---
         const soundManager = new SoundManager(this.game);
         this.registry.set('soundManager', soundManager);
-        this.input.once('pointerdown', () => soundManager.resumeContext(), this);
-        console.log("SystemScene: SoundManagerを登録しました。");
+        this.actionInterpreter = new ActionInterpreter(this.game); // ★ this.actionInterpreterに保存
+        this.registry.set('actionInterpreter', this.actionInterpreter);
+        
+        // --- 2. ゲームフロー・ステートマシンの初期化 ---
+        this.gameFlow = this.cache.json.get('game_flow');
+        if (!this.gameFlow) {
+            console.error("CRITICAL: game_flow.json not found!");
+            return;
+        }
+        this.gameState = this.gameFlow.initialState;
+        
+        // --- 3. イベントリスナーを「一つ」に統一 ---
+        // 古いリスナーは全て不要になる
+        this.events.on('request_game_flow_event', this.handleGameFlowEvent, this);
+        
+        console.log(`[GameFlow] Initial state set to: '${this.gameState}'`);
 
-        // --- 2. イベントリスナーの設定 ---
-       //  this.events.on('request-load-game', this._handleLoadGame, this); 
-          this.events.on('request-scene-transition', this._startTransition, this);
-           this.events.on('request-simple-transition', this._handleSimpleTransition, this);
-        this.events.on('return-to-novel', this._handleReturnToNovel, this);
-        this.events.on('request-overlay', this._handleRequestOverlay, this);
-        this.events.on('end-overlay', this._handleEndOverlay, this);
-          this.events.on('request-subscene', this._handleRequestSubScene, this);
-         this.events.on('request-gamemode-toggle', (mode) => {
-            const gameScene = this.scene.get('GameScene');
-            if (gameScene && gameScene.scene.isActive() && gameScene.scenarioManager) {
-                const currentMode = gameScene.scenarioManager.mode;
-                const newMode = currentMode === mode ? 'normal' : mode;
-                gameScene.scenarioManager.setMode(newMode);
-                console.log(`モード変更: ${currentMode} -> ${newMode}`);
-            }
-        });
-         this.events.on('request-scene-resume', (sceneKey) => {
-            const targetScene = this.scene.get(sceneKey);
-            if (targetScene && targetScene.scene.isPaused()) {
-                targetScene.scene.resume();
-                console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
-            }
-        });
-        const actionInterpreter = new ActionInterpreter(this.game);
-        this.registry.set('actionInterpreter', actionInterpreter);
-        console.log("SystemScene: ActionInterpreter has been registered globally.");
-        // --------------------------------------------------------------------
-     // ★★★ 時間を再開させるための、公式な命令を追加 ★★★
-        this.events.on('request-time-resume', () => {
-            this.isTimeStopped = false;
-        });
-        // --- 3. エディタ関連の初期化 ---
+        // --- 4. エディタ関連の初期化 (変更なし) ---
         this.initializeEditor();
          
-        // --- 4. 初期ゲームの起動 ---
+        // --- 5. 初期ステートの onEnter を実行してゲームを開始 ---
         if (this.initialGameData) {
-            this._startInitialGame(this.initialGameData);
+            this.globalCharaDefs = this.initialGameData.charaDefs;
+            // ★ 初期ステートに遷移するリクエストを自分自身に送る
+            this.handleGameFlowEvent('initialize_game', {
+                startScenario: this.initialGameData.startScenario,
+                charaDefs: this.globalCharaDefs
+            });
         }
-        
     }
+    // in src/scenes/SystemScene.js (クラス内に新しく追加)
+
+/**
+ * ★★★ 新設：ゲームフローイベントを処理する司令塔 ★★★
+ * @param {string} eventName - 遷移のきっかけとなるイベント名
+ * @param {object} eventData - イベントに伴う追加データ
+ */
+handleGameFlowEvent(eventName, eventData = {}) {
+    if (!this.gameFlow) return;
+
+    const currentStateDef = this.gameFlow.states[this.gameState];
+    const transition = currentStateDef?.transitions?.find(t => t.event === eventName);
+    
+    if (transition) {
+        const toState = transition.to;
+        console.log(`[GameFlow] Transitioning: '${this.gameState}' --(${eventName})--> '${toState}'`);
+
+        // 1. 現在のステートの onExit アクションを実行
+        this.executeStateActions('onExit', this.gameState, eventData);
+
+        // 2. ステートを更新
+        this.gameState = toState;
+        this.sceneStack = [toState]; // シンプルなスタック管理
+
+        // 3. 新しいステートの onEnter アクションを実行
+        this.executeStateActions('onEnter', this.gameState, eventData);
+    } else if (eventName === 'initialize_game') {
+        // ゲーム開始時だけの特別な処理
+        console.log(`[GameFlow] Initializing game in state '${this.gameState}'`);
+        this.executeStateActions('onEnter', this.gameState, eventData);
+    }
+}
+
+/**
+ * ★★★ 新設：指定されたステートのアクションを実行するエンジン ★★★
+ * @param {'onEnter' | 'onExit'} hook - 'onEnter' または 'onExit'
+ * @param {string} stateName - 状態の名前
+ * @param {object} contextData - VSL内で参照できる追加データ
+ */
+executeStateActions(hook, stateName, contextData = {}) {
+    const actions = this.gameFlow.states[stateName]?.[hook];
+
+    if (actions && Array.isArray(actions) && this.actionInterpreter) {
+        // ActionInterpreter.run は GameObject を第一引数に取るので、
+        // SystemScene自身をダミーのGameObjectとして渡す
+        // VSL内で self, source, target を使えるように context を渡す
+        this.actionInterpreter.run(this, { nodes: actions }, contextData);
+    }
+}
 
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
@@ -148,7 +171,7 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
      */
-
+/*
 _startInitialGame(initialData) {
     this.globalCharaDefs = initialData.charaDefs;
     console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
@@ -196,13 +219,13 @@ _startInitialGame(initialData) {
 
     console.log("[SystemScene] Running UIScene now.");
     this.scene.run('UIScene');
-}
+}*/
 // in src/scenes/SystemScene.js
 
 /**
  * ★★★ 新設：ポーズメニューを開く専用ハンドラ (最終修正版) ★★★
  * @param {{ from: string, layoutKey: string, params?: object }} data
- */
+ *//*
 handleOpenPauseMenu(data) {
     const fromScene = data.from;
     const menuLayoutKey = data.layoutKey; // ★★★ 'sceneKey' -> 'layoutKey' に修正 ★★★
@@ -222,14 +245,14 @@ handleOpenPauseMenu(data) {
         // 3. 汎用的なOverlaySceneを起動し、どのレイアウトを使うかを渡す
         this.scene.launch(sceneToLaunch, { layoutKey: menuLayoutKey, ...data.params });
     }
-}
+}*/
 
 /**
  * ★★★ 新設：ポーズメニューを閉じる専用ハンドラ ★★★
  * @param {{ from: string }} data
  */
 // in src/scenes/SystemScene.js
-
+/*
 handleClosePauseMenu(data) {
     console.log("handleClosePauseMenu called with data:", data);
     const closingMenu = data.from; // 'OverlayScene' が渡される
@@ -263,7 +286,7 @@ handleClosePauseMenu(data) {
         this.gameState = (sceneToResume === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     }
 }
-
+*/
  /**
      * [jump]や[transition_scene]によるシーン遷移リクエストを処理する (最終確定版)
      * @param {object} data - { from: string, to: string, params: object, fade: object }
@@ -273,7 +296,7 @@ handleClosePauseMenu(data) {
      * [transition_scene]などから呼ばれる、最も基本的なシーン遷移
      */
    // in src/scenes/SystemScene.js
-
+/*
 _handleSimpleTransition(data) {
     const { from, to, params } = data;
 
@@ -302,7 +325,7 @@ _handleSimpleTransition(data) {
         // 停止すべきシーンがない場合（最初の起動など）は、直接新しいシーンを開始
         this._startAndMonitorScene(to, params);
     }
-}
+}*/
 
 
     /**
@@ -359,7 +382,7 @@ _handleSimpleTransition(data) {
     /**
      * ★★★ 最終FIX版 ★★★
      * [return_novel]から呼ばれる、ノベルパートへの復帰
-     */
+     *//*
     _handleReturnToNovel(data) {
         const fromSceneKey = data.from;
 
@@ -379,12 +402,12 @@ _handleSimpleTransition(data) {
         this.gameState = 'NOVEL';
     this.sceneStack = ['GameScene'];
     console.log(`[State Logger] Game state changed to: ${this.gameState}`);
-    }
+    }*/
 
     /**
      * オーバーレイ表示のリクエストを処理 (入力制御オプション付き)
      * @param {object} data - { from: string, scenario: string, block_input: boolean }
-     */
+     *//*
     _handleRequestOverlay(data) {
         console.log(`[SystemScene] オーバーレイ表示リクエストを受信 (from: ${data.from})`);
 
@@ -408,13 +431,13 @@ _handleSimpleTransition(data) {
             returnTo: data.from,
             inputWasBlocked: shouldBlockInput 
         });
-    }
+    }*/
 
     /**
      * オーバーレイ終了のリクエストを処理 (入力制御オプション付き)
      * @param {object} data - { from: 'NovelOverlayScene', returnTo: string, inputWasBlocked: boolean }
      */
-    _handleEndOverlay(data) {
+    /*_handleEndOverlay(data) {
         console.log(`[SystemScene] オーバーレイ終了リクエストを受信 (return to: ${data.returnTo})`);
 
         // NovelOverlaySceneを停止
@@ -438,7 +461,7 @@ _handleSimpleTransition(data) {
              console.log(`[SystemScene] シーン[${data.returnTo}]の入力はもともと有効だったので、何もしません。`);
         }
         this.isTimeStopped = false;
-    }
+    }*/
 
    /**
      * ★★★ 新しい、中核となるシーン起動ヘルパー (最終FIX版) ★★★

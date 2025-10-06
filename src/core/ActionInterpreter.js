@@ -35,14 +35,14 @@ export default class ActionInterpreter {
      */
  // in src/core/ActionInterpreter.js
 // in src/core/ActionInterpreter.js
-async run(source, eventData, collidedTarget = null) {
+async run(source, eventData, context = null) {
     if (!source || !source.scene || !source.scene.scene.isActive()) return;
     if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
 
     this.scene = source.scene;
     this.currentSource = source;
-    this.currentTarget = collidedTarget;
-    
+    //this.currentTarget = collidedTarget;
+    this.currentTarget = context.target;
     const stateManager = this.scene.registry.get('stateManager');
     if (!stateManager) {
         console.error("[ActionInterpreter] StateManager not found in scene registry!");
