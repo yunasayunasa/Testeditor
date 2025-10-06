@@ -89,4 +89,17 @@ export default class SceneTransitionManager {
 
         this.systemScene.scene.run(sceneKey, params);
     }
+
+    // src/core/SceneTransitionManager.js
+
+/**
+ * ゲームの初期シーン（通常はGameScene）を起動する特別なメソッド。
+ * @param {string} sceneKey 
+ * @param {object} params 
+ */
+startInitialScene(sceneKey, params = {}) {
+    console.log(`%c[SceneTransitionManager] Starting initial scene: ${sceneKey}`, "color: #FF9800; font-weight: bold;");
+    // プライベートメソッドを呼び出して、実際の処理を開始する
+    this._startAndMonitorScene(sceneKey, params);
+}
 }

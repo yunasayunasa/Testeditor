@@ -194,7 +194,7 @@ _startInitialGame(initialData) {
     uiScene.events.once('scene-ready', () => {
         console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
         
-        this._startAndMonitorScene('GameScene', {
+        this.transitionManager.startInitialScene('GameScene', {
             charaDefs: this.globalCharaDefs,
             startScenario: initialData.startScenario,
         });
