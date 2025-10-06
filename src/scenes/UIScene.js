@@ -247,51 +247,48 @@ if (params.events) {
 
   // src/scenes/UIScene.js
 
+// src/scenes/UIScene.js
+
 onSceneTransition(newSceneKey) {
-    // ▼▼▼【ここからが、タイミング問題を解決する最終FIXです】▼▼▼
-    // --------------------------------------------------------------------
-    
-    // ★★★ メソッドが呼ばれるたびに、レジストリから最新の定義を直接取得する ★★★
-    const uiRegistry = this.registry.get('uiRegistry');
-    const sceneUiVisibility = this.registry.get('sceneUiVisibility'); 
-    
-    // ★★★ ガード節を強化 ★★★
-    if (!uiRegistry || !sceneUiVisibility) {
-        console.error(`[UIScene.onSceneTransition] CRITICAL: uiRegistry or sceneUiVisibility is not available.`);
-        // 重要なデータがないので、UIをすべて非表示にしてエラーを防ぐのが安全
-        for (const [name, uiElement] of this.uiElements.entries()) {
-            uiElement.setVisible(false);
-        }
-        return; // 処理を中断
+    // ★★★ 準備ができていない場合は、遅延実行を試みる ★★★
+    if (!this.isFullyReady) {
+        console.warn(`[UIScene.onSceneTransition] Scene is not fully ready. Retrying in 10ms...`);
+        // 10ミリ秒後にもう一度、自分自身を呼び出す
+        this.time.delayedCall(10, () => this.onSceneTransition(newSceneKey));
+        return;
     }
-    
-    // --------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+    // --- ここからが本処理 ---
+
+    // 1. 常にレジストリから最新の定義を取得する（最重要）
+    const sceneUiVisibility = this.registry.get('sceneUiVisibility');
+    
+    // 2. ガード節：定義がなければ、UIを全て隠してエラーを防ぐ
+    if (!sceneUiVisibility) {
+        console.error(`[UIScene.onSceneTransition] CRITICAL: 'sceneUiVisibility' not found in registry.`);
+        this.uiElements.forEach(uiElement => uiElement.setVisible(false));
+        return;
+    }
+
+    // 3. これから表示すべきUIグループのリストを取得
     const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-    console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
+    console.log(`%c[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`, 'color: #03A9F4');
 
-    for (const [name, uiElement] of this.uiElements.entries()) {
-        const registryKey = uiElement.getData('registryKey');
+    // 4. 管理している全てのUI要素をループ
+    this.uiElements.forEach((uiElement, name) => {
+        // uiElementに保存された'group'データを取得
+        const elementGroups = uiElement.getData('group');
 
-       if (registryKey) {
-            // ▼▼▼【ここを、よりシンプルで確実なロジックに統一】▼▼▼
-            const definition = uiRegistry[registryKey];
-            
-            // ★★★ definitionが存在し、groupsプロパティが配列であることだけを確認 ★★★
-            if (definition && Array.isArray(definition.groups)) {
-                // 'Text'でも'generic_button'でも、すべてのUIがこの同じロジックで処理される
-                const shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
-                uiElement.setVisible(shouldBeVisible);
-            } else {
-                // 不明なものは非表示
-                uiElement.setVisible(false);
-            }
+        // ★★★ ロジックを極限までシンプルにする ★★★
+        if (elementGroups && Array.isArray(elementGroups)) {
+            // このUI要素が持つグループのいずれか一つでも、表示すべきグループリストに含まれているか？
+            const shouldBeVisible = elementGroups.some(group => visibleGroups.includes(group));
+            uiElement.setVisible(shouldBeVisible);
         } else {
-            // keyがないものも非表示
+            // グループ情報を持たないUIは、原則として非表示にする
             uiElement.setVisible(false);
         }
-    }
+    });
 }
      /**
      * ★★★ 新規追加 ★★★
