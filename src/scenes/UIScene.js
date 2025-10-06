@@ -245,6 +245,7 @@ registerUiElement(name, element, params) {
 
     // --- 1. グループ情報を「uiRegistry」から取得し、setDataする ---
     const groups = definition ? definition.groups : [];
+     console.log(`%c[LOG BOMB 3] UIScene.registerUiElement: For element '${name}', setting group data:`, "color: red; font-size: 1.2em; font-weight: bold;", groups);
     element.setData('group', groups);
 
     // --- 2. イベント情報を「JSON(params)」から取得し、setDataする ---
@@ -281,36 +282,36 @@ registerUiElement(name, element, params) {
 // src/scenes/UIScene.js
 
 
+
 onSceneTransition(newSceneKey) {
     if (!this.isFullyReady) {
         this.time.delayedCall(10, () => this.onSceneTransition(newSceneKey));
         return;
     }
 
+    // ▼▼▼【ここからログボム】▼▼▼
+    // --- 1. registryから取得を試みる ---
     const sceneUiVisibility = this.registry.get('sceneUiVisibility');
-    
-    // 2. ガード節：定義がなければ、UIを全て隠してエラーを防ぐ
+    console.log("%c[LOG BOMB 2A] UIScene.onSceneTransition: Attempting to get 'sceneUiVisibility'. Result:", "color: red; font-size: 1.2em; font-weight: bold;", sceneUiVisibility);
+
     if (!sceneUiVisibility) {
-        console.error(`[UIScene.onSceneTransition] CRITICAL: 'sceneUiVisibility' not found in registry.`);
-        this.uiElements.forEach(uiElement => uiElement.setVisible(false));
+        console.error("%c[LOG BOMB 2 ERROR] 'sceneUiVisibility' NOT FOUND IN REGISTRY!", "color: red; font-size: 1.5em;");
         return;
     }
 
-    // 3. これから表示すべきUIグループのリストを取得
+    // --- 2. 表示すべきグループリストを計算する ---
     const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-    console.log(`%c[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`, 'color: #03A9F4');
+    console.log(`%c[LOG BOMB 2B] UIScene.onSceneTransition: For scene '${newSceneKey}', calculated visibleGroups:`, "color: red; font-size: 1.2em; font-weight: bold;", visibleGroups);
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     this.uiElements.forEach((uiElement, name) => {
-        // ▼▼▼【ここを、setDataされた'group'を見るように戻します】▼▼▼
         const elementGroups = uiElement.getData('group');
-
         if (elementGroups && Array.isArray(elementGroups)) {
             const shouldBeVisible = elementGroups.some(group => visibleGroups.includes(group));
             uiElement.setVisible(shouldBeVisible);
         } else {
             uiElement.setVisible(false);
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     });
 }
 

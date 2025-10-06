@@ -83,7 +83,14 @@ window.onload = async () => {
 
     // --- 準備完了したデータを、ゲームが起動する「前」にregistryにセットする ---
     game.registry.set('uiRegistry', processedUiRegistry);
-    game.registry.set('sceneUiVisibility', sceneUiVisibility);
+   console.log("%c[LOG BOMB 1A] main.js: About to set 'sceneUiVisibility'. Data is:", "color: red; font-size: 1.2em; font-weight: bold;", sceneUiVisibility);
+
+// --- 2. 実際に登録する ---
+game.registry.set('sceneUiVisibility', sceneUiVisibility);
+
+// --- 3. 登録した「直後」に、registryから取得して、本当に保存されたか確認する ---
+const checkVisibility = game.registry.get('sceneUiVisibility');
+console.log("%c[LOG BOMB 1B] main.js: Just set 'sceneUiVisibility'. Verification get:", "color: red; font-size: 1.2em; font-weight: bold;", checkVisibility);
     game.registry.set('eventTagHandlers', eventTagHandlers);
     console.log("[main.js] All global data has been set in the registry.");
 
