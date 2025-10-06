@@ -1,6 +1,6 @@
 // src/core/ActionInterpreter.js (グローバルサービス版)
 
-import { eventTagHandlers } from '../handlers/events/index.js';
+//import { eventTagHandlers } from '../handlers/events/index.js';
 
 export default class ActionInterpreter {
     constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
@@ -11,9 +11,11 @@ export default class ActionInterpreter {
         this.scene = null;
         this.currentSource = null;
         this.currentTarget = null;
-        
+        this.tagHandlers = {};
     }
-
+registerTagHandlers(handlers) {
+        this.tagHandlers = { ...this.tagHandlers, ...handlers };
+    }
     /**
      * ★★★ グローバルサービス版 ★★★
      * @param {Phaser.GameObjects.GameObject} source - イベントを発生させたオブジェクト

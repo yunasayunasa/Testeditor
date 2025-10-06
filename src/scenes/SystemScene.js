@@ -4,6 +4,8 @@ import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
 import OverlayScene from './OverlayScene.js'; 
 import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
+import { eventTagHandlers } from '../handlers/events/index.js';
+
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -64,7 +66,9 @@ export default class SystemScene extends Phaser.Scene {
         // --- 1. コアサービスの初期化 (変更なし) ---
         const soundManager = new SoundManager(this.game);
         this.registry.set('soundManager', soundManager);
-        this.actionInterpreter = new ActionInterpreter(this.game); // ★ this.actionInterpreterに保存
+       this.actionInterpreter = new ActionInterpreter(this.game);
+        this.actionInterpreter.registerTagHandlers(eventTagHandlers); // ★ 後からハンドラを登録
+        
         this.registry.set('actionInterpreter', this.actionInterpreter);
         
         // --- 2. ゲームフロー・ステートマシンの初期化 ---
