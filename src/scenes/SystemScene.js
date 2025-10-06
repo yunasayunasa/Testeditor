@@ -5,6 +5,7 @@ import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
 import OverlayScene from './OverlayScene.js'; 
 import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
+import SceneTransitionManager from '../core/SceneTransitionManager.js';
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -17,6 +18,7 @@ export default class SystemScene extends Phaser.Scene {
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
         this.gameState = 'INITIALIZING';
+        this.transitionManager = null;
         
     this.sceneStack = [];
     }
@@ -80,12 +82,14 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
         this.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
         console.log("SystemScene: SoundManagerを登録しました。");
+           this.transitionManager = new SceneTransitionManager(this);
+
 
         // --- 2. イベントリスナーの設定 ---
        //  this.events.on('request-load-game', this._handleLoadGame, this); 
           this.events.on('request-scene-transition', this._startTransition, this);
-           this.events.on('request-simple-transition', this._handleSimpleTransition, this);
-        this.events.on('return-to-novel', this._handleReturnToNovel, this);
+       //    this.events.on('request-simple-transition', this._handleSimpleTransition, this);
+//this.events.on('return-to-novel', this._handleReturnToNovel, this);
         this.events.on('request-overlay', this._handleRequestOverlay, this);
         this.events.on('end-overlay', this._handleEndOverlay, this);
           this.events.on('request-subscene', this._handleRequestSubScene, this);
@@ -275,7 +279,7 @@ handleClosePauseMenu(data) {
      * [transition_scene]などから呼ばれる、最も基本的なシーン遷移
      */
    // in src/scenes/SystemScene.js
-
+/*
 _handleSimpleTransition(data) {
     const { from, to, params } = data;
 
@@ -304,7 +308,7 @@ _handleSimpleTransition(data) {
         // 停止すべきシーンがない場合（最初の起動など）は、直接新しいシーンを開始
         this._startAndMonitorScene(to, params);
     }
-}
+}*/
 
 
     /**
@@ -361,7 +365,7 @@ _handleSimpleTransition(data) {
     /**
      * ★★★ 最終FIX版 ★★★
      * [return_novel]から呼ばれる、ノベルパートへの復帰
-     */
+     *//*
     _handleReturnToNovel(data) {
         const fromSceneKey = data.from;
 
@@ -381,7 +385,7 @@ _handleSimpleTransition(data) {
         this.gameState = 'NOVEL';
     this.sceneStack = ['GameScene'];
     console.log(`[State Logger] Game state changed to: ${this.gameState}`);
-    }
+    }*/
 
     /**
      * オーバーレイ表示のリクエストを処理 (入力制御オプション付き)
@@ -446,7 +450,7 @@ _handleSimpleTransition(data) {
      * ★★★ 新しい、中核となるシーン起動ヘルパー (最終FIX版) ★★★
      * @param {string} sceneKey - 起動するシーンのキー
      * @param {object} params - シーンに渡すデータ
-     */
+     *//*
     _startAndMonitorScene(sceneKey, params = {}) {
         if (this.isProcessingTransition) { return; }
         this.isProcessingTransition = true;
@@ -471,7 +475,7 @@ _handleSimpleTransition(data) {
                 console.log(`[SystemScene] Commanding '${sceneKey}' to set up its joystick.`);
                 targetScene.setupJoystick();
             }
-        }*/
+        }
         // --------------------------------------------------------------------
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
@@ -487,7 +491,7 @@ _handleSimpleTransition(data) {
 
     // シーンを起動する
     this.scene.run(sceneKey, params);
-}
+}*/
     /**
      * シーン遷移が完全に完了したときの処理
      * @param {string} sceneKey - 完了したシーンのキー

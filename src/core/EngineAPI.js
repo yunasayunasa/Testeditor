@@ -7,16 +7,19 @@
  */
 class EngineAPI {
     constructor() {
-        /** @type {import('../scenes/SystemScene.js').default | null} */
-        this.systemScene = null;
+             this.systemScene = null;
+        /** @type {import('./SceneTransitionManager.js').default | null} */
+        this.transitionManager = null; // ★ プロパティ追加
     }
 
     /**
      * SystemSceneによって呼び出され、APIを初期化する。
      * @param {import('../scenes/SystemScene.js').default} systemSceneInstance 
      */
-    init(systemSceneInstance) {
+        init(systemSceneInstance) {
         this.systemScene = systemSceneInstance;
+        // ★ SystemSceneが設立した専門部署を、司令塔も把握する
+        this.transitionManager = systemSceneInstance.transitionManager;
     }
 
     /**
@@ -36,17 +39,15 @@ class EngineAPI {
      * @param {object} [params={}] 遷移先のシーンに渡すデータ
      */
     requestSimpleTransition(fromSceneKey, toSceneKey, params = {}) {
-        if (!this.isReady()) return;
-        this.systemScene.events.emit('request-simple-transition', { from: fromSceneKey, to: toSceneKey, params });
+        if (!this.transitionManager) return;
+        // ★ 伝達先を events.emit から transitionManager のメソッド呼び出しに変更
+        this.transitionManager.handleSimpleTransition({ from: fromSceneKey, to: toSceneKey, params });
     }
     
-    /**
-     * ゲームシーンからノベルシーンへ復帰するようリクエストする。
-     * @param {string} fromSceneKey 呼び出し元のシーンキー
-     */
-    requestReturnToNovel(fromSceneKey) {
-        if (!this.isReady()) return;
-        this.systemScene.events.emit('return-to-novel', { from: fromSceneKey });
+    requestReturnToNovel(fromSceneKey, params = {}) {
+        if (!this.transitionManager) return;
+        // ★ 伝達先を events.emit から transitionManager のメソッド呼び出しに変更
+        this.transitionManager.handleReturnToNovel({ from: fromSceneKey, params });
     }
 
     /**
