@@ -232,22 +232,28 @@ async buildUiFromLayout(layoutData) {
  * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
  * これまでの registerUiElement を、このメソッドで完全に置き換えてください。
  */
+
 registerUiElement(name, element, params) {
     element.name = name;
     this.add.existing(element);
     this.uiElements.set(name, element);
 
+    // ▼▼▼【ここからがUI問題を解決する最後の修正】▼▼▼
+    // --------------------------------------------------------------------
+    // registryから最新のuiRegistryを「再取得」する
+    const uiRegistry = this.registry.get('uiRegistry');
+    const registryKey = element.getData('registryKey') || name;
+    const definition = uiRegistry ? uiRegistry[registryKey] : null;
+
+    // パラメータ、またはuiRegistryの定義から、グループ情報を取得してsetDataする
+    const groups = params.group || (definition ? definition.groups : []);
+    element.setData('group', groups);
+    // --------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     if (params.x !== undefined) element.x = params.x;
     if (params.y !== undefined) element.y = params.y;
     if (params.depth !== undefined) element.setDepth(params.depth);
-      // ▼▼▼ ログ爆弾 No.1 ▼▼▼
-        if (name === 'message_window') {
-            console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
-        }
-    if (params.group) element.setData('group', params.group);
-if (params.events) {
-        element.setData('events', params.events);
-    }
     // --- 当たり判定 (Hit Area) の設定 ---
     let hitArea = null;
     let hitAreaCallback = null;

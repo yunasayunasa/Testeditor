@@ -3,6 +3,7 @@ import EditorUI from '../editor/EditorUI.js';
 import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
 import OverlayScene from './OverlayScene.js'; 
+import JumpScene from './JumpScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
 export default class SystemScene extends Phaser.Scene {
     constructor() {
@@ -104,32 +105,32 @@ create() {
     this.initializeEditor();
      
     // --- 5. ゲームの起動 ---
-    // 古い _startInitialGame() を呼び出すのではなく、ステートマシンを初期ステートに遷移させることでゲームを開始する
-    
-    // 5a. まず、ゲームに必要なシーン（UISceneなど）を動的に追加する
-    if (!this.scene.get('UIScene')) {
-        this.scene.add('UIScene', UIScene, false, { physics: { matter: { enable: false } } });
-        console.log("[SystemScene] UISceneを動的に追加しました。");
-    }
-    if (!this.scene.get('GameScene')) {
-        this.scene.add('GameScene', GameScene, false);
-        console.log("[SystemScene] GameSceneを動的に追加しました。");
-    }
-     if (!this.scene.get('OverlayScene')) {
-        this.scene.add('OverlayScene', OverlayScene, false);
-        console.log("[SystemScene] OverlaySceneを動的に追加しました。");
-    }
-    // JumpSceneなども必要ならここで追加する
+// 5a. まず、ゲームに必要な全てのシーンを動的に追加する
+if (!this.scene.get('UIScene')) {
+    this.scene.add('UIScene', UIScene, false, { physics: { matter: { enable: false } } });
+}
+if (!this.scene.get('GameScene')) {
+    this.scene.add('GameScene', GameScene, false);
+}
+if (!this.scene.get('OverlayScene')) {
+    this.scene.add('OverlayScene', OverlayScene, false);
+}
 
-    // 5b. UISceneだけは、常に裏で動いていてほしいので、先に起動しておく
-    this.scene.run('UIScene');
+// ▼▼▼【このブロックを新しく追加】▼▼▼
+// --- ゲームプレイで使う可能性のあるシーンも、ここで全て登録しておく ---
+if (!this.scene.get('JumpScene')) {
+    this.scene.add('JumpScene', JumpScene, false);
+}
+// if (!this.scene.get('BattleScene')) { this.scene.add('BattleScene', BattleScene, false); }
+// ...
+console.log("[SystemScene] All dynamic scenes have been added to the scene manager.");
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+// 5b. UISceneだけは先に起動しておく
+this.scene.run('UIScene');
 
-// 5c. UISceneが「本当に」準備完了するのを待ってから、ゲームフローを開始する
+// 5c. UISceneの準備完了を待ってから、ゲームフローを開始する
 this.scene.get('UIScene').events.once('scene-ready', () => {
-    console.log('%c[SystemScene] Handshake successful! UIScene is ready. Starting game flow.', 'color: #2196F3; font-weight: bold;');
-    
-    // UISceneの準備ができてから、ゲームの初期ステートに遷移する
     this.transitionToState(this.gameFlow.initialState);
 });
 // --------------------------------------------------------------------
