@@ -1,45 +1,32 @@
 {
-  "initialState": "Novel",
+  "initialState": "Title",
   "states": {
-    "Novel": {
-      "onEnter": [],
-      "onExit": [
-        {
-          "type": "stop_scene",
-          "params": {
-            "sceneKey": "GameScene"
-          }
-        }
-      ],
-      "transitions": [
-        {
-          "event": "start_gameplay",
-          "target": "Gameplay"
-        }
-      ]
-    },
-    "Gameplay": {
+    "Title": {
+      "comment": "タイトル画面の状態",
       "onEnter": [
         {
           "type": "run_scene",
-          "params": {
-            "sceneKey": "JumpScene"
-          }
-        }
-      ],
-      "onExit": [
-        {
-          "type": "stop_scene",
-          "params": {
-            "sceneKey": "JumpScene"
-          }
+          "params": { "sceneKey": "GameScene" }
         }
       ],
       "transitions": [
-        {
-          "event": "return_to_novel",
-          "target": "Novel"
-        }
+        { "event": "start_game", "to": "Gameplay" }
+      ]
+    },
+    "Gameplay": {
+      "comment": "メインのゲームプレイ状態",
+      "onEnter": [],
+      "onExit": [],
+      "transitions": [
+        { "event": "open_main_menu", "to": "MainMenu" }
+      ]
+    },
+    "MainMenu": {
+      "comment": "ポーズメニューが開いている状態",
+      "onEnter": [],
+      "onExit": [],
+      "transitions": [
+        { "event": "close_menu", "to": "Gameplay" }
       ]
     }
   }

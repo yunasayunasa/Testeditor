@@ -48,7 +48,7 @@ import load_game from './load_game.js';
 import call_component_method from './call_component_method.js';
 import close_menu from './close_menu.js'; 
 import open_menu from './open_menu.js'; 
-
+import run_scene from './run_scene.js'; 
 
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
@@ -98,8 +98,8 @@ export const eventTagHandlers = {
 'close_menu':close_menu,
 'open_menu':open_menu,
 'save_game':save_game,
-'load_game':load_game
-
+'load_game':load_game,
+'run_scene':run_scene
 
 
 };
