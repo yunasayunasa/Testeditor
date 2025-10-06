@@ -53,10 +53,20 @@ export default class SystemScene extends Phaser.Scene {
             }
         }
     }
-    init(data) {
-        if (data && data.initialGameData) {
-            this.initialGameData = data.initialGameData;
+       init(data) {
+        // PreloadSceneから渡されたinitialGameDataが存在するかチェック
+        if (data && data.initialGameData && data.initialGameData.charaDefs) {
+            // 受け取ったキャラクター定義を、自身のプロパティに即座に保存する
+            this.globalCharaDefs = data.initialGameData.charaDefs;
+            console.log(`%c[SystemScene] Global character definitions received and stored successfully.`, 'color: lightgreen; font-weight: bold;');
+        } else {
+            // データが渡されなかった場合も、空のオブジェクトで初期化しておく
+            this.globalCharaDefs = {};
+            console.warn('[SystemScene] No initial game data or charaDefs found. Initializing with empty definitions.');
         }
+
+        // 古いinitialGameDataプロパティはもはや不要
+        this.initialGameData = null;
     }
 
     // src/scenes/SystemScene.js
