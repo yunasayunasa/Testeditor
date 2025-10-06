@@ -85,14 +85,14 @@ export default class SystemScene extends Phaser.Scene {
         this.initializeEditor();
          
         // --- 5. 初期ステートの onEnter を実行してゲームを開始 ---
-        if (this.initialGameData) {
+    /*    if (this.initialGameData) {
             this.globalCharaDefs = this.initialGameData.charaDefs;
             // ★ 初期ステートに遷移するリクエストを自分自身に送る
             this.handleGameFlowEvent('initialize_game', {
                 startScenario: this.initialGameData.startScenario,
                 charaDefs: this.globalCharaDefs
             });
-        }
+        }*/
         this.executeStateActions('onEnter', this.gameState);
     }
     // in src/scenes/SystemScene.js (クラス内に新しく追加)
