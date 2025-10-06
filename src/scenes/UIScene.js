@@ -155,7 +155,9 @@ async buildUiFromLayout(layoutData) {
 
             // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
             uiElement.setData('registryKey', registryKey);
-
+// ★ uiRegistryまたはlayoutから、グループ情報を取得してsetDataする
+const groups = layout.group || (uiRegistry[registryKey] ? uiRegistry[registryKey].groups : []);
+uiElement.setData('group', groups);
             // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
             if (layout.components) {
                 uiElement.setData('components', layout.components); // まず永続化データを保存
