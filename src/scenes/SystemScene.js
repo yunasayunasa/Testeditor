@@ -123,12 +123,9 @@ create() {
 
     // 5b. UISceneだけは、常に裏で動いていてほしいので、先に起動しておく
     this.scene.run('UIScene');
-    // UISceneの準備完了を待つ必要があれば、イベントリスナーを使う
-    this.scene.get('UIScene').events.once('scene-ready', () => {
-        console.log('[SystemScene] UIScene is ready. Starting game flow.');
-        // 5c. UISceneの準備ができてから、ゲームフローを開始する
-        this.transitionToState(this.gameFlow.initialState);
-    });
+
+// 5c. UISceneの準備完了を待つ必要はもはやない。ゲームフローを即座に開始する。
+this.transitionToState(this.gameFlow.initialState);
 }
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
