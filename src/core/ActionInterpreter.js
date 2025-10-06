@@ -5,7 +5,7 @@
 export default class ActionInterpreter {
     constructor(game) { // ★ Phaser.Game のインスタンスを受け取る
         this.game = game;
-        this.tagHandlers = eventTagHandlers;
+     
         
         // ★ 実行のたびに更新されるプロパティ
         this.scene = null;
