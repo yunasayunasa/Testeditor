@@ -151,7 +151,7 @@ create() {
 _startInitialGame(initialData) {
     this.globalCharaDefs = initialData.charaDefs;
     console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
-
+console.log(`[SystemScene] グローバルキャラクター定義を保持しました。`);
     // ▼▼▼【ここからが修正箇所です】▼▼▼
 
     // --- UIScene専用の設定オブジェクトを定義 ---
