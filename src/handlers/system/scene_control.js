@@ -18,19 +18,14 @@ function getSystemScene(interpreter) {
 async function run_scene(interpreter, params) {
     const systemScene = getSystemScene(interpreter);
     const sceneKey = params.sceneKey;
-    let sceneParams = params.params || {};
 
     if (systemScene && sceneKey) {
-        // ▼▼▼【ここからが改造部分】▼▼▼
-        // パラメータの中身をチェックし、特別なキーワードを解決する
-        if (sceneParams.charaDefs === '@global') {
-            // SystemSceneが保持しているグローバルなcharaDefsに置き換える
-            sceneParams.charaDefs = systemScene.globalCharaDefs || {};
-        }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        console.log(`[VSL:run_scene] Requesting to run scene: '${sceneKey}' with params:`, sceneParams);
-        systemScene.scene.run(sceneKey, sceneParams);
+        console.log(`[VSL:run_scene] Relaying 'request-run-scene' event to SystemScene for scene: '${sceneKey}'`);
+        // ★★★ シーンを直接runするのをやめ、SystemSceneにイベントを投げるだけにする ★★★
+        systemScene.events.emit('request-run-scene', {
+            sceneKey: sceneKey,
+            params: params.params || {}
+        });
     }
 }
 run_scene.define = {

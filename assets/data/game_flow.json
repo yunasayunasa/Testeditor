@@ -2,18 +2,7 @@
   "initialState": "Novel",
   "states": {
     "Novel": {
-      "onEnter": [
-        {
-          "type": "run_scene",
-          "params": {
-            "sceneKey": "GameScene",
-            "params": {
-               "startScenario": "test",
-               "charaDefs": "@global"
-            }
-          }
-        }
-      ],
+      "onEnter": [],
       "onExit": [
         {
           "type": "stop_scene",

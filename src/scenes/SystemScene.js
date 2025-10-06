@@ -100,7 +100,7 @@ create() {
     this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
     this.events.on('request-close-menu', this.handleClosePauseMenu, this);
     this.events.on('request-time-resume', () => { this.isTimeStopped = false; });
-    
+    this.events.on('request-run-scene', (data) => this._startAndMonitorScene(data.sceneKey, data.params));
     // --- 4. エディタ関連の初期化 ---
     this.initializeEditor();
      
@@ -131,7 +131,19 @@ this.scene.run('UIScene');
 
 // 5c. UISceneの準備完了を待ってから、ゲームフローを開始する
 this.scene.get('UIScene').events.once('scene-ready', () => {
-    this.transitionToState(this.gameFlow.initialState);
+    console.log('[SystemScene] UIScene is ready. Starting game flow.');
+    
+    // ★★★ transitionToStateではなく、_handleSimpleTransitionを直接呼び出す ★★★
+    this._handleSimpleTransition({
+        from: null, // 最初のシーンなので'from'はない
+        to: 'GameScene', // ★ game_flow.jsonに合わせる
+        params: {
+            startScenario: 'test', // ★ game_flow.jsonに合わせる
+            charaDefs: this.globalCharaDefs
+        }
+    });
+    
+    this.currentState = 'Novel'; // ★ game_flow.jsonに合わせる
 });
 // --------------------------------------------------------------------
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -140,6 +152,17 @@ this.scene.get('UIScene').events.once('scene-ready', () => {
 // this.transitionToState(this.gameFlow.initialState); 
 }
 
+
+/**
+ * ★★★ 新設：UIの状態を更新するための、唯一の公式なメソッド ★★★
+ */
+_updateUiForScene(sceneKey) {
+    const uiScene = this.scene.get('UIScene');
+    if (uiScene && typeof uiScene.onSceneTransition === 'function') {
+        console.log(`[SystemScene] Notifying UIScene about transition to '${sceneKey}'.`);
+        uiScene.onSceneTransition(sceneKey);
+    }
+}
 
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
@@ -292,34 +315,24 @@ handleClosePauseMenu(data) {
      * ★★★ 最終FIX版 ★★★
      * [transition_scene]などから呼ばれる、最も基本的なシーン遷移
      */
-   // in src/scenes/SystemScene.js
-
+  
 _handleSimpleTransition(data) {
     const { from, to, params } = data;
 
-    // ★★★ 状態の更新は、遷移が「開始」されたこのタイミングで行うのが正しい ★★★
-    this.gameState = (to === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
+    // ★★★ 1. 遷移先のUIに「先に」切り替える ★★★
+    this._updateUiForScene(to);
+
+    this.gameState = to; // シンプルに
     this.sceneStack = [to];
-    console.log(`[State Logger] Game state changing to: ${this.gameState}`);
 
-    // --- ここからが、安全なシーン切り替えのロジック ---
     const sceneToStop = this.scene.get(from);
-
     if (sceneToStop && sceneToStop.scene.isActive() && from !== 'UIScene') {
-        
-        // 1. 停止対象シーンの 'shutdown' イベントを一度だけリッスン
         sceneToStop.events.once('shutdown', () => {
             console.log(`[SystemScene] '${from}' has shut down. Now starting '${to}'.`);
-            
-            // 2. shutdown完了後に、新しいシーンを開始
             this._startAndMonitorScene(to, params);
         });
-
-        // 3. シーンの停止を命令
         this.scene.stop(from);
-
     } else {
-        // 停止すべきシーンがない場合（最初の起動など）は、直接新しいシーンを開始
         this._startAndMonitorScene(to, params);
     }
 }
