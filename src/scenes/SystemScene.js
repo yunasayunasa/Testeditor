@@ -124,9 +124,19 @@ create() {
     // 5b. UISceneだけは、常に裏で動いていてほしいので、先に起動しておく
     this.scene.run('UIScene');
 
-// 5c. UISceneの準備完了を待つ必要はもはやない。ゲームフローを即座に開始する。
-this.transitionToState(this.gameFlow.initialState);
-}
+
+// 5c. UISceneが「本当に」準備完了するのを待ってから、ゲームフローを開始する
+this.scene.get('UIScene').events.once('scene-ready', () => {
+    console.log('%c[SystemScene] Handshake successful! UIScene is ready. Starting game flow.', 'color: #2196F3; font-weight: bold;');
+    
+    // UISceneの準備ができてから、ゲームの初期ステートに遷移する
+    this.transitionToState(this.gameFlow.initialState);
+});
+// --------------------------------------------------------------------
+// ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+// ▼▼▼【この行は削除してください】▼▼▼
+// this.transitionToState(this.gameFlow.initialState); 
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
