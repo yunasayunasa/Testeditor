@@ -5,10 +5,16 @@
       "comment": "タイトル画面の状態",
       "onEnter": [
         {
-          "type": "run_scene",
-          "params": { "sceneKey": "GameScene" }
+          "type": "run_scene", 
+      "params": { 
+        "sceneKey": "GameScene",
+        
+        "params": {
+          "startScenario": "scene1"
         }
-      ],
+      } 
+    }
+  ],
       "transitions": [
         { "event": "start_game", "to": "Gameplay" }
       ]

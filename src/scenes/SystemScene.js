@@ -78,7 +78,7 @@ export default class SystemScene extends Phaser.Scene {
         // --- 3. イベントリスナーを「一つ」に統一 ---
         // 古いリスナーは全て不要になる
         this.events.on('request_game_flow_event', this.handleGameFlowEvent, this);
-        
+        this.events.on('request-simple-transition', this._handleSimpleTransition, this);
         console.log(`[GameFlow] Initial state set to: '${this.gameState}'`);
 
         // --- 4. エディタ関連の初期化 (変更なし) ---
@@ -93,6 +93,7 @@ export default class SystemScene extends Phaser.Scene {
                 charaDefs: this.globalCharaDefs
             });
         }
+        this.executeStateActions('onEnter', this.gameState);
     }
     // in src/scenes/SystemScene.js (クラス内に新しく追加)
 
@@ -133,14 +134,12 @@ handleGameFlowEvent(eventName, eventData = {}) {
  * @param {string} stateName - 状態の名前
  * @param {object} contextData - VSL内で参照できる追加データ
  */
-executeStateActions(hook, stateName, contextData = {}) {
+executeStateActions(hook, stateName) {
     const actions = this.gameFlow.states[stateName]?.[hook];
-
     if (actions && Array.isArray(actions) && this.actionInterpreter) {
-        // ActionInterpreter.run は GameObject を第一引数に取るので、
-        // SystemScene自身をダミーのGameObjectとして渡す
-        // VSL内で self, source, target を使えるように context を渡す
-        this.actionInterpreter.run(this, { nodes: actions }, contextData);
+        // ★ ActionInterpreterの第一引数には、GameObjectではなくGameインスタンスを渡す方が安全かもしれない
+        //    が、まずは interpreter.game から辿れるようにしたので、thisで試す
+        this.actionInterpreter.run(this, { nodes: actions });
     }
 }
 
