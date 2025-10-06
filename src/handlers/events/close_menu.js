@@ -1,10 +1,7 @@
 // src/handlers/events/close_menu.js
-
+import EngineAPI from '../../core/EngineAPI.js';
 export default async function close_menu(interpreter) {
-    const systemScene = interpreter.scene.scene.get('SystemScene');
-    systemScene.events.emit('request-close-menu', {
-        from: interpreter.scene.scene.key // 自分自身(OverlayScene)のキーを渡す
-    });
+    EngineAPI.requestCloseMenu(interpreter.scene.scene.key);
 }
 
 close_menu.define = {
