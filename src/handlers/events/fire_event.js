@@ -1,12 +1,6 @@
-
 // src/handlers/events/fire_event.js
+import EngineAPI from '../../core/EngineAPI.js'; // ★ 1. インポート
 
-/**
- * [fire_event] アクションタグ
- * SystemScene経由で、グローバルなカスタムイベントを発行します。
- * @param {ActionInterpreter} interpreter
- * @param {object} params
- */
 export default async function fire_event(interpreter, params) {
     const eventName = params.name;
     if (!eventName) {
@@ -14,7 +8,6 @@ export default async function fire_event(interpreter, params) {
         return;
     }
 
-    // ★ パラメータは、安全に評価してから渡す
     const stateManager = interpreter.scene.registry.get('stateManager');
     let eventParams = params.params;
     if (stateManager && typeof eventParams === 'string') {
@@ -25,8 +18,10 @@ export default async function fire_event(interpreter, params) {
         }
     }
     
-    interpreter.scene.scene.get('SystemScene').events.emit(eventName, eventParams);
-    console.log(`[fire_event] Event '${eventName}' fired with params:`, eventParams);
+     // ★ 2. EngineAPIを呼び出す
+    EngineAPI.fireEvent(eventName, eventParams);
+    
+    console.log(`[fire_event] Event '${eventName}' fired via EngineAPI with params:`, eventParams);
 }
 
 fire_event.define = {

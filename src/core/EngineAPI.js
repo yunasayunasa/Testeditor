@@ -102,6 +102,19 @@ runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
         });
     });
 }
+
+// src/core/EngineAPI.js
+
+/**
+ * システム全体にカスタムイベントを発行する。
+ * @param {string} eventName 発行するイベントの名前
+ * @param {any} [data=null] イベントに渡すデータ
+ */
+fireEvent(eventName, data = null) {
+    console.log(`%c[EngineAPI] Request received: fireEvent (name: ${eventName})`, 'color: #2196F3; font-weight: bold;');
+    if (!this.isReady()) return;
+    this.systemScene.events.emit(eventName, data);
+}
 }
 
 // シングルトンインスタンスを作成してエクスポート
