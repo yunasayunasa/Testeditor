@@ -1,5 +1,6 @@
 import SoundManager from '../core/SoundManager.js';
 import EditorUI from '../editor/EditorUI.js';
+import EngineAPI from '../core/EngineAPI.js';
 import UIScene from './UIScene.js';
 import GameScene from './GameScene.js'; 
 import OverlayScene from './OverlayScene.js'; 
@@ -72,7 +73,8 @@ export default class SystemScene extends Phaser.Scene {
 console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
 
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
-        
+        EngineAPI.init(this); // ★★★ この行を追加 ★★★
+    console.log('[SystemScene] EngineAPI has been initialized and is ready.');
        // --- 1. コアサービスの初期化 ---
         const soundManager = new SoundManager(this.game);
         this.registry.set('soundManager', soundManager);
