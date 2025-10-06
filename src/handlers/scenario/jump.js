@@ -7,6 +7,7 @@
  * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
  * @param {object} params - { storage, target, params }
  */
+import EngineAPI from '../../core/EngineAPI.js'; // ★ インポート
 export default async function handleJump(manager, params) {
     
     // --- シーン間遷移の場合 ---
@@ -30,22 +31,16 @@ export default async function handleJump(manager, params) {
             }
         }
         
-        // 3. SystemSceneに遷移をリクエスト
-        const fromSceneKey = manager.scene.scene.key; 
-            manager.scene.scene.get('SystemScene').events.emit('request-simple-transition', {
-            to: toSceneKey,
-            from: fromSceneKey,
-            params: transitionParams,
-        });
+            const fromSceneKey = manager.scene.scene.key;
+        const toSceneKey = params.storage;
 
-        // 4. ScenarioManagerのループを完全に停止させ、GameSceneの責務を終了する
+        // ★★★ SystemSceneを直接呼ぶ代わりにEngineAPIを呼ぶ ★★★
+        EngineAPI.requestJump(fromSceneKey, toSceneKey, transitionParams);
+
         manager.stop();
         
-    // --- ファイル内ジャンプの場合 ---
     } else if (params.target && params.target.startsWith('*')) {
-        console.log(`[jump] ラベル[${params.target}]へジャンプします。`);
         manager.jumpTo(params.target);
-        
     } else {
         console.warn('[jump] 有効なstorage属性またはtarget属性が指定されていません。');
     }

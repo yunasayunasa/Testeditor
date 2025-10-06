@@ -1,12 +1,6 @@
 // src/handlers/events/run_scenario.js
+import EngineAPI from '../../core/EngineAPI.js'; // ★ インポート
 
-/**
- * [run_scenario] アクションタグ
- * 現在のシーンの上で、オーバーレイとしてノベルパートを再生します。
- * @param {ActionInterpreter} interpreter
- * @param {object} params
- * @returns {Promise<void>} オーバーレイが終了するまで待機
- */
 export default async function run_scenario(interpreter, params) {
     const file = params.file;
     if (!file) {
@@ -14,25 +8,16 @@ export default async function run_scenario(interpreter, params) {
         return;
     }
 
-    const block_input = params.block_input !== 'false'; // デフォルトはtrue
+    const block_input = params.block_input !== 'false';
     const scene = interpreter.scene;
-    const systemScene = scene.scene.get('SystemScene');
 
-    // ★ Promiseを使って、オーバーレイが閉じるまで、VSLの実行を「待機」させる
-    return new Promise(resolve => {
-        systemScene.events.emit('request-overlay', {
-            from: scene.scene.key,
-            scenario: file,
-            block_input: block_input
-        });
+    // ★★★ EngineAPIに処理を完全に委譲し、Promiseが解決されるのを待つだけ ★★★
+    await EngineAPI.runScenarioAsOverlay(scene.scene.key, file, block_input);
 
-        // オーバーレイが終了したことを知るためのリスナー
-        systemScene.events.once('end-overlay', () => {
-            console.log(`[run_scenario] Overlay finished. Resuming action sequence.`);
-            resolve(); // Promiseを解決し、次のノードへ進む
-        });
-    });
+    console.log(`[run_scenario] Overlay finished. Resuming action sequence.`);
 }
+// define部分は変更なし
+// ...
 
 /**
  * ★ VSLエディタ用の自己定義 ★

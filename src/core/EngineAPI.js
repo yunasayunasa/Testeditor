@@ -69,6 +69,39 @@ class EngineAPI {
         if (!this.isReady()) return;
         this.systemScene.events.emit('request-close-menu', { from: fromSceneKey });
     }
+
+    /**
+ * [jump]タグからのシーン遷移リクエストを処理する。
+ * @param {string} fromSceneKey 
+ * @param {string} toSceneKey 
+ * @param {object} [params={}] 
+ */
+requestJump(fromSceneKey, toSceneKey, params = {}) {
+    console.log(`%c[EngineAPI] Request received: jump (from: ${fromSceneKey}, to: ${toSceneKey})`, 'color: #2196F3; font-weight: bold;');
+    if (!this.isReady()) return;
+    this.systemScene.events.emit('request-simple-transition', {
+        from: fromSceneKey,
+        to: toSceneKey,
+        params: params,
+    });
+}
+
+runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
+    console.log(`%c[EngineAPI] Request received: runScenarioAsOverlay (from: ${fromSceneKey}, file: ${scenarioFile})`, 'color: #2196F3; font-weight: bold;');
+    if (!this.isReady()) return Promise.resolve(); // APIが準備できてなければ即座に終了
+
+    return new Promise(resolve => {
+        this.systemScene.events.emit('request-overlay', {
+            from: fromSceneKey,
+            scenario: scenarioFile,
+            block_input: blockInput
+        });
+
+        this.systemScene.events.once('end-overlay', () => {
+            resolve();
+        });
+    });
+}
 }
 
 // シングルトンインスタンスを作成してエクスポート
