@@ -8,7 +8,8 @@
           "params": {
             "sceneKey": "GameScene",
             "params": {
-               "startScenario": "test"
+               "startScenario": "test",
+               "charaDefs": "@global"
             }
           }
         }

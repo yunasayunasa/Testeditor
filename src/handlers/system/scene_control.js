@@ -13,18 +13,24 @@ function getSystemScene(interpreter) {
 }
 
 // --- VSL Tag Handlers ---
+// src/handlers/system/scene_control.js
 
-/**
- * [run_scene]: 指定されたシーンを開始(run)する
- */
 async function run_scene(interpreter, params) {
     const systemScene = getSystemScene(interpreter);
     const sceneKey = params.sceneKey;
+    let sceneParams = params.params || {};
 
     if (systemScene && sceneKey) {
-        console.log(`[VSL:run_scene] Requesting to run scene: '${sceneKey}'`);
-        // SystemSceneの既存のメソッドを呼び出すだけで良い
-        systemScene.scene.run(sceneKey, params.params || {});
+        // ▼▼▼【ここからが改造部分】▼▼▼
+        // パラメータの中身をチェックし、特別なキーワードを解決する
+        if (sceneParams.charaDefs === '@global') {
+            // SystemSceneが保持しているグローバルなcharaDefsに置き換える
+            sceneParams.charaDefs = systemScene.globalCharaDefs || {};
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        console.log(`[VSL:run_scene] Requesting to run scene: '${sceneKey}' with params:`, sceneParams);
+        systemScene.scene.run(sceneKey, sceneParams);
     }
 }
 run_scene.define = {
