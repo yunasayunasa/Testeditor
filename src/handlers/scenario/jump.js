@@ -1,36 +1,47 @@
-// src/handlers/scenario/jump.js
-
+/**
+ * [jump] タグ - シーン遷移 / ラベルジャンプ
+ * 
+ * 他のPhaserシーンへ遷移するか、現在のシナリオファイル内のラベルへジャンプします。
+ * シーン遷移の際は、オートセーブを実行し、パラメータを渡すことができます。
+ * 
+ * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
+ * @param {object} params - { storage, target, params }
+ */
 export default async function handleJump(manager, params) {
     
+    // --- シーン間遷移の場合 ---
     if (params.storage) {
         const toSceneKey = params.storage;
-        
-        // ★★★ "start_gameplay" のような、game_flow.jsonに定義したイベント名を決定する ★★★
-        let eventName = '';
-        if (toSceneKey === 'JumpScene') {
-            eventName = 'start_gameplay';
-        }
-        // 他のシーンへの遷移もここに追加
-        // else if (toSceneKey === 'AnotherScene') { eventName = 'goto_another'; }
+        console.log(`[jump] シーン[${toSceneKey}]へ遷移します。`);
 
-        if (eventName) {
-            console.log(`[jump] ゲームフローステート遷移イベント '${eventName}' を発行します。`);
-            
-            // 1. オートセーブを実行
-            manager.scene.performSave(0);
+        // 1. オートセーブを実行
+        manager.scene.performSave(0);
 
-            // 2. SystemSceneに、新しい命令系統でイベントを発行
-            manager.scene.scene.get('SystemScene').events.emit('request_game_flow_event', eventName);
-
-            // 3. ScenarioManagerのループを完全に停止させる
-            manager.stop();
-
-        } else {
-            console.warn(`[jump] No game flow event defined for storage: '${params.storage}'`);
+        // 2. 遷移先に渡すパラメータを解決
+        let transitionParams = {};
+        if (params.params) {
+            try {
+                // params="{ key1: f.value1, key2: 'some_string' }" のような形式を想定
+                // StateManagerのgetValueを使って、安全にオブジェクトを生成する
+                transitionParams = manager.stateManager.getValue(`(${params.params})`);
+            } catch (e) {
+                console.error(`[jump] params属性の解析に失敗しました: "${params.params}"`, e);
+                transitionParams = {}; // 失敗した場合は空のオブジェクトにする
+            }
         }
         
+        // 3. SystemSceneに遷移をリクエスト
+        const fromSceneKey = manager.scene.scene.key; 
+            manager.scene.scene.get('SystemScene').events.emit('request-simple-transition', {
+            to: toSceneKey,
+            from: fromSceneKey,
+            params: transitionParams,
+        });
+
+        // 4. ScenarioManagerのループを完全に停止させ、GameSceneの責務を終了する
+        manager.stop();
         
-    // --- ファイル内ジャンプの場合（変更なし）---
+    // --- ファイル内ジャンプの場合 ---
     } else if (params.target && params.target.startsWith('*')) {
         console.log(`[jump] ラベル[${params.target}]へジャンプします。`);
         manager.jumpTo(params.target);
