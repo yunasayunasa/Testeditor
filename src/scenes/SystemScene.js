@@ -137,6 +137,9 @@ this.scene.get('UIScene').events.once('scene-ready', () => {
 
 // ▼▼▼【この行は削除してください】▼▼▼
 // this.transitionToState(this.gameFlow.initialState); 
+}
+
+
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
         const currentURL = window.location.href;
