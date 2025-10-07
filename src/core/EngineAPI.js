@@ -51,48 +51,32 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         this.transitionManager.handleReturnToNovel({ from: fromSceneKey, params });
     }
 
-    /**
-     * ポーズメニューのようなオーバーレイメニューの表示をリクエストする。
-     * @param {string} fromSceneKey 呼び出し元のシーンキー
-     * @param {string} layoutKey 表示するメニューのレイアウトキー
-     * @param {object} [params={}] メニューシーンに渡す追加データ
-     */
-    requestPauseMenu(fromSceneKey, layoutKey, params = {}) {
-        if (!this.isReady()) return;
-        this.systemScene.events.emit('request-pause-menu', { from: fromSceneKey, layoutKey, params });
-    }
     
-    /**
-     * 表示中のメニューを閉じるようリクエストする。
-     * @param {string} fromSceneKey 呼び出し元（メニューシーン自身）のキー
-     */
-    requestCloseMenu(fromSceneKey) {
-        console.log(`%c[EngineAPI] Request received: closeMenu (from: ${fromSceneKey})`, 'color: #2196F3; font-weight: bold;');
-        if (!this.isReady()) return;
-        this.systemScene.events.emit('request-close-menu', { from: fromSceneKey });
-    }
+// 'open_menu' タグから呼ばれる
+requestPauseMenu(fromSceneKey, layoutKey, params = {}) {
+    if (!this.overlayManager) return;
+    this.overlayManager.openMenuOverlay({ from: fromSceneKey, layoutKey, params });
+}
 
-   
-
+// 'run_scenario' タグから呼ばれる
 runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
-    console.log(`%c[EngineAPI] Request received: runScenarioAsOverlay (from: ${fromSceneKey}, file: ${scenarioFile})`, 'color: #2196F3; font-weight: bold;');
-    if (!this.isReady()) return Promise.resolve(); // APIが準備できてなければ即座に終了
-
+    if (!this.overlayManager) return Promise.resolve();
     return new Promise(resolve => {
-        this.systemScene.events.emit('request-overlay', {
+        this.overlayManager.openNovelOverlay({
             from: fromSceneKey,
             scenario: scenarioFile,
             block_input: blockInput
         });
-
-        this.systemScene.events.once('end-overlay', () => {
-            resolve();
-        });
+        this.systemScene.events.once('overlay-closed', () => resolve());
     });
 }
 
-// src/core/EngineAPI.js
-
+// 'close_menu' や 'overlay_end' タグから呼ばれる
+requestCloseOverlay(fromSceneKey, overlayData = {}) {
+    if (!this.overlayManager) return;
+    // dataをマージして、必要な情報を全て渡す
+    this.overlayManager.closeOverlay({ from: fromSceneKey, ...overlayData });
+}
 /**
  * システム全体にカスタムイベントを発行する。
  * @param {string} eventName 発行するイベントの名前
@@ -120,16 +104,6 @@ requestJump(fromSceneKey, toSceneKey, params = {}) {
     }
 
 
-/**
- * 現在のオーバーレイシーンを終了するようリクエストする。
- * @param {string} fromSceneKey オーバーレイシーン自身のキー
- */
-requestEndOverlay(fromSceneKey) {
-    console.log(`%c[EngineAPI] Request received: endOverlay (from: ${fromSceneKey})`, 'color: #2196F3; font-weight: bold;');
-    if (!this.isReady()) return;
-    // ★ SystemSceneの 'end-overlay' イベントを呼び出す
-    this.systemScene.events.emit('end-overlay', { from: fromSceneKey });
-}
 }
 
 // シングルトンインスタンスを作成してエクスポート
