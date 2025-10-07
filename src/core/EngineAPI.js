@@ -22,6 +22,7 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         this.systemScene = systemSceneInstance;
         // ★ SystemSceneが設立した専門部署を、司令塔も把握する
         this.transitionManager = systemSceneInstance.transitionManager;
+            this.overlayManager = systemSceneInstance.overlayManager;
     }
 
     /**
