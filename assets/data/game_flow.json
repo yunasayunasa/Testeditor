@@ -1,55 +1,36 @@
 {
   "initialState": "Title",
-
   "states": {
 
     "Title": {
-      "comment": "タイトル画面の状態。起動時にTitleSceneを開始する。",
-      "onEnter": [
-        {
-          "action": "transitionTo",
-          "params": { 
-            "scene": "TitleScene"
+      "onEnter": [ { "action": "transitionTo", "params": { "scene": "TitleScene" } } ],
+      "transitions": [
+       
+        { 
+          "event": "START_GAME", 
+          "to": "InGame",
+          "action": { 
+            "type": "transitionTo", 
+            "params": { "scene": "GameScene", "scenario": "scene1" }
           }
         }
-      ],
-      "transitions": [
-        { "event": "START_GAME", "to": "InGame" }
       ]
     },
 
     "InGame": {
-      "comment": "メインのゲームプレイ状態。GameSceneやJumpSceneなどがアクティブ。",
-      "onEnter": [
-        {
-          "action": "transitionTo",
-          "params": { 
-            "scene": "GameScene",
-            "scenario": "test"
-          }
-        }
-      ],
-      "onExit": [],
+      "comment": "InGame状態自体は、onEnterで何もしない。ただ『プレイ中』であることを示すだけ",
+      "onEnter": [], 
       "transitions": [
-        { "event": "OPEN_PAUSE_MENU", "to": "Paused" },
-        { "event": "GAME_OVER", "to": "GameOver" }
+        { "event": "OPEN_PAUSE_MENU", "to": "Paused" }
       ]
     },
 
     "Paused": {
-      "comment": "ポーズメニューが開いている状態。背後のシーンはポーズされている。",
       "onEnter": [
-        { 
-          "action": "openMenuOverlay",
-          "params": {
-            "layout": "pause_menu"
-          }
-        }
+        { "action": "pauseScene" } 
       ],
       "onExit": [
-        {
-          "action": "closeOverlay"
-        }
+        { "action": "resumeScene" } 
       ],
       "transitions": [
         { "event": "CLOSE_PAUSE_MENU", "to": "InGame" }

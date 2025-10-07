@@ -38,11 +38,14 @@ export default class GameFlowManager {
         if (!currentStateDefinition || !currentStateDefinition.transitions) return;
 
         const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
-        if (transition) {
-            console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
-            this.transitionTo(transition.to);
+    if (transition) {
+        // ★ 遷移時に実行するアクションがあれば、先に実行する
+        if (transition.action) {
+            this.executeActions([transition.action]); // 配列にラップして渡す
         }
+        this.transitionTo(transition.to);
     }
+}
 
     /**
      * 指定された状態へ遷移する。
@@ -78,8 +81,8 @@ export default class GameFlowManager {
         for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
-            switch (action.action) {
-                case 'transitionTo': { // ★ スコープを作るために {} を追加
+           switch (action.action) { // ★ action.type ではなく action.action に統一
+            case 'transitionTo':
                     const fromScene = EngineAPI.activeGameSceneKey || 'SystemScene';
                     const toSceneKey = action.params.scene;
 
@@ -111,8 +114,22 @@ export default class GameFlowManager {
                     EngineAPI.requestCloseOverlay('OverlayScene');
                     break;
                 
-                // 将来、ここへアクションを追加していく (例: playBgm, stopTimeなど)
+                // ▼▼▼ 新しいアクションを追加 ▼▼▼
+            case 'pauseScene': {
+                const activeScene = EngineAPI.activeGameSceneKey;
+                if (activeScene) {
+                    // ここで OverlayManager を呼ぶのではなく、EngineAPIに依頼するのが美しい
+                    EngineAPI.requestPauseMenu(activeScene, 'pause_menu');
+                }
+                break;
+            }
+
+            case 'resumeScene': {
+                // EngineAPIに依頼するのが美しい
+                EngineAPI.requestCloseOverlay('OverlayScene');
+                break;
             }
         }
     }
+}
 }
