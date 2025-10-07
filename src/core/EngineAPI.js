@@ -113,8 +113,20 @@ requestReturnToNovel(fromSceneKey, params = {}) { // ★ params引数を追加
     if (!this.isReady()) return;
     this.systemScene.events.emit('return-to-novel', { from: fromSceneKey, params }); // ★ paramsを渡す
 }
-
 // src/core/EngineAPI.js
+
+/**
+ * [jump]タグからの特別なシーン遷移リクエストを処理する。
+ * @param {string} fromSceneKey 
+ * @param {string} toSceneKey 
+ * @param {object} [params={}] 
+ */
+requestJump(fromSceneKey, toSceneKey, params = {}) {
+    console.log(`%c[EngineAPI] Request received: JUMP (special handling for ScenarioManager)`, 'color: #FFC107; font-weight: bold;');
+    if (!this.transitionManager) return;
+    // ★ SceneTransitionManagerの "新しい専用メソッド" を呼び出す
+    this.transitionManager.handleJumpTransition({ from: fromSceneKey, to: toSceneKey, params });
+}
 
 /**
  * 現在のオーバーレイシーンを終了するようリクエストする。
