@@ -1,38 +1,74 @@
 {
   "initialState": "Title",
+
   "states": {
+
     "Title": {
-      "comment": "タイトル画面の状態",
+      "comment": "タイトル画面の状態。起動時にTitleSceneを開始する。",
       "onEnter": [
         {
-          "type": "run_scene", 
-      "params": { 
-        "sceneKey": "GameScene",
-        
-        "params": {
-          "startScenario": "scene1"
+          "action": "transitionTo",
+          "params": { 
+            "scene": "TitleScene"
+          }
         }
-      } 
-    }
-  ],
+      ],
       "transitions": [
-        { "event": "start_game", "to": "Gameplay" }
+        { "event": "START_GAME", "to": "InGame" }
       ]
     },
-    "Gameplay": {
-      "comment": "メインのゲームプレイ状態",
-      "onEnter": [],
+
+    "InGame": {
+      "comment": "メインのゲームプレイ状態。GameSceneやJumpSceneなどがアクティブ。",
+      "onEnter": [
+        {
+          "action": "transitionTo",
+          "params": { 
+            "scene": "GameScene",
+            "scenario": "scene1"
+          }
+        }
+      ],
       "onExit": [],
       "transitions": [
-        { "event": "open_main_menu", "to": "MainMenu" }
+        { "event": "OPEN_PAUSE_MENU", "to": "Paused" },
+        { "event": "GAME_OVER", "to": "GameOver" }
       ]
     },
-    "MainMenu": {
-      "comment": "ポーズメニューが開いている状態",
-      "onEnter": [],
-      "onExit": [],
+
+    "Paused": {
+      "comment": "ポーズメニューが開いている状態。背後のシーンはポーズされている。",
+      "onEnter": [
+        { 
+          "action": "openMenuOverlay",
+          "params": {
+            "layout": "pause_menu"
+          }
+        }
+      ],
+      "onExit": [
+        {
+          "action": "closeOverlay"
+        }
+      ],
       "transitions": [
-        { "event": "close_menu", "to": "Gameplay" }
+        { "event": "CLOSE_PAUSE_MENU", "to": "InGame" }
+      ]
+    },
+
+    "GameOver": {
+      "comment": "ゲームオーバー画面が表示されている状態。",
+      "onEnter": [
+        {
+          "action": "transitionTo",
+          "params": {
+            "scene": "GameOverScene"
+          }
+        }
+      ],
+      "transitions": [
+        { "event": "RESTART_GAME", "to": "InGame" },
+        { "event": "RETURN_TO_TITLE", "to": "Title" }
       ]
     }
   }

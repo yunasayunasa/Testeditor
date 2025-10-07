@@ -14,6 +14,7 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         this.overlayManager = null;
             /** @type {import('./TimeManager.js').default | null} */
         this.timeManager = null; // ★ プロパティ追加
+        this.gameFlowManager = null;
     }
 
     /**
@@ -27,6 +28,17 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
             this.overlayManager = systemSceneInstance.overlayManager;
             this.timeManager = systemSceneInstance.timeManager;
     }
+
+        /**
+     * ゲームフローの状態遷移を要求するイベントを発行する。
+     * @param {string} eventName 
+     */
+    fireGameFlowEvent(eventName) {
+        console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
+        if (!this.gameFlowManager) return;
+        this.gameFlowManager.handleEvent(eventName);
+    }
+}
  /**
      * 現在アクティブな最前面のゲームプレイシーンのキーを取得する。
      * @returns {string | null}

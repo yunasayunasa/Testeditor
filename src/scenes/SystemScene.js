@@ -1,4 +1,5 @@
 import SoundManager from '../core/SoundManager.js';
+import GameFlowManager from '../core/GameFlowManager.js';
 import EditorUI from '../editor/EditorUI.js';
 import EngineAPI from '../core/EngineAPI.js';
 import UIScene from './UIScene.js';
@@ -112,12 +113,24 @@ this.overlayManager = new OverlayManager(this); // ★ 専門部署を設立
         // --- 3. エディタ関連の初期化 ---
         this.initializeEditor();
          
-        // --- 4. 初期ゲームの起動 ---
-        if (this.initialGameData) {
-            this._startInitialGame(this.initialGameData);
-        }
-        
+         // ★ 1. 経営マニュアル(JSON)をキャッシュから取得
+    const flowData = this.cache.json.get('game_flow');
+    if (flowData) {
+        // ★ 2. CEOを雇い、マニュアルを渡す
+        this.gameFlowManager = new GameFlowManager(flowData);
+        // ★ 3. EngineAPIにCEOの存在を知らせる (将来のため)
+        EngineAPI.gameFlowManager = this.gameFlowManager; 
+        // ★ 4. CEOに業務を開始させる
+        this.gameFlowManager.start();
+    } else {
+        console.error('[SystemScene] FATAL: game_flow.json not found in cache.');
     }
+
+    // ▼▼▼ 初期ゲームの起動ロジックは、GameFlowManagerが担当するので不要になる ▼▼▼
+    // if (this.initialGameData) {
+    //     this._startInitialGame(this.initialGameData);
+    // }
+}
     
     // src/scenes/SystemScene.js
 // src/scenes/SystemScene.js
