@@ -24,13 +24,15 @@
           { "event": "RUN_NOVEL_OVERLAY", "to": "NovelOverlay" }
       ]
     },
-    "Paused": {
-      "onEnter": [
-        { "type": "pauseScene" }
-      ],
-      "onExit": [
-        { "type": "resumeScene" }
-      ],
+   "Paused": {
+  "onEnter": [
+    { "type": "pauseScene" },
+    { "type": "openMenuOverlay", "params": { "layout": "pause_menu" } }
+  ],
+  "onExit": [
+    { "type": "closeOverlay" },
+    { "type": "resumeScene" }
+  ],
       "transitions": [
         { "event": "CLOSE_PAUSE_MENU", "to": "InGame" }
       ]
@@ -38,11 +40,11 @@
     "NovelOverlay": {
       "comment": "背後のシーンを停止させ、ノベルパートをオーバーレイ表示している状態",
       "onEnter": [
-        { "type": "stopTime" }, 
+        { "type": "pauseScene" }, 
         { "type": "runNovelOverlay" } 
       ],
       "onExit": [
-        { "type": "resumeTime" } 
+        { "type": "resumeScene" } 
       ],
       "transitions": [
         { "event": "END_NOVEL_OVERLAY", "to": "InGame" }

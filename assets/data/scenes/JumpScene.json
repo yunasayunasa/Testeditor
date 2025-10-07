@@ -85,7 +85,7 @@
         "nextWaypoint": "test_a",
         "isYSortable": true,
         "lastTap": 0,
-        "overlap_tartman": true,
+        "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
         "collision_mask": 4294967295
@@ -159,7 +159,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 268,
+      "x": 265,
       "y": 625,
       "depth": 625,
       "scaleX": 0.65,
@@ -284,13 +284,13 @@
         "collision_category": 2,
         "collision_mask": 4294967295,
         "overlap_checkpoint": false,
-        "overlap_next_arrow_1759845615890": true
+        "overlap_next_arrow_1759845615890": false
       }
     },
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1836,
+      "x": 1201,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -359,7 +359,7 @@
         "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": true,
+        "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
@@ -396,27 +396,28 @@
         "lastTap": 0,
         "collision_category": 1,
         "collision_mask": 4294967295,
-        "overlap_player": false
+        "overlap_player": false,
+        "overlap_yuna_angry_1759846628757": true
       }
     },
     {
-      "name": "next_arrow_1759845615890",
+      "name": "yuna_angry_1759846628757",
       "type": "Image",
-      "x": 338,
-      "y": 10,
+      "x": 507,
+      "y": 652,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 0.43,
+      "scaleY": 0.43,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
       "events": [
         {
-          "id": "event_1759845640805",
+          "id": "event_1759846676617",
           "trigger": "onOverlap_Start",
           "nodes": [
             {
-              "id": "node_1759845672389",
+              "id": "node_1759846701449",
               "type": "run_scenario",
               "params": {
                 "file": "overlay_test",
@@ -424,29 +425,29 @@
               },
               "x": 50,
               "y": 50
-            },
+            }
+          ],
+          "connections": [],
+          "targetGroup": "player"
+        },
+        {
+          "id": "event_1759846723473",
+          "trigger": "onOverlap_End",
+          "nodes": [
             {
-              "id": "node_1759845702648",
+              "id": "node_1759846728825",
               "type": "destroy",
               "params": {
                 "target": "source"
               },
               "x": 50,
-              "y": 220
+              "y": 50
             }
           ],
-          "connections": [
-            {
-              "fromNode": "node_1759845672389",
-              "fromPin": "output",
-              "toNode": "node_1759845702648",
-              "toPin": "input"
-            }
-          ],
-          "targetGroup": "player"
+          "connections": []
         }
       ],
-      "texture": "next_arrow",
+      "texture": "yuna_angry",
       "physics": {
         "isStatic": false,
         "isSensor": true,
@@ -460,8 +461,8 @@
         }
       },
       "data": {
-        "lastTap": 1759845651364
-      
+        "lastTap": 1759846629812,
+        "overlap_checkpoint": true
       }
     }
   ],

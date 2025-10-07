@@ -118,18 +118,31 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                 // ▼▼▼ 新しいアクションを追加 ▼▼▼
-            case 'pauseScene': {
+              case 'pauseScene': {
                 const activeScene = EngineAPI.activeGameSceneKey;
                 if (activeScene) {
-                    // ここで OverlayManager を呼ぶのではなく、EngineAPIに依頼するのが美しい
-                    EngineAPI.requestPauseMenu(activeScene, 'pause_menu');
+                    console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
+                    
+                    // ★ EngineAPIに新しいメソッドを追加するのが理想だが、
+                    //    今回は直接PhaserのAPIを呼んでみる
+                    const systemScene = EngineAPI.systemScene;
+                    if (systemScene) {
+                        systemScene.scene.pause(activeScene);
+                        // ポーズしたシーンをスタックに積むのはOverlayManagerの役割だったが、
+                        // ここでも行う必要がある
+                        systemScene.sceneStack.push(activeScene); 
+                    }
                 }
                 break;
             }
 
             case 'resumeScene': {
-                // EngineAPIに依頼するのが美しい
-                EngineAPI.requestCloseOverlay('OverlayScene');
+                const systemScene = EngineAPI.systemScene;
+                if (systemScene && systemScene.sceneStack.length > 0) {
+                    const sceneToResume = systemScene.sceneStack.pop();
+                    console.log(`[GameFlowManager] -> Resuming scene: ${sceneToResume}`);
+                    systemScene.scene.resume(sceneToResume);
+                }
                 break;
             }
 

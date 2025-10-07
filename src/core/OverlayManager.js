@@ -13,24 +13,11 @@ export default class OverlayManager {
      * 主にポーズメニューなどで使用。
      * @param {object} data - { from, layoutKey, params }
      */
-   openMenuOverlay(data) {
-    console.group(`%c[OverlayManager] Group: openMenuOverlay`, "color: #00BCD4;");
-    console.log(`Request data:`, data);
-    console.log(`Scene stack BEFORE pushing:`, [...this.systemScene.sceneStack]);
-
-    const { from, layoutKey, params } = data;
-    const sceneToLaunch = 'OverlayScene';
-
-    if (this.systemScene.scene.isActive(from)) {
-        this.systemScene.scene.pause(from);
-        this.systemScene.sceneStack.push(from);
-        this.systemScene.gameState = 'MENU';
-        this.systemScene.scene.launch(sceneToLaunch, { layoutKey, ...params });
-        
-        console.log(`Scene '${from}' paused.`);
-        console.log(`Scene stack AFTER pushing:`, [...this.systemScene.sceneStack]);
-    }
-    console.groupEnd();
+   // src/core/OverlayManager.js
+openMenuOverlay(data) {
+    // pauseScene や sceneStack の管理は GameFlowManager が行う
+    console.log(`%c[OverlayManager] Launching Menu Overlay (Layout: ${data.layoutKey})`, "color: #00BCD4; font-weight: bold;");
+    this.systemScene.scene.launch('OverlayScene', { layoutKey: data.layoutKey, ...data.params });
 }
 
     /**
