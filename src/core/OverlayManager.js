@@ -49,7 +49,7 @@ export default class OverlayManager {
             returnTo: from,
             inputWasBlocked: shouldBlockInput 
         });
-    }
+    }}
 
     /**
      * ★ 全てのオーバーレイに共通の「閉じる」処理 ★
