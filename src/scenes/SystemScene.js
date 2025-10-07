@@ -98,15 +98,15 @@ this.overlayManager = new OverlayManager(this); // ★ 専門部署を設立
 
     // --- 2. イベントリスナーの設定 ---
     // (SystemSceneに残っているイベントリスナー)
-    this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
+  //  this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
         // --- 2. イベントリスナーの設定 ---
 //this.scene.manager.events.on('shutdown', this.handleSceneShutdown, this);
        //  this.events.on('request-load-game', this._handleLoadGame, this); 
-          this.events.on('request-scene-transition', this._startTransition, this);
+          //this.events.on('request-scene-transition', this._startTransition, this);
        //    this.events.on('request-simple-transition', this._handleSimpleTransition, this);
 //this.events.on('return-to-novel', this._handleReturnToNovel, this);
-        this.events.on('request-overlay', this._handleRequestOverlay, this);
-        this.events.on('end-overlay', this._handleEndOverlay, this);
+        //this.events.on('request-overlay', this._handleRequestOverlay, this);
+        //this.events.on('end-overlay', this._handleEndOverlay, this);
           this.events.on('request-subscene', this._handleRequestSubScene, this);
          this.events.on('request-gamemode-toggle', (mode) => {
             const gameScene = this.scene.get('GameScene');
