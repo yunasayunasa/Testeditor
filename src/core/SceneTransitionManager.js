@@ -111,25 +111,18 @@ startInitialScene(sceneKey, params = {}) {
  * fromシーンのshutdownを待たずに、即座に次のシーンを開始する。
  * @param {object} data - { from, to, params }
  */
+// src/core/SceneTransitionManager.js
 handleJumpTransition(data) {
     console.log(`%c[SceneTransitionManager] Handling JUMP transition: ${data.from} -> ${data.to}`, "color: #FF9800; font-weight: bold;");
     const { from, to, params } = data;
 
-    // ★ gameStateの管理は行う
-    this.systemScene.gameState = 'GAMEPLAY'; // jumpは常にゲームプレイシーンへ
+    this.systemScene.gameState = 'GAMEPLAY';
     this.systemScene.sceneStack = [to];
-
-    // ▼▼▼ ここが handleSimpleTransition との決定的な違い ▼▼▼
-    // fromシーン (GameScene) の shutdown イベントを待たずに、
-    // 即座に次のシーンの起動処理を開始する。
     
-    // GameSceneは既にScenarioManagerによって停止されているので、
-    // Phaserのシーンマネージャーからも明示的に停止する。
-    if (this.systemScene.scene.isActive(from)) {
-        this.systemScene.scene.stop(from);
-    }
-
+    // ★ fromシーンの停止処理は、全てScenarioManagerに任せる。
+    // ★ ここでは何もしない。
+    
+    // ★ ただ、新しいシーンを開始するだけ。
     this._startAndMonitorScene(to, params);
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 }
 }
