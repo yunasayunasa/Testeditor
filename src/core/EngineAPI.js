@@ -10,6 +10,7 @@ class EngineAPI {
              this.systemScene = null;
         /** @type {import('./SceneTransitionManager.js').default | null} */
         this.transitionManager = null; // ★ プロパティ追加
+this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティを追加
     }
 
     /**
@@ -122,10 +123,11 @@ requestReturnToNovel(fromSceneKey, params = {}) { // ★ params引数を追加
  * @param {object} [params={}] 
  */
 requestJump(fromSceneKey, toSceneKey, params = {}) {
-    console.log(`%c[EngineAPI] Request received: JUMP (special handling for ScenarioManager)`, 'color: #FFC107; font-weight: bold;');
-    if (!this.transitionManager) return;
-    
-    this.transitionManager.handleJumpTransition({ from: fromSceneKey, to: toSceneKey, params });
+        console.log(`%c[EngineAPI] JUMP request received and PENDING. Waiting for ${fromSceneKey} to shut down.`, 'color: #FFC107; font-weight: bold;');
+        
+        // ★ すぐに実行せず、予約票として保管する
+        this.pendingJumpRequest = { to: toSceneKey, params: params };
+    }
 }
 
 /**
