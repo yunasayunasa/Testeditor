@@ -1,18 +1,17 @@
-// src/handlers/scenario/overlay_end.js
-import EngineAPI from '../../core/EngineAPI.js'; // ★ 1. インポート
+import EngineAPI from '../../core/EngineAPI.js';
 
-/**
- * [overlay_end] タグ - 現在のオーバーレイシーンを終了するようシステムにリクエストする
- * 
- * @param {ScenarioManager} manager - ScenarioManagerのインスタンス
- */
 export default async function handleOverlayEnd(manager) {
-    const overlaySceneKey = manager.scene.scene.key;
-    console.log(`%c[overlay_end] Requesting system to end overlay: ${overlaySceneKey}`, "color: green; font-weight: bold;");
+    const overlayScene = manager.scene; // NovelOverlaySceneのインスタンス
+    const overlaySceneKey = overlayScene.scene.key;
 
-    // ★ 2. EngineAPIにオーバーレイの終了をリクエストするだけ
-    EngineAPI.requestEndOverlay(overlaySceneKey);
+    console.log(`%c[overlay_end] Requesting system to close overlay: ${overlaySceneKey}`, "color: green; font-weight: bold;");
+
+    // ★ 汎用的な「閉じる」メソッドに、このシーンが持つ固有の情報を渡す
+    EngineAPI.requestCloseOverlay(overlaySceneKey, {
+        returnTo: overlayScene.returnTo,
+        inputWasBlocked: overlayScene.inputWasBlocked
+    });
     
-    // ★ 3. 自身のシナリオマネージャーを停止する (これはこのタグの責務)
+    // 自身のシナリオマネージャーを停止する
     manager.stop();
 }
