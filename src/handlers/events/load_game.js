@@ -27,7 +27,7 @@ export default async function load_game(interpreter, params) {
         //     interpreter.stop();
         // }
         return '__interrupt__'; // ★ 処理をここで中断させる
-    }
+    
         } catch (e) {
             console.error("CRITICAL: Failed to parse save data JSON!", e);
         }
