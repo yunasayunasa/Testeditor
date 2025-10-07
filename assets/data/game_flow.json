@@ -1,49 +1,29 @@
+
 {
   "initialState": "Title",
   "states": {
     "Title": {
-      "onEnter": [ { "type": "transitionTo", "params": { "scene": "TitleScene" } } ],
-      "transitions": [
-      
-        { "event": "START_GAME", "to": "PreparingGameScene" }
-      ]
-    },
-
-  
-    "PreparingGameScene": {
-      "comment": "背景となるゲームシーンを開始し、完了を待つ状態",
       "onEnter": [
-        { "type": "transitionTo", "params": { "scene": "JumpScene" } }
+        { "type": "transitionTo", "params": { "scene": "TitleScene" } }
       ],
       "transitions": [
-        
-        { "event": "transition-complete", "to": "OpeningNovel" }
+        { 
+          "event": "START_GAME", 
+          "to": "InGame",
+          "action": { 
+            "type": "transitionTo", 
+            "params": { "scene": "GameScene", "scenario": "test" }
+          }
+        }
       ]
     },
-
-    "OpeningNovel": {
-      "comment": "準備完了したゲームシーンの上で、ノベルを再生する状態",
-      "onEnter": [
-         
-        { "type": "runNovelOverlay", "params": { "scenario": "overlay_test" } }
-      ],
-      "transitions": [
-        { "event": "END_NOVEL_OVERLAY", "to": "InGame" }
-      ]
-    },
-
     "InGame": {
-      "onEnter": [
-        { "type": "resumeScene" } 
-      ],
+      "onEnter": [],
       "transitions": [
         { "event": "OPEN_PAUSE_MENU", "to": "Paused" },
-        { "event": "RUN_NOVEL_OVERLAY", "to": "NovelOverlay" }
+          { "event": "RUN_NOVEL_OVERLAY", "to": "NovelOverlay" }
       ]
     },
-    
-   
-  
    "Paused": {
   "onEnter": [
     { "type": "pauseScene" },

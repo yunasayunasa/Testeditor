@@ -58,17 +58,10 @@ class EngineAPI {
  * @param {string} eventName 
  * @param {object} [data={}] イベントに関連するデータ
  */
-// src/core/EngineAPI.js
-
-// fireGameFlowEvent メソッドを探し、以下のように上書きしてください
-fireGameFlowEvent(eventName, data = {}) {
-    if (!this.systemScene) return;
-
-    // ★ GameFlowManagerを直接呼ばず、SystemSceneに中継を依頼する
-    this.systemScene.events.emit('fire-game-flow-event', { 
-        eventName: eventName, 
-        eventData: data 
-    });
+fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
+    console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
+    if (!this.gameFlowManager) return;
+    this.gameFlowManager.handleEvent(eventName, data); // ★ dataを渡す
 }
 
     // --- Scene Transitions ---
@@ -131,4 +124,3 @@ fireGameFlowEvent(eventName, data = {}) {
 
 const engineAPI = new EngineAPI();
 export default engineAPI;
-

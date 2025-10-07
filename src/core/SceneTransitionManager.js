@@ -1,6 +1,4 @@
 // src/core/SceneTransitionManager.js
-import EngineAPI from './EngineAPI.js';
-
 
 /**
  * ゲーム全体のシーン遷移を管理する専門クラス。
@@ -111,11 +109,9 @@ targetScene.events.once(completionEvent, () => {
     // 3. カメラのフェードインは、入力が有効になった後で行う
     this.systemScene.cameras.main.fadeFrom(300, 0, 0, 0); // コールバックはもう不要
     
-      this.systemScene.events.emit('transition-complete', sceneKey);
-        
-        // ★★★ 5. ゲームフローにも、遷移完了を通知する ★★★
-        EngineAPI.fireGameFlowEvent('transition-complete', { scene: sceneKey });
-    });
+    // 4. 遷移完了イベントも、このタイミングで発行してよい
+    this.systemScene.events.emit('transition-complete', sceneKey);
+});
 
         this.systemScene.scene.run(sceneKey, params);
     }

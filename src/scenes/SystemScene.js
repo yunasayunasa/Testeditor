@@ -84,11 +84,6 @@ const uiSceneConfig = { physics: { matter: { enable: false } } };
     this.scene.bringToTop('UIScene'); // 常に一番手前に
     console.log('%c[SystemScene] Platform ready: UIScene is now running permanently.', 'color: #4CAF50; font-weight: bold;');
     // --- 2. イベントリスナーの設定 ---
-    this.events.on('fire-game-flow-event', (data) => {
-        if (this.gameFlowManager) {
-            this.gameFlowManager.handleEvent(data.eventName, data.eventData);
-        }
-    });
     // (SystemSceneに残っているイベントリスナー)
   //  this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
         // --- 2. イベントリスナーの設定 ---

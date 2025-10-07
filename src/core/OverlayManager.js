@@ -14,38 +14,29 @@ export default class OverlayManager {
      * @param {object} data - { from, layoutKey, params }
      */
    // src/core/OverlayManager.js
-
-    openMenuOverlay(data) {
-        const fromScene = this.systemScene.scene.get(data.from);
-        if (fromScene?.scene.isActive()) {
-            this.systemScene.scene.pause(data.from);
-            this.systemScene.sceneStack.push(data.from); // ★ PUSH
-            this.systemScene.gameState = 'MENU';
+openMenuOverlay(data) {
+    // pauseScene や sceneStack の管理は GameFlowManager が行う
+    console.log(`%c[OverlayManager] Launching Menu Overlay (Layout: ${data.layoutKey})`, "color: #00BCD4; font-weight: bold;");
     this.systemScene.scene.launch('OverlayScene', { layoutKey: data.layoutKey, ...data.params });
-}}
+}
 
     /**
      * ★ ノベルパートのオーバーレイを開く ★
      * 主に [run_scenario] で使用。
      * @param {object} data - { from, scenario, block_input }
      */
-  openNovelOverlay(data) {
-    const fromScene = this.systemScene.scene.get(data.from);
-    if (fromScene?.scene.isActive()) {
-        console.log(`%c[OverlayManager] Pausing scene '${data.from}' and pushing to stack.`, "color: #00BCD4; font-weight: bold;");
+    openNovelOverlay(data) {
+        console.log(`%c[OverlayManager] Opening Novel Overlay (Scenario: ${data.scenario})`, "color: #00BCD4; font-weight: bold;");
+        const { from, scenario, block_input } = data;
+        const sceneToLaunch = 'NovelOverlayScene'; // ★ 対象シーンは 'NovelOverlayScene'
         
-        // ★★★ 1. 背後のシーンをポーズする ★★★
-        this.systemScene.scene.pause(data.from);
-        
-        // ★★★ 2. スタックに積む ★★★
-        this.systemScene.sceneStack.push(data.from);
-
-            const shouldBlockInput = (data.block_input !== false);
-            // 入力ブロックは pause とは別に行う
-            if (shouldBlockInput) {
+        const shouldBlockInput = (block_input !== false);
+        if (shouldBlockInput) {
+            const fromScene = this.systemScene.scene.get(from);
+            if (fromScene?.scene.isActive()) {
                 fromScene.input.enabled = false;
-                this.inputBlockedScene = fromScene;
             }
+        }
 
         this.systemScene.scene.launch(sceneToLaunch, { 
             scenario,
@@ -53,7 +44,7 @@ export default class OverlayManager {
             returnTo: from,
             inputWasBlocked: shouldBlockInput 
         });
-    }}
+    }
 
     /**
      * ★ 全てのオーバーレイに共通の「閉じる」処理 ★
