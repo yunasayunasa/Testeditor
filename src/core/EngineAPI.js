@@ -1,55 +1,48 @@
-// src/core/EngineAPI.js (あるいは src/EngineAPI.js)
-
 /**
  * Odyssey Engineの全てのグローバル機能への公式アクセスポイント。
- * 各シーンはこのAPIを通じてエンジン中枢と通信する。
- * これにより、SystemSceneの内部実装と各シーンを疎結合に保つ。
  */
 class EngineAPI {
     constructor() {
-             this.systemScene = null;
-        /** @type {import('./SceneTransitionManager.js').default | null} */
-        this.transitionManager = null; // ★ プロパティ追加
-this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティを追加
+        this.systemScene = null;
+        this.transitionManager = null;
         this.overlayManager = null;
-            /** @type {import('./TimeManager.js').default | null} */
-        this.timeManager = null; // ★ プロパティ追加
+        this.timeManager = null;
         this.gameFlowManager = null;
+        this.pendingJumpRequest = null;
     }
 
     /**
-     * SystemSceneによって呼び出され、APIを初期化する。
-     * @param {import('../scenes/SystemScene.js').default} systemSceneInstance 
+     * SystemSceneによって呼び出され、全てのマネージャーを引き継ぐ。
+     * @param {import('../scenes/SystemScene.js').default} systemSceneInstance
      */
-        init(systemSceneInstance) {
+    init(systemSceneInstance) {
         this.systemScene = systemSceneInstance;
-        // ★ SystemSceneが設立した専門部署を、司令塔も把握する
         this.transitionManager = systemSceneInstance.transitionManager;
-            this.overlayManager = systemSceneInstance.overlayManager;
-            this.timeManager = systemSceneInstance.timeManager;
+        this.overlayManager = systemSceneInstance.overlayManager;
+        this.timeManager = systemSceneInstance.timeManager;
+        // gameFlowManagerはSystemSceneが直接セットする
     }
 
-        /**
-     * ゲームフローの状態遷移を要求するイベントを発行する。
-     * @param {string} eventName 
-     */
-    fireGameFlowEvent(eventName) {
-        console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
-        if (!this.gameFlowManager) return;
-        this.gameFlowManager.handleEvent(eventName);
-    }
-}
- /**
-     * 現在アクティブな最前面のゲームプレイシーンのキーを取得する。
+    /**
+     * 現在アクティブな最前面のゲームプレイシーンのキーを取得するゲッター。
      * @returns {string | null}
      */
     get activeGameSceneKey() {
-        if (!this.isReady() || this.systemScene.sceneStack.length === 0) {
+        if (!this.systemScene || this.systemScene.sceneStack.length === 0) {
             return null;
         }
         return this.systemScene.sceneStack[this.systemScene.sceneStack.length - 1];
     }
 
+    /**
+     * 時間が停止しているかどうかを問い合わせるゲッター。
+     * @returns {boolean}
+     */
+    get isTimeStopped() {
+        if (!this.timeManager) return false;
+        return this.timeManager.isTimeStopped;
+    }
+    
     /**
      * APIが利用可能かどうかを確認する。
      * @returns {boolean}
@@ -58,96 +51,71 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         return this.systemScene !== null;
     }
 
-    // --- ここから下に、SystemSceneの機能を翻訳したメソッドを追加していく ---
+    // --- Game Flow ---
+    fireGameFlowEvent(eventName) {
+        console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
+        if (!this.gameFlowManager) return;
+        this.gameFlowManager.handleEvent(eventName);
+    }
 
-    /**
-     * シンプルなシーン遷移をリクエストする。
-     * @param {string} fromSceneKey 遷移元のシーンキー
-     * @param {string} toSceneKey 遷移先のシーンキー
-     * @param {object} [params={}] 遷移先のシーンに渡すデータ
-     */
+    // --- Scene Transitions ---
     requestSimpleTransition(fromSceneKey, toSceneKey, params = {}) {
         if (!this.transitionManager) return;
-        // ★ 伝達先を events.emit から transitionManager のメソッド呼び出しに変更
         this.transitionManager.handleSimpleTransition({ from: fromSceneKey, to: toSceneKey, params });
     }
-    
+
     requestReturnToNovel(fromSceneKey, params = {}) {
         if (!this.transitionManager) return;
-        // ★ 伝達先を events.emit から transitionManager のメソッド呼び出しに変更
         this.transitionManager.handleReturnToNovel({ from: fromSceneKey, params });
     }
 
-    
-// 'open_menu' タグから呼ばれる
-requestPauseMenu(fromSceneKey, layoutKey, params = {}) {
-    if (!this.overlayManager) return;
-    this.overlayManager.openMenuOverlay({ from: fromSceneKey, layoutKey, params });
-}
-
-// 'run_scenario' タグから呼ばれる
-runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
-    if (!this.overlayManager) return Promise.resolve();
-    return new Promise(resolve => {
-        this.overlayManager.openNovelOverlay({
-            from: fromSceneKey,
-            scenario: scenarioFile,
-            block_input: blockInput
-        });
-        this.systemScene.events.once('overlay-closed', () => resolve());
-    });
-}
-
-// 'close_menu' や 'overlay_end' タグから呼ばれる
-requestCloseOverlay(fromSceneKey, overlayData = {}) {
-    if (!this.overlayManager) return;
-    // dataをマージして、必要な情報を全て渡す
-    this.overlayManager.closeOverlay({ from: fromSceneKey, ...overlayData });
-}
-/**
- * システム全体にカスタムイベントを発行する。
- * @param {string} eventName 発行するイベントの名前
- * @param {any} [data=null] イベントに渡すデータ
- */
-fireEvent(eventName, data = null) {
-    console.log(`%c[EngineAPI] Request received: fireEvent (name: ${eventName})`, 'color: #2196F3; font-weight: bold;');
-    if (!this.isReady()) return;
-    this.systemScene.events.emit(eventName, data);
-}
-
-
-
-/**
- * [jump]タグからの特別なシーン遷移リクエストを処理する。
- * @param {string} fromSceneKey 
- * @param {string} toSceneKey 
- * @param {object} [params={}] 
- */
-requestJump(fromSceneKey, toSceneKey, params = {}) {
+    requestJump(fromSceneKey, toSceneKey, params = {}) {
         console.log(`%c[EngineAPI] JUMP request received and PENDING. Waiting for ${fromSceneKey} to shut down.`, 'color: #FFC107; font-weight: bold;');
-        
-        // ★ すぐに実行せず、予約票として保管する
         this.pendingJumpRequest = { to: toSceneKey, params: params };
     }
 
-     // --- 時間管理 ---
-    
+    // --- Overlays ---
+    requestPauseMenu(fromSceneKey, layoutKey, params = {}) {
+        if (!this.overlayManager) return;
+        this.overlayManager.openMenuOverlay({ from: fromSceneKey, layoutKey, params });
+    }
+
+    runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
+        if (!this.overlayManager) return Promise.resolve();
+        return new Promise(resolve => {
+            this.overlayManager.openNovelOverlay({
+                from: fromSceneKey,
+                scenario: scenarioFile,
+                block_input: blockInput
+            });
+            this.systemScene.events.once('overlay-closed', () => resolve());
+        });
+    }
+
+    requestCloseOverlay(fromSceneKey, overlayData = {}) {
+        if (!this.overlayManager) return;
+        this.overlayManager.closeOverlay({ from: fromSceneKey, ...overlayData });
+    }
+
+    // --- Time Management ---
     stopTime() {
-        console.log(`%c[EngineAPI] Request received: stopTime. Delegating to TimeManager...`, 'color: #2196F3; font-weight: bold;');
         if (!this.timeManager) return;
         this.timeManager.stopTime();
     }
 
     resumeTime() {
-        console.log(`%c[EngineAPI] Request received: resumeTime. Delegating to TimeManager...`, 'color: #2196F3; font-weight: bold;');
         if (!this.timeManager) return;
         this.timeManager.resumeTime();
     }
 
+    // --- Misc ---
+    fireEvent(eventName, data = null) {
+        if (!this.systemScene) return;
+        this.systemScene.events.emit(eventName, data);
+    }
+    
+} // ★★★ ここがクラスの正しい閉じ括弧 ★★★
 
-
-}
-
-// シングルトンインスタンスを作成してエクスポート
 const engineAPI = new EngineAPI();
 export default engineAPI;
+
