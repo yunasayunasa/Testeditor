@@ -69,17 +69,36 @@ export default class JumpScene extends BaseGameScene {
      * ★ 修正点 3: onSceneResumeを修正
      * 存在しないcreateJoystick()の代わりに、新しい_initializeJoystick()を呼び出す
      */
-    onSceneResume() {
-        console.log("[JumpScene] Resumed. Re-initializing joystick.");
-        
-        if (this.joystick) {
-            this.joystick.destroy();
-            this.joystick = null;
-        }
-        
-        // 統合された新しいメソッドを呼び出して再生成する
-        this.joystick = this._initializeJoystick(); 
+   // JumpScene.js
+
+onSceneResume() {
+    console.log("[JumpScene] Resumed. Starting stabilization process.");
+
+    // 1. シーン全体の入力を一時的に無効化する
+    // これにより、Phaserの内部的なresume処理が完了するまで、
+    // ユーザーからの新たな入力イベント（ポーズボタン押下など）を受け付けないようにする。
+    this.input.enabled = false;
+    console.log("[JumpScene] Input disabled temporarily to ensure stable resume.");
+
+    // ジョイスティックの再初期化
+    if (this.joystick) {
+        this.joystick.destroy();
+        this.joystick = null;
     }
+    this.joystick = this._initializeJoystick();
+    
+    // 2. ほんの少し（数フレーム分）待ってから、入力を再び有効化する
+    // 100msもあれば、Phaserのシーンマネージャーがresumeの内部処理を
+    // 完了するには十分な時間です。
+    this.time.delayedCall(100, () => {
+        // 万が一、この待機時間中にシーンがシャットダウンされた場合などに備えて
+        // シーンがまだアクティブであることを確認する
+        if (this.scene.isActive(this.scene.key)) {
+            this.input.enabled = true;
+            console.log("[JumpScene] Stabilization complete. Input re-enabled.");
+        }
+    });
+}
     
     update(time, delta) {
         super.update(time, delta);
