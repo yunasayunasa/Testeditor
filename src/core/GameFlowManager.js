@@ -100,7 +100,8 @@ handleEvent(eventName, data = {}) {
         executeActions(actions, eventData = {}) { // ★ eventData引数を追加
     for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
-            
+             // ★★★ 1. アクション自身のparamsと、イベントのdataをマージする ★★★
+        const params = { ...action.params, ...eventData };
           switch (action.type) {
             case 'transitionTo':
                     const fromScene = EngineAPI.activeGameSceneKey || 'SystemScene';
@@ -118,9 +119,9 @@ handleEvent(eventName, data = {}) {
                     }
                     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-                    EngineAPI.requestSimpleTransition(fromScene, toSceneKey, action.params);
-                    break;
-                
+                    EngineAPI.requestSimpleTransition(fromScene, params.scene, params); 
+                break;
+            
                 
                 case 'openMenuOverlay':
                     const activeScene = EngineAPI.activeGameSceneKey;
@@ -175,9 +176,9 @@ handleEvent(eventName, data = {}) {
                 const activeScene = EngineAPI.activeGameSceneKey;
                 
                 // ★★★ eventDataからシナリオファイル名を取得する ★★★
-                const scenarioFile = eventData.scenario; 
+                const scenarioFile = params.scenario; 
                 
-                if (activeScene && scenarioFile) {
+                  if (activeScene && scenarioFile) {
                     EngineAPI.runScenarioAsOverlay(activeScene, scenarioFile, true)
                         .then(() => {
                             EngineAPI.fireGameFlowEvent('END_NOVEL_OVERLAY');
