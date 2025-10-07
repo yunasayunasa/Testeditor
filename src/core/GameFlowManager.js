@@ -1,6 +1,19 @@
 // src/core/GameFlowManager.js
 import EngineAPI from './EngineAPI.js';
+import GameScene from '../scenes/GameScene.js';
+import TitleScene from '../scenes/TitleScene.js';
+import GameOverScene from '../scenes/GameOverScene.js';
+// JumpSceneなど、JSONから呼ばれる可能性のある他のシーンもインポート
+import JumpScene from '../scenes/JumpScene.js';
 
+
+
+const SCENE_MAP = {
+    GameScene,
+    TitleScene,
+    GameOverScene,
+    JumpScene 
+};
 export default class GameFlowManager {
     constructor(flowData) {
         this.states = flowData.states;
@@ -61,32 +74,28 @@ export default class GameFlowManager {
      * アクションの配列を実行する。
      * @param {Array<object>} actions 
      */
-    executeActions(actions) {
+       executeActions(actions) {
         for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
-            // actionの種類に応じて、EngineAPIの適切なメソッドを呼び出す
             switch (action.action) {
-                case 'transitionTo':
-                    // 現在のシーン情報をEngineAPIから取得
-                    const fromScene = EngineAPI.activeGameSceneKey || 'SystemScene'; 
-                    EngineAPI.requestSimpleTransition(fromScene, action.params.scene, action.params);
-                    break;
-                
-                case 'openMenuOverlay':
-                    const activeScene = EngineAPI.activeGameSceneKey;
-                    if (activeScene) {
-                        EngineAPI.requestPauseMenu(activeScene, action.params.layout, action.params);
+                case 'transitionTo': { // ★ スコープを作るために {} を追加
+                    const fromScene = EngineAPI.activeGameSceneKey || 'SystemScene';
+                    const toSceneKey = action.params.scene;
+
+                    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+                    // ★★★ これが今回の解決策の核心です ★★★
+                    const systemScene = EngineAPI.systemScene;
+                    if (systemScene && !systemScene.scene.get(toSceneKey)) {
+                        const SceneClass = SCENE_MAP[toSceneKey];
+                        if (SceneClass) {
+                            console.log(`%c[GameFlowManager] Dynamically adding scene: '${toSceneKey}'`, 'color: #795548; font-weight: bold;');
+                            systemScene.scene.add(toSceneKey, SceneClass, false);
+                        }
                     }
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+                    EngineAPI.requestSimpleTransition(fromScene, toSceneKey, action.params);
                     break;
-                
-                case 'closeOverlay':
-                    // 閉じるべきオーバーレイシーンを特定する必要があるが、一旦簡略化
-                    EngineAPI.requestCloseOverlay('OverlayScene');
-                    break;
-                
-                // 将来、ここへアクションを追加していく (例: playBgm, stopTimeなど)
-            }
-        }
-    }
-}
+                }
+}}}}
