@@ -85,7 +85,7 @@
         "nextWaypoint": "test_a",
         "isYSortable": true,
         "lastTap": 0,
-        "overlap_tartman": false,
+        "overlap_tartman": true,
         "overlap_player": false,
         "collision_category": 1,
         "collision_mask": 4294967295
@@ -159,7 +159,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 293,
+      "x": 268,
       "y": 625,
       "depth": 625,
       "scaleX": 0.65,
@@ -278,18 +278,19 @@
         }
       },
       "data": {
-        "lastTap": 1759758049105,
+        "lastTap": 0,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
         "collision_mask": 4294967295,
-        "overlap_checkpoint": false
+        "overlap_checkpoint": false,
+        "overlap_next_arrow_1759845615890": true
       }
     },
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1208,
+      "x": 1836,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -358,7 +359,7 @@
         "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": false,
+        "overlap_test_b": true,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
@@ -396,6 +397,71 @@
         "collision_category": 1,
         "collision_mask": 4294967295,
         "overlap_player": false
+      }
+    },
+    {
+      "name": "next_arrow_1759845615890",
+      "type": "Image",
+      "x": 338,
+      "y": 689,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1759845640805",
+          "trigger": "onOverlap_Start",
+          "nodes": [
+            {
+              "id": "node_1759845672389",
+              "type": "run_scenario",
+              "params": {
+                "file": "overlay_test",
+                "block_input": true
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1759845702648",
+              "type": "destroy",
+              "params": {
+                "target": "source"
+              },
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1759845672389",
+              "fromPin": "output",
+              "toNode": "node_1759845702648",
+              "toPin": "input"
+            }
+          ],
+          "targetGroup": "player"
+        }
+      ],
+      "texture": "next_arrow",
+      "physics": {
+        "isStatic": false,
+        "isSensor": true,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      },
+      "data": {
+        "lastTap": 1759845651364,
+        "overlap_player": true
       }
     }
   ],
