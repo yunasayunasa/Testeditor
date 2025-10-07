@@ -109,9 +109,11 @@ targetScene.events.once(completionEvent, () => {
     // 3. カメラのフェードインは、入力が有効になった後で行う
     this.systemScene.cameras.main.fadeFrom(300, 0, 0, 0); // コールバックはもう不要
     
-    // 4. 遷移完了イベントも、このタイミングで発行してよい
-    this.systemScene.events.emit('transition-complete', sceneKey);
-});
+      this.systemScene.events.emit('transition-complete', sceneKey);
+        
+        // ★★★ 5. ゲームフローにも、遷移完了を通知する ★★★
+        EngineAPI.fireGameFlowEvent('transition-complete', { scene: sceneKey });
+    });
 
         this.systemScene.scene.run(sceneKey, params);
     }

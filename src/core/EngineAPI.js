@@ -58,10 +58,10 @@ class EngineAPI {
  * @param {string} eventName 
  * @param {object} [data={}] イベントに関連するデータ
  */
-fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
-    console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
-    if (!this.gameFlowManager) return;
-    this.gameFlowManager.handleEvent(eventName, data); // ★ dataを渡す
+fireGameFlowEvent(eventName, data = {}) {
+    if (!this.systemScene) return;
+    // ★ SystemSceneに中継を依頼する
+    this.systemScene.events.emit('fire-game-flow-event', { eventName: eventName, eventData: data });
 }
 
     // --- Scene Transitions ---
