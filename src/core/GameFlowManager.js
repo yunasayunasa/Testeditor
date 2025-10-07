@@ -100,7 +100,7 @@ export default class GameFlowManager {
 
                     EngineAPI.requestSimpleTransition(fromScene, toSceneKey, action.params);
                     break;
-                }
+                
                 
                 case 'openMenuOverlay':
                     const activeScene = EngineAPI.activeGameSceneKey;
