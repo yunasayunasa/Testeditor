@@ -11,7 +11,7 @@
           "to": "InGame",
           "action": { 
             "type": "transitionTo", 
-            "params": { "scene": "GameScene", "scenario": "scene1" }
+            "params": { "scene": "GameScene", "scenario": "test" }
           }
         }
       ]
