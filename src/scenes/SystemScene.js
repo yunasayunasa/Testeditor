@@ -86,6 +86,7 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
 
 
         // --- 2. イベントリスナーの設定 ---
+this.scene.manager.events.on('shutdown', this.handleSceneShutdown, this);
        //  this.events.on('request-load-game', this._handleLoadGame, this); 
           this.events.on('request-scene-transition', this._startTransition, this);
        //    this.events.on('request-simple-transition', this._handleSimpleTransition, this);
@@ -126,6 +127,28 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
         }
         
     }
+    
+    // src/scenes/SystemScene.js
+
+/**
+ * いずれかのシーンがシャットダウンした時に呼び出されるグローバルなハンドラ
+ * @param {Phaser.Scenes.Scene} scene - シャットダウンしたシーンのインスタンス
+ */
+handleSceneShutdown(scene) {
+    // GameSceneがシャットダウンした時、かつ、保留中のジャンプリクエストがある場合のみ処理
+    if (scene.scene.key === 'GameScene' && EngineAPI.pendingJumpRequest) {
+        console.log(`%c[SystemScene] Detected shutdown of GameScene. Executing pending JUMP request.`, 'color: #4CAF50; font-weight: bold;');
+        
+        // 保留中のリクエストを取得
+        const request = EngineAPI.pendingJumpRequest;
+        
+        // ★ SceneTransitionManagerを使って、実際に遷移を実行する
+        this.transitionManager.startInitialScene(request.to, request.params);
+        
+        // 実行したら、必ず予約票を破棄する
+        EngineAPI.pendingJumpRequest = null;
+    }
+}
 
     initializeEditor() {
         // ★★★ デバッグモードの判定は残す ★★★
