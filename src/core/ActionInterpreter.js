@@ -103,6 +103,10 @@ async run(source, eventData, collidedTarget = null) {
                         target: this.currentTarget
                     }
                 );
+               if (handlerResult === '__interrupt__') {
+            console.log(`[ActionInterpreter] Handler requested an interruption. Stopping execution.`);
+            break; // whileループを強制的に抜ける
+        }
                 // ▲▲▲【ここまでが変数名修正箇所】▲▲▲
 
                 if (typeof handlerResult === 'string') {
