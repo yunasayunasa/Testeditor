@@ -86,7 +86,7 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
 
 
         // --- 2. イベントリスナーの設定 ---
-this.scene.manager.events.on('shutdown', this.handleSceneShutdown, this);
+//this.scene.manager.events.on('shutdown', this.handleSceneShutdown, this);
        //  this.events.on('request-load-game', this._handleLoadGame, this); 
           this.events.on('request-scene-transition', this._startTransition, this);
        //    this.events.on('request-simple-transition', this._handleSimpleTransition, this);
@@ -129,7 +129,29 @@ this.scene.manager.events.on('shutdown', this.handleSceneShutdown, this);
     }
     
     // src/scenes/SystemScene.js
+// src/scenes/SystemScene.js
 
+/**
+ * GameSceneがシャットダウンした時に、SceneTransitionManagerから呼び出される専用ハンドラ
+ */
+handleGameSceneShutdown() {
+    // 保留中のジャンプリクエストがある場合のみ処理
+    if (EngineAPI.pendingJumpRequest) {
+        console.log(`%c[SystemScene] Detected shutdown of GameScene. Executing pending JUMP request.`, 'color: #4CAF50; font-weight: bold;');
+        
+        const request = EngineAPI.pendingJumpRequest;
+        
+        // ★ SceneTransitionManagerを使って、実際に遷移を実行する
+        // handleJumpTransitionを直接呼んでも良いし、startInitialSceneでも結果はほぼ同じ
+        this.transitionManager.handleJumpTransition({
+            from: 'GameScene', // fromは固定
+            to: request.to,
+            params: request.params
+        });
+        
+        EngineAPI.pendingJumpRequest = null;
+    }
+}
 /**
  * いずれかのシーンがシャットダウンした時に呼び出されるグローバルなハンドラ
  * @param {Phaser.Scenes.Scene} scene - シャットダウンしたシーンのインスタンス
