@@ -72,8 +72,8 @@ export default class SystemScene extends Phaser.Scene {
             console.error('!!! LOG BOMB FAILED !!!', e);
         }
         console.log('--- END OF LOG BOMB ---');
-        this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
-    this.events.on('request-close-menu', this.handleClosePauseMenu, this);
+        //this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
+    //this.events.on('request-close-menu', this.handleClosePauseMenu, this);
 console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
 
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
