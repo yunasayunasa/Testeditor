@@ -82,10 +82,12 @@ export default class JumpScene extends BaseGameScene {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
         // デバッグ以外では空でも良い
     }
-    onSceneResume() {
+   onSceneResume() {
     if (this.joystick) {
-        this.joystick.reset(); // ライブラリにこういうメソッドがあれば
+        this.joystick.destroy();
     }
+    // createメソッドにあったジョイスティックの初期化処理を再度実行
+    this.joystick = this.createJoystick(); 
 }
        /**
      * ★★★ 修正版 ★★★
