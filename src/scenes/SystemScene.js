@@ -34,10 +34,11 @@ export default class SystemScene extends Phaser.Scene {
     init(data) {
         if (data && data.initialGameData) {
             this.initialGameData = data.initialGameData;
-        }
+        
         this.globalCharaDefs = data.initialGameData.charaDefs;
         console.log('[SystemScene] Global character definitions have been stored.');
     }
+}
 
     create() {
           console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
