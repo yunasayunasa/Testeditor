@@ -42,7 +42,8 @@ handleEvent(eventName, data = {}) {
     console.log(`CURRENT STATE: '${this.currentState}'`);
     console.log(`Event Data:`, data);
 
-    const currentStateDefinition = this.states[this.currentState];
+    
+    
     if (!currentStateDefinition) {
         console.error("Current state definition not found!");
         console.groupEnd();
