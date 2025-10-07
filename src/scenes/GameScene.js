@@ -30,6 +30,7 @@ export default class GameScene extends Phaser.Scene {
         
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
+        
 
         // ★★★ 2. UISceneの準備が完了するまで待機する処理を追加 ★★★
         this.uiScene = this.scene.get('UIScene');
@@ -64,9 +65,19 @@ export default class GameScene extends Phaser.Scene {
             // 致命的なエラーなので、ここで処理を止めるのは妥当
             return; 
         }
+this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs || {};
+    console.log('[GameScene] Character definitions have been set to this scene.', this.charaDefs);
+    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
-        this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
-        
+    // 2. ScenarioManagerは、コンストラクタの中で `this.scene.charaDefs` を参照して、
+    //    自動的にキャラクター定義を取得する
+    this.scenarioManager = new ScenarioManager(
+        this, 
+        messageWindow, 
+        this.stateManager, 
+        this.soundManager
+        // ここに引数を追加する必要はない
+    );
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
         this.stateManager.on('f-variable-changed', this.onFVariableChanged, this);
 
