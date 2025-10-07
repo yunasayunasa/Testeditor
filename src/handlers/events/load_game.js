@@ -18,9 +18,16 @@ export default async function load_game(interpreter, params) {
             // ★ 2. EngineAPIを呼び出す
             EngineAPI.requestSimpleTransition(fromScene, toScene, transitionParams);
 
-            if (interpreter.stop) {
-                interpreter.stop();
-            }
+                // interpreter.stop() はもう不要
+        // if (interpreter.stop) {
+        //     interpreter.stop();
+        // }
+             // interpreter.stop() はもう不要
+        // if (interpreter.stop) {
+        //     interpreter.stop();
+        // }
+        return '__interrupt__'; // ★ 処理をここで中断させる
+    }
         } catch (e) {
             console.error("CRITICAL: Failed to parse save data JSON!", e);
         }
