@@ -104,17 +104,7 @@ fireEvent(eventName, data = null) {
     this.systemScene.events.emit(eventName, data);
 }
 
-// src/core/EngineAPI.js
-/**
- * @param {string} fromSceneKey
- * @param {object} [params={}] ノベルシーンに渡すデータ
- */
-requestReturnToNovel(fromSceneKey, params = {}) { // ★ params引数を追加
-    console.log(`%c[EngineAPI] Request received: returnToNovel (from: ${fromSceneKey})`, 'color: #2196F3; font-weight: bold;');
-    if (!this.isReady()) return;
-    this.systemScene.events.emit('return-to-novel', { from: fromSceneKey, params }); // ★ paramsを渡す
-}
-// src/core/EngineAPI.js
+
 
 /**
  * [jump]タグからの特別なシーン遷移リクエストを処理する。
