@@ -48,22 +48,11 @@ handleEvent(eventName, data = {}) {
     }
     
     console.log("Searching for transition in:", currentStateDefinition.transitions);
-    const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
-
+   const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
     if (transition) {
-        console.log(`%cSUCCESS: Transition found! -> to: '${transition.to}'`, "color: #4CAF50;");
-        console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
-      } else {
-        console.error(`%cFAILURE: No transition found for event '${eventName}' in state '${this.currentState}'.`, "color: #F44336;");
-    }
-    console.groupEnd();
-
-    // 元のロジックはここから...
-    if (transition) {
-        if (transition.action) {
-            this.executeActions([transition.action], data); 
-        }
-        this.transitionTo(transition.to, data);
+        // ★ handleEventは、状態遷移を命令するだけ。
+        // ★ 遷移時アクションの実行は、transitionToに完全に任せる。
+        this.transitionTo(transition.to, transition.action, data);
     }
 }
 
@@ -84,12 +73,17 @@ handleEvent(eventName, data = {}) {
             this.executeActions(oldStateDefinition.onExit);
         }
 
-        // 2. 状態を更新
-        this.currentState = newStateName;
+         // ★ 1. まず、遷移時アクションがあれば、それを実行する
+    if (transitionAction) {
+        this.executeActions([transitionAction], eventData);
+    }
+    
+    this.currentState = newStateName;
 
-        // 3. 新しい状態の onEnter アクションを実行
+    // ★ 2. 次に、新しい状態のonEnterアクションを実行する
+    const newStateDefinition = this.states[newStateName];
     if (newStateDefinition && newStateDefinition.onEnter) {
-        this.executeActions(newStateDefinition.onEnter, data); // ★ onEnterにも渡す
+        this.executeActions(newStateDefinition.onEnter, eventData);
     }
 }
 
