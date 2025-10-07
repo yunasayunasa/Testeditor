@@ -74,7 +74,7 @@ export default class GameFlowManager {
      * アクションの配列を実行する。
      * @param {Array<object>} actions 
      */
-       executeActions(actions) {
+        executeActions(actions) {
         for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
@@ -98,4 +98,21 @@ export default class GameFlowManager {
                     EngineAPI.requestSimpleTransition(fromScene, toSceneKey, action.params);
                     break;
                 }
-}}}}
+                
+                case 'openMenuOverlay':
+                    const activeScene = EngineAPI.activeGameSceneKey;
+                    if (activeScene) {
+                        EngineAPI.requestPauseMenu(activeScene, action.params.layout, action.params);
+                    }
+                    break;
+                
+                case 'closeOverlay':
+                    // 閉じるべきオーバーレイシーンを特定する必要があるが、一旦簡略化
+                    EngineAPI.requestCloseOverlay('OverlayScene');
+                    break;
+                
+                // 将来、ここへアクションを追加していく (例: playBgm, stopTimeなど)
+            }
+        }
+    }
+}
