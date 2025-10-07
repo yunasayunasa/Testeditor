@@ -75,16 +75,26 @@ export default class SystemScene extends Phaser.Scene {
 console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
 
         console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
-        EngineAPI.init(this); // ★★★ この行を追加 ★★★
-    console.log('[SystemScene] EngineAPI has been initialized and is ready.');
-       // --- 1. コアサービスの初期化 ---
-        const soundManager = new SoundManager(this.game);
-        this.registry.set('soundManager', soundManager);
-        this.input.once('pointerdown', () => soundManager.resumeContext(), this);
-        console.log("SystemScene: SoundManagerを登録しました。");
-           this.transitionManager = new SceneTransitionManager(this);
+           console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
+   
+    // --- 1. コアサービスの初期化 ---
+    const soundManager = new SoundManager(this.game);
+    this.registry.set('soundManager', soundManager);
+    this.input.once('pointerdown', () => soundManager.resumeContext(), this);
+    console.log("SystemScene: SoundManagerを登録しました。");
+    
+    // ★ 1. まず専門部署を全て設立する
+    this.transitionManager = new SceneTransitionManager(this);
+    // (将来ここに OverlayManager などが追加される)
+    console.log("[SystemScene] All managers have been instantiated.");
 
+    // ★ 2. 準備が整った状態で、EngineAPIに司令塔を委ねる
+    EngineAPI.init(this);
+    console.log('[SystemScene] EngineAPI has been initialized with all managers.');
 
+    // --- 2. イベントリスナーの設定 ---
+    // (SystemSceneに残っているイベントリスナー)
+    this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
         // --- 2. イベントリスナーの設定 ---
 //this.scene.manager.events.on('shutdown', this.handleSceneShutdown, this);
        //  this.events.on('request-load-game', this._handleLoadGame, this); 
