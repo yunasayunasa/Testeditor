@@ -81,7 +81,7 @@ handleEvent(eventName, data = {}) {
     this.currentState = newStateName;
 
     // ★ 2. 次に、新しい状態のonEnterアクションを実行する
-    const newStateDefinition = this.states[newStateName];
+    
     if (newStateDefinition && newStateDefinition.onEnter) {
         this.executeActions(newStateDefinition.onEnter, eventData);
     }
