@@ -267,7 +267,7 @@ _startInitialGame(initialData) {
 /**
  * ★★★ 新設：ポーズメニューを開く専用ハンドラ (最終修正版) ★★★
  * @param {{ from: string, layoutKey: string, params?: object }} data
- */
+ *
 handleOpenPauseMenu(data) {
     const fromScene = data.from;
     const menuLayoutKey = data.layoutKey; // ★★★ 'sceneKey' -> 'layoutKey' に修正 ★★★
@@ -292,7 +292,7 @@ handleOpenPauseMenu(data) {
 /**
  * ★★★ 新設：ポーズメニューを閉じる専用ハンドラ ★★★
  * @param {{ from: string }} data
- */
+ *
 // in src/scenes/SystemScene.js
 
 handleClosePauseMenu(data) {
@@ -449,7 +449,7 @@ _handleSimpleTransition(data) {
     /**
      * オーバーレイ表示のリクエストを処理 (入力制御オプション付き)
      * @param {object} data - { from: string, scenario: string, block_input: boolean }
-     */
+     *
     _handleRequestOverlay(data) {
         console.log(`[SystemScene] オーバーレイ表示リクエストを受信 (from: ${data.from})`);
 
@@ -478,7 +478,7 @@ _handleSimpleTransition(data) {
     /**
      * オーバーレイ終了のリクエストを処理 (入力制御オプション付き)
      * @param {object} data - { from: 'NovelOverlayScene', returnTo: string, inputWasBlocked: boolean }
-     */
+     *
     _handleEndOverlay(data) {
         console.log(`[SystemScene] オーバーレイ終了リクエストを受信 (return to: ${data.returnTo})`);
 
