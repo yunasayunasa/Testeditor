@@ -72,6 +72,14 @@ export default class SceneTransitionManager {
         this.systemScene.game.input.enabled = false;
 
         const targetScene = this.systemScene.scene.get(sceneKey);
+        if (sceneKey === 'GameScene') {
+        console.log(`[SceneTransitionManager] Attaching a one-time shutdown listener to GameScene.`);
+        // GameSceneがシャットダウンするイベントを、一度だけリッスンする
+        targetScene.events.once('shutdown', () => {
+            // GameSceneが死んだら、SystemSceneのハンドラを呼び出す
+            this.systemScene.handleGameSceneShutdown();
+        });
+    }
         const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
 
         targetScene.events.once(completionEvent, () => {
