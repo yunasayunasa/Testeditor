@@ -17,25 +17,34 @@ export default class SceneTransitionManager {
      * [jump]や[transition_scene]から呼ばれる、最も基本的なシーン遷移
      * @param {object} data - { from, to, params }
      */
-    handleSimpleTransition(data) {
-        console.log(`%c[SceneTransitionManager] Handling simple transition: ${data.from} -> ${data.to}`, "color: #FF9800; font-weight: bold;");
-        const { from, to, params } = data;
+    // src/core/SceneTransitionManager.js
+handleSimpleTransition(data) {
+    console.group(`%c[SceneTransitionManager] Group: handleSimpleTransition`, "color: #FF9800;");
+    console.log(`Transition requested:`, data);
+    
+    const { from, to, params } = data;
+    this.systemScene.gameState = (to === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
+    this.systemScene.sceneStack = [to];
 
-        // ★ gameStateの管理は、まだSystemSceneが担当する
-        this.systemScene.gameState = (to === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
-        this.systemScene.sceneStack = [to];
+    const sceneToStop = this.systemScene.scene.get(from);
 
-        const sceneToStop = this.systemScene.scene.get(from);
-
-        if (sceneToStop && sceneToStop.scene.isActive() && from !== 'UIScene') {
-            sceneToStop.events.once('shutdown', () => {
-                this._startAndMonitorScene(to, params);
-            });
-            this.systemScene.scene.stop(from);
-        } else {
+    if (sceneToStop && sceneToStop.scene.isActive() && from !== 'UIScene') {
+        console.log(`Target to stop: '${from}'. Setting up shutdown listener.`);
+        
+        sceneToStop.events.once('shutdown', () => {
+            console.log(`%c[SceneTransitionManager] Event: '${from}' has SHUT DOWN. Now starting '${to}'.`, "color: #4CAF50; font-weight: bold;");
             this._startAndMonitorScene(to, params);
-        }
+        });
+
+        console.log(`%c[SceneTransitionManager] Command: Issuing scene.stop('${from}') NOW.`, "color: #E91E63; font-weight: bold;");
+        this.systemScene.scene.stop(from);
+
+    } else {
+        console.log(`No active scene to stop. Starting '${to}' directly.`);
+        this._startAndMonitorScene(to, params);
     }
+    console.groupEnd();
+}
 
     /**
      * [return_novel]から呼ばれる、ノベルパートへの復帰
