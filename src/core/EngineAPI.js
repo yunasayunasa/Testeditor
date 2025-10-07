@@ -12,6 +12,8 @@ class EngineAPI {
         this.transitionManager = null; // ★ プロパティ追加
 this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティを追加
         this.overlayManager = null;
+            /** @type {import('./TimeManager.js').default | null} */
+        this.timeManager = null; // ★ プロパティ追加
     }
 
     /**
@@ -23,6 +25,7 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         // ★ SystemSceneが設立した専門部署を、司令塔も把握する
         this.transitionManager = systemSceneInstance.transitionManager;
             this.overlayManager = systemSceneInstance.overlayManager;
+            this.timeManager = systemSceneInstance.timeManager;
     }
  /**
      * 現在アクティブな最前面のゲームプレイシーンのキーを取得する。
@@ -114,6 +117,21 @@ requestJump(fromSceneKey, toSceneKey, params = {}) {
         // ★ すぐに実行せず、予約票として保管する
         this.pendingJumpRequest = { to: toSceneKey, params: params };
     }
+
+     // --- 時間管理 ---
+    
+    stopTime() {
+        console.log(`%c[EngineAPI] Request received: stopTime. Delegating to TimeManager...`, 'color: #2196F3; font-weight: bold;');
+        if (!this.timeManager) return;
+        this.timeManager.stopTime();
+    }
+
+    resumeTime() {
+        console.log(`%c[EngineAPI] Request received: resumeTime. Delegating to TimeManager...`, 'color: #2196F3; font-weight: bold;');
+        if (!this.timeManager) return;
+        this.timeManager.resumeTime();
+    }
+
 
 
 }

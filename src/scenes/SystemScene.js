@@ -7,6 +7,7 @@ import OverlayScene from './OverlayScene.js';
 import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
 import SceneTransitionManager from '../core/SceneTransitionManager.js';
 import OverlayManager from '../core/OverlayManager.js';
+import TimeManager from '../core/TimeManager.js';
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
@@ -16,45 +17,19 @@ export default class SystemScene extends Phaser.Scene {
         this.initialGameData = null;
         this.novelBgmKey = null; // BGMキーの保持
         this.editorUI = null; // EditorUIへの参照を保持
-         this._isTimeStopped = false;
+      //   this._isTimeStopped = false;
           this.transitionState = 'none'; // 'none', 'fading_out', 'switching', 'fading_in'
         this.transitionData = null;
+        this.timeManager = null; 
         this.gameState = 'INITIALIZING';
         this.transitionManager = null;
         
     this.sceneStack = [];
     }
 // ★★★ isTimeStoppedへのアクセスを、ゲッター/セッター経由に限定する ★★★
-    get isTimeStopped() {
-        return this._isTimeStopped;
-    }
+   
 
-    set isTimeStopped(value) {
-        if (this._isTimeStopped === value) return; // 状態が変わらないなら何もしない
-        this._isTimeStopped = value;
-
-        // --- 状態が変化した瞬間に、全てのシーンに影響を及ぼす ---
-        this.broadcastTimeScale();
-    }
-
-    /**
-     * ★★★ 新規メソッド：アクティブな全シーンに、タイムスケールを伝播させる ★★★
-     */
-    broadcastTimeScale() {
-        const newTimeScale = this._isTimeStopped ? 0 : 1;
-             // ★★★ ログ爆弾 No.5 ★★★
-        console.log(`%c[LOG BOMB 5] broadcastTimeScale: Broadcasting new timeScale: ${newTimeScale}`, 'color: red; font-size: 1.2em; font-weight: bold;');
-        // 現在アクティブな全てのシーンをループ
-        for (const scene of this.game.scene.getScenes(true)) {
-            // そのシーンが matter.world を持っているか（物理シーンか）を確認
-            if (scene.matter && scene.matter.world) {
-                // ★★★ これが、物理の世界の時間を止める、魔法の呪文だ ★★★
-                scene.matter.world.engine.timing.timeScale = newTimeScale;
-                
-                console.log(`[SystemScene] Time scale of scene '${scene.scene.key}' set to ${newTimeScale}`);
-            }
-        }
-    }
+  
     init(data) {
         if (data && data.initialGameData) {
             this.initialGameData = data.initialGameData;
@@ -90,6 +65,8 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
     // (将来ここに OverlayManager などが追加される)
     console.log("[SystemScene] All managers have been instantiated.");
 this.overlayManager = new OverlayManager(this); // ★ 専門部署を設立
+        console.log("[SystemScene] All managers have been instantiated.");
+        this.timeManager = new TimeManager(this.game); 
         console.log("[SystemScene] All managers have been instantiated.");
 
     // ★ 2. 準備が整った状態で、EngineAPIに司令塔を委ねる

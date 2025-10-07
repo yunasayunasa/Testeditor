@@ -5,13 +5,11 @@
  * ゲーム全体の時間を再開します。
  * @param {ActionInterpreter} interpreter
  */
-export default async function time_resume(interpreter) {
-    const systemScene = interpreter.scene.scene.get('SystemScene');
-    if (systemScene) {
-        systemScene.isTimeStopped = false;
-    }
-}
+import EngineAPI from '../../core/EngineAPI.js';
 
+export default async function time_resume(interpreter) {
+    EngineAPI.resumeTime();
+}
 /**
  * ★ VSLエディタ用の自己定義 ★
  */
