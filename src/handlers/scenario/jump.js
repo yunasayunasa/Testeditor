@@ -35,11 +35,14 @@ export default async function handleJump(manager, params) {
        
         
 
+      // ★ 1. まずは遷移リクエストを確実に発行する
         EngineAPI.requestJump(fromSceneKey, toSceneKey, transitionParams);
 
-        // manager.stop() はこのままの位置でOK
-        manager.stop();
-    
+        // ★ 2. manager.stop() の実行を、次のフレームに遅延させる
+        setTimeout(() => {
+            console.log('[handleJump] Delaying manager.stop() to next tick.');
+            manager.stop();
+        }, 0); // 0ミリ秒の遅延でOK
         
     } else if (params.target && params.target.startsWith('*')) {
         manager.jumpTo(params.target);
