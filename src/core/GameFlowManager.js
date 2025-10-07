@@ -35,6 +35,8 @@ export default class GameFlowManager {
  * @param {object} [data={}] イベントに関連するデータ
  */
 handleEvent(eventName, data = {}) {
+    const currentStateDefinition = this.states[this.currentState];
+    if (!currentStateDefinition || !currentStateDefinition.transitions) return;
     // ▼▼▼ ここにログ爆弾を仕掛ける ▼▼▼
     console.group(`%c[GameFlowManager] Event Received: ${eventName}`, "background: #795548; color: white; padding: 2px 5px;");
     console.log(`CURRENT STATE: '${this.currentState}'`);
@@ -48,15 +50,21 @@ handleEvent(eventName, data = {}) {
     }
     
     console.log("Searching for transition in:", currentStateDefinition.transitions);
-   const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
+  const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
+
     if (transition) {
-        // ★ handleEventは、状態遷移を命令するだけ。
-        // ★ 遷移時アクションの実行は、transitionToに完全に任せる。
+        console.log(`%cSUCCESS: Transition found! -> to: '${transition.to}'`, "color: #4CAF50;");
+        
+        // ★★★ 見つけた遷移情報と、イベントデータを、全てtransitionToに託す ★★★
         this.transitionTo(transition.to, transition.action, data);
+
+    } else {
+        console.error(`%cFAILURE: No transition found...`, "color: #F44336;");
     }
 }
 
     // src/core/GameFlowManager.js (ReferenceError修正版)
+
 
 /**
  * @param {string} newStateName
@@ -66,26 +74,19 @@ handleEvent(eventName, data = {}) {
 transitionTo(newStateName, transitionAction = null, eventData = {}) {
     if (this.currentState === newStateName || !this.states[newStateName]) return;
 
-    console.log(`%c[GameFlowManager] Transitioning from '${this.currentState}' to '${newStateName}'`, 'color: #795548; font-weight: bold;');
-
     const oldStateDefinition = this.states[this.currentState];
-    const newStateDefinition = this.states[newStateName];
-
-    // 1. 古い状態の onExit アクションを実行
     if (oldStateDefinition && oldStateDefinition.onExit) {
-        // ★★★ ここを data -> eventData に修正 ★★★
         this.executeActions(oldStateDefinition.onExit, eventData);
     }
 
-    // ★ 2. 状態更新の前に、遷移時アクションを実行する
+    // ★ 遷移時アクションは、状態が変わる「前」に実行する
     if (transitionAction) {
         this.executeActions([transitionAction], eventData);
     }
     
-    // 3. 状態を更新
     this.currentState = newStateName;
 
-    // ★ 4. 新しい状態の onEnter アクションを実行する
+    const newStateDefinition = this.states[newStateName];
     if (newStateDefinition && newStateDefinition.onEnter) {
         this.executeActions(newStateDefinition.onEnter, eventData);
     }
