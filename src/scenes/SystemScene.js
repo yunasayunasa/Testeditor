@@ -73,7 +73,13 @@ this.overlayManager = new OverlayManager(this); // ★ 専門部署を設立
     // ★ 2. 準備が整った状態で、EngineAPIに司令塔を委ねる
     EngineAPI.init(this);
     console.log('[SystemScene] EngineAPI has been initialized with all managers.');
-
+const uiSceneConfig = { physics: { matter: { enable: false } } };
+    if (!this.scene.get('UIScene')) {
+        this.scene.add('UIScene', UIScene, false, uiSceneConfig);
+    }
+    this.scene.run('UIScene');
+    this.scene.bringToTop('UIScene'); // 常に一番手前に
+    console.log('%c[SystemScene] Platform ready: UIScene is now running permanently.', 'color: #4CAF50; font-weight: bold;');
     // --- 2. イベントリスナーの設定 ---
     // (SystemSceneに残っているイベントリスナー)
   //  this.events.on('request-pause-menu', this.handleOpenPauseMenu, this);
@@ -202,7 +208,7 @@ handleSceneShutdown(scene) {
     }
  /**
      * 初期ゲームを起動する内部メソッド (改訂版)
-     */
+     
 
 _startInitialGame(initialData) {
     this.globalCharaDefs = initialData.charaDefs;

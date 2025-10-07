@@ -100,8 +100,11 @@ targetScene.events.once(completionEvent, () => {
     this.systemScene.game.input.enabled = true;
     
     // 2. UISceneに通知
-    const uiScene = this.systemScene.scene.get('UIScene');
-    if (uiScene) uiScene.onSceneTransition(sceneKey);
+   const uiScene = this.systemScene.scene.get('UIScene');
+        if (uiScene) {
+            uiScene.onSceneTransition(sceneKey);
+            this.systemScene.scene.bringToTop('UIScene'); // ★ 念のためここでも一番手前に
+        }
     
     // 3. カメラのフェードインは、入力が有効になった後で行う
     this.systemScene.cameras.main.fadeFrom(300, 0, 0, 0); // コールバックはもう不要
