@@ -128,7 +128,7 @@ requestJump(fromSceneKey, toSceneKey, params = {}) {
         // ★ すぐに実行せず、予約票として保管する
         this.pendingJumpRequest = { to: toSceneKey, params: params };
     }
-}
+
 
 /**
  * 現在のオーバーレイシーンを終了するようリクエストする。
