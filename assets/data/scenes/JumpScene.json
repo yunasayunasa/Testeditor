@@ -449,7 +449,7 @@
       ],
       "texture": "yuna_angry",
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "isSensor": true,
         "fixedRotation": false,
         "gravityScale": 1,

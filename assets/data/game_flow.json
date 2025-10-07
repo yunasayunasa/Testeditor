@@ -1,24 +1,35 @@
-
 {
   "initialState": "Title",
   "states": {
     "Title": {
-      "onEnter": [
-        { "type": "transitionTo", "params": { "scene": "TitleScene" } }
-      ],
+      "onEnter": [ { "type": "transitionTo", "params": { "scene": "TitleScene" } } ],
       "transitions": [
-        { 
-          "event": "START_GAME", 
-          "to": "InGame",
-          "action": { 
-            "type": "transitionTo", 
-            "params": { "scene": "GameScene", "scenario": "test" }
-          }
-        }
+        
+        { "event": "START_GAME", "to": "OpeningNovel" }
       ]
     },
+
+    
+    "OpeningNovel": {
+      "comment": "ゲーム開始直後のオープニングノベルを再生する状態",
+      "onEnter": [
+        
+        { "type": "transitionTo", "params": { "scene": "JumpScene" } },
+        
+        
+        { "type": "runNovelOverlay", "params": { "scenario": "overlay_test" } }
+      ],
+      "transitions": [
+        
+        { "event": "END_NOVEL_OVERLAY", "to": "InGame" }
+      ]
+    },
+
     "InGame": {
-      "onEnter": [],
+      "comment": "InGame状態自体は、onEnterで何もしない。ただ『プレイ中』であることを示すだけ",
+      "onEnter": [], 
+      
+      
       "transitions": [
         { "event": "OPEN_PAUSE_MENU", "to": "Paused" },
           { "event": "RUN_NOVEL_OVERLAY", "to": "NovelOverlay" }
