@@ -11,6 +11,7 @@ import ConfigScene from './scenes/ConfigScene.js';
 import BacklogScene from './scenes/BacklogScene.js';
 import ActionScene from './scenes/ActionScene.js';
 import BattleScene from './scenes/BattleScene.js';
+import OverlayScene from './scenes/OverlayScene.js';
 import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
 import JumpScene from './scenes/JumpScene.js';
@@ -74,6 +75,7 @@ const config = {
         ActionScene,
          BattleScene,
         JumpScene,
+        OverlayScene,
        NovelOverlayScene
    ],
     input: {
