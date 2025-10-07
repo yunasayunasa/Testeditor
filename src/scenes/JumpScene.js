@@ -9,6 +9,7 @@ export default class JumpScene extends BaseGameScene {
         this.joystick = null;
         this.playerController = null; // ★ playerControllerもnullで初期化
         
+        
     }
 
   create() {
@@ -69,16 +70,23 @@ export default class JumpScene extends BaseGameScene {
              this.addJoystickFromEditor(); // 常に表示する場合
         }
     }*/
+   
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
       const uiScene = this.scene.get('UIScene');
-
+    // シーンがレジュームされた時のイベントリスナーを登録
+    this.events.on('resume', this.onSceneResume, this);
    
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
         // デバッグ以外では空でも良い
     }
+    onSceneResume() {
+    if (this.joystick) {
+        this.joystick.reset(); // ライブラリにこういうメソッドがあれば
+    }
+}
        /**
      * ★★★ 修正版 ★★★
      * JumpSceneに特有のロジック（SpriteかImageかの判定）だけを行い、
@@ -338,7 +346,9 @@ shutdown() {
             this.joystick.destroy();
             this.joystick = null;
             console.log("[JumpScene] Joystick instance destroyed.");
+
         }
+        this.events.off('resume', this.onSceneResume, this);
         super.shutdown();
         console.log("[JumpScene] Shutdown sequence complete.");
     }
