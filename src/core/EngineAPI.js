@@ -11,6 +11,7 @@ class EngineAPI {
         /** @type {import('./SceneTransitionManager.js').default | null} */
         this.transitionManager = null; // ★ プロパティ追加
 this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティを追加
+        this.overlayManager = null;
     }
 
     /**
