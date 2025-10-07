@@ -124,7 +124,7 @@ requestReturnToNovel(fromSceneKey, params = {}) { // ★ params引数を追加
 requestJump(fromSceneKey, toSceneKey, params = {}) {
     console.log(`%c[EngineAPI] Request received: JUMP (special handling for ScenarioManager)`, 'color: #FFC107; font-weight: bold;');
     if (!this.transitionManager) return;
-    // ★ SceneTransitionManagerの "新しい専用メソッド" を呼び出す
+    
     this.transitionManager.handleJumpTransition({ from: fromSceneKey, to: toSceneKey, params });
 }
 
