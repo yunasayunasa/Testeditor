@@ -56,32 +56,36 @@ handleEvent(eventName, data = {}) {
     }
 }
 
-    /**
-     * 指定された状態へ遷移する。
-     * @param {string} newStateName 
-     */
-    transitionTo(newStateName, data = {}) { 
-        if (this.currentState === newStateName || !this.states[newStateName]) return;
+    // src/core/GameFlowManager.js (ReferenceError修正版)
 
-        console.log(`%c[GameFlowManager] Transitioning from '${this.currentState}' to '${newStateName}'`, 'color: #795548; font-weight: bold;');
+/**
+ * @param {string} newStateName
+ * @param {object | null} transitionAction - 遷移時に実行されるアクション
+ * @param {object} [eventData={}] - イベントから渡されたデータ
+ */
+transitionTo(newStateName, transitionAction = null, eventData = {}) {
+    if (this.currentState === newStateName || !this.states[newStateName]) return;
 
-        const oldStateDefinition = this.states[this.currentState];
-        const newStateDefinition = this.states[newStateName];
+    console.log(`%c[GameFlowManager] Transitioning from '${this.currentState}' to '${newStateName}'`, 'color: #795548; font-weight: bold;');
 
-        // 1. 古い状態の onExit アクションを実行
-        if (oldStateDefinition && oldStateDefinition.onExit) {
-            this.executeActions(oldStateDefinition.onExit);
-        }
+    const oldStateDefinition = this.states[this.currentState];
+    const newStateDefinition = this.states[newStateName];
 
-         // ★ 1. まず、遷移時アクションがあれば、それを実行する
+    // 1. 古い状態の onExit アクションを実行
+    if (oldStateDefinition && oldStateDefinition.onExit) {
+        // ★★★ ここを data -> eventData に修正 ★★★
+        this.executeActions(oldStateDefinition.onExit, eventData);
+    }
+
+    // ★ 2. 状態更新の前に、遷移時アクションを実行する
     if (transitionAction) {
         this.executeActions([transitionAction], eventData);
     }
     
+    // 3. 状態を更新
     this.currentState = newStateName;
 
-    // ★ 2. 次に、新しい状態のonEnterアクションを実行する
-    
+    // ★ 4. 新しい状態の onEnter アクションを実行する
     if (newStateDefinition && newStateDefinition.onEnter) {
         this.executeActions(newStateDefinition.onEnter, eventData);
     }
