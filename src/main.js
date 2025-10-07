@@ -14,7 +14,8 @@ import BattleScene from './scenes/BattleScene.js';
 import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
 import JumpScene from './scenes/JumpScene.js';
-
+import TitleScene from './scenes/TitleScene.js';
+import GameOverScene from './scenes/GameOverScene.js';
 // ★★★ 新設：uiRegistryを自動処理する非同期関数 ★★★
 // pathから動的にモジュールをimportするため、asyncにする
 async function processUiRegistry(registry) {
@@ -65,7 +66,8 @@ const config = {
         SystemScene, 
    //  UIScene,       
     //  GameScene,   
-        
+         TitleScene,      // ★ 追加
+        GameOverScene,   // ★ 追加
       SaveLoadScene, 
         ConfigScene, 
         BacklogScene, 
