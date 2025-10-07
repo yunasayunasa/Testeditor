@@ -58,10 +58,17 @@ class EngineAPI {
  * @param {string} eventName 
  * @param {object} [data={}] イベントに関連するデータ
  */
+// src/core/EngineAPI.js
+
+// fireGameFlowEvent メソッドを探し、以下のように上書きしてください
 fireGameFlowEvent(eventName, data = {}) {
     if (!this.systemScene) return;
-    // ★ SystemSceneに中継を依頼する
-    this.systemScene.events.emit('fire-game-flow-event', { eventName: eventName, eventData: data });
+
+    // ★ GameFlowManagerを直接呼ばず、SystemSceneに中継を依頼する
+    this.systemScene.events.emit('fire-game-flow-event', { 
+        eventName: eventName, 
+        eventData: data 
+    });
 }
 
     // --- Scene Transitions ---
