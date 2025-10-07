@@ -13,18 +13,25 @@ export default class OverlayManager {
      * 主にポーズメニューなどで使用。
      * @param {object} data - { from, layoutKey, params }
      */
-    openMenuOverlay(data) {
-        console.log(`%c[OverlayManager] Opening Menu Overlay (Layout: ${data.layoutKey})`, "color: #00BCD4; font-weight: bold;");
-        const { from, layoutKey, params } = data;
-        const sceneToLaunch = 'OverlayScene'; // ★ 対象シーンは 'OverlayScene'
+   openMenuOverlay(data) {
+    console.group(`%c[OverlayManager] Group: openMenuOverlay`, "color: #00BCD4;");
+    console.log(`Request data:`, data);
+    console.log(`Scene stack BEFORE pushing:`, [...this.systemScene.sceneStack]);
 
-        if (this.systemScene.scene.isActive(from)) {
-            this.systemScene.scene.pause(from);
-            this.systemScene.sceneStack.push(from);
-            this.systemScene.gameState = 'MENU';
-            this.systemScene.scene.launch(sceneToLaunch, { layoutKey, ...params });
-        }
+    const { from, layoutKey, params } = data;
+    const sceneToLaunch = 'OverlayScene';
+
+    if (this.systemScene.scene.isActive(from)) {
+        this.systemScene.scene.pause(from);
+        this.systemScene.sceneStack.push(from);
+        this.systemScene.gameState = 'MENU';
+        this.systemScene.scene.launch(sceneToLaunch, { layoutKey, ...params });
+        
+        console.log(`Scene '${from}' paused.`);
+        console.log(`Scene stack AFTER pushing:`, [...this.systemScene.sceneStack]);
     }
+    console.groupEnd();
+}
 
     /**
      * ★ ノベルパートのオーバーレイを開く ★
@@ -56,15 +63,19 @@ export default class OverlayManager {
      * ★ 全てのオーバーレイに共通の「閉じる」処理 ★
      * @param {object} data - { from, returnTo(NovelOverlay用), inputWasBlocked(NovelOverlay用) }
      */
-    closeOverlay(data) {
-        console.log(`%c[OverlayManager] Closing Overlay: ${data.from}`, "color: #00BCD4; font-weight: bold;");
-        const closingSceneKey = data.from;
-        
-        // --- 復帰先のシーンを決定する ---
-        // NovelOverlaySceneはreturnToプロパティを持つが、OverlaySceneは持たない。
-        // スタックから取り出すのが、より汎用的で安全。
-        if (this.systemScene.sceneStack.length === 0) return;
-        const sceneToResumeKey = this.systemScene.sceneStack.pop();
+   closeOverlay(data) {
+    console.group(`%c[OverlayManager] Group: closeOverlay`, "color: #00BCD4;");
+    console.log(`Request data:`, data);
+    console.log(`Scene stack BEFORE pop:`, [...this.systemScene.sceneStack]);
+
+    if (this.systemScene.sceneStack.length === 0) {
+        console.error("Scene stack is empty! Cannot close overlay.");
+        console.groupEnd();
+        return;
+    }
+    const sceneToResumeKey = this.systemScene.sceneStack.pop();
+    console.log(`Scene to resume from stack: '${sceneToResumeKey}'`);
+    console.log(`Scene stack AFTER pop:`, [...this.systemScene.sceneStack]);
 
         // --- オーバーレイシーンを停止 ---
         if (this.systemScene.scene.isActive(closingSceneKey)) {
@@ -85,7 +96,10 @@ export default class OverlayManager {
 
             // 2. UISceneを更新
             const uiScene = this.systemScene.scene.get('UIScene');
-            if (uiScene) uiScene.onSceneTransition(sceneToResumeKey);
+    if (uiScene) {
+        console.log(`%c[OverlayManager] Command: Calling uiScene.onSceneTransition('${sceneToResumeKey}')`, "color: #E91E63; font-weight: bold;");
+        uiScene.onSceneTransition(sceneToResumeKey);
+    }
             
             // 3. 入力ブロックを解除 (NovelOverlayからの情報があれば)
             if (data.inputWasBlocked) {
