@@ -25,28 +25,27 @@ openMenuOverlay(data) {
      * 主に [run_scenario] で使用。
      * @param {object} data - { from, scenario, block_input }
      */
-   // src/core/OverlayManager.js (最後の修正)
-
-openNovelOverlay(data) {
-    const fromScene = this.systemScene.scene.get(data.from);
-    if (fromScene?.scene.isActive()) {
-        console.log(`%c[OverlayManager] Pausing scene '${data.from}' and pushing to stack for NovelOverlay.`, "color: #00BCD4; font-weight: bold;");
+    openNovelOverlay(data) {
+        console.log(`%c[OverlayManager] Opening Novel Overlay (Scenario: ${data.scenario})`, "color: #00BCD4; font-weight: bold;");
+        const { from, scenario, block_input } = data;
+        const sceneToLaunch = 'NovelOverlayScene'; // ★ 対象シーンは 'NovelOverlayScene'
         
-        // ★★★ 1. 背後のシーンをポーズする ★★★
-        this.systemScene.scene.pause(data.from);
-        
-        // ★★★ 2. スタックに積む (これが抜けていた！) ★★★
-        this.systemScene.sceneStack.push(data.from);
-        
-        const shouldBlockInput = (data.block_input !== false);
+        const shouldBlockInput = (block_input !== false);
         if (shouldBlockInput) {
-            fromScene.input.enabled = false;
-            this.inputBlockedScene = fromScene;
+            const fromScene = this.systemScene.scene.get(from);
+            if (fromScene?.scene.isActive()) {
+                fromScene.input.enabled = false;
+            }
         }
 
-        this.systemScene.scene.launch('NovelOverlayScene', { /* ... */ });
+        this.systemScene.scene.launch(sceneToLaunch, { 
+            scenario,
+            charaDefs: this.systemScene.globalCharaDefs,
+            returnTo: from,
+            inputWasBlocked: shouldBlockInput 
+        });
     }
-}
+
     /**
      * ★ 全てのオーバーレイに共通の「閉じる」処理 ★
      * @param {object} data - { from, returnTo(NovelOverlay用), inputWasBlocked(NovelOverlay用) }
