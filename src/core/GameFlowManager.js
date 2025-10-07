@@ -34,19 +34,36 @@ export default class GameFlowManager {
  * @param {string} eventName 
  * @param {object} [data={}] イベントに関連するデータ
  */
-handleEvent(eventName, data = {}) { // ★ data引数を追加
-    const currentStateDefinition = this.states[this.currentState];
-    if (!currentStateDefinition || !currentStateDefinition.transitions) return;
+handleEvent(eventName, data = {}) {
+    // ▼▼▼ ここにログ爆弾を仕掛ける ▼▼▼
+    console.group(`%c[GameFlowManager] Event Received: ${eventName}`, "background: #795548; color: white; padding: 2px 5px;");
+    console.log(`CURRENT STATE: '${this.currentState}'`);
+    console.log(`Event Data:`, data);
 
+    const currentStateDefinition = this.states[this.currentState];
+    if (!currentStateDefinition) {
+        console.error("Current state definition not found!");
+        console.groupEnd();
+        return;
+    }
+    
+    console.log("Searching for transition in:", currentStateDefinition.transitions);
     const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
+
     if (transition) {
+        console.log(`%cSUCCESS: Transition found! -> to: '${transition.to}'`, "color: #4CAF50;");
         console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
-        
-        // ★ 遷移時アクションを実行する際に、イベントデータを渡す
+      } else {
+        console.error(`%cFAILURE: No transition found for event '${eventName}' in state '${this.currentState}'.`, "color: #F44336;");
+    }
+    console.groupEnd();
+
+    // 元のロジックはここから...
+    if (transition) {
         if (transition.action) {
             this.executeActions([transition.action], data); 
         }
-        this.transitionTo(transition.to, data); // ★ transitionToにも渡す
+        this.transitionTo(transition.to, data);
     }
 }
 
