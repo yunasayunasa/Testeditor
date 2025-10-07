@@ -29,21 +29,24 @@ export default class GameFlowManager {
         this.transitionTo(this.initialState);
     }
 
-    /**
-     * 外部からイベントを受け取り、状態遷移を試みる。
-     * @param {string} eventName 
-     */
-    handleEvent(eventName) {
-        const currentStateDefinition = this.states[this.currentState];
-        if (!currentStateDefinition || !currentStateDefinition.transitions) return;
+   /**
+ * 外部からイベントを受け取り、状態遷移を試みる。
+ * @param {string} eventName 
+ * @param {object} [data={}] イベントに関連するデータ
+ */
+handleEvent(eventName, data = {}) { // ★ data引数を追加
+    const currentStateDefinition = this.states[this.currentState];
+    if (!currentStateDefinition || !currentStateDefinition.transitions) return;
 
-        const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
+    const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
     if (transition) {
-        // ★ 遷移時に実行するアクションがあれば、先に実行する
+        console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
+        
+        // ★ 遷移時アクションを実行する際に、イベントデータを渡す
         if (transition.action) {
-            this.executeActions([transition.action]); // 配列にラップして渡す
+            this.executeActions([transition.action], data); 
         }
-        this.transitionTo(transition.to);
+        this.transitionTo(transition.to, data); // ★ transitionToにも渡す
     }
 }
 
@@ -51,7 +54,7 @@ export default class GameFlowManager {
      * 指定された状態へ遷移する。
      * @param {string} newStateName 
      */
-    transitionTo(newStateName) {
+    transitionTo(newStateName, data = {}) { 
         if (this.currentState === newStateName || !this.states[newStateName]) return;
 
         console.log(`%c[GameFlowManager] Transitioning from '${this.currentState}' to '${newStateName}'`, 'color: #795548; font-weight: bold;');
@@ -68,17 +71,17 @@ export default class GameFlowManager {
         this.currentState = newStateName;
 
         // 3. 新しい状態の onEnter アクションを実行
-        if (newStateDefinition && newStateDefinition.onEnter) {
-            this.executeActions(newStateDefinition.onEnter);
-        }
+    if (newStateDefinition && newStateDefinition.onEnter) {
+        this.executeActions(newStateDefinition.onEnter, data); // ★ onEnterにも渡す
     }
+}
 
     /**
      * アクションの配列を実行する。
      * @param {Array<object>} actions 
      */
-        executeActions(actions) {
-        for (const action of actions) {
+        executeActions(actions, eventData = {}) { // ★ eventData引数を追加
+    for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
           switch (action.type) {
@@ -127,6 +130,31 @@ export default class GameFlowManager {
             case 'resumeScene': {
                 // EngineAPIに依頼するのが美しい
                 EngineAPI.requestCloseOverlay('OverlayScene');
+                break;
+            }
+
+            case 'stopTime':
+                EngineAPI.stopTime();
+                break;
+            
+            case 'resumeTime':
+                EngineAPI.resumeTime();
+                break;
+            
+            case 'runNovelOverlay': {
+                const activeScene = EngineAPI.activeGameSceneKey;
+                
+                // ★★★ eventDataからシナリオファイル名を取得する ★★★
+                const scenarioFile = eventData.scenario; 
+                
+                if (activeScene && scenarioFile) {
+                    EngineAPI.runScenarioAsOverlay(activeScene, scenarioFile, true)
+                        .then(() => {
+                            EngineAPI.fireGameFlowEvent('END_NOVEL_OVERLAY');
+                        });
+                } else {
+                    console.warn('[GameFlowManager] runNovelOverlay: activeScene or scenario file not found.', {activeScene, scenarioFile});
+                }
                 break;
             }
         }

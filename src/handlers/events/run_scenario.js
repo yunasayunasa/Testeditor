@@ -1,24 +1,21 @@
-// src/handlers/events/run_scenario.js
-import EngineAPI from '../../core/EngineAPI.js'; // ★ インポート
+// src/handlers/events/run_scenario.js (本当の最終FIX版)
+import EngineAPI from '../../core/EngineAPI.js';
 
 export default async function run_scenario(interpreter, params) {
     const file = params.file;
     if (!file) {
         console.warn('[run_scenario] "file" parameter is missing.');
-        return;
+        return '__interrupt__'; // 何もしない場合も中断はする
     }
 
-    const block_input = params.block_input !== 'false';
-    const scene = interpreter.scene;
-
-    // ★★★ EngineAPIに処理を完全に委譲し、Promiseが解決されるのを待つだけ ★★★
-    await EngineAPI.runScenarioAsOverlay(scene.scene.key, file, block_input);
-
-    console.log(`[run_scenario] Overlay finished. Resuming action sequence.`);
+    // ★ イベントを発行する際に、パラメータを一緒に渡す
+    EngineAPI.fireGameFlowEvent('RUN_NOVEL_OVERLAY', { 
+        scenario: file 
+    });
+    
+    // VSLの実行をここで中断する
+    return '__interrupt__';
 }
-// define部分は変更なし
-// ...
-
 /**
  * ★ VSLエディタ用の自己定義 ★
  */

@@ -51,12 +51,18 @@ class EngineAPI {
         return this.systemScene !== null;
     }
 
-    // --- Game Flow ---
-    fireGameFlowEvent(eventName) {
-        console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
-        if (!this.gameFlowManager) return;
-        this.gameFlowManager.handleEvent(eventName);
-    }
+    // src/core/EngineAPI.js
+
+/**
+ * ゲームフローの状態遷移を要求するイベントを発行する。
+ * @param {string} eventName 
+ * @param {object} [data={}] イベントに関連するデータ
+ */
+fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
+    console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
+    if (!this.gameFlowManager) return;
+    this.gameFlowManager.handleEvent(eventName, data); // ★ dataを渡す
+}
 
     // --- Scene Transitions ---
     requestSimpleTransition(fromSceneKey, toSceneKey, params = {}) {
