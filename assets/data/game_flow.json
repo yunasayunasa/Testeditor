@@ -24,7 +24,7 @@
     "OpeningNovel": {
       "comment": "準備完了したゲームシーンの上で、ノベルを再生する状態",
       "onEnter": [
-        { "type": "pauseScene" }, 
+         
         { "type": "runNovelOverlay", "params": { "scenario": "overlay_test" } }
       ],
       "transitions": [

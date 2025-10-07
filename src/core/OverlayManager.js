@@ -29,12 +29,16 @@ export default class OverlayManager {
      * 主に [run_scenario] で使用。
      * @param {object} data - { from, scenario, block_input }
      */
-   openNovelOverlay(data) {
-        const fromScene = this.systemScene.scene.get(data.from);
-        if (fromScene?.scene.isActive()) {
-            // ★★★ 1. シーンをポーズし、スタックに積む処理を追加 ★★★
-            this.systemScene.scene.pause(data.from);
-            this.systemScene.sceneStack.push(data.from);
+  openNovelOverlay(data) {
+    const fromScene = this.systemScene.scene.get(data.from);
+    if (fromScene?.scene.isActive()) {
+        console.log(`%c[OverlayManager] Pausing scene '${data.from}' and pushing to stack.`, "color: #00BCD4; font-weight: bold;");
+        
+        // ★★★ 1. 背後のシーンをポーズする ★★★
+        this.systemScene.scene.pause(data.from);
+        
+        // ★★★ 2. スタックに積む ★★★
+        this.systemScene.sceneStack.push(data.from);
 
             const shouldBlockInput = (data.block_input !== false);
             // 入力ブロックは pause とは別に行う
