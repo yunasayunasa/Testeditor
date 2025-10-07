@@ -91,18 +91,24 @@ handleSimpleTransition(data) {
     }
         const completionEvent = (sceneKey === 'GameScene') ? 'gameScene-load-complete' : 'scene-ready';
 
-        targetScene.events.once(completionEvent, () => {
-            const uiScene = this.systemScene.scene.get('UIScene');
-            if (uiScene) uiScene.onSceneTransition(sceneKey);
+        // src/core/SceneTransitionManager.js
+targetScene.events.once(completionEvent, () => {
+    console.log(`%c[SceneTransitionManager] Event: Scene '${sceneKey}' is READY. Re-enabling input NOW.`, "color: #4CAF50; font-weight: bold;");
 
-            this.systemScene.cameras.main.fadeFrom(300, 0, 0, 0, false, (camera, progress) => {
-                if (progress === 1) {
-                    this.isProcessing = false;
-                    this.systemScene.game.input.enabled = true;
-                    this.systemScene.events.emit('transition-complete', sceneKey);
-                }
-            });
-        });
+    // ★★★ 1. シーンの準備ができたこの瞬間に、入力を再有効化する ★★★
+    this.isProcessing = false;
+    this.systemScene.game.input.enabled = true;
+    
+    // 2. UISceneに通知
+    const uiScene = this.systemScene.scene.get('UIScene');
+    if (uiScene) uiScene.onSceneTransition(sceneKey);
+    
+    // 3. カメラのフェードインは、入力が有効になった後で行う
+    this.systemScene.cameras.main.fadeFrom(300, 0, 0, 0); // コールバックはもう不要
+    
+    // 4. 遷移完了イベントも、このタイミングで発行してよい
+    this.systemScene.events.emit('transition-complete', sceneKey);
+});
 
         this.systemScene.scene.run(sceneKey, params);
     }
