@@ -6,9 +6,11 @@ import GameScene from './GameScene.js';
 import OverlayScene from './OverlayScene.js'; 
 import ActionInterpreter from '../core/ActionInterpreter.js'; // ★ インポート
 import SceneTransitionManager from '../core/SceneTransitionManager.js';
+import OverlayManager from '../core/OverlayManager.js';
 export default class SystemScene extends Phaser.Scene {
     constructor() {
         super({ key: 'SystemScene' });
+        this.overlayManager = null; // ★ プロパティ追加
         this.globalCharaDefs = null;
         this.isProcessingTransition = false;
         this.initialGameData = null;
@@ -87,6 +89,8 @@ console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu
     this.transitionManager = new SceneTransitionManager(this);
     // (将来ここに OverlayManager などが追加される)
     console.log("[SystemScene] All managers have been instantiated.");
+this.overlayManager = new OverlayManager(this); // ★ 専門部署を設立
+        console.log("[SystemScene] All managers have been instantiated.");
 
     // ★ 2. 準備が整った状態で、EngineAPIに司令塔を委ねる
     EngineAPI.init(this);
