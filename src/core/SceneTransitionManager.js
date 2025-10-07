@@ -1,4 +1,6 @@
 // src/core/SceneTransitionManager.js
+import EngineAPI from './EngineAPI.js';
+
 
 /**
  * ゲーム全体のシーン遷移を管理する専門クラス。

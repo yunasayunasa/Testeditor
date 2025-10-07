@@ -6,6 +6,7 @@ import GameOverScene from '../scenes/GameOverScene.js';
 // JumpSceneなど、JSONから呼ばれる可能性のある他のシーンもインポート
 import JumpScene from '../scenes/JumpScene.js';
 
+import EngineAPI from './EngineAPI.js';
 
 
 const SCENE_MAP = {
