@@ -1,11 +1,12 @@
+
 {
   "initialState": "Title",
   "states": {
-
     "Title": {
-      "onEnter": [ { "action": "transitionTo", "params": { "scene": "TitleScene" } } ],
+      "onEnter": [
+        { "type": "transitionTo", "params": { "scene": "TitleScene" } }
+      ],
       "transitions": [
-       
         { 
           "event": "START_GAME", 
           "to": "InGame",
@@ -16,32 +17,28 @@
         }
       ]
     },
-
     "InGame": {
-      "comment": "InGame状態自体は、onEnterで何もしない。ただ『プレイ中』であることを示すだけ",
-      "onEnter": [], 
+      "onEnter": [],
       "transitions": [
         { "event": "OPEN_PAUSE_MENU", "to": "Paused" }
       ]
     },
-
     "Paused": {
       "onEnter": [
-        { "action": "pauseScene" } 
+        { "type": "pauseScene" }
       ],
       "onExit": [
-        { "action": "resumeScene" } 
+        { "type": "resumeScene" }
       ],
       "transitions": [
         { "event": "CLOSE_PAUSE_MENU", "to": "InGame" }
       ]
     },
-
     "GameOver": {
       "comment": "ゲームオーバー画面が表示されている状態。",
       "onEnter": [
         {
-          "action": "transitionTo",
+          "type": "transitionTo",
           "params": {
             "scene": "GameOverScene"
           }

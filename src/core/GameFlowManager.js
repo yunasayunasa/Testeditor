@@ -81,7 +81,7 @@ export default class GameFlowManager {
         for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
-           switch (action.action) { // ★ action.type ではなく action.action に統一
+          switch (action.type) {
             case 'transitionTo':
                     const fromScene = EngineAPI.activeGameSceneKey || 'SystemScene';
                     const toSceneKey = action.params.scene;
