@@ -34,7 +34,7 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         }
         return this.systemScene.sceneStack[this.systemScene.sceneStack.length - 1];
     }
-}
+
     /**
      * APIが利用可能かどうかを確認する。
      * @returns {boolean}
