@@ -1,3 +1,5 @@
+import EngineAPI from '../core/EngineAPI.js';
+
 export default class EditorUI {
     constructor(game, editorPlugin) {
         this.game = game;
@@ -873,30 +875,36 @@ onAddButtonClicked = () => {
             pauseButton.style.fontSize = '14px';
 
             // --- ボタンがクリックされた時の処理を定義 ---
-            pauseButton.addEventListener('click', () => {
-                // SystemSceneへの参照を取得
-                const systemScene = this.game.scene.getScene('SystemScene');
-                if (systemScene) {
-                    // isTimeStoppedフラグを、現在の状態の逆(true/false)に設定
-                    systemScene.isTimeStopped = !systemScene.isTimeStopped;
+           pauseButton.addEventListener('click', () => {
+            // ★★★ ここからが修正箇所 ★★★
+            
+            // 1. TimeManagerの状態を直接確認する
+            //    EngineAPIにゲッターを追加するのが理想だが、今回は直接参照する
+            const timeManager = EngineAPI.timeManager; 
+            if (!timeManager) return;
+            
+            const isCurrentlyStopped = timeManager.isTimeStopped;
 
-                    // ボタンの見た目を、新しい状態に合わせて更新
-                    if (systemScene.isTimeStopped) {
-                        // 時間が停止した場合
-                        pauseButton.innerText = '▶️ Play';
-                        pauseButton.style.backgroundColor = '#2a9d8f'; // 目立つ色に
-                    } else {
-                        // 時間が再開した場合
-                        pauseButton.innerText = '⏸️ Pause';
-                        pauseButton.style.backgroundColor = '#555';
-                    }
-                }
-            });
+            // 2. 現在の状態に応じて、逆の命令をEngineAPIに発行する
+            if (isCurrentlyStopped) {
+                EngineAPI.resumeTime();
+            } else {
+                EngineAPI.stopTime();
+            }
 
-            // 完成したボタンをDOMに追加
-            modeControls.appendChild(pauseButton);
-        }
+            // 3. ボタンの見た目を更新する (新しい状態を再度確認)
+            if (!isCurrentlyStopped) { // これから停止する場合
+                pauseButton.innerText = '▶️ Play';
+                pauseButton.style.backgroundColor = '#2a9d8f';
+            } else { // これから再開する場合
+                pauseButton.innerText = '⏸️ Pause';
+                pauseButton.style.backgroundColor = '#555';
+            }
+        });
+
+        modeControls.appendChild(pauseButton);
     }
+}
 
 
      /**
