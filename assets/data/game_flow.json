@@ -25,7 +25,7 @@
           "action": "transitionTo",
           "params": { 
             "scene": "GameScene",
-            "scenario": "scene1"
+            "scenario": "test"
           }
         }
       ],
