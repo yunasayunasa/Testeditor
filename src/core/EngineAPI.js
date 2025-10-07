@@ -24,7 +24,17 @@ this.pendingJumpRequest = null; // ★ 予約票を保管するプロパティ�
         this.transitionManager = systemSceneInstance.transitionManager;
             this.overlayManager = systemSceneInstance.overlayManager;
     }
-
+ /**
+     * 現在アクティブな最前面のゲームプレイシーンのキーを取得する。
+     * @returns {string | null}
+     */
+    get activeGameSceneKey() {
+        if (!this.isReady() || this.systemScene.sceneStack.length === 0) {
+            return null;
+        }
+        return this.systemScene.sceneStack[this.systemScene.sceneStack.length - 1];
+    }
+}
     /**
      * APIが利用可能かどうかを確認する。
      * @returns {boolean}
