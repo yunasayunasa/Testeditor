@@ -22,6 +22,29 @@ class EngineAPI {
         this.timeManager = systemSceneInstance.timeManager;
         // gameFlowManagerはSystemSceneが直接セットする
     }
+    
+    
+        /**
+     * ★★★ 新設：シーンを安全にレジュームするための公式API ★★★
+     * GameFlowManagerからの要求を受け、SystemSceneに安全なレジューム処理を依頼する。
+     * @param {string} sceneKey - レジュームするシーンのキー
+     * @returns {Promise<void>} レジュームが完了したときに解決されるPromise
+     */
+    requestSafeResume(sceneKey) {
+        return new Promise(resolve => {
+            if (!this.systemScene || !sceneKey) {
+                console.error('[EngineAPI] Cannot request resume. SystemScene or sceneKey is missing.');
+                resolve();
+                return;
+            }
+            
+            // SystemSceneの内部メソッドを呼び出し、完了時にPromiseを解決する
+            this.systemScene._safeResumeScene(sceneKey, () => {
+                resolve();
+            });
+        });
+    }
+
 
     /**
      * 現在アクティブな最前面のゲームプレイシーンのキーを取得するゲッター。
