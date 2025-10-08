@@ -110,16 +110,30 @@ fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
     }
 
     runScenarioAsOverlay(fromSceneKey, scenarioFile, blockInput) {
-        if (!this.overlayManager) return Promise.resolve();
+        if (!this.overlayManager || !this.systemScene) {
+            return Promise.resolve(); // APIが準備できていなければ即時解決
+        }
+        
+        // Promiseを返すことで、呼び出し元(GameFlowManager)が await できるようにする
         return new Promise(resolve => {
+            // 1. "オーバーレイが閉じた" という公式イベントを一度だけリッスンする
+            this.systemScene.events.once('overlay-closed', (data) => {
+                console.log(`[EngineAPI] 'overlay-closed' event received. Resolving the promise for runScenarioAsOverlay.`);
+                
+                // 3. イベントを受け取ったら、Promiseを解決して待機を終了させる
+                resolve();
+            });
+
+            // 2. オーバーレイの表示をリクエストする
+            //    このメソッドの実行自体はすぐに終わる
             this.overlayManager.openNovelOverlay({
                 from: fromSceneKey,
                 scenario: scenarioFile,
                 block_input: blockInput
             });
-            this.systemScene.events.once('overlay-closed', () => resolve());
         });
     }
+
 
     requestCloseOverlay(fromSceneKey, overlayData = {}) {
         if (!this.overlayManager) return;
