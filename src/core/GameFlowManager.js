@@ -164,21 +164,24 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                 EngineAPI.resumeTime();
                 break;
             
-            case 'runNovelOverlay': {
-                const activeScene = EngineAPI.activeGameSceneKey;
-                
-                // ★★★ eventDataからシナリオファイル名を取得する ★★★
-                const scenarioFile = eventData.scenario; 
-                
-                if (activeScene && scenarioFile) {
-                    EngineAPI.runScenarioAsOverlay(activeScene, scenarioFile, true)
-                        .then(() => {
-                            EngineAPI.fireGameFlowEvent('END_NOVEL_OVERLAY');
-                        });
-                } else {
-                    console.warn('[GameFlowManager] runNovelOverlay: activeScene or scenario file not found.', {activeScene, scenarioFile});
+              case 'runNovelOverlay': {
+                    const activeScene = EngineAPI.activeGameSceneKey;
+                    const scenarioFile = eventData.scenario; 
+                    
+                    if (activeScene && scenarioFile) {
+                        console.log(`[GameFlowManager] Awaiting completion of scenario overlay: ${scenarioFile}`);
+                        
+                        // EngineAPI.runScenarioAsOverlay が返すPromiseを待つ
+                        // このPromiseは、[overlay_end]が実行され、'overlay-closed'イベントが
+                        // 発行された時に解決される
+                        await EngineAPI.runScenarioAsOverlay(activeScene, scenarioFile, true);
+                        
+                        // awaitが完了した = オーバーレイが正常に終了した、ということ
+                        console.log(`[GameFlowManager] Scenario overlay completed. Firing END_NOVEL_OVERLAY event.`);
+                        EngineAPI.fireGameFlowEvent('END_NOVEL_OVERLAY');
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
