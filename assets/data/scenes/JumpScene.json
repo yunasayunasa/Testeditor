@@ -18,7 +18,7 @@
     {
       "name": "Background",
       "visible": true,
-      "locked": false
+      "locked": true
     }
   ],
   "objects": [
@@ -38,7 +38,7 @@
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
-        "lastTap": 0
+        "lastTap": 1759937280431
       }
     },
     {
@@ -85,7 +85,7 @@
         "nextWaypoint": "test_a",
         "isYSortable": true,
         "lastTap": 0,
-        "overlap_tartman": false,
+        "overlap_tartman": true,
         "overlap_player": false,
         "collision_category": 1,
         "collision_mask": 4294967295
@@ -290,7 +290,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1201,
+      "x": 1835,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -359,7 +359,7 @@
         "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": false,
+        "overlap_test_b": true,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
@@ -461,8 +461,640 @@
         }
       },
       "data": {
-        "lastTap": 1759846629812,
-        "overlap_checkpoint": true
+        "lastTap": 0,
+        "overlap_checkpoint": true,
+        "collision_category": 1,
+        "collision_mask": 4294967295
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_0_0",
+      "type": "Image",
+      "x": 165,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 239.90253411306014,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_0_1",
+      "type": "Image",
+      "x": 165,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 239.90253411306014,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_0_2",
+      "type": "Image",
+      "x": 165,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 239.90253411306014,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_1_0",
+      "type": "Image",
+      "x": 545,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 619.9025341130601,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_1_1",
+      "type": "Image",
+      "x": 545,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 619.9025341130601,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_1_2",
+      "type": "Image",
+      "x": 545,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 619.9025341130601,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_2_0",
+      "type": "Image",
+      "x": 925,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 999.9025341130601,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_2_1",
+      "type": "Image",
+      "x": 925,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 999.9025341130601,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_2_2",
+      "type": "Image",
+      "x": 925,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 999.9025341130601,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_3_0",
+      "type": "Image",
+      "x": 1305,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 1379.9025341130598,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_3_1",
+      "type": "Image",
+      "x": 1305,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 1379.9025341130598,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_3_2",
+      "type": "Image",
+      "x": 1305,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 1379.9025341130598,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_4_0",
+      "type": "Image",
+      "x": 1685,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 1759.9025341130598,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_4_1",
+      "type": "Image",
+      "x": 1685,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 1759.9025341130598,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_4_2",
+      "type": "Image",
+      "x": 1685,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 1759.9025341130598,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_5_0",
+      "type": "Image",
+      "x": 2065,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2139.9025341130605,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_5_1",
+      "type": "Image",
+      "x": 2065,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2139.9025341130605,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_5_2",
+      "type": "Image",
+      "x": 2065,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2139.9025341130605,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_6_0",
+      "type": "Image",
+      "x": 2445,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2519.9025341130605,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_6_1",
+      "type": "Image",
+      "x": 2445,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2519.9025341130605,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_6_2",
+      "type": "Image",
+      "x": 2445,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2519.9025341130605,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_7_0",
+      "type": "Image",
+      "x": 2825,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2899.9025341130605,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_7_1",
+      "type": "Image",
+      "x": 2825,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2899.9025341130605,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_7_2",
+      "type": "Image",
+      "x": 2825,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 2899.9025341130605,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_8_0",
+      "type": "Image",
+      "x": 3205,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 3279.9025341130605,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_8_1",
+      "type": "Image",
+      "x": 3205,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 3279.9025341130605,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_8_2",
+      "type": "Image",
+      "x": 3205,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 3279.9025341130605,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0",
+      "type": "Image",
+      "x": 3585,
+      "y": 153,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 3659.9025341130605,
+        "dragStartY": 152.5730994152046
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_1",
+      "type": "Image",
+      "x": 3585,
+      "y": 533,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 0,
+        "dragStartX": 3659.9025341130605,
+        "dragStartY": 532.5730994152045
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_2",
+      "type": "Image",
+      "x": 3585,
+      "y": 913,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759937188338,
+        "dragStartX": 3659.9025341130605,
+        "dragStartY": 912.5730994152045
+      }
+    },
+    {
+      "name": "taimatsu_on_1759937289592",
+      "type": "Image",
+      "x": 220,
+      "y": 271,
+      "depth": 0,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "components": [
+        {
+          "type": "LightComponent",
+          "params": {
+            "radius": 310,
+            "intensity": 0.17
+          }
+        },
+        {
+          "type": "VignetteComponent",
+          "params": {}
+        }
+      ],
+      "texture": "taimatsu_on",
+      "data": {
+        "lastTap": 0
       }
     }
   ],
