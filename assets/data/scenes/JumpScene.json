@@ -38,7 +38,7 @@
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
-        "lastTap": 1759937280431
+        "lastTap": 0
       }
     },
     {
@@ -85,7 +85,7 @@
         "nextWaypoint": "test_a",
         "isYSortable": true,
         "lastTap": 0,
-        "overlap_tartman": true,
+        "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
         "collision_mask": 4294967295
@@ -290,7 +290,7 @@
     {
       "name": "tartman",
       "type": "Sprite",
-      "x": 1835,
+      "x": 1207,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -359,7 +359,7 @@
         "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": true,
+        "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
@@ -1008,26 +1008,6 @@
       }
     },
     {
-      "name": "maptile_wood_1759937102294_9_0",
-      "type": "Image",
-      "x": 3585,
-      "y": 153,
-      "depth": -2,
-      "scaleX": 0.76,
-      "scaleY": 0.76,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Background",
-      "group": "fill_group_9bd1296a-3493-4503-b630-a31b073d2296",
-      "events": [],
-      "texture": "maptile_wood",
-      "data": {
-        "lastTap": 0,
-        "dragStartX": 3659.9025341130605,
-        "dragStartY": 152.5730994152046
-      }
-    },
-    {
       "name": "maptile_wood_1759937102294_9_1",
       "type": "Image",
       "x": 3585,
@@ -1062,7 +1042,7 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759937188338,
+        "lastTap": 0,
         "dragStartX": 3659.9025341130605,
         "dragStartY": 912.5730994152045
       }
@@ -1095,6 +1075,114 @@
       "texture": "taimatsu_on",
       "data": {
         "lastTap": 0
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0_9_0",
+      "type": "Image",
+      "x": 3579,
+      "y": 159,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_4969dc9a-64cd-4260-94b9-57e9e24b0439",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759938186971
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0_9_1",
+      "type": "Image",
+      "x": 3947,
+      "y": 158,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_4969dc9a-64cd-4260-94b9-57e9e24b0439",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759938193750
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0_9_2_9_1",
+      "type": "Image",
+      "x": 3959,
+      "y": 539,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_d8a7ee6c-4f3d-4488-a8a5-5f192f88f3bb",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759938209525
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0_9_2_9_2",
+      "type": "Image",
+      "x": 3953,
+      "y": 919,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_d8a7ee6c-4f3d-4488-a8a5-5f192f88f3bb",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759938213683
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0_9_2_10_1",
+      "type": "Image",
+      "x": 4302,
+      "y": 514,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_d8a7ee6c-4f3d-4488-a8a5-5f192f88f3bb",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759938220115
+      }
+    },
+    {
+      "name": "maptile_wood_1759937102294_9_0_9_2_10_2",
+      "type": "Image",
+      "x": 4302,
+      "y": 195,
+      "depth": -2,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "group": "fill_group_d8a7ee6c-4f3d-4488-a8a5-5f192f88f3bb",
+      "events": [],
+      "texture": "maptile_wood",
+      "data": {
+        "lastTap": 1759938217513
       }
     }
   ],
