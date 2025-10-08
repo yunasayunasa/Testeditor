@@ -1,58 +1,90 @@
-
 {
   "initialState": "Title",
   "states": {
     "Title": {
       "onEnter": [
-        { "type": "transitionTo", "params": { "scene": "TitleScene" } }
+        {
+          "type": "transitionTo",
+          "params": {
+            "scene": "TitleScene"
+          }
+        }
       ],
       "transitions": [
-        { 
-          "event": "START_GAME", 
+        {
+          "event": "START_GAME",
           "to": "InGame",
-          "action": { 
-            "type": "transitionTo", 
-            "params": { "scene": "GameScene", "scenario": "test" }
+          "action": {
+            "type": "transitionTo",
+            "params": {
+              "scene": "GameScene",
+              "scenario": "test"
+            }
           }
         }
       ]
     },
     "InGame": {
-      "onEnter": [],
+      "onEnter": [
+        {
+          "type": "resumeScene"
+        }
+      ],
       "transitions": [
-        { "event": "OPEN_PAUSE_MENU", "to": "Paused" },
-          { "event": "RUN_NOVEL_OVERLAY", "to": "NovelOverlay" }
+        {
+          "event": "OPEN_PAUSE_MENU",
+          "to": "Paused"
+        },
+        {
+          "event": "RUN_NOVEL_OVERLAY",
+          "to": "NovelOverlay"
+        }
       ]
     },
-   "Paused": {
-  "onEnter": [
-    { "type": "pauseScene" },
-    { "type": "openMenuOverlay", "params": { "layout": "pause_menu" } }
-  ],
-  "onExit": [
-    { "type": "closeOverlay" },
-    { "type": "resumeScene" }
-  ],
+    "Paused": {
+      "onEnter": [
+        {
+          "type": "pauseScene"
+        },
+        {
+          "type": "openMenuOverlay",
+          "params": {
+            "layout": "pause_menu"
+          }
+        }
+      ],
+      "onExit": [],
       "transitions": [
-        { "event": "CLOSE_PAUSE_MENU", "to": "InGame" }
+        {
+          "event": "CLOSE_PAUSE_MENU",
+          "to": "InGame",
+          "action": {
+            "type": "closeOverlay"
+          }
+        }
       ]
     },
     "NovelOverlay": {
-      "comment": "背後のシーンを停止させ、ノベルパートをオーバーレイ表示している状態",
       "onEnter": [
-        { "type": "pauseScene" }, 
-        { "type": "runNovelOverlay" } 
+        {
+          "type": "pauseScene"
+        },
+        {
+          "type": "runNovelOverlay"
+        }
       ],
-      "onExit": [
-        { "type": "resumeScene" } 
-      ],
+      "onExit": [],
       "transitions": [
-        { "event": "END_NOVEL_OVERLAY", "to": "InGame" }
+        {
+          "event": "END_NOVEL_OVERLAY",
+          "to": "InGame",
+          "action": {
+            "type": "closeOverlay"
+          }
+        }
       ]
     },
-  
     "GameOver": {
-      "comment": "ゲームオーバー画面が表示されている状態。",
       "onEnter": [
         {
           "type": "transitionTo",
@@ -62,8 +94,14 @@
         }
       ],
       "transitions": [
-        { "event": "RESTART_GAME", "to": "InGame" },
-        { "event": "RETURN_TO_TITLE", "to": "Title" }
+        {
+          "event": "RESTART_GAME",
+          "to": "InGame"
+        },
+        {
+          "event": "RETURN_TO_TITLE",
+          "to": "Title"
+        }
       ]
     }
   }
