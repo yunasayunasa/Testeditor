@@ -1622,17 +1622,33 @@ populateVslTriggerEditor(activeEvent) {
             
         } else {
             // --- 通常のノードの場合 (既存のロジック) ---
-            handler.define.params.forEach(paramDef => {
-                if (paramDef.type === 'component_select') {
-                    this.createNodeComponentSelect(paramsContainer, nodeData, paramDef.key, paramDef.label);
-                } else if (paramDef.type === 'asset_key') {
-                    this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
-                } else if (paramDef.type === 'select') {
-                    this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
-                } else if (paramDef.type === 'number') {
-                    this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
-                } else {
-                    this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+             handler.define.params.forEach(paramDef => {
+                // ▼▼▼【ここからが修正箇所です】▼▼▼
+                switch (paramDef.type) {
+                    case 'game_flow_event_select':
+                        // ★ 新しいcaseを追加
+                        this.createNodeGameFlowEventSelect(paramsContainer, nodeData, paramDef.key, paramDef.label);
+                        break;
+                    
+                    case 'component_select':
+                        this.createNodeComponentSelect(paramsContainer, nodeData, paramDef.key, paramDef.label);
+                        break;
+                    
+                    case 'asset_key':
+                        this.createNodeAssetSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef);
+                        break;
+                    
+                    case 'select':
+                        this.createNodeSelectInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue, paramDef.options);
+                        break;
+                    
+                    case 'number':
+                        this.createNodeNumberInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                        break;
+                    
+                    default:
+                        this.createNodeTextInput(paramsContainer, nodeData, paramDef.key, paramDef.label, paramDef.defaultValue);
+                        break;
                 }
             });
         }
@@ -1678,7 +1694,77 @@ populateVslTriggerEditor(activeEvent) {
         nodeElement.appendChild(outputsContainer);
     }
    
-   // in EditorUI.js (クラス内のどこかに追加)
+   // in your VSLEditor.js or similar file
+
+/**
+ * ★★★ 新設メソッド ★★★
+ * ゲームフローイベントを選択するためのドロップダウンリストをノード内に生成する。
+ * assets/data/game_flow.json を読み込み、イベント名を自動的にリストアップする。
+ */
+createNodeGameFlowEventSelect(parent, nodeData, key, label) {
+    const row = document.createElement('div');
+    row.className = 'node-param-row';
+    
+    const labelElement = document.createElement('label');
+    labelElement.innerText = label;
+    
+    const select = document.createElement('select');
+    
+    // --- 1. game_flow.json をPhaserのキャッシュから取得 ---
+    const gameFlowData = this.game.cache.json.get('game_flow');
+    
+    if (gameFlowData && gameFlowData.states) {
+        // --- 2. 全てのイベント名を収集し、重複を排除 ---
+        const eventSet = new Set();
+        Object.values(gameFlowData.states).forEach(stateDef => {
+            if (stateDef.transitions) {
+                stateDef.transitions.forEach(transition => {
+                    eventSet.add(transition.event);
+                });
+            }
+        });
+
+        // --- 3. ドロップダウンの選択肢を生成 ---
+        const events = Array.from(eventSet).sort(); // アルファベット順にソート
+        
+        // 空の選択肢を追加
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.innerText = 'イベントを選択...';
+        select.appendChild(emptyOption);
+        
+        events.forEach(eventName => {
+            const option = document.createElement('option');
+            option.value = eventName;
+            option.innerText = eventName;
+            select.appendChild(option);
+        });
+
+    } else {
+        // JSONが読み込めなかった場合のフォールバック
+        const errorOption = document.createElement('option');
+        errorOption.value = '';
+        errorOption.innerText = 'game_flow.jsonが見つかりません';
+        select.appendChild(errorOption);
+        select.disabled = true;
+    }
+    
+    // --- 4. 現在の値を設定し、イベントリスナーをセット ---
+    const currentValue = nodeData.params?.[key] || '';
+    select.value = currentValue;
+    
+    select.addEventListener('change', (e) => {
+        if (!nodeData.params) {
+            nodeData.params = {};
+        }
+        nodeData.params[key] = e.target.value;
+    });
+
+    row.append(labelElement, select);
+    parent.appendChild(row);
+    
+    return row; // 参照を返す
+}
 
 /**
  * ★★★ 新設 ★★★
