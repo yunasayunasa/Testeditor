@@ -1,15 +1,11 @@
-
-// src/scenes/NovelOverlayScene.js (最終確定・完成版)
-
 import ScenarioManager from '../core/ScenarioManager.js';
 import { tagHandlers } from '../handlers/index.js';
-import handleOverlayEnd from '../handlers/scenario/overlay_end.js'; // パスを確認
+import handleOverlayEnd from '../handlers/scenario/overlay_end.js';
 
 export default class NovelOverlayScene extends Phaser.Scene {
     constructor() {
         super({ key: 'NovelOverlayScene' });
         
-        // --- プロパティの初期化 ---
         this.scenarioManager = null;
         this.uiScene = null;
         this.soundManager = null;
@@ -23,7 +19,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.returnTo = null;
         this.inputWasBlocked = false;
 
-        this.onClickHandler = null; // ★ リスナー解除のためにプロパティとして保持
+        this.onClickHandler = null;
     } 
 
     init(data) {
@@ -46,7 +42,6 @@ export default class NovelOverlayScene extends Phaser.Scene {
     create() {
         console.log("[NovelOverlayScene] create 開始");
         
-        // --- 1. サービスの参照を取得 ---
         this.uiScene = this.scene.get('UIScene');
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
@@ -57,35 +52,26 @@ export default class NovelOverlayScene extends Phaser.Scene {
             return;
         }
 
-        // ★★★ 解決策 (A): UIの状態を、ルールブックに従って更新するよう依頼する ★★★
-        // これにより、UISceneが'NovelOverlayScene'用のUI('game'グループ)を表示してくれる。
-        // これには messageWindow.y を正しい位置に戻す処理も含まれる。
-        this.scene.get('SystemScene').events.emit('transition-complete', this.scene.key);
+        this.uiScene.onSceneTransition(this.scene.key);
         
-      // --- 2. UIの準備 ---
-    this.uiScene.showMessageWindow(); // 座標を戻す
+        // --- レイヤーの生成 ---
+        // NovelOverlaySceneが管理するオブジェクトは、UISceneの最前面UIよりは奥、
+        // ゲームシーンよりは手前に表示されるようにdepthを設定する
+        const OVERLAY_BASE_DEPTH = 5000;
+        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
+        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
 
-    const OVERLAY_BASE_DEPTH = 10000;
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // messageWindowを自分の子にせず、UISceneにdepthの変更だけを依頼する
+        this.uiScene.setElementDepth('message_window', OVERLAY_BASE_DEPTH + 20);
+        this.uiScene.showMessageWindow();
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    // ★★★ これが最後の修正です ★★★
-    // (A) メッセージウィンドウをUISceneから「借りて」、このシーンの子にする
-    this.add.existing(messageWindow);
-    // (B) このシーンの中で、depthを再設定する
-    messageWindow.setDepth(OVERLAY_BASE_DEPTH + 20);
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
-    // --- 3. レイヤーの生成 ---
-    this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
-    this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
-        // --- 4. タグハンドラの登録 ---
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
-        // ★ handleOverlayEndは、強制執行FIX版を使うことを想定
         this.scenarioManager.registerTag('overlay_end', handleOverlayEnd);
            
-        // --- 5. シナリオを開始 ---
         this.scenarioManager.loadScenario(this.startScenario).then(() => {
             this._finalizeSetup();
         });
@@ -93,7 +79,6 @@ export default class NovelOverlayScene extends Phaser.Scene {
 
     _finalizeSetup() {
         this.isSceneFullyReady = true;
-        // ★ クリックハンドラをプロパティに保存
         this.onClickHandler = () => { if (this.scenarioManager) this.scenarioManager.onClick(); };
         this.input.on('pointerdown', this.onClickHandler);
         
@@ -190,42 +175,28 @@ export default class NovelOverlayScene extends Phaser.Scene {
     }
 shutdown() {
         console.log("[NovelOverlayScene] shutdown されました。");
-  // --- shutdownの最後に、特別扱いをやめさせる ---
-    // ★★★ 念のため、depthを元のデフォルト値に戻すよう依頼する ★★★
-    // uiRegistryからデフォルト値を取得する
-    const uiRegistry = this.registry.get('uiRegistry');
-    const defaultDepth = uiRegistry?.message_window?.params?.depth || 10; // デフォルト値がなければ10など
-    this.uiScene.setElementDepth('message_window', defaultDepth);
-        // ★★★ 解決策 (B): createで行ったことを、すべて元に戻す ★★★
 
-        // --- 1. イベントリスナーを確実に解除 ---
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // 借りてないので、返す必要もありません。
+        // 代わりに、変更したdepthを元の値に戻すようUISceneに依頼します。
+        const uiRegistry = this.registry.get('uiRegistry');
+        const defaultDepth = uiRegistry?.message_window?.params?.depth || 10;
+        this.uiScene.setElementDepth('message_window', defaultDepth);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         if (this.onClickHandler) {
             this.input.off('pointerdown', this.onClickHandler);
             this.onClickHandler = null;
         }
-const messageWindow = this.uiScene.uiElements.get('message_window');
-    if (messageWindow) {
-        // (A) このシーンから取り除く
-        this.children.remove(messageWindow);
-        // (B) UISceneに返却する
-        this.uiScene.add.existing(messageWindow);
-    }
-        // --- 2. ScenarioManagerを停止・破棄 ---
+
         if (this.scenarioManager) {
             this.scenarioManager.stop();
             this.scenarioManager = null;
         }
-
-        // --- 3. このシーンが生成したすべてのオブジェクトを破棄 ---
-        // (レイヤーコンテナと、その中のキャラクターなど)
-        this.children.removeAll(true);
         
-        // --- 4. プロパティをリセット ---
+        this.children.removeAll(true);
         this.isSceneFullyReady = false;
         this.layer = {};
         this.characters = {};
-
-        // ★★★ このshutdownは、[overlay_end]ハンドラから「明示的に」呼ばれる ★★★
-        // したがって、ここでイベントを発行する必要はない。
     }
 }
