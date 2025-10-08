@@ -1,3 +1,7 @@
+// ▼▼▼【これが最も重要です】▼▼▼
+// ファイルの先頭で、NovelOverlaySceneクラスを静的にインポートします。
+// これにより、JavaScriptエンジンはOverlayManagerを読み込む時点で
+// NovelOverlaySceneの存在を確実に知ることができます。
 import NovelOverlayScene from '../scenes/NovelOverlayScene.js';
 
 export default class OverlayManager {
@@ -8,38 +12,31 @@ export default class OverlayManager {
         this.systemScene = systemSceneInstance;
     }
 
-    /**
-     * 汎用的なメニュー/UIオーバーレイを開く。
-     * @param {object} data - { from, layoutKey, params }
-     */
     openMenuOverlay(data) {
         console.log(`%c[OverlayManager] Launching Menu Overlay (Layout: ${data.layoutKey})`, "color: #00BCD4; font-weight: bold;");
         this.systemScene.scene.launch('OverlayScene', { layoutKey: data.layoutKey, ...data.params });
     }
 
-    /**
-     * ノベルパートのオーバーレイを開く。
-     * 毎回新しいシーンインスタンスを生成することを保証する。
-     * @param {object} data - { from, scenario, block_input }
-     */
     openNovelOverlay(data) {
         console.log(`%c[OverlayManager] Opening Novel Overlay (Scenario: ${data.scenario})`, "color: #00BCD4; font-weight: bold;");
         const { from, scenario, block_input } = data;
         const sceneToLaunch = 'NovelOverlayScene';
 
-        // 1. もし古いNovelOverlaySceneが残っていたら、念のため削除する
         if (this.systemScene.scene.get(sceneToLaunch)) {
             this.systemScene.scene.remove(sceneToLaunch);
             console.log(`[OverlayManager] Removed stale instance of '${sceneToLaunch}'.`);
         }
 
-        // 2. 起動する前に、必ずシーンをPhaserに「追加」する
+        // ▼▼▼【エラーを解決する核心部分】▼▼▼
+        // 先頭でimportした NovelOverlayScene クラスをここで使います。
+        // 'require' はもう使いません。
         this.systemScene.scene.add(sceneToLaunch, NovelOverlayScene, false);
         console.log(`[OverlayManager] Added a new, clean instance of '${sceneToLaunch}'.`);
 
         const shouldBlockInput = (block_input !== false);
         if (shouldBlockInput) {
             const fromScene = this.systemScene.scene.get(from);
+
             if (fromScene?.scene.isActive()) {
                 fromScene.input.enabled = false;
             }
@@ -53,11 +50,6 @@ export default class OverlayManager {
         });
     }
 
-    /**
-     * 全てのオーバーレイに共通の「閉じる」処理。
-     * NovelOverlaySceneの場合は、シーンを完全に削除する。
-     * @param {object} data - { from, returnTo(NovelOverlay用), inputWasBlocked(NovelOverlay用) }
-     */
     closeOverlay(data) {
         console.group(`%c[OverlayManager] Group: closeOverlay (with scene removal)`, "color: #00BCD4;");
         console.log(`Request data:`, data);
@@ -68,7 +60,6 @@ export default class OverlayManager {
             this.systemScene.scene.stop(closingSceneKey);
             console.log(`Scene '${closingSceneKey}' stopped.`);
 
-            // NovelOverlaySceneは再利用せず、毎回破棄する
             if (closingSceneKey === 'NovelOverlayScene') {
                 this.systemScene.scene.remove(closingSceneKey);
                 console.log(`%c[OverlayManager] Scene '${closingSceneKey}' was completely removed to ensure clean state on next launch.`, "color: #E91E63; font-weight: bold;");
