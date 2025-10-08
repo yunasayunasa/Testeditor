@@ -145,6 +145,30 @@ const uiSceneConfig = { physics: { matter: { enable: false } } };
 // src/scenes/SystemScene.js
 
 /**
+     * ★★★ 責任を明確化 (メソッド名を _ で始める) ★★★
+     * EngineAPIからの指示を受けて、シーンを安全にレジュームする内部メソッド。
+     * @private
+     */
+    _safeResumeScene(sceneKey, onComplete) {
+        const targetScene = this.scene.get(sceneKey);
+
+        if (!targetScene || !this.scene.isPaused(sceneKey)) {
+            console.warn(`[SystemScene] _safeResumeScene: Scene '${sceneKey}' cannot be resumed.`);
+            if (onComplete) onComplete();
+            return;
+        }
+
+        targetScene.events.once('resume', () => {
+            console.log(`%c[SystemScene] RESUME COMPLETE for scene: '${sceneKey}'.`, 'color: lightgreen; font-weight: bold;');
+            if (onComplete) {
+                onComplete();
+            }
+        });
+
+        this.scene.resume(sceneKey);
+    }
+
+/**
  * GameSceneがシャットダウンした時に、SceneTransitionManagerから呼び出される専用ハンドラ
  */
 handleGameSceneShutdown() {
