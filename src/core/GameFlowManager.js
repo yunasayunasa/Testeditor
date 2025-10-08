@@ -80,7 +80,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
      * アクションの配列を実行する。
      * @param {Array<object>} actions 
      */
-        executeActions(actions, eventData = {}) { // ★ eventData引数を追加
+        async executeActions(actions, eventData = {}) {// ★ eventData引数を追加
     for (const action of actions) {
             console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
