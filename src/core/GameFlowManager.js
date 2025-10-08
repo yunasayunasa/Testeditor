@@ -185,5 +185,5 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
             }
         }
     }
-}
+
 }
