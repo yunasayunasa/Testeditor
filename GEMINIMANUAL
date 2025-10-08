@@ -128,4 +128,41 @@ Physics Interaction Protocol: Any VSL tag handler that directly modifies the phy
 Contract: Such handlers MUST NOT directly call physics-altering functions (e.g., gameObject.applyForce()).
 Deferred Execution Queue: Instead, they MUST use the BaseGameScene.deferAction(callback) method. This pushes the function into a queue.
 Execution Locus: BaseGameScene.update() executes and clears this queue at the beginning of every frame. This guarantees that all physics modifications occur at a safe point in the engine's update loop, ensuring stability and predictable behavior.
+SECTION 8: GAME FLOW STATE MACHINE PROTOCOL (NEW SECTION, V5.1)
+8.1. Core Principle: Decoupling Game State from Scene Implementation
+The introduction of the GameFlowManager service establishes a high-level, finite state machine (FSM) that governs the overall game state (e.g., Title, InGame, Paused). This FSM supersedes all previous ad-hoc state management and scene transition logic previously handled by SystemScene event listeners. The primary objective is to make the game's macro-flow declarative, predictable, and decoupled from the internal implementation of individual scenes.
+8.2. Architectural Components & Data Flow
+game_flow.json (The Blueprint): A static JSON asset that declaratively defines the entire game flow. It is the single source of truth for all possible states, the events that trigger transitions between them, and the actions to be executed upon entering, exiting, or during a transition. This file is loaded by PreloadScene and parsed by GameFlowManager.
+GameFlowManager.js (The Conductor): A global service, instantiated by SystemScene. Its sole responsibilities are:
+To parse game_flow.json and initialize the FSM.
+To maintain the currentState of the game.
+To expose a single public method, handleEvent(eventName, data), to the rest of the engine.
+To execute declarative actions defined in the blueprint by invoking the appropriate methods on the EngineAPI. It MUST NOT directly interact with Phaser's Scene Manager or any scene instance.
+EngineAPI.js (The Official Interface): The sole, mandatory interface between the GameFlowManager and the rest of the engine (SystemScene, SceneTransitionManager, OverlayManager). The GameFlowManager's actions map directly to methods on the EngineAPI.
+Key Contract: All engine-level operations that are asynchronous (e.g., scene transitions, waiting for an overlay to close) MUST be exposed via EngineAPI methods that return a Promise. The GameFlowManager's executeActions method MUST be async and MUST await these Promise-returning methods to ensure sequential, non-competing execution of state transitions.
+SystemScene.js (The Low-Level Executor): Acts as the low-level "driver" for engine operations, but only when commanded by the EngineAPI. It exposes internal methods (e.g., _safeResumeScene) that are wrapped by the public EngineAPI. It is responsible for direct interaction with Phaser's Scene Manager API (this.scene.pause, this.scene.resume, etc.).
+8.3. State Transition & Scene Lifecycle Protocol (Definitive)
+This protocol replaces previous scene transition mechanisms and resolves race conditions related to scene lifecycles.
+Event Trigger: An external event (e.g., UI button click, scenario tag execution) calls EngineAPI.fireGameFlowEvent(eventName, data).
+FSM Evaluation: GameFlowManager receives the event, consults its state definition for the currentState, and identifies a valid transition.
+Action Execution (Asynchronous Contract): GameFlowManager calls its async executeActions method.
+If the transition defines an action (e.g., closeOverlay), it is executed first via await EngineAPI.requestCloseOverlay().
+The FSM transitions to the to state.
+The onEnter actions of the new state are executed, again using await for any asynchronous operations (e.g., await EngineAPI.requestSafeResume()).
+Asynchronous resume Protocol (Critical):
+EngineAPI.requestSafeResume(sceneKey): Returns a new Promise. It does not resolve immediately. It calls SystemScene._safeResumeScene.
+SystemScene._safeResumeScene(sceneKey, onComplete): Registers a targetScene.events.once('resume', ...) listener. It then calls this.scene.resume(sceneKey).
+Phaser Scene Manager: Performs the internal resume operation. Upon completion, it emits the 'resume' event.
+SystemScene Listener: The 'resume' event triggers the listener's callback, which in turn calls the onComplete callback passed from the EngineAPI.
+EngineAPI Promise: The onComplete callback calls the resolve function of the Promise, completing the await in GameFlowManager. This guarantees the FSM does not proceed until the Phaser scene is verifiably active.
+Asynchronous Overlay Protocol (Critical):
+EngineAPI.runScenarioAsOverlay(...): Returns a new Promise. It registers a systemScene.events.once('overlay-closed', ...) listener. It then calls OverlayManager.openNovelOverlay.
+[overlay_end] tag: Triggers EngineAPI.requestCloseOverlay.
+OverlayManager.closeOverlay(...): Registers a sceneToClose.events.once('shutdown', ...) listener, then calls this.systemScene.scene.stop(...).
+shutdown event: The listener's callback executes. It calls this.systemScene.scene.remove(...) to prevent key duplication errors, and finally emits the global 'overlay-closed' event.
+EngineAPI listener: The 'overlay-closed' event triggers the listener, which resolves the Promise, completing the await in GameFlowManager.
+8.4. OverlayManager Revised Responsibilities
+The OverlayManager is now a pure "scene lifecycle executor" with no knowledge of game state.
+Contract: It MUST NOT call scene.pause or scene.resume. These are the sole responsibility of the GameFlowManager via pauseScene/resumeScene actions.
+NovelOverlayScene Management: To prevent state corruption between uses, the OverlayManager MUST adhere to a strict add -> launch -> stop -> remove lifecycle for NovelOverlayScene. The remove operation MUST be deferred until after the scene's 'shutdown' event has been received to prevent race conditions and "duplicate key" errors.
 END OF DOCUMENT

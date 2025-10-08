@@ -528,5 +528,90 @@ DetectionAreaComponent が発する onAreaEnter/onAreaLeave イベントをト�
 VSL: 将来的には [get_data key="..."] のようなタグを作ることで、シナリオの流れをカスタムデータに基づいて分岐させることも可能になります。
 カスタムデータを活用することで、静的なオブジェクトに動的な「意味」や「状態」を持たせることができ、ワールドのインタラクティビティを飛躍的に向上させることができます。
 
+
+8. エンジンの心臓部：ゲームフローマシン
+Odyssey Engine v5.10の最も重要な進化は、ゲームフローマシン (GameFlowManager) の導入です。これは、ゲーム全体の大きな流れ（タイトル画面 → ゲーム中 → ポーズメニュー → ゲームオーバーなど）を、game_flow.json という単一の設計図に基づいて管理する、エンジンの新しい「心臓部」です。
+これにより、これまで SystemScene が場当たり的に行っていたシーン遷移や状態管理が、予測可能で、視覚的に分かりやすい、堅牢なシステムへと生まれ変わりました。
+8.1. 基本的な考え方：「状態」と「遷移」
+ゲームフローマシンは、非常にシンプルな2つの概念に基づいています。
+状態 (State): ゲームが取りうる、明確に区切られた状況のことです。
+例：「タイトル画面を表示している状態 (Title)」「プレイヤーがゲームをプレイしている状態 (InGame)」「ポーズメニューが開いている状態 (Paused)」
+遷移 (Transition): ある「状態」から別の「状態」へ移る「きっかけ」のことです。このきっかけは、必ずイベント (Event) によって引き起こされます。
+例：「START_GAME イベントが発生したら、Title 状態から InGame 状態へ遷移する」「OPEN_PAUSE_MENU イベントが発生したら、InGame 状態から Paused 状態へ遷移する」
+この「状態」と「遷移」のルールをすべて記述したものが、assets/data/game_flow.json ファイルです。
+8.2. 設計図：game_flow.json の構造
+このJSONファイルは、ゲーム全体の流れを定義する設計図です。
+code
+JSON
+{
+  "initialState": "Title",
+  "states": {
+    "Title": {
+      "onEnter": [
+        { "type": "transitionTo", "params": { "scene": "TitleScene" } }
+      ],
+      "transitions": [
+        { "event": "START_GAME", "to": "InGame" }
+      ]
+    },
+    "InGame": {
+      "onEnter": [ { "type": "resumeScene" } ],
+      "transitions": [
+        { "event": "OPEN_PAUSE_MENU", "to": "Paused" },
+        { "event": "RUN_NOVEL_OVERLAY", "to": "NovelOverlay" }
+      ]
+    },
+    "Paused": {
+      "onEnter": [
+        { "type": "pauseScene" },
+        { "type": "openMenuOverlay", "params": { "layout": "pause_menu" } }
+      ],
+      "transitions": [
+        { "event": "CLOSE_PAUSE_MENU", "to": "InGame", "action": { "type": "closeOverlay" } }
+      ]
+    },
+    "NovelOverlay": {
+       "onEnter": [
+        { "type": "pauseScene" },
+        { "type": "runNovelOverlay" }
+      ],
+      "transitions": [
+        { "event": "END_NOVEL_OVERLAY", "to": "InGame", "action": { "type": "closeOverlay" } }
+      ]
+    }
+  }
+}
+initialState: ゲーム起動時に、最初になる状態を指定します。
+states: ゲームが取りうる全ての「状態」を定義します。
+onEnter: その状態に入った瞬間に自動的に実行されるアクションのリストです。
+例：Title 状態に入ったら、transitionTo アクションで TitleScene を表示する。
+onExit: (オプション) その状態から出る瞬間に実行されるアクションのリストです。
+transitions: その状態から遷移可能なルールのリストです。
+event: 遷移のきっかけとなるイベント名。
+to: 遷移先の状態名。
+action: (オプション) 遷移が実行される瞬間に、一度だけ実行されるアクション。
+8.3. アクション・リファレンス
+game_flow.json の中で使える type (アクションの種類) は、エンジンの心臓部を操作するための強力な命令です。
+アクション type	説明	主な使用場面
+transitionTo	現在のシーンを停止し、指定された新しいシーンを開始します。最も基本的なシーン切り替えです。	Title 状態に入ったら TitleScene を表示する、など。
+pauseScene	現在アクティブなゲームシーンをポーズさせます。	ポーズメニューやオーバーレイを表示する直前の onEnter で使用。
+resumeScene	直前にポーズされたゲームシーンを再開します。	InGame 状態に戻る際の onEnter で使用。
+openMenuOverlay	OverlayScene を起動し、指定されたレイアウトを表示させます。	Paused 状態に入ったら、pause_menu レイアウトを表示する、など。
+runNovelOverlay	NovelOverlayScene を起動し、イベントから渡されたシナリオファイルを実行します。	NovelOverlay 状態に入った時に、実際のオーバーレイ処理を開始する。
+closeOverlay	現在表示されているオーバーレイシーン（OverlayScene または NovelOverlayScene）を閉じます。	ポーズメニューを閉じる、またはノベルオーバーレイが終了する際の transition アクションとして使用。
+stopTime	物理エンジンなど、ゲーム内時間の進行を停止します。	ポーズメニュー表示時など。
+resumeTime	停止したゲーム内時間を再開します。	ゲーム復帰時など。
+8.4. イベントの発行方法（プログラマー向け）
+UIのボタンやシナリオタグなどからゲームフローの状態を遷移させたい場合は、EngineAPI を通じてイベントを発行します。
+code
+JavaScript
+// UIのボタンがクリックされた時など
+EngineAPI.fireGameFlowEvent('START_GAME');
+
+// [run_scenario] タグのハンドラ内部など
+// 'scenario' という追加情報を添えてイベントを発行
+EngineAPI.fireGameFlowEvent('RUN_NOVEL_OVERLAY', { scenario: 'event_01.ks' });
+
+
 このマニュアルが、あなたの創造の旅の信頼できる羅針盤となることを願っています。
 さあ、あなただけの物語を始めましょう！
