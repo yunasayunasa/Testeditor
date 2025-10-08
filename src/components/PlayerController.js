@@ -1,7 +1,6 @@
 //
 // Odyssey Engine - PlayerController Component
 // src/components/PlayerController.js
-
 export default class PlayerController {
     
     constructor(scene, target, params = {}) {
@@ -15,6 +14,7 @@ export default class PlayerController {
 
         // --- コンストラクタでは、変数を安全な初期値で定義するだけ ---
         this.cursors = null;
+        this.joystick = null; // ★ joystickのプロパティも初期化
         this.keyboardEnabled = false;
         this.isInitialized = false; // ★ 初期化済みかどうかのフラグ
 
@@ -28,13 +28,10 @@ serialize() {
     deserialize(data) {
         // No state to restore for now
     }
-    /**
-     * ★★★ 新設：安全なタイミングで呼び出すための初期化メソッド ★★★
-     */
     initKeyboard() {
-        if (this.isInitialized) return; // 二重実行を防ぐ
+        if (this.isInitialized) return;
 
-        if (this.scene && this.scene.input && this.scene.input.keyboard) {
+        if (this.scene?.input?.keyboard) {
             this.keyboardEnabled = true;
             this.cursors = this.scene.input.keyboard.createCursorKeys();
             console.log("%c[PlayerController] Keyboard cursors initialized successfully.", 'color: lightgreen');
@@ -42,21 +39,25 @@ serialize() {
             console.warn("[PlayerController] Keyboard input system not available during initKeyboard().");
             this.keyboardEnabled = false;
         }
-        this.isInitialized = true; // 初期化が完了したことを記録
+        this.isInitialized = true;
     }
 
     update(time, delta) {
-        // ★★★ updateの最初に、一度だけ初期化処理を呼び出す ★★★
+        // ★ 1. 最初に、一度だけ初期化処理を呼び出す
         if (!this.isInitialized) {
             this.initKeyboard();
         }
         
-        // --- 以下、元のupdateメソッドの処理 ---
-        if (!this.gameObject || !this.gameObject.scene || !this.gameObject.active) {
+        // ★ 2. 毎フレーム、シーンから最新のジョイスティックへの参照を取得する
+        //    (resumeで再生成されるため、この処理は必須)
+        this.joystick = this.scene.joystick;
+
+        if (!this.gameObject?.scene || !this.gameObject.active) {
             return;
         }
 
-        const joystick = this.scene.joystick;
+        // --- 以下、元のupdateメソッドの処理 (一部修正) ---
+
         if (this.state === 'hiding') {
             if (this.gameObject?.body) this.gameObject.setVelocity(0, 0);
             return;
@@ -70,14 +71,21 @@ serialize() {
         const body = this.gameObject.body;
         
         let moveX = 0;
-        if (this.keyboardEnabled && this.cursors) {
+
+        // ▼▼▼【ここがロード時のエラーを解決する核心部分】▼▼▼
+        // this.cursors が初期化済みであることを確認してからアクセスする
+        if (this.keyboardEnabled && this.cursors) { 
             if (this.cursors.left.isDown) moveX = -1;
             else if (this.cursors.right.isDown) moveX = 1;
         }
-        if (joystick) {
-            if (joystick.left) moveX = -1;
-            else if (joystick.right) moveX = 1;
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // this.joystick が存在することを確認してからアクセスする
+        if (this.joystick) {
+            if (this.joystick.left) moveX = -1;
+            else if (this.joystick.right) moveX = 1;
         }
+        
         let newDirection = this.direction;
         if (moveX < 0) newDirection = 'left';
         else if (moveX > 0) newDirection = 'right';
@@ -105,6 +113,7 @@ serialize() {
         }
         this.changeState(newState);
         
+        // this.cursors が初期化済みであることを確認してからアクセスする
         if (this.keyboardEnabled && this.cursors && Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.jump();
         }
