@@ -19,7 +19,7 @@ export default class SoundManager {
     // AudioContextを安全に再開
     resumeContext() {
         if (this.sound.context.state === 'suspended') {
-            this.sound.context.resume().then(() => // console.log("SoundManager: AudioContextが再開されました。"));
+            this.sound.context.resume().then(() => console.log("SoundManager: AudioContextが再開されました。"));
         }
     }
     
