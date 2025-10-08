@@ -61,7 +61,7 @@ export const uiRegistry = {
 
     'jump_button': { 
         path: './ui/JumpButton.js',
-        groups: ['controls', 'action']
+        groups: []
     },
   
       
