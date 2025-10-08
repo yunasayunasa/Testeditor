@@ -72,12 +72,37 @@ export default class JumpScene extends BaseGameScene {
         // データからシーンを構築する命令は最後に呼ぶ
          this.initSceneWithData();
       const uiScene = this.scene.get('UIScene');
-
+this.events.on('resume', this.onSceneResume, this);
    
     }
      dumpJoyStickState() {
         // このメソッドは、PlayerControllerのupdateで直接参照するため、
         // デバッグ以外では空でも良い
+    }
+    
+     /**
+     * シーンがポーズから復帰した際に自動的に呼び出されるメソッド。
+     * 古いジョイスティックを破棄し、新しいものを生成して入力が途切れないようにする。
+     */
+    onSceneResume() {
+        console.log("[JumpScene] Scene has been resumed. Re-initializing joystick to prevent input loss.");
+
+        // 1. 既存のジョイスティックインスタンスがあれば、安全に破棄する
+        if (this.joystick) {
+            this.joystick.destroy();
+            this.joystick = null;
+        }
+
+        // 2. create()メソッドの冒頭にあったものと全く同じロジックで、ジョイスティックを再生成する
+        const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
+        if (joystickPlugin) {
+            this.joystick = joystickPlugin.add(this, {
+                x: 150, y: this.cameras.main.height - 150, radius: 100,
+                base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
+                thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
+            });
+            console.log("[JumpScene] Joystick re-created successfully after resume.");
+        }
     }
        /**
      * ★★★ 修正版 ★★★
@@ -334,6 +359,9 @@ onSetupComplete() {
  */
 shutdown() {
         console.log("[JumpScene] Shutdown sequence started.");
+        this.events.off('resume', this.onSceneResume, this);
+
+        // --- 以下は元のshutdown()のコード ---
         if (this.joystick) {
             this.joystick.destroy();
             this.joystick = null;
