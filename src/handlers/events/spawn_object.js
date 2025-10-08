@@ -71,7 +71,7 @@ export default async function spawn_object(interpreter, params) {
     if (newGameObject) {
         // ★ applyProperties がレイヤー設定を含むすべてのプロパティを適用する
         scene.applyProperties(newGameObject, newObjectLayout);
-        console.log(`[spawn_object] Successfully spawned '${newGameObject.name}' on layer '${newObjectLayout.layer}'.`);
+        // console.log(`[spawn_object] Successfully spawned '${newGameObject.name}' on layer '${newObjectLayout.layer}'.`);
     } else {
         console.error(`[spawn_object] Failed to create game object from prefab '${prefabKey}'.`);
     }

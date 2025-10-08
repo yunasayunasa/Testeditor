@@ -36,7 +36,7 @@ export default class WatchVariableComponent {
         
         if (eventKey === watchKey) {
             // ▼▼▼ ログ爆弾 No.2 (再) ▼▼▼
-            console.log(`%c[LOG BOMB 2 | WatchVariable] OK! イベントキー '${eventKey}' が一致しました。これから '${this.gameObject.name}' に対して 'onValueChanged' (ペイロード: ${value}) をemitします。`, 'color: cyan; font-weight: bold; font-size: 1.2em;');
+            // console.log(`%c[LOG BOMB 2 | WatchVariable] OK! イベントキー '${eventKey}' が一致しました。これから '${this.gameObject.name}' に対して 'onValueChanged' (ペイロード: ${value}) をemitします。`, 'color: cyan; font-weight: bold; font-size: 1.2em;');
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
             this.gameObject.emit('onValueChanged', value, this.lastValue);
@@ -53,7 +53,7 @@ export default class WatchVariableComponent {
         // ★ stateManagerから、現在の最新の値を取得
         const initialValue = this.stateManager.getValue(this.variableToWatch);
         
-        console.log(`%c[WatchVariableComponent] Initial check for '${this.variableToWatch}'. Current value is: ${initialValue}`, "color: yellow;");
+        // console.log(`%c[WatchVariableComponent] Initial check for '${this.variableToWatch}'. Current value is: ${initialValue}`, "color: yellow;");
 
         // ★ 値が存在する場合のみ、イベントを発行
         if (initialValue !== undefined) {
@@ -73,7 +73,7 @@ export default class WatchVariableComponent {
             // ★★★ 購読した 'f-variable-changed' を解除する ★★★
             this.stateManager.off('f-variable-changed', this.listener);
         }
-        console.log(`[WatchVariableComponent] for ${this.gameObject.name} destroyed.`);
+        // console.log(`[WatchVariableComponent] for ${this.gameObject.name} destroyed.`);
     }
 }
 WatchVariableComponent.define = {

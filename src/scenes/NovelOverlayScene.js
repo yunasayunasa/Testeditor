@@ -40,7 +40,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("[NovelOverlayScene] create 開始");
+        // console.log("[NovelOverlayScene] create 開始");
         
         this.uiScene = this.scene.get('UIScene');
         this.soundManager = this.registry.get('soundManager');
@@ -83,7 +83,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.input.on('pointerdown', this.onClickHandler);
         
         this.time.delayedCall(10, () => this.scenarioManager.next());
-        console.log("[NovelOverlayScene] create 完了");
+        // console.log("[NovelOverlayScene] create 完了");
     }
 
   
@@ -174,7 +174,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         }
     }
 shutdown() {
-        console.log("[NovelOverlayScene] shutdown されました。");
+        // console.log("[NovelOverlayScene] shutdown されました。");
 
         // ▼▼▼【ここが修正の核心です】▼▼▼
         // 借りてないので、返す必要もありません。

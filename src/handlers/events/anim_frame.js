@@ -36,7 +36,7 @@ export default async function anim_frame(interpreter, params, target) {
     target.stop();
     target.setFrame(frameNumber);
 
-    console.log(`[anim_frame] Set '${target.name}' to frame ${frameNumber} (animation '${animKey}' is used as reference).`);
+    // console.log(`[anim_frame] Set '${target.name}' to frame ${frameNumber} (animation '${animKey}' is used as reference).`);
 }
 
 /**

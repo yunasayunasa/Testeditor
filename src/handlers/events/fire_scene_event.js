@@ -16,7 +16,7 @@ export default async function fire_scene_event(interpreter, params) {
     const targetScene = interpreter.scene.scene.get(sceneKey);
     if (targetScene) {
         targetScene.events.emit(eventName);
-        console.log(`[fire_scene_event] Fired '${eventName}' on scene '${sceneKey}'.`);
+        // console.log(`[fire_scene_event] Fired '${eventName}' on scene '${sceneKey}'.`);
     } else {
         console.warn(`[fire_scene_event] Scene with key '${sceneKey}' not found.`);
     }

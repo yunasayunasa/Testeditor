@@ -12,7 +12,7 @@ export default class ActionScene extends Phaser.Scene {
 
     init(data) {
         this.receivedParams = data.params || {}; // ★ jump.jsの仕様変更に合わせる
-        console.log("ActionScene: init 完了。受け取ったパラメータ:", this.receivedParams);
+        // console.log("ActionScene: init 完了。受け取ったパラメータ:", this.receivedParams);
         
         this.eventEmitted = false;
     }
@@ -20,7 +20,7 @@ export default class ActionScene extends Phaser.Scene {
    // src/scenes/ActionScene.js
 
     create() {
-        console.log("ActionScene: create 開始");
+        // console.log("ActionScene: create 開始");
         this.cameras.main.setBackgroundColor('#4a86e8');
         
         // --- チュートリアル用のボタン ---
@@ -48,7 +48,7 @@ export default class ActionScene extends Phaser.Scene {
             });
 
         this.events.emit('scene-ready');
-        console.log("ActionScene: create 完了。scene-readyイベントを発行しました。");
+        // console.log("ActionScene: create 完了。scene-readyイベントを発行しました。");
     
 
         // --- ★★★ 勝利ボタン ★★★ ---
@@ -63,7 +63,7 @@ export default class ActionScene extends Phaser.Scene {
             // ★★★ 修正箇所: イベントがまだ発行されていない場合のみ発行 ★★★
             if (!this.eventEmitted) {
                 this.eventEmitted = true; // フラグを立てる
-                console.log("ActionScene: 勝利ボタンクリック -> return-to-novel を発行");
+                // console.log("ActionScene: 勝利ボタンクリック -> return-to-novel を発行");
                 this.scene.get('SystemScene').events.emit('return-to-novel', {
                     from: this.scene.key,
                     params: { 'f.battle_result': 'win' } 
@@ -85,7 +85,7 @@ export default class ActionScene extends Phaser.Scene {
             // ★★★ 修正箇所: イベントがまだ発行されていない場合のみ発行 ★★★
             if (!this.eventEmitted) {
                 this.eventEmitted = true; // フラグを立てる
-                console.log("ActionScene: 敗北ボタンクリック -> return-to-novel を発行");
+                // console.log("ActionScene: 敗北ボタンクリック -> return-to-novel を発行");
                 this.scene.get('SystemScene').events.emit('return-to-novel', {
                     from: this.scene.key,
                     params: { 'f.battle_result': 'lose' } 
@@ -94,7 +94,7 @@ export default class ActionScene extends Phaser.Scene {
                 console.warn("ActionScene: return-to-novel イベントは既に発行されています。スキップします。");
             }
         });
-        console.log("ActionScene: create 完了");
+        // console.log("ActionScene: create 完了");
     
 
      // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
@@ -102,12 +102,12 @@ export default class ActionScene extends Phaser.Scene {
         // ★★★ 5ヶ条のルール1：createの最後にscene-readyを発行 ★★★
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
         this.events.emit('scene-ready');
-        console.log("ActionScene: create 完了。scene-readyイベントを発行しました。");
+        // console.log("ActionScene: create 完了。scene-readyイベントを発行しました。");
     }
     
     // ★★★ 5ヶ条のルール4：shutdownで後片付け ★★★
     shutdown() {
-        console.log("ActionScene: shutdown されました。");
+        // console.log("ActionScene: shutdown されました。");
         // このシーンは動的なイベントやタイマーを生成していないので、
         // 現状はコンソールログだけでOK。
         // もしthis.time.addEventなどを使ったら、ここでdestroyする。

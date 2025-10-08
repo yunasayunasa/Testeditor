@@ -49,7 +49,7 @@ export default class ScenarioManager {
     stop() {
         this.isStopped = true;
         this.isEnd = true; // gameLoopを抜けるようにする
-        console.log("ScenarioManager: 停止しました。");
+        // console.log("ScenarioManager: 停止しました。");
         // もしタイマー（オートモードなど）があれば、ここでクリアする
         if (this.autoTimer) {
             this.autoTimer.remove();
@@ -59,7 +59,7 @@ export default class ScenarioManager {
     // --- 新しいメインループ ---
        async gameLoop() {
         this.isLoopRunning = true;
-        console.log(`[gameLoop] >> ループ開始 (Line: ${this.currentLine})`);
+        // console.log(`[gameLoop] >> ループ開始 (Line: ${this.currentLine})`);
 
         while (!this.isEnd && !this.isWaitingClick && !this.isWaitingChoice && !this.isStopped) {
             
@@ -73,15 +73,15 @@ export default class ScenarioManager {
             const processingLine = this.currentLine; // ログ用に現在行を保持
             this.currentLine++;
 
-            console.log(`[gameLoop] -> Line ${processingLine} のパースを開始: "${line}"`);
+            // console.log(`[gameLoop] -> Line ${processingLine} のパースを開始: "${line}"`);
             
             await this.parse(line);
 
-            console.log(`[gameLoop] <- Line ${processingLine} のパースが完了。`);
+            // console.log(`[gameLoop] <- Line ${processingLine} のパースが完了。`);
         }
         
         this.isLoopRunning = false;
-        console.log(`[gameLoop] << ループ停止。isEnd=${this.isEnd}, isWaitingClick=${this.isWaitingClick}, isWaitingChoice=${this.isWaitingChoice}, Line: ${this.currentLine}`);
+        // console.log(`[gameLoop] << ループ停止。isEnd=${this.isEnd}, isWaitingClick=${this.isWaitingClick}, isWaitingChoice=${this.isWaitingChoice}, Line: ${this.currentLine}`);
     }
      // --- クリック処理 ---
     onClick() {
@@ -185,7 +185,7 @@ async parse(line) {
      * @param {string|null} targetLabel - ジャンプ先のラベル (例: '*start')
      */
     async loadScenario(scenarioKey, targetLabel = null) {
-        console.log(`%c[loadScenario] START: ${scenarioKey}`, "color: yellow; font-weight: bold;");
+        // console.log(`%c[loadScenario] START: ${scenarioKey}`, "color: yellow; font-weight: bold;");
         let rawText;
         const keyWithoutExt = scenarioKey.replace('.ks', '');
 
@@ -217,7 +217,7 @@ async parse(line) {
         this.scenario = rawText.split(/\r\n|\n|\r/).filter(line => line.trim() !== '');
         this.currentFile = scenarioKey; // 呼び出し元のファイル名を保持
         this.currentLine = 0; // 行番号をリセット
-        console.log(`[loadScenario] シナリオを解析しました: ${this.currentFile} (${this.scenario.length}行)`);
+        // console.log(`[loadScenario] シナリオを解析しました: ${this.currentFile} (${this.scenario.length}行)`);
 
 
         // --- 2. @asset宣言の解析 ---
@@ -246,7 +246,7 @@ async parse(line) {
 
         // --- 3. 動的ロードの実行 ---
         if (assetsToLoad.length > 0) {
-            console.log("追加アセットの動的ロードが必要です:", assetsToLoad);
+            // console.log("追加アセットの動的ロードが必要です:", assetsToLoad);
             
             await new Promise(resolve => {
                 this.scene.scene.launch('LoadingScene', {
@@ -254,7 +254,7 @@ async parse(line) {
                     onComplete: resolve
                 });
             });
-            console.log("追加アセットのロードが完了しました。");
+            // console.log("追加アセットのロードが完了しました。");
         }
 
         // --- 4. ラベルへのジャンプ ---
@@ -262,7 +262,7 @@ async parse(line) {
             this.jumpTo(targetLabel);
         }
         
-        console.log(`%c[loadScenario] END: ${scenarioKey}`, "color: yellow; font-weight: bold;");
+        // console.log(`%c[loadScenario] END: ${scenarioKey}`, "color: yellow; font-weight: bold;");
     }
     jumpTo(target) {
         const labelName = target.substring(1);
@@ -275,10 +275,10 @@ async parse(line) {
     }
 
     embedVariables(line) {
-        console.log(`.......... ScenarioManager.embedVariables 開始: "${line}"`);
+        // console.log(`.......... ScenarioManager.embedVariables 開始: "${line}"`);
 
         return line.replace(/&((f|sf)\.[a-zA-Z0-9_.-]+)/g, (match, exp) => {
-             console.log(`.............. embedVariables: 変数展開を試みます -> ${exp}`);
+             // console.log(`.............. embedVariables: 変数展開を試みます -> ${exp}`);
              
             // ★★★ 修正箇所: stateManager.eval -> stateManager.getValue ★★★
             const value = this.stateManager.getValue(exp); 
@@ -367,11 +367,11 @@ async parse(line) {
              // スキップモードでない時に同じボタンが押されたら、モードをノーマルに戻す
              this.mode = 'normal';
              if (this.autoTimer) this.autoTimer.remove();
-             console.log(`モード変更: ${newMode} -> normal`);
+             // console.log(`モード変更: ${newMode} -> normal`);
              return;
         }
 
-        console.log(`モード変更: ${this.mode} -> ${newMode}`);
+        // console.log(`モード変更: ${this.mode} -> ${newMode}`);
         this.mode = newMode;
 
         if (this.autoTimer) this.autoTimer.remove();
@@ -388,7 +388,7 @@ async parse(line) {
     skipLoop() {
         // スキップモードでない、または待機状態ならループを止める
         if (this.mode !== 'skip' || this.isWaitingChoice || this.isEnd) {
-            console.log("スキップを停止します。");
+            // console.log("スキップを停止します。");
             this.setMode('normal'); // 通常モードに戻す
             return;
         }

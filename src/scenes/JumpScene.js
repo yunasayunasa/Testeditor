@@ -19,9 +19,9 @@ export default class JumpScene extends BaseGameScene {
             base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
             thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
         });
-        console.log("[JumpScene] Joystick instance created at the beginning of create().");
+        // console.log("[JumpScene] Joystick instance created at the beginning of create().");
     }
-        console.log("[JumpScene] Create started.");
+        // console.log("[JumpScene] Create started.");
         super.create();
     
      /*   this.cameras.main.setBackgroundColor('#4488cc');
@@ -34,7 +34,7 @@ export default class JumpScene extends BaseGameScene {
     //    ビネットの強さ (0.0 ～ 1.0)
     vignetteEffect.strength = 0.6; */
     
-    console.log("[JumpScene] Vignette effect applied to the main camera.");
+    // console.log("[JumpScene] Vignette effect applied to the main camera.");
         const soundManager = this.registry.get('soundManager');
         if (soundManager) soundManager.playBgm('bgm_action');
 
@@ -45,7 +45,7 @@ export default class JumpScene extends BaseGameScene {
         // 1. Matter.jsのAPIを使って、世界の境界を設定する
         this.matter.world.setBounds(0, 0, worldWidth, worldHeight);
     this.matter.world.timeScale = 1;
-    console.log(`[JumpScene] Matter.js world time scale was set to: ${this.matter.world.timeScale}`);
+    // console.log(`[JumpScene] Matter.js world time scale was set to: ${this.matter.world.timeScale}`);
         // 2. カメラの境界設定は、物理エンジンとは無関係なので、そのまま使える
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
         // ★★★ ここまで ★★★
@@ -57,7 +57,7 @@ export default class JumpScene extends BaseGameScene {
 
     // 2. JSONデータ内に hasJoystick: true のフラグがあれば、ジョイスティックを生成
     if (layoutData && layoutData.hasJoystick) {
-        console.log("[JumpScene] Joystick found in layout data. Re-creating joystick...");
+        // console.log("[JumpScene] Joystick found in layout data. Re-creating joystick...");
         
         // ★ addJoystickFromEditorを、シーン自身の初期化のために再利用する
         //    (ただし、アラートは出ないように少し改修すると、より良い)
@@ -85,7 +85,7 @@ this.events.on('resume', this.onSceneResume, this);
      * 古いジョイスティックを破棄し、新しいものを生成して入力が途切れないようにする。
      */
     onSceneResume() {
-        console.log("[JumpScene] Scene has been resumed. Re-initializing joystick to prevent input loss.");
+        // console.log("[JumpScene] Scene has been resumed. Re-initializing joystick to prevent input loss.");
 
         // 1. 既存のジョイスティックインスタンスがあれば、安全に破棄する
         if (this.joystick) {
@@ -101,7 +101,7 @@ this.events.on('resume', this.onSceneResume, this);
                 base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
                 thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
             });
-            console.log("[JumpScene] Joystick re-created successfully after resume.");
+            // console.log("[JumpScene] Joystick re-created successfully after resume.");
         }
     }
        /**
@@ -133,25 +133,25 @@ setupPlayerAndCamera() {
     
     // 1. シーンのオブジェクトリストに 'player' という名前のオブジェクトが存在するか確認
     const playerObjectExists = this.children.list.some(child => child.name === 'player');
-    console.log(`Step 1: Does a 'player' object exist in the scene's children list? -> ${playerObjectExists}`);
+    // console.log(`Step 1: Does a 'player' object exist in the scene's children list? -> ${playerObjectExists}`);
 
     // 2. 実際に 'player' を名前で検索してみる
     this.player = this.children.getByName('player');
     
     if (this.player) {
-        console.log(`%cStep 2: SUCCESS! Player object found.`, 'color: lightgreen;');
-        console.log(`Step 3: Player's current position is (x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)})`);
+        // console.log(`%cStep 2: SUCCESS! Player object found.`, 'color: lightgreen;');
+        // console.log(`Step 3: Player's current position is (x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)})`);
 
         this.playerController = this.player.components?.PlayerController;
         this.player.setFixedRotation();
         
         // 3. カメラが既に何かを追従していないか確認
         if (this.cameras.main && !this.cameras.main.isFollowing) {
-            console.log("Step 4: Camera is not following anything. Starting follow now...");
+            // console.log("Step 4: Camera is not following anything. Starting follow now...");
             this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
             // 追従開始後のカメラのスクロール位置をログに出す
             this.time.delayedCall(10, () => { // 1フレーム待ってから確認
-                 console.log(`Step 5: Camera follow started. Camera scroll is now (x: ${Math.round(this.cameras.main.scrollX)}, y: ${Math.round(this.cameras.main.scrollY)})`);
+                 // console.log(`Step 5: Camera follow started. Camera scroll is now (x: ${Math.round(this.cameras.main.scrollX)}, y: ${Math.round(this.cameras.main.scrollY)})`);
             });
         } else {
             console.warn("Step 4: Camera is already following an object.");
@@ -201,7 +201,7 @@ setupPlayerAndCamera() {
             return;
         }
 
-        console.log("[JumpScene] Setting up joystick by external command...");
+        // console.log("[JumpScene] Setting up joystick by external command...");
         this.joystick = joystickPlugin.add(this, {
             x: 150, y: this.cameras.main.height - 150, radius: 100,
             base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
@@ -261,18 +261,18 @@ setupPlayerAndCamera() {
         // ★ ログは初回だけでいいので、フラグで管理する
         if (!this._jumpButtonListenerAttached) {
             this._jumpButtonListenerAttached = true;
-            console.log("[JumpScene] Jump button listener is now active.");
+            // console.log("[JumpScene] Jump button listener is now active.");
         }
     }
  // in src/scenes/JumpScene.js
 // src/scenes/JumpScene.js
 
 onSetupComplete() {
-    console.log("[JumpScene] onSetupComplete called. This is the final step in setup.");
+    // console.log("[JumpScene] onSetupComplete called. This is the final step in setup.");
 
     // ★★★ 1. ロードデータがあれば、シーンの状態を復元する ★★★
     if (this.loadData) {
-        console.log("Restoring scene state from save data...", this.loadData);
+        // console.log("Restoring scene state from save data...", this.loadData);
         
         const stateManager = this.registry.get('stateManager');
         if (stateManager && this.loadData.variables) {
@@ -325,7 +325,7 @@ onSetupComplete() {
             return;
         }
 
-        console.log("[JumpScene] Adding joystick from editor request...");
+        // console.log("[JumpScene] Adding joystick from editor request...");
 
         // --- 3. ジョイスティックを生成・設定 ---
         this.joystick = joystickPlugin.add(this, {
@@ -339,7 +339,7 @@ onSetupComplete() {
 
         // --- 4. 成功したことをユーザーに伝える ---
         // (アラートは少し煩わしいので、コンソールログの方が良いかもしれません)
-        if (isFromEditor) console.log("ジョイスティックがシーンに追加されました。");
+        if (isFromEditor) // console.log("ジョイスティックがシーンに追加されました。");
 }
     
 
@@ -358,16 +358,16 @@ onSetupComplete() {
  * シーンが停止する際にPhaserによって自動的に呼び出される
  */
 shutdown() {
-        console.log("[JumpScene] Shutdown sequence started.");
+        // console.log("[JumpScene] Shutdown sequence started.");
         this.events.off('resume', this.onSceneResume, this);
 
         // --- 以下は元のshutdown()のコード ---
         if (this.joystick) {
             this.joystick.destroy();
             this.joystick = null;
-            console.log("[JumpScene] Joystick instance destroyed.");
+            // console.log("[JumpScene] Joystick instance destroyed.");
         }
         super.shutdown();
-        console.log("[JumpScene] Shutdown sequence complete.");
+        // console.log("[JumpScene] Shutdown sequence complete.");
     }
 }

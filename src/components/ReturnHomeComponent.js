@@ -19,7 +19,7 @@ export default class ReturnHomeComponent {
     start() {
         // --- 1. 自身の初期位置を「故郷」として記憶する ---
         this.homePosition.set(this.gameObject.x, this.gameObject.y);
-        console.log(`[ReturnHome] '${this.gameObject.name}' home set to (${this.homePosition.x}, ${this.homePosition.y})`);
+        // console.log(`[ReturnHome] '${this.gameObject.name}' home set to (${this.homePosition.x}, ${this.homePosition.y})`);
     }
 
     /**
@@ -30,7 +30,7 @@ export default class ReturnHomeComponent {
         if (this.isReturning) return;
         this.isReturning = true;
         this.gameObject.emit('onAiBehaviorChange', { source: 'ReturnHomeComponent', active: true });
-        console.log(`[ReturnHome] '${this.gameObject.name}' starting to return.`);
+        // console.log(`[ReturnHome] '${this.gameObject.name}' starting to return.`);
 
         // 物理ボディを一時的に無効化（壁などに引っかからないように）
         if (this.gameObject.body) this.gameObject.body.enable = false;
@@ -50,7 +50,7 @@ export default class ReturnHomeComponent {
      * 初期位置に再出現（リポップ）させる処理
      */
     repopAtHome() {
-        console.log(`[ReturnHome] '${this.gameObject.name}' repoping.`);
+        // console.log(`[ReturnHome] '${this.gameObject.name}' repoping.`);
         this.gameObject.setPosition(this.homePosition.x, this.homePosition.y);
         this.gameObject.setVisible(true); // 再び見えるように
         if (this.gameObject.body) this.gameObject.body.enable = true;
@@ -63,7 +63,7 @@ export default class ReturnHomeComponent {
                 this.isReturning = false;
                 // 「私の仕事は終わった」とブロードキャスト
                 this.gameObject.emit('onAiBehaviorChange', { source: 'ReturnHomeComponent', active: false });
-                console.log(`[ReturnHome] '${this.gameObject.name}' has returned.`);
+                // console.log(`[ReturnHome] '${this.gameObject.name}' has returned.`);
             }
         });
     }

@@ -21,7 +21,7 @@ export default async function handleReturn(manager, params) {
         return;
     }
 
-    console.log(`[return] 呼び出し元へ復帰します -> ${returnInfo.file} (Line: ${returnInfo.line})`);
+    // console.log(`[return] 呼び出し元へ復帰します -> ${returnInfo.file} (Line: ${returnInfo.line})`);
 
     const { file, line } = returnInfo;
 

@@ -388,7 +388,7 @@ onCropAndPlace = () => {
         return;
     }
 
-    console.log(`Cropping '${this.selectedTilemapKey}' at`, this.cropRect);
+    // console.log(`Cropping '${this.selectedTilemapKey}' at`, this.cropRect);
 
     // EditorPluginに処理を依頼
     this.plugin.placeCroppedTilemap(this.selectedTilemapKey, this.cropRect);
@@ -433,7 +433,7 @@ onCropAndPlace = () => {
             modeLabel.textContent = (mode === 'play') ? 'Play Mode' : 'Select Mode';
         }
         
-        console.log(`[EditorUI] Global mode changed to: ${mode}`);
+        // console.log(`[EditorUI] Global mode changed to: ${mode}`);
     }
     // =================================================================
     // UI構築・更新メソッド群
@@ -485,7 +485,7 @@ onCropAndPlace = () => {
         this.game.input.off('pointerdown', this.onPointerDown, this);
 
         // --- 新しいリスナーを登録 ---
-        console.log("[EditorUI] Attaching Phaser global input listeners.");
+        // console.log("[EditorUI] Attaching Phaser global input listeners.");
         this.game.input.on('pointermove', this.onPointerMove, this);
         this.game.input.on('pointerdown', this.onPointerDown, this);
     }
@@ -547,7 +547,7 @@ onCropAndPlace = () => {
         const tileX = Math.floor(worldX / tileWidth);
         const tileY = Math.floor(worldY / tileHeight);
         
-        console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
+        // console.log(`[EditorUI | Phaser Event] Placing tile index ${this.selectedTileIndex} at grid (${tileX}, ${tileY})`);
 
         if (typeof scene.placeTile === 'function') {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true); // 物理ボディ付きで配置
@@ -570,7 +570,7 @@ onCropAndPlace = () => {
      */
     startRangeFillDrag(sourceObject) {
         this.rangeFillSourceObject = sourceObject;
-        console.log(`[EditorUI | Final Fix] Range fill drag started.`);
+        // console.log(`[EditorUI | Final Fix] Range fill drag started.`);
         
         this.game.canvas.style.cursor = 'crosshair';
 
@@ -585,7 +585,7 @@ onCropAndPlace = () => {
 
         // --- マウスボタンが離された時の処理 ---
         const onMouseUp = (event) => {
-            console.log(`[EditorUI | Final Fix] Mouse up detected. Executing fill.`);
+            // console.log(`[EditorUI | Final Fix] Mouse up detected. Executing fill.`);
             
             // --- 処理の実行 ---
             const scene = this.getActiveGameScene();
@@ -971,7 +971,7 @@ onAddButtonClicked = () => {
     async openHelpModal() {
         if (!this.helpModal || !this.helpModalContent) return;
  this.game.input.enabled = false;
-            console.log("[EditorUI] Phaser input disabled for Help Modal.");
+            // console.log("[EditorUI] Phaser input disabled for Help Modal.");
         // モーダルを表示
         this.helpModal.style.display = 'flex';
         // Phaserの入力を無効化
@@ -996,7 +996,7 @@ onAddButtonClicked = () => {
     closeHelpModal() {
         if (!this.helpModal) return;
          this.game.input.enabled = true;
-            console.log("[EditorUI] Phaser input re-enabled.");
+            // console.log("[EditorUI] Phaser input re-enabled.");
         this.helpModal.style.display = 'none';
       
     }
@@ -1062,7 +1062,7 @@ onAddButtonClicked = () => {
         if (layer && layer.locked) return; // ロック中はアクティブ化不可
         
         this.activeLayerName = layerName;
-        console.log(`Active layer set to: ${this.activeLayerName}`);
+        // console.log(`Active layer set to: ${this.activeLayerName}`);
         this.buildLayerPanel();
     }
 
@@ -1253,7 +1253,7 @@ onAddButtonClicked = () => {
                 // ▼▼▼【ここからがコピー処理】▼▼▼
                 const clonedData = this.cloneEventDataWithNewIds(this.activeEventData);
                 systemScene.eventClipboard = clonedData;
-                console.log("Copied event to clipboard:", systemScene.eventClipboard);
+                // console.log("Copied event to clipboard:", systemScene.eventClipboard);
                 // 貼り付けボタンを即座に表示するために、タブUIを再描画
                 this.buildVslTabs();
                 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
@@ -1327,7 +1327,7 @@ closeEventEditor = () => {
         this.eventEditorOverlay.style.display = 'none';
         this.editingObject = null;
         this.game.input.enabled = true;
-        console.log("[EditorUI] Phaser input re-enabled.");
+        // console.log("[EditorUI] Phaser input re-enabled.");
         if(this.plugin) {
             this.plugin.pluginManager.game.input.enabled = true;
         }
@@ -1839,7 +1839,7 @@ createNodePositionInput(container, nodeData, key) {
         
         // SVGでプレビュー用の線を描画する準備
         // (このSVGのセットアップは少し複雑なので、まずはロジックを完成させる)
-        console.log(`Connection started from node: ${fromNodeId}`);
+        // console.log(`Connection started from node: ${fromNodeId}`);
     }
   
    /**
@@ -1848,7 +1848,7 @@ createNodePositionInput(container, nodeData, key) {
  */
 selectNode(nodeData) {
     this.selectedNodeData = nodeData;
-    console.log("Selected node:", nodeData);
+    // console.log("Selected node:", nodeData);
 
     // ★ EditorPluginに、プロパティパネルを「ノード編集モード」で更新するよう依頼
     if (this.plugin) {
@@ -2098,7 +2098,7 @@ createNodeAssetSelectInput(container, nodeData, paramKey, label, paramDef) {
     setVslMode(mode) {
         if (this.vslMode === mode) return;
         this.vslMode = mode;
-        console.log(`VSL mode changed to: ${mode}`);
+        // console.log(`VSL mode changed to: ${mode}`);
 
         const selectBtn = document.getElementById('vsl-select-mode-btn');
         const panBtn = document.getElementById('vsl-pan-mode-btn');
@@ -2260,11 +2260,11 @@ drawConnections(svgLayer, nodes, connections) {
 
     // --- デバッグログ (Phase 1: 実行開始) ---
     console.groupCollapsed("[DEBUG] drawConnections 実行");
-    console.log("渡されたnodesデータ:", JSON.parse(JSON.stringify(nodes || [])));
-    console.log("渡されたconnectionsデータ:", JSON.parse(JSON.stringify(connections || [])));
+    // console.log("渡されたnodesデータ:", JSON.parse(JSON.stringify(nodes || [])));
+    // console.log("渡されたconnectionsデータ:", JSON.parse(JSON.stringify(connections || [])));
     
     if (!connections || connections.length === 0) {
-        console.log("接続データが空のため、描画をスキップします。");
+        // console.log("接続データが空のため、描画をスキップします。");
         console.groupEnd();
         return;
     }
@@ -2278,15 +2278,15 @@ drawConnections(svgLayer, nodes, connections) {
         const fromNodeEl = canvasEl.querySelector(`[data-node-id="${conn.fromNode}"]`);
         const toNodeEl = canvasEl.querySelector(`[data-node-id="${conn.toNode}"]`);
         
-        console.log("FromノードDOM:", fromNodeEl);
-        console.log("ToノードDOM:", toNodeEl);
+        // console.log("FromノードDOM:", fromNodeEl);
+        // console.log("ToノードDOM:", toNodeEl);
 
         if (fromNodeEl && toNodeEl) {
             const fromPinEl = fromNodeEl.querySelector(`[data-pin-type="output"][data-pin-name="${conn.fromPin}"]`);
             const toPinEl = toNodeEl.querySelector(`[data-pin-type="input"][data-pin-name="${conn.toPin}"]`);
 
-            console.log("FromピンDOM:", fromPinEl);
-            console.log("ToピンDOM:", toPinEl);
+            // console.log("FromピンDOM:", fromPinEl);
+            // console.log("ToピンDOM:", toPinEl);
 
             if (fromPinEl && toPinEl) {
                 // --- 座標計算 ---
@@ -2322,9 +2322,9 @@ drawConnections(svgLayer, nodes, connections) {
                 svgLayer.appendChild(path);
                 
                 // --- デバッグログ (Phase 3: 成功) ---
-                console.log("計算後の座標:", {startX, startY, endX, endY});
-                console.log("SVGパスデータ:", pathData);
-                console.log("%c描画成功！", "color: lightgreen;");
+                // console.log("計算後の座標:", {startX, startY, endX, endY});
+                // console.log("SVGパスデータ:", pathData);
+                // console.log("%c描画成功！", "color: lightgreen;");
 
             } else {
                 // --- デバッグログ (Phase 3: 失敗) ---
@@ -2717,9 +2717,9 @@ setupStateMachineEventListeners() {
 
     // ▼▼▼【ここからデバッグログ】▼▼▼
     console.groupCollapsed("[DEBUG] setupStateMachineEventListeners 実行");
-    console.log("Add State Button:", addStateBtn);
-    console.log("States List Container:", statesList);
-    console.log("Hooks Tabs Container:", hooksTabs);
+    // console.log("Add State Button:", addStateBtn);
+    // console.log("States List Container:", statesList);
+    // console.log("Hooks Tabs Container:", hooksTabs);
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     // --- 新しいリスナー関数を定義 ---
     this._onAddNewState = () => {

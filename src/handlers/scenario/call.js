@@ -15,17 +15,17 @@ export default async function handleCall(manager, params) {
         file: manager.currentFile,
         line: manager.currentLine // manager.currentLineは既に次の行を指しているので、これで正しい
     });
-    console.log("CallStack Pushed:", manager.callStack);
+    // console.log("CallStack Pushed:", manager.callStack);
 
     // --- .ksファイル（サブルーチン）呼び出しの場合 ---
     if (storage && storage.endsWith('.ks')) {
-        console.log(`[call] サブルーチンシナリオ [${storage}] を呼び出します。`);
+        // console.log(`[call] サブルーチンシナリオ [${storage}] を呼び出します。`);
         await manager.loadScenario(storage, target);
         // loadScenarioが終わったら、gameLoopが次の行から実行を再開する
     } 
     // --- 別のPhaserシーン呼び出しの場合 ---
     else if (storage) {
-        console.log(`[call] サブルーチンシーン [${storage}] を呼び出します。`);
+        // console.log(`[call] サブルーチンシーン [${storage}] を呼び出します。`);
         
         // ★★★ [jump]ハンドラと全く同じロジックで遷移する ★★★
         

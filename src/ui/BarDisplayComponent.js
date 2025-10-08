@@ -30,7 +30,7 @@ export default class BarDisplayComponent {
         
         // 割合を計算 (0から1の範囲にクランプ)
         const percentage = Phaser.Math.Clamp(currentValue / maxValue, 0, 1);
-           console.log(`%c[LOG BOMB 3 | BarDisplay] '${this.gameObject.name}'が'onValueChanged'を受信しました。
+           // console.log(`%c[LOG BOMB 3 | BarDisplay] '${this.gameObject.name}'が'onValueChanged'を受信しました。
         - 受け取った現在値: ${currentValue}
         - 最大値の変数'${this.maxValueVariable}'から取得した値: ${maxValue}
         - 計算された割合: ${percentage}

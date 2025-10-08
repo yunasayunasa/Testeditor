@@ -33,7 +33,7 @@ export default class InteractButton extends Button {
         // 3. ゲームプレイシーンにイベントを発火させる
         if (gameScene) {
             gameScene.events.emit('interact_button_pressed');
-            console.log(`[InteractButton] Fired 'interact_button_pressed' on scene '${gameScene.scene.key}'.`);
+            // console.log(`[InteractButton] Fired 'interact_button_pressed' on scene '${gameScene.scene.key}'.`);
         } else {
             console.warn('[InteractButton] Could not find an active game scene to fire event on.');
         }

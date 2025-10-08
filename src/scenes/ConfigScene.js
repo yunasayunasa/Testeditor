@@ -9,7 +9,7 @@ export default class ConfigScene extends Phaser.Scene {
     create() {
             this.scene.bringToTop();
 
-        console.log("ConfigScene: create 開始");
+        // console.log("ConfigScene: create 開始");
 
         // ★★★ 1. createの冒頭で、プロパティを確実に初期化する ★★★
         this.configManager = this.sys.registry.get('configManager');

@@ -61,7 +61,7 @@ export default async function handleWalk(manager, params) {
 
     } finally {
         // --- 4. 完了処理（成功時もエラー時も必ず実行される） ---
-        console.log(`[walk] キャラクター[${name}]の歩行が完了しました。`);
+        // console.log(`[walk] キャラクター[${name}]の歩行が完了しました。`);
         // a. 上下動Tweenを確実に停止
         const walkTween = scene.tweens.getTweensOf(walkData)[0];
         if (walkTween) {

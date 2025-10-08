@@ -10,7 +10,7 @@ export default async function toggle_hiding(interpreter, params, target) {
         console.groupEnd();
         return;
     }
-    console.log(`Status: Found 'player' object.`);
+    // console.log(`Status: Found 'player' object.`);
 
     const playerController = player.components?.PlayerController;
     if (!playerController || typeof playerController.toggleHiding !== 'function') {
@@ -18,8 +18,8 @@ export default async function toggle_hiding(interpreter, params, target) {
         console.groupEnd();
         return;
     }
-    console.log(`Status: Found 'PlayerController' and 'toggleHiding' method.`);
-    console.log(`Action: Calling playerController.toggleHiding() with target '${target.name}'...`);
+    // console.log(`Status: Found 'PlayerController' and 'toggleHiding' method.`);
+    // console.log(`Action: Calling playerController.toggleHiding() with target '${target.name}'...`);
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     playerController.toggleHiding(target);

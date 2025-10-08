@@ -532,7 +532,7 @@ createAnimationPrefixInput() {
      * @param {object} layerObject - 選択されたレイヤーのデータオブジェクト
      */
     selectLayer(layerObject) {
-        console.log(`[EditorPlugin] Layer selected:`, layerObject);
+        // console.log(`[EditorPlugin] Layer selected:`, layerObject);
         // 他の選択をすべて解除
         this.deselectAll();
         
@@ -620,7 +620,7 @@ createAnimationPrefixInput() {
     applyLayerStatesToScene() {
         const scene = this.getActiveGameScene();
         if (!scene) return;
-        console.log("[EditorPlugin] Applying layer states to all scene objects...");
+        // console.log("[EditorPlugin] Applying layer states to all scene objects...");
 
         // editableObjects はシーンごとのMapなので、現在のシーンのSetを取得
         const allObjects = this.editableObjects.get(scene.scene.key);
@@ -894,7 +894,7 @@ recreateBodyByReconstruction(changedPhysicsOption) {
         
     }
     // changedPhysicsOptionがnullなら、layout.physicsはundefinedのまま = ボディなし
-console.log('%c[EditorPlugin] Reconstructing with layout:', 'color: cyan;', layout);
+// console.log('%c[EditorPlugin] Reconstructing with layout:', 'color: cyan;', layout);
     // --- 3. 再構築プロセス ---
     const scene = targetObject.scene;
     const sceneKey = scene.scene.key;
@@ -1077,7 +1077,7 @@ createTransformInputs() {
         const target = this.selectedObject;
         if (!target || !target.body) return;
 
-        console.log(`[EditorPlugin | Final Fix] Rebuilding physics body for '${target.name}'.`);
+        // console.log(`[EditorPlugin | Final Fix] Rebuilding physics body for '${target.name}'.`);
 
         // --- 1. 既存のボディからプロパティを記憶 ---
         const oldBodyOptions = {
@@ -1206,7 +1206,7 @@ createMatterPropertiesUI(gameObject) {
             if (isTextObject) {
                 // テキストオブジェクトの場合：再構築せず、setDataで状態を更新するだけ
                 this.selectedObject.setData('ignoreGravity', isChecked);
-                console.log(`[EditorPlugin] Set ignoreGravity=${isChecked} for Text object (no reconstruction).`);
+                // console.log(`[EditorPlugin] Set ignoreGravity=${isChecked} for Text object (no reconstruction).`);
                 // UIの表示を更新するために、PropertyPanelの更新だけは呼び出す
                 this.updatePropertyPanel();
             } else {
@@ -1656,7 +1656,7 @@ createColorInput(container, label, initialValue, callback) {
 setAllObjectsDraggable(isDraggable) {
     if (!this.isEnabled) return;
 
-    console.log(`[EditorPlugin] Setting all objects draggable: ${isDraggable}`);
+    // console.log(`[EditorPlugin] Setting all objects draggable: ${isDraggable}`);
 
     // editableObjects は Map<string, Set> なので、全てのSetをループ
     for (const sceneObjectSet of this.editableObjects.values()) {
@@ -1732,7 +1732,7 @@ const currentMode = this.game.registry.get('editor_mode');
             const layer = this.layerStates.find(l => l.name === layerName);
             // レイヤーがロックされている場合は、選択もダブルタップも一切させない
             if (layer && layer.locked) {
-                console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
+                // console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
                 return; 
             }
             const now = Date.now();
@@ -1749,7 +1749,7 @@ const currentMode = this.game.registry.get('editor_mode');
                     // ★ BaseGameSceneの新しいメソッドを呼び出して、グループメンバーを取得
                     const groupObjects = scene.getObjectsByGroup(groupId);
                     
-                    console.log(`[EditorPlugin] Double tap detected. Selecting ${groupObjects.length} objects in group: ${groupId}`);
+                    // console.log(`[EditorPlugin] Double tap detected. Selecting ${groupObjects.length} objects in group: ${groupId}`);
                     this.selectMultipleObjects(groupObjects);
                 } else {
                     // グループがない場合は、通常通りシングルオブジェクトを選択
@@ -1930,8 +1930,8 @@ const currentMode = this.game.registry.get('editor_mode');
         try {
             const jsonString = JSON.stringify(prefabData, null, 2);
             
-            console.log(`%c--- Group Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
-            console.log(jsonString);
+            // console.log(`%c--- Group Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
+            // console.log(jsonString);
             
             navigator.clipboard.writeText(jsonString).then(() => {
                 alert(`グループプレハブ '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' のような名前で保存してください。`);
@@ -2101,7 +2101,7 @@ const currentMode = this.game.registry.get('editor_mode');
     applyPhysicsToGroup(options) {
         if (!this.selectedObjects || this.selectedObjects.length === 0) return;
 
-        console.log(`[EditorPlugin | Final Touch] Applying physics to group:`, options);
+        // console.log(`[EditorPlugin | Final Touch] Applying physics to group:`, options);
 
         // 選択中のすべてのオブジェクトに対してループ処理
         this.selectedObjects.forEach(target => {
@@ -2309,8 +2309,8 @@ exportLayoutToJson() {
     
         // JSONに変換して出力
         const jsonString = JSON.stringify(sceneLayoutData, null, 2);
-        console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
-        console.log(jsonString);
+        // console.log(`%c--- Layout for [${sceneKey}] ---`, "color: lightgreen;");
+        // console.log(jsonString);
         navigator.clipboard.writeText(jsonString).then(() => {
             alert(`Layout for ${sceneKey} copied to clipboard!`);
         });
@@ -2334,7 +2334,7 @@ exportLayoutToJson() {
         const prefabName = prompt("このプレハブの名前を入力してください (例: coin, bullet):", gameObject.name);
 
         if (!prefabName) {
-            console.log("[EditorPlugin] Prefab export cancelled.");
+            // console.log("[EditorPlugin] Prefab export cancelled.");
             return;
         }
 
@@ -2419,8 +2419,8 @@ exportLayoutToJson() {
         try {
             const jsonString = JSON.stringify(prefabData, null, 2);
             
-            console.log(`%c--- Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
-            console.log(jsonString);
+            // console.log(`%c--- Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
+            // console.log(jsonString);
             
             navigator.clipboard.writeText(jsonString).then(() => {
                 alert(`Prefab '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' という名前で保存してください。`);
@@ -2559,7 +2559,7 @@ createAnimationCreationForm() {
                 repeat: repeat
             });
             
-            console.log(`[EditorPlugin] Global animation '${animKey}' created/updated successfully.`);
+            // console.log(`[EditorPlugin] Global animation '${animKey}' created/updated successfully.`);
             this.openAnimationEditor(); // UIをリフレッシュ
             
         } catch (error) {
@@ -2686,7 +2686,7 @@ convertImageToSprite() {
     const scene = oldImage.scene;
     if (!scene || typeof scene.extractLayoutFromObject !== 'function') return;
 
-    console.log(`[EditorPlugin] Converting Image '${oldImage.name}' to Sprite...`);
+    // console.log(`[EditorPlugin] Converting Image '${oldImage.name}' to Sprite...`);
 
     // --- 1. 既存のオブジェクトから、すべての情報をレイアウトデータとして抽出 ---
     const layout = scene.extractLayoutFromObject(oldImage);
@@ -2754,7 +2754,7 @@ convertImageToSprite() {
         // --- ケース2: 古い単一イベントのデータ構造の場合 ---
         // (各イベント定義に'id'プロパティがないことで判定)
         if (events.length > 0 && events[0].id === undefined) {
-            console.log("Migrating single-event structure to new multi-trigger structure...");
+            // console.log("Migrating single-event structure to new multi-trigger structure...");
             
             const oldEventData = events[0]; // 古いデータは最初の要素だけだと仮定
             

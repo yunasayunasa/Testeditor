@@ -13,7 +13,7 @@ export default async function handleJump(manager, params) {
     // --- シーン間遷移の場合 ---
     if (params.storage) {
         const toSceneKey = params.storage;
-        console.log(`[jump] シーン[${toSceneKey}]へ遷移します。`);
+        // console.log(`[jump] シーン[${toSceneKey}]へ遷移します。`);
 
         // 1. オートセーブを実行
         manager.scene.performSave(0);
@@ -40,7 +40,7 @@ export default async function handleJump(manager, params) {
     
         // ★ 2. そして、即座に、同期的に、自分の仕事を終える
         manager.stop();
-        console.log(`[handleJump] Ordering parent scene (${manager.scene.scene.key}) to shut down.`);
+        // console.log(`[handleJump] Ordering parent scene (${manager.scene.scene.key}) to shut down.`);
         manager.scene.scene.stop();
     
     } else if (params.target && params.target.startsWith('*')) {

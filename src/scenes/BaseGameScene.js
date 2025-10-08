@@ -33,11 +33,11 @@ export default class BaseGameScene extends Phaser.Scene {
         // それをこのシーンのプロパティとして保存する
         if (data && data.layoutDataKey) {
             this.layoutDataKey = data.layoutDataKey;
-            console.log(`[${this.scene.key}] Initialized with specific layout data key: '${this.layoutDataKey}'`);
+            // console.log(`[${this.scene.key}] Initialized with specific layout data key: '${this.layoutDataKey}'`);
         } else {
             // 指定がなければ、nullのまま
             this.layoutDataKey = null;
-            console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
+            // console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
         }
          this.loadData = data.loadData || null; // ★ ロードデータを受け取る
     }
@@ -50,7 +50,7 @@ export default class BaseGameScene extends Phaser.Scene {
         this.ySortEnabled = layoutData?.scene_settings?.ySortEnabled === true;
 
         if (this.ySortEnabled) {
-            console.log("[BaseGameScene] Y-Sort is enabled for this scene.");
+            // console.log("[BaseGameScene] Y-Sort is enabled for this scene.");
         }
         this.applySceneSettings(); 
 
@@ -82,7 +82,7 @@ applySceneSettings() {
     const layoutData = this.cache.json.get(keyToLoad);
 
     if (layoutData && layoutData.scene_settings) {
-        console.log(`[BaseGameScene] Applying 'scene_settings' in the first update frame...`); // メッセージを戻す
+        // console.log(`[BaseGameScene] Applying 'scene_settings' in the first update frame...`); // メッセージを戻す
         const settings = layoutData.scene_settings;
 
         if (settings.backgroundColor) {
@@ -119,7 +119,7 @@ initSceneWithData() {
     // --- 1. 読み込むべきJSONのキーを決定する ---
     const keyToLoad = this.layoutDataKey || this.scene.key;
 
-    console.log(`[${this.scene.key}] Attempting to build layout from JSON key: '${keyToLoad}'`);
+    // console.log(`[${this.scene.key}] Attempting to build layout from JSON key: '${keyToLoad}'`);
 
     // --- 2. 決定したキーを使って、キャッシュからJSONデータを取得 ---
     const layoutData = this.cache.json.get(keyToLoad);
@@ -199,7 +199,7 @@ createAnimationsFromLayout(layoutData) {
         // ▼▼▼【ここが修正箇所です】▼▼▼
         // animData.key を直接使います
         const createdAnim = this.anims.get(animData.key);
-        console.log(`[BaseGameScene] VERIFY: Animation '${animData.key}' was just created. Is it accessible?`, createdAnim ? 'YES' : 'NO');
+        // console.log(`[BaseGameScene] VERIFY: Animation '${animData.key}' was just created. Is it accessible?`, createdAnim ? 'YES' : 'NO');
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     });
 }
@@ -217,7 +217,7 @@ createAnimationsFromLayout(layoutData) {
     handleStartTutorial(tutorialFile) {
         if (!tutorialFile) return;
 
-        console.log(`[${this.scene.key}] Caught 'start_tutorial' event for file: ${tutorialFile}`);
+        // console.log(`[${this.scene.key}] Caught 'start_tutorial' event for file: ${tutorialFile}`);
         
         // SystemSceneにオーバーレイの起動を依頼する
         this.scene.get('SystemScene').events.emit('request-overlay', {
@@ -369,7 +369,7 @@ buildSceneFromLayout(layoutData) {
     // ▼▼▼【start()を呼び出すコードをここから削除】▼▼▼
     // 責務がinitComponentsAndEventsに移動したため、このブロックは不要
     /*
-    console.log(`%c[BaseGameScene] Starting ${allComponentsToStart.length} components...`);
+    // console.log(`%c[BaseGameScene] Starting ${allComponentsToStart.length} components...`);
     allComponentsToStart.forEach(component => { ... });
     */
 
@@ -398,7 +398,7 @@ buildSceneFromLayout(layoutData) {
              try {
                 this.textures.addBase64(newTextureKey, layout.textureData);
                 textureKey = newTextureKey;
-                console.log(`[Import] Restored texture from Base64 data with key '${newTextureKey}'.`);
+                // console.log(`[Import] Restored texture from Base64 data with key '${newTextureKey}'.`);
              } catch (e) {
                 console.error(`[Import] Failed to restore texture from Base64 data.`, e);
                 textureKey = '__DEFAULT';
@@ -503,7 +503,7 @@ initComponentsAndEvents(gameObject) {
     // ▼▼▼【ここが修正の核心！】▼▼▼
     // --- 5. 収集したコンポーネントのstart()を、このメソッド内で呼び出す ---
     if (componentsToStart.length > 0) {
-        console.log(`%c[initComponentsAndEvents] Starting ${componentsToStart.length} components for '${gameObject.name}'...`, 'color: orange;');
+        // console.log(`%c[initComponentsAndEvents] Starting ${componentsToStart.length} components for '${gameObject.name}'...`, 'color: orange;');
         componentsToStart.forEach(component => {
             try {
                 component.start();
@@ -767,9 +767,9 @@ update(time, delta) {
         });
     }
     if (!this._debugOnce) {
-        console.log("--- BASEGAME SCENE UPDATE CALLED ---");
-        console.log("this.ySortEnabled:", this.ySortEnabled);
-        console.log("this.ySortableObjects:", this.ySortableObjects);
+        // console.log("--- BASEGAME SCENE UPDATE CALLED ---");
+        // console.log("this.ySortEnabled:", this.ySortEnabled);
+        // console.log("this.ySortableObjects:", this.ySortableObjects);
         this._debugOnce = true;
     }
 
@@ -782,7 +782,7 @@ update(time, delta) {
 
                     // プレイヤーの時だけログを出す
                     if(obj.name === 'player') {
-                        console.log(`[Y-Sort] player depth updated to: ${sortY}`);
+                        // console.log(`[Y-Sort] player depth updated to: ${sortY}`);
                     }
                 }
             }
@@ -831,7 +831,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
 // in src/scenes/BaseGameScene.js
 
     finalizeSetup(allGameObjects) {
-        console.log(`[BaseGameScene] Finalizing setup with ${allGameObjects.length} objects.`);
+        // console.log(`[BaseGameScene] Finalizing setup with ${allGameObjects.length} objects.`);
 
         for (const gameObject of allGameObjects) {
             const events = gameObject.getData('events');
@@ -889,7 +889,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             }
         });
         
-        console.log("[BaseGameScene] All collision and overlap listeners activated.");
+        // console.log("[BaseGameScene] All collision and overlap listeners activated.");
 
         if (this.onSetupComplete) { this.onSetupComplete(); }
         this.events.emit('scene-ready');
@@ -961,7 +961,7 @@ handleCollision(sourceObject, targetObject, pair) {
             // --- ケース1: トリガーが 'onCollide_Start' の場合 ---
             // 方向を問わないので、グループが一致すれば即座にアクションを実行
             if (trigger === 'onCollide_Start') {
-                console.log(`%c[Collision] COLLIDE Event: '${sourceObject.name}' collided with '${targetObject.name}'`, 'color: yellow');
+                // console.log(`%c[Collision] COLLIDE Event: '${sourceObject.name}' collided with '${targetObject.name}'`, 'color: yellow');
               actionInterpreter.run(sourceObject, eventData, targetObject);
                 // 一致するイベントが見つかったので、このイベント定義に対する処理は終了
                 continue; 
@@ -981,11 +981,11 @@ handleCollision(sourceObject, targetObject, pair) {
                 const isHit = !isStomp; // それ以外は全て 'Hit' とする
 
                 if (trigger === 'onStomp' && isStomp) {
-                    console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
+                    // console.log(`%c[Collision] STOMP Event: '${sourceObject.name}' stomped on '${targetObject.name}'`, 'color: lightgreen');
                    actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
                 else if (trigger === 'onHit' && isHit) {
-                    console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
+                    // console.log(`%c[Collision] HIT Event: '${sourceObject.name}' was hit by '${targetObject.name}'`, 'color: orange');
                     actionInterpreter.run(sourceObject, eventData, targetObject);
                 }
             }
@@ -999,7 +999,7 @@ handleCollision(sourceObject, targetObject, pair) {
      * @param {Phaser.GameObjects.GameObject} targetObject - 対象オブジェクト。
      */
     onEditorEventChanged(targetObject) {
-        console.log(`[${this.scene.key}] Rebuilding events for '${targetObject.name}'.`);
+        // console.log(`[${this.scene.key}] Rebuilding events for '${targetObject.name}'.`);
         // イベントリスナーのみを再適用する
         this.applyEventsAndEditorFunctions(targetObject, targetObject.getData('events'));
     }
@@ -1098,7 +1098,7 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
 
         if (prefabData.type === 'GroupPrefab') {
             
-            console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabKey}'`);
+            // console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabKey}'`);
             
             // ▼▼▼【ここが修正箇所です】▼▼▼
             // prefabName ではなく、引数で渡された newName を使う

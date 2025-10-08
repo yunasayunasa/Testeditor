@@ -15,7 +15,7 @@ export default class MenuButton extends Text {
 
         // クリックされたら、UISceneのパネル切り替えメソッドを呼び出す
         this.setInteractive().on('pointerdown', () => {
-            console.log("MenuButton clicked. Telling UIScene to toggle 'bottom_panel'.");
+            // console.log("MenuButton clicked. Telling UIScene to toggle 'bottom_panel'.");
             // `scene` は UIScene のインスタンスなので、そのメソッドを直接呼べる
             if (scene && typeof scene.togglePanelByName === 'function') {
                 scene.togglePanelByName('bottom_panel');

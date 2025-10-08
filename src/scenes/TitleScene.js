@@ -23,7 +23,7 @@ export default class TitleScene extends Phaser.Scene {
 
         // テキストがクリックされたら、ゲームフローステートマシンにイベントを送る
         startText.on('pointerdown', () => {
-            console.log('[TitleScene] Start text clicked. Firing START_GAME event.');
+            // console.log('[TitleScene] Start text clicked. Firing START_GAME event.');
             EngineAPI.fireGameFlowEvent('START_GAME');
         });
 

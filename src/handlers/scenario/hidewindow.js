@@ -26,5 +26,5 @@ export default async function handleHideWindow(manager, params) {
     // setVisible(false)でも隠せるが、座標移動の方がアニメーションに繋げやすい
     // messageWindow.setVisible(false);
 
-    console.log(`[hidewindow] Message window hidden at y=${targetY}`);
+    // console.log(`[hidewindow] Message window hidden at y=${targetY}`);
 }

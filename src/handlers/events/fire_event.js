@@ -21,7 +21,7 @@ export default async function fire_event(interpreter, params) {
      // ★ 2. EngineAPIを呼び出す
     EngineAPI.fireEvent(eventName, eventParams);
     
-    console.log(`[fire_event] Event '${eventName}' fired via EngineAPI with params:`, eventParams);
+    // console.log(`[fire_event] Event '${eventName}' fired via EngineAPI with params:`, eventParams);
 }
 
 fire_event.define = {

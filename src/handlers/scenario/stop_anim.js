@@ -31,7 +31,7 @@ export default async function handleStopAnim(manager, params) {
 
     // 1. 指定されたターゲットに紐づくTweenをすべて停止・削除する
     scene.tweens.killTweensOf(target);
-    console.log(`[stop_anim] オブジェクト[${name}]のアニメーションを停止しました。`);
+    // console.log(`[stop_anim] オブジェクト[${name}]のアニメーションを停止しました。`);
 
     // 2. キャラクターの状態を、安全なデフォルト値に強制的にリセットする
     //    (呼吸アニメーションの副作用を完全に消し去る)
@@ -49,7 +49,7 @@ export default async function handleStopAnim(manager, params) {
     target.setScale(1);
     target.setAngle(0);
 
-    console.log(`[stop_anim] オブジェクト[${name}]の状態をリセットしました。`);
+    // console.log(`[stop_anim] オブジェクト[${name}]の状態をリセットしました。`);
     
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 }

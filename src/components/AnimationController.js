@@ -8,7 +8,7 @@ export default class AnimationController {
 
         this.animPrefix = params.prefix || owner.getData('anim_prefix') || owner.name.split('_')[0]; 
         
-        console.log(`[AnimationController] Initialized for '${owner.name}'. Using prefix: '${this.animPrefix}'. Scene key: '${this.scene.scene.key}'`);
+// // console.log(`[AnimationController] Initialized for '${owner.name}'. Using prefix: '${this.animPrefix}'. Scene key: '${this.scene.scene.key}'`);
         
         this.lastState = 'idle';
         this.lastDirection = 'right';

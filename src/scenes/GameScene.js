@@ -25,7 +25,7 @@ export default class GameScene extends Phaser.Scene {
 
  async create(data) {
    
-        console.log("GameScene: create処理を開始します。");
+        // console.log("GameScene: create処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
         
         this.soundManager = this.registry.get('soundManager');
@@ -49,7 +49,7 @@ export default class GameScene extends Phaser.Scene {
                 resolve();
             }
         });
-        console.log("GameScene: UISceneの準備完了を確認しました。");
+        // console.log("GameScene: UISceneの準備完了を確認しました。");
 
 
         this.layer.background = this.add.container(0, 0).setDepth(0);
@@ -66,7 +66,7 @@ export default class GameScene extends Phaser.Scene {
             return; 
         }
 this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs || {};
-    console.log('[GameScene] Character definitions have been set to this scene.', this.charaDefs);
+    // console.log('[GameScene] Character definitions have been set to this scene.', this.charaDefs);
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
     // 2. ScenarioManagerは、コンストラクタの中で `this.scene.charaDefs` を参照して、
@@ -86,7 +86,7 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
             await this.performLoad(this.loadSlot, this.returnParams);
             this._finalizeSetup(); // awaitの後に実行
         } else {
-            console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
+            // console.log("[GameScene] 新規ゲーム開始のため、ゲーム変数(f)を初期化します。");
             this.stateManager.f = {};
             await this.scenarioManager.loadScenario(this.startScenario); // loadScenarioも非同期の可能性があるのでawait
             this._finalizeSetup();
@@ -100,7 +100,7 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
         this.isSceneFullyReady = true;
         this.input.on('pointerdown', () => { if (this.scenarioManager) this.scenarioManager.onClick(); });
         this.events.emit('gameScene-load-complete');
-        console.log("GameScene: 準備完了。SystemSceneに通知しました。");
+        // console.log("GameScene: 準備完了。SystemSceneに通知しました。");
     }
 
      /**
@@ -195,7 +195,7 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
             const gameState = this.stateManager.getState(this.scenarioManager);
             const jsonString = JSON.stringify(gameState, null, 2);
             localStorage.setItem(`save_data_${slot}`, jsonString);
-            console.log(`%cスロット[${slot}]にセーブしました。`, "color: limegreen;");
+            // console.log(`%cスロット[${slot}]にセーブしました。`, "color: limegreen;");
         } catch (e) {
             console.error(`セーブに失敗しました: スロット[${slot}]`, e);
         }
@@ -203,7 +203,7 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
 
     async performLoad(slot, returnParams = null) {
         
-        console.log(`スロット[${slot}]からのロード処理を開始します。`);
+        // console.log(`スロット[${slot}]からのロード処理を開始します。`);
         try {
             const jsonString = localStorage.getItem(`save_data_${slot}`);
             if (!jsonString) {
@@ -214,7 +214,7 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
             this.stateManager.setState(loadedState);
 
             if (returnParams) {
-                console.log("復帰パラメータを反映します:", returnParams);
+                // console.log("復帰パラメータを反映します:", returnParams);
                 for (const key in returnParams) {
                     const value = returnParams[key];
                     let evalExp;
@@ -245,9 +245,9 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
             this.events.emit('force-hud-update');
 
             if (loadedState.scenario.isWaitingClick || loadedState.scenario.isWaitingChoice) {
-                console.log("ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
+                // console.log("ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
             } else {
-                console.log("ロード完了: 次の行からシナリオを再開します。");
+                // console.log("ロード完了: 次の行からシナリオを再開します。");
                 this.time.delayedCall(10, () => this.scenarioManager.next());
             }
         } catch (e) {
@@ -261,12 +261,12 @@ this.charaDefs = data.charaDefs || this.scene.get('SystemScene').globalCharaDefs
 }
 
 async function rebuildScene(scene, loadedState, restoredBgmKey) {
-    console.log("--- 世界の再構築を開始 ---", loadedState);
+    // console.log("--- 世界の再構築を開始 ---", loadedState);
     const manager = scene.scenarioManager;
 try {
     // 1. 現在の表示と状態をクリア
     // scene.clearChoiceButtons(); // clearChoiceButtonsはGameSceneのメソッド
-    console.log("[rebuildScene] Step 1: Clearing current state...");
+    // console.log("[rebuildScene] Step 1: Clearing current state...");
     scene.layer.background.removeAll(true);
     scene.layer.character.removeAll(true);
     scene.characters = {};
@@ -280,7 +280,7 @@ try {
     scene.cameras.main.resetFX();
 
     // 2. シナリオの論理的な状態を復元
-    console.log("[rebuildScene] Step 2: Restoring scenario state...");
+    // console.log("[rebuildScene] Step 2: Restoring scenario state...");
     await manager.loadScenario(loadedState.scenario.fileName);
     manager.currentLine = loadedState.scenario.line;
     manager.ifStack = loadedState.scenario.ifStack || [];
@@ -289,7 +289,7 @@ try {
     manager.isWaitingChoice = loadedState.scenario.isWaitingChoice;
 
     // 3. 背景を復元
-    console.log("[rebuildScene] Step 3: Restoring background...");
+    // console.log("[rebuildScene] Step 3: Restoring background...");
     if (loadedState.layers.background) {
         const bg = scene.add.image(scene.scale.width / 2, scene.scale.height / 2, loadedState.layers.background);
         bg.setDisplaySize(scene.scale.width, scene.scale.height);
@@ -297,7 +297,7 @@ try {
     }
     
     // 4. キャラクターを復元
-    console.log("[rebuildScene] Step 4: Restoring characters...");
+    // console.log("[rebuildScene] Step 4: Restoring characters...");
     if (loadedState.layers.characters) {
         for (const name in loadedState.layers.characters) {
             const charaData = loadedState.layers.characters[name];
@@ -309,7 +309,7 @@ try {
     }
 
     // 5. BGMを復元
-    console.log("[rebuildScene] Step 5: Restoring BGM...");
+    // console.log("[rebuildScene] Step 5: Restoring BGM...");
     const targetBgmKey = restoredBgmKey || loadedState.sound.bgm;
     if (targetBgmKey) {
         manager.soundManager.playBgm(targetBgmKey);
@@ -318,14 +318,14 @@ try {
     }
 
     // 6. メッセージウィンドウと選択肢を復元
-    console.log("[rebuildScene] Step 6: Restoring message window content...");
+    // console.log("[rebuildScene] Step 6: Restoring message window content...");
     if (loadedState.scenario.isWaitingClick) {
         await manager.messageWindow.setText(loadedState.scenario.currentText, false, loadedState.scenario.speakerName);
         manager.messageWindow.showNextArrow();
     }
     // if (loadedState.scenario.isWaitingChoice) { ...選択肢の復元処理... }
     
-    console.log("--- 世界の再構築完了 ---");
+    // console.log("--- 世界の再構築完了 ---");
      } catch (error) {
         // ★★★ どのステップでエラーが起きても、必ずここで捕捉される ★★★
         console.error("%c[rebuildScene] FATAL ERROR during scene reconstruction:", "color: red; font-size: 1.5em;", error);

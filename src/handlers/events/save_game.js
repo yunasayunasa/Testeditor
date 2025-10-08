@@ -21,6 +21,6 @@ export default async function save_game(interpreter, params) {
 
     if (saveData) {
         localStorage.setItem(`save_slot_${slot}`, JSON.stringify(saveData));
-        console.log(`%c[SAVE GAME] Game state saved to slot '${slot}'.`, 'color: lightblue;', saveData);
+        // console.log(`%c[SAVE GAME] Game state saved to slot '${slot}'.`, 'color: lightblue;', saveData);
     }
 }

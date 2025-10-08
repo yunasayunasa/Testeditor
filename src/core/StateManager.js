@@ -21,7 +21,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         if (this.sf.debug_mode) {
             console.warn("[StateManager] Debug mode is ON (activated by URL parameter).");
         } else {
-            console.log("[StateManager] Debug mode is OFF.");
+            // console.log("[StateManager] Debug mode is OFF.");
         }
     }
     
@@ -36,7 +36,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         const oldValue = this.f[key];
         if (oldValue !== value) {
             this.f[key] = value;
-            console.log(`%c[StateManager] 変数 'f.${key}' が ${oldValue} -> ${value} に変更されました。'f-variable-changed'イベントを発行します。`, 'color: magenta; font-size: 1.2em;');
+            // console.log(`%c[StateManager] 変数 'f.${key}' が ${oldValue} -> ${value} に変更されました。'f-variable-changed'イベントを発行します。`, 'color: magenta; font-size: 1.2em;');
             this.emit('f-variable-changed', key, value, oldValue);
         }
     }
@@ -64,7 +64,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
     saveSystemData() {
         try {
             localStorage.setItem('my_novel_engine_system', JSON.stringify(this.sf));
-            console.log("%c[StateManager] System data saved to localStorage.", "color: lightgreen; font-weight: bold;", this.sf);
+            // console.log("%c[StateManager] System data saved to localStorage.", "color: lightgreen; font-weight: bold;", this.sf);
         } catch (e) {
             console.error("システム変数の保存に失敗しました。", e);
         }
@@ -127,7 +127,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         const currentBgmKey = scenarioManager.soundManager.getCurrentBgmKey();
 
         // ★★★ 2. 変数を使ってコンソールに出力する ★★★
-        console.log(`[StateManager.getState] Saving BGM key: '${currentBgmKey}'`);
+        // console.log(`[StateManager.getState] Saving BGM key: '${currentBgmKey}'`);
 
         return {
             saveDate: new Date().toLocaleString('ja-JP'),
@@ -174,7 +174,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         // sf変数はシステムデータなので、ここでは復元しないのが一般的
         // 必要であれば、`this.sf = { ...this.sf, ...loadedState.variables.sf };` のようにマージする
 
-        console.log("[StateManager] Game variables restored from save data.", this.f);
+        // console.log("[StateManager] Game variables restored from save data.", this.f);
         
         // ロード完了後、すべてのf変数について「変更通知」を発行する
         // これにより、HUDなどが自分自身の表示を更新する
@@ -300,7 +300,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
             const setF_helper = (key, value) => this.setF(key, value);
             const setSF_helper = (key, value) => this.setSF(key, value);
             
-            console.log(`[StateManager.execute] Executing: "${exp}".`);
+            // console.log(`[StateManager.execute] Executing: "${exp}".`);
             
             // --- 2. 渡す変数と、引数リストを一致させる ---
             new Function('f', 'sf', 'self', 'source', 'target', 'Phaser', 'setF', 'setSF', `'use strict'; ${exp};`)(f, sf, self, source, target, Phaser, setF_helper, setSF_helper);

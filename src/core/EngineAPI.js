@@ -82,7 +82,7 @@ class EngineAPI {
  * @param {object} [data={}] イベントに関連するデータ
  */
 fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
-    console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
+// // console.log(`%c[EngineAPI] Game Flow Event Fired: ${eventName}. Relaying to GameFlowManager.`, 'color: #2196F3; font-weight: bold;');
     if (!this.gameFlowManager) return;
     this.gameFlowManager.handleEvent(eventName, data); // ★ dataを渡す
 }
@@ -99,7 +99,7 @@ fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
     }
 
     requestJump(fromSceneKey, toSceneKey, params = {}) {
-        console.log(`%c[EngineAPI] JUMP request received and PENDING. Waiting for ${fromSceneKey} to shut down.`, 'color: #FFC107; font-weight: bold;');
+// // console.log(`%c[EngineAPI] JUMP request received and PENDING. Waiting for ${fromSceneKey} to shut down.`, 'color: #FFC107; font-weight: bold;');
         this.pendingJumpRequest = { to: toSceneKey, params: params };
     }
 
@@ -118,7 +118,7 @@ fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
         return new Promise(resolve => {
             // 1. "オーバーレイが閉じた" という公式イベントを一度だけリッスンする
             this.systemScene.events.once('overlay-closed', (data) => {
-                console.log(`[EngineAPI] 'overlay-closed' event received. Resolving the promise for runScenarioAsOverlay.`);
+// // console.log(`[EngineAPI] 'overlay-closed' event received. Resolving the promise for runScenarioAsOverlay.`);
                 
                 // 3. イベントを受け取ったら、Promiseを解決して待機を終了させる
                 resolve();

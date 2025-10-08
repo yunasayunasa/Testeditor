@@ -16,26 +16,26 @@ export default class UIScene extends Phaser.Scene {
 
       // createメソッドは非同期である必要はない
       async create() {
-        console.log("UIScene: Data-Driven Initialization Started");
+        // console.log("UIScene: Data-Driven Initialization Started");
         this.scene.bringToTop();
 this.isFullyReady = false; // ★ 最初にフラグを倒す
         try {
             // ステップ1: UIの構築を待つ
             const layoutData = this.cache.json.get(this.scene.key);
             await this.buildUiFromLayout(layoutData);
-            console.log("UIScene: UI build complete.");
+            // console.log("UIScene: UI build complete.");
 
             // ステップ2: 連携設定を行う
             const systemScene = this.scene.get('SystemScene');
             if (systemScene) {
                 systemScene.events.on('transition-complete', this.onSceneTransition, this);
-                console.log("UIScene: SystemSceneとの連携を設定しました。");
+                // console.log("UIScene: SystemSceneとの連携を設定しました。");
             } else {
                 console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
 
             // ステップ3: すべての準備が完了してから、成功を通知する
-            console.log("UIScene: Finalizing setup and emitting scene-ready.");
+            // console.log("UIScene: Finalizing setup and emitting scene-ready.");
             this.isFullyReady = true; // ★ 最後にフラグを立てる
             this.events.emit('scene-ready');
 
@@ -86,7 +86,7 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
                 this.componentsToUpdate.push(componentInstance);
             }
 
-            console.log(`[UIScene] Component '${componentType}' added to UI element '${target.name}'.`);
+            // console.log(`[UIScene] Component '${componentType}' added to UI element '${target.name}'.`);
         } else {
             console.warn(`[UIScene] Attempted to add an unknown component: '${componentType}'`);
         }
@@ -122,7 +122,7 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
 async buildUiFromLayout(layoutData) {
-    console.log("[UIScene] Starting UI build with FINAL routine.");
+    // console.log("[UIScene] Starting UI build with FINAL routine.");
     if (!layoutData || !layoutData.objects) return;
 
     const uiRegistry = this.registry.get('uiRegistry');
@@ -198,7 +198,7 @@ registerUiElement(name, element, params) {
     if (params.depth !== undefined) element.setDepth(params.depth);
       // ▼▼▼ ログ爆弾 No.1 ▼▼▼
         if (name === 'message_window') {
-            console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
+            // console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
         }
     if (params.group) element.setData('group', params.group);
 if (params.events) {
@@ -269,7 +269,7 @@ onSceneTransition(newSceneKey) {
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const visibleGroups = sceneUiVisibility[newSceneKey] || [];
-    console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
+    // console.log(`[UIScene.onSceneTransition] Updating UI for '${newSceneKey}'. Visible groups: [${visibleGroups.join(', ')}]`);
 
     for (const [name, uiElement] of this.uiElements.entries()) {
         const registryKey = uiElement.getData('registryKey');
@@ -303,7 +303,7 @@ onSceneTransition(newSceneKey) {
         const element = this.uiElements.get(key);
         if (element) {
             element.setDepth(depth);
-            console.log(`[UIScene] Element '${key}' depth set to ${depth}`);
+            // console.log(`[UIScene] Element '${key}' depth set to ${depth}`);
         } else {
             console.warn(`[UIScene] setElementDepth: Element with key '${key}' not found.`);
         }
@@ -400,7 +400,7 @@ onSceneTransition(newSceneKey) {
             // パネルを開くとき：
             // depthを非常に大きな値に設定し、強制的に最前面に持ってくる
             panelToToggle.setDepth(10000); 
-            console.log(`[UIScene] Bringing '${panelName}' to front with depth 100.`);
+            // console.log(`[UIScene] Bringing '${panelName}' to front with depth 100.`);
         }
         
         // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
@@ -416,7 +416,7 @@ onSceneTransition(newSceneKey) {
                     // depthを元に戻すか、低い値に設定する（任意）
                     // これにより、他のUI要素との予期せぬ競合を防ぐ
                     panelToToggle.setDepth(50); // 例えば、通常のUIよりは手前だが、最前面ではない値
-                    console.log(`[UIScene] Resetting '${panelName}' depth to 50.`);
+                    // console.log(`[UIScene] Resetting '${panelName}' depth to 50.`);
                 }
             }
         });
@@ -450,7 +450,7 @@ onSceneTransition(newSceneKey) {
         }
     }
   setVisible(isVisible) {
-        console.log(`UIScene: setVisible(${isVisible}) が呼ばれました。`);
+        // console.log(`UIScene: setVisible(${isVisible}) が呼ばれました。`);
         // UIScene内の全ての表示オブジェクトの可視性を切り替える
         if (this.menuButton) this.menuButton.setVisible(isVisible);
         if (this.panel) this.panel.setVisible(isVisible); 
@@ -535,7 +535,7 @@ onSceneTransition(newSceneKey) {
         // --- 4. シーンに登録し、編集可能にする ---
         this.registerUiElement(newName, newUiElement, params);
         newUiElement.setData('registryKey', registryKey);
-        console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
+        // console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
 
         return newUiElement;
         // --------------------------------------------------------------------
@@ -592,24 +592,24 @@ applyUiEvents(uiElement) {
     // ★★★ デバッグログ（ステップ1）★★★
     // このUI要素がイベント定義を持っているか確認
     if (events.length > 0) {
-        console.log(`[ApplyEvents] Found ${events.length} event(s) for '${uiElement.name}'. Setting up listeners...`);
+        // console.log(`[ApplyEvents] Found ${events.length} event(s) for '${uiElement.name}'. Setting up listeners...`);
     } else if (uiElement.name === 'debug_menu_button') {
         console.error(`[ApplyEvents] CRITICAL: '${uiElement.name}' has NO event data!`);
     }
 
     events.forEach(eventData => {
-        console.log(`[ApplyEvents] Processing event trigger '${eventData.trigger}' for '${uiElement.name}'`);
+        // console.log(`[ApplyEvents] Processing event trigger '${eventData.trigger}' for '${uiElement.name}'`);
         if (eventData.trigger === 'onClick') {
             uiElement.on('onClick', () => {
                 
                 // ★★★ デバッグログ（ステップ2）★★★
                 // onClickリスナーが実際に呼ばれたか確認
-                console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
+                // console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
 
                 const actionInterpreter = this.registry.get('actionInterpreter');
                  // ★★★ 'currentMode' のチェックを完全に削除 ★★★
                 if (actionInterpreter) {
-                    console.log(`%c[ApplyEvents] Running ActionInterpreter for '${uiElement.name}'...`, 'background: #222; color: #bada55');
+                    // console.log(`%c[ApplyEvents] Running ActionInterpreter for '${uiElement.name}'...`, 'background: #222; color: #bada55');
                     actionInterpreter.run(uiElement, eventData);
                 } else {
                     console.error("[ApplyEvents] ActionInterpreter not found in registry.");
@@ -629,7 +629,7 @@ applyUiEvents(uiElement) {
      * @param {boolean} visible - 表示するかどうか
      */
     setGroupVisible(groupName, visible) {
-        console.log(`[UIScene] Setting visibility of group '${groupName}' to ${visible}`);
+        // console.log(`[UIScene] Setting visibility of group '${groupName}' to ${visible}`);
         
         if (!this.uiRegistry) return;
 

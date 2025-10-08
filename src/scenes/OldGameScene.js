@@ -29,7 +29,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create(data) {
-        console.log("GameScene: create処理を開始します。");
+        // console.log("GameScene: create処理を開始します。");
         this.cameras.main.setBackgroundColor('#000000');
         
         // --- 1. 必須オブジェクトとサービスの取得（最優先） ---
@@ -52,20 +52,20 @@ export default class GameScene extends Phaser.Scene {
         // コンストラクタの引数をシンプルに修正済みのものを呼び出す
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
 
-            console.log("レイヤー表示状態の強制チェック:");
-    console.log("  - 背景レイヤー.visible:", this.layer.background.visible);
-    console.log("  - キャラクターレイヤー.visible:", this.layer.character.visible);
+            // console.log("レイヤー表示状態の強制チェック:");
+    // console.log("  - 背景レイヤー.visible:", this.layer.background.visible);
+    // console.log("  - キャラクターレイヤー.visible:", this.layer.character.visible);
 
     // 強制的に表示状態にする
     this.layer.background.setVisible(true);
     this.layer.character.setVisible(true);
-    console.log("キャラクターレイヤーを強制的に表示状態にしました。");
+    // console.log("キャラクターレイヤーを強制的に表示状態にしました。");
         
-        console.log("[GameScene] タグハンドラの登録を開始します...");
+        // console.log("[GameScene] タグハンドラの登録を開始します...");
         for (const tagName in tagHandlers) {
             this.scenarioManager.registerTag(tagName, tagHandlers[tagName]);
         }
-        console.log(`[GameScene] ${Object.keys(tagHandlers).length}個のタグハンドラを登録しました。`);
+        // console.log(`[GameScene] ${Object.keys(tagHandlers).length}個のタグハンドラを登録しました。`);
         // 
         // --- 5. シナリオの読み込みと実行開始 ---
         this.scenarioManager.load(this.startScenario);
@@ -78,7 +78,7 @@ export default class GameScene extends Phaser.Scene {
      * シーンのセットアップ最終処理
      
     _finalizeSetup() {
-        console.log("GameScene: 最終準備を開始します。");
+        // console.log("GameScene: 最終準備を開始します。");
         this.isSceneFullyReady = true;
 
         // クリック（タップ）でシナリオを進めるためのリスナーを設定
@@ -90,7 +90,7 @@ export default class GameScene extends Phaser.Scene {
         
         // 準備完了をSystemSceneに通知
         this.events.emit('gameScene-load-complete');
-        console.log("GameScene: 準備完了。SystemSceneに通知しました。");
+        // console.log("GameScene: 準備完了。SystemSceneに通知しました。");
 
         // 最初の行へ進むように指示
         this.time.delayedCall(10, () => {
@@ -99,7 +99,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     shutdown() {
-        console.log("GameScene: shutdown処理");
+        // console.log("GameScene: shutdown処理");
         if (this.input) {
             this.input.off('pointerdown');
         }
@@ -138,7 +138,7 @@ export default class GameScene extends Phaser.Scene {
         // ★★★ state.sound.bgmには常に最新の情報が入るようになる ★★★
         const jsonString = JSON.stringify(gameState, null, 2);
         localStorage.setItem(`save_data_${slot}`, jsonString);
-        console.log(`スロット[${slot}]にセーブしました。`);
+        // console.log(`スロット[${slot}]にセーブしました。`);
     } catch (e) {
         console.error(`セーブに失敗しました: スロット[${slot}]`, e);
     }
@@ -211,7 +211,7 @@ clearChoiceButtons() {
 // GameScene.js 内の performLoad メソッド (省略なし)
 
 async performLoad(slot, returnParams = null) {
-    console.log("[LOG-BOMB] performLoad: START");
+    // console.log("[LOG-BOMB] performLoad: START");
     this.isPerformingLoad = true;
     let success = false; // ロードが成功したかを追跡するフラグ
 
@@ -227,7 +227,7 @@ async performLoad(slot, returnParams = null) {
         this.stateManager.setState(loadedState);
 
             if (returnParams) {
-                console.log("復帰パラメータを反映します:", returnParams);
+                // console.log("復帰パラメータを反映します:", returnParams);
                 for (const key in returnParams) {
                     const value = returnParams[key];
                     let evalExp;
@@ -254,7 +254,7 @@ async performLoad(slot, returnParams = null) {
             }
 
         
-            console.log("[LOG-BOMB] performLoad: AWAITING rebuildScene..."); // ★
+            // console.log("[LOG-BOMB] performLoad: AWAITING rebuildScene..."); // ★
             
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ★★★ ここが唯一の変更点です ★★★
@@ -262,23 +262,23 @@ async performLoad(slot, returnParams = null) {
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             await rebuildScene(this.scenarioManager, loadedState, this.restoredBgmKey);
 
-            console.log("[LOG-BOMB] performLoad: ...rebuildScene COMPLETED."); // ★
+            // console.log("[LOG-BOMB] performLoad: ...rebuildScene COMPLETED."); // ★
           
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             // ★★★ これが新しい解決策：汎用的な更新イベントを発行 ★★★
             // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
             this.events.emit('force-hud-update');
-            console.log("GameScene: すべてのHUDに強制更新リクエストを発行しました。");
+            // console.log("GameScene: すべてのHUDに強制更新リクエストを発行しました。");
 
             if (loadedState.scenario.isWaitingClick || loadedState.scenario.isWaitingChoice) {
-                console.log("ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
+                // console.log("ロード完了: 待機状態のため、ユーザーの入力を待ちます。");
             } else {
-                console.log("ロード完了: 次の行からシナリオを再開します。");
+                // console.log("ロード完了: 次の行からシナリオを再開します。");
                 this.time.delayedCall(10, () => this.scenarioManager.next());
             }
             
             this.isSceneFullyReady = true;
-            console.log(`スロット[${slot}]からロードしました。`);
+            // console.log(`スロット[${slot}]からロードしました。`);
             success = true; // 成功フラグを立てる
 
     } catch (e) {
@@ -289,13 +289,13 @@ async performLoad(slot, returnParams = null) {
         // ★★★ 修正の核心 ★★★
         // tryまたはcatchの処理が完了した後、"必ず"実行されるブロック
         this.isPerformingLoad = false;
-         console.log("[LOG-BOMB] performLoad: FINALLY block reached."); // ★
+         // console.log("[LOG-BOMB] performLoad: FINALLY block reached."); // ★
         // イベントの発行を次のフレームに遅延させる
         this.time.delayedCall(1, () => {
             this.events.emit('gameScene-load-complete');
             
-            console.log("[LOG-BOMB] performLoad: Event emitted from finally block."); // ★
-            console.log("GameScene: 処理完了。ロード完了イベントを発行しました。(finallyブロック)");
+            // console.log("[LOG-BOMB] performLoad: Event emitted from finally block."); // ★
+            // console.log("GameScene: 処理完了。ロード完了イベントを発行しました。(finallyブロック)");
         });
     }
 }}
@@ -303,8 +303,8 @@ async performLoad(slot, returnParams = null) {
 // GameScene.js のファイル末尾などにある rebuildScene 関数 (省略なし)
 
 async function rebuildScene(manager, state, restoredBgmKey) {
-    console.log("[LOG-BOMB] rebuildScene: START"); // ★
-    console.log("--- rebuildScene 開始 ---", state);
+    // console.log("[LOG-BOMB] rebuildScene: START"); // ★
+    // console.log("--- rebuildScene 開始 ---", state);
     const scene = manager.scene;
 
     // 1. 現在の表示と状態をクリア
@@ -352,17 +352,17 @@ async function rebuildScene(manager, state, restoredBgmKey) {
     // ★★★ ここが唯一の変更点です ★★★
     // ★★★ BGMの復元ロジック ★★★
     // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-    console.log(`[rebuildScene] BGM復元開始。復帰キー: ${restoredBgmKey}, セーブデータキー: ${state.sound.bgm}`);
+    // console.log(`[rebuildScene] BGM復元開始。復帰キー: ${restoredBgmKey}, セーブデータキー: ${state.sound.bgm}`);
     
     // 別シーンからの復帰キー(restoredBgmKey)を最優先で使います。
     // それがなければ(nullなら)、セーブデータ内のキー(state.sound.bgm)を使います。
     const targetBgmKey = restoredBgmKey || state.sound.bgm;
 
     if (targetBgmKey) {
-        console.log(`[rebuildScene] BGM '${targetBgmKey}' の再生を試みます。`);
+        // console.log(`[rebuildScene] BGM '${targetBgmKey}' の再生を試みます。`);
         manager.soundManager.playBgm(targetBgmKey);
     } else {
-        console.log(`[rebuildScene] BGMを停止します。`);
+        // console.log(`[rebuildScene] BGMを停止します。`);
         manager.soundManager.stopBgm();
     }
 
@@ -382,11 +382,11 @@ async function rebuildScene(manager, state, restoredBgmKey) {
     if (state.scenario.isWaitingChoice && state.scenario.pendingChoices && state.scenario.pendingChoices.length > 0) {
         scene.pendingChoices = state.scenario.pendingChoices;
         scene.displayChoiceButtons(); // ★ これが呼ばれるようにする ★
-        console.log("選択肢を復元し、表示しました。");
+        // console.log("選択肢を復元し、表示しました。");
     } else {
         scene.pendingChoices = []; // 選択肢がない場合は空にする
     }
     
-    console.log("--- rebuildScene 正常終了 ---");
+    // console.log("--- rebuildScene 正常終了 ---");
 }
 */

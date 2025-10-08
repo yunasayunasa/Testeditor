@@ -84,7 +84,7 @@ export default class MessageWindow extends Container {
 
     // ★★★ 5. (推奨) コンポーネント破棄時にリスナーをクリーンアップする ★★★
     destroy(fromScene) {
-        console.log("MessageWindow: destroyされました。イベントリスナーを解除します。");
+        // console.log("MessageWindow: destroyされました。イベントリスナーを解除します。");
         if (this.configManager) {
             this.configManager.off('change:textSpeed', this.updateTextSpeed, this);
         }

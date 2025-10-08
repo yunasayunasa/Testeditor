@@ -19,7 +19,7 @@ export default class SoundManager {
     // AudioContextを安全に再開
     resumeContext() {
         if (this.sound.context.state === 'suspended') {
-            this.sound.context.resume().then(() => console.log("SoundManager: AudioContextが再開されました。"));
+            this.sound.context.resume().then(() => // console.log("SoundManager: AudioContextが再開されました。"));
         }
     }
     
@@ -171,7 +171,7 @@ export default class SoundManager {
             sound.stop();
             sound.destroy(); // 停止したらオブジェクトを破棄
             this.activeSe.delete(key); // Mapから参照を削除
-            console.log(`[SoundManager] Stopped and removed looping SE: ${key}`);
+            // console.log(`[SoundManager] Stopped and removed looping SE: ${key}`);
         }
     }
 
@@ -187,6 +187,6 @@ export default class SoundManager {
             this.configManager.off('change:bgmVolume', this.onBgmVolumeChange, this);
         }
         this.stopBgm(); // 引数なし
-        console.log("SoundManager: 破棄されました。");
+        // console.log("SoundManager: 破棄されました。");
     }
 }

@@ -8,7 +8,7 @@
  */
 export default async function reload_scene(interpreter, params) {
     const scene = interpreter.scene;
-    console.log(`%c[Action] Reloading scene: ${scene.scene.key}`, 'color: red; font-weight: bold;');
+    // console.log(`%c[Action] Reloading scene: ${scene.scene.key}`, 'color: red; font-weight: bold;');
     scene.scene.restart();
 }
 

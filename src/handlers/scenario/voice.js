@@ -42,7 +42,7 @@ export async function handleVoice(manager, params) {
         }
 
         utterance.onend = () => {
-            console.log(`[voice] 発話完了: "${text}"`);
+            // console.log(`[voice] 発話完了: "${text}"`);
             resolve();
         };
         utterance.onerror = (event) => {
@@ -55,14 +55,14 @@ export async function handleVoice(manager, params) {
             // 既に有効化済みなら、直接speakを試みる
             try {
                 window.speechSynthesis.speak(utterance);
-                console.log(`[voice] (有効済み)発話開始: "${text}"`);
+                // console.log(`[voice] (有効済み)発話開始: "${text}"`);
             } catch (e) {
                 console.error(`[voice] (有効済み)発話開始失敗: "${text}"`, e);
                 resolve();
             }
         } else {
             // 初回、またはブロックされている場合、ユーザーにクリックを促すボタンを表示
-            console.log(`[voice] 発話に許可が必要。ボタンを表示します: "${text}"`);
+            // console.log(`[voice] 発話に許可が必要。ボタンを表示します: "${text}"`);
             const enableButton = manager.scene.add.text(
                 manager.scene.scale.width / 2,
                 manager.scene.scale.height / 2,
@@ -84,7 +84,7 @@ export async function handleVoice(manager, params) {
                 try {
                     window.speechSynthesis.speak(utterance);
                     manager.stateManager.sf.voiceSynthEnabled = true; // 許可された
-                    console.log(`[voice] (ボタンクリック)発話開始: "${text}"`);
+                    // console.log(`[voice] (ボタンクリック)発話開始: "${text}"`);
                     enableButton.destroy(); // ボタンを削除
                 } catch (e) {
                     console.error(`[voice] (ボタンクリック)発話開始失敗: "${text}"`, e);

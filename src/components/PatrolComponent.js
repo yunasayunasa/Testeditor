@@ -26,7 +26,7 @@ export default class PatrolComponent {
                 console.warn(`[PatrolComponent] Start waypoint '${params.startWaypoint}' not found. Disabling.`);
                 this.enabled = false;
             } else {
-                console.log(`[PatrolComponent] Patrolling enabled. Starting at '${this.currentWaypoint.name}'.`);
+// // console.log(`[PatrolComponent] Patrolling enabled. Starting at '${this.currentWaypoint.name}'.`);
             }
         }, [], this);
 
@@ -97,7 +97,7 @@ export default class PatrolComponent {
             } else {
                 // 待機時間が終わっても、次の目的地が見つからない場合
                 // （ここでパトロールを終了させるか、あるいは最初の地点に戻るか、仕様次第）
-                console.log(`[PatrolComponent] End of path reached and no next waypoint found after waiting.`);
+// // console.log(`[PatrolComponent] End of path reached and no next waypoint found after waiting.`);
                 this.enabled = false;
             }
         }

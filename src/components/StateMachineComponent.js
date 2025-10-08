@@ -38,7 +38,7 @@ export default class StateMachineComponent {
         // 既にその状態なら何もしない
         if (this.currentStateName === newStateName) return;
 
-        console.log(`[StateMachine] Transitioning from '${this.currentStateName}' to '${newStateName}'...`, this.gameObject.name);
+        // console.log(`[StateMachine] Transitioning from '${this.currentStateName}' to '${newStateName}'...`, this.gameObject.name);
 
         // 1. 今の状態の onExit を実行 (完了を待たない)
         if (this.currentStateLogic && this.currentStateLogic.onExit) {
@@ -59,6 +59,6 @@ export default class StateMachineComponent {
         if (this.currentStateLogic.onEnter) {
             this.actionInterpreter.run(this.gameObject, this.currentStateLogic.onEnter);
         }
-        console.log(`[StateMachine] Transition complete. Current state: '${this.currentStateName}'`, this.gameObject.name);
+        // console.log(`[StateMachine] Transition complete. Current state: '${this.currentStateName}'`, this.gameObject.name);
     }
 }

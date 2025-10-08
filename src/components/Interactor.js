@@ -97,12 +97,12 @@ onInteract() {
     console.group(`%c[DEBUG] Interactor.onInteract Fired!`, 'color: cyan; font-weight: bold;');
     
     if (!this.closestInteractable) {
-        console.log("Status: No interactable object in range. Aborting.");
+// // console.log("Status: No interactable object in range. Aborting.");
         console.groupEnd();
         return;
     }
-    console.log(`Status: Closest interactable is '${this.closestInteractable.name}'.`);
-    console.log("Action: Finding 'onInteract' trigger in its events data...");
+// // console.log(`Status: Closest interactable is '${this.closestInteractable.name}'.`);
+// // console.log("Action: Finding 'onInteract' trigger in its events data...");
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const events = this.closestInteractable.getData('events') || [];
@@ -110,7 +110,7 @@ onInteract() {
     for (const eventData of events) {
         if (eventData.trigger === 'onInteract') {
             foundInteractEvent = true;
-            console.log("Action: 'onInteract' trigger found! Requesting ActionInterpreter to run...");
+// // console.log("Action: 'onInteract' trigger found! Requesting ActionInterpreter to run...");
             this.scene.registry.get('actionInterpreter').run(this.closestInteractable, eventData, this.gameObject);
         }
     }

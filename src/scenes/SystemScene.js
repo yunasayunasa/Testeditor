@@ -31,36 +31,36 @@ export default class SystemScene extends Phaser.Scene {
         if (data && data.initialGameData) {
             this.initialGameData = data.initialGameData;
             this.globalCharaDefs = data.initialGameData.charaDefs;
-            console.log('[SystemScene] Global character definitions have been stored.');
+            // console.log('[SystemScene] Global character definitions have been stored.');
         }
     }
 
     create() {
-        console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
+        // console.log('--- SURGICAL LOG BOMB in SystemScene.create ---');
         try {
-            console.log('this:', this);
-            console.log('this.scene:', this.scene);
-            console.log('this.scene.manager:', this.scene.manager);
-            console.log('this.scene.manager.events:', this.scene.manager.events);
+            // console.log('this:', this);
+            // console.log('this.scene:', this.scene);
+            // console.log('this.scene.manager:', this.scene.manager);
+            // console.log('this.scene.manager.events:', this.scene.manager.events);
         } catch (e) {
             console.error('!!! LOG BOMB FAILED !!!', e);
         }
-        console.log('--- END OF LOG BOMB ---');
-        console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
-        console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
+        // console.log('--- END OF LOG BOMB ---');
+        // console.log(`%c[SYSTEM LOG] SystemScene is now listening for 'request-pause-menu'.`, 'color: #4CAF50; font-size: 1.2em;');
+        // console.log("SystemScene: 起動・グローバルサービスのセットアップを開始。");
 
         const soundManager = new SoundManager(this.game);
         this.registry.set('soundManager', soundManager);
         this.input.once('pointerdown', () => soundManager.resumeContext(), this);
-        console.log("SystemScene: SoundManagerを登録しました。");
+        // console.log("SystemScene: SoundManagerを登録しました。");
 
         this.transitionManager = new SceneTransitionManager(this);
         this.overlayManager = new OverlayManager(this);
         this.timeManager = new TimeManager(this.game);
-        console.log("[SystemScene] All managers have been instantiated.");
+        // console.log("[SystemScene] All managers have been instantiated.");
 
         EngineAPI.init(this);
-        console.log('[SystemScene] EngineAPI has been initialized with all managers.');
+        // console.log('[SystemScene] EngineAPI has been initialized with all managers.');
 
         const uiSceneConfig = { physics: { matter: { enable: false } } };
         if (!this.scene.get('UIScene')) {
@@ -68,7 +68,7 @@ export default class SystemScene extends Phaser.Scene {
         }
         this.scene.run('UIScene');
         this.scene.bringToTop('UIScene');
-        console.log('%c[SystemScene] Platform ready: UIScene is now running permanently.', 'color: #4CAF50; font-weight: bold;');
+        // console.log('%c[SystemScene] Platform ready: UIScene is now running permanently.', 'color: #4CAF50; font-weight: bold;');
 
         this.events.on('request-subscene', this._handleRequestSubScene, this);
         this.events.on('request-gamemode-toggle', (mode) => {
@@ -77,20 +77,20 @@ export default class SystemScene extends Phaser.Scene {
                 const currentMode = gameScene.scenarioManager.mode;
                 const newMode = currentMode === mode ? 'normal' : mode;
                 gameScene.scenarioManager.setMode(newMode);
-                console.log(`モード変更: ${currentMode} -> ${newMode}`);
+                // console.log(`モード変更: ${currentMode} -> ${newMode}`);
             }
         });
         this.events.on('request-scene-resume', (sceneKey) => {
             const targetScene = this.scene.get(sceneKey);
             if (targetScene && targetScene.scene.isPaused()) {
                 targetScene.scene.resume();
-                console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
+                // console.log(`[SystemScene] Command received. Scene '${sceneKey}' has been resumed.`);
             }
         });
 
         const actionInterpreter = new ActionInterpreter(this.game);
         this.registry.set('actionInterpreter', actionInterpreter);
-        console.log("SystemScene: ActionInterpreter has been registered globally.");
+        // console.log("SystemScene: ActionInterpreter has been registered globally.");
 
         this.events.on('request-time-resume', () => {
             this.isTimeStopped = false;
@@ -116,7 +116,7 @@ export default class SystemScene extends Phaser.Scene {
             return;
         }
         targetScene.events.once('resume', () => {
-            console.log(`%c[SystemScene] RESUME COMPLETE for scene: '${sceneKey}'.`, 'color: lightgreen; font-weight: bold;');
+            // console.log(`%c[SystemScene] RESUME COMPLETE for scene: '${sceneKey}'.`, 'color: lightgreen; font-weight: bold;');
             if (onComplete) {
                 onComplete();
             }
@@ -126,7 +126,7 @@ export default class SystemScene extends Phaser.Scene {
 
     handleGameSceneShutdown() {
         if (EngineAPI.pendingJumpRequest) {
-            console.log(`%c[SystemScene] Detected shutdown of GameScene. Executing pending JUMP request.`, 'color: #4CAF50; font-weight: bold;');
+            // console.log(`%c[SystemScene] Detected shutdown of GameScene. Executing pending JUMP request.`, 'color: #4CAF50; font-weight: bold;');
             const request = EngineAPI.pendingJumpRequest;
             this.transitionManager.handleJumpTransition({
                 from: 'GameScene',
@@ -139,7 +139,7 @@ export default class SystemScene extends Phaser.Scene {
 
     handleSceneShutdown(scene) {
         if (scene.scene.key === 'GameScene' && EngineAPI.pendingJumpRequest) {
-            console.log(`%c[SystemScene] Detected shutdown of GameScene. Executing pending JUMP request.`, 'color: #4CAF50; font-weight: bold;');
+            // console.log(`%c[SystemScene] Detected shutdown of GameScene. Executing pending JUMP request.`, 'color: #4CAF50; font-weight: bold;');
             const request = EngineAPI.pendingJumpRequest;
             this.transitionManager.startInitialScene(request.to, request.params);
             EngineAPI.pendingJumpRequest = null;
@@ -150,7 +150,7 @@ export default class SystemScene extends Phaser.Scene {
         const currentURL = window.location.href;
         const isDebugMode = currentURL.includes('?debug=true') || currentURL.includes('&debug=true');
         if (isDebugMode) {
-            console.log("[SystemScene] Debug mode detected. Initializing Editor UI...");
+            // console.log("[SystemScene] Debug mode detected. Initializing Editor UI...");
             document.body.classList.add('debug-mode');
             const editorPlugin = this.plugins.get('EditorPlugin');
             if (editorPlugin && editorPlugin.isEnabled) {
@@ -163,7 +163,7 @@ export default class SystemScene extends Phaser.Scene {
 
     _startInitialGame(initialData) {
         this.globalCharaDefs = initialData.charaDefs;
-        console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
+        // console.log(`[SystemScene] 初期ゲーム起動リクエストを受信。`);
 
         const uiSceneConfig = {
             physics: {
@@ -175,26 +175,26 @@ export default class SystemScene extends Phaser.Scene {
 
         if (!this.scene.get('UIScene')) {
             this.scene.add('UIScene', UIScene, false, uiSceneConfig);
-            console.log("[SystemScene] UISceneを「物理演算無効」で動的に追加しました。");
+            // console.log("[SystemScene] UISceneを「物理演算無効」で動的に追加しました。");
         }
         if (!this.scene.get('GameScene')) {
             this.scene.add('GameScene', GameScene, false);
-            console.log("[SystemScene] GameSceneを動的に追加しました。");
+            // console.log("[SystemScene] GameSceneを動的に追加しました。");
         }
         if (!this.scene.get('OverlayScene')) {
             this.scene.add('OverlayScene', OverlayScene, false);
-            console.log("[SystemScene] OverlaySceneを動的に追加しました。");
+            // console.log("[SystemScene] OverlaySceneを動的に追加しました。");
         }
 
         const uiScene = this.scene.get('UIScene');
         uiScene.events.once('scene-ready', () => {
-            console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
+            // console.log("[SystemScene] UIScene is ready. Now starting GameScene.");
             this.transitionManager.startInitialScene('GameScene', {
                 charaDefs: this.globalCharaDefs,
                 startScenario: initialData.startScenario,
             });
         });
-        console.log("[SystemScene] Running UIScene now.");
+        // console.log("[SystemScene] Running UIScene now.");
         this.scene.run('UIScene');
     }
 
@@ -203,7 +203,7 @@ export default class SystemScene extends Phaser.Scene {
         const menuLayoutKey = data.layoutKey;
         const sceneToLaunch = 'OverlayScene';
         if (this.scene.isActive(fromScene)) {
-            console.log(`[SystemScene] Pausing '${fromScene}' to open overlay '${sceneToLaunch}' with layout '${menuLayoutKey}'.`);
+            // console.log(`[SystemScene] Pausing '${fromScene}' to open overlay '${sceneToLaunch}' with layout '${menuLayoutKey}'.`);
             this.scene.pause(fromScene);
             this.sceneStack.push(fromScene);
             this.gameState = 'MENU';
@@ -212,7 +212,7 @@ export default class SystemScene extends Phaser.Scene {
     }
 
     handleClosePauseMenu(data) {
-        console.log("handleClosePauseMenu called with data:", data);
+        // console.log("handleClosePauseMenu called with data:", data);
         const closingMenu = data.from;
         if (this.sceneStack.length === 0) {
             console.error("[SystemScene] Close menu requested, but scene stack is empty!");
@@ -220,7 +220,7 @@ export default class SystemScene extends Phaser.Scene {
         }
         const sceneToResume = this.sceneStack.pop();
         if (sceneToResume) {
-            console.log(`[SystemScene] Closing menu '${closingMenu}' and resuming '${sceneToResume}'.`);
+            // console.log(`[SystemScene] Closing menu '${closingMenu}' and resuming '${sceneToResume}'.`);
             this.scene.stop(closingMenu);
             if (this.scene.isPaused(sceneToResume)) {
                 this.scene.resume(sceneToResume);
@@ -235,7 +235,7 @@ export default class SystemScene extends Phaser.Scene {
 
     _startTransition(data) {
         if (this.isProcessingTransition) return;
-        console.log(`[SystemScene] シーン遷移リクエスト(シンプル版): ${data.from} -> ${data.to}`);
+        // console.log(`[SystemScene] シーン遷移リクエスト(シンプル版): ${data.from} -> ${data.to}`);
         this.isProcessingTransition = true;
         this.game.input.enabled = false;
         this._performSceneSwitch(data);
@@ -254,7 +254,7 @@ export default class SystemScene extends Phaser.Scene {
         toScene.events.once(completionEvent, () => {
             this.isProcessingTransition = false;
             this.game.input.enabled = true;
-            console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
+            // console.log(`[SystemScene] シーン[${data.to}]への遷移が完了しました。`);
             this.events.emit('transition-complete', data.to);
         });
         if (this.scene.isActive(data.from)) {
@@ -269,20 +269,20 @@ export default class SystemScene extends Phaser.Scene {
     _onTransitionComplete(sceneKey) {
         this.isProcessingTransition = false;
         this.game.input.enabled = true;
-        console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。ゲーム全体の入力を再有効化。`);
+        // console.log(`[SystemScene] シーン[${sceneKey}]の遷移が完了。ゲーム全体の入力を再有効化。`);
         this.events.emit('transition-complete', sceneKey);
     }
 
     _handleRequestSubScene(data) {
         const gameScene = this.scene.get('GameScene');
         if (gameScene && gameScene.scene.isActive()) {
-            console.log(`[SystemScene] Sub-scene request for ${data.targetScene}. Preparing GameScene...`);
+            // console.log(`[SystemScene] Sub-scene request for ${data.targetScene}. Preparing GameScene...`);
             gameScene.performSave(0);
             this.scene.pause('GameScene');
-            console.log("[SystemScene] GameScene has been put to sleep.");
+            // console.log("[SystemScene] GameScene has been put to sleep.");
             this.scene.launch(data.targetScene, data.launchData);
         } else {
-            console.log(`[SystemScene] Launching sub-scene ${data.targetScene} directly.`);
+            // console.log(`[SystemScene] Launching sub-scene ${data.targetScene} directly.`);
             this.scene.launch(data.targetScene, data.launchData);
         }
     }
@@ -293,7 +293,7 @@ export default class SystemScene extends Phaser.Scene {
             const currentMode = gameScene.scenarioManager.mode;
             const newMode = currentMode === mode ? 'normal' : mode;
             gameScene.scenarioManager.setMode(newMode);
-            console.log(`モード変更: ${currentMode} -> ${newMode}`);
+            // console.log(`モード変更: ${currentMode} -> ${newMode}`);
         }
     }
 

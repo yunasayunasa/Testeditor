@@ -60,7 +60,7 @@ export default class SaveLoadScene extends Phaser.Scene {
                         // その後のクリックイベントなどを受け付けるために、シーン自体の再開が必要。
                         this.scene.resume('GameScene'); 
                     } else {
-                        console.log(`スロット${i}は空なのでロードできません。`);
+                        // console.log(`スロット${i}は空なのでロードできません。`);
                     }
                 }
             });

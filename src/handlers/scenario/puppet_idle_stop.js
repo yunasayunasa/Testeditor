@@ -17,7 +17,7 @@ export default async function handlePuppetIdleStop(manager, params) {
     if (tweens && Array.isArray(tweens)) {
         tweens.forEach(tween => tween.stop());
         chara.removeData('puppetIdleTweens');
-        console.log(`[puppet_idle_stop] ${name}のアイドルアニメーションを停止しました。`);
+        // console.log(`[puppet_idle_stop] ${name}のアイドルアニメーションを停止しました。`);
     }
 
     const finalY = chara.originY === 1.0 ? chara.y - (chara.displayHeight / 2) : chara.y;

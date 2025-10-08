@@ -14,7 +14,7 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     preload() {
-        console.log("PreloadScene: 起動。全アセットのロードを開始します。");
+        // console.log("PreloadScene: 起動。全アセットのロードを開始します。");
         
         // --- 1. ロード画面UIの表示 ---
         this.setupLoadingUI();
@@ -29,7 +29,7 @@ this.load.json('game_flow', 'assets/data/game_flow.json');
     }
 
     create() {
-        console.log("PreloadScene: create開始。アセット定義を解析します。");
+        // console.log("PreloadScene: create開始。アセット定義を解析します。");
         
         // --- 3. コアマネージャーの初期化 ---
         this.registry.set('configManager', new ConfigManager());
@@ -38,7 +38,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
         const assetDefine = this.cache.json.get('asset_define');
        
         this.registry.set('ComponentRegistry', ComponentRegistry);
-        console.log("[PreloadScene] ComponentRegistry has been registered globally.");
+        // console.log("[PreloadScene] ComponentRegistry has been registered globally.");
         // --- 4. asset_define.json に基づいてロードキューを構築 ---
         this.buildLoadQueue(assetDefine);
 
@@ -93,7 +93,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
                 if (prefabInfo.key && prefabInfo.path) {
                     // ★★★ JSONではなく、一時的なキーで「テキスト」としてロード ★★★
                     this.load.text(`${prefabInfo.key}_prefab_text`, `assets/${prefabInfo.path}`);
-                    console.log(`[PreloadScene] Queued as text: prefab - key='${prefabInfo.key}', path='assets/${prefabInfo.path}'`);
+                    // console.log(`[PreloadScene] Queued as text: prefab - key='${prefabInfo.key}', path='assets/${prefabInfo.path}'`);
                 }
             }
         }
@@ -108,7 +108,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
                         const key = filename.split('.')[0];
                         const path = group.path + filename;
                         this.load[group.type](key, path);
-                        console.log(`[PreloadScene] Queued: ${group.type} - key='${key}', path='${path}'`);
+                        // console.log(`[PreloadScene] Queued: ${group.type} - key='${key}', path='${path}'`);
                     }
                 }
             }
@@ -119,7 +119,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
      * 全てのアセットのロードが完了したときに呼び出される
      */
     onLoadComplete(assetDefine) {
-        console.log("PreloadScene: 全アセットロード完了。");
+        // console.log("PreloadScene: 全アセットロード完了。");
         
         this.createGlobalAssetList();
         const charaDefs = this.createCharaDefs(assetDefine);
@@ -241,7 +241,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
     }
     
     this.registry.set('asset_list', assetList);
-    console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
+    // console.log(`[PreloadScene] ${assetList.length}個のアセット情報をレジストリに登録しました。`);
 }
     /**
      * キャラクター定義オブジェクトを生成する
@@ -267,7 +267,7 @@ this.registry.set('physics_define', this.cache.json.get('physics_define'));
      */
     stop() {
         super.stop();
-        console.log("PreloadScene: stop されました。ロード画面UIを破棄します。");
+        // console.log("PreloadScene: stop されました。ロード画面UIを破棄します。");
         if (this.progressBar) { this.progressBar.destroy(); this.progressBar = null; }
         if (this.progressBox) { this.progressBox.destroy(); this.progressBox = null; }
         if (this.percentText) { this.percentText.destroy(); this.percentText = null; }

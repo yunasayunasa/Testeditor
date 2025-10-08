@@ -14,7 +14,7 @@ export default async function set_data(interpreter, params) {
     if (!stateManager) return;
 
     // ▼▼▼【デバッグログを追加】▼▼▼
-    console.log(`%c[DEBUG | set_data]これから評価する値(value):`, 'color: orange;', value, `(型: ${typeof value})`);
+    // console.log(`%c[DEBUG | set_data]これから評価する値(value):`, 'color: orange;', value, `(型: ${typeof value})`);
 
     let finalValue;
     try {
@@ -24,7 +24,7 @@ export default async function set_data(interpreter, params) {
     }
     
     // ▼▼▼【デバッグログを追加】▼▼▼
-    console.log(`%c[DEBUG | set_data]評価後の値(finalValue):`, 'color: orange;', finalValue, `(型: ${typeof finalValue})`);
+    // console.log(`%c[DEBUG | set_data]評価後の値(finalValue):`, 'color: orange;', finalValue, `(型: ${typeof finalValue})`);
 
     stateManager.setF(key, finalValue);
 }

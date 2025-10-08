@@ -27,7 +27,7 @@ export default class ConfigManager extends Phaser.Events.EventEmitter {
         for (const key in configDefs) {
             this.values[key] = savedValues[key] !== undefined ? savedValues[key] : configDefs[key].defaultValue;
         }
-        console.log("ConfigManager 初期化完了:", this.values);
+        // console.log("ConfigManager 初期化完了:", this.values);
     }
 
     getValue(key) {

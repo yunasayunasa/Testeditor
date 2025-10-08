@@ -27,7 +27,7 @@ export default async function apply_force(interpreter, params, target) {
         y: forceY / (DELTA_TIME_MS / 1000)
     };
     
-    console.log(`%c[Force Normalized] User force: (${forceX}, ${forceY}) -> Engine force: (${normalizedForce.x.toFixed(2)}, ${normalizedForce.y.toFixed(2)})`, 'color: white; background: red;');
+    // console.log(`%c[Force Normalized] User force: (${forceX}, ${forceY}) -> Engine force: (${normalizedForce.x.toFixed(2)}, ${normalizedForce.y.toFixed(2)})`, 'color: white; background: red;');
     
     // 3. 正規化された力をエンジンに与える
     MatterBody.applyForce(target.body, target.body.position, normalizedForce);
@@ -38,7 +38,7 @@ export default async function apply_force(interpreter, params, target) {
     // --------------------------------------------------------------------
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    console.log(`  > Velocity AFTER manual engine step: { x: ${target.body.velocity.x.toFixed(2)}, y: ${target.body.velocity.y.toFixed(2)} }`);
+    // console.log(`  > Velocity AFTER manual engine step: { x: ${target.body.velocity.x.toFixed(2)}, y: ${target.body.velocity.y.toFixed(2)} }`);
 }
 /**
  * ★ VSLエディタ用の自己定義 ★

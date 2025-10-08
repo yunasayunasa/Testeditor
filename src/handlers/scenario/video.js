@@ -54,7 +54,7 @@ export function handleVideo(manager, params) {
         // 通常再生の場合は、再生終了を待つ
         return new Promise(resolve => {
             video.once('complete', () => {
-                console.log(`動画[${storage}]の再生が完了しました。`);
+                // console.log(`動画[${storage}]の再生が完了しました。`);
                 video.destroy();
                 resolve();
             });

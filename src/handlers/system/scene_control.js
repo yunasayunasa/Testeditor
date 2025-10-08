@@ -20,7 +20,7 @@ async function run_scene(interpreter, params) {
     const sceneKey = params.sceneKey;
 
     if (systemScene && sceneKey) {
-        console.log(`[VSL:run_scene] Relaying 'request-run-scene' event to SystemScene for scene: '${sceneKey}'`);
+        // console.log(`[VSL:run_scene] Relaying 'request-run-scene' event to SystemScene for scene: '${sceneKey}'`);
         // ★★★ シーンを直接runするのをやめ、SystemSceneにイベントを投げるだけにする ★★★
         systemScene.events.emit('request-run-scene', {
             sceneKey: sceneKey,
@@ -41,7 +41,7 @@ async function stop_scene(interpreter, params) {
     const sceneKey = params.sceneKey;
 
     if (systemScene && sceneKey) {
-        console.log(`[VSL:stop_scene] Requesting to stop scene: '${sceneKey}'`);
+        // console.log(`[VSL:stop_scene] Requesting to stop scene: '${sceneKey}'`);
         systemScene.scene.stop(sceneKey);
     }
 }
@@ -59,7 +59,7 @@ async function pause_scene(interpreter, params) {
 
     if (systemScene && sceneKey) {
         // @previousState のような特別なキーワードを解決するロジックが必要になるが、まずは直接指定から実装
-        console.log(`[VSL:pause_scene] Requesting to pause scene: '${sceneKey}'`);
+        // console.log(`[VSL:pause_scene] Requesting to pause scene: '${sceneKey}'`);
         systemScene.scene.pause(sceneKey);
     }
 }
@@ -76,7 +76,7 @@ async function resume_scene(interpreter, params) {
     const sceneKey = params.sceneKey;
 
     if (systemScene && sceneKey) {
-        console.log(`[VSL:resume_scene] Requesting to resume scene: '${sceneKey}'`);
+        // console.log(`[VSL:resume_scene] Requesting to resume scene: '${sceneKey}'`);
         systemScene.scene.resume(sceneKey);
     }
 }
@@ -94,7 +94,7 @@ async function launch_scene(interpreter, params) {
 
     if (systemScene && sceneKey) {
         // layoutKeyなどの追加パラメータも渡せるように、params全体を渡す
-        console.log(`[VSL:launch_scene] Requesting to launch scene: '${sceneKey}' with params:`, params);
+        // console.log(`[VSL:launch_scene] Requesting to launch scene: '${sceneKey}' with params:`, params);
         systemScene.scene.launch(sceneKey, params);
     }
 }

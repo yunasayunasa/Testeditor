@@ -28,7 +28,7 @@ export default class TextDisplayComponent {
      * @param {*} currentValue - 現在の値 (数値でも文字列でもOK)
      */
      updateText(currentValue) {
-        console.log(`%c[LOG BOMB 3 | TextDisplay] OK! '${this.gameObject.name}' が 'onValueChanged' を受信しました。ペイロード: ${currentValue}`, 'color: lime;');
+        // console.log(`%c[LOG BOMB 3 | TextDisplay] OK! '${this.gameObject.name}' が 'onValueChanged' を受信しました。ペイロード: ${currentValue}`, 'color: lime;');
         
         const newText = this.template.replace('{value}', currentValue);
         this.gameObject.setText(newText);

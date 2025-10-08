@@ -64,7 +64,7 @@ export default class BattleScene extends Phaser.Scene {
 // BattleScene.js の create メソッド (完成・省略なし)
 
     async create() {
-        console.log("BattleScene: create 開始");
+        // console.log("BattleScene: create 開始");
         this.cameras.main.setBackgroundColor('#8a2be2');
 
         // --- 1. 最初に、全てのプロパティとマネージャーを準備する ---
@@ -187,13 +187,13 @@ export default class BattleScene extends Phaser.Scene {
 
             // 戦闘ロジックの開始 (今はコンソールログだけ)
             this.time.delayedCall(500, () => {
-                console.log("★★ 本来ならここで戦闘ロジックが開始されます ★★");
+                // console.log("★★ 本来ならここで戦闘ロジックが開始されます ★★");
             });
         });
 
         // --- 7. 準備完了を通知する ---
         this.events.emit('scene-ready');
-        console.log("BattleScene: create 完了");
+        // console.log("BattleScene: create 完了");
     }
 
     // ★★★ 修正点④: endBattleメソッドをasync化し、あなたのロジックを尊重した形に修正 ★★★
@@ -201,7 +201,7 @@ export default class BattleScene extends Phaser.Scene {
         if (this.battleEnded) return;
         this.battleEnded = true;
 
-        console.log(`BattleScene: バトル終了。結果: ${result}`);
+        // console.log(`BattleScene: バトル終了。結果: ${result}`);
         
         if (this.winButton) this.winButton.disableInteractive();
         if (this.loseButton) this.loseButton.disableInteractive();
@@ -225,7 +225,7 @@ export default class BattleScene extends Phaser.Scene {
             });
             
         } else { // result === 'lose'
-            console.log("BattleScene: ゲームオーバー処理を開始します。");
+            // console.log("BattleScene: ゲームオーバー処理を開始します。");
             
             this.gameOverText = this.add.text(this.scale.width / 2, this.scale.height / 2 - 50, 'GAME OVER', { fontSize: '64px', fill: '#f00', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setDepth(999);
             this.retryButton = this.add.text(this.scale.width / 2, this.scale.height / 2 + 50, 'もう一度挑戦', { fontSize: '32px', fill: '#fff', backgroundColor: '#880000', padding: { x: 20, y: 10 } }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(999);
@@ -278,7 +278,7 @@ export default class BattleScene extends Phaser.Scene {
 
     // --- startBattle: あなたの元のコードのまま ---
     startBattle() {
-        console.log("戦闘開始！");
+        // console.log("戦闘開始！");
         if(this.playerPlaceholderText) this.playerPlaceholderText.setVisible(false);
         if(this.enemyPlaceholderText) this.enemyPlaceholderText.setVisible(false);
         this.backpackGridObjects.forEach(obj => obj.setVisible(false));
@@ -303,10 +303,10 @@ export default class BattleScene extends Phaser.Scene {
                 }
             }
         }
-        console.log(`プレイヤー最終ステータス: 攻撃=${this.playerStats.attack}, 防御=${this.playerStats.defense}`);
+        // console.log(`プレイヤー最終ステータス: 攻撃=${this.playerStats.attack}, 防御=${this.playerStats.defense}`);
         this.addToBattleLog(`あなたのステータス: 攻撃=${this.playerStats.attack}, 防御=${this.playerStats.defense}`);
         const executeTurn = (turn) => {
-            console.log(`--- Turn ${turn} ---`);
+            // console.log(`--- Turn ${turn} ---`);
             this.time.delayedCall(1000, () => {
                 if (this.battleEnded) return;
                 const playerDamage = Math.max(0, this.playerStats.attack - this.enemyStats.defense);
@@ -434,12 +434,12 @@ export default class BattleScene extends Phaser.Scene {
 
     // ★★★ 修正点⑥: shutdown()にクリーンアップ処理を集約する ★★★
      shutdown() {
-        console.log("BattleScene: shutdown されました。リスナーをクリーンアップします。");
+        // console.log("BattleScene: shutdown されました。リスナーをクリーンアップします。");
        
     }
 
     // --- resume: あなたの元のコードのまま ---
     resume() {
-        console.log("BattleScene: resume されました。");
+        // console.log("BattleScene: resume されました。");
     }
 }

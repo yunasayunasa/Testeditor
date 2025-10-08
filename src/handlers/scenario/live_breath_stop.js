@@ -27,7 +27,7 @@ export default async function handleLiveBreathStop(manager, params) {
         // stop()ではなくremove()を使い、TweenManagerから完全に除去する
         breathTween.remove();
         chara.removeData('liveBreathTween');
-        console.log(`[live_breath_stop] ${name}の呼吸Tweenを削除しました。`);
+        // console.log(`[live_breath_stop] ${name}の呼吸Tweenを削除しました。`);
     }
 
     // 3. 保存しておいた元の状態情報を使って、キャラクターを復元する
@@ -45,6 +45,6 @@ export default async function handleLiveBreathStop(manager, params) {
         
         // d. 使った情報は削除
         chara.removeData('breathInfo');
-        console.log(`[live_breath_stop] ${name}の状態を復元しました。`);
+        // console.log(`[live_breath_stop] ${name}の状態を復元しました。`);
     }
 }

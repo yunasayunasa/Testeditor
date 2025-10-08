@@ -25,7 +25,7 @@ export default class GameFlowManager {
      * ステートマシンを開始する。
      */
     start() {
-        console.log('%c[GameFlowManager] Starting with initial state...', 'color: #795548; font-weight: bold;');
+        // console.log('%c[GameFlowManager] Starting with initial state...', 'color: #795548; font-weight: bold;');
         this.transitionTo(this.initialState);
     }
 
@@ -40,7 +40,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
 
     const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
     if (transition) {
-        console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
+        // console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
         
         // ★ 遷移時アクションを実行する際に、イベントデータを渡す
         if (transition.action) {
@@ -57,7 +57,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
     transitionTo(newStateName, data = {}) { 
         if (this.currentState === newStateName || !this.states[newStateName]) return;
 
-        console.log(`%c[GameFlowManager] Transitioning from '${this.currentState}' to '${newStateName}'`, 'color: #795548; font-weight: bold;');
+        // console.log(`%c[GameFlowManager] Transitioning from '${this.currentState}' to '${newStateName}'`, 'color: #795548; font-weight: bold;');
 
         const oldStateDefinition = this.states[this.currentState];
         const newStateDefinition = this.states[newStateName];
@@ -82,7 +82,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
      */
         async executeActions(actions, eventData = {}) {// ★ eventData引数を追加
     for (const action of actions) {
-            console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
+            // console.log(`[GameFlowManager] Executing action: ${action.action}`, action.params);
             
           switch (action.type) {
             case 'transitionTo':
@@ -95,7 +95,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     if (systemScene && !systemScene.scene.get(toSceneKey)) {
                         const SceneClass = SCENE_MAP[toSceneKey];
                         if (SceneClass) {
-                            console.log(`%c[GameFlowManager] Dynamically adding scene: '${toSceneKey}'`, 'color: #795548; font-weight: bold;');
+                            // console.log(`%c[GameFlowManager] Dynamically adding scene: '${toSceneKey}'`, 'color: #795548; font-weight: bold;');
                             systemScene.scene.add(toSceneKey, SceneClass, false);
                         }
                     }
@@ -121,7 +121,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
               case 'pauseScene': {
                 const activeScene = EngineAPI.activeGameSceneKey;
                 if (activeScene) {
-                    console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
+                    // console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
                     
                     // ★ EngineAPIに新しいメソッドを追加するのが理想だが、
                     //    今回は直接PhaserのAPIを呼んでみる
@@ -141,12 +141,12 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     const sceneToResume = EngineAPI.activeGameSceneKey;
 
                     if (sceneToResume) {
-                        console.log(`[GameFlowManager] -> Requesting safe resume for scene: ${sceneToResume} via EngineAPI.`);
+                        // console.log(`[GameFlowManager] -> Requesting safe resume for scene: ${sceneToResume} via EngineAPI.`);
                         
                         // ▼▼▼【ここを、EngineAPIの呼び出しに書き換えます】▼▼▼
                         // await を使うことで、resumeが完了するまでここで待機する
                         await EngineAPI.requestSafeResume(sceneToResume);
-                        console.log(`[GameFlowManager] Safe resume for '${sceneToResume}' has been confirmed by EngineAPI.`);
+                        // console.log(`[GameFlowManager] Safe resume for '${sceneToResume}' has been confirmed by EngineAPI.`);
                         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
                     } else {
                         // sceneStackからpopするロジックはEngineAPI側に任せるべきかもしれないが、
@@ -169,7 +169,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     const scenarioFile = eventData.scenario; 
                     
                     if (activeScene && scenarioFile) {
-                        console.log(`[GameFlowManager] Awaiting completion of scenario overlay: ${scenarioFile}`);
+                        // console.log(`[GameFlowManager] Awaiting completion of scenario overlay: ${scenarioFile}`);
                         
                         // EngineAPI.runScenarioAsOverlay が返すPromiseを待つ
                         // このPromiseは、[overlay_end]が実行され、'overlay-closed'イベントが
@@ -177,7 +177,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                         await EngineAPI.runScenarioAsOverlay(activeScene, scenarioFile, true);
                         
                         // awaitが完了した = オーバーレイが正常に終了した、ということ
-                        console.log(`[GameFlowManager] Scenario overlay completed. Firing END_NOVEL_OVERLAY event.`);
+                        // console.log(`[GameFlowManager] Scenario overlay completed. Firing END_NOVEL_OVERLAY event.`);
                         EngineAPI.fireGameFlowEvent('END_NOVEL_OVERLAY');
                     }
                     break;

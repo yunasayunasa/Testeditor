@@ -18,12 +18,12 @@ export default class OverlayScene extends Phaser.Scene {
     // ★★★ ポイント2: init()でレイアウトキーを受け取る ★★★
     init(data) {
         this.layoutDataKey = data.layoutKey || null;
-        console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
+        // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
     }
 
     // createメソッドは非同期である必要はない
     create() {
-        console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
+        // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
         this.scene.bringToTop();
 
         // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
@@ -91,7 +91,7 @@ export default class OverlayScene extends Phaser.Scene {
                 this.componentsToUpdate.push(componentInstance);
             }
 
-            console.log(`[UIScene] Component '${componentType}' added to UI element '${target.name}'.`);
+            // console.log(`[UIScene] Component '${componentType}' added to UI element '${target.name}'.`);
         } else {
             console.warn(`[UIScene] Attempted to add an unknown component: '${componentType}'`);
         }
@@ -127,7 +127,7 @@ export default class OverlayScene extends Phaser.Scene {
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
 async buildUiFromLayout(layoutData) {
-    console.log("[UIScene] Starting UI build with FINAL routine.");
+    // console.log("[UIScene] Starting UI build with FINAL routine.");
     if (!layoutData || !layoutData.objects) return;
 
     const uiRegistry = this.registry.get('uiRegistry');
@@ -203,7 +203,7 @@ registerUiElement(name, element, params) {
     if (params.depth !== undefined) element.setDepth(params.depth);
       // ▼▼▼ ログ爆弾 No.1 ▼▼▼
         if (name === 'message_window') {
-            console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
+            // console.log(`%c[LOG BOMB 1] UIScene.registerUiElement: 'message_window' の初期depthを ${params.depth} に設定しました。`, 'color: yellow; font-size: 1.2em;');
         }
     if (params.group) element.setData('group', params.group);
 if (params.events) {
@@ -293,7 +293,7 @@ if (params.events) {
         // --- 4. シーンに登録し、編集可能にする ---
         this.registerUiElement(newName, newUiElement, params);
         newUiElement.setData('registryKey', registryKey);
-        console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
+        // console.log(`[UIScene] UI Component '${newName}' from registry key '${registryKey}' added.`);
 
         return newUiElement;
         // --------------------------------------------------------------------

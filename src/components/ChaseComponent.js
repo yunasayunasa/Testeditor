@@ -41,8 +41,8 @@ export default class ChaseComponent {
         // 1. センサーボディを調べる
         const detectionArea = this.gameObject.components.DetectionAreaComponent;
         if (detectionArea && detectionArea.sensorBody) {
-            console.log("▼ SENSOR BODY ▼", detectionArea.sensorBody);
-            console.log("SENSOR collisionFilter:", detectionArea.sensorBody.collisionFilter);
+// // console.log("▼ SENSOR BODY ▼", detectionArea.sensorBody);
+// // console.log("SENSOR collisionFilter:", detectionArea.sensorBody.collisionFilter);
         } else {
            
         }
@@ -50,8 +50,8 @@ export default class ChaseComponent {
         // 2. プレイヤーボディを調べる
         const player = this.scene.children.getByName('player');
         if (player && player.body) {
-            console.log("▼ PLAYER BODY ▼", player.body);
-            console.log("PLAYER collisionFilter:", player.body.collisionFilter);
+// // console.log("▼ PLAYER BODY ▼", player.body);
+// // console.log("PLAYER collisionFilter:", player.body.collisionFilter);
         } else {
             console.error("Player body NOT FOUND in the scene!");
         }
@@ -68,7 +68,7 @@ export default class ChaseComponent {
     onTargetDetected(target) {
         if (!this.enabled || this.state === 'CHASING') return;
 
-        console.log(`[ChaseComponent] Target '${target.name}' detected!`);
+// // console.log(`[ChaseComponent] Target '${target.name}' detected!`);
         this.chaseTarget = target;
         this.startChasing();
     }
@@ -77,7 +77,7 @@ export default class ChaseComponent {
     onTargetLost(target) {
         // 見失ったターゲットが、現在追跡中のターゲットと同じなら追跡をやめる
         if (this.state === 'CHASING' && this.chaseTarget === target) {
-            console.log(`[ChaseComponent] Target '${target.name}' lost!`);
+// // console.log(`[ChaseComponent] Target '${target.name}' lost!`);
             this.stopChasing();
         }
     }

@@ -37,7 +37,7 @@ serialize() {
         if (this.scene && this.scene.input && this.scene.input.keyboard) {
             this.keyboardEnabled = true;
             this.cursors = this.scene.input.keyboard.createCursorKeys();
-            console.log("%c[PlayerController] Keyboard cursors initialized successfully.", 'color: lightgreen');
+            // console.log("%c[PlayerController] Keyboard cursors initialized successfully.", 'color: lightgreen');
         } else {
             console.warn("[PlayerController] Keyboard input system not available during initKeyboard().");
             this.keyboardEnabled = false;
@@ -158,13 +158,13 @@ serialize() {
     toggleHiding(hidingSpot) {
     // ▼▼▼【ここからデバッグログを追加】▼▼▼
     console.group(`%c[DEBUG] PlayerController.toggleHiding Called!`, 'color: lightgreen; font-weight: bold;');
-    console.log(`Current state is: '${this.state}'`);
+    // console.log(`Current state is: '${this.state}'`);
 
     if (this.state === 'hiding') {
-        console.log("Action: Calling unhide()...");
+        // console.log("Action: Calling unhide()...");
         this.unhide();
     } else {
-        console.log("Action: Calling hide()...");
+        // console.log("Action: Calling hide()...");
         this.hide(hidingSpot);
     }
     console.groupEnd();

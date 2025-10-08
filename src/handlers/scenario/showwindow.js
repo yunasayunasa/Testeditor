@@ -57,5 +57,5 @@ export default async function handleShowWindow(manager, params) {
     messageWindow.setVisible(true); // 念のため表示状態にする
     messageWindow.setPosition(targetX, targetY);
 
-    console.log(`[showwindow] Message window moved to (${targetX}, ${targetY})`);
+    // console.log(`[showwindow] Message window moved to (${targetX}, ${targetY})`);
 }

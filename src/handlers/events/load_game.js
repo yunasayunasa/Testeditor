@@ -13,7 +13,7 @@ export default async function load_game(interpreter, params) {
             const toScene = saveData.currentSceneKey;
             const transitionParams = { loadData: saveData };
 
-            console.log(`Step 4: EngineAPI found. Calling 'requestSimpleTransition'.`);
+            // console.log(`Step 4: EngineAPI found. Calling 'requestSimpleTransition'.`);
             
             // ★ 2. EngineAPIを呼び出す
             EngineAPI.requestSimpleTransition(fromScene, toScene, transitionParams);

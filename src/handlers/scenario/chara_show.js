@@ -47,7 +47,7 @@ export default async function handleCharaShow(manager, params) {
     scene.characters[name] = chara;
   // ▼▼▼ ログ爆弾 No.4 (最重要) ▼▼▼
     const messageWindow = scene.uiScene.uiElements.get('message_window');
-    console.log(`%c[LOG BOMB 4] chara_show実行時:
+    // console.log(`%c[LOG BOMB 4] chara_show実行時:
         - 表示するキャラクター: ${chara.name} (texture: ${chara.texture.key})
         - キャラクターのdepth: ${chara.depth} (コンテナ内での値)
         - 所属コンテナのdepth: ${manager.layers.character.depth}

@@ -11,7 +11,7 @@ export function handleStopVideo(manager, params) {
     targetLayer.list.forEach(item => {
         // Phaserの動画オブジェクトは 'stop' メソッドを持つかで判別
         if (item.stop) {
-            console.log(`動画を停止・消去します:`, item.texture.key);
+            // console.log(`動画を停止・消去します:`, item.texture.key);
             item.stop();
             item.destroy();
         }

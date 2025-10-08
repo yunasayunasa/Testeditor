@@ -25,7 +25,7 @@ export default async function handleLog(manager, params) {
         const value = manager.stateManager.eval(exp);
         
         // 評価した式とその結果を、スタイル付きで分かりやすくコンソールに出力
-        console.log(`%c[Log Tag] ${exp}:`, "color: dodgerblue; font-weight: bold;", value);
+        // console.log(`%c[Log Tag] ${exp}:`, "color: dodgerblue; font-weight: bold;", value);
         
     } catch (e) {
         console.error(`[log] 式の評価中にエラーが発生しました: "${exp}"`, e);

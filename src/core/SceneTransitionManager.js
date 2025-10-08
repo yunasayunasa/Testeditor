@@ -20,7 +20,7 @@ export default class SceneTransitionManager {
     // src/core/SceneTransitionManager.js
 handleSimpleTransition(data) {
     console.group(`%c[SceneTransitionManager] Group: handleSimpleTransition`, "color: #FF9800;");
-    console.log(`Transition requested:`, data);
+    // console.log(`Transition requested:`, data);
     
     const { from, to, params } = data;
     this.systemScene.gameState = (to === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
@@ -29,18 +29,18 @@ handleSimpleTransition(data) {
     const sceneToStop = this.systemScene.scene.get(from);
 
     if (sceneToStop && sceneToStop.scene.isActive() && from !== 'UIScene') {
-        console.log(`Target to stop: '${from}'. Setting up shutdown listener.`);
+        // console.log(`Target to stop: '${from}'. Setting up shutdown listener.`);
         
         sceneToStop.events.once('shutdown', () => {
-            console.log(`%c[SceneTransitionManager] Event: '${from}' has SHUT DOWN. Now starting '${to}'.`, "color: #4CAF50; font-weight: bold;");
+            // console.log(`%c[SceneTransitionManager] Event: '${from}' has SHUT DOWN. Now starting '${to}'.`, "color: #4CAF50; font-weight: bold;");
             this._startAndMonitorScene(to, params);
         });
 
-        console.log(`%c[SceneTransitionManager] Command: Issuing scene.stop('${from}') NOW.`, "color: #E91E63; font-weight: bold;");
+        // console.log(`%c[SceneTransitionManager] Command: Issuing scene.stop('${from}') NOW.`, "color: #E91E63; font-weight: bold;");
         this.systemScene.scene.stop(from);
 
     } else {
-        console.log(`No active scene to stop. Starting '${to}' directly.`);
+        // console.log(`No active scene to stop. Starting '${to}' directly.`);
         this._startAndMonitorScene(to, params);
     }
     console.groupEnd();
@@ -51,7 +51,7 @@ handleSimpleTransition(data) {
      * @param {object} data - { from, params }
      */
     handleReturnToNovel(data) {
-        console.log(`%c[SceneTransitionManager] Handling return to novel from ${data.from}`, "color: #FF9800; font-weight: bold;");
+        // console.log(`%c[SceneTransitionManager] Handling return to novel from ${data.from}`, "color: #FF9800; font-weight: bold;");
         const { from, params } = data; // paramsを受け取る
 
         if (this.systemScene.scene.isActive(from) && from !== 'UIScene') {
@@ -82,7 +82,7 @@ handleSimpleTransition(data) {
 
         const targetScene = this.systemScene.scene.get(sceneKey);
         if (sceneKey === 'GameScene') {
-        console.log(`[SceneTransitionManager] Attaching a one-time shutdown listener to GameScene.`);
+        // console.log(`[SceneTransitionManager] Attaching a one-time shutdown listener to GameScene.`);
         // GameSceneがシャットダウンするイベントを、一度だけリッスンする
         targetScene.events.once('shutdown', () => {
             // GameSceneが死んだら、SystemSceneのハンドラを呼び出す
@@ -93,7 +93,7 @@ handleSimpleTransition(data) {
 
         // src/core/SceneTransitionManager.js
 targetScene.events.once(completionEvent, () => {
-    console.log(`%c[SceneTransitionManager] Event: Scene '${sceneKey}' is READY. Re-enabling input NOW.`, "color: #4CAF50; font-weight: bold;");
+    // console.log(`%c[SceneTransitionManager] Event: Scene '${sceneKey}' is READY. Re-enabling input NOW.`, "color: #4CAF50; font-weight: bold;");
 
     // ★★★ 1. シーンの準備ができたこの瞬間に、入力を再有効化する ★★★
     this.isProcessing = false;
@@ -124,7 +124,7 @@ targetScene.events.once(completionEvent, () => {
  * @param {object} params 
  */
 startInitialScene(sceneKey, params = {}) {
-    console.log(`%c[SceneTransitionManager] Starting initial scene: ${sceneKey}`, "color: #FF9800; font-weight: bold;");
+    // console.log(`%c[SceneTransitionManager] Starting initial scene: ${sceneKey}`, "color: #FF9800; font-weight: bold;");
     // プライベートメソッドを呼び出して、実際の処理を開始する
     this._startAndMonitorScene(sceneKey, params);
 }
@@ -139,7 +139,7 @@ startInitialScene(sceneKey, params = {}) {
  */
 // src/core/SceneTransitionManager.js
 handleJumpTransition(data) {
-    console.log(`%c[SceneTransitionManager] Handling JUMP transition: ${data.from} -> ${data.to}`, "color: #FF9800; font-weight: bold;");
+    // console.log(`%c[SceneTransitionManager] Handling JUMP transition: ${data.from} -> ${data.to}`, "color: #FF9800; font-weight: bold;");
     const { from, to, params } = data;
 
     this.systemScene.gameState = 'GAMEPLAY';

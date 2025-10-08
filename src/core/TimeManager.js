@@ -51,7 +51,7 @@ export default class TimeManager {
      */
     _broadcastTimeScale() {
         const newTimeScale = this._isTimeStopped ? 0 : 1;
-        console.log(`%c[TimeManager] Broadcasting new timeScale: ${newTimeScale}`, "color: #9C27B0; font-weight: bold;");
+        // console.log(`%c[TimeManager] Broadcasting new timeScale: ${newTimeScale}`, "color: #9C27B0; font-weight: bold;");
 
         for (const scene of this.game.scene.getScenes(true)) {
             if (scene.matter && scene.matter.world) {
