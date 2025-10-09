@@ -121,7 +121,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
               case 'pauseScene': {
                 const activeScene = EngineAPI.activeGameSceneKey;
                 if (activeScene) {
-                     console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
+                    // console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
                     
                     // ★ EngineAPIに新しいメソッドを追加するのが理想だが、
                     //    今回は直接PhaserのAPIを呼んでみる
@@ -132,13 +132,10 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                         // ここでも行う必要がある
                         systemScene.sceneStack.push(activeScene); 
                     }
-                  
+                }
                 break;
             }
-                
-}
-                
-            
+
             case 'resumeScene': {
                     // EngineAPIから現在アクティブなシーンを取得するのは安全
                     const sceneToResume = EngineAPI.activeGameSceneKey;
@@ -156,7 +153,6 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                         // activeGameSceneKeyがnullを返す場合はこちらでハンドリングする
                          console.warn('[GameFlowManager] resumeScene: No active scene to resume.');
                     }
-                   
                     break;
                 }
                 

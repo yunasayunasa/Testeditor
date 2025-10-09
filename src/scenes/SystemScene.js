@@ -106,11 +106,7 @@ export default class SystemScene extends Phaser.Scene {
         } else {
             console.error('[SystemScene] FATAL: game_flow.json not found in cache.');
         }
-
-    
     }
-
-    
 
     _safeResumeScene(sceneKey, onComplete) {
         const targetScene = this.scene.get(sceneKey);
