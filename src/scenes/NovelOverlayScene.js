@@ -52,6 +52,27 @@ export default class NovelOverlayScene extends Phaser.Scene {
             return;
         }
 
+        const inputZone = this.add.zone(
+            this.scale.width / 2, 
+            this.scale.height / 2, 
+            this.scale.width, 
+            this.scale.height
+        );
+        inputZone.setInteractive();
+        
+        // 2. このゾーンを、UISceneのUIよりも確実に手前に配置する
+        //    (UISceneのUIが通常 depth 1000-2000 を使うと仮定)
+        const OVERLAY_INPUT_DEPTH = 9000;
+        inputZone.setDepth(OVERLAY_INPUT_DEPTH);
+
+        // 3. このゾーンがクリックされた時に、シナリオを進める
+        this.onClickHandler = () => { 
+            if (this.scenarioManager) {
+                this.scenarioManager.onClick();
+            }
+        };
+        inputZone.on('pointerdown', this.onClickHandler);
+
         this.uiScene.onSceneTransition(this.scene.key);
         
         // --- レイヤーの生成 ---
@@ -95,8 +116,8 @@ export default class NovelOverlayScene extends Phaser.Scene {
 
     _finalizeSetup() {
         this.isSceneFullyReady = true;
-        this.onClickHandler = () => { if (this.scenarioManager) this.scenarioManager.onClick(); };
-        this.input.on('pointerdown', this.onClickHandler);
+      //  this.onClickHandler = () => { if (this.scenarioManager) this.scenarioManager.onClick(); };
+     //   this.input.on('pointerdown', this.onClickHandler);
         
         this.time.delayedCall(10, () => this.scenarioManager.next());
         // console.log("[NovelOverlayScene] create 完了");
