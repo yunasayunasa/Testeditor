@@ -112,30 +112,41 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.scenarioManager.loadScenario(this.startScenario).then(() => {
             this._finalizeSetup();
         });
-
-        this.input.on('pointerdown', (pointer) => {
-        // クリックされた座標にあるインタラクティブなオブジェクトをすべて取得
-        const hitObjects = this.input.hitTest(pointer, this.game.scene.getScenes(true).map(s => s.children.list).flat());
-
-        console.group(`%c[INPUT DEBUG] Pointer Down at (${pointer.x}, ${pointer.y})`, "background: #222; color: #bada55");
+////////
+           this.input.on('pointerdown', (pointer) => {
+        // 1. 一時的に、ポインターの下にある全てのオブジェクトを取得する設定に変更
+        this.input.topOnly = false;
         
-        if (hitObjects.length > 0) {
+        // 2. このフレームでクリックされたオブジェクトのリストを取得する
+        //    (Phaserの内部的なプロパティ _list にアクセスします)
+        const hitObjects = this.input.manager.pointers[0].local.hitTest;
+
+        console.group(`%c[INPUT DEBUG] Pointer Down at (${Math.round(pointer.x)}, ${Math.round(pointer.y)})`, "background: #222; color: #bada55");
+        
+        if (hitObjects && hitObjects.length > 0) {
             console.log("Phaser found these interactive objects (topmost first):");
+            // hitTestは描画順の逆（手前が先頭）で返ってくる
             hitObjects.forEach((obj, index) => {
-                console.log(
-                    `  #${index + 1}:`, 
-                    obj.name || '(no name)', 
-                    `| Scene: ${obj.scene.scene.key}`,
-                    `| Depth: ${obj.depth}`,
-                    `| Visible: ${obj.visible}`,
-                    `| Alpha: ${obj.alpha}`
-                );
+                // オブジェクトが破棄されていないか念のためチェック
+                if (obj && obj.scene) {
+                    console.log(
+                        `  #${index + 1}:`, 
+                        obj.name || '(no name)', 
+                        `| Type: ${obj.constructor.name}`,
+                        `| Scene: ${obj.scene.scene.key}`,
+                        `| Depth: ${obj.depth}`,
+                        `| Interactive: ${obj.input ? 'YES' : 'NO'}`
+                    );
+                }
             });
         } else {
             console.log("Phaser found NO interactive objects at this position.");
         }
         
         console.groupEnd();
+        
+        // 3. 設定を元に戻す（非常に重要！）
+        this.input.topOnly = true;
     });
     }
 
