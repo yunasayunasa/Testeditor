@@ -66,6 +66,22 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.uiScene.setElementDepth('message_window', OVERLAY_BASE_DEPTH + 20);
         this.uiScene.showMessageWindow();
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        this.inputBlocker = this.add.zone(0, 0, this.scale.width, this.scale.height)
+        .setOrigin(0, 0) // 左上を基準
+        .setInteractive({ useHandCursor: true })
+        .setDepth(100000); // すべてのUIよりも最上位のdepth
+
+    // ★ 独自のクリックハンドラを設定 (このオブジェクトのクリックは最優先される)
+    this.onClickHandler = (pointer, localX, localY, event) => {
+        // [p]タグの時だけ、イベントを消費してシナリオを進行させる
+        if (this.scenarioManager && this.scenarioManager.isWaitingClick) {
+            event.stopPropagation(); // 背後のシーンにクリックが漏れるのを防ぐ
+            this.scenarioManager.onClick();
+        }
+    };
+    
+    // inputBlocker のクリックイベントとして登録
+    this.inputBlocker.on('pointerdown', this.onClickHandler);
 
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
@@ -193,6 +209,12 @@ shutdown() {
             this.scenarioManager.stop();
             this.scenarioManager = null;
         }
+
+          if (this.inputBlocker) {
+        this.inputBlocker.off('pointerdown', this.onClickHandler);
+        this.inputBlocker.destroy();
+        this.inputBlocker = null;
+    }
         
         this.children.removeAll(true);
         this.isSceneFullyReady = false;
