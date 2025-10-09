@@ -166,9 +166,6 @@ setupPlayerAndCamera() {
 }
     
    update(time, delta) {
-    if (this.isCustomPaused) {
-            return; // カスタムポーズ中は、以降のupdate処理をすべてスキップ
-        }
     
     super.update(time, delta);
     if (!this.joystick) {

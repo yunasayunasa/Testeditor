@@ -16,7 +16,6 @@ export default class BaseGameScene extends Phaser.Scene {
         this.updatableComponents = new Set(); 
         this._deferredActions = []; 
         this.joystick = null; 
-        this.isCustomPaused = false;
        
         this._sceneSettingsApplied = false;
         this.ySortEnabled = false; // ★ シーンのYソートが有効かどうかのフラグ
@@ -749,10 +748,6 @@ addComponent(target, componentType, params = {}) {
     return componentInstance;
 } 
 update(time, delta) {
-    if (this.isCustomPaused) {
-            return; // カスタムポーズ中は、以降のupdate処理をすべてスキップ
-        }
-        super.update(time, delta); // Componentのupdateは呼び出す
     // --- 0. シーンの初期設定と「簡易光源」の遅延生成 ---
    
 
