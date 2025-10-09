@@ -112,6 +112,31 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.scenarioManager.loadScenario(this.startScenario).then(() => {
             this._finalizeSetup();
         });
+
+        this.input.on('pointerdown', (pointer) => {
+        // クリックされた座標にあるインタラクティブなオブジェクトをすべて取得
+        const hitObjects = this.input.hitTest(pointer, this.game.scene.getScenes(true).map(s => s.children.list).flat());
+
+        console.group(`%c[INPUT DEBUG] Pointer Down at (${pointer.x}, ${pointer.y})`, "background: #222; color: #bada55");
+        
+        if (hitObjects.length > 0) {
+            console.log("Phaser found these interactive objects (topmost first):");
+            hitObjects.forEach((obj, index) => {
+                console.log(
+                    `  #${index + 1}:`, 
+                    obj.name || '(no name)', 
+                    `| Scene: ${obj.scene.scene.key}`,
+                    `| Depth: ${obj.depth}`,
+                    `| Visible: ${obj.visible}`,
+                    `| Alpha: ${obj.alpha}`
+                );
+            });
+        } else {
+            console.log("Phaser found NO interactive objects at this position.");
+        }
+        
+        console.groupEnd();
+    });
     }
 
     _finalizeSetup() {
