@@ -1079,33 +1079,26 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
     // in BaseGameScene.js
 // in BaseGameScene.js
 
-    /**
-     * ★★★ 最終FIX版 (変数名修正) ★★★
+ /**
+     * ★★★ 修正版 (makeEditable呼び出しを追加) ★★★
      * エディタからの要求に応じて、プレハブをシーンにインスタンス化する。
-     * 単一プレハブとグループプレハブの両方に対応する。
      */
-    addPrefabFromEditor(prefabKey, newName, layerName) { // ← newName を受け取る
+    addPrefabFromEditor(prefabKey, newName, layerName) {
         const prefabData = this.cache.json.get(prefabKey);
-        if (!prefabData) {
-            console.error(`[BaseGameScene] Prefab data for key '${prefabKey}' not found.`);
-            return null;
-        }
+        if (!prefabData) return null;
 
         const spawnPos = {
             x: this.cameras.main.scrollX + this.cameras.main.width / 2,
             y: this.cameras.main.scrollY + this.cameras.main.height / 2
         };
 
-        if (prefabData.type === 'GroupPrefab') {
-            
-            // console.log(`[BaseGameScene] Reconstructing Group Prefab: '${prefabKey}'`);
-            
-            // ▼▼▼【ここが修正箇所です】▼▼▼
-            // prefabName ではなく、引数で渡された newName を使う
-            const newGroupId = `group_${newName}_${Phaser.Math.RND.uuid().substr(0,4)}`;
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ★★★ 1. EditorPluginを最初に取得しておく ★★★
+        const editorPlugin = this.plugins.get('EditorPlugin');
 
+        if (prefabData.type === 'GroupPrefab') {
+            const newGroupId = `group_${newName}_${Phaser.Math.RND.uuid().substr(0,4)}`;
             const createdObjects = [];
+
             prefabData.objects.forEach(childLayout => {
                 const newLayout = { ...childLayout };
                 newLayout.x = spawnPos.x + (childLayout.x || 0);
@@ -1116,14 +1109,18 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
                 const newGameObject = this.createObjectFromLayout(newLayout);
                 if (newGameObject) {
                     this.applyProperties(newGameObject, newLayout);
+                    
+                    // ★★★ 2. 生成したオブジェクトをエディタに登録する ★★★
+                    if (editorPlugin && editorPlugin.isEnabled) {
+                        editorPlugin.makeEditable(newGameObject, this);
+                    }
+                    
                     createdObjects.push(newGameObject);
                 }
             });
-            
             return createdObjects;
 
-        } else {
-            
+        } else { // 単一プレハブの場合
             const newObjectLayout = { ...prefabData };
             newObjectLayout.name = newName;
             newObjectLayout.x = spawnPos.x;
@@ -1131,8 +1128,14 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
             newObjectLayout.layer = layerName;
 
             const newGameObject = this.createObjectFromLayout(newObjectLayout);
-            this.applyProperties(newGameObject, newObjectLayout);
-            
+            if (newGameObject) { // ★ オブジェクトが生成できたか確認
+                this.applyProperties(newGameObject, newObjectLayout);
+                
+                // ★★★ 2. 生成したオブジェクトをエディタに登録する ★★★
+                if (editorPlugin && editorPlugin.isEnabled) {
+                    editorPlugin.makeEditable(newGameObject, this);
+                }
+            }
             return newGameObject;
         }
     }
