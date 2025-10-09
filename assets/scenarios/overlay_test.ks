@@ -5,11 +5,11 @@
 tartman:「うぅ...トイレトイレ...」
 
 tartman:「しかし...やはり夜の騎空艇は不気味だな...」
-[p]
+
 tartman「普通に怖い...」
-[p]
+
 tartman:「む、あれは...」
-[p]
+
 [chara_show name="anila" pos="right" time=500]
 anila:「...」
 [p]
