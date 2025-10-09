@@ -18,7 +18,7 @@
     {
       "name": "Background",
       "visible": true,
-      "locked": true
+      "locked": false
     }
   ],
   "objects": [
@@ -84,7 +84,7 @@
       "data": {
         "nextWaypoint": "test_a",
         "isYSortable": true,
-        "lastTap": 0,
+        "lastTap": 1759999305301,
         "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
@@ -160,7 +160,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 335,
+      "x": 402,
       "y": 625,
       "depth": 625,
       "scaleX": 0.65,
@@ -234,7 +234,10 @@
       "components": [
         {
           "type": "PlayerController",
-          "params": {}
+          "params": {
+            "walkSoundKey": "smash",
+            "jumpSoundKey": "smash"
+          }
         },
         {
           "type": "Scrollable",
@@ -245,7 +248,8 @@
         {
           "type": "Interactor",
           "params": {
-            "radius": 200
+            "radius": 200,
+            "iconColor": "0x1db427"
           }
         },
         {
@@ -268,13 +272,14 @@
         }
       },
       "data": {
-        "lastTap": 1759995980472,
+        "lastTap": 0,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
         "collision_mask": 4294967295,
         "overlap_checkpoint": false,
-        "overlap_next_arrow_1759845615890": false
+        "overlap_next_arrow_1759845615890": false,
+        "overlap_yuna_angry_1759846628757": true
       }
     },
     {
@@ -402,24 +407,21 @@
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
+      "group": "interactable",
       "events": [
         {
           "id": "event_1759846676617",
-          "trigger": "onOverlap_Start",
+          "trigger": "onInteract",
           "nodes": [
             {
-              "id": "node_1759846701449",
-              "type": "run_scenario",
-              "params": {
-                "file": "overlay_test",
-                "block_input": true
-              },
+              "id": "node_1759999298570",
+              "type": "toggle_hiding",
+              "params": {},
               "x": 50,
               "y": 50
             }
           ],
-          "connections": [],
-          "targetGroup": "player"
+          "connections": []
         },
         {
           "id": "event_1759846723473",
@@ -452,10 +454,11 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1759999335738,
         "overlap_checkpoint": true,
         "collision_category": 1,
-        "collision_mask": 4294967295
+        "collision_mask": 4294967295,
+        "overlap_player": true
       }
     },
     {
