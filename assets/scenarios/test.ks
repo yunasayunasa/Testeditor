@@ -1,42 +1,4 @@
-; === Odyssey Engine 総合チュートリアル (最終統合テスト版) ===
 
-; --- 0. 変数の初期化と事前テスト ---
-[eval exp="f.love_meter = 0"]       
-  ; 既存
-[eval exp="sf.boot_count = (sf.boot_count || 0) + 1"] 
-; 既存（起動回数を永続化）
-[eval exp="f.player_name = 'マスター'"] 
-; 既存
-[eval exp="f.coin = 0"]            
- ; ★★★ 追加: コイン変数の初期化 (HUD連携テスト用) ★★★
-[eval exp="f.test_item = 0"]      
-  ; ★★★ 追加: アイテム取得テスト用変数 ★★★
-[eval exp="f.test_flag = 'none'"]  
- ; ★★★ 追加: IF分岐テスト用変数 ★★★
-[eval exp="f.sub_result = 'none'"] 
- ; ★★★ 追加: サブルーチン戻り値用変数 ★★★
-[eval exp="f.battle_result = 'none'"]
- ; ★★★ 追加: 戦闘結果用変数 ★★★
-[eval exp="f.final_status = 'none'"] 
-; ★★★ 追加: 最終ステータス用変数 ★★★
-
-; --- １．基本的な表示と演出 ---
-[playbgm storage="cafe" time=1000]
-[bg storage="bg_school" time=150]
-[wait time=1500]
-[chara_show name="yuna" y=200 pos="center"] 
-; y=800 は画面外のはず
-[move name="yuna" y=450 alpha=1 time=1000] 
-; ★★★ y=450は画面内のy座標に修正（中心付近）★★★
-[wait time=1000]
-
-[delay speed=80]
-yuna:「ようこそ！これは、あなたと一緒に作ったゲームエンジンのチュートリアルです。」
-[p]
-
-yuna:「このゲームを起動するのは、&sf.boot_count 回目ですね。」
-[p]
- ; ★ sf.boot_countのテスト
 [jump storage="JumpScene" params="{player_level:f.love_meter, player_name:'&f.player_name;', start_area:'bridge', current_coin:f.coin, player_max_hp:f.player_max_hp, player_hp:f.player_hp}"]
 
 [chara_show name="kaito" pos="right" time=1000]
