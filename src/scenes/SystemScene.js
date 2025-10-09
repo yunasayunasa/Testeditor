@@ -69,36 +69,7 @@ export default class SystemScene extends Phaser.Scene {
         this.scene.run('UIScene');
         this.scene.bringToTop('UIScene');
         // console.log('%c[SystemScene] Platform ready: UIScene is now running permanently.', 'color: #4CAF50; font-weight: bold;');
-console.log("%c[LOG BOMB] Setting up global pointerdown listener in SystemScene.", "color: red; font-size: 1.5em;");
 
-        // ゲーム全体の生の入力イベントを捕捉する
-        this.input.on('pointerdown', (pointer) => {
-            console.group(`%c[LOG BOMB | SystemScene] Global Pointer Down Event! at (${Math.round(pointer.x)}, ${Math.round(pointer.y)})`, "background: red; color: white;");
-
-            // 現在アクティブな全シーンを取得
-            const activeScenes = this.game.scene.getScenes(true);
-            console.log("-> Active Scenes:", activeScenes.map(s => s.scene.key));
-
-            // ポインターの下にあるオブジェクトを問い合わせる
-            const hitObjects = this.input.manager.hitTest(pointer, activeScenes.map(s => s.children.list).flat());
-
-            if (hitObjects && hitObjects.length > 0) {
-                console.log("-> Phaser's Hit Test found (Topmost First):");
-                hitObjects.forEach((obj, index) => {
-                    if (obj && obj.scene) {
-                        console.log(
-                            `  #${index + 1}: %c${obj.name || '(no name)'}`, "font-weight: bold;",
-                            `| Scene: ${obj.scene.scene.key}`,
-                            `| Depth: ${obj.depth}`,
-                            `| Interactive: ${obj.input ? 'YES' : 'NO'}`
-                        );
-                    }
-                });
-            } else {
-                console.log("-> Phaser's Hit Test found NO interactive objects.");
-            }
-            console.groupEnd();
-        });
         this.events.on('request-subscene', this._handleRequestSubScene, this);
         this.events.on('request-gamemode-toggle', (mode) => {
             const gameScene = this.scene.get('GameScene');
