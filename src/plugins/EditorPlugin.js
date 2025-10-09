@@ -2320,8 +2320,10 @@ exportLayoutToJson() {
         alert("Failed to export layout. Check the console for a critical error.");
     }
 }
+   // in src/plugins/EditorPlugin.js
+
     /**
-     * ★★★ 新規メソッド ★★★
+     * ★★★ 修正版 ★★★
      * 現在選択されている単一のオブジェクトを、プレハブ用のJSONとしてエクスポートする。
      */
     exportSelectionToPrefab() {
@@ -2333,106 +2335,111 @@ exportLayoutToJson() {
         const gameObject = this.selectedObject;
         const prefabName = prompt("このプレハブの名前を入力してください (例: coin, bullet):", gameObject.name);
 
-        if (!prefabName) {
-            // console.log("[EditorPlugin] Prefab export cancelled.");
-            return;
-        }
+        if (!prefabName) return;
 
-        // --- 1. 必要なプロパティだけを抽出した、プレーンなオブジェクトを作成 ---
-        // (exportLayoutToJsonとほぼ同じロジック)
-        const prefabData = {
-            // ★ nameはプレハブのデフォルト名として保存
-            name: prefabName, 
-            type: (gameObject instanceof Phaser.GameObjects.Text) ? 'Text' :
-             (gameObject instanceof Phaser.GameObjects.Sprite) ? 'Sprite' : 'Image',
-            texture: gameObject.texture.key,
-            
-            // ★ 座標(x, y)はプレハブに不要なので、含めない
-
-            depth: gameObject.depth,
-            scaleX: parseFloat(gameObject.scaleX.toFixed(2)),
-            scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
-            angle: Math.round(gameObject.angle),
-            alpha: parseFloat(gameObject.alpha.toFixed(2)),
-        };
-        
-        // --- 2. getData()で取得した安全なデータを追加 ---
-        const group = gameObject.getData('group');
-        if (group) prefabData.group = group;
-
-         if (objData.type === 'Text') {
-            objData.text = gameObject.text;
-            objData.style = {
-                // --- 既存のスタイル ---
-                fontSize: gameObject.style.fontSize,
-                fill: gameObject.style.color,
-                // ▼▼▼【新しいスタイルを追加】▼▼▼
-                fontFamily: gameObject.style.fontFamily,
-                fontStyle: gameObject.style.fontStyle,
-                // 影のスタイルも保存
-                shadow: {
-                    offsetX: gameObject.style.shadowOffsetX,
-                    offsetY: gameObject.style.shadowOffsetY,
-                    color: gameObject.style.shadowColor,
-                    blur: gameObject.style.shadowBlur,
-                    stroke: gameObject.style.shadowStroke,
-                    fill: gameObject.style.shadowFill
-                }
-            };
-        } else {
-           
-        // ★★★ textureプロパティが存在するか確認してからキーを取得 ★★★
-        if (gameObject.texture && gameObject.texture.key) {
-            objData.texture = gameObject.texture.key;
-        }
-    
-            // 画像/スプライトの場合
-            objData.texture = gameObject.texture.key;
-        }
-
-        const animData = gameObject.getData('animation_data');
-        if (animData) prefabData.animation = animData;
-        
-        const events = gameObject.getData('events');
-        if (events && events.length > 0) prefabData.events = events;
-        
-        const components = gameObject.getData('components');
-        if (components && components.length > 0) prefabData.components = components;
-
-        // --- 3. 物理ボディのプロパティを抽出 ---
-        if (gameObject.body) {
-            const body = gameObject.body;
-            prefabData.physics = {
-                isStatic: body.isStatic,
-                isSensor: body.isSensor,
-                fixedRotation: gameObject.getData('fixedRotation') || false, // ★ この行を追加
-                ignoreGravity: gameObject.getData('ignoreGravity') === true,
-                gravityScale: body.gravityScale.y,
-                shape: gameObject.getData('shape') || 'rectangle', 
-                friction: parseFloat(body.friction.toFixed(2)),
-                frictionAir: parseFloat(body.frictionAir.toFixed(2)), // 空気抵抗も忘れずに
-                restitution: parseFloat(body.restitution.toFixed(2)),
-            };
-        }
-        
-        // --- 4. 安全なオブジェクトをJSONに変換して出力 ---
         try {
-            const jsonString = JSON.stringify(prefabData, null, 2);
+            // --- 1. objDataの骨格を定義 ---
+            // ★★★ 変数名を prefabData から objData に統一（またはその逆）★★★
+            const objData = {
+                name: prefabName, // ★ ユーザーが入力した名前を使用
+                type: 'Unknown', // 初期値
+                // ★ 座標(x, y)はプレハブに不要
+                depth: gameObject.depth,
+                scaleX: parseFloat(gameObject.scaleX.toFixed(2)),
+                scaleY: parseFloat(gameObject.scaleY.toFixed(2)),
+                angle: Math.round(gameObject.angle),
+                alpha: parseFloat(gameObject.alpha.toFixed(2)),
+            };
+
+            // --- 2. exportLayoutToJson と同じロジックでプロパティを抽出 ---
             
-            // console.log(`%c--- Prefab Data for [${prefabName}] ---`, "color: #4CAF50; font-weight: bold;");
-            // console.log(jsonString);
+            // 型を判定
+            if (gameObject instanceof Phaser.GameObjects.Sprite) objData.type = 'Sprite';
+            else if (gameObject instanceof Phaser.GameObjects.Text) objData.type = 'Text';
+            else if (gameObject instanceof Phaser.GameObjects.Image) objData.type = 'Image';
+            else objData.type = gameObject.constructor.name;
             
+            // 全カスタムデータを取得
+            const allCustomData = { ...gameObject.data.values };
+
+            // トップレベルプロパティを分離
+            objData.layer = allCustomData.layer;
+            objData.group = allCustomData.group;
+            objData.events = allCustomData.events;
+            objData.components = allCustomData.components;
+            objData.animation_data = allCustomData.animation_data;
+            objData.anim_prefix = allCustomData.anim_prefix;
+            
+            delete allCustomData.layer;
+            delete allCustomData.group;
+            delete allCustomData.events;
+            delete allCustomData.components;
+            delete allCustomData.animation_data;
+            delete allCustomData.anim_prefix;
+
+            // テクスチャ/クロップ情報を処理
+            const cropSourceData = allCustomData.cropSource;
+            if (cropSourceData) {
+                objData.cropSource = cropSourceData;
+                delete allCustomData.cropSource;
+            } else if (gameObject.texture && gameObject.texture.key && gameObject.texture.key !== '__DEFAULT') {
+                objData.texture = gameObject.texture.key;
+            }
+            
+            // イベントデータの修復
+            if (objData.events && Array.isArray(objData.events)) {
+                objData.events.forEach(event => {
+                    if (event.nodes && Array.isArray(event.nodes)) {
+                        event.nodes.forEach(node => {
+                            if (node.type === 'anim_play' && node.params && node.params.name !== undefined) {
+                                node.params.key = node.params.name;
+                                delete node.params.name;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // テキスト固有プロパティ
+            if (objData.type === 'Text') {
+                objData.text = gameObject.text;
+                if (gameObject.style) objData.style = gameObject.style.toJSON();
+            }
+
+            // 物理ボディの抽出
+            if (gameObject.body) {
+                const body = gameObject.body;
+                objData.physics = {
+                    isStatic: body.isStatic,
+                    isSensor: body.isSensor,
+                    fixedRotation: allCustomData.fixedRotation || false,
+                    gravityScale: body.gravityScale.y,
+                    friction: parseFloat(body.friction.toFixed(2)),
+                    restitution: parseFloat(body.restitution.toFixed(2)),
+                    collisionFilter: {
+                        category: gameObject.getData('collision_category') ?? body.collisionFilter.category,
+                        mask: gameObject.getData('collision_mask') ?? body.collisionFilter.mask
+                    }
+                };
+                delete allCustomData.fixedRotation;
+                delete allCustomData.ignoreGravity; // ignoreGravityはgravityScale:0で表現
+                delete allCustomData.shape;
+            }
+
+            // 残ったものを 'data' に格納
+            objData.data = allCustomData;
+
+            // --- 3. JSONに変換して出力 ---
+            const jsonString = JSON.stringify(objData, null, 2);
             navigator.clipboard.writeText(jsonString).then(() => {
                 alert(`Prefab '${prefabName}' のJSONデータをクリップボードにコピーしました。\n\n'assets/data/prefabs/${prefabName}.json' という名前で保存してください。`);
             });
+
         } catch (error) {
             console.error("[EditorPlugin] FAILED to stringify prefab data.", error);
             alert("プレハブのエクスポートに失敗しました。コンソールを確認してください。");
         }
     }
-
-    // ... (ファイルの末尾まで) ...
-    // --- モーダルウィンドウ関連 ---
 
     // --- モーダルウィンドウ関連 ---
 
