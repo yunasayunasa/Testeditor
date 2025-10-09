@@ -19,6 +19,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.returnTo = null;
         this.inputWasBlocked = false;
 
+        this.inputBlocker = null; // ★ プロパティを初期化
         this.onClickHandler = null;
     } 
 
@@ -40,8 +41,6 @@ export default class NovelOverlayScene extends Phaser.Scene {
     }
 
     create() {
-        // console.log("[NovelOverlayScene] create 開始");
-        
         this.uiScene = this.scene.get('UIScene');
         this.soundManager = this.registry.get('soundManager');
         this.stateManager = this.registry.get('stateManager');
@@ -52,61 +51,36 @@ export default class NovelOverlayScene extends Phaser.Scene {
             return;
         }
 
-        // ▼▼▼【ここがタッチデバイス対応の核心です】▼▼▼
-        // 1. Zoneの代わりに、画面全体を覆う「透明な四角形」を生成
+        // --- 1. 入力ブロッカーの生成 (Rectangle版に統一) ---
         this.inputBlocker = this.add.rectangle(
-            this.scale.width / 2,
-            this.scale.height / 2,
-            this.scale.width,
-            this.scale.height,
-            0x000000, // 塗りつぶしの色（何でもよい）
-            0.0 // ★ 透明度を0にする
-        );
-        this.inputBlocker.setInteractive();
+            this.scale.width / 2, this.scale.height / 2,
+            this.scale.width, this.scale.height,
+            0x000000, 0.0
+        ).setInteractive();
         
-        // 2. このブロッカーを、UISceneのUIよりも確実に手前に配置
-        const OVERLAY_INPUT_DEPTH = 9000;
+        const OVERLAY_INPUT_DEPTH = 99999; // 非常に大きな値に
         this.inputBlocker.setDepth(OVERLAY_INPUT_DEPTH);
 
-        // 3. ブロッカーがクリック(タップ)された時に、シナリオを進める
-        this.onClickHandler = () => { 
-            if (this.scenarioManager) {
+        this.onClickHandler = (pointer, localX, localY, event) => { 
+            if (this.scenarioManager && this.scenarioManager.isWaitingClick) {
+                // stopPropagationは、ブロッカーが最上位にあるため、実は不要だが安全のため残す
+                event.stopPropagation(); 
                 this.scenarioManager.onClick();
             }
         };
         this.inputBlocker.on('pointerdown', this.onClickHandler);
 
+        // --- 2. UIとレイヤーの準備 ---
         this.uiScene.onSceneTransition(this.scene.key);
         
-        // --- レイヤーの生成 ---
-        // NovelOverlaySceneが管理するオブジェクトは、UISceneの最前面UIよりは奥、
-        // ゲームシーンよりは手前に表示されるようにdepthを設定する
-        const OVERLAY_BASE_DEPTH = 5000;
-        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
-        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
-
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        // messageWindowを自分の子にせず、UISceneにdepthの変更だけを依頼する
-        this.uiScene.setElementDepth('message_window', OVERLAY_BASE_DEPTH + 20);
+        const OVERLAY_UI_DEPTH = 5000;
+        this.uiScene.setElementDepth('message_window', OVERLAY_UI_DEPTH + 20);
         this.uiScene.showMessageWindow();
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-        this.inputBlocker = this.add.zone(0, 0, this.scale.width, this.scale.height)
-        .setOrigin(0, 0) // 左上を基準
-        .setInteractive({ useHandCursor: true })
-        .setDepth(100000); // すべてのUIよりも最上位のdepth
-
-    // ★ 独自のクリックハンドラを設定 (このオブジェクトのクリックは最優先される)
-    this.onClickHandler = (pointer, localX, localY, event) => {
-        // [p]タグの時だけ、イベントを消費してシナリオを進行させる
-        if (this.scenarioManager && this.scenarioManager.isWaitingClick) {
-            event.stopPropagation(); // 背後のシーンにクリックが漏れるのを防ぐ
-            this.scenarioManager.onClick();
-        }
-    };
-    
-    // inputBlocker のクリックイベントとして登録
-    this.inputBlocker.on('pointerdown', this.onClickHandler);
-
+        
+        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_UI_DEPTH + 5);
+        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_UI_DEPTH + 10);
+        
+        // --- 3. ScenarioManagerの起動 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
         
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
@@ -119,12 +93,10 @@ export default class NovelOverlayScene extends Phaser.Scene {
 
     _finalizeSetup() {
         this.isSceneFullyReady = true;
-      //  this.onClickHandler = () => { if (this.scenarioManager) this.scenarioManager.onClick(); };
-     //   this.input.on('pointerdown', this.onClickHandler);
-        
         this.time.delayedCall(10, () => this.scenarioManager.next());
-        // console.log("[NovelOverlayScene] create 完了");
     }
+
+    
 
   
      /**
@@ -214,33 +186,26 @@ export default class NovelOverlayScene extends Phaser.Scene {
         }
     }
 shutdown() {
-        // console.log("[NovelOverlayScene] shutdown されました。");
-
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        // 借りてないので、返す必要もありません。
-        // 代わりに、変更したdepthを元の値に戻すようUISceneに依頼します。
+        // --- 1. UIのdepthを元に戻す ---
         const uiRegistry = this.registry.get('uiRegistry');
         const defaultDepth = uiRegistry?.message_window?.params?.depth || 10;
         this.uiScene.setElementDepth('message_window', defaultDepth);
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        if (this.onClickHandler) {
-            this.input.off('pointerdown', this.onClickHandler);
-            this.onClickHandler = null;
+        // --- 2. 入力ブロッカーの完全なクリーンアップ ---
+        if (this.inputBlocker) {
+            this.inputBlocker.off('pointerdown', this.onClickHandler);
+            this.inputBlocker.destroy();
+            this.inputBlocker = null;
         }
-
+        this.onClickHandler = null;
+        
+        // --- 3. ScenarioManagerの停止 ---
         if (this.scenarioManager) {
             this.scenarioManager.stop();
             this.scenarioManager = null;
         }
 
-         if (this.inputBlocker) {
-            this.inputBlocker.off('pointerdown', this.onClickHandler);
-            this.inputBlocker.destroy(); // ★ 念のため明示的に破棄
-            this.inputBlocker = null;
-        }
-        this.onClickHandler = null;
-        
+        // --- 4. 残りのクリーンアップ ---
         this.children.removeAll(true);
         this.isSceneFullyReady = false;
         this.layer = {};
