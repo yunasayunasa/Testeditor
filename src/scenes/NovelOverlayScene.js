@@ -51,20 +51,20 @@ export default class NovelOverlayScene extends Phaser.Scene {
             return;
         }
 
-        // --- 1. 入力ブロッカーの生成 (Rectangle版に統一) ---
         this.inputBlocker = this.add.rectangle(
             this.scale.width / 2, this.scale.height / 2,
             this.scale.width, this.scale.height,
-            0x000000, 0.0
+            0x000ff, 0.5 // ★★★ デバッグのため、半透明の青にします ★★★
         ).setInteractive();
         
-        const OVERLAY_INPUT_DEPTH = 99999; // 非常に大きな値に
+        const OVERLAY_INPUT_DEPTH = 99999;
         this.inputBlocker.setDepth(OVERLAY_INPUT_DEPTH);
+        this.inputBlocker.setName('NOVEL_OVERLAY_INPUT_BLOCKER'); // ★ デバッグ用に名前を設定
 
-        this.onClickHandler = (pointer, localX, localY, event) => { 
-            if (this.scenarioManager && this.scenarioManager.isWaitingClick) {
-                // stopPropagationは、ブロッカーが最上位にあるため、実は不要だが安全のため残す
-                event.stopPropagation(); 
+        this.onClickHandler = (pointer, localX, localY, event) => {
+            // ▼▼▼【ログ爆弾】▼▼▼
+            console.log("%c[LOG BOMB | NovelOverlayScene] inputBlocker's onClickHandler was called!", "background: green; color: white;");
+            if (this.scenarioManager) {
                 this.scenarioManager.onClick();
             }
         };

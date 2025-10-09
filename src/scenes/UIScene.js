@@ -14,43 +14,51 @@ export default class UIScene extends Phaser.Scene {
 
   // src/scenes/UIScene.js (修正後のコード)
 
-      // createメソッドは非同期である必要はない
-      async create() {
-        // console.log("UIScene: Data-Driven Initialization Started");
+   async create() {
         this.scene.bringToTop();
-this.isFullyReady = false; // ★ 最初にフラグを倒す
+        this.isFullyReady = false;
+
         try {
-            // ステップ1: UIの構築を待つ
             const layoutData = this.cache.json.get(this.scene.key);
             await this.buildUiFromLayout(layoutData);
-            // console.log("UIScene: UI build complete.");
 
-            // ステップ2: 連携設定を行う
             const systemScene = this.scene.get('SystemScene');
             if (systemScene) {
                 systemScene.events.on('transition-complete', this.onSceneTransition, this);
-                // console.log("UIScene: SystemSceneとの連携を設定しました。");
             } else {
                 console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
 
-             const messageWindow = this.uiElements.get('message_window');
-        messageWindow.setInteractive(); // 確実にインタラクティブにする
-        messageWindow.on('pointerdown', () => {
-            if (this.activeNovelManager) {
-                this.activeNovelManager.onClick();
+            // ▼▼▼【ログ爆弾 START】▼▼▼
+            // buildUiFromLayout が完了した後、安全に messageWindow を取得してリスナーを設定
+            const messageWindow = this.uiElements.get('message_window');
+            if (messageWindow) {
+                // setInteractiveは registerUiElement の中で呼ばれているはずだが、念のため
+                messageWindow.setInteractive();
+                
+                // 既存のリスナーを一度クリアしてから登録する
+                messageWindow.off('pointerdown'); 
+                messageWindow.on('pointerdown', (pointer) => {
+                    console.log("%c[LOG BOMB | UIScene] messageWindow received a pointerdown event!", "background: orange; color: black;");
+                    
+                    if (this.activeNovelManager) {
+                        console.log("%c[LOG BOMB | UIScene] -> Found activeNovelManager. Calling onClick().", "background: orange; color: black;");
+                        this.activeNovelManager.onClick();
+                    } else {
+                        console.log("%c[LOG BOMB | UIScene] -> activeNovelManager is null. Doing nothing.", "background: orange; color: black;");
+                    }
+                });
+                console.log("%c[LOG BOMB] UIScene: pointerdown listener for 'message_window' is now active.", "color: orange;");
+            } else {
+                console.error("[LOG BOMB] UIScene: Could not find 'message_window' after UI build.");
             }
-        });
+            // ▲▲▲【ログ爆-弾 END】▲▲▲
 
-            // ステップ3: すべての準備が完了してから、成功を通知する
-            // console.log("UIScene: Finalizing setup and emitting scene-ready.");
-            this.isFullyReady = true; // ★ 最後にフラグを立てる
+            this.isFullyReady = true;
             this.events.emit('scene-ready');
 
         } catch (err) {
-            // どこかでエラーが起きれば、必ずここに来る
             console.error("UIScene: create処理中にエラーが発生しました。", err);
-            // (オプション) エラーが発生したことを明確に示すために、エラーメッセージを画面に表示するなど
             this.add.text(this.scale.width / 2, this.scale.height / 2, 'UIScene FAILED TO INITIALIZE', { color: 'red', fontSize: '32px' }).setOrigin(0.5);
         }
     }
