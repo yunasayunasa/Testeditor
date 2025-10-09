@@ -19,7 +19,6 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.returnTo = null;
         this.inputWasBlocked = false;
 
-        this.inputBlocker = null; // ★ プロパティを初期化
         this.onClickHandler = null;
     } 
 
@@ -41,38 +40,35 @@ export default class NovelOverlayScene extends Phaser.Scene {
     }
 
     create() {
-            this.uiScene = this.scene.get('UIScene');
-            this.soundManager = this.registry.get('soundManager');
-            this.stateManager = this.registry.get('stateManager');
-            const messageWindow = this.uiScene.uiElements.get('message_window');
-
-            if (!messageWindow) {
-                console.error("[NovelOverlayScene] CRITICAL: message_window not found.");
-                return;
-            }
-
-            // --- ★★★ 修正点１：inputBlockerを削除 ★★★ ---
-            // 以下のinputBlocker関連のコードをすべて削除またはコメントアウトします
-            /*
-            this.inputBlocker = this.add.rectangle(...).setInteractive();
-            this.inputBlocker.setDepth(...);
-            this.inputBlocker.setName(...);
-            this.onClickHandler = () => { ... };
-            this.inputBlocker.on('pointerdown', this.onClickHandler);
-            */
-
-            // --- 2. UIとレイヤーの準備 (変更なし) ---
-            this.uiScene.onSceneTransition(this.scene.key);
-            const OVERLAY_UI_DEPTH = 5000;
-            this.uiScene.setElementDepth('message_window', OVERLAY_UI_DEPTH + 20);
-            this.uiScene.showMessageWindow();
-            this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_UI_DEPTH + 5);
-            this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_UI_DEPTH + 10);
-            
+        // console.log("[NovelOverlayScene] create 開始");
         
-        // --- 3. ScenarioManagerの起動 ---
+        this.uiScene = this.scene.get('UIScene');
+        this.soundManager = this.registry.get('soundManager');
+        this.stateManager = this.registry.get('stateManager');
+        const messageWindow = this.uiScene.uiElements.get('message_window');
+
+        if (!messageWindow) {
+            console.error("[NovelOverlayScene] CRITICAL: message_window not found.");
+            return;
+        }
+
+        this.uiScene.onSceneTransition(this.scene.key);
+        
+        // --- レイヤーの生成 ---
+        // NovelOverlaySceneが管理するオブジェクトは、UISceneの最前面UIよりは奥、
+        // ゲームシーンよりは手前に表示されるようにdepthを設定する
+        const OVERLAY_BASE_DEPTH = 5000;
+        this.layer.cg = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 5);
+        this.layer.character = this.add.container(0, 0).setDepth(OVERLAY_BASE_DEPTH + 10);
+
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // messageWindowを自分の子にせず、UISceneにdepthの変更だけを依頼する
+        this.uiScene.setElementDepth('message_window', OVERLAY_BASE_DEPTH + 20);
+        this.uiScene.showMessageWindow();
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
-        this.uiScene.setActiveNovelManager(this.scenarioManager);
+        
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
         this.scenarioManager.registerTag('overlay_end', handleOverlayEnd);
            
@@ -81,26 +77,14 @@ export default class NovelOverlayScene extends Phaser.Scene {
         });
     }
 
-   _finalizeSetup() {
-            this.isSceneFullyReady = true;
-
-            // --- ★★★ 修正点２：GameSceneと全く同じクリック処理を追加 ★★★ ---
-            this.input.on('pointerdown', () => {
-                // isSceneFullyReadyはもう不要ですが、念のため残しても良いです
-                if (this.isSceneFullyReady && this.scenarioManager) {
-                    this.scenarioManager.onClick();
-                }
-            });
-            
-            this.time.delayedCall(10, () => {
-                if (this.scenarioManager) {
-                    this.scenarioManager.next()
-                }
-            });
-            console.log("[NovelOverlayScene] _finalizeSetup complete. Scene is now fully ready.");
-        }
+    _finalizeSetup() {
+        this.isSceneFullyReady = true;
+        this.onClickHandler = () => { if (this.scenarioManager) this.scenarioManager.onClick(); };
+        this.input.on('pointerdown', this.onClickHandler);
         
-    
+        this.time.delayedCall(10, () => this.scenarioManager.next());
+        // console.log("[NovelOverlayScene] create 完了");
+    }
 
   
      /**
@@ -190,23 +174,26 @@ export default class NovelOverlayScene extends Phaser.Scene {
         }
     }
 shutdown() {
-        // --- 1. UIのdepthを元に戻す ---
+        // console.log("[NovelOverlayScene] shutdown されました。");
+
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // 借りてないので、返す必要もありません。
+        // 代わりに、変更したdepthを元の値に戻すようUISceneに依頼します。
         const uiRegistry = this.registry.get('uiRegistry');
         const defaultDepth = uiRegistry?.message_window?.params?.depth || 10;
         this.uiScene.setElementDepth('message_window', defaultDepth);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-       if (this.input) this.input.off('pointerdown');
+        if (this.onClickHandler) {
+            this.input.off('pointerdown', this.onClickHandler);
+            this.onClickHandler = null;
+        }
 
-        
-        // --- 3. ScenarioManagerの停止 ---
         if (this.scenarioManager) {
             this.scenarioManager.stop();
             this.scenarioManager = null;
         }
-if (this.uiScene.activeNovelManager === this.scenarioManager) {
-        this.uiScene.setActiveNovelManager(null);
-    }
-        // --- 4. 残りのクリーンアップ ---
+        
         this.children.removeAll(true);
         this.isSceneFullyReady = false;
         this.layer = {};
