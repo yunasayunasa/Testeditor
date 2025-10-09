@@ -51,8 +51,24 @@ export default class NovelOverlayScene extends Phaser.Scene {
             return;
         }
 
-     this.uiScene.children.remove(messageWindow); // UISceneからまず取り除く
-    this.add.existing(messageWindow); // 自分の子にする
+        // --- 1. 入力ブロッカーの生成 (Rectangle版に統一) ---
+        this.inputBlocker = this.add.rectangle(
+            this.scale.width / 2, this.scale.height / 2,
+            this.scale.width, this.scale.height,
+            0x000000, 0.0
+        ).setInteractive();
+        
+        const OVERLAY_INPUT_DEPTH = 99999; // 非常に大きな値に
+        this.inputBlocker.setDepth(OVERLAY_INPUT_DEPTH);
+
+        this.onClickHandler = (pointer, localX, localY, event) => { 
+            if (this.scenarioManager && this.scenarioManager.isWaitingClick) {
+                // stopPropagationは、ブロッカーが最上位にあるため、実は不要だが安全のため残す
+                event.stopPropagation(); 
+                this.scenarioManager.onClick();
+            }
+        };
+        this.inputBlocker.on('pointerdown', this.onClickHandler);
 
         // --- 2. UIとレイヤーの準備 ---
         this.uiScene.onSceneTransition(this.scene.key);
@@ -66,7 +82,7 @@ export default class NovelOverlayScene extends Phaser.Scene {
         
         // --- 3. ScenarioManagerの起動 ---
         this.scenarioManager = new ScenarioManager(this, messageWindow, this.stateManager, this.soundManager);
-        
+        this.uiScene.setActiveNovelManager(this.scenarioManager);
         for (const tagName in tagHandlers) { this.scenarioManager.registerTag(tagName, tagHandlers[tagName]); }
         this.scenarioManager.registerTag('overlay_end', handleOverlayEnd);
            
@@ -170,14 +186,11 @@ export default class NovelOverlayScene extends Phaser.Scene {
         }
     }
 shutdown() {
-        const messageWindow = this.uiScene.uiElements.get('message_window');
-    if (messageWindow) {
-        // ▼▼▼ 安全な返却処理 ▼▼▼
-        // 自分の子リストから取り除くが、destroyはしない
-        this.children.remove(messageWindow, false); 
-        
-        // UISceneに返却する
-        this.uiScene.add.existing(messageWindow);}
+        // --- 1. UIのdepthを元に戻す ---
+        const uiRegistry = this.registry.get('uiRegistry');
+        const defaultDepth = uiRegistry?.message_window?.params?.depth || 10;
+        this.uiScene.setElementDepth('message_window', defaultDepth);
+
         // --- 2. 入力ブロッカーの完全なクリーンアップ ---
         if (this.inputBlocker) {
             this.inputBlocker.off('pointerdown', this.onClickHandler);
@@ -191,7 +204,9 @@ shutdown() {
             this.scenarioManager.stop();
             this.scenarioManager = null;
         }
-
+if (this.uiScene.activeNovelManager === this.scenarioManager) {
+        this.uiScene.setActiveNovelManager(null);
+    }
         // --- 4. 残りのクリーンアップ ---
         this.children.removeAll(true);
         this.isSceneFullyReady = false;

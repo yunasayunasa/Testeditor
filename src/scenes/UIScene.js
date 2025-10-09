@@ -8,7 +8,7 @@ export default class UIScene extends Phaser.Scene {
         this.uiElements = new Map();
         this.isPanelOpen = false;
         this.componentsToUpdate = [];
-       
+       this.activeNovelManager = null;
         // ★ this.menuButton や this.panel プロパティは削除しても良いが、互換性のために残してもOK
     }
 
@@ -34,6 +34,14 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
                 console.warn("UIScene: SystemSceneが見つかりませんでした。");
             }
 
+             const messageWindow = this.uiElements.get('message_window');
+        messageWindow.setInteractive(); // 確実にインタラクティブにする
+        messageWindow.on('pointerdown', () => {
+            if (this.activeNovelManager) {
+                this.activeNovelManager.onClick();
+            }
+        });
+
             // ステップ3: すべての準備が完了してから、成功を通知する
             // console.log("UIScene: Finalizing setup and emitting scene-ready.");
             this.isFullyReady = true; // ★ 最後にフラグを立てる
@@ -46,7 +54,9 @@ this.isFullyReady = false; // ★ 最初にフラグを倒す
             this.add.text(this.scale.width / 2, this.scale.height / 2, 'UIScene FAILED TO INITIALIZE', { color: 'red', fontSize: '32px' }).setOrigin(0.5);
         }
     }
-
+setActiveNovelManager(manager) {
+        this.activeNovelManager = manager;
+    }
  /***
   * 
   * 
