@@ -69,7 +69,7 @@
     "NovelOverlay": {
       "onEnter": [
         {
-          "type": "pauseScene"
+          "type": "stoptime"
         },
         {
           "type": "runNovelOverlay"
