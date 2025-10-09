@@ -174,16 +174,7 @@
           "trigger": "onReady",
           "nodes": [
             {
-              "id": "node_1759315295335",
-              "type": "vignette",
-              "params": {
-                "mode": "on",
-                "alpha": 0.7,
-                "time": 1000,
-                "texture": "vignette_overlay"
-              },
-              "x": 50,
-              "y": 50
+             
             }
           ],
           "connections": []
@@ -263,8 +254,8 @@
           "params": {}
         }
       ],
-      "anim_prefix": "anila",
-      "texture": "anila_walk",
+       "anim_prefix": "tartman",
+      "texture": "tartman_run",
       "physics": {
         "isStatic": false,
         "isSensor": false,
@@ -288,7 +279,7 @@
       }
     },
     {
-      "name": "tartman",
+      "name": "anila",
       "type": "Sprite",
       "x": 1207,
       "y": 609,
@@ -341,8 +332,9 @@
           }
         }
       ],
-      "anim_prefix": "tartman",
-      "texture": "tartman_run",
+      "anim_prefix": "anila",
+      "texture": "anila_walk",
+     
       "physics": {
         "isStatic": false,
         "isSensor": false,
