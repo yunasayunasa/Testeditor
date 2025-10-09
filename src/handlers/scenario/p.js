@@ -9,7 +9,7 @@
  * @param {object} params - タグのパラメータ (このタグでは使用しません)
  */
 export default async function handleP(manager, params) {
-      manager.scene.performSave(0);
+      //manager.scene.performSave(0);
     // クリック待ち状態に移行
     manager.isWaitingClick = true;
     
