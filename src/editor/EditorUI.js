@@ -1,10 +1,10 @@
 import EngineAPI from '../core/EngineAPI.js';
-
+import { ComponentRegistry } from '../../src/components/index.js'; // ★ インポート
 export default class EditorUI {
     constructor(game, editorPlugin) {
         this.game = game;
         this.plugin = editorPlugin;
-
+ this.assetList = this.game.registry.get('asset_list') || [];
         const currentURL = window.location.href;
         if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
 

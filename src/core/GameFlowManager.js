@@ -182,6 +182,14 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     }
                     break;
                 }
+                    case 'playBgm': {
+                // SoundManagerはregistryから取得するのが安全
+                const soundManager = EngineAPI.systemScene?.registry.get('soundManager');
+                if (soundManager && params.key) {
+                    soundManager.playBgm(params.key, params.volume);
+                }
+                break;
+                }
             }
         }
     }

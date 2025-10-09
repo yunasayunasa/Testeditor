@@ -1475,15 +1475,27 @@ createComponentSection() {
         if (define && Array.isArray(define.params)) {
             define.params.forEach(paramDef => {
                 const currentValue = componentDef.params[paramDef.key] ?? paramDef.defaultValue;
+                
+                // ★ onValueChangeは外に出して共通化
                 const onValueChange = (newValue) => {
                     componentDef.params[paramDef.key] = newValue;
                     targetObject.setData('components', attachedComponents);
                     if (targetObject.scene?.initComponentsAndEvents) {
                         targetObject.scene.initComponentsAndEvents(targetObject);
                     }
+                    // ★ プレビューを更新するために updatePropertyPanel を呼ぶのが良い
+                    this.updatePropertyPanel();
                 };
 
-                if (paramDef.type === 'range') {
+                // ▼▼▼ この if/else if ブロックを修正 ▼▼▼
+                // -----------------------------------------------------------------
+                // ★★★ 1. 新しい 'asset:*' の判定を最優先で行う ★★★
+                if (typeof paramDef.options === 'string' && paramDef.options.startsWith('asset:')) {
+                    const assetType = paramDef.options.split(':')[1];
+                    // ★ 新しいヘルパーメソッドを呼び出す
+                    this.createAssetSelect(paramsContainer, paramDef.label, currentValue, assetType, onValueChange);
+                
+                } else if (paramDef.type === 'range') {
                     this.createRangeInput(paramsContainer, paramDef.label, currentValue, paramDef.min, paramDef.max, paramDef.step, onValueChange);
                 } else if (paramDef.type === 'checkbox') {
                     this.createCheckbox(paramsContainer, paramDef.label, currentValue, onValueChange);
@@ -1505,11 +1517,16 @@ createComponentSection() {
     // --- 3. 「コンポーネントを追加」ドロップダウンの表示 (変更なし) ---
     const availableComponents = Object.keys(ComponentRegistry).filter(name => !attachedComponents.some(c => c.type === name));
     if (availableComponents.length > 0) {
-        const select = document.createElement('select');
-        select.innerHTML = '<option value="">コンポーネントを追加...</option>';
-        availableComponents.forEach(compName => {
-            select.innerHTML += `<option value="${compName}">${compName}</option>`;
-        });
+        availableComponents.sort();
+
+    const select = document.createElement('select');
+    select.innerHTML = '<option value="">コンポーネントを追加...</option>';
+    
+    // ★★★ 2. ソート済みの配列でループする ★★★
+    availableComponents.forEach(compName => {
+        select.innerHTML += `<option value="${compName}">${compName}</option>`;
+    });
+       
         select.onchange = (e) => {
             const compToAdd = e.target.value;
             if (!compToAdd) return;
@@ -1531,7 +1548,49 @@ createComponentSection() {
         button.addEventListener('click', () => this.exportLayoutToJson());
         this.editorPropsContainer.appendChild(button);
     }
-// in src/plugins/EditorPlugin.js (クラス内のどこか)
+ /**
+     * ★★★ 新規ヘルパーメソッド ★★★
+     * アセットリストから特定のタイプのアセットを選択する<select>要素を生成する
+     */
+    createAssetSelect(container, label, currentValue, assetType, onChange) {
+        // this.assetListは、事前にEditorUIから渡してもらうか、ここで取得する必要がある
+        const assetList = this.pluginManager.game.registry.get('asset_list') || [];
+
+        const select = document.createElement('select');
+        
+        const noneOption = document.createElement('option');
+        noneOption.value = '';
+        noneOption.textContent = '--- None ---';
+        select.appendChild(noneOption);
+        if (!currentValue) {
+            noneOption.selected = true;
+        }
+
+        assetList
+            .filter(asset => asset.type === assetType)
+            .sort((a, b) => a.key.localeCompare(b.key)) // ★ついでにアセット名もソート
+            .forEach(asset => {
+                const option = document.createElement('option');
+                option.value = asset.key;
+                option.textContent = asset.key;
+                if (asset.key === currentValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        
+        select.addEventListener('change', (e) => {
+            onChange(e.target.value || null);
+        });
+
+        // ラベルとselect要素をコンテナに追加する (createTextInputなどと同じ形式で)
+        const labelEl = document.createElement('label');
+        labelEl.innerText = label;
+        const controlWrapper = document.createElement('div');
+        controlWrapper.className = 'prop-control';
+        controlWrapper.append(labelEl, select);
+        container.appendChild(controlWrapper);
+    }
 
 /** ★★★ 新規追加 ★★★
  * カラーピッカー入力欄を生成するヘルパーメソッド

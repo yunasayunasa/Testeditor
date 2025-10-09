@@ -17,6 +17,9 @@ export default class PlayerController {
         this.cursors = null;
         this.keyboardEnabled = false;
         this.isInitialized = false; // ★ 初期化済みかどうかのフラグ
+        this.walkSoundKey = params.walkSoundKey || null; // ★ パラメータを受け取る
+        this.jumpSoundKey = params.jumpSoundKey || null; // ★ パラメータを受け取る
+        this.isPlayingWalkSound = false; // ★ 歩行音の再生中フラグ
 
         this.state = 'idle';
         this.direction = 'right';
@@ -100,8 +103,19 @@ serialize() {
             newState = (body.velocity.y < 0) ? 'jump_up' : 'fall_down';
         } else if (Math.abs(body.velocity.x) > 0.1) {
             newState = 'walk';
+            if (this.walkSoundKey && !this.isPlayingWalkSound) {
+                // SoundManagerにループ再生を依頼する（将来的に実装が必要）
+                // this.scene.soundManager.playSe(this.walkSoundKey, { loop: true });
+                this.scene.sound.play(this.walkSoundKey, { loop: true }); // 一旦PhaserのAPIで
+                this.isPlayingWalkSound = true;
+            }
         } else {
             newState = 'idle';
+            if (this.isPlayingWalkSound) {
+                // this.scene.soundManager.stopSe(this.walkSoundKey);
+                this.scene.sound.stopByKey(this.walkSoundKey);
+                this.isPlayingWalkSound = false;
+            }
         }
         this.changeState(newState);
         
@@ -119,6 +133,10 @@ serialize() {
         if (timeSinceGrounded <= this.coyoteTimeThreshold) {
             // ★★★ this.target を this.gameObject に変更 ★★★
             this.gameObject.setVelocityY(this.jumpVelocity);
+            if (this.jumpSoundKey) {
+                // this.scene.soundManager.playSe(this.jumpSoundKey);
+                this.scene.sound.play(this.jumpSoundKey);
+            }
             this.changeState('jump_up');
             
             this.lastGroundedTime = 0; 
@@ -227,8 +245,22 @@ PlayerController.define = {
             max: 20,
             step: 0.5,
             defaultValue: 4
-        }
+        },
         // ★ 将来的にジャンプ力などもパラメータにしたくなったら、ここに追加する
         // { key: 'jumpVelocity', type: 'range', ... }
+{
+            key: 'walkSoundKey',
+            type: 'select',
+            label: 'Walk Sound (SE)',
+            options: 'asset:audio', // ★ 特殊なキーワードで、オーディオアセット一覧を指定
+            defaultValue: null
+        },
+        {
+            key: 'jumpSoundKey',
+            type: 'select',
+            label: 'Jump Sound (SE)',
+            options: 'asset:audio',
+            defaultValue: null
+        }
     ]
 };

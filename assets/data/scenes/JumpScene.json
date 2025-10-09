@@ -160,7 +160,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 265,
+      "x": 335,
       "y": 625,
       "depth": 625,
       "scaleX": 0.65,
@@ -268,7 +268,7 @@
         }
       },
       "data": {
-        "lastTap": 1759995308191,
+        "lastTap": 1759995980472,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -280,7 +280,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1197,
+      "x": 1204,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -294,7 +294,7 @@
         {
           "type": "NpcController",
           "params": {
-            "moveSpeed": 12
+            "moveSpeed": 5.5
           }
         },
         {
@@ -319,7 +319,8 @@
           "params": {
             "waitTime": 8600,
             "arrivalThreshold": 100,
-            "startWaypoint": "test_b"
+            "startWaypoint": "test_b",
+            "is8Way": false
           }
         },
         {
@@ -1202,7 +1203,7 @@
       ],
       "texture": "taimatsu_on",
       "data": {
-        "lastTap": 1759995341823
+        "lastTap": 0
       }
     },
     {
@@ -1228,7 +1229,7 @@
       ],
       "texture": "taimatsu_on",
       "data": {
-        "lastTap": 1759995347439
+        "lastTap": 0
       }
     },
     {
@@ -1254,7 +1255,7 @@
       ],
       "texture": "taimatsu_on",
       "data": {
-        "lastTap": 1759995353519
+        "lastTap": 0
       }
     },
     {
@@ -1280,7 +1281,7 @@
       ],
       "texture": "taimatsu_on",
       "data": {
-        "lastTap": 1759995360592
+        "lastTap": 0
       }
     },
     {
@@ -1306,7 +1307,7 @@
       ],
       "texture": "taimatsu_on",
       "data": {
-        "lastTap": 1759995364168
+        "lastTap": 0
       }
     },
     {
@@ -1323,7 +1324,7 @@
       "events": [],
       "texture": "mado_wood",
       "data": {
-        "lastTap": 1759995440864
+        "lastTap": 0
       }
     },
     {
@@ -1340,7 +1341,7 @@
       "events": [],
       "texture": "mado_wood",
       "data": {
-        "lastTap": 1759995542911
+        "lastTap": 0
       }
     },
     {
@@ -1357,7 +1358,7 @@
       "events": [],
       "texture": "mado_wood",
       "data": {
-        "lastTap": 1759995540223
+        "lastTap": 0
       }
     },
     {
@@ -1374,7 +1375,7 @@
       "events": [],
       "texture": "mado_wood",
       "data": {
-        "lastTap": 1759995527168
+        "lastTap": 0
       }
     }
   ],

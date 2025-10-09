@@ -26,7 +26,9 @@
     },
     "InGame": {
       "onEnter": [
+        { "type": "playBgm", "params": { "key": "cafe", "volume": 0.8 } },
         {
+          
           "type": "resumeScene"
         }
       ],
