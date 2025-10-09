@@ -130,7 +130,7 @@ window.onload = async () => {
     const game = new Phaser.Game(config);
     
 
-    game.input.on('pointerdown', (pointer) => {
+  /*  game.input.on('pointerdown', (pointer) => {
     console.log('====================================================');
     console.log(`%c[GLOBAL DEBUG] Pointer Down Event at (${pointer.x}, ${pointer.y})`, "color: magenta; font-size: 1.2em;");
     
@@ -155,7 +155,7 @@ window.onload = async () => {
         console.log("%c[GLOBAL DEBUG] No interactive objects found at this position.", "color: magenta;");
     }
     console.log('====================================================');
-});
+});*/
 
     // ★ステップ2: ゲームインスタンスができた直後に、準備したデータを登録する
     // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
