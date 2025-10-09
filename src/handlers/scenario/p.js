@@ -14,7 +14,7 @@ export default async function handleP(manager, params) {
     manager.isWaitingClick = true;
     
     // メッセージウィンドウにクリック待ちアイコンを表示
-//  try { manager.messageWindow.showNextArrow();}
+ manager.messageWindow.showNextArrow();
 //catch{}
     // もし現在のモードが 'auto' なら、オートモードのタイマーを開始する
     if (manager.mode === 'auto') {
