@@ -1,0 +1,11 @@
+{
+  "scene_settings": {
+    "backgroundColor": "#000000"
+  },
+  "layers": [
+    { "name": "Background", "depth": 0 },
+    { "name": "Gameplay", "depth": 10 },
+    { "name": "Foreground", "depth": 20 }
+  ],
+  "objects": []
+}
