@@ -129,6 +129,34 @@ window.onload = async () => {
     // Phaser Gameインスタンスを生成
     const game = new Phaser.Game(config);
     
+
+    game.input.on('pointerdown', (pointer) => {
+    console.log('====================================================');
+    console.log(`%c[GLOBAL DEBUG] Pointer Down Event at (${pointer.x}, ${pointer.y})`, "color: magenta; font-size: 1.2em;");
+    
+    // 現在アクティブな全てのシーンを取得
+    const activeScenes = game.scene.getScenes(true);
+
+    console.log(`%c[GLOBAL DEBUG] Active Scenes (${activeScenes.length}):`, "color: magenta;");
+    activeScenes.forEach(scene => {
+        console.log(`  - Key: ${scene.scene.key}, Status: ${game.scene.getStatus(scene)}`);
+    });
+
+    // どのGameObjectがクリックされたかを特定する
+    // game.input.hitTest() を使って、クリック位置にあるインタラクティブなオブジェクトのリストを取得
+    const hitTestResults = game.input.hitTest(pointer, activeScenes, game.cameras.main);
+
+    if (hitTestResults.length > 0) {
+        console.log(`%c[GLOBAL DEBUG] Hit Test Results (${hitTestResults.length}):`, "color: magenta;");
+        hitTestResults.forEach((obj, index) => {
+            console.log(`  [${index}] GameObject Name: ${obj.name}, Scene: ${obj.scene.scene.key}, Depth: ${obj.depth}`);
+        });
+    } else {
+        console.log("%c[GLOBAL DEBUG] No interactive objects found at this position.", "color: magenta;");
+    }
+    console.log('====================================================');
+});
+
     // ★ステップ2: ゲームインスタンスができた直後に、準備したデータを登録する
     // これにより、どのシーンが起動するよりも先にデータが利用可能になることが保証される
     game.registry.set('uiRegistry', processedUiRegistry);
