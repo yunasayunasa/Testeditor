@@ -132,10 +132,14 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                         // ここでも行う必要がある
                         systemScene.sceneStack.push(activeScene); 
                     }
-                }
+                    EngineAPI.systemScene.game.input.enabled = false;
+                console.log(`[GameFlowManager] Global input disabled.`);
                 break;
             }
-
+                
+}
+                
+            
             case 'resumeScene': {
                     // EngineAPIから現在アクティブなシーンを取得するのは安全
                     const sceneToResume = EngineAPI.activeGameSceneKey;
@@ -153,6 +157,8 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                         // activeGameSceneKeyがnullを返す場合はこちらでハンドリングする
                          console.warn('[GameFlowManager] resumeScene: No active scene to resume.');
                     }
+                    EngineAPI.systemScene.game.input.enabled = true;
+                console.log(`[GameFlowManager] Global input re-enabled.`);
                     break;
                 }
                 

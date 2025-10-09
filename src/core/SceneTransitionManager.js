@@ -78,7 +78,7 @@ handleSimpleTransition(data) {
     _startAndMonitorScene(sceneKey, params = {}) {
         if (this.isProcessing) return;
         this.isProcessing = true;
-        this.systemScene.game.input.enabled = false;
+       // this.systemScene.game.input.enabled = false;
 
         const targetScene = this.systemScene.scene.get(sceneKey);
         if (sceneKey === 'GameScene') {
@@ -97,7 +97,7 @@ targetScene.events.once(completionEvent, () => {
 
     // ★★★ 1. シーンの準備ができたこの瞬間に、入力を再有効化する ★★★
     this.isProcessing = false;
-    this.systemScene.game.input.enabled = true;
+   // this.systemScene.game.input.enabled = true;
     
     // 2. UISceneに通知
    const uiScene = this.systemScene.scene.get('UIScene');
