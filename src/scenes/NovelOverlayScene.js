@@ -61,11 +61,13 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.inputBlocker.setDepth(OVERLAY_INPUT_DEPTH);
         this.inputBlocker.setName('NOVEL_OVERLAY_INPUT_BLOCKER'); // ★ デバッグ用に名前を設定
 
-        this.onClickHandler = (pointer, localX, localY, event) => {
-            // ▼▼▼【ログ爆弾】▼▼▼
-            console.log("%c[LOG BOMB | NovelOverlayScene] inputBlocker's onClickHandler was called!", "background: green; color: white;");
-            if (this.scenarioManager) {
+       this.onClickHandler = () => { 
+            // isSceneFullyReady フラグが true になるまで、onClickは何もしない
+            if (this.isSceneFullyReady && this.scenarioManager) {
+                console.log("%c[LOG BOMB | NovelOverlayScene] onClickHandler called AND scene is ready. Calling scenarioManager.onClick().", "background: green; color: white;");
                 this.scenarioManager.onClick();
+            } else {
+                console.warn("[NovelOverlayScene] Click ignored because scene is not fully ready yet.");
             }
         };
         this.inputBlocker.on('pointerdown', this.onClickHandler);
@@ -91,11 +93,19 @@ export default class NovelOverlayScene extends Phaser.Scene {
         });
     }
 
-    _finalizeSetup() {
+   _finalizeSetup() {
+        // ▼▼▼【ここが重要】▼▼▼
+        // scenarioManager.next() を呼び出す直前に、準備完了フラグを立てる
         this.isSceneFullyReady = true;
-        this.time.delayedCall(10, () => this.scenarioManager.next());
+        
+        // 遅延呼び出しはもう不要かもしれないが、安全のため残す
+        this.time.delayedCall(10, () => {
+            if (this.scenarioManager) {
+                this.scenarioManager.next()
+            }
+        });
+        console.log("[NovelOverlayScene] _finalizeSetup complete. Scene is now fully ready.");
     }
-
     
 
   
