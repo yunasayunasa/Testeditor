@@ -3,7 +3,7 @@ import EngineAPI from '../core/EngineAPI.js';
 
 import BaseGameScene from './BaseGameScene.js';
 
-export default class TitleScene extends Phaser.Scene {
+export default class TitleScene extends BaseGameScene {
     constructor() {
         super({ key: 'TitleScene' });
     }
