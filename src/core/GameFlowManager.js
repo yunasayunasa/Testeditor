@@ -121,7 +121,7 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
               case 'pauseScene': {
                 const activeScene = EngineAPI.activeGameSceneKey;
                 if (activeScene) {
-                    // console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
+                     console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
                     
                     // ★ EngineAPIに新しいメソッドを追加するのが理想だが、
                     //    今回は直接PhaserのAPIを呼んでみる
