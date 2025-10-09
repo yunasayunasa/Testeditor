@@ -118,38 +118,44 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                 // ▼▼▼ 新しいアクションを追加 ▼▼▼
-             case 'pauseScene': {
-                    const activeSceneKey = EngineAPI.activeGameSceneKey;
-                    const activeScene = EngineAPI.systemScene.scene.get(activeSceneKey);
-                    if (activeScene) {
-                        console.log(`[GameFlowManager] -> Applying custom pause to scene: ${activeSceneKey}`);
-                        activeScene.isCustomPaused = true; // ★ updateを止める
-                        
-                        // 物理エンジンも止める
-                        if (activeScene.matter?.world) {
-                            activeScene.matter.world.engine.timing.timeScale = 0;
-                        }
+              case 'pauseScene': {
+                const activeScene = EngineAPI.activeGameSceneKey;
+                if (activeScene) {
+                    // console.log(`[GameFlowManager] -> Pausing scene: ${activeScene}`);
+                    
+                    // ★ EngineAPIに新しいメソッドを追加するのが理想だが、
+                    //    今回は直接PhaserのAPIを呼んでみる
+                    const systemScene = EngineAPI.systemScene;
+                    if (systemScene) {
+                        systemScene.scene.pause(activeScene);
+                        // ポーズしたシーンをスタックに積むのはOverlayManagerの役割だったが、
+                        // ここでも行う必要がある
+                        systemScene.sceneStack.push(activeScene); 
                     }
-                    break;
                 }
+                break;
+            }
 
-                case 'resumeScene': {
-                    const sceneToResumeKey = EngineAPI.activeGameSceneKey;
-                    const sceneToResume = EngineAPI.systemScene.scene.get(sceneToResumeKey);
+            case 'resumeScene': {
+                    // EngineAPIから現在アクティブなシーンを取得するのは安全
+                    const sceneToResume = EngineAPI.activeGameSceneKey;
+
                     if (sceneToResume) {
-                        console.log(`[GameFlowManager] -> Removing custom pause from scene: ${sceneToResumeKey}`);
-                        sceneToResume.isCustomPaused = false; // ★ updateを再開
+                        // console.log(`[GameFlowManager] -> Requesting safe resume for scene: ${sceneToResume} via EngineAPI.`);
                         
-                        // 物理エンジンも再開
-                        if (sceneToResume.matter?.world) {
-                            sceneToResume.matter.world.engine.timing.timeScale = 1;
-                        }
-
-                        // ★★★ EngineAPIのsafeResumeはもう不要になる ★★★
-                        // なぜなら、入力が止まっていないので競合が起きないから
+                        // ▼▼▼【ここを、EngineAPIの呼び出しに書き換えます】▼▼▼
+                        // await を使うことで、resumeが完了するまでここで待機する
+                        await EngineAPI.requestSafeResume(sceneToResume);
+                        // console.log(`[GameFlowManager] Safe resume for '${sceneToResume}' has been confirmed by EngineAPI.`);
+                        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+                    } else {
+                        // sceneStackからpopするロジックはEngineAPI側に任せるべきかもしれないが、
+                        // activeGameSceneKeyがnullを返す場合はこちらでハンドリングする
+                         console.warn('[GameFlowManager] resumeScene: No active scene to resume.');
                     }
                     break;
                 }
+                
             case 'stopTime':
                 EngineAPI.stopTime();
                 break;
