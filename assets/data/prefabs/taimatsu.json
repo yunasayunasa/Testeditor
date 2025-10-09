@@ -15,11 +15,8 @@
         "radius": 310,
         "intensity": 0.17
       }
-    },
-    {
-      "type": "VignetteComponent",
-      "params": {}
     }
+   
   ],
   "texture": "taimatsu_on",
   "data": {
