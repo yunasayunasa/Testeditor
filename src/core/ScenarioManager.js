@@ -84,24 +84,43 @@ export default class ScenarioManager {
         // console.log(`[gameLoop] << ループ停止。isEnd=${this.isEnd}, isWaitingClick=${this.isWaitingClick}, isWaitingChoice=${this.isWaitingChoice}, Line: ${this.currentLine}`);
     }
      // --- クリック処理 ---
-    onClick() {
-       
-        
-        if (this.isEnd) return;
-        
-        if (this.isWaitingChoice) return;
+   // in src/core/ScenarioManager.js
 
-        if (this.messageWindow.isTyping) {
-            this.messageWindow.skipTyping();
-            return;
+onClick() {
+    // isWaitingClick が true の場合、他のチェックはすべて無視して、クリック待ちを解除する処理を最優先する
+    if (this.isWaitingClick) {
+        // オートモードのタイマーが動いていれば止める
+        if (this.autoTimer) {
+            this.autoTimer.remove();
+            this.autoTimer = null;
         }
 
-        if (this.isWaitingClick) {
-            this.messageWindow.hideNextArrow();
-            this.next(); 
-        }
+        this.isWaitingClick = false; // 先にフラグを下ろす
+        this.messageWindow.hideNextArrow();
+        
+        // メッセージウィンドウをクリアしてから次の処理へ進むのが安全
+        this.messageWindow.clear(); 
+        
+        this.next(); 
+        return; // 処理はここで完了
     }
 
+    // タイプライターアニメーション中なら、スキップして全文表示する
+    if (this.messageWindow.isTyping) {
+        this.messageWindow.skipTyping();
+        return;
+    }
+
+    // 選択肢を待っている時は何もしない
+    if (this.isWaitingChoice) {
+        return;
+    }
+    
+    // シナリオが終了している時は何もしない
+    if (this.isEnd) {
+        return;
+    }
+}
 
  // --- parseメソッドは、状態を変更するだけ ---
     // ScenarioManager.js の parse メソッド (最終版 Ver.2)
