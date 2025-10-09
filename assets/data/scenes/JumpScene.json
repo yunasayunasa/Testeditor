@@ -88,7 +88,8 @@
         "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
-        "collision_mask": 4294967295
+        "collision_mask": 4294967295,
+        "overlap_anila": false
       }
     },
     {
@@ -173,9 +174,7 @@
           "id": "event_1759315288106",
           "trigger": "onReady",
           "nodes": [
-            {
-             
-            }
+            {}
           ],
           "connections": []
         },
@@ -254,7 +253,7 @@
           "params": {}
         }
       ],
-       "anim_prefix": "tartman",
+      "anim_prefix": "tartman",
       "texture": "tartman_run",
       "physics": {
         "isStatic": false,
@@ -269,7 +268,7 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1759995308191,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -281,7 +280,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1207,
+      "x": 1197,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -334,7 +333,6 @@
       ],
       "anim_prefix": "anila",
       "texture": "anila_walk",
-     
       "physics": {
         "isStatic": false,
         "isSensor": false,
@@ -1049,18 +1047,22 @@
       "scaleY": 0.1,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
+      "layer": "Background",
       "events": [],
       "components": [
         {
           "type": "LightComponent",
           "params": {
-            "radius": 310,
+            "radius": 430,
             "intensity": 0.17
           }
         },
         {
           "type": "VignetteComponent",
+          "params": {}
+        },
+        {
+          "type": "FogComponent",
           "params": {}
         }
       ],
@@ -1084,7 +1086,7 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759938186971
+        "lastTap": 0
       }
     },
     {
@@ -1102,7 +1104,7 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759938193750
+        "lastTap": 0
       }
     },
     {
@@ -1120,7 +1122,7 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759938209525
+        "lastTap": 0
       }
     },
     {
@@ -1138,7 +1140,7 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759938213683
+        "lastTap": 0
       }
     },
     {
@@ -1156,7 +1158,7 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759938220115
+        "lastTap": 0
       }
     },
     {
@@ -1174,7 +1176,205 @@
       "events": [],
       "texture": "maptile_wood",
       "data": {
-        "lastTap": 1759938217513
+        "lastTap": 0
+      }
+    },
+    {
+      "name": "taimatsu_1759995158311",
+      "type": "Image",
+      "x": 949,
+      "y": 280,
+      "depth": 0,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "components": [
+        {
+          "type": "LightComponent",
+          "params": {
+            "radius": 340,
+            "intensity": 0.1
+          }
+        }
+      ],
+      "texture": "taimatsu_on",
+      "data": {
+        "lastTap": 1759995341823
+      }
+    },
+    {
+      "name": "taimatsu_1759995204583",
+      "type": "Image",
+      "x": 1503,
+      "y": 278,
+      "depth": 0,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "components": [
+        {
+          "type": "LightComponent",
+          "params": {
+            "radius": 340,
+            "intensity": 0.1
+          }
+        }
+      ],
+      "texture": "taimatsu_on",
+      "data": {
+        "lastTap": 1759995347439
+      }
+    },
+    {
+      "name": "taimatsu_1759995219231",
+      "type": "Image",
+      "x": 1991,
+      "y": 278,
+      "depth": 0,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "components": [
+        {
+          "type": "LightComponent",
+          "params": {
+            "radius": 340,
+            "intensity": 0.1
+          }
+        }
+      ],
+      "texture": "taimatsu_on",
+      "data": {
+        "lastTap": 1759995353519
+      }
+    },
+    {
+      "name": "taimatsu_1759995255647",
+      "type": "Image",
+      "x": 2575,
+      "y": 284,
+      "depth": 0,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "components": [
+        {
+          "type": "LightComponent",
+          "params": {
+            "radius": 340,
+            "intensity": 0.1
+          }
+        }
+      ],
+      "texture": "taimatsu_on",
+      "data": {
+        "lastTap": 1759995360592
+      }
+    },
+    {
+      "name": "taimatsu_1759995272887",
+      "type": "Image",
+      "x": 3458,
+      "y": 247,
+      "depth": 0,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "components": [
+        {
+          "type": "LightComponent",
+          "params": {
+            "radius": 340,
+            "intensity": 0.1
+          }
+        }
+      ],
+      "texture": "taimatsu_on",
+      "data": {
+        "lastTap": 1759995364168
+      }
+    },
+    {
+      "name": "mado_wood_1759995424711",
+      "type": "Image",
+      "x": 632,
+      "y": 285,
+      "depth": 0,
+      "scaleX": 0.22,
+      "scaleY": 0.22,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "texture": "mado_wood",
+      "data": {
+        "lastTap": 1759995440864
+      }
+    },
+    {
+      "name": "mado_wood_1759995456383",
+      "type": "Image",
+      "x": 1748,
+      "y": 285,
+      "depth": 0,
+      "scaleX": 0.22,
+      "scaleY": 0.22,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "texture": "mado_wood",
+      "data": {
+        "lastTap": 1759995542911
+      }
+    },
+    {
+      "name": "mado_wood_1759995485127",
+      "type": "Image",
+      "x": 2934,
+      "y": 293,
+      "depth": 0,
+      "scaleX": 0.25,
+      "scaleY": 0.25,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "texture": "mado_wood",
+      "data": {
+        "lastTap": 1759995540223
+      }
+    },
+    {
+      "name": "mado_wood_1759995503583",
+      "type": "Image",
+      "x": 3196,
+      "y": 291,
+      "depth": 0,
+      "scaleX": 0.25,
+      "scaleY": 0.25,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Background",
+      "events": [],
+      "texture": "mado_wood",
+      "data": {
+        "lastTap": 1759995527168
       }
     }
   ],
