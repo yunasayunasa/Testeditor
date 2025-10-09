@@ -18,7 +18,7 @@
     {
       "name": "Background",
       "visible": true,
-      "locked": false
+      "locked": true
     }
   ],
   "objects": [
