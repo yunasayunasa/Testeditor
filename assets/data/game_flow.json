@@ -68,9 +68,7 @@
     },
     "NovelOverlay": {
       "onEnter": [
-        {
-          "type": "resumescene"
-        },
+        
         {
           "type": "runNovelOverlay"
         }
