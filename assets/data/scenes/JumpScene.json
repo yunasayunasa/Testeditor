@@ -1431,7 +1431,7 @@
       ],
       "texture": "maptile_wood",
       "physics": {
-        "isStatic": true,
+        "isStatic": false,
         "isSensor": true,
         "fixedRotation": true,
         "gravityScale": 1,
