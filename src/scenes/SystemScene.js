@@ -106,7 +106,47 @@ export default class SystemScene extends Phaser.Scene {
         } else {
             console.error('[SystemScene] FATAL: game_flow.json not found in cache.');
         }
+////
+        this.debugText = this.add.text(10, 10, '', { 
+            font: '16px Courier', 
+            fill: '#00ff00', 
+            backgroundColor: 'rgba(0,0,0,0.7)' 
+        }).setDepth(999999); // 常に最前面に表示
+    
     }
+
+      /**
+     * ★★★ 新設または修正 ★★★
+     * 毎フレーム実行されるupdateループ
+     */
+    update() {
+        // ▼▼▼【ここからがデバッグコードです】▼▼▼
+        const pointer = this.input.activePointer;
+
+        // 1. Phaserに、現在のポインター座標上にあるインタラクティブなオブジェクトを問い合わせる
+        //    true を渡すことで、アクティブな全シーンを検索対象にする
+        const hitObjects = this.input.manager.hitTest(pointer, this.game.scene.getScenes(true).map(s => s.children.list).flat());
+        
+        let debugOutput = `Pointer: ${Math.round(pointer.x)}, ${Math.round(pointer.y)}\n`;
+        debugOutput += "--------------------------------------\n";
+
+        if (hitObjects && hitObjects.length > 0) {
+            debugOutput += "Hit Test (Topmost First):\n";
+            // hitTestは手前のオブジェクトから順にリストアップしてくれる
+            hitObjects.slice(0, 5).forEach((obj, index) => { // 上位5件まで表示
+                if (obj && obj.scene) {
+                    debugOutput += `#${index + 1}: ${obj.name || '(no name)'} | Scene: ${obj.scene.scene.key} | Depth: ${obj.depth}\n`;
+                }
+            });
+        } else {
+            debugOutput += "No interactive objects under pointer.";
+        }
+        
+        // 画面左上のデバッグテキストを更新
+        this.debugText.setText(debugOutput);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    }
+    
 
     _safeResumeScene(sceneKey, onComplete) {
         const targetScene = this.scene.get(sceneKey);

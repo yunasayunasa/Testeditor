@@ -52,26 +52,29 @@ export default class NovelOverlayScene extends Phaser.Scene {
             return;
         }
 
-        const inputZone = this.add.zone(
-            this.scale.width / 2, 
-            this.scale.height / 2, 
-            this.scale.width, 
-            this.scale.height
+        // ▼▼▼【ここがタッチデバイス対応の核心です】▼▼▼
+        // 1. Zoneの代わりに、画面全体を覆う「透明な四角形」を生成
+        this.inputBlocker = this.add.rectangle(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            this.scale.width,
+            this.scale.height,
+            0x000000, // 塗りつぶしの色（何でもよい）
+            0.0 // ★ 透明度を0にする
         );
-        inputZone.setInteractive();
+        this.inputBlocker.setInteractive();
         
-        // 2. このゾーンを、UISceneのUIよりも確実に手前に配置する
-        //    (UISceneのUIが通常 depth 1000-2000 を使うと仮定)
+        // 2. このブロッカーを、UISceneのUIよりも確実に手前に配置
         const OVERLAY_INPUT_DEPTH = 9000;
-        inputZone.setDepth(OVERLAY_INPUT_DEPTH);
+        this.inputBlocker.setDepth(OVERLAY_INPUT_DEPTH);
 
-        // 3. このゾーンがクリックされた時に、シナリオを進める
+        // 3. ブロッカーがクリック(タップ)された時に、シナリオを進める
         this.onClickHandler = () => { 
             if (this.scenarioManager) {
                 this.scenarioManager.onClick();
             }
         };
-        inputZone.on('pointerdown', this.onClickHandler);
+        this.inputBlocker.on('pointerdown', this.onClickHandler);
 
         this.uiScene.onSceneTransition(this.scene.key);
         
@@ -112,42 +115,6 @@ export default class NovelOverlayScene extends Phaser.Scene {
         this.scenarioManager.loadScenario(this.startScenario).then(() => {
             this._finalizeSetup();
         });
-////////
-           this.input.on('pointerdown', (pointer) => {
-        // 1. 一時的に、ポインターの下にある全てのオブジェクトを取得する設定に変更
-        this.input.topOnly = false;
-        
-        // 2. このフレームでクリックされたオブジェクトのリストを取得する
-        //    (Phaserの内部的なプロパティ _list にアクセスします)
-        const hitObjects = this.input.manager.pointers[0].local.hitTest;
-
-        console.group(`%c[INPUT DEBUG] Pointer Down at (${Math.round(pointer.x)}, ${Math.round(pointer.y)})`, "background: #222; color: #bada55");
-        
-        if (hitObjects && hitObjects.length > 0) {
-            console.log("Phaser found these interactive objects (topmost first):");
-            // hitTestは描画順の逆（手前が先頭）で返ってくる
-            hitObjects.forEach((obj, index) => {
-                // オブジェクトが破棄されていないか念のためチェック
-                if (obj && obj.scene) {
-                    console.log(
-                        `  #${index + 1}:`, 
-                        obj.name || '(no name)', 
-                        `| Type: ${obj.constructor.name}`,
-                        `| Scene: ${obj.scene.scene.key}`,
-                        `| Depth: ${obj.depth}`,
-                        `| Interactive: ${obj.input ? 'YES' : 'NO'}`
-                    );
-                }
-            });
-        } else {
-            console.log("Phaser found NO interactive objects at this position.");
-        }
-        
-        console.groupEnd();
-        
-        // 3. 設定を元に戻す（非常に重要！）
-        this.input.topOnly = true;
-    });
     }
 
     _finalizeSetup() {
@@ -267,11 +234,12 @@ shutdown() {
             this.scenarioManager = null;
         }
 
-          if (this.inputBlocker) {
-        this.inputBlocker.off('pointerdown', this.onClickHandler);
-        this.inputBlocker.destroy();
-        this.inputBlocker = null;
-    }
+         if (this.inputBlocker) {
+            this.inputBlocker.off('pointerdown', this.onClickHandler);
+            this.inputBlocker.destroy(); // ★ 念のため明示的に破棄
+            this.inputBlocker = null;
+        }
+        this.onClickHandler = null;
         
         this.children.removeAll(true);
         this.isSceneFullyReady = false;
