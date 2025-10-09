@@ -99,7 +99,7 @@ onClick() {
         this.messageWindow.hideNextArrow();
         
         // メッセージウィンドウをクリアしてから次の処理へ進むのが安全
-        this.messageWindow.clear(); 
+      //  this.messageWindow.clear(); 
         
         this.next(); 
         return; // 処理はここで完了
