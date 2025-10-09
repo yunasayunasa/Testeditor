@@ -1,11 +1,25 @@
 {
   "scene_settings": {
-    "backgroundColor": "#000000"
+   
+    "backgroundColor": "0x4488cc"
   },
+    
   "layers": [
-    { "name": "Background", "depth": 0 },
-    { "name": "Gameplay", "depth": 10 },
-    { "name": "Foreground", "depth": 20 }
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": true
+    }
   ],
   "objects": []
 }
