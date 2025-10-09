@@ -3,13 +3,13 @@
 [wait time=500]
 
 tartman:「うぅ...トイレトイレ...」
-
+[p]
 tartman:「しかし...やはり夜の騎空艇は不気味だな...」
-
+[p]
 tartman「普通に怖い...」
-
+[p]
 tartman:「む、あれは...」
-
+[p]
 [chara_show name="anila" pos="right" time=500]
 anila:「...」
 [p]
@@ -35,5 +35,6 @@ naletion:！マークが表示された状態で隠れるボタンを押すと�
 naletion:隠れている最中は見つかりませんが、移動はできません。
 [p]
 naletion:あなた様の無事をお祈りしております...。
+[p]
 [cm]
 [overlay_end]
