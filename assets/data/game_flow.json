@@ -69,7 +69,7 @@
     "NovelOverlay": {
       "onEnter": [
         {
-          "type": "stoptime"
+          "type": "resumescene"
         },
         {
           "type": "runNovelOverlay"
