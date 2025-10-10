@@ -1793,60 +1793,47 @@ setAllObjectsDraggable(isDraggable) {
      * ゲームオブジェクトをエディタで編集可能にする。
      * タイルマップモードでは選択できないようにガードを追加する。
      */
-    makeEditable(gameObject, scene) {
-        if (!this.isEnabled) return;
-        const sceneKey = scene.scene.key;
-        if (!this.editableObjects.has(sceneKey)) {
-            this.editableObjects.set(sceneKey, new Set());
-        }
-        this.editableObjects.get(sceneKey).add(gameObject);
-const currentMode = this.game.registry.get('editor_mode');
-    if (currentMode === 'play') {
-        return; // プレイモードなら、エディタは何もしない
+   makeEditable(gameObject, scene) {
+    if (!this.isEnabled) return;
+    const sceneKey = scene.scene.key;
+    if (!this.editableObjects.has(sceneKey)) {
+        this.editableObjects.set(sceneKey, new Set());
     }
-        if (!gameObject.input) {
-            gameObject.setInteractive();
-        }
-        
-        // setDraggableは一度だけで良い
-        scene.input.setDraggable(gameObject);
+    // 既に登録済みなら、これ以降のリスナー設定は不要
+    if (this.editableObjects.get(sceneKey).has(gameObject)) {
+        return;
+    }
+    this.editableObjects.get(sceneKey).add(gameObject);
 
-        // --- 既存リスナーをクリア ---
-        gameObject.off('pointerdown');
-        gameObject.off('drag');
-        gameObject.off('pointerover');
-        gameObject.off('pointerout');
-
-        
-        // ▼▼▼【ここからがダブルタップ検知のロジックです】▼▼▼
-        // --------------------------------------------------------------------
-        
-        // --- タップ情報を記録するための変数をGameObjectに持たせる ---
-       gameObject.setData('lastTap', 0);
-
-            gameObject.on('pointerdown', (pointer) => {
     const currentMode = this.game.registry.get('editor_mode');
-    
-    // プレイモードの場合は、Buttonが発火させた'onClick'などの処理に任せる
     if (currentMode === 'play') {
-        // --- プレイモードの場合 ---
-        const events = gameObject.getData('events') || [];
-        const onClickEvent = events.find(e => e.trigger === 'onClick');
-
-        if (onClickEvent) {
-            const actionInterpreter = this.game.registry.get('actionInterpreter');
-            if (actionInterpreter) {
-                // ActionInterpreterに直接実行を依頼
-                actionInterpreter.run(gameObject, onClickEvent, null);
-            }
-        }
-        return; // エディタの選択処理は行わない
+        return;
     }
 
-    // ▼▼▼【ここが誤爆を防ぐ核心です】▼▼▼
-    // エディットモード（'select'など）でクリックされた場合は、
-    // これ以降のイベント（Buttonの'onClick'など）が発火しないように、伝播を止める
-    pointer.event.stopPropagation();
+    // ★ 1. setInteractiveは BaseGameScene 側が担当するので、ここでは呼ばない。
+    //    ただし、念のため存在チェックは行う。
+    if (!gameObject.input) {
+        gameObject.setInteractive();
+    }
+    
+    // ★ 2. ドラッグ可能にする
+    scene.input.setDraggable(gameObject);
+
+    // ▼▼▼ 修正点 ▼▼▼
+    // ----------------------------------------------------
+    // --- 3. pointerdownリスナーはクリアしない ---
+    // gameObject.off('pointerdown'); // ← ★★★ この行を削除またはコメントアウト！ ★★★
+
+    // --- 4. 代わりに、エディタ専用のクリックリスナーを追加する ---
+    //    'pointerdown' イベントは、複数のリスナーを登録できる。
+    //    BaseGameSceneが登録したリスナーと、このリスナーは共存する。
+    gameObject.on('pointerdown', (pointer) => {
+        const editorMode = this.game.registry.get('editor_mode');
+        
+        // ★ エディタがプレイモードでなければ、選択処理を行う
+        if (editorMode !== 'play') {
+            // イベントの伝播を止めて、ゲームプレイ用のonClickが誤爆するのを防ぐ
+            pointer.event.stopPropagation();
             // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
           const layerName = gameObject.getData('layer');
             const layer = this.layerStates.find(l => l.name === layerName);
