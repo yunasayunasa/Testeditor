@@ -49,6 +49,24 @@
             }
           ],
           "connections": []
+        },
+        {
+          "id": "event_1760066227350",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1760066269099",
+              "type": "camera_fade",
+              "params": {
+                "type": "in",
+                "time": 1000,
+                "color": "0x000000"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
         }
       ],
       "components": [
@@ -61,7 +79,7 @@
       ],
       "texture": "title",
       "data": {
-        "lastTap": 1760055356610
+        "lastTap": 1760066220019
       }
     }
   ],
