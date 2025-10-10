@@ -92,18 +92,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.layerStates = layers;
         this.applyLayerStatesToScene(); // ★ 状態が更新されたら、すぐに適用処理を呼び出す
     }
-    
-    // in src/plugins/EditorPlugin.js
-
-/**
- * ★★★ 新規メソッド ★★★
- * エディタの状態をリフレッシュし、現在アクティブなシーンのオブジェクトを再スキャンする
- */
-/**
- * ★★★ 真の最終・堅牢版 ★★★
- * エディタの状態をリフレッシュする。
- * 個々のオブジェクトで発生したエラーで、全体の処理が止まらないようにする。
- */
 // in src/plugins/EditorPlugin.js
 
 /**
@@ -134,7 +122,6 @@ refresh() {
         alert('リスタートするアクティブなゲームシーンが見つかりません。');
     }
 }
-
     panCamera(dx, dy) {
         if (!this.isEnabled) return;
         const camera = this.getActiveGameCamera();
@@ -1774,154 +1761,193 @@ setAllObjectsDraggable(isDraggable) {
      * ゲームオブジェクトをエディタで編集可能にする。
      * タイルマップモードでは選択できないようにガードを追加する。
      */
-               // in src/plugins/EditorPlugin.js
-
-makeEditable(gameObject, scene) {
-    if (!this.isEnabled) return;
-    const sceneKey = scene.scene.key;
-
-    if (!this.editableObjects.has(sceneKey)) {
-        this.editableObjects.set(sceneKey, new Set());
-    }
-    // 既に登録済みなら、これ以降のリスナー設定は不要（リフレッシュ時の重複防止）
-    if (this.editableObjects.get(sceneKey).has(gameObject)) {
-        return;
-    }
-    this.editableObjects.get(sceneKey).add(gameObject);
-
-    // プレイモードの場合は、オブジェクトを登録するだけで、エディタ用のイベントリスナーは設定しない
-    const currentMode = this.game.registry.get('editor_mode');
+    makeEditable(gameObject, scene) {
+        if (!this.isEnabled) return;
+        const sceneKey = scene.scene.key;
+        if (!this.editableObjects.has(sceneKey)) {
+            this.editableObjects.set(sceneKey, new Set());
+        }
+        this.editableObjects.get(sceneKey).add(gameObject);
+const currentMode = this.game.registry.get('editor_mode');
     if (currentMode === 'play') {
-        return;
+        return; // プレイモードなら、エディタは何もしない
     }
-
-    // --- ここから先は、エディタモードの時だけ実行される ---
-
-    if (!gameObject.input) {
-        gameObject.setInteractive();
-    }
-    
-    scene.input.setDraggable(gameObject);
-
-    // --- 既存のエディタ用リスナーを全てクリアする ---
-    gameObject.off('pointerdown');
-    gameObject.off('dragstart');
-    gameObject.off('drag');
-    gameObject.off('dragend');
-    gameObject.off('pointerover');
-    gameObject.off('pointerout');
-
-    // --- エディタ用のリスナーを再設定する ---
-    
-    // [pointerdown] : 選択、ダブルタップ選択
-    gameObject.on('pointerdown', (pointer) => {
-        // このリスナーはエディタモード専用なので、モードチェックは不要だが、念のため
-        const editorMode = this.game.registry.get('editor_mode');
-        if (editorMode === 'play') {
-            return; 
+        if (!gameObject.input) {
+            gameObject.setInteractive();
         }
-
-        // BaseGameSceneのonClickイベントが誤爆しないように、イベントの伝播を止める
-        pointer.event.stopPropagation();
         
-        const layerName = gameObject.getData('layer');
-        const layer = this.layerStates.find(l => l.name === layerName);
-        if (layer && layer.locked) {
-            return; 
-        }
+        // setDraggableは一度だけで良い
+        scene.input.setDraggable(gameObject);
 
-        const now = Date.now();
-        const lastTap = gameObject.getData('lastTap') || 0;
-        gameObject.setData('lastTap', now);
-        const diff = now - lastTap;
+        // --- 既存リスナーをクリア ---
+        gameObject.off('pointerdown');
+        gameObject.off('drag');
+        gameObject.off('pointerover');
+        gameObject.off('pointerout');
 
-        if (diff < 300) { // ダブルタップ処理
-            const groupId = gameObject.getData('group');
-            if (groupId && typeof scene.getObjectsByGroup === 'function') {
-                const groupObjects = scene.getObjectsByGroup(groupId);
-                this.selectMultipleObjects(groupObjects);
-            } else {
-                this.selectSingleObject(gameObject);
+        
+        // ▼▼▼【ここからがダブルタップ検知のロジックです】▼▼▼
+        // --------------------------------------------------------------------
+        
+        // --- タップ情報を記録するための変数をGameObjectに持たせる ---
+       gameObject.setData('lastTap', 0);
+
+            gameObject.on('pointerdown', (pointer) => {
+    const currentMode = this.game.registry.get('editor_mode');
+    
+    // プレイモードの場合は、Buttonが発火させた'onClick'などの処理に任せる
+    if (currentMode === 'play') {
+        // --- プレイモードの場合 ---
+        const events = gameObject.getData('events') || [];
+        const onClickEvent = events.find(e => e.trigger === 'onClick');
+
+        if (onClickEvent) {
+            const actionInterpreter = this.game.registry.get('actionInterpreter');
+            if (actionInterpreter) {
+                // ActionInterpreterに直接実行を依頼
+                actionInterpreter.run(gameObject, onClickEvent, null);
             }
-        } else { // シングルタップ処理
-            setTimeout(() => {
-                if (gameObject.getData('lastTap') === now) {
+        }
+        return; // エディタの選択処理は行わない
+    }
+
+    // ▼▼▼【ここが誤爆を防ぐ核心です】▼▼▼
+    // エディットモード（'select'など）でクリックされた場合は、
+    // これ以降のイベント（Buttonの'onClick'など）が発火しないように、伝播を止める
+    pointer.event.stopPropagation();
+            // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
+          const layerName = gameObject.getData('layer');
+            const layer = this.layerStates.find(l => l.name === layerName);
+            // レイヤーがロックされている場合は、選択もダブルタップも一切させない
+            if (layer && layer.locked) {
+                // console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
+                return; 
+            }
+            const now = Date.now();
+            const lastTap = gameObject.getData('lastTap');
+            const diff = now - lastTap;
+            
+            gameObject.setData('lastTap', now);
+
+            if (diff < 300) { // ダブルタップの処理
+                const groupId = gameObject.getData('group');
+                
+                // ▼▼▼【ここからが修正箇所です】▼▼▼
+                if (groupId && typeof scene.getObjectsByGroup === 'function') {
+                    // ★ BaseGameSceneの新しいメソッドを呼び出して、グループメンバーを取得
+                    const groupObjects = scene.getObjectsByGroup(groupId);
+                    
+                    // console.log(`[EditorPlugin] Double tap detected. Selecting ${groupObjects.length} objects in group: ${groupId}`);
+                    this.selectMultipleObjects(groupObjects);
+                } else {
+                    // グループがない場合は、通常通りシングルオブジェクトを選択
                     this.selectSingleObject(gameObject);
                 }
-            }, 300);
-        }
-    });
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // [dragstart] : ドラッグ開始時の準備
-    gameObject.on('dragstart', (pointer) => {
-        const layerName = gameObject.getData('layer');
-        const layer = this.layerStates.find(l => l.name === layerName);
-        if (layer && layer.locked) {
-            if(gameObject.input) gameObject.input.draggable = false;
-            return;
-        }
-        if(gameObject.input) gameObject.input.draggable = true;
+            } else { // シングルタップの処理
+               setTimeout(() => {
+                    if (gameObject.getData('lastTap') === now) {
+                        this.selectSingleObject(gameObject);
+                    }
+                }, 300);
+            }
+        });
         
-        if (this.selectedObjects && this.selectedObjects.length > 0) {
-            this.selectedObjects.forEach(obj => {
-                obj.setData('dragStartX', obj.x);
-                obj.setData('dragStartY', obj.y);
-            });
-        }
-    });
+        // --------------------------------------------------------------------
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // [drag] : ドラッグ中のオブジェクト移動
-    gameObject.on('drag', (pointer, dragX, dragY) => {
-        const dx = pointer.x - pointer.prevPosition.x;
-        const dy = pointer.y - pointer.prevPosition.y;
+        
+        // ▼▼▼【ここからが追加修正箇所】▼▼▼
+        // --------------------------------------------------------------------
+        // --- drag ---
+         // ▼▼▼ グループドラッグのロジックをここに追加 ▼▼▼
+        gameObject.off('dragstart');
+        gameObject.on('dragstart', (pointer) => {
+              // ▼▼▼【ここにもロック状態チェックを追加】▼▼▼
+             // ▼▼▼【ここにも同様のガード節を追加】▼▼▼
+            const layerName = gameObject.getData('layer');
+            const layer = this.layerStates.find(l => l.name === layerName);
+            if (layer && layer.locked) {
+                // ドラッグ不可にするおまじない
+                if(gameObject.input) gameObject.input.draggable = false;
+                return;
+            }
+            if(gameObject.input) gameObject.input.draggable = true;
+            // もし複数選択中なら、各オブジェクトの初期位置を記憶
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                this.selectedObjects.forEach(obj => {
+                    obj.setData('dragStartX', obj.x);
+                    obj.setData('dragStartY', obj.y);
+                });
+            }
+        });
 
-        const camera = this.getActiveGameCamera();
-        const zoom = camera ? camera.zoom : 1;
-        const moveX = dx / zoom;
-        const moveY = dy / zoom;
+        gameObject.off('drag');
+        gameObject.on('drag', (pointer, dragX, dragY) => {
+            
+            // ▼▼▼【ここからが修正の核心です】▼▼▼
+            // --- ポインターの移動差分を取得 ---
+            const dx = pointer.x - pointer.prevPosition.x;
+            const dy = pointer.y - pointer.prevPosition.y;
 
-        if (this.selectedObjects && this.selectedObjects.length > 0) {
-            this.selectedObjects.forEach(obj => {
-                obj.x += moveX;
-                obj.y += moveY;
-                if (obj.body) {
-                    Phaser.Physics.Matter.Matter.Body.translate(obj.body, { x: moveX, y: moveY });
+            // --- カメラのズームを考慮して、移動量を補正 ---
+            const camera = this.getActiveGameCamera();
+            const zoom = camera ? camera.zoom : 1;
+            const moveX = dx / zoom;
+            const moveY = dy / zoom;
+
+            // --- もし複数選択中なら、グループ全体を動かす ---
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                this.selectedObjects.forEach(obj => {
+                    obj.x += moveX;
+                    obj.y += moveY;
+                    if (obj.body) {
+                        // ボディの位置も差分で更新する
+                        Phaser.Physics.Matter.Matter.Body.translate(obj.body, { x: moveX, y: moveY });
+                    }
+                });
+            } else {
+                // --- 単体選択中のドラッグ ---
+                gameObject.x += moveX;
+                gameObject.y += moveY;
+                if (gameObject.body) {
+                    Phaser.Physics.Matter.Matter.Body.translate(gameObject.body, { x: moveX, y: moveY });
                 }
-            });
-        } else {
-            gameObject.x += moveX;
-            gameObject.y += moveY;
-            if (gameObject.body) {
-                Phaser.Physics.Matter.Matter.Body.translate(gameObject.body, { x: moveX, y: moveY });
             }
-        }
-    });
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // [dragend] : ドラッグ終了時のUI更新
-    gameObject.on('dragend', (pointer) => {
-        if (this.selectedObjects && this.selectedObjects.length > 0) {
-            this.selectMultipleObjects(this.selectedObjects);
-        } else {
-            this.updatePropertyPanel();
-        }
-    });
+            // ドラッグ中はUIを更新しない
+        });
 
-    // [pointerover] : マウスオーバー時のハイライト
-    gameObject.on('pointerover', () => {
-         if (this.editorUI && this.editorUI.currentMode === 'select') {
-            if (typeof gameObject.setTint === 'function') {
-                gameObject.setTint(0x00ff00);
+        gameObject.off('dragend');
+        gameObject.on('dragend', (pointer) => {
+            // ドラッグが終わったタイミングでUIを更新
+            if (this.selectedObjects && this.selectedObjects.length > 0) {
+                this.selectMultipleObjects(this.selectedObjects); // 複数選択UIを再表示
+            } else {
+                this.updatePropertyPanel();
             }
-         }
-    });
+        });
     
-    // [pointerout] : マウスアウト時のハイライト解除
-    gameObject.on('pointerout', () => {
-        if (typeof gameObject.clearTint === 'function') {
-            gameObject.clearTint();
-        }
-    });
-}
+
+        
+        gameObject.on('pointerover', () => {
+             if (this.editorUI && this.editorUI.currentMode === 'select') {
+                // ▼▼▼ 【setTintエラー対策】setTintメソッドが存在するか確認してから呼び出す ▼▼▼
+                if (typeof gameObject.setTint === 'function') {
+                    gameObject.setTint(0x00ff00);
+                }
+             }
+        });
+        
+         gameObject.on('pointerout', () => {
+            // ▼▼▼ 【setTintエラー対策】clearTintメソッドが存在するか確認してから呼び出す ▼▼▼
+            if (typeof gameObject.clearTint === 'function') {
+                gameObject.clearTint();
+            }
+        });
+    }
     //---------/:::/
     //グループ系
     //-----////////
