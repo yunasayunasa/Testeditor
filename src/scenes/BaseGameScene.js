@@ -641,34 +641,57 @@ applyProperties(gameObject, layout) {
  * ★★★ イベントリスナー登録を復活させた、真の最終完成版 ★★★
  * オブジェクトにイベントリスナーとエディタ機能を設定する。
  */
+// in src/scenes/BaseGameScene.js
+
+/**
+ * GameObjectにVSLイベントとエディタ機能を適用する (onClick, onReady対応版)
+ * @param {Phaser.GameObjects.GameObject} gameObject - 対象のゲームオブジェクト
+ * @param {Array<object>} eventsData - JSONから読み込んだイベント定義の配列
+ */
 applyEventsAndEditorFunctions(gameObject, eventsData) {
     const events = eventsData || [];
     gameObject.setData('events', events);
     
     // --- 1. まず、過去に登録した可能性のあるリスナーをすべてクリアする ---
-    //    これにより、再初期化（initComponentsAndEvents）の際にリスナーが重複するのを防ぐ。
     gameObject.off('pointerdown');
     gameObject.off('onStateChange');
     gameObject.off('onDirectionChange');
+    // (将来的に追加するイベントがあれば、ここにもoffを追加する)
 
     // --- 2. データに基づいて、新しいリスナーを設定していく ---
     events.forEach(eventData => {
         
         // --- 'onClick' トリガーの処理 ---
-        // (これはプレイモードでのみ発火するよう、リスナー内部で判定)
         if (eventData.trigger === 'onClick') {
+            // オブジェクトをクリック可能にする
+            gameObject.setInteractive({ useHandCursor: true });
+            
             gameObject.on('pointerdown', () => {
-                const currentMode = this.registry.get('editor_mode');
-                if (currentMode === 'play' && this.actionInterpreter) {
-                    this.actionInterpreter.run(gameObject, eventData, gameObject);
+                const editorPlugin = this.plugins.get('EditorPlugin');
+                
+                // エディタが存在しない(通常プレイ)か、またはエディタがプレイモードの場合に実行
+                if (!editorPlugin || editorPlugin.mode === 'play') { 
+                    if (this.actionInterpreter) {
+                        console.log(`[ApplyEvents] onClick fired for '${gameObject.name}'`);
+                        this.actionInterpreter.run(gameObject, eventData, null); // 衝突相手はいないのでnull
+                    }
                 }
             });
         }
           
+        // --- 'onReady' トリガーの処理 ---
+        if (eventData.trigger === 'onReady') {
+            // onReadyは条件なしで、このメソッドが呼ばれた直後に一度だけ実行する
+            if (this.actionInterpreter) {
+                console.log(`[ApplyEvents] onReady fired for '${gameObject.name}'`);
+                // runを非同期で呼び出すが、完了は待たない (fire and forget)
+                this.actionInterpreter.run(gameObject, eventData, null); // 衝突相手はいないのでnull
+            }
+        }
+        
         // --- 'onStateChange' トリガーの処理 ---
         if (eventData.trigger === 'onStateChange') {
             gameObject.on('onStateChange', (newState, oldState) => {
-                // 条件を評価し、満たされればActionInterpreterを実行するヘルパーを呼び出す
                 this.evaluateConditionAndRun(gameObject, eventData, { state: newState, oldState: oldState });
             });
         }
@@ -680,18 +703,17 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
             });
         }
 
-        // ★ 他のカスタムイベントトリガー（onDamageなど）も、必要であればここに追加する
+        // ★ onOverlap_Start, onOverlap_End など、物理イベントのトリガーは、
+        //   物理ボディが作成された後に、別の場所で設定される想定。
+        //   もしここで設定するなら、gameObject.bodyの存在チェックが必要。
     });
 
     // --- 3. 最後に、エディタ用のインタラクティブ設定を行う ---
-    // (これはゲームプレイのリスナーとは独立している)
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled) {
         editor.makeEditable(gameObject, this);
     }
 }
- // in src/scenes/BaseGameScene.js
-
 /**
  * ★★★ リアルタイム編集対応・最終FIX版 ★★★
  * ターゲットオブジェクトにコンポーネントを追加する。
