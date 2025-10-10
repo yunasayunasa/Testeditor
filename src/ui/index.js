@@ -68,7 +68,7 @@ export const uiRegistry = {
 
     'message_window': { 
         path: './ui/MessageWindow.js', 
-        groups: ['game']
+        groups: ['window','game']
     },
     
     'bottom_panel': { 
@@ -94,7 +94,7 @@ export const uiRegistry = {
  */
 export const sceneUiVisibility = {
     'GameScene': ['hud', 'menu', 'game'],
-    'JumpScene': ['controls', 'action','hud', 'ui_element'],
+    'JumpScene': ['controls', 'action','window', 'ui_element'],
     'BattleScene': ['hud', 'battle'],
     'ActionScene': ['menu', 'game'], // 例
     'TitleScene': ['text_ui'],
