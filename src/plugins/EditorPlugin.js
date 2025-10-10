@@ -92,6 +92,56 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.layerStates = layers;
         this.applyLayerStatesToScene(); // ★ 状態が更新されたら、すぐに適用処理を呼び出す
     }
+    
+    // in src/plugins/EditorPlugin.js
+
+/**
+ * ★★★ 新規メソッド ★★★
+ * エディタの状態をリフレッシュし、現在アクティブなシーンのオブジェクトを再スキャンする
+ */
+refresh() {
+    console.log('%c[EditorPlugin] Refreshing...', 'color: #FF9800; font-weight: bold;');
+
+    // 1. 現在の選択を全て解除する
+    this.deselectObject();
+
+    // 2. 編集可能オブジェクトのリストを全てクリアする
+    this.editableObjects.clear();
+    
+    // 3. 現在アクティブな「ゲームプレイシーン」を取得する
+    //    (SystemSceneやUISceneは対象外とする)
+    let activeScene = null;
+    const allScenes = this.pluginManager.game.scene.getScenes(true);
+    for (const scene of allScenes) {
+        // BaseGameSceneを継承しているか、あるいはGameSceneか、で判定するのが良い
+        if (scene.scene.key !== 'SystemScene' && scene.scene.key !== 'UIScene') {
+            activeScene = scene;
+            break;
+        }
+    }
+
+    if (!activeScene) {
+        console.warn('[EditorPlugin] No active game scene found to refresh.');
+        return;
+    }
+    
+    console.log(`[EditorPlugin] Rescanning active scene: '${activeScene.scene.key}'`);
+
+    // 4. アクティブなシーンの、全ての子オブジェクトをループする
+    activeScene.children.list.forEach(gameObject => {
+        // 5. それぞれのオブジェクトに対して、再度 makeEditable を実行する
+        //    makeEditable は冪等（何度呼んでも安全）なので、問題ない
+        this.makeEditable(gameObject, activeScene);
+    });
+
+    // 6. UIパネルも更新する
+    if (this.editorUI) {
+        this.editorUI.updatePropertyPanel();
+        this.editorUI.updateLayerPanel();
+    }
+    
+    alert(`Editor has been refreshed for scene '${activeScene.scene.key}'.`);
+}
 
     panCamera(dx, dy) {
         if (!this.isEnabled) return;
