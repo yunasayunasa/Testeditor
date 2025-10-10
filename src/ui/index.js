@@ -80,7 +80,7 @@ export const uiRegistry = {
     // これにより、onSceneTransitionが他のUIと同様にグループベースで表示制御できるようになる。
     'Text': {
         component: Phaser.GameObjects.Text, // pathは不要。main.jsがcomponentを直接参照する。
-        groups: ['game', 'ui_element','text_ui']      // テキストは'game'グループと汎用グループに所属させる。
+        groups: ['text_ui']      // テキストは'game'グループと汎用グループに所属させる。
     }
 };
 
@@ -94,9 +94,9 @@ export const uiRegistry = {
  */
 export const sceneUiVisibility = {
     'GameScene': ['hud', 'menu', 'game'],
-    'JumpScene': ['controls', 'action','hud', 'ui_element','text_ui'],
+    'JumpScene': ['controls', 'action','hud', 'ui_element'],
     'BattleScene': ['hud', 'battle'],
     'ActionScene': ['menu', 'game'], // 例
-    'TitleScene': [],
-    'NovelOverlayScene': ['game'] // オーバーレイ中は'game'グループ(メッセージウィンドウなど)のみ表示
+    'TitleScene': ['text_ui'],
+    ' NovelOverlayScene': ['game'] // オーバーレイ中は'game'グループ(メッセージウィンドウなど)のみ表示
 };
