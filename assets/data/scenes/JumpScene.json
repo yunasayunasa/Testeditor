@@ -34,7 +34,7 @@
       "alpha": 1,
       "layer": "Foreground",
       "events": [],
-      "texture": "cg01",
+      "texture": "chest",
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
@@ -68,7 +68,7 @@
           "connections": []
         }
       ],
-      "texture": "cg01",
+      "texture": "chest",
       "physics": {
         "isStatic": true,
         "isSensor": true,
@@ -458,7 +458,7 @@
           "connections": []
         }
       ],
-      "texture": "yuna_angry",
+      "texture": "taru",
       "physics": {
         "isStatic": true,
         "isSensor": true,
