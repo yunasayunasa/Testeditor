@@ -79,6 +79,7 @@
         "UIScene.json",
         "stage2.json",
         "JumpScene.json",
+          "TitleScene.json",
         "pause_menu.json"
       ]
     },
