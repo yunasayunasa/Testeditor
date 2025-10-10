@@ -103,7 +103,7 @@ refresh() {
     console.log('%c[EditorPlugin] Refreshing...', 'color: #FF9800; font-weight: bold;');
 
     // 1. 現在の選択を全て解除する
-    this.deselectObject();
+    this.selectSingleObject(null); 
 
     // 2. 編集可能オブジェクトのリストを全てクリアする
     this.editableObjects.clear();
