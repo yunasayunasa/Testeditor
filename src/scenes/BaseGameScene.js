@@ -42,6 +42,10 @@ export default class BaseGameScene extends Phaser.Scene {
          this.loadData = data.loadData || null; // ★ ロードデータを受け取る
     }
  create() {
+    this.actionInterpreter = this.registry.get('actionInterpreter');
+    if (!this.actionInterpreter) {
+        console.error(`[${this.scene.key}] CRITICAL: ActionInterpreter not found in registry!`);
+    }
         // このメソッドは、継承先（JumpSceneなど）で super.create() として
         // 呼び出されることを想定していますが、中身は空で構いません。
         const keyToLoad = this.layoutDataKey || this.scene.key;
