@@ -672,20 +672,17 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
     events.forEach(eventData => {
         
         // --- 'onClick' トリガーの処理 ---
-        if (eventData.trigger === 'onClick') {
-            gameObject.on('pointerdown', () => {
-                const editorPlugin = this.plugins.get('EditorPlugin');
+        gameObject.on('pointerdown', () => {
+                console.log(`%c[DEBUG] onClick fired for '${gameObject.name}' WITHOUT mode check!`, 'color: red; font-weight: bold;');
                 
-                // エディタが存在しない(通常プレイ)か、またはエディタがプレイモードの場合に実行
-                if (!editorPlugin || editorPlugin.isEnabled && editorPlugin.mode === 'play') { 
-                    if (this.actionInterpreter) {
-                        console.log(`[ApplyEvents] onClick fired for '${gameObject.name}'`);
-                        // ActionInterpreterに直接実行を依頼
-                        this.actionInterpreter.run(gameObject, eventData, null); // 衝突相手はいないのでnull
-                    }
+                if (this.actionInterpreter) {
+                    this.actionInterpreter.run(gameObject, eventData, null);
+                } else {
+                    console.error('[DEBUG] ActionInterpreter not found!');
                 }
             });
         }
+          
           
         // --- 'onReady' トリガーの処理 ---
         if (eventData.trigger === 'onReady') {
