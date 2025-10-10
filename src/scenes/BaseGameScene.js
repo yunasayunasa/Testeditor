@@ -643,8 +643,10 @@ applyProperties(gameObject, layout) {
  */
 // in src/scenes/BaseGameScene.js
 
+// in src/scenes/BaseGameScene.js
+
 /**
- * GameObjectにVSLイベントとエディタ機能を適用する (onClick, onReady対応版)
+ * GameObjectにVSLイベントとエディタ機能を適用する (onClick, onReady対応の最終FIX版)
  * @param {Phaser.GameObjects.GameObject} gameObject - 対象のゲームオブジェクト
  * @param {Array<object>} eventsData - JSONから読み込んだイベント定義の配列
  */
@@ -658,21 +660,27 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
     gameObject.off('onDirectionChange');
     // (将来的に追加するイベントがあれば、ここにもoffを追加する)
 
-    // --- 2. データに基づいて、新しいリスナーを設定していく ---
+    // --- 2. setInteractiveの事前適用 ---
+    // onClickイベントが一つでも定義されていれば、オブジェクトをクリック可能にする
+    // これは、エディタのモードに関わらず、常に行う必要がある。
+    const hasOnClick = events.some(e => e.trigger === 'onClick');
+    if (hasOnClick) {
+        gameObject.setInteractive({ useHandCursor: true });
+    }
+
+    // --- 3. データに基づいて、新しいリスナーを設定していく ---
     events.forEach(eventData => {
         
         // --- 'onClick' トリガーの処理 ---
         if (eventData.trigger === 'onClick') {
-            // オブジェクトをクリック可能にする
-            gameObject.setInteractive({ useHandCursor: true });
-            
             gameObject.on('pointerdown', () => {
                 const editorPlugin = this.plugins.get('EditorPlugin');
                 
                 // エディタが存在しない(通常プレイ)か、またはエディタがプレイモードの場合に実行
-                if (!editorPlugin || editorPlugin.mode === 'play') { 
+                if (!editorPlugin || editorPlugin.isEnabled && editorPlugin.mode === 'play') { 
                     if (this.actionInterpreter) {
                         console.log(`[ApplyEvents] onClick fired for '${gameObject.name}'`);
+                        // ActionInterpreterに直接実行を依頼
                         this.actionInterpreter.run(gameObject, eventData, null); // 衝突相手はいないのでnull
                     }
                 }
@@ -702,15 +710,14 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
                 this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
             });
         }
-
-        // ★ onOverlap_Start, onOverlap_End など、物理イベントのトリガーは、
-        //   物理ボディが作成された後に、別の場所で設定される想定。
-        //   もしここで設定するなら、gameObject.bodyの存在チェックが必要。
     });
 
-    // --- 3. 最後に、エディタ用のインタラクティブ設定を行う ---
+    // --- 4. 最後に、エディタ用の追加処理を行う ---
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled) {
+        // makeEditableは、ドラッグ機能や選択ハイライトなど、
+        // エディタ専用のインタラクションを追加する役割に専念する。
+        // (setInteractiveが重複して呼ばれてもPhaserは問題なく処理する)
         editor.makeEditable(gameObject, this);
     }
 }
