@@ -1,6 +1,6 @@
 {
   "scene_settings": {
-    "ySortEnabled": true,
+    "ySortEnabled": false,
     "backgroundColor": "0x4488cc"
   },
   "hasJoystick": true,
@@ -1367,7 +1367,7 @@
       "texture": "taru",
       "physics": {
         "isStatic": false,
-        "isSensor": false,
+        "isSensor": true,
         "fixedRotation": false,
         "gravityScale": 1,
         "friction": 0.1,
