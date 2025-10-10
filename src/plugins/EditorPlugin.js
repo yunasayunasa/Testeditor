@@ -104,53 +104,34 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
  * エディタの状態をリフレッシュする。
  * 個々のオブジェクトで発生したエラーで、全体の処理が止まらないようにする。
  */
-refresh() {
-    console.log('%c[EditorPlugin] Refreshing...', 'color: #FF9800; font-weight: bold;');
+// in src/plugins/EditorPlugin.js
 
-    this.selectSingleObject(null);
-    this.editableObjects.clear();
-    
+/**
+ * ★★★ 最終・最シンプル版 ★★★
+ * 現在アクティブなゲームシーンをリスタートさせることで、エディタの状態を完全にリフレッシュする
+ */
+refresh() {
+    console.log('%c[EditorPlugin] Refreshing via Scene Restart...', 'color: #FF9800; font-weight: bold;');
+
+    // 1. 現在アクティブな「ゲームプレイシーン」を取得する
     let activeScene = null;
     const allScenes = this.pluginManager.game.scene.getScenes(true);
     for (const scene of allScenes) {
-        if (scene.scene.key !== 'SystemScene' && scene.scene.key !== 'UIScene' && scene.scene.isActive()) {
+        if (scene.scene.key !== 'SystemScene' && scene.scene.key !== 'UIScene') {
             activeScene = scene;
             break;
         }
     }
 
-    if (!activeScene) {
-        console.warn('[EditorPlugin] No active game scene found to refresh.');
-        alert('リフレッシュ対象のアクティブなゲームシーンが見つかりませんでした。');
-        return;
-    }
-    
-    console.log(`[EditorPlugin] Rescanning active scene: '${activeScene.scene.key}'`);
-    let errorCount = 0;
+    if (activeScene) {
+        // 2. シーンに再起動を命令する
+        console.log(`[EditorPlugin] Restarting scene: '${activeScene.scene.key}'`);
+        activeScene.scene.restart();
 
-    // ▼▼▼ forEach を for...of に変更し、try...catch で囲む ▼▼▼
-    // ----------------------------------------------------------------------
-    for (const gameObject of activeScene.children.list) {
-        try {
-            // makeEditable は冪等なので、何度呼んでも安全
-            this.makeEditable(gameObject, activeScene);
-        } catch (error) {
-            // iPadでしか出ないような謎のエラーを、ここで捕捉する
-            console.error(`[EditorPlugin] Failed to make an object editable during refresh.`, { 
-                objectName: gameObject.name, 
-                objectType: gameObject.type, 
-                error: error 
-            });
-            errorCount++;
-        }
-    }
-    // ----------------------------------------------------------------------
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-    if (errorCount > 0) {
-        alert(`エディタのリフレッシュが完了しましたが、${errorCount}個のオブジェクトでエラーが発生しました。詳細はコンソールを確認してください。`);
+        // alertは不要（シーンがリロードされるので）
     } else {
-        alert(`Editor has been refreshed for scene '${activeScene.scene.key}'.`);
+        console.warn('[EditorPlugin] No active game scene found to restart.');
+        alert('リスタートするアクティブなゲームシーンが見つかりません。');
     }
 }
 
