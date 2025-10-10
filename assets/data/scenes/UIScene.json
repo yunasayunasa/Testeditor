@@ -1,6 +1,6 @@
 {
   "scene_settings": {},
-  "hasJoystick": true,
+  "hasJoystick": false,
   "layers": [
     {
       "name": "Foreground",
@@ -29,7 +29,10 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "group": ["controls", "action"],
+      "group": [
+        "controls",
+        "action"
+      ],
       "registryKey": "jump_button",
       "data": {
         "lastTap": 0
@@ -47,7 +50,7 @@
       "alpha": 1,
       "group": "game",
       "registryKey": "message_window",
-      "label": "「このゲームを起動するのは、605 回目ですね。」",
+      "label": "",
       "data": {
         "lastTap": 0
       }
@@ -161,7 +164,56 @@
       "registryKey": "generic_button",
       "label": "MENU",
       "data": {
-        "lastTap": 1759622949137
+        "lastTap": 0
+      }
+    },
+    {
+      "name": "text_1760055302233",
+      "type": "Text",
+      "x": 640,
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1.42,
+      "scaleY": 1.42,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "Text",
+      "text": "げーむすたーと",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24.984375,
+          "descent": 7.875,
+          "fontSize": 32.859375
+        }
+      },
+      "data": {
+        "lastTap": 0
       }
     }
   ]
