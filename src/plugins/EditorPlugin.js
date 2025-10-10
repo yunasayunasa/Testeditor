@@ -134,11 +134,11 @@ refresh() {
         this.makeEditable(gameObject, activeScene);
     });
 
-    // 6. UIパネルも更新する
+    /*// 6. UIパネルも更新する
     if (this.editorUI) {
         this.editorUI.updatePropertyPanel();
         this.editorUI.updateLayerPanel();
-    }
+    }*/
     
     alert(`Editor has been refreshed for scene '${activeScene.scene.key}'.`);
 }
