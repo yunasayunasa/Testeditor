@@ -49,6 +49,13 @@ export default class EditorUI {
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
+        const refreshBtn = document.getElementById('editor-refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            // EditorPluginの新しいメソッドを呼び出す
+            this.plugin.refresh();
+        });
+    }
 
         
 
