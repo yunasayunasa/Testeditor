@@ -94,9 +94,9 @@ export const uiRegistry = {
  */
 export const sceneUiVisibility = {
     'GameScene': ['hud', 'menu', 'game'],
-    'JumpScene': ['controls', 'action','window', 'ui_element'],
+    'JumpScene': ['controls', 'action','hud', 'ui_element'],
     'BattleScene': ['hud', 'battle'],
     'ActionScene': ['menu', 'game'], // 例
     'TitleScene': ['text_ui'],
-    ' NovelOverlayScene': ['game'] // オーバーレイ中は'game'グループ(メッセージウィンドウなど)のみ表示
+    ' NovelOverlayScene': ['game','window'] // オーバーレイ中は'game'グループ(メッセージウィンドウなど)のみ表示
 };
