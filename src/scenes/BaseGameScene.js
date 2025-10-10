@@ -663,14 +663,11 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
     // --- 2. setInteractiveの事前適用 ---
     // onClickイベントが一つでも定義されていれば、オブジェクトをクリック可能にする
     // これは、エディタのモードに関わらず、常に行う必要がある。
-    const hasOnClick = events.some(e => e.trigger === 'onClick');
-    if (hasOnClick) {
-        gameObject.setInteractive({ useHandCursor: true });
-    }
-
-    // --- 3. データに基づいて、新しいリスナーを設定していく ---
     events.forEach(eventData => {
         
+        if (eventData.trigger === 'onClick') {
+            // ★ 1. オブジェクトをとにかくクリック可能にする
+            gameObject.setInteractive({ useHandCursor: true });
         // --- 'onClick' トリガーの処理 ---
         gameObject.on('pointerdown', () => {
                 console.log(`%c[DEBUG] onClick fired for '${gameObject.name}' WITHOUT mode check!`, 'color: red; font-weight: bold;');
