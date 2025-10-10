@@ -665,9 +665,25 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
     // (将来的に追加するイベントがあれば、ここにもoffを追加する)
 
     // --- 2. setInteractiveの事前適用 ---
+events.forEach(eventData => {
+        
+        if (eventData.trigger === 'onClick') {
+            // ★ 1. オブジェクトをとにかくクリック可能にする
+            gameObject.setInteractive({ useHandCursor: true });
+        // --- 'onClick' トリガーの処理 ---
+        gameObject.on('pointerdown', () => {
+                console.log(`%c[DEBUG] onClick fired for '${gameObject.name}' WITHOUT mode check!`, 'color: red; font-weight: bold;');
+                
+                if (this.actionInterpreter) {
+                    this.actionInterpreter.run(gameObject, eventData, null);
+                } else {
+                    console.error('[DEBUG] ActionInterpreter not found!');
+                }
+            });
+        }
     // onClickイベントが一つでも定義されていれば、オブジェクトをクリック可能にする
     // これは、エディタのモードに関わらず、常に行う必要がある。
-    const hasOnClick = events.some(e => e.trigger === 'onClick');
+    /*const hasOnClick = events.some(e => e.trigger === 'onClick');
     if (hasOnClick) {
         gameObject.setInteractive({ useHandCursor: true });
     }
@@ -689,7 +705,7 @@ applyEventsAndEditorFunctions(gameObject, eventsData) {
                     }
                 }
             });
-        }
+        }*/
           
         // --- 'onReady' トリガーの処理 ---
         if (eventData.trigger === 'onReady') {
