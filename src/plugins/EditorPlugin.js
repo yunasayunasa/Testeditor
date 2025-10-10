@@ -99,22 +99,21 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
  * ★★★ 新規メソッド ★★★
  * エディタの状態をリフレッシュし、現在アクティブなシーンのオブジェクトを再スキャンする
  */
+/**
+ * ★★★ 真の最終・堅牢版 ★★★
+ * エディタの状態をリフレッシュする。
+ * 個々のオブジェクトで発生したエラーで、全体の処理が止まらないようにする。
+ */
 refresh() {
     console.log('%c[EditorPlugin] Refreshing...', 'color: #FF9800; font-weight: bold;');
 
-    // 1. 現在の選択を全て解除する
-    this.selectSingleObject(null); 
-
-    // 2. 編集可能オブジェクトのリストを全てクリアする
+    this.selectSingleObject(null);
     this.editableObjects.clear();
     
-    // 3. 現在アクティブな「ゲームプレイシーン」を取得する
-    //    (SystemSceneやUISceneは対象外とする)
     let activeScene = null;
     const allScenes = this.pluginManager.game.scene.getScenes(true);
     for (const scene of allScenes) {
-        // BaseGameSceneを継承しているか、あるいはGameSceneか、で判定するのが良い
-        if (scene.scene.key !== 'SystemScene' && scene.scene.key !== 'UIScene') {
+        if (scene.scene.key !== 'SystemScene' && scene.scene.key !== 'UIScene' && scene.scene.isActive()) {
             activeScene = scene;
             break;
         }
@@ -122,25 +121,37 @@ refresh() {
 
     if (!activeScene) {
         console.warn('[EditorPlugin] No active game scene found to refresh.');
+        alert('リフレッシュ対象のアクティブなゲームシーンが見つかりませんでした。');
         return;
     }
     
     console.log(`[EditorPlugin] Rescanning active scene: '${activeScene.scene.key}'`);
+    let errorCount = 0;
 
-    // 4. アクティブなシーンの、全ての子オブジェクトをループする
-    activeScene.children.list.forEach(gameObject => {
-        // 5. それぞれのオブジェクトに対して、再度 makeEditable を実行する
-        //    makeEditable は冪等（何度呼んでも安全）なので、問題ない
-        this.makeEditable(gameObject, activeScene);
-    });
+    // ▼▼▼ forEach を for...of に変更し、try...catch で囲む ▼▼▼
+    // ----------------------------------------------------------------------
+    for (const gameObject of activeScene.children.list) {
+        try {
+            // makeEditable は冪等なので、何度呼んでも安全
+            this.makeEditable(gameObject, activeScene);
+        } catch (error) {
+            // iPadでしか出ないような謎のエラーを、ここで捕捉する
+            console.error(`[EditorPlugin] Failed to make an object editable during refresh.`, { 
+                objectName: gameObject.name, 
+                objectType: gameObject.type, 
+                error: error 
+            });
+            errorCount++;
+        }
+    }
+    // ----------------------------------------------------------------------
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    /*// 6. UIパネルも更新する
-    if (this.editorUI) {
-        this.editorUI.updatePropertyPanel();
-        this.editorUI.updateLayerPanel();
-    }*/
-    
-    alert(`Editor has been refreshed for scene '${activeScene.scene.key}'.`);
+    if (errorCount > 0) {
+        alert(`エディタのリフレッシュが完了しましたが、${errorCount}個のオブジェクトでエラーが発生しました。詳細はコンソールを確認してください。`);
+    } else {
+        alert(`Editor has been refreshed for scene '${activeScene.scene.key}'.`);
+    }
 }
 
     panCamera(dx, dy) {
