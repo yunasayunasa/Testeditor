@@ -14,8 +14,11 @@ tartman:「さて、用を済ませてさっさと寝るか…」
 [p]
 tartman:「…ん？」
 [p]
-[move name="tartman" pos="left" time=3000]
+[move name="tartman" x=200 time=3000]
 tartman:「あ」
 [fadein time=100 color=FF00000]
-
+[chara_hide name="tartman" time=100]
+anila:「ｺﾞﾁｿｳ…ｻﾏ」
+[p]
+エンディング　ニガサナイ
 [s]
