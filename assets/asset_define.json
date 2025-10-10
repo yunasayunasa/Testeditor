@@ -27,6 +27,10 @@
  "tartman_normal": "assets/images/tartman_normal.png",
 "mado_wood": "assets/images/mado_wood_02.png",
 "maptile_wood": "assets/images/maptile_wood_02.png",
+"taru": "assets/images/taru.png",
+"chest": "assets/images/chest.png",
+"hasira_bottom": "assets/images/hasira_bottom.png",
+"hasira_center": "assets/images/hasira_center.png",
 "taimatsu_on": "assets/images/taimatsu_on.png"
   },
    "spritesheets": {
