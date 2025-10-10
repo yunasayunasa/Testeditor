@@ -18,7 +18,7 @@
     {
       "name": "Background",
       "visible": true,
-      "locked": true
+      "locked": false
     }
   ],
   "objects": [
@@ -89,7 +89,7 @@
         "overlap_player": false,
         "collision_category": 1,
         "collision_mask": 4294967295,
-        "overlap_anila": false
+        "overlap_anila": true
       }
     },
     {
@@ -286,7 +286,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1204,
+      "x": 1836,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -356,7 +356,7 @@
         "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": false,
+        "overlap_test_b": true,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
@@ -439,6 +439,23 @@
             }
           ],
           "connections": []
+        },
+        {
+          "id": "event_1760081467666",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1760081481178",
+              "type": "run_scenario",
+              "params": {
+                "file": "overlay_test",
+                "block_input": true
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
         }
       ],
       "texture": "yuna_angry",
@@ -455,7 +472,7 @@
         }
       },
       "data": {
-        "lastTap": 1760006370658,
+        "lastTap": 1760080890194,
         "overlap_checkpoint": true,
         "collision_category": 1,
         "collision_mask": 4294967295,
@@ -1380,71 +1397,6 @@
       "texture": "mado_wood",
       "data": {
         "lastTap": 0
-      }
-    },
-    {
-      "name": "maptile_wood_1760006466695",
-      "type": "Image",
-      "x": 267,
-      "y": 299,
-      "depth": -1,
-      "scaleX": 0.3,
-      "scaleY": 0.3,
-      "angle": 0,
-      "alpha": 0.03,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1760006476506",
-          "trigger": "onOverlap_Start",
-          "nodes": [
-            {
-              "id": "node_1760006613968",
-              "type": "destroy",
-              "params": {
-                "target": "source"
-              },
-              "x": 50,
-              "y": 50
-            },
-            {
-              "id": "node_1760006619437",
-              "type": "run_scenario",
-              "params": {
-                "file": "overlay_test",
-                "block_input": false
-              },
-              "x": 50,
-              "y": 220
-            }
-          ],
-          "connections": [
-            {
-              "fromNode": "node_1760006613968",
-              "fromPin": "output",
-              "toNode": "node_1760006619437",
-              "toPin": "input"
-            }
-          ],
-          "targetGroup": "player"
-        }
-      ],
-      "texture": "maptile_wood",
-      "physics": {
-        "isStatic": false,
-        "isSensor": true,
-        "fixedRotation": true,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      },
-      "data": {
-        "lastTap": 1760006575918,
-        "overlap_player": false
       }
     }
   ],
