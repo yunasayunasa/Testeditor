@@ -1366,10 +1366,10 @@
       ],
       "texture": "taru",
       "physics": {
-        "isStatic": false,
+        "isStatic": true,
         "isSensor": true,
         "fixedRotation": false,
-        "gravityScale": 1,
+        "gravityScale": 0,
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
