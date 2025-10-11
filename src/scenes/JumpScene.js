@@ -36,7 +36,7 @@ export default class JumpScene extends BaseGameScene {
     
     // console.log("[JumpScene] Vignette effect applied to the main camera.");
         const soundManager = this.registry.get('soundManager');
-        if (soundManager) soundManager.playBgm('bgm_action');
+        if (soundManager) soundManager.playBgm('night_bgm');
 
         const worldWidth = 3840;
         const worldHeight = 720;
