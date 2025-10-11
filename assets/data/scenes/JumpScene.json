@@ -266,7 +266,7 @@
         {
           "type": "PlayerController",
           "params": {
-            "walkSoundKey": "smash",
+            "walkSoundKey": "walk",
             "jumpSoundKey": "smash",
             "moveSpeed": 6
           }
