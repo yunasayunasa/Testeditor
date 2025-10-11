@@ -186,7 +186,7 @@
               "id": "node_1759659886405",
               "type": "load_game",
               "params": {
-                "slot": "checkpoint_2"
+                "slot": "checkpoint"
               },
               "x": 50,
               "y": 50
@@ -221,7 +221,7 @@
               "id": "node_1759651217413",
               "type": "save_game",
               "params": {
-                "slot": "checkpoint_2"
+                "slot": "checkpoint"
               },
               "x": 50,
               "y": 50

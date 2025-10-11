@@ -197,6 +197,7 @@ export default class StateManager extends Phaser.Events.EventEmitter {
         const saveData = {
             saveDate: new Date().toLocaleString('ja-JP'),
             currentSceneKey: currentScene.scene.key,
+            layoutDataKey: currentScene.layoutDataKey || currentScene.scene.key,
             variables: { 
                 f: JSON.parse(JSON.stringify(this.f))
             },

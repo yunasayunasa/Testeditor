@@ -40,6 +40,7 @@ export default class BaseGameScene extends Phaser.Scene {
             // console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
         }
          this.loadData = data.loadData || null; // ★ ロードデータを受け取る
+         
     }
  create() {
     this.actionInterpreter = this.registry.get('actionInterpreter');

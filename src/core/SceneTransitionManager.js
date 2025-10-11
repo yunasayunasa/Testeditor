@@ -23,25 +23,27 @@ handleSimpleTransition(data) {
     // console.log(`Transition requested:`, data);
     
     const { from, to, params } = data;
+      const finalParams = { ...params };
+    // [load_game] の場合
+    if (finalParams.loadData && finalParams.loadData.layoutDataKey) {
+        finalParams.layoutDataKey = finalParams.loadData.layoutDataKey;
+    }
+    // [transition_scene] の場合、dataパラメータをlayoutDataKeyとして引き継ぐ
+    else if (finalParams.data) { 
+        finalParams.layoutDataKey = finalParams.data;
+    }
     this.systemScene.gameState = (to === 'GameScene') ? 'NOVEL' : 'GAMEPLAY';
     this.systemScene.sceneStack = [to];
 
     const sceneToStop = this.systemScene.scene.get(from);
 
-    if (sceneToStop && sceneToStop.scene.isActive() && from !== 'UIScene') {
-        // console.log(`Target to stop: '${from}'. Setting up shutdown listener.`);
-        
+    if (sceneToStop?.scene.isActive() && from !== 'UIScene') { // ?.で安全に
         sceneToStop.events.once('shutdown', () => {
-            // console.log(`%c[SceneTransitionManager] Event: '${from}' has SHUT DOWN. Now starting '${to}'.`, "color: #4CAF50; font-weight: bold;");
-            this._startAndMonitorScene(to, params);
+            this._startAndMonitorScene(to, finalParams); // ★ 修正したfinalParamsを渡す
         });
-
-        // console.log(`%c[SceneTransitionManager] Command: Issuing scene.stop('${from}') NOW.`, "color: #E91E63; font-weight: bold;");
         this.systemScene.scene.stop(from);
-
     } else {
-        // console.log(`No active scene to stop. Starting '${to}' directly.`);
-        this._startAndMonitorScene(to, params);
+        this._startAndMonitorScene(to, finalParams); // ★ 修正したfinalParamsを渡す
     }
     console.groupEnd();
 }
