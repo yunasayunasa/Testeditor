@@ -65,8 +65,8 @@
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
-        "lastTap": 1760153566829,
-        "overlap_anila": true,
+        "lastTap": 0,
+        "overlap_anila": false,
         "collision_category": 1,
         "collision_mask": 4294967295,
         "overlap_rulia_monster_1760153504781": false
@@ -120,7 +120,7 @@
         "overlap_player": false,
         "collision_category": 1,
         "collision_mask": 4294967295,
-        "overlap_anila": false
+        "overlap_anila": true
       }
     },
     {
@@ -302,7 +302,7 @@
         }
       },
       "data": {
-        "lastTap": 1760153577401,
+        "lastTap": 0,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -324,7 +324,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1570,
+      "x": 1904,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -383,7 +383,7 @@
         "isSensor": false,
         "fixedRotation": true,
         "gravityScale": 1,
-        "friction": 0.1,
+        "friction": 0,
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
@@ -391,15 +391,15 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760155181873,
         "isYSortable": true,
         "nextWaypoint": "test_a",
-        "overlap_test_b": false,
+        "overlap_test_b": true,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
         "collision_mask": 511,
-        "overlap_test_a": true,
+        "overlap_test_a": false,
         "overlap_test_c": false,
         "overlap_test_e": false
       }
@@ -1328,7 +1328,7 @@
         "nextWaypoint": "test_d",
         "collision_category": 1,
         "collision_mask": 4294967295,
-        "overlap_anila": false
+        "overlap_anila": true
       }
     },
     {
@@ -1588,7 +1588,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 3729,
+      "x": 2628,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -1653,7 +1653,7 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760155223246,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
@@ -1663,9 +1663,9 @@
         "collision_mask": 511,
         "overlap_clear_obj_1760107568696": false,
         "overlap_checkpoint": false,
-        "overlap_test_c": false,
+        "overlap_test_c": true,
         "overlap_test_e": false,
-        "overlap_clear_obj_1760152421830": true
+        "overlap_clear_obj_1760152421830": false
       }
     },
     {
@@ -1717,41 +1717,34 @@
         "lastTap": 0,
         "collision_category": 1,
         "collision_mask": 4294967295,
-        "overlap_anila": true
+        "overlap_anila": false,
+        "overlap_taimatsu_on_1760155234499": false
       }
     },
     {
       "name": "rulia_monster_1760153504781",
       "type": "Image",
-      "x": 248,
-      "y": 476,
+      "x": 260,
+      "y": 472,
       "depth": 0,
       "scaleX": 1.67,
       "scaleY": 1.67,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
+      "group": "enemy",
       "events": [],
       "components": [
         {
-          "type": "ChaseComponent",
+          "type": "NpcController",
           "params": {
-            "chaseSpeed": 0.5
+            "moveSpeed": 1
           }
         },
         {
-          "type": "NpcController",
-          "params": {}
-        },
-        {
-          "type": "DetectionAreaComponent",
+          "type": "PatrolComponent",
           "params": {
-            "radius": 1000,
-            "type": "cone",
-            "offsetX": 200,
-            "offsetY": 154,
-            "segments": 12,
-            "coneAngle": 359
+            "startWaypoint": "test_d"
           }
         }
       ],
@@ -1761,7 +1754,7 @@
         "isSensor": false,
         "fixedRotation": true,
         "gravityScale": 1,
-        "friction": 0.1,
+        "friction": 0,
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
@@ -1769,11 +1762,60 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760155204585,
         "overlap_yuna_angry_1759846628757": false,
         "overlap_checkpoint": false,
         "overlap_test_a": false,
-        "collision_mask": 1019
+        "collision_mask": 1019,
+        "collision_category": 4
+      }
+    },
+    {
+      "name": "taimatsu_on_1760155234499",
+      "type": "Image",
+      "x": 3729,
+      "y": 589,
+      "depth": 0,
+      "scaleX": 0.13,
+      "scaleY": 0.13,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1760155280085",
+          "trigger": "onOverlap_Start",
+          "nodes": [
+            {
+              "id": "node_1760155295743",
+              "type": "return_novel",
+              "params": {
+                "params": ""
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": [],
+          "targetGroup": "player"
+        }
+      ],
+      "texture": "taimatsu_on",
+      "physics": {
+        "isStatic": true,
+        "isSensor": true,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      },
+      "data": {
+        "lastTap": 1760155252096,
+        "overlap_clear_obj_1760152421830": false
       }
     }
   ],

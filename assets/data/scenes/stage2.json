@@ -65,8 +65,10 @@
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
-        "lastTap": 1760152096918,
-        "overlap_anila": true
+        "lastTap": 0,
+        "overlap_anila": true,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     },
     {
@@ -112,7 +114,7 @@
       "data": {
         "nextWaypoint": "test_c",
         "isYSortable": true,
-        "lastTap": 1760152198145,
+        "lastTap": 0,
         "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
@@ -299,7 +301,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152029771,
+        "lastTap": 0,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -321,7 +323,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1197,
+      "x": 1209,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -380,7 +382,7 @@
         "isSensor": false,
         "fixedRotation": true,
         "gravityScale": 1,
-        "friction": 0.1,
+        "friction": 0,
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
@@ -388,7 +390,7 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760154652251,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
@@ -510,7 +512,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152089213,
+        "lastTap": 0,
         "overlap_checkpoint": true,
         "collision_category": 1,
         "collision_mask": 4294967295,
@@ -1401,7 +1403,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152217789,
+        "lastTap": 0,
         "overlap_player": false,
         "nextWaypoint": "test_d",
         "collision_category": 1,
@@ -1592,7 +1594,7 @@
       ],
       "texture": "taru",
       "data": {
-        "lastTap": 1760152240144,
+        "lastTap": 0,
         "nextWaypoint": "test_e"
       }
     },
@@ -1610,7 +1612,7 @@
       "events": [],
       "texture": "taru",
       "data": {
-        "lastTap": 1760152233056
+        "lastTap": 0
       }
     },
     {
@@ -1655,7 +1657,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152238902,
+        "lastTap": 0,
         "overlap_player": false,
         "nextWaypoint": "test_a",
         "collision_category": 1,
@@ -1709,7 +1711,9 @@
         }
       },
       "data": {
-        "lastTap": 1760152441611
+        "lastTap": 0,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     }
   ],
