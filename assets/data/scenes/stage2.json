@@ -1,6 +1,6 @@
 {
   "scene_settings": {
-    "ySortEnabled": true,
+    
     "backgroundColor": "0x4488cc"
   },
   "hasJoystick": true,
@@ -153,7 +153,7 @@
       "alpha": 1,
       "events": [],
       "data": {
-        "isYSortable": true,
+      
         "lastTap": 0
       }
     },
@@ -186,7 +186,7 @@
               "id": "node_1759659886405",
               "type": "load_game",
               "params": {
-                "slot": "checkpoint"
+                "slot": "checkpoint_2"
               },
               "x": 50,
               "y": 50
@@ -221,7 +221,7 @@
               "id": "node_1759651217413",
               "type": "save_game",
               "params": {
-                "slot": "checkpoint"
+                "slot": "checkpoint_2"
               },
               "x": 50,
               "y": 50
