@@ -1,4 +1,4 @@
-
+[playbgm storage="nightbgm loop="true"]
 [chara_show name="tartman" pos="left" time=500]
 [wait time=500]
 
@@ -13,7 +13,7 @@ tartman:「む、あれは...」
 [chara_show name="anila" pos="right" time=500]
 anila:「...」
 [p]
-tartman「羊娘ではないか、おい、こんな夜中に何を...」
+tartman:「羊娘ではないか、おい、こんな夜中に何を...」
 [p]
 anila:「ﾅｶ...ｽｲﾀ」
 [p]
