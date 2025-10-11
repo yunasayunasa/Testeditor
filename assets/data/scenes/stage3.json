@@ -24,8 +24,8 @@
     {
       "name": "test_a",
       "type": "Image",
-      "x": 1111,
-      "y": 589,
+      "x": 1494,
+      "y": 556,
       "depth": 0,
       "scaleX": 0.49,
       "scaleY": 0.49,
@@ -65,8 +65,11 @@
       "data": {
         "nextWaypoint": "test_b",
         "isYSortable": true,
-        "lastTap": 1760152096918,
-        "overlap_anila": true
+        "lastTap": 1760153566829,
+        "overlap_anila": true,
+        "collision_category": 1,
+        "collision_mask": 4294967295,
+        "overlap_rulia_monster_1760153504781": false
       }
     },
     {
@@ -112,7 +115,7 @@
       "data": {
         "nextWaypoint": "test_c",
         "isYSortable": true,
-        "lastTap": 1760152198145,
+        "lastTap": 0,
         "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
@@ -187,7 +190,7 @@
     {
       "name": "player",
       "type": "Sprite",
-      "x": 95,
+      "x": 725,
       "y": 625,
       "depth": 625,
       "scaleX": 0.65,
@@ -299,7 +302,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152029771,
+        "lastTap": 1760153577401,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -321,7 +324,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1197,
+      "x": 1570,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -404,7 +407,7 @@
     {
       "name": "checkpoint",
       "type": "Image",
-      "x": 640,
+      "x": 1009,
       "y": 651,
       "depth": 0,
       "scaleX": 0.46,
@@ -432,89 +435,8 @@
         "collision_category": 1,
         "collision_mask": 4294967295,
         "overlap_player": false,
-        "overlap_yuna_angry_1759846628757": true
-      }
-    },
-    {
-      "name": "yuna_angry_1759846628757",
-      "type": "Image",
-      "x": 507,
-      "y": 652,
-      "depth": 0,
-      "scaleX": 0.43,
-      "scaleY": 0.43,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "group": "interactable",
-      "events": [
-        {
-          "id": "event_1759846676617",
-          "trigger": "onInteract",
-          "nodes": [
-            {
-              "id": "node_1759999298570",
-              "type": "toggle_hiding",
-              "params": {},
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": []
-        },
-        {
-          "id": "event_1759846723473",
-          "trigger": "onOverlap_End",
-          "nodes": [
-            {
-              "id": "node_1759846728825",
-              "type": "destroy",
-              "params": {
-                "target": "source"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": []
-        },
-        {
-          "id": "event_1760081467666",
-          "trigger": "onReady",
-          "nodes": [
-            {
-              "id": "node_1760081481178",
-              "type": "run_scenario",
-              "params": {
-                "file": "overlay_test",
-                "block_input": true
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "texture": "chest",
-      "physics": {
-        "isStatic": true,
-        "isSensor": true,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 0.1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      },
-      "data": {
-        "lastTap": 1760152089213,
-        "overlap_checkpoint": true,
-        "collision_category": 1,
-        "collision_mask": 4294967295,
-        "overlap_player": false
+        "overlap_yuna_angry_1759846628757": true,
+        "overlap_rulia_monster_1760153504781": false
       }
     },
     {
@@ -1401,7 +1323,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152217789,
+        "lastTap": 0,
         "overlap_player": false,
         "nextWaypoint": "test_d",
         "collision_category": 1,
@@ -1592,7 +1514,7 @@
       ],
       "texture": "taru",
       "data": {
-        "lastTap": 1760152240144,
+        "lastTap": 0,
         "nextWaypoint": "test_e"
       }
     },
@@ -1610,7 +1532,7 @@
       "events": [],
       "texture": "taru",
       "data": {
-        "lastTap": 1760152233056
+        "lastTap": 0
       }
     },
     {
@@ -1655,7 +1577,7 @@
         }
       },
       "data": {
-        "lastTap": 1760152238902,
+        "lastTap": 0,
         "overlap_player": false,
         "nextWaypoint": "test_a",
         "collision_category": 1,
@@ -1663,10 +1585,10 @@
         "overlap_anila": false
       }
     },
-     {
+    {
       "name": "anila",
       "type": "Sprite",
-      "x": 2252,
+      "x": 3729,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -1731,7 +1653,7 @@
         }
       },
       "data": {
-        "lastTap": 1760107915079,
+        "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
@@ -1740,7 +1662,10 @@
         "collision_category": 4,
         "collision_mask": 511,
         "overlap_clear_obj_1760107568696": false,
-        "overlap_checkpoint": false
+        "overlap_checkpoint": false,
+        "overlap_test_c": false,
+        "overlap_test_e": false,
+        "overlap_clear_obj_1760152421830": true
       }
     },
     {
@@ -1789,7 +1714,66 @@
         }
       },
       "data": {
-        "lastTap": 1760152441611
+        "lastTap": 0,
+        "collision_category": 1,
+        "collision_mask": 4294967295,
+        "overlap_anila": true
+      }
+    },
+    {
+      "name": "rulia_monster_1760153504781",
+      "type": "Image",
+      "x": 248,
+      "y": 476,
+      "depth": 0,
+      "scaleX": 1.67,
+      "scaleY": 1.67,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "components": [
+        {
+          "type": "ChaseComponent",
+          "params": {
+            "chaseSpeed": 0.5
+          }
+        },
+        {
+          "type": "NpcController",
+          "params": {}
+        },
+        {
+          "type": "DetectionAreaComponent",
+          "params": {
+            "radius": 1000,
+            "type": "cone",
+            "offsetX": 200,
+            "offsetY": 154,
+            "segments": 12,
+            "coneAngle": 359
+          }
+        }
+      ],
+      "texture": "rulia_monster",
+      "physics": {
+        "isStatic": false,
+        "isSensor": false,
+        "fixedRotation": true,
+        "gravityScale": 1,
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 4,
+          "mask": 1019
+        }
+      },
+      "data": {
+        "lastTap": 0,
+        "overlap_yuna_angry_1759846628757": false,
+        "overlap_checkpoint": false,
+        "overlap_test_a": false,
+        "collision_mask": 1019
       }
     }
   ],
