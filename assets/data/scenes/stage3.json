@@ -302,7 +302,7 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760156140359,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -387,18 +387,18 @@
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
-          "mask": 511
+          "mask": 507
         }
       },
       "data": {
-        "lastTap": 1760155181873,
+        "lastTap": 1760156075062,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": true,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
-        "collision_mask": 511,
+        "collision_mask": 507,
         "overlap_test_a": false,
         "overlap_test_c": false,
         "overlap_test_e": false
@@ -1649,18 +1649,18 @@
         "restitution": 0,
         "collisionFilter": {
           "category": 4,
-          "mask": 511
+          "mask": 507
         }
       },
       "data": {
-        "lastTap": 1760155223246,
+        "lastTap": 1760156068284,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
         "dragStartX": 1927.9999999999998,
         "dragStartY": 609.0911424572828,
         "collision_category": 4,
-        "collision_mask": 511,
+        "collision_mask": 507,
         "overlap_clear_obj_1760107568696": false,
         "overlap_checkpoint": false,
         "overlap_test_c": true,
@@ -1668,13 +1668,11 @@
         "overlap_clear_obj_1760152421830": false
       }
     },
-   
-    
     {
       "name": "rulia_monster_1760153504781",
       "type": "Image",
-      "x": 260,
-      "y": 472,
+      "x": 289,
+      "y": 476,
       "depth": 0,
       "scaleX": 1.67,
       "scaleY": 1.67,
@@ -1711,7 +1709,7 @@
         }
       },
       "data": {
-        "lastTap": 1760155204585,
+        "lastTap": 0,
         "overlap_yuna_angry_1759846628757": false,
         "overlap_checkpoint": false,
         "overlap_test_a": false,
@@ -1763,8 +1761,10 @@
         }
       },
       "data": {
-        "lastTap": 1760155252096,
-        "overlap_clear_obj_1760152421830": false
+        "lastTap": 1760156104939,
+        "overlap_clear_obj_1760152421830": false,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     }
   ],

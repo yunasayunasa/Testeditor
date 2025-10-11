@@ -17,8 +17,9 @@ tartman:「…ん？」
 [move name="tartman" x=200 time=3000]
 tartman:「あ」
 [fadein time=100 color=FF00000]
-[chara_hide name="tartman" time=100]
+[chara_hide name="tartman" time=500]
 anila:「ｺﾞﾁｿｳ…ｻﾏ」
 [p]
 エンディング　ニガサナイ
+[p]
 [s]
