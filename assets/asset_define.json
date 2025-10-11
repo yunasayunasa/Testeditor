@@ -92,6 +92,7 @@
         "GameScene.json",
         "UIScene.json",
         "stage2.json",
+         "stage3.json",
         "JumpScene.json",
           "TitleScene.json",
         "pause_menu.json"

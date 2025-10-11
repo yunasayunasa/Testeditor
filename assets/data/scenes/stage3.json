@@ -1663,6 +1663,86 @@
         "overlap_anila": false
       }
     },
+     {
+      "name": "anila",
+      "type": "Sprite",
+      "x": 2252,
+      "y": 609,
+      "depth": 609,
+      "scaleX": 0.76,
+      "scaleY": 0.76,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "group": "enemy",
+      "events": [],
+      "components": [
+        {
+          "type": "NpcController",
+          "params": {
+            "moveSpeed": 12.5
+          }
+        },
+        {
+          "type": "AnimationController",
+          "params": {}
+        },
+        {
+          "type": "ChaseComponent",
+          "params": {
+            "detectionType": "vision",
+            "visionAngle": 60,
+            "detectionRadius": 500,
+            "chaseSpeed": 10
+          }
+        },
+        {
+          "type": "ReturnHomeComponent",
+          "params": {}
+        },
+        {
+          "type": "DetectionAreaComponent",
+          "params": {
+            "type": "cone",
+            "radius": 370,
+            "offsetX": 142
+          }
+        },
+        {
+          "type": "WanderComponent",
+          "params": {
+            "waitDuration": 1100,
+            "walkDuration": 5600
+          }
+        }
+      ],
+      "anim_prefix": "anila",
+      "texture": "anila_walk",
+      "physics": {
+        "isStatic": false,
+        "isSensor": false,
+        "fixedRotation": true,
+        "gravityScale": 1,
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 4,
+          "mask": 511
+        }
+      },
+      "data": {
+        "lastTap": 1760107915079,
+        "isYSortable": true,
+        "nextWaypoint": "test_a",
+        "overlap_test_b": false,
+        "dragStartX": 1927.9999999999998,
+        "dragStartY": 609.0911424572828,
+        "collision_category": 4,
+        "collision_mask": 511,
+        "overlap_clear_obj_1760107568696": false,
+        "overlap_checkpoint": false
+      }
+    },
     {
       "name": "clear_obj_1760152421830",
       "type": "Image",
