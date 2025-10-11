@@ -382,7 +382,7 @@
     {
       "name": "checkpoint",
       "type": "Image",
-      "x": 640,
+      "x": 440,
       "y": 651,
       "depth": 0,
       "scaleX": 0.46,

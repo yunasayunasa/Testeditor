@@ -1797,7 +1797,7 @@
               "id": "node_1760157315787",
               "type": "run_scenario",
               "params": {
-                "file": "secene2",
+                "file": "scene2",
                 "block_input": true
               },
               "x": 50,
