@@ -1668,59 +1668,8 @@
         "overlap_clear_obj_1760152421830": false
       }
     },
-    {
-      "name": "clear_obj_1760152421830",
-      "type": "Image",
-      "x": 3742,
-      "y": 570,
-      "depth": 0,
-      "scaleX": 0.54,
-      "scaleY": 0.54,
-      "angle": 0,
-      "alpha": 1,
-      "layer": "Gameplay",
-      "events": [
-        {
-          "id": "event_1760152473140",
-          "trigger": "onOverlap_Start",
-          "nodes": [
-            {
-              "id": "node_1760152484222",
-              "type": "transition_scene",
-              "params": {
-                "scene": "JumpScene",
-                "data": "stage3",
-                "script": ""
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": [],
-          "targetGroup": "player"
-        }
-      ],
-      "texture": "clear_obj",
-      "physics": {
-        "isStatic": true,
-        "isSensor": true,
-        "fixedRotation": false,
-        "gravityScale": 1,
-        "friction": 1,
-        "restitution": 0,
-        "collisionFilter": {
-          "category": 1,
-          "mask": 4294967295
-        }
-      },
-      "data": {
-        "lastTap": 0,
-        "collision_category": 1,
-        "collision_mask": 4294967295,
-        "overlap_anila": false,
-        "overlap_taimatsu_on_1760155234499": false
-      }
-    },
+   
+    
     {
       "name": "rulia_monster_1760153504781",
       "type": "Image",
