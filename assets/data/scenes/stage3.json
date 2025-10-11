@@ -1588,7 +1588,7 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 2628,
+      "x": 1628,
       "y": 609,
       "depth": 609,
       "scaleX": 0.76,
@@ -1602,7 +1602,7 @@
         {
           "type": "NpcController",
           "params": {
-            "moveSpeed": 12.5
+            "moveSpeed": 20.5
           }
         },
         {
@@ -1614,8 +1614,8 @@
           "params": {
             "detectionType": "vision",
             "visionAngle": 60,
-            "detectionRadius": 500,
-            "chaseSpeed": 10
+            "detectionRadius": 300,
+            "chaseSpeed": 5
           }
         },
         {
@@ -1633,7 +1633,7 @@
         {
           "type": "WanderComponent",
           "params": {
-            "waitDuration": 1100,
+            "waitDuration": 900,
             "walkDuration": 5600
           }
         }
