@@ -36,39 +36,39 @@ export default class SoundManager {
      * @param {number} [fadeinTime=0] - フェードイン時間(ms)
      * @returns {Promise<void>} フェードイン完了時に解決されるPromise
      */
-   // src/core/SoundManager.js (最終FIX・完成版)
+    playBgm(key, fadeinTime = 0) {
+        return new Promise(resolve => {
+            this.resumeContext();
 
-/**
- * BGMを再生する (設定オブジェクト対応・Promiseなしの撃ちっぱなし版)
- * @param {string} key - 再生するBGMのアセットキー
- * @param {object} [config={}] - 設定オブジェクト { fade: number, loop: boolean, volume: number }
- */
-playBgm(key, config = {}) {
-    this.resumeContext();
+            // 同じ曲が既に再生中の場合は、何もしないで即座に完了
+            if (this.currentBgm && this.currentBgmKey === key && this.currentBgm.isPlaying) {
+                resolve();
+                return;
+            }
 
-    if (this.currentBgm && this.currentBgmKey === key && this.currentBgm.isPlaying) {
-        return;
+            // 既存のBGMがあれば、まずフェードアウトさせて止める
+            this.stopBgm(fadeinTime); // 新しい曲のフェードイン時間と同じ時間でクロスフェード
+
+            // 新しいBGMを再生
+            const targetVolume = this.configManager.getValue('bgmVolume');
+            const newBgm = this.sound.add(key, { loop: true, volume: 0 }); // 最初は音量0
+            newBgm.play();
+
+            this.currentBgm = newBgm;
+            this.currentBgmKey = key;
+
+            // フェードインTween
+            this.game.scene.getScene('SystemScene').tweens.add({
+                targets: newBgm,
+                volume: targetVolume,
+                duration: fadeinTime,
+                ease: 'Linear',
+                onComplete: () => {
+                    resolve(); // フェードイン完了でPromiseを解決
+                }
+            });
+        });
     }
-
-    const fadeTime = config.fade || 0;
-    this.stopBgm(fadeTime); // クロスフェード
-
-    const loop = config.loop !== false; // デフォルトはtrue
-    const targetVolume = this.configManager.getValue('bgmVolume') * (config.volume || 1);
-    
-    const newBgm = this.sound.add(key, { loop: loop, volume: 0 });
-    newBgm.play();
-
-    this.currentBgm = newBgm;
-    this.currentBgmKey = key;
-
-    this.game.scene.getScene('SystemScene').tweens.add({
-        targets: newBgm,
-        volume: targetVolume,
-        duration: fadeTime,
-        ease: 'Linear'
-    });
-}
 
      /**
      * ★★★ 音ゲーの心臓部（マスタークロック）★★★

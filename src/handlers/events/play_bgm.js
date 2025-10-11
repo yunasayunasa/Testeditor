@@ -1,16 +1,26 @@
+// src/handlers/events/play_bgm.js
+
+/**
+ * [play_bgm] アクションタグ
+ * BGMを再生します。
+ * @param {ActionInterpreter} interpreter
+ * @param {object} params
+ */
 export default async function play_bgm(interpreter, params) {
     const key = params.key;
-    if (!key) return;
+    if (!key) {
+        console.warn(`[play_bgm] 'key' parameter is missing.`);
+        return;
+    }
+    
+    // params.loopが'false'の文字列である場合のみ、ループしない
+    const loop = params.loop !== 'false';
     
     const soundManager = interpreter.scene.registry.get('soundManager');
     if (soundManager) {
-        // ★ SoundManagerに、設定オブジェクトを渡す
-        soundManager.playBgm(key, {
-            loop: params.loop !== 'false'
-        });
+        soundManager.playBgm(key, loop);
     }
 }
-
 
 /**
  * ★ VSLエディタ用の自己定義 ★
