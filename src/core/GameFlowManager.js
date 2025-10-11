@@ -182,14 +182,14 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     }
                     break;
                 }
-                    case 'playBgm': {
-                // SoundManagerはregistryから取得するのが安全
+                       case 'playBgm': {
                 const soundManager = EngineAPI.systemScene?.registry.get('soundManager');
-                if (soundManager && params.key) {
-                    soundManager.playBgm(params.key, params.volume);
+                if (soundManager && action.params.key) {
+                    // ★ 新しい「撃ちっぱなし」メソッドを呼び出す
+                    soundManager.playBgmFireAndForget(action.params.key, action.params.volume);
                 }
                 break;
-                }
+            }
             }
         }
     }

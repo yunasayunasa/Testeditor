@@ -86,6 +86,29 @@ export default class SoundManager {
     }
 
     /**
+ * ★★★ 新規メソッド ★★★
+ * BGMを再生する (撃ちっぱなし専用バージョン)
+ * GameFlowManagerなど、完了を待つ必要がないシステムから呼び出す
+ */
+playBgmFireAndForget(key, fadeinTime = 0) {
+    // playBgmの中身とほぼ同じだが、Promiseでラップしない
+    this.resumeContext();
+    if (this.currentBgm && this.currentBgmKey === key && this.currentBgm.isPlaying) return;
+    this.stopBgm(fadeinTime);
+    const targetVolume = this.configManager.getValue('bgmVolume');
+    const newBgm = this.sound.add(key, { loop: true, volume: 0 });
+    newBgm.play();
+    this.currentBgm = newBgm;
+    this.currentBgmKey = key;
+    this.game.scene.getScene('SystemScene').tweens.add({
+        targets: newBgm,
+        volume: targetVolume,
+        duration: fadeinTime,
+        ease: 'Linear'
+    });
+}
+
+    /**
      * BGMを停止する (フェード対応版)
      * @param {number} [fadeoutTime=0] - フェードアウト時間(ms)
      */
@@ -159,6 +182,8 @@ export default class SoundManager {
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         });
     }
+
+
 
     /**
      * ★★★ 新規メソッド ★★★
