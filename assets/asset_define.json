@@ -59,6 +59,8 @@
   
   "sounds": {
 "popopo": "assets/gyakuten_popopo.mp3",
+"night_bgm": "assets/audio/night_bgm.mp3",
+"blood": "assets/audio/blood.mp3",
 "cafe": "assets/cafe.mp3",
  "bgm_action": "assets/gyakuten_bgm.mp3",
 "ronpa_bgm": "assets/ronpa_bgm.mp3",
