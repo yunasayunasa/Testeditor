@@ -7,7 +7,7 @@ tartman:「な！なんだ！？巨大な大食い娘が！？」
 tartman:「ま、まずい！追ってくる！逃げなくては！」
 [p]
 [chara_show name="gran" pos="right" time=500]
-[chara_show name="gran" pos="center" time=500]
+[chara_show name="anila" pos="center" time=500]
 anila:「...」
 [p]
 tartman「くっ！先の2人まで...！？」
