@@ -1,4 +1,4 @@
-[playbgm storage="night_bgm"]
+
 [jump storage="JumpScene" params="{player_level:f.love_meter, player_name:'&f.player_name;', start_area:'bridge', current_coin:f.coin, player_max_hp:f.player_max_hp, player_hp:f.player_hp}"]
 
 [chara_show name="tartman" pos="center" time=1000]

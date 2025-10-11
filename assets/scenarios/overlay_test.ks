@@ -1,4 +1,4 @@
-
+[playbgm storage="night_bgm"]
 [chara_show name="tartman" pos="left" time=500]
 [wait time=500]
 
