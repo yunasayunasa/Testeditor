@@ -1,6 +1,6 @@
 {
   "scene_settings": {
-    "ySortEnabled": false,
+    
     "backgroundColor": "0x4488cc"
   },
   "hasJoystick": true,
@@ -304,7 +304,7 @@
       "type": "Sprite",
       "x": 1152,
       "y": 609,
-      "depth": 609,
+      "depth": 10000,
       "scaleX": 0.76,
       "scaleY": 0.76,
       "angle": 0,
