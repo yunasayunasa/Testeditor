@@ -9,4 +9,4 @@ export default async function play_bgm(interpreter, params) {
             loop: params.loop !== 'false'
         });
     }
-}```
+}
