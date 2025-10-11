@@ -1,6 +1,5 @@
 {
   "scene_settings": {
-    
     "backgroundColor": "0x4488cc"
   },
   "hasJoystick": true,
@@ -18,7 +17,7 @@
     {
       "name": "Background",
       "visible": true,
-      "locked": true
+      "locked": false
     }
   ],
   "objects": [
@@ -53,7 +52,7 @@
       "texture": "chest",
       "data": {
         "nextWaypoint": "test_b",
-        "lastTap": 1760107917489
+        "lastTap": 0
       }
     },
     {
@@ -98,7 +97,7 @@
       },
       "data": {
         "nextWaypoint": "test_a",
-        "lastTap": 1760107614503,
+        "lastTap": 0,
         "overlap_tartman": false,
         "overlap_player": false,
         "collision_category": 1,
@@ -216,6 +215,17 @@
               },
               "x": 50,
               "y": 220
+            },
+            {
+              "id": "node_1760165291690",
+              "type": "play_sound",
+              "params": {
+                "key": "blood",
+                "volume": 1,
+                "loop": "false"
+              },
+              "x": 50,
+              "y": 390
             }
           ],
           "connections": [
@@ -223,6 +233,12 @@
               "fromNode": "node_1759757955280",
               "fromPin": "output",
               "toNode": "node_1759659886405",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_1760165291690",
+              "fromPin": "output",
+              "toNode": "node_1759757955280",
               "toPin": "input"
             }
           ],
@@ -288,7 +304,7 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760165275077,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -302,8 +318,8 @@
     {
       "name": "anila",
       "type": "Sprite",
-      "x": 1152,
-      "y": 609,
+      "x": 1206,
+      "y": 599,
       "depth": 10000,
       "scaleX": 0.76,
       "scaleY": 0.76,
@@ -367,7 +383,7 @@
         }
       },
       "data": {
-        "lastTap": 1760107915079,
+        "lastTap": 1760165324781,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
@@ -1369,7 +1385,7 @@
         "isStatic": true,
         "isSensor": true,
         "fixedRotation": false,
-        "gravityScale": 0,
+        "gravityScale": 1,
         "friction": 0.1,
         "restitution": 0,
         "collisionFilter": {
@@ -1378,8 +1394,10 @@
         }
       },
       "data": {
-        "lastTap": 1760107923368,
-        "overlap_checkpoint": true
+        "lastTap": 0,
+        "overlap_checkpoint": true,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     },
     {
@@ -1396,7 +1414,7 @@
       "events": [],
       "texture": "taru",
       "data": {
-        "lastTap": 1760107267169
+        "lastTap": 0
       }
     },
     {
@@ -1413,7 +1431,7 @@
       "events": [],
       "texture": "next_arrow",
       "data": {
-        "lastTap": 1760107523858
+        "lastTap": 0
       }
     },
     {
@@ -1424,7 +1442,7 @@
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "angle": 90,
+      "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
@@ -1442,10 +1460,12 @@
         }
       },
       "data": {
-        "lastTap": 1760107587996,
+        "lastTap": 0,
         "overlap_yuna_angry_1759846628757": false,
         "overlap_checkpoint": false,
-        "overlap_anila": false
+        "overlap_anila": false,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     },
     {
@@ -1529,14 +1549,16 @@
         }
       },
       "data": {
-        "lastTap": 1760107667076
+        "lastTap": 0,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     },
-     {
+    {
       "name": "next_arrow_1760157261448",
       "type": "Image",
       "x": 108,
-      "y": 10,
+      "y": 700,
       "depth": 0,
       "scaleX": 0.27,
       "scaleY": 0.27,
@@ -1566,6 +1588,16 @@
               },
               "x": 50,
               "y": 220
+            },
+            {
+              "id": "node_1760165252128",
+              "type": "play_bgm",
+              "params": {
+                "key": "night_bgm",
+                "loop": true
+              },
+              "x": 50,
+              "y": 390
             }
           ],
           "connections": [
@@ -1573,6 +1605,12 @@
               "fromNode": "node_1760157304584",
               "fromPin": "output",
               "toNode": "node_1760157315787",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_1760165252128",
+              "fromPin": "output",
+              "toNode": "node_1760157304584",
               "toPin": "input"
             }
           ],
@@ -1593,7 +1631,9 @@
         }
       },
       "data": {
-        "lastTap": 1760157280615
+        "lastTap": 1760165215801,
+        "collision_category": 1,
+        "collision_mask": 4294967295
       }
     }
   ],
