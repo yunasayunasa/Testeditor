@@ -66,7 +66,7 @@
         "nextWaypoint": "test_b",
         "isYSortable": true,
         "lastTap": 0,
-        "overlap_anila": false,
+        "overlap_anila": true,
         "collision_category": 1,
         "collision_mask": 4294967295,
         "overlap_rulia_monster_1760153504781": false
@@ -302,7 +302,7 @@
         }
       },
       "data": {
-        "lastTap": 1760156140359,
+        "lastTap": 0,
         "isYSortable": true,
         "overlap_test_b": false,
         "collision_category": 2,
@@ -391,7 +391,7 @@
         }
       },
       "data": {
-        "lastTap": 1760156075062,
+        "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": true,
@@ -1653,7 +1653,7 @@
         }
       },
       "data": {
-        "lastTap": 1760156068284,
+        "lastTap": 0,
         "isYSortable": true,
         "nextWaypoint": "test_a",
         "overlap_test_b": false,
@@ -1665,13 +1665,14 @@
         "overlap_checkpoint": false,
         "overlap_test_c": true,
         "overlap_test_e": false,
-        "overlap_clear_obj_1760152421830": false
+        "overlap_clear_obj_1760152421830": false,
+        "overlap_test_a": true
       }
     },
     {
       "name": "rulia_monster_1760153504781",
       "type": "Image",
-      "x": 289,
+      "x": 269,
       "y": 476,
       "depth": 0,
       "scaleX": 1.67,
@@ -1709,7 +1710,7 @@
         }
       },
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760157256085,
         "overlap_yuna_angry_1759846628757": false,
         "overlap_checkpoint": false,
         "overlap_test_a": false,
@@ -1761,10 +1762,74 @@
         }
       },
       "data": {
-        "lastTap": 1760156104939,
+        "lastTap": 0,
         "overlap_clear_obj_1760152421830": false,
         "collision_category": 1,
         "collision_mask": 4294967295
+      }
+    },
+    {
+      "name": "next_arrow_1760157261448",
+      "type": "Image",
+      "x": 658,
+      "y": 507,
+      "depth": 0,
+      "scaleX": 0.27,
+      "scaleY": 0.27,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1760157291453",
+          "trigger": "onCollide_Start",
+          "nodes": [
+            {
+              "id": "node_1760157304584",
+              "type": "destroy",
+              "params": {
+                "target": "source"
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1760157315787",
+              "type": "run_scenario",
+              "params": {
+                "file": "secene2",
+                "block_input": true
+              },
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760157304584",
+              "fromPin": "output",
+              "toNode": "node_1760157315787",
+              "toPin": "input"
+            }
+          ],
+          "targetGroup": "player"
+        }
+      ],
+      "texture": "next_arrow",
+      "physics": {
+        "isStatic": false,
+        "isSensor": false,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      },
+      "data": {
+        "lastTap": 1760157280615
       }
     }
   ],

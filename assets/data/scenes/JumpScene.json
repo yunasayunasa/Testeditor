@@ -1531,6 +1531,70 @@
       "data": {
         "lastTap": 1760107667076
       }
+    },
+     {
+      "name": "next_arrow_1760157261448",
+      "type": "Image",
+      "x": 108,
+      "y": 507,
+      "depth": 0,
+      "scaleX": 0.27,
+      "scaleY": 0.27,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1760157291453",
+          "trigger": "onCollide_Start",
+          "nodes": [
+            {
+              "id": "node_1760157304584",
+              "type": "destroy",
+              "params": {
+                "target": "source"
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1760157315787",
+              "type": "run_scenario",
+              "params": {
+                "file": "overlay_test",
+                "block_input": true
+              },
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760157304584",
+              "fromPin": "output",
+              "toNode": "node_1760157315787",
+              "toPin": "input"
+            }
+          ],
+          "targetGroup": "player"
+        }
+      ],
+      "texture": "next_arrow",
+      "physics": {
+        "isStatic": false,
+        "isSensor": false,
+        "fixedRotation": false,
+        "gravityScale": 1,
+        "friction": 0.1,
+        "restitution": 0,
+        "collisionFilter": {
+          "category": 1,
+          "mask": 4294967295
+        }
+      },
+      "data": {
+        "lastTap": 1760157280615
+      }
     }
   ],
   "animations": [
