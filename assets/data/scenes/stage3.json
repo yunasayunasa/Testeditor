@@ -231,6 +231,17 @@
               },
               "x": 50,
               "y": 220
+            },
+            {
+              "id": "node_1760165291690",
+              "type": "play_sound",
+              "params": {
+                "key": "blood",
+                "volume": 1,
+                "loop": "false"
+              },
+              "x": 50,
+              "y": 390
             }
           ],
           "connections": [
@@ -238,6 +249,12 @@
               "fromNode": "node_1759757955280",
               "fromPin": "output",
               "toNode": "node_1759659886405",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_1760165291690",
+              "fromPin": "output",
+              "toNode": "node_1759757955280",
               "toPin": "input"
             }
           ],
@@ -273,7 +290,7 @@
         {
           "type": "Scrollable",
           "params": {
-            "speed": -5
+            "speed": 11
           }
         },
         {
