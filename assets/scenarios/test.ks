@@ -17,6 +17,7 @@ tartman:「…ん？」
 [move name="tartman" x=200 time=3000]
 tartman:「あ」
 [fadein time=100 color=FF00000]
+[playse storage="blood"]
 [chara_hide name="tartman" time=500]
 anila:「ｺﾞﾁｿｳ…ｻﾏ」
 [p]

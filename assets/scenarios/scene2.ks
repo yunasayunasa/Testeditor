@@ -10,7 +10,7 @@ tartman:「ま、まずい！追ってくる！逃げなくては！」
 [chara_show name="anila" pos="center" time=500]
 anila:「...」
 [p]
-tartman「くっ！先の2人まで...！？」
+tartman:「くっ！先の2人まで...！？」
 [p]
 gran:「ﾅｶ...ｽｲﾀ」
 [p]

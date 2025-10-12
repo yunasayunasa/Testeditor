@@ -9,9 +9,9 @@ tartman:「私をみるなり一心不乱に食べようとしてくるのは...
 tartman:「もう追ってこないよな...？」
 [p]
 [chara_show name="gran" pos="right" time=500]
-anila:「...」
+gran:「...」
 [p]
-tartman「嘘だろう...！？団長では無いか！」
+tartman:「嘘だろう...！？団長では無いか！」
 [p]
 gran:「ﾅｶ...ｽｲﾀ」
 [p]
