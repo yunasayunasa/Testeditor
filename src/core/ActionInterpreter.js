@@ -36,8 +36,30 @@ export default class ActionInterpreter {
  // in src/core/ActionInterpreter.js
 // in src/core/ActionInterpreter.js
 async run(source, eventData, collidedTarget = null) {
-    if (!source || !source.scene || !source.scene.scene.isActive()) return;
-    if (!eventData || !eventData.nodes || eventData.nodes.length === 0) return;
+    if (!source || !source.scene) {
+        console.warn('[ActionInterpreter.run] Guard triggered: Source or source.scene is invalid.');
+        return;
+    }
+    if (!source.scene.scene.isActive()) {
+        console.warn(`[ActionInterpreter.run] Guard triggered: Source scene '${source.scene.scene.key}' is not active.`);
+        // ★ onReady のための特別措置：アクティブでなくても、少し待ってリトライする
+        if (eventData.trigger === 'onReady') {
+            await new Promise(resolve => setTimeout(resolve, 16)); // 1フレーム待つ
+            if (!source.scene.scene.isActive()) {
+                 console.error(`[ActionInterpreter.run] Retried, but scene is still not active. Aborting onReady.`);
+                 return;
+            }
+            console.log(`[ActionInterpreter.run] Scene is now active after delay. Continuing onReady.`);
+        } else {
+            return;
+        }
+    }
+
+    if (!eventData || !eventData.nodes || eventData.nodes.length === 0) {
+        console.warn('[ActionInterpreter.run] Guard triggered: Event data has no nodes.');
+        return;
+    }
+
 
     this.scene = source.scene;
     this.currentSource = source;
