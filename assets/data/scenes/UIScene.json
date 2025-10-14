@@ -38,7 +38,23 @@
         "lastTap": 0
       }
     },
-   
+    {
+      "name": "message_window",
+      "type": "MessageWindow",
+      "x": 646,
+      "y": 577,
+      "depth": 5000,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "group": "game",
+      "registryKey": "message_window",
+      "label": "",
+      "data": {
+        "lastTap": 0
+      }
+    },
     {
       "name": "menu_button",
       "type": "Text",
