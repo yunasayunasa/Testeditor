@@ -173,8 +173,8 @@
       "x": 302,
       "y": 522,
       "depth": 5001,
-      "scaleX": 2.05,
-      "scaleY": 2.05,
+      "scaleX": 1,
+      "scaleY": 1,
       "angle": 0,
       "alpha": 1,
       "components": [
@@ -225,7 +225,7 @@
         }
       },
       "data": {
-        "lastTap": 1760428014236
+        "lastTap": 0
       }
     },
     {
@@ -234,14 +234,14 @@
       "x": 958,
       "y": 444,
       "depth": 0,
-      "scaleX": 1.54,
-      "scaleY": 1.54,
+      "scaleX": 1,
+      "scaleY": 1,
       "angle": 0,
       "alpha": 1,
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1760428037526
+        "lastTap": 0
       }
     },
     {
@@ -250,14 +250,33 @@
       "x": 335,
       "y": 444,
       "depth": 0,
-      "scaleX": 1.75,
-      "scaleY": 1.75,
+      "scaleX": 1,
+      "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [
+        {
+          "id": "event_1760429970941",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1760429980997",
+              "type": "state_transition",
+              "params": {
+                "to": "Pressing",
+                "target": "TestimonyController"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1760428046156
+        "lastTap": 1760429959357
       }
     },
     {
@@ -270,10 +289,29 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [
+        {
+          "id": "event_1760430021013",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1760430039925",
+              "type": "update_statement_index",
+              "params": {
+                "direction": "next",
+                "to": ""
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
       "registryKey": "generic_button",
       "label": "→",
       "data": {
-        "lastTap": 1760428081212
+        "lastTap": 1760430016706
       }
     },
     {
@@ -286,10 +324,29 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [
+        {
+          "id": "event_1760430083229",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1760430086325",
+              "type": "update_statement_index",
+              "params": {
+                "direction": "prev",
+                "to": ""
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
       "registryKey": "generic_button",
       "label": "←",
       "data": {
-        "lastTap": 1760428093092
+        "lastTap": 1760430080525
       }
     }
   ]

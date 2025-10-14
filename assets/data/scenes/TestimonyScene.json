@@ -2,10 +2,128 @@
   "scene_settings": {
     "backgroundColor": "#1a1a1a"
   },
+  "hasJoystick": false,
   "layers": [
-    { "name": "UI", "visible": true, "locked": false },
-    { "name": "Characters", "visible": true, "locked": false },
-    { "name": "Background", "visible": true, "locked": false }
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
   ],
-  "objects": []
+  "objects": [
+    {
+      "name": "TestimonyController",
+      "type": "Image",
+      "x": 965,
+      "y": 1001,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1760430133565",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1760430138277",
+              "type": "eval",
+              "params": {
+                "exp": "f.current_testimony_id = \"testimony_01\""
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1760430166981",
+              "type": "eval",
+              "params": {
+                "exp": "f.current_statement_index = 0"
+              },
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760430138277",
+              "fromPin": "output",
+              "toNode": "node_1760430166981",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
+      "components": [
+        {
+          "type": "StateMachineComponent",
+          "params": {}
+        }
+      ],
+      "texture": "yuna_angry",
+      "data": {
+        "lastTap": 1760430129037,
+        "stateMachine": {
+          "initialState": "待機",
+          "states": {
+            "待機": {
+              "onEnter": {
+                "nodes": [],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [],
+                "connections": []
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            },
+            "Pressing": {
+              "onEnter": {
+                "nodes": [],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [],
+                "connections": []
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            },
+            "Presenting": {
+              "onEnter": {
+                "nodes": [],
+                "connections": []
+              },
+              "onUpdate": {
+                "nodes": [],
+                "connections": []
+              },
+              "onExit": {
+                "nodes": [],
+                "connections": []
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "animations": []
 }
