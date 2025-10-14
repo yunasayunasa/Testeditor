@@ -95,9 +95,9 @@
         "wordWrapCallbackScope": null,
         "wordWrapUseAdvanced": false,
         "metrics": {
-          "ascent": 28.09375,
-          "descent": 8.859375,
-          "fontSize": 36.953125
+          "ascent": 26,
+          "descent": 7,
+          "fontSize": 33
         }
       },
       "data": {
@@ -166,7 +166,131 @@
       "data": {
         "lastTap": 0
       }
+    },
+    {
+      "name": "testimony_text",
+      "type": "Text",
+      "x": 302,
+      "y": 522,
+      "depth": 0,
+      "scaleX": 2.05,
+      "scaleY": 2.05,
+      "angle": 0,
+      "alpha": 1,
+      "components": [
+        {
+          "type": "WatchVariableComponent",
+          "params": {
+            "variable": "f.current_statement_index"
+          }
+        },
+        {
+          "type": "TestimonyDisplayComponent",
+          "params": {}
+        }
+      ],
+      "registryKey": "Text",
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "lastTap": 1760428014236
+      }
+    },
+    {
+      "name": "button_present",
+      "type": "Button",
+      "x": 958,
+      "y": 444,
+      "depth": 0,
+      "scaleX": 1.54,
+      "scaleY": 1.54,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "generic_button",
+      "label": "突きつける",
+      "data": {
+        "lastTap": 1760428037526
+      }
+    },
+    {
+      "name": "button_press",
+      "type": "Button",
+      "x": 335,
+      "y": 444,
+      "depth": 0,
+      "scaleX": 1.75,
+      "scaleY": 1.75,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "generic_button",
+      "label": "ゆさぶる",
+      "data": {
+        "lastTap": 1760428046156
+      }
+    },
+    {
+      "name": "button_next_statement",
+      "type": "Button",
+      "x": 1179,
+      "y": 444,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "generic_button",
+      "label": "→",
+      "data": {
+        "lastTap": 1760428081212
+      }
+    },
+    {
+      "name": "button_prev_statement",
+      "type": "Button",
+      "x": 114,
+      "y": 444,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "generic_button",
+      "label": "←",
+      "data": {
+        "lastTap": 1760428093092
+      }
     }
-   
   ]
 }
