@@ -1,0 +1,11 @@
+{
+  "scene_settings": {
+    "backgroundColor": "#1a1a1a"
+  },
+  "layers": [
+    { "name": "UI", "visible": true, "locked": false },
+    { "name": "Characters", "visible": true, "locked": false },
+    { "name": "Background", "visible": true, "locked": false }
+  ],
+  "objects": []
+}

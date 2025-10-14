@@ -14,7 +14,7 @@ import BattleScene from './scenes/BattleScene.js';
 import OverlayScene from './scenes/OverlayScene.js';
 import NovelOverlayScene from './scenes/NovelOverlayScene.js';
 import EditorPlugin from './plugins/EditorPlugin.js';
-import JumpScene from './scenes/JumpScene.js';
+import TestimonyScene from './scenes/TestimonyScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
 // ★★★ 新設：uiRegistryを自動処理する非同期関数 ★★★
@@ -74,7 +74,7 @@ const config = {
         BacklogScene, 
         ActionScene,
          BattleScene,
-        JumpScene,
+        TestimonyScene,
         OverlayScene,
        NovelOverlayScene
    ],

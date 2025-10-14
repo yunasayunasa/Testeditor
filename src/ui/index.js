@@ -94,7 +94,7 @@ export const uiRegistry = {
  */
 export const sceneUiVisibility = {
     'GameScene': ['hud', 'menu', 'game'],
-    'JumpScene': ['controls', 'action','hud', 'ui_element','text_ui'],
+    'TestimonyScene': ['controls', 'action','hud', 'ui_element','text_ui','game'],
     'BattleScene': ['hud', 'battle'],
     'ActionScene': ['menu', 'game'], // 例
     'TitleScene': [],

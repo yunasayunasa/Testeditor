@@ -4,7 +4,7 @@ import GameScene from '../scenes/GameScene.js';
 import TitleScene from '../scenes/TitleScene.js';
 import GameOverScene from '../scenes/GameOverScene.js';
 // JumpSceneなど、JSONから呼ばれる可能性のある他のシーンもインポート
-import JumpScene from '../scenes/JumpScene.js';
+import TestimonyScene from '../scenes/TestimonyScene.js';
 
 
 
@@ -12,7 +12,7 @@ const SCENE_MAP = {
     GameScene,
     TitleScene,
     GameOverScene,
-    JumpScene 
+    TestimonyScene
 };
 export default class GameFlowManager {
     constructor(flowData) {

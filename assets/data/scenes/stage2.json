@@ -1703,7 +1703,7 @@
               "id": "node_1760152484222",
               "type": "transition_scene",
               "params": {
-                "scene": "JumpScene",
+                "scene": "TestimonyScene",
                 "data": "stage3",
                 "script": ""
               },
