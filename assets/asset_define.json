@@ -95,7 +95,15 @@
         "pause_menu.json"
       ]
     }
-  }
+  },
+   "testimonies": {
+      "path": "assets/data/testimonies/",
+      "type": "json",
+      "list": [
+        "testimony_01.json"
+      ]
+    }
+
 }
  
   
