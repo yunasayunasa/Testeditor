@@ -50,6 +50,11 @@ import close_menu from './close_menu.js';
 import open_menu from './open_menu.js'; 
 import run_scene from './run_scene.js'; 
 import fire_game_flow_event from './fire_game_flow_event.js';
+import show_novel_text from './show_novel_text.js';
+import update_statement_index from './update_statement_index.js';
+
+
+
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
     'time_stop': time_stop,
@@ -100,6 +105,8 @@ export const eventTagHandlers = {
 'save_game':save_game,
 'load_game':load_game,
 'run_scene':run_scene,
- 'fire_game_flow_event': fire_game_flow_event
+ 'fire_game_flow_event': fire_game_flow_event,
+ 'show_novel_text': show_novel_text,
+'update_statement_index': update_statement_index
 
 };

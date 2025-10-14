@@ -1,0 +1,26 @@
+{
+  "witness": "証人A",
+  "statements": [
+    {
+      "text": "事件が起きたあの晩、私は現場の部屋で\\n大きな物音を聞きました。",
+      "press_action": {
+        "text": "（物音…？もう少し詳しく聞いてみるか…）"
+      },
+      "correct_evidence": null
+    },
+    {
+      "text": "そうですね…確か、窓ガラスが\\n割れるような音だったと思います。",
+      "press_action": {
+        "text": "（窓ガラス…しかし報告書にそんな記述はなかったはずだ。）"
+      },
+      "correct_evidence": "site_report"
+    },
+    {
+      "text": "犯人は、窓を割って侵入し、\\nその後、静かに立ち去ったに違いありません。",
+      "press_action": {
+        "text": "（静かに…？待てよ、最初の証言と矛盾していないか？）"
+      },
+      "correct_evidence": "witness_testimony_01"
+    }
+  ]
+}
