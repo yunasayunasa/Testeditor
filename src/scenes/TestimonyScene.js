@@ -13,14 +13,14 @@ export default class TestimonyScene extends BaseGameScene {
 
   create() {
     const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
-    if (joystickPlugin) {
+    /*if (joystickPlugin) {
         this.joystick = joystickPlugin.add(this, {
             x: 150, y: this.cameras.main.height - 150, radius: 100,
             base: this.add.circle(0, 0, 100, 0x888888, 0.5).setScrollFactor(0).setDepth(1000),
             thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
         });
         // console.log("[JumpScene] Joystick instance created at the beginning of create().");
-    }
+    }*/
         // console.log("[JumpScene] Create started.");
         super.create();
     
@@ -38,7 +38,7 @@ export default class TestimonyScene extends BaseGameScene {
         const soundManager = this.registry.get('soundManager');
         if (soundManager) soundManager.playBgm('night_bgm');
 
-        const worldWidth = 3840;
+        const worldWidth = 1280;
         const worldHeight = 720;
 
         // ★★★ ここからがMatter.jsへの対応です ★★★
@@ -89,13 +89,13 @@ this.events.on('resume', this.onSceneResume, this);
         // console.log("[JumpScene] Scene has been resumed. Re-initializing joystick to prevent input loss.");
 
         // 1. 既存のジョイスティックインスタンスがあれば、安全に破棄する
-        if (this.joystick) {
+       /* if (this.joystick) {
             this.joystick.destroy();
             this.joystick = null;
         }
 
         // 2. create()メソッドの冒頭にあったものと全く同じロジックで、ジョイスティックを再生成する
-        const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
+      const joystickPlugin = this.plugins.get('rexvirtualjoystickplugin');
         if (joystickPlugin) {
             this.joystick = joystickPlugin.add(this, {
                 x: 150, y: this.cameras.main.height - 150, radius: 100,
@@ -103,7 +103,7 @@ this.events.on('resume', this.onSceneResume, this);
                 thumb: this.add.circle(0, 0, 50, 0xcccccc, 0.8).setScrollFactor(0).setDepth(1000),
             });
             // console.log("[JumpScene] Joystick re-created successfully after resume.");
-        }
+        }*/
     }
        /**
      * ★★★ 修正版 ★★★
@@ -168,7 +168,7 @@ setupPlayerAndCamera() {
    update(time, delta) {
     
     super.update(time, delta);
-    if (!this.joystick) {
+    /*if (!this.joystick) {
         this.setupJoystick();
     }
     // プレイヤーが死んだり非アクティブになったら、参照をリセット
@@ -187,7 +187,7 @@ setupPlayerAndCamera() {
     // プレイヤーコントローラーが見つかっていれば、ジャンプボタンのリスナーも設定する
     if (this.playerController) {
         this.attachJumpButtonListener();
-    }
+    }*/
 }
        /**
      * ★★★ 新設：ジョイスティックをセットアップする専用メソッド ★★★
