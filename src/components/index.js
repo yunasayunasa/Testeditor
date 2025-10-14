@@ -23,7 +23,7 @@ import PatrolComponent from './PatrolComponent.js';
 import WatchVariableComponent from '../ui/WatchVariableComponent.js';
 import BarDisplayComponent from '../ui/BarDisplayComponent.js';
 import TextDisplayComponent from '../ui/TextDisplayComponent.js';
-import TestimonyDisplayComponent from './TestimonyDisplayComponent.js';
+import TestimonyDisplayComponent from '../TestimonyDisplayComponent.js';
 // (将来、新しいコンポーネントを追加したら、ここにもimport文を追加します)
 
 
