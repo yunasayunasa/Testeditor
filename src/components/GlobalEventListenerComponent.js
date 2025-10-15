@@ -1,4 +1,4 @@
-import EngineAPI from '../../core/EngineAPI.js';
+import EngineAPI from '../core/EngineAPI.js';
 
 export default class GlobalEventListenerComponent {
     constructor(scene, gameObject, params) {
