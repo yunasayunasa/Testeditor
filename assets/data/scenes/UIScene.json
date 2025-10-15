@@ -177,6 +177,55 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [
+        {
+          "id": "event_1760508831338",
+          "trigger": "onReady",
+          "nodes": [
+            {
+              "id": "node_1760508846025",
+              "type": "eval",
+              "params": {
+                "exp": "f.current_testimony_id = \"testimony_01\""
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1760508890058",
+              "type": "eval",
+              "params": {
+                "exp": "f.current_statement_index = 0"
+              },
+              "x": 50,
+              "y": 220
+            },
+            {
+              "id": "node_1760508900874",
+              "type": "wait",
+              "params": {
+                "time": 10
+              },
+              "x": 50,
+              "y": 390
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760508846025",
+              "fromPin": "output",
+              "toNode": "node_1760508890058",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_1760508900874",
+              "fromPin": "output",
+              "toNode": "node_1760508846025",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
       "components": [
         {
           "type": "WatchVariableComponent",
@@ -225,7 +274,7 @@
         }
       },
       "data": {
-        "lastTap": 0
+        "lastTap": 1760508822882
       }
     },
     {
@@ -260,11 +309,13 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1760429980997",
-              "type": "state_transition",
+              "id": "node_1760508953481",
+              "type": "call_component_method",
               "params": {
-                "to": "Pressing",
-                "target": "TestimonyController"
+                "target": "self",
+                "params": "[]",
+                "component": "TestimonyDisplayComponent",
+                "method": null
               },
               "x": 50,
               "y": 50
@@ -276,7 +327,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1760429959357
+        "lastTap": 1760508941410
       }
     },
     {
@@ -311,7 +362,7 @@
       "registryKey": "generic_button",
       "label": "→",
       "data": {
-        "lastTap": 1760430016706
+        "lastTap": 0
       }
     },
     {
@@ -346,7 +397,7 @@
       "registryKey": "generic_button",
       "label": "←",
       "data": {
-        "lastTap": 1760430080525
+        "lastTap": 0
       }
     }
   ]
