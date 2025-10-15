@@ -64,17 +64,29 @@
               "toPin": "input"
             }
           ]
+        },
+        {
+          "id": "event_1760517765136",
+          "trigger": "onClick",
+          "nodes": [],
+          "connections": []
         }
       ],
       "components": [
         {
           "type": "StateMachineComponent",
           "params": {}
+        },
+        {
+          "type": "GlobalEventListenerComponent",
+          "params": {
+            "events": "REQUEST_PRESS"
+          }
         }
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1760515426654,
+        "lastTap": 0,
         "stateMachine": {
           "initialState": "待機",
           "states": {
