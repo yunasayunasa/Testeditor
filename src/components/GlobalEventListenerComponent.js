@@ -4,7 +4,7 @@ export default class GlobalEventListenerComponent {
     constructor(scene, gameObject, params) {
         this.scene = scene;
         this.gameObject = gameObject;
-        this.eventsToListen = params.events || [];
+         this.eventsToListen = params.events || ''; // 配列ではなく、必ず空文字列''をデフォルトにする
         this.systemEvents = null;
 
         if (EngineAPI.isReady()) {
@@ -33,7 +33,8 @@ export default class GlobalEventListenerComponent {
     };
     
     startListening() {
-        if (!this.systemEvents) return;
+         if (!this.systemEvents || !this.eventsToListen) return; // ← 空文字列なら何もしないガード節を追加
+      
 
         this.eventsToListen.split(',').forEach(eventName => {
             const trimmedEvent = eventName.trim();
@@ -46,7 +47,7 @@ export default class GlobalEventListenerComponent {
     }
 
     destroy() {
-        if (!this.systemEvents) return;
+        if (!this.systemEvents || !this.eventsToListen) return; // ← 空文字列なら何もしないガード節を追加
 
         this.eventsToListen.split(',').forEach(eventName => {
             const trimmedEvent = eventName.trim();

@@ -177,23 +177,6 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-     
-          "connections": [
-            {
-              "fromNode": "node_1760508846025",
-              "fromPin": "output",
-              "toNode": "node_1760508890058",
-              "toPin": "input"
-            },
-            {
-              "fromNode": "node_1760508900874",
-              "fromPin": "output",
-              "toNode": "node_1760508846025",
-              "toPin": "input"
-            }
-          
-        
-      ],
       "components": [
         {
           "type": "WatchVariableComponent",
@@ -207,7 +190,7 @@
         }
       ],
       "registryKey": "Text",
-      "text": "",
+      "text": "事件が起きたあの晩、私は現場の部屋で\n大きな物音を聞きました。",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -242,7 +225,7 @@
         }
       },
       "data": {
-        "lastTap": 1760514146141
+        "lastTap": 0
       }
     },
     {
@@ -277,13 +260,11 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1760508953481",
-              "type": "call_component_method",
+              "id": "node_1760517363560",
+              "type": "fire_event",
               "params": {
-                "target": "TestimonyController",
-                "params": "[\"Pressing\"]",
-                "component": "StateMachineComponent",
-                "method": "transitionTo"
+                "name": "REQUEST_PRESS",
+                "params": ""
               },
               "x": 50,
               "y": 50
@@ -295,7 +276,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 0
+        "lastTap": 1760517350471
       }
     },
     {
