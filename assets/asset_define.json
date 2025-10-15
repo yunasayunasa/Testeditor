@@ -93,7 +93,7 @@
         "TestimonyScene.json",
           "TitleScene.json",
         "pause_menu.json",
-         "./testimonies/testimony_01.json" 
+         "../testimonies/testimony_01.json" 
       ]
     }
   }
