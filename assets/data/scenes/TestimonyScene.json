@@ -74,7 +74,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1760430129037,
+        "lastTap": 1760515426654,
         "stateMachine": {
           "initialState": "待機",
           "states": {
@@ -94,8 +94,35 @@
             },
             "Pressing": {
               "onEnter": {
-                "nodes": [],
-                "connections": []
+                "nodes": [
+                  {
+                    "id": "node_1760515480014",
+                    "type": "show_novel_text",
+                    "params": {
+                      "text": "（ゆさぶり中...） "
+                    },
+                    "x": 50,
+                    "y": 50
+                  },
+                  {
+                    "id": "node_1760515508878",
+                    "type": "state_transition",
+                    "params": {
+                      "to": "待機",
+                      "target": "self"
+                    },
+                    "x": 50,
+                    "y": 220
+                  }
+                ],
+                "connections": [
+                  {
+                    "fromNode": "node_1760515480014",
+                    "fromPin": "output",
+                    "toNode": "node_1760515508878",
+                    "toPin": "input"
+                  }
+                ]
               },
               "onUpdate": {
                 "nodes": [],
