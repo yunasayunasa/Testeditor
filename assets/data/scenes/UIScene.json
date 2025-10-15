@@ -170,8 +170,8 @@
     {
       "name": "testimony_text",
       "type": "Text",
-      "x": 302,
-      "y": 522,
+      "x": 121,
+      "y": 499,
       "depth": 5001,
       "scaleX": 1,
       "scaleY": 1,
@@ -239,7 +239,7 @@
         }
       ],
       "registryKey": "Text",
-      "text": "New Text",
+      "text": "",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -274,7 +274,7 @@
         }
       },
       "data": {
-        "lastTap": 1760510012651
+        "lastTap": 1760514146141
       }
     },
     {
@@ -327,7 +327,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1760510015339
+        "lastTap": 0
       }
     },
     {

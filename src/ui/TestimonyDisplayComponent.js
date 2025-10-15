@@ -58,7 +58,8 @@ export default class TestimonyDisplayComponent {
         const statement = this.testimonyData.statements[this.currentStatementIndex];
         
         if (statement) {
-            this.gameObject.setText(statement.text);
+           const formattedText = statement.text.replace(/\\n/g, '\n');
+this.gameObject.setText(formattedText);
         } else {
             this.gameObject.setText(''); // 該当する証言がなければ空にする
         }
