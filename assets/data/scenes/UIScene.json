@@ -274,7 +274,7 @@
         }
       },
       "data": {
-        "lastTap": 1760508822882
+        "lastTap": 1760510012651
       }
     },
     {
@@ -312,10 +312,10 @@
               "id": "node_1760508953481",
               "type": "call_component_method",
               "params": {
-                "target": "self",
-                "params": "[]",
-                "component": "TestimonyDisplayComponent",
-                "method": null
+                "target": "TestimonyController",
+                "params": "[\"Pressing\"]",
+                "component": "StateMachineComponent",
+                "method": "transitionTo"
               },
               "x": 50,
               "y": 50
@@ -327,7 +327,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1760508941410
+        "lastTap": 1760510015339
       }
     },
     {
