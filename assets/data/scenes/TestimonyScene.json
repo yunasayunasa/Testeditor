@@ -67,8 +67,21 @@
         },
         {
           "id": "event_1760517765136",
-          "trigger": "onClick",
-          "nodes": [],
+          "trigger": "REQUEST_PRESS",
+          "nodes": [
+            {
+              "id": "node_1760518310040",
+              "type": "call_component_method",
+              "params": {
+                "target": "self",
+                "params": "[\"Pressing\"]",
+                "component": "StateMachineComponent",
+                "method": "transitionTo"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
           "connections": []
         }
       ],
@@ -86,7 +99,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 0,
+        "lastTap": 1760518293616,
         "stateMachine": {
           "initialState": "待機",
           "states": {
