@@ -92,11 +92,19 @@
          "stage3.json",
         "TestimonyScene.json",
           "TitleScene.json",
-        "pause_menu.json",
-         "../testimonies/testimony_01.json" 
+        "pause_menu.json"
+         
       ]
-    }
+    },
+    
+  "testimonies": {
+    "path": "assets/data/testimonies/",
+    "type": "json",
+    "list": [
+      "testimony_01.json"
+    ]
   }
+}
 
 }
  
