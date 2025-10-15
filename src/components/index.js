@@ -16,7 +16,7 @@ import VignetteComponent from './VignetteComponent.js';
 import FogComponent from './FogComponent.js';
 import DetectionAreaComponent from './DetectionAreaComponent.js';
 import PatrolComponent from './PatrolComponent.js';
-import GlobalEventListenerComponent from './systems/GlobalEventListenerComponent.js';
+import GlobalEventListenerComponent from './GlobalEventListenerComponent.js';
 
 
 
