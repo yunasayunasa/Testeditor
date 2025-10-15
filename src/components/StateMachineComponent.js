@@ -62,3 +62,12 @@ export default class StateMachineComponent {
         // console.log(`[StateMachine] Transition complete. Current state: '${this.currentStateName}'`, this.gameObject.name);
     }
 }
+
+StateMachineComponent.define = {
+    // VSLなどから呼び出しを許可するメソッドのリスト
+    methods: [
+        'transitionTo'
+    ],
+    // エディタのプロパティパネルに表示するパラメータ
+    params: []
+};
