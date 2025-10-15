@@ -177,39 +177,7 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "events": [
-        {
-          "id": "event_1760508831338",
-          "trigger": "onReady",
-          "nodes": [
-            {
-              "id": "node_1760508846025",
-              "type": "eval",
-              "params": {
-                "exp": "f.current_testimony_id = \"testimony_01\""
-              },
-              "x": 50,
-              "y": 50
-            },
-            {
-              "id": "node_1760508890058",
-              "type": "eval",
-              "params": {
-                "exp": "f.current_statement_index = 0"
-              },
-              "x": 50,
-              "y": 220
-            },
-            {
-              "id": "node_1760508900874",
-              "type": "wait",
-              "params": {
-                "time": 10
-              },
-              "x": 50,
-              "y": 390
-            }
-          ],
+     
           "connections": [
             {
               "fromNode": "node_1760508846025",
@@ -223,8 +191,8 @@
               "toNode": "node_1760508846025",
               "toPin": "input"
             }
-          ]
-        }
+          
+        
       ],
       "components": [
         {
