@@ -8,12 +8,12 @@ export default async function update_statement_index(interpreter, params, target
     if (!stateManager) return;
 
     // 2. 現在の証言データとインデックスを取得
-    const testimonyId = stateManager.getF('current_testimony_id');
+    const testimonyId = stateManager.getValue('f.current_testimony_id');
     const testimonyData = interpreter.scene.cache.json.get(testimonyId);
     
     if (!testimonyData || !testimonyData.statements) return;
 
-    const currentIndex = stateManager.getF('current_statement_index') || 0;
+    const currentIndex = stateManager.getValue('f.current_statement_index') || 0;
     const maxIndex = testimonyData.statements.length - 1;
 
     // 3. パラメータに基づいて新しいインデックスを計算

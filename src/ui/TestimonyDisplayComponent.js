@@ -40,7 +40,7 @@ export default class TestimonyDisplayComponent {
         }
 
         const testimonyIdKey = this.testimonyIdVariable.replace('f.', '');
-        const testimonyId = this.stateManager.getF(testimonyIdKey);
+        const testimonyId = this.stateManager.getValue(`f.${testimonyIdKey}`);
 
         if (!testimonyId) return; // 証言IDがセットされていなければ何もしない
 
