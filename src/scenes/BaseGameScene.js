@@ -507,6 +507,18 @@ initComponentsAndEvents(gameObject) {
     
     // ▼▼▼【ここが修正の核心！】▼▼▼
     // --- 5. 収集したコンポーネントのstart()を、このメソッド内で呼び出す ---
+
+    // --- 5a. (特別処理) StateMachineComponentがあれば、先にinit()を呼び出す ---
+    const stateMachine = gameObject.components?.StateMachineComponent;
+    if (stateMachine && typeof stateMachine.init === 'function') {
+        const stateMachineData = gameObject.getData('stateMachine');
+        if (stateMachineData) {
+            // console.log(`[BaseGameScene] Initializing StateMachine for '${gameObject.name}'...`);
+            stateMachine.init(stateMachineData);
+        }
+    }
+
+     // --- 5b. 収集したコンポーネントのstart()を呼び出す (既存のコード) ---
     if (componentsToStart.length > 0) {
         // console.log(`%c[initComponentsAndEvents] Starting ${componentsToStart.length} components for '${gameObject.name}'...`, 'color: orange;');
         componentsToStart.forEach(component => {
@@ -746,7 +758,7 @@ events.forEach(eventData => {
             }
         });
     }
-    
+
     });
 
     // --- 4. 最後に、エディタ用の追加処理を行う ---
