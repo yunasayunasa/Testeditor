@@ -10,13 +10,13 @@ export default async function fire_event(interpreter, params) {
 
     const stateManager = interpreter.scene.registry.get('stateManager');
     let eventParams = params.params;
-    if (stateManager && typeof eventParams === 'string') {
-        try {
-            eventParams = stateManager.eval(eventParams);
-        } catch(e) {
-            // 文字列リテラルの場合は、そのまま使う
-        }
+    if (stateManager && typeof eventParams === 'string' && eventParams.trim() !== '') { // ← 空白でないこともチェック
+    try {
+        eventParams = stateManager.eval(eventParams);
+    } catch(e) {
+        // 文字列リテラルの場合は、そのまま使う
     }
+}
     
      // ★ 2. EngineAPIを呼び出す
     EngineAPI.fireEvent(eventName, eventParams);

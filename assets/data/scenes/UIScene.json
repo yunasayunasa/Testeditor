@@ -264,7 +264,7 @@
               "type": "fire_event",
               "params": {
                 "name": "REQUEST_PRESS",
-                "params": ""
+                "params": "null"
               },
               "x": 50,
               "y": 50
@@ -276,7 +276,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1760517350471
+        "lastTap": 1760597756481
       }
     },
     {
