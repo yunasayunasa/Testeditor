@@ -25,6 +25,7 @@ import WatchVariableComponent from '../ui/WatchVariableComponent.js';
 import BarDisplayComponent from '../ui/BarDisplayComponent.js';
 import TextDisplayComponent from '../ui/TextDisplayComponent.js';
 import TestimonyDisplayComponent from '../ui/TestimonyDisplayComponent.js';
+import VisibilityComponent from '../ui/VisibilityComponent.js';
 // (将来、新しいコンポーネントを追加したら、ここにもimport文を追加します)
 
 
@@ -53,6 +54,7 @@ GlobalEventListenerComponent,
     WatchVariableComponent,
     BarDisplayComponent,
     TextDisplayComponent,
-    TestimonyDisplayComponent
+    TestimonyDisplayComponent,
+    VisibilityComponent
     // (新しいコンポーネントを追加したら、ここにも名前を追加します)
 };
