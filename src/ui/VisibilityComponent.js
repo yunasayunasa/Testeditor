@@ -1,34 +1,30 @@
 /**
- * VisibilityComponent
- * 指定されたゲーム変数を監視し、条件に基づいてGameObjectの表示/非表示を切り替える。
+ * VisibilityComponent (スタンドアロン版)
+ * 指定されたゲーム変数を直接監視し、条件に基づいてGameObjectの表示/非表示を切り替える。
  */
 export default class VisibilityComponent {
     constructor(scene, gameObject, params) {
+        this.scene = scene;
         this.gameObject = gameObject;
         
-        // --- 監視対象のWatchVariableComponentを探す ---
-        // params.variableで指定された変数を監視しているWatchVariableComponentを見つける
-        this.watchComponent = this.findWatcher(params.variable);
-        
-        // --- 表示条件 ---
-        // JSON.parseを使って、'true'/'false'の文字列をbooleanに変換する
+        // --- パラメータ ---
+        this.variableToWatch = params.variable;
         try {
             this.visibleWhen = JSON.parse(String(params.condition).toLowerCase());
         } catch (e) {
-            this.visibleWhen = true; // パース失敗時はデフォルトでtrue
+            this.visibleWhen = true;
         }
 
-        if (this.watchComponent) {
-            this.onValueChange = (newValue) => {
-                const conditionMet = (newValue === this.visibleWhen);
-                this.gameObject.setVisible(conditionMet);
-            };
-            
-            // WatchVariableComponentが発するイベントをリッスン開始
-            this.watchComponent.gameObject.on('onValueChanged', this.onValueChange);
-            
-            // 初期値で一度チェック
-            this.watchComponent.checkInitialValue();
+        // --- StateManagerの取得とイベントリスナーの設定 ---
+        this.stateManager = this.scene.registry.get('stateManager');
+        if (this.stateManager && this.variableToWatch) {
+            // --- StateManagerの変更イベントを直接購読 ---
+            this.listener = (key, value) => this.onVariableChanged(key, value);
+            this.stateManager.on('f-variable-changed', this.listener);
+
+            // --- 初期値で一度チェック ---
+            // 次のフレームで実行し、他のすべての初期化が終わるのを待つ
+            this.scene.time.delayedCall(0, () => this.checkInitialValue());
         }
     }
 
@@ -52,25 +48,33 @@ export default class VisibilityComponent {
     };
 
     /**
-     * 同じGameObjectにアタッチされているWatchVariableComponentの中から、
-     * 指定された変数を監視しているインスタンスを探して返す。
+     * StateManagerから変数の変更通知を受け取ったときの処理
      */
-    findWatcher(variableName) {
-        if (!this.gameObject.components || !variableName) return null;
-        
-        for (const key in this.gameObject.components) {
-            const component = this.gameObject.components[key];
-            if (component.constructor.name === 'WatchVariableComponent' && component.variableToWatch === variableName) {
-                return component;
-            }
+    onVariableChanged(key, value) {
+        const watchKey = this.variableToWatch.replace('f.', '').trim();
+        if (key.trim() === watchKey) {
+            const conditionMet = (value === this.visibleWhen);
+            this.gameObject.setVisible(conditionMet);
         }
-        return null;
+    }
+
+    /**
+     * コンポーネント生成時に、一度だけ現在の変数の値を確認し、UIに反映させる
+     */
+    checkInitialValue() {
+        if (!this.stateManager || !this.variableToWatch) return;
+
+        const initialValue = this.stateManager.getValue(this.variableToWatch);
+        if (initialValue !== undefined) {
+            const conditionMet = (initialValue === this.visibleWhen);
+            this.gameObject.setVisible(conditionMet);
+        }
     }
 
     // コンポーネント破棄時の後片付け
     destroy() {
-        if (this.watchComponent && this.onValueChange) {
-            this.watchComponent.gameObject.off('onValueChanged', this.onValueChange);
+        if (this.stateManager && this.listener) {
+            this.stateManager.off('f-variable-changed', this.listener);
         }
     }
 }
