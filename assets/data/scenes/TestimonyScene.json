@@ -73,7 +73,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1760594941526,
+        "lastTap": 1760604308524,
         "stateMachine": {
           "initialState": "待機",
           "states": {
@@ -95,30 +95,53 @@
               "onEnter": {
                 "nodes": [
                   {
-                    "id": "node_1760515480014",
-                    "type": "show_novel_text",
+                    "id": "node_1760604318411",
+                    "type": "if",
                     "params": {
-                      "text": "（ゆさぶり中...） "
+                      "exp": "this.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.text"
                     },
                     "x": 50,
                     "y": 50
                   },
                   {
-                    "id": "node_1760515508878",
-                    "type": "state_transition",
+                    "id": "node_1760604326715",
+                    "type": "show_novel_text",
                     "params": {
-                      "to": "待機",
-                      "target": "self"
+                      "text": "this.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.text"
                     },
                     "x": 50,
                     "y": 220
+                  },
+                  {
+                    "id": "node_1760604329395",
+                    "type": "call_component_method",
+                    "params": {
+                      "target": "self",
+                      "params": "[\"待機\"]",
+                      "component": "StateMachineComponent",
+                      "method": "transitionTo"
+                    },
+                    "x": 50,
+                    "y": 390
                   }
                 ],
                 "connections": [
                   {
-                    "fromNode": "node_1760515480014",
+                    "fromNode": "node_1760604318411",
+                    "fromPin": "output_true",
+                    "toNode": "node_1760604326715",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1760604318411",
+                    "fromPin": "output_false",
+                    "toNode": "node_1760604329395",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1760604326715",
                     "fromPin": "output",
-                    "toNode": "node_1760515508878",
+                    "toNode": "node_1760604329395",
                     "toPin": "input"
                   }
                 ]
