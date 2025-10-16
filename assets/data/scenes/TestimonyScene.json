@@ -36,34 +36,8 @@
         {
           "id": "event_1760430133565",
           "trigger": "onReady",
-          "nodes": [
-            {
-              "id": "node_1760430138277",
-              "type": "eval",
-              "params": {
-                "exp": "f.current_testimony_id = \"testimony_01\""
-              },
-              "x": 50,
-              "y": 50
-            },
-            {
-              "id": "node_1760430166981",
-              "type": "eval",
-              "params": {
-                "exp": "f.current_statement_index = 0"
-              },
-              "x": 50,
-              "y": 220
-            }
-          ],
-          "connections": [
-            {
-              "fromNode": "node_1760430138277",
-              "fromPin": "output",
-              "toNode": "node_1760430166981",
-              "toPin": "input"
-            }
-          ]
+          "nodes": [],
+          "connections": []
         },
         {
           "id": "event_1760517765136",
@@ -99,7 +73,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1760518293616,
+        "lastTap": 1760594941526,
         "stateMachine": {
           "initialState": "待機",
           "states": {
