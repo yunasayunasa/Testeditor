@@ -33,18 +33,22 @@ export default class GlobalEventListenerComponent {
     };
     
     startListening() {
-         if (!this.systemEvents || !this.eventsToListen) return; // ← 空文字列なら何もしないガード節を追加
-      
+    if (!this.systemEvents || !this.eventsToListen) return;
 
-        this.eventsToListen.split(',').forEach(eventName => {
-            const trimmedEvent = eventName.trim();
-            if (trimmedEvent) {
-                this.systemEvents.on(trimmedEvent, (data) => {
-                    this.gameObject.emit(trimmedEvent, data);
-                }, this);
-            }
-        });
-    }
+    this.eventsToListen.split(',').forEach(eventName => {
+        const trimmedEvent = eventName.trim();
+        if (trimmedEvent) {
+            // ▼▼▼【ここから下を追記】▼▼▼
+            console.log(`%c[GlobalListener] '${this.gameObject.name}' がグローバルイベント '${trimmedEvent}' のリスニングを開始しました。`, 'color: #3f51b5;');
+
+            this.systemEvents.on(trimmedEvent, (data) => {
+                console.log(`%c[GlobalListener] '${this.gameObject.name}' が '${trimmedEvent}' を受信しました！これから gameObject.emit を実行します。`, 'color: #3f51b5; font-weight: bold;');
+                this.gameObject.emit(trimmedEvent, data);
+            }, this);
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        }
+    });
+}
 
     destroy() {
         if (!this.systemEvents || !this.eventsToListen) return; // ← 空文字列なら何もしないガード節を追加
