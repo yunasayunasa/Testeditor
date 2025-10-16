@@ -187,6 +187,13 @@
         {
           "type": "TestimonyDisplayComponent",
           "params": {}
+        },
+        {
+          "type": "VisibilityComponent",
+          "params": {
+            "variable": "f.is_novel_mode",
+            "condition": "false"
+          }
         }
       ],
       "registryKey": "Text",
@@ -225,7 +232,7 @@
         }
       },
       "data": {
-        "lastTap": 0
+        "lastTap": 1760603168915
       }
     },
     {
@@ -276,7 +283,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1760597756481
+        "lastTap": 0
       }
     },
     {
