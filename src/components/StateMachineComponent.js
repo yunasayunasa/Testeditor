@@ -25,6 +25,9 @@ export default class StateMachineComponent {
 
     update(time, delta) {
         if (!this.currentStateLogic || !this.currentStateLogic.onUpdate) return;
+        if (!this.currentStateLogic.onUpdate.nodes || this.currentStateLogic.onUpdate.nodes.length === 0) {
+        return; // 実行するノードがなければ何もしない
+    }
         if (this.actionInterpreter) {
             this.actionInterpreter.run(this.gameObject, this.currentStateLogic.onUpdate);
         }
