@@ -50,7 +50,7 @@
       "alpha": 1,
       "group": "game",
       "registryKey": "message_window",
-      "label": "",
+      "label": "（ゆさぶり中...） ",
       "data": {
         "lastTap": 0
       }
@@ -191,13 +191,13 @@
         {
           "type": "VisibilityComponent",
           "params": {
-            "variable": "f.is_novel_mode",
-            "condition": "false"
+            "condition": "false",
+            "variable": "f.is_novel_mode"
           }
         }
       ],
       "registryKey": "Text",
-      "text": "事件が起きたあの晩、私は現場の部屋で\n大きな物音を聞きました。",
+      "text": "犯人は、窓を割って侵入し、\nその後、静かに立ち去ったに違いありません。",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -232,7 +232,7 @@
         }
       },
       "data": {
-        "lastTap": 1760603168915
+        "lastTap": 1760603393131
       }
     },
     {
