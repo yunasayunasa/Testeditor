@@ -733,6 +733,20 @@ events.forEach(eventData => {
                 this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
             });
         }
+
+        // --- 汎用カスタムイベントの処理 ---
+    const knownTriggers = ['onClick', 'onReady', 'onStateChange', 'onDirectionChange'];
+    if (!knownTriggers.includes(eventData.trigger)) {
+        // 上記以外の、知らない名前のトリガーが来たら、それをカスタムイベントとしてリッスンする
+        gameObject.on(eventData.trigger, (data) => {
+            // カスタムイベントには、今のところ条件判定(condition)はないシンプルなものとする
+            if (this.actionInterpreter) {
+                // eventData（ノードや接続情報）と、イベントが渡したデータ(data)をコンテキストとして渡す
+                this.actionInterpreter.run(gameObject, eventData, data);
+            }
+        });
+    }
+    
     });
 
     // --- 4. 最後に、エディタ用の追加処理を行う ---
