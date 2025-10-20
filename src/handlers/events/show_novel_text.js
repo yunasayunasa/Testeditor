@@ -33,7 +33,7 @@ export default async function show_novel_text(interpreter, params, target) {
     stateManager.setF('is_novel_mode', true);
     
     // --- 2. テキストを表示し、ウィンドウを可視化 ---
-    const textToShow = params.text || '';
+
     if (typeof messageWindow.setText === 'function') {
         // タイプライター表示機能があるかチェック
         if (typeof messageWindow.startTyping === 'function') {
