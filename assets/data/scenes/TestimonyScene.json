@@ -73,7 +73,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1760942716850,
+        "lastTap": 1760947937341,
         "stateMachine": {
           "initialState": "待機",
           "states": {
@@ -107,7 +107,7 @@
                     "id": "node_1760604326715",
                     "type": "show_novel_text",
                     "params": {
-                      "text": "f.temp_press_text"
+                      "text": "&{f.temp_press_text}"
                     },
                     "x": 50,
                     "y": 220
