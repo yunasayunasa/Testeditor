@@ -1,20 +1,78 @@
 {
+  "scene_settings": {},
+  "hasJoystick": false,
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
       "name": "menu_background",
-      "registryKey": "panel", 
+      "type": "Panel",
       "x": 640,
       "y": 360,
-      "width": 500,
-      "height": 400,
-      "alpha": 0.8
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "data": {
+        "registryKey": "panel",
+        "lastTap": 1760949585381
+      }
     },
     {
       "name": "resume_button",
-      "registryKey": "generic_button",
-      "x": 800,
-      "y": 100,
+      "type": "Button",
+      "x": 833,
+      "y": 206,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_close_menu",
+          "nodes": [
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            }
+          ]
+        }
+      ],
       "label": "戻る",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949543580
+      }
+    },
+    {
+      "name": "証拠品１",
+      "type": "Button",
+      "x": 478,
+      "y": 505,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onClick",
@@ -24,17 +82,43 @@
               "id": "node_close_menu",
               "type": "close_menu",
               "params": {}
+            },
+            {
+              "id": "node_1760949606725",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"site_report\""
+              },
+              "x": 50,
+              "y": 296
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760949606725",
+              "fromPin": "output",
+              "toNode": "node_close_menu",
+              "toPin": "input"
             }
           ]
         }
-      ]
-    },
-     {
-      "name": "resume_button",
-      "registryKey": "generic_button",
-      "x": 240,
-      "y": 360,
+      ],
       "label": "証拠品１",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949587885
+      }
+    },
+    {
+      "name": "証拠品２",
+      "type": "Button",
+      "x": 647,
+      "y": 505,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onClick",
@@ -44,37 +128,43 @@
               "id": "node_close_menu",
               "type": "close_menu",
               "params": {}
+            },
+            {
+              "id": "node_1760949651301",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"knife\""
+              },
+              "x": 50,
+              "y": 367
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760949651301",
+              "fromPin": "output",
+              "toNode": "node_close_menu",
+              "toPin": "input"
             }
           ]
         }
-      ]
-    },
-     {
-      "name": "resume_button",
-      "registryKey": "generic_button",
-      "x": 640,
-      "y": 360,
+      ],
       "label": "証拠品２",
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_close_menu",
-          "nodes": [
-            {
-              "id": "node_close_menu",
-              "type": "close_menu",
-              "params": {}
-            }
-          ]
-        }
-      ]
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949640013
+      }
     },
-     {
-      "name": "resume_button",
-      "registryKey": "generic_button",
-      "x": 1040,
-      "y": 360,
-      "label": "証拠品3",
+    {
+      "name": "証拠品３",
+      "type": "Button",
+      "x": 812,
+      "y": 508,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onClick",
@@ -84,10 +174,33 @@
               "id": "node_close_menu",
               "type": "close_menu",
               "params": {}
+            },
+            {
+              "id": "node_1760949690157",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"witness_testimony_01\""
+              },
+              "x": 50,
+              "y": 331
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760949690157",
+              "fromPin": "output",
+              "toNode": "node_close_menu",
+              "toPin": "input"
             }
           ]
         }
-      ]
+      ],
+      "label": "証拠品3",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949686181
+      }
     }
-  ]
+  ],
+  "animations": []
 }
