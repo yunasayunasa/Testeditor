@@ -1,15 +1,21 @@
 /**
- * [show_novel_text]タグ (UIScene対応・UI状態管理機能付き)
- * データ駆動シーン内で、指定されたテキストをメッセージウィンドウに表示し、クリックを待つ。
- * 実行中は f.is_novel_mode を true に設定する。
+ * [show_novel_text]タグ (変数埋め込み対応版)
  */
 export default async function show_novel_text(interpreter, params, target) {
-    // --- StateManagerを取得 ---
     const stateManager = interpreter.scene.registry.get('stateManager');
-    if (!stateManager) {
-        console.warn('[show_novel_text] StateManager not found.');
-        return;
-    }
+    if (!stateManager) return;
+    
+    // ▼▼▼【ここからが新しい機能です】▼▼▼
+    let textToShow = params.text || '';
+    
+    // &{...} という形式の変数埋め込みを正規表現で探す
+    const variableRegex = /&\{([^}]+)\}/g;
+    textToShow = textToShow.replace(variableRegex, (match, variablePath) => {
+        // 見つかった変数パス (例: f.temp_press_text) の値を StateManager から取得
+        const value = stateManager.getValue(variablePath.trim());
+        // 値が存在すればそれに置換、なければ空文字に置換
+        return value !== undefined ? value : '';
+    });
 
     // --- UISceneとメッセージウィンドウを取得 ---
     const uiScene = interpreter.scene.scene.get('UIScene');
