@@ -126,8 +126,8 @@ export default class OverlayScene extends Phaser.Scene {
 
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
+// in OverlayScene.js
 async buildUiFromLayout(layoutData) {
-    // console.log("[UIScene] Starting UI build with FINAL routine.");
     if (!layoutData || !layoutData.objects) return;
 
     const uiRegistry = this.registry.get('uiRegistry');
@@ -135,59 +135,67 @@ async buildUiFromLayout(layoutData) {
 
     for (const layout of layoutData.objects) {
         try {
-            const registryKey = layout.registryKey || layout.name;
-            if (!registryKey) continue;
-
             let uiElement = null;
+            const registryKey = layout.registryKey;
 
-            // --- Step 1: オブジェクトのインスタンスを生成 ---
-            if (registryKey === 'Text') {
+            // --- オブジェクト生成ロジック ---
+            if (layout.type === 'Text') {
                 uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
-            } else {
+            } else if (layout.type === 'Image') {
+                uiElement = this.add.image(0, 0, layout.texture);
+            } else if (registryKey && uiRegistry && uiRegistry[registryKey]) {
+                // uiRegistryに登録された特別なコンポーネントの場合
                 const definition = uiRegistry[registryKey];
                 if (definition && definition.component) {
                     const UiComponentClass = definition.component;
-                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
                     layout.stateManager = stateManager;
                     uiElement = new UiComponentClass(this, layout);
                 }
+            } else {
+                 // 上記以外（汎用ボタンなど）は、デフォルトでImageとして扱う
+                uiElement = this.add.image(0, 0, layout.texture || '__DEFAULT');
             }
 
             if (!uiElement) {
-                console.warn(`Could not create UI element for '${layout.name}'`);
+                console.warn(`[OverlayScene] Could not create UI element for '${layout.name}'`);
                 continue;
             }
-
-            // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
-            uiElement.setData('registryKey', registryKey);
-
-            // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
+            
+            // --- 共通設定 ---
             if (layout.components) {
-                uiElement.setData('components', layout.components); // まず永続化データを保存
+                uiElement.setData('components', layout.components);
                 layout.components.forEach(compDef => {
                     this.addComponent(uiElement, compDef.type, compDef.params);
                 });
             }
-
-            // --- Step 3: 共通の登録・設定処理を呼び出す ---
-            // ★ paramsではなく、JSONから読み込んだ生の`layout`を渡すのが最も確実
             this.registerUiElement(layout.name, uiElement, layout);
 
         } catch (e) {
-            console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
+            console.error(`[OverlayScene] FAILED to create UI element '${layout.name}'.`, e);
         }
     }
 }
+    applyUiEvents(uiElement) {
+    const events = uiElement.getData('events') || [];
+    
+    // 既存の 'onClick' リスナーがあればクリア
+    uiElement.off('pointerdown');
 
-// ... (registerUiElementは、当たり判定を与える「究極の解決策」版のままでOKです) ...
-    /**
-     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
-     * (setSize/setInteractiveを安全に呼び出す最終確定版)
-     */
-    /**
-     * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
-     * ★★★ 以下のメソッドで、既存の registerUiElement を完全に置き換えてください ★★★
-     */
+    events.forEach(eventData => {
+        if (eventData.trigger === 'onClick') {
+            // pointerdownをリッスンし、ActionInterpreterを実行
+            uiElement.on('pointerdown', () => {
+                const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+                if (!systemRegistry) return;
+                
+                const actionInterpreter = systemRegistry.get('actionInterpreter');
+                if (actionInterpreter) {
+                    actionInterpreter.run(uiElement, eventData);
+                }
+            });
+        }
+    });
+}
    
 /**
  * UI要素を登録し、インタラクティブ化する (最終確定・完成版)
