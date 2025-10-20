@@ -12,9 +12,69 @@
     {
       "name": "resume_button",
       "registryKey": "generic_button",
+      "x": 800,
+      "y": 100,
+      "label": "戻る",
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_close_menu",
+          "nodes": [
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            }
+          ]
+        }
+      ]
+    },
+     {
+      "name": "resume_button",
+      "registryKey": "generic_button",
+      "x": 240,
+      "y": 360,
+      "label": "証拠品１",
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_close_menu",
+          "nodes": [
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            }
+          ]
+        }
+      ]
+    },
+     {
+      "name": "resume_button",
+      "registryKey": "generic_button",
       "x": 640,
       "y": 360,
-      "label": "ゲームに戻る",
+      "label": "証拠品２",
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_close_menu",
+          "nodes": [
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            }
+          ]
+        }
+      ]
+    },
+     {
+      "name": "resume_button",
+      "registryKey": "generic_button",
+      "x": 1040,
+      "y": 360,
+      "label": "証拠品3",
       "events": [
         {
           "trigger": "onClick",
