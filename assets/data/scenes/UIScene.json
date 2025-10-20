@@ -50,7 +50,7 @@
       "alpha": 1,
       "group": "game",
       "registryKey": "message_window",
-      "label": "（ゆさぶり中...） ",
+      "label": "",
       "data": {
         "lastTap": 0
       }
@@ -120,54 +120,6 @@
       }
     },
     {
-      "name": "interact_button_1759238969243",
-      "type": "InteractButton",
-      "x": 1009,
-      "y": 652,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "registryKey": "interact_button",
-      "label": "調べる",
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "debug_menu_button",
-      "type": "Button",
-      "x": 1200,
-      "y": 50,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_open_pause_menu",
-          "nodes": [
-            {
-              "id": "node_open_pause_menu",
-              "type": "open_menu",
-              "params": {
-                "layout": "pause_menu"
-              },
-              "x": 1191
-            }
-          ]
-        }
-      ],
-      "registryKey": "generic_button",
-      "label": "MENU",
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
       "name": "testimony_text",
       "type": "Text",
       "x": 121,
@@ -197,7 +149,7 @@
         }
       ],
       "registryKey": "Text",
-      "text": "犯人は、窓を割って侵入し、\nその後、静かに立ち去ったに違いありません。",
+      "text": "そうですね…確か、窓ガラスが\n割れるような音だったと思います。",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -232,7 +184,7 @@
         }
       },
       "data": {
-        "lastTap": 1760603393131
+        "lastTap": 0
       }
     },
     {
@@ -245,10 +197,26 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
+      "events": [
+        {
+          "id": "event_1760948576772",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1760948581292",
+              "type": "open_menu",
+              "params": {},
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 0
+        "lastTap": 1760948708548
       }
     },
     {
