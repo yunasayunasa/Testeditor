@@ -153,6 +153,7 @@ fireGameFlowEvent(eventName, data = {}) { // ★ data引数を追加
 
     // --- Misc ---
     fireEvent(eventName, data = null) {
+         console.log(`%c[LOG 2: 中継点] EngineAPI.fireEventが呼ばれました。イベント名: '${eventName}'`, 'color: #9c27b0; font-weight: bold;');
         if (!this.systemScene) return;
         this.systemScene.events.emit(eventName, data);
     }

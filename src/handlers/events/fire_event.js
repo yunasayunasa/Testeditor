@@ -2,6 +2,7 @@
 import EngineAPI from '../../core/EngineAPI.js'; // ★ 1. インポート
 
 export default async function fire_event(interpreter, params) {
+    console.log(`%c[LOG 1: 発火点] [fire_event]が呼ばれました。イベント名: '${params.name}'`, 'color: #e91e63; font-weight: bold;');
     const eventName = params.name;
     if (!eventName) {
         console.warn('[fire_event] "name" parameter is missing.');

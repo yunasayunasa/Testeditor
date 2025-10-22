@@ -749,8 +749,10 @@ events.forEach(eventData => {
         // --- 汎用カスタムイベントの処理 ---
     const knownTriggers = ['onClick', 'onReady', 'onStateChange', 'onDirectionChange'];
     if (!knownTriggers.includes(eventData.trigger)) {
+         console.log(`%c[LOG 3: 受信準備] '${gameObject.name}' がカスタムトリガー '${eventData.trigger}' のリスニングを開始します。`, 'color: #00bcd4; font-weight: bold;');
         // 上記以外の、知らない名前のトリガーが来たら、それをカスタムイベントとしてリッスンする
         gameObject.on(eventData.trigger, (data) => {
+             console.log(`%c[LOG 4: 受信成功] '${gameObject.name}' がカスタムトリガー '${eventData.trigger}' を受信しました！VSLを実行します。`, 'color: #4caf50; font-weight: bold;');
             // カスタムイベントには、今のところ条件判定(condition)はないシンプルなものとする
             if (this.actionInterpreter) {
                 // eventData（ノードや接続情報）と、イベントが渡したデータ(data)をコンテキストとして渡す
