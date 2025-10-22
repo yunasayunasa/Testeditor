@@ -599,43 +599,41 @@ onSceneTransition(newSceneKey) {
      * ★★★ グローバルInterpreterを使うように修正 ★★★
      * UIオブジェクトのイベント定義に基づいて、リスナーを設定する
      */
-   // in src/scenes/UIScene.js
+    // in src/scenes/UIScene.js
 
 applyUiEvents(uiElement) {
     const events = uiElement.getData('events') || [];
     
-    // --- 1. 過去のリスナーをすべてクリア ---
-    const allTriggers = new Set(events.map(e => e.trigger));
-    allTriggers.forEach(triggerName => {
-        // "onClick" は "pointerdown" として登録するので特別扱い
-        if (triggerName === 'onClick') {
-            uiElement.off('pointerdown');
-        } else {
-            uiElement.off(triggerName);
-        }
-    });
+    // 既存のリスナーをクリア
+    uiElement.off('onClick');
 
-    // --- 2. 新しいリスナーを設定 ---
+    // ★★★ デバッグログ（ステップ1）★★★
+    // このUI要素がイベント定義を持っているか確認
+    if (events.length > 0) {
+        // console.log(`[ApplyEvents] Found ${events.length} event(s) for '${uiElement.name}'. Setting up listeners...`);
+    } else if (uiElement.name === 'debug_menu_button') {
+        console.error(`[ApplyEvents] CRITICAL: '${uiElement.name}' has NO event data!`);
+    }
+
     events.forEach(eventData => {
-        const trigger = eventData.trigger;
-        if (!trigger) return;
+        // console.log(`[ApplyEvents] Processing event trigger '${eventData.trigger}' for '${uiElement.name}'`);
+        if (eventData.trigger === 'onClick') {
+            uiElement.on('onClick', () => {
+                
+                // ★★★ デバッグログ（ステップ2）★★★
+                // onClickリスナーが実際に呼ばれたか確認
+                // console.log(`%c[ApplyEvents] onClick fired for '${uiElement.name}'!`, 'color: violet');
 
-        // --- 'onClick' は 'pointerdown' にマッピングする ---
-        const eventToListen = (trigger === 'onClick') ? 'pointerdown' : trigger;
-
-        uiElement.on(eventToListen, (pointer) => {
-            // EditorPluginのモードチェックは、UIシーンでは不要なことが多いので簡略化
-            // (IDEモードでUIボタンを押して動作確認したいため)
-
-            // VSL実行に必要な ActionInterpreter を SystemScene から取得
-            const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
-            if (!systemRegistry) return;
-            
-            const actionInterpreter = systemRegistry.get('actionInterpreter');
-            if (actionInterpreter) {
-                actionInterpreter.run(uiElement, eventData);
-            }
-        });
+                const actionInterpreter = this.registry.get('actionInterpreter');
+                 // ★★★ 'currentMode' のチェックを完全に削除 ★★★
+                if (actionInterpreter) {
+                    // console.log(`%c[ApplyEvents] Running ActionInterpreter for '${uiElement.name}'...`, 'background: #222; color: #bada55');
+                    actionInterpreter.run(uiElement, eventData);
+                } else {
+                    console.error("[ApplyEvents] ActionInterpreter not found in registry.");
+                }
+            });
+        }
     });
 }
 
