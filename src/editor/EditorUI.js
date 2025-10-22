@@ -1492,7 +1492,8 @@ populateVslTriggerEditor(activeEvent) {
         'onOverlap_End',
         'onStateChange',      // ★★★ これを復活させる ★★★
         'onInteract',
-    'REQUEST_PRESS'
+    'REQUEST_PRESS',
+    'REQUEST_PRESENT'
     ];
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 

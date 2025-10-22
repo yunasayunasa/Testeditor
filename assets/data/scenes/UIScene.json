@@ -149,7 +149,7 @@
         }
       ],
       "registryKey": "Text",
-      "text": "そうですね…確か、窓ガラスが\n割れるような音だったと思います。",
+      "text": "事件が起きたあの晩、私は現場の部屋で\n大きな物音を聞きました。",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -184,7 +184,7 @@
         }
       },
       "data": {
-        "lastTap": 0
+        "lastTap": 1761117007553
       }
     },
     {
@@ -203,9 +203,12 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1760948581292",
-              "type": "open_menu",
-              "params": {},
+              "id": "node_1761117019521",
+              "type": "fire_event",
+              "params": {
+                "name": "REQUEST_PRESENT",
+                "params": "null"
+              },
               "x": 50,
               "y": 50
             }
@@ -216,7 +219,7 @@
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1760948708548
+        "lastTap": 1761117009202
       }
     },
     {
