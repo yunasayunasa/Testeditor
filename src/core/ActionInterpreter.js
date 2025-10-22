@@ -33,33 +33,29 @@ export default class ActionInterpreter {
      * @param {object} eventData - 単一のイベント定義 ({ trigger, nodes, connections })
      * @param {Phaser.GameObjects.GameObject} [collidedTarget=null] - 衝突イベントの相手
      */
- // in src/core/ActionInterpreter.js
-// in src/core/ActionInterpreter.js
 async run(source, eventData, collidedTarget = null) {
-    if (!source || !source.scene) {
-        console.warn('[ActionInterpreter.run] Guard triggered: Source or source.scene is invalid.');
-        return;
-    }
+    // ▼▼▼【ここから下を、新しいコードに置き換えてください】▼▼▼
+
+    if (!source || !source.scene) return;
+    
+    // --- シーンがアクティブになるまで待機する、新しいガード節 ---
     if (!source.scene.scene.isActive()) {
-        console.warn(`[ActionInterpreter.run] Guard triggered: Source scene '${source.scene.scene.key}' is not active.`);
-        // ★ onReady のための特別措置：アクティブでなくても、少し待ってリトライする
-        if (eventData.trigger === 'onReady') {
-            await new Promise(resolve => setTimeout(resolve, 16)); // 1フレーム待つ
-            if (!source.scene.scene.isActive()) {
-                 console.error(`[ActionInterpreter.run] Retried, but scene is still not active. Aborting onReady.`);
-                 return;
-            }
-            console.log(`[ActionInterpreter.run] Scene is now active after delay. Continuing onReady.`);
-        } else {
-            return;
-        }
-    }
+        // console.log(`[ActionInterpreter.run] Scene '${source.scene.scene.key}' is not active yet. Waiting...`);
+        await new Promise(resolve => {
+            source.scene.events.once('transitioncomplete', resolve);
+            source.scene.events.once('create', resolve); // create完了でもOK
+            source.scene.events.once('start', resolve); // start完了でもOK
 
+            // タイムアウトを設定して無限待機を防ぐ
+            setTimeout(() => resolve(), 500); 
+        });
+        // console.log(`[ActionInterpreter.run] Scene is now active. Continuing run.`);
+    }
+    
     if (!eventData || !eventData.nodes || eventData.nodes.length === 0) {
-        console.warn('[ActionInterpreter.run] Guard triggered: Event data has no nodes.');
+        // console.warn("[ActionInterpreter.run] Guard triggered: Event data has no nodes.");
         return;
     }
-
 
     this.scene = source.scene;
     this.currentSource = source;
