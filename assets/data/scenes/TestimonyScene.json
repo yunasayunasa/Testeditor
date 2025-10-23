@@ -36,7 +36,18 @@
         {
           "id": "event_1760430133565",
           "trigger": "onReady",
-          "nodes": [],
+          "nodes": [
+            {
+              "id": "node_1761205805983",
+              "type": "fire_game_flow_event",
+              "params": {
+                "data": "{}",
+                "event": "SCENE_CHANGED"
+              },
+              "x": 50,
+              "y": 50
+            }
+          ],
           "connections": []
         },
         {
@@ -87,7 +98,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 0,
+        "lastTap": 1761205782527,
         "stateMachine": {
           "initialState": "待機",
           "states": {
