@@ -40,8 +40,8 @@
       "x": 833,
       "y": 206,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 100,
+      "scaleY": 100,
       "angle": 0,
       "alpha": 1,
       "events": [
@@ -69,8 +69,8 @@
       "x": 478,
       "y": 505,
       "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 100,
+      "scaleY": 100,
       "angle": 0,
       "alpha": 1,
       "events": [
