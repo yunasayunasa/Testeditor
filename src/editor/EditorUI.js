@@ -1493,7 +1493,8 @@ populateVslTriggerEditor(activeEvent) {
         'onStateChange',      // ★★★ これを復活させる ★★★
         'onInteract',
     'REQUEST_PRESS',
-    'REQUEST_PRESENT'
+    'REQUEST_PRESENT',
+    'SCENE_CHANGED'
     ];
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 

@@ -41,7 +41,11 @@
         {
           "event": "RUN_NOVEL_OVERLAY",
           "to": "NovelOverlay"
-        }
+        },
+         {
+    "event": "SCENE_CHANGED",  
+    "to": "InGame"        
+  }
       ]
     },
     "Paused": {
