@@ -134,8 +134,8 @@ export default class OverlayScene extends Phaser.Scene {
     // SystemSceneから uiRegistry と stateManager を取得するのが最も確実
    const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
     if (!systemRegistry) return;
-    const uiRegistry = systemRegistry.get('uiRegistry');
-    const stateManager = systemRegistry.get('stateManager');
+   
+    
 
     for (const layout of layoutData.objects) {
         try {
