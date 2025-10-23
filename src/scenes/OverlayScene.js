@@ -30,12 +30,15 @@ export default class OverlayScene extends Phaser.Scene {
         const layoutData = this.cache.json.get(this.layoutDataKey);
         
         if (layoutData) {
-            this.buildUiFromLayout(layoutData);
-
-            // (オプション) このオーバーレイシーン自体をクリックしたら閉じる、という機能
-            // this.input.on('pointerdown', () => this.close());
-            
-        } else {
+        const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+        if (!systemRegistry) return;
+        const sceneUiVisibility = systemRegistry.get('sceneUiVisibility'); // ← systemRegistryから取得
+        const uiRegistry = systemRegistry.get('uiRegistry'); // ← uiRegistryもここで取得
+        if (!sceneUiVisibility || !uiRegistry) return;
+        const visibleGroups = sceneUiVisibility[this.scene.key] || [];
+           // 2. UIを構築する
+        this.buildUiFromLayout(layoutData, visibleGroups, uiRegistry, systemRegistry.get('stateManager'));
+    } else {
             console.error(`[OverlayScene] Layout data for key '${this.layoutDataKey}' not found!`);
             const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, `Layout not found:\n${this.layoutDataKey}`, { color: 'red', align: 'center' }).setOrigin(0.5);
             // エラー表示をクリックしたらシーンを閉じる
@@ -124,11 +127,12 @@ export default class OverlayScene extends Phaser.Scene {
  * 
  */
 
-  async buildUiFromLayout(layoutData) {
-    if (!layoutData || !layoutData.objects) return;
+  async buildUiFromLayout(layoutData, visibleGroups = [], uiRegistry, stateManager) { // ← 引数を変更
+    if (!layoutData || !layoutData.objects || !uiRegistry || !stateManager) return; // ← ガード節を強化
+
 
     // SystemSceneから uiRegistry と stateManager を取得するのが最も確実
-    const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+   const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
     if (!systemRegistry) return;
     const uiRegistry = systemRegistry.get('uiRegistry');
     const stateManager = systemRegistry.get('stateManager');
@@ -161,6 +165,14 @@ export default class OverlayScene extends Phaser.Scene {
                 console.warn(`[OverlayScene] Could not create UI element for '${layout.name}' with registryKey '${registryKey}'`);
                 continue;
             }
+
+            // 3. 表示すべきかどうかを判定
+            const registryKey = layout.registryKey || layout.name;
+            const definition = uiRegistry[registryKey];
+            let shouldBeVisible = false;
+            if (definition && Array.isArray(definition.groups)) {
+                shouldBeVisible = definition.groups.some(group => visibleGroups.includes(group));
+            }
             
             // --- 2. コンポーネントのアタッチ ---
             if (layout.components) {
@@ -174,7 +186,7 @@ export default class OverlayScene extends Phaser.Scene {
             // registryKeyをデータとして保存しておくのが重要
             uiElement.setData('registryKey', registryKey);
             this.registerUiElement(layout.name, uiElement, layout);
-
+ uiElement.setVisible(shouldBeVisible);
         } catch (e) {
             console.error(`[OverlayScene] FAILED to create UI element '${layout.name}'.`, e);
         }

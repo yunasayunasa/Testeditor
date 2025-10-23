@@ -98,5 +98,6 @@ export const sceneUiVisibility = {
     'BattleScene': ['hud', 'battle'],
     'ActionScene': ['menu', 'game'], // 例
     'TitleScene': [],
-    'NovelOverlayScene': ['game'] // オーバーレイ中は'game'グループ(メッセージウィンドウなど)のみ表示
+    'NovelOverlayScene': ['game'], 
+    'OverlayScene': ['ui_element', 'action']
 };
