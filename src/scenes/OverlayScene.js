@@ -124,50 +124,55 @@ export default class OverlayScene extends Phaser.Scene {
  * 
  */
 
-   // src/scenes/UIScene.js -> buildUiFromLayout()
-
-// in OverlayScene.js
-async buildUiFromLayout(layoutData) {
+  async buildUiFromLayout(layoutData) {
     if (!layoutData || !layoutData.objects) return;
 
-    const uiRegistry = this.registry.get('uiRegistry');
-    const stateManager = this.registry.get('stateManager');
+    // SystemSceneから uiRegistry と stateManager を取得するのが最も確実
+    const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+    if (!systemRegistry) return;
+    const uiRegistry = systemRegistry.get('uiRegistry');
+    const stateManager = systemRegistry.get('stateManager');
 
     for (const layout of layoutData.objects) {
         try {
             let uiElement = null;
-            const registryKey = layout.registryKey;
-
-            // --- オブジェクト生成ロジック ---
-            if (layout.type === 'Text') {
+            const registryKey = layout.registryKey || layout.name;
+            
+            // --- 1. オブジェクト生成 ---
+            if (registryKey === 'Text' || layout.type === 'Text') {
+                // "Text" は特別なキー
                 uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
-            } else if (layout.type === 'Image') {
-                uiElement = this.add.image(0, 0, layout.texture);
-            } else if (registryKey && uiRegistry && uiRegistry[registryKey]) {
-                // uiRegistryに登録された特別なコンポーネントの場合
+            } 
+            else if (uiRegistry && uiRegistry[registryKey]) {
+                // uiRegistry に定義がある場合 (generic_button, panel など)
                 const definition = uiRegistry[registryKey];
-                if (definition && definition.component) {
+                if (definition.component) {
                     const UiComponentClass = definition.component;
                     layout.stateManager = stateManager;
                     uiElement = new UiComponentClass(this, layout);
                 }
-            } else {
-                 // 上記以外（汎用ボタンなど）は、デフォルトでImageとして扱う
+            }
+            else {
+                // 上記以外は、汎用のImageオブジェクトとして生成を試みる
                 uiElement = this.add.image(0, 0, layout.texture || '__DEFAULT');
             }
 
             if (!uiElement) {
-                console.warn(`[OverlayScene] Could not create UI element for '${layout.name}'`);
+                console.warn(`[OverlayScene] Could not create UI element for '${layout.name}' with registryKey '${registryKey}'`);
                 continue;
             }
             
-            // --- 共通設定 ---
+            // --- 2. コンポーネントのアタッチ ---
             if (layout.components) {
                 uiElement.setData('components', layout.components);
                 layout.components.forEach(compDef => {
                     this.addComponent(uiElement, compDef.type, compDef.params);
                 });
             }
+
+            // --- 3. 共通設定と登録 ---
+            // registryKeyをデータとして保存しておくのが重要
+            uiElement.setData('registryKey', registryKey);
             this.registerUiElement(layout.name, uiElement, layout);
 
         } catch (e) {
