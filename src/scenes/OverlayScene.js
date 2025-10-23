@@ -167,7 +167,7 @@ export default class OverlayScene extends Phaser.Scene {
             }
 
             // 3. 表示すべきかどうかを判定
-            const registryKey = layout.registryKey || layout.name;
+            
             const definition = uiRegistry[registryKey];
             let shouldBeVisible = false;
             if (definition && Array.isArray(definition.groups)) {
