@@ -9,6 +9,35 @@
       "height": 500,
       "alpha": 0.9
     },
+     {
+      "name": "resume_button",
+      "type": "Button",
+      "x": 833,
+      "y": 206,
+      "depth": 0,
+      "scaleX": 100,
+      "scaleY": 100,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_close_menu",
+          "nodes": [
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            }
+          ]
+        }
+      ],
+      "label": "戻る",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949543580
+      }
+    },
     {
       "name": "evidence_site_report",
       "registryKey": "generic_button",
