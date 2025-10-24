@@ -562,6 +562,10 @@ applyProperties(gameObject, layout) {
 
     // --- 2. シーンに追加 ---
     this.add.existing(gameObject);
+     // --- 2a. (特別処理) OverlaySceneの場合は、常に表示状態にする ---
+    if (this.scene.key === 'OverlayScene') {
+        gameObject.setVisible(true);
+    }
     
     // --- 3. テクスチャ設定 ---
     let finalTextureKey = data.texture;
