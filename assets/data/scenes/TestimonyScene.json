@@ -76,7 +76,9 @@
             {
               "id": "node_1761118070185",
               "type": "open_menu",
-              "params": {},
+              "params": {
+                "layout": "evidence_list"
+              },
               "x": 50,
               "y": 50
             }
@@ -98,7 +100,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1761205782527,
+        "lastTap": 1761289716215,
         "stateMachine": {
           "initialState": "待機",
           "states": {
