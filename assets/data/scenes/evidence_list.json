@@ -1,19 +1,45 @@
 {
+  "scene_settings": {},
+  "hasJoystick": false,
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
-      "name": "evidence_background",
-      "registryKey": "panel",
+      "name": "menu_background",
+      "type": "Panel",
       "x": 640,
       "y": 360,
-      "width": 600,
-      "height": 500,
-      "alpha": 0.9
+      "depth": 0,
+      "scaleX": 1000,
+      "scaleY": 1000,
+      "angle": 0,
+      "alpha": 1,
+      "data": {
+        "registryKey": "panel",
+        "lastTap": 1760949585381
+      }
     },
-     {
-      "name": "resume_button",
+   
+    {
+      "name": "証拠品１",
       "type": "Button",
-      "x": 833,
-      "y": 206,
+      "x": 478,
+      "y": 505,
       "depth": 0,
       "scaleX": 100,
       "scaleY": 100,
@@ -28,75 +54,125 @@
               "id": "node_close_menu",
               "type": "close_menu",
               "params": {}
+            },
+            {
+              "id": "node_1760949606725",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"site_report\""
+              },
+              "x": 50,
+              "y": 296
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1760949606725",
+              "fromPin": "output",
+              "toNode": "node_close_menu",
+              "toPin": "input"
             }
           ]
         }
       ],
-      "label": "戻る",
+      "label": "証拠品１",
       "data": {
         "registryKey": "generic_button",
-        "lastTap": 1760949543580
+        "lastTap": 1760949587885
       }
     },
     {
-      "name": "evidence_site_report",
-      "registryKey": "generic_button",
-      "x": 640,
-      "y": 250,
-      "label": "現場の調査報告書",
+      "name": "証拠品２",
+      "type": "Button",
+      "x": 647,
+      "y": 505,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onClick",
-          "id": "event_select_report",
+          "id": "event_close_menu",
           "nodes": [
-            { "id": "node_eval_report", "type": "eval", "params": { "exp": "f.selected_evidence = 'site_report'" } },
-            { "id": "node_close_report", "type": "close_menu", "params": {} }
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            },
+            {
+              "id": "node_1760949651301",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"knife\""
+              },
+              "x": 50,
+              "y": 367
+            }
           ],
           "connections": [
-            { "fromNode": "node_eval_report", "fromPin": "output", "toNode": "node_close_report", "toPin": "input" }
+            {
+              "fromNode": "node_1760949651301",
+              "fromPin": "output",
+              "toNode": "node_close_menu",
+              "toPin": "input"
+            }
           ]
         }
-      ]
+      ],
+      "label": "証拠品２",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949640013
+      }
     },
     {
-      "name": "evidence_knife",
-      "registryKey": "generic_button",
-      "x": 640,
-      "y": 350,
-      "label": "凶器のナイフ",
+      "name": "証拠品３",
+      "type": "Button",
+      "x": 812,
+      "y": 508,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onClick",
-          "id": "event_select_knife",
+          "id": "event_close_menu",
           "nodes": [
-            { "id": "node_eval_knife", "type": "eval", "params": { "exp": "f.selected_evidence = 'knife'" } },
-            { "id": "node_close_knife", "type": "close_menu", "params": {} }
+            {
+              "id": "node_close_menu",
+              "type": "close_menu",
+              "params": {}
+            },
+            {
+              "id": "node_1760949690157",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"witness_testimony_01\""
+              },
+              "x": 50,
+              "y": 331
+            }
           ],
           "connections": [
-            { "fromNode": "node_eval_knife", "fromPin": "output", "toNode": "node_close_knife", "toPin": "input" }
+            {
+              "fromNode": "node_1760949690157",
+              "fromPin": "output",
+              "toNode": "node_close_menu",
+              "toPin": "input"
+            }
           ]
         }
-      ]
-    },
-    {
-      "name": "evidence_testimony",
-      "registryKey": "generic_button",
-      "x": 640,
-      "y": 450,
-      "label": "証人自身の最初の証言",
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_select_testimony",
-          "nodes": [
-            { "id": "node_eval_testimony", "type": "eval", "params": { "exp": "f.selected_evidence = 'witness_testimony_01'" } },
-            { "id": "node_close_testimony", "type": "close_menu", "params": {} }
-          ],
-          "connections": [
-            { "fromNode": "node_eval_testimony", "fromPin": "output", "toNode": "node_close_testimony", "toPin": "input" }
-          ]
-        }
-      ]
+      ],
+      "label": "証拠品3",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1760949686181
+      }
     }
-  ]
+  ],
+  "animations": []
 }
