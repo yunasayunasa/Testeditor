@@ -105,12 +105,18 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                 
-                case 'openMenuOverlay':
-                    const activeScene = EngineAPI.activeGameSceneKey;
-                    if (activeScene) {
-                        EngineAPI.requestPauseMenu(activeScene, action.params.layout, action.params);
-                    }
-                    break;
+             case 'openMenuOverlay': { // ← ブロック {} で囲む
+    const activeScene = EngineAPI.activeGameSceneKey;
+    if (activeScene) {
+        // ▼▼▼【ここが修正の核心です】▼▼▼
+        // イベントデータに layout があればそれを優先し、なければアクションのデフォルト値を使う
+        const layoutKey = eventData.layout || action.params.layout;
+        EngineAPI.requestPauseMenu(activeScene, layoutKey, action.params);
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    }
+    break; // ← breakを忘れない
+}
+
                 
                 case 'closeOverlay':
                     // 閉じるべきオーバーレイシーンを特定する必要があるが、一旦簡略化
