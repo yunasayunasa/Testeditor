@@ -17,12 +17,19 @@ export default class OverlayScene extends Phaser.Scene {
 
     // ★★★ ポイント2: init()でレイアウトキーを受け取る ★★★
     init(data) {
-        this.layoutDataKey = data.layoutKey || null;
+          // layoutKeyが渡された場合のみ、シーンのプロパティを更新する
+    if (data && data.layoutKey) {
+        this.layoutDataKey = data.layoutKey;
+    }
         // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
     }
 
     // createメソッドは非同期である必要はない
     create() {
+         if (!this.layoutDataKey) {
+        console.error('[OverlayScene] create called, but layoutDataKey is missing. Aborting.');
+        return;
+    }
         // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
         this.scene.bringToTop();
 
