@@ -92,6 +92,7 @@
          "stage3.json",
         "TestimonyScene.json",
           "TitleScene.json",
+          "evidence_list.json",
         "pause_menu.json"
          
       ]
