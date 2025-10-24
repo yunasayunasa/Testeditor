@@ -52,6 +52,18 @@ export default class OverlayScene extends Phaser.Scene {
             errorText.setInteractive();
             errorText.on('pointerdown', () => this.close());
         }
+
+
+        // --- EditorPluginとの連携 （必要に応じてコメントアウトしてください。）---
+    const editor = this.plugins.get('EditorPlugin');
+    if (editor && editor.isEnabled) {
+        // 1. グローバルな編集モードを強制的に 'select' に設定
+        this.registry.set('editor_mode', 'select');
+
+        // 2. このシーン上の全てのオブジェクトのドラッグを有効化するよう依頼
+        //    (makeEditableの中で個別に行われるが、念のため全体にも適用)
+        editor.setAllObjectsDraggable(true);
+    }
     }
 
     /**
