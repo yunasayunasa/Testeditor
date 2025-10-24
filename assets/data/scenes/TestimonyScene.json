@@ -74,10 +74,11 @@
           "trigger": "REQUEST_PRESENT",
           "nodes": [
             {
-              "id": "node_1761118070185",
-              "type": "open_menu",
+              "id": "node_1761294818760",
+              "type": "fire_game_flow_event",
               "params": {
-                "layout": "evidence_list"
+                "data": "{\"layout\": \"evidence_list\"}",
+                "event": "OPEN_PAUSE_MENU"
               },
               "x": 50,
               "y": 50
@@ -100,7 +101,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1761289716215,
+        "lastTap": 1761294782441,
         "stateMachine": {
           "initialState": "待機",
           "states": {
