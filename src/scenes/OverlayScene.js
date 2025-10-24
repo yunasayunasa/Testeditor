@@ -147,7 +147,7 @@ export default class OverlayScene extends Phaser.Scene {
     for (const layout of layoutData.objects) {
         try {
             let uiElement = null;
-            const registryKey = layout.registryKey || layout.name;
+            const registryKey = layout.registryKey || (layout.data && layout.data.registryKey) || layout.name;
             
             // --- 1. オブジェクト生成 ---
             if (registryKey === 'Text' || layout.type === 'Text') {
