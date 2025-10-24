@@ -1,0 +1,73 @@
+{
+  "objects": [
+    {
+      "name": "evidence_background",
+      "registryKey": "panel",
+      "x": 640,
+      "y": 360,
+      "width": 600,
+      "height": 500,
+      "alpha": 0.9
+    },
+    {
+      "name": "evidence_site_report",
+      "registryKey": "generic_button",
+      "x": 640,
+      "y": 250,
+      "label": "現場の調査報告書",
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_report",
+          "nodes": [
+            { "id": "node_eval_report", "type": "eval", "params": { "exp": "f.selected_evidence = 'site_report'" } },
+            { "id": "node_close_report", "type": "close_menu", "params": {} }
+          ],
+          "connections": [
+            { "fromNode": "node_eval_report", "fromPin": "output", "toNode": "node_close_report", "toPin": "input" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "evidence_knife",
+      "registryKey": "generic_button",
+      "x": 640,
+      "y": 350,
+      "label": "凶器のナイフ",
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_knife",
+          "nodes": [
+            { "id": "node_eval_knife", "type": "eval", "params": { "exp": "f.selected_evidence = 'knife'" } },
+            { "id": "node_close_knife", "type": "close_menu", "params": {} }
+          ],
+          "connections": [
+            { "fromNode": "node_eval_knife", "fromPin": "output", "toNode": "node_close_knife", "toPin": "input" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "evidence_testimony",
+      "registryKey": "generic_button",
+      "x": 640,
+      "y": 450,
+      "label": "証人自身の最初の証言",
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_testimony",
+          "nodes": [
+            { "id": "node_eval_testimony", "type": "eval", "params": { "exp": "f.selected_evidence = 'witness_testimony_01'" } },
+            { "id": "node_close_testimony", "type": "close_menu", "params": {} }
+          ],
+          "connections": [
+            { "fromNode": "node_eval_testimony", "fromPin": "output", "toNode": "node_close_testimony", "toPin": "input" }
+          ]
+        }
+      ]
+    }
+  ]
+}
