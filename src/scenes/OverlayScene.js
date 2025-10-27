@@ -36,7 +36,7 @@ export default class OverlayScene extends BaseGameScene {
      */
     create() {
         // 他のシーンの最前面に表示されるようにする
-        this.scene.bringToTop();
+         this.scene.bringToTop(this.scene.key); // 自分のキーを渡して確実に最前面に
 
         // layoutDataKeyが設定されていない場合は、エラーを防ぐために処理を中断
         if (!this.layoutDataKey) {
@@ -46,7 +46,18 @@ export default class OverlayScene extends BaseGameScene {
 
         // BaseGameSceneが持つ、JSONからシーンを構築する魔法のメソッドを呼び出す
         this.initSceneWithData();
-
+ this.events.once('scene-ready', () => {
+        let maxDepth = 10000; // UISceneよりも大きな基準値
+        this.children.each(child => {
+            child.setVisible(true);
+            child.setAlpha(1);
+            
+            // ▼▼▼【この一行を追加】▼▼▼
+            child.setDepth(maxDepth++);
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        });
+        console.log(`[OverlayScene] All ${this.children.list.length} objects set to visible, alpha=1, and high depth.`);
+    });
         // --- EditorPluginとの連携 ---
         // IDEモードでこのシーンが起動・リスタートされた際に、
         // ゲーム全体の編集モードが 'select' であることを保証する
