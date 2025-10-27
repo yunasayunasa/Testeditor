@@ -599,8 +599,12 @@ applyProperties(gameObject, layout) {
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
-    if (data.depth !== undefined) gameObject.setDepth(data.depth);
-
+    if (data.depth !== undefined) {
+    gameObject.setDepth(data.depth);
+} else if (this.scene.key === 'OverlayScene') {
+    // OverlaySceneでdepth指定がない場合は、非常に高いデフォルト値を与える
+    gameObject.setDepth(10000); 
+}
     // Yソート対象なら、原点を自動的に足元に設定
     if (gameObject.getData('isYSortable') === true) {
         gameObject.setOrigin(0.5, 1);
