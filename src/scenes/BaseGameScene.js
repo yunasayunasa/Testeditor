@@ -568,6 +568,7 @@ applyProperties(gameObject, layout) {
         this.children.each(child => {
             // 強制的に表示状態にする
             child.setVisible(true);
+            child.setAlpha(1);
         });
         console.log(`[OverlayScene] All ${this.children.list.length} objects have been set to visible.`);
     });
