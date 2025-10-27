@@ -184,7 +184,7 @@
         }
       },
       "data": {
-        "lastTap": 1761117007553
+        "lastTap": 0
       }
     },
     {
@@ -203,11 +203,11 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1761117019521",
-              "type": "fire_event",
+              "id": "node_1761550834352",
+              "type": "fire_game_flow_event",
               "params": {
-                "name": "REQUEST_PRESENT",
-                "params": "null"
+                "data": "{\"layout\": \"evidence_list\"}",
+                "event": "OPEN_PAUSE_MENU"
               },
               "x": 50,
               "y": 50
@@ -219,7 +219,7 @@
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1761117009202
+        "lastTap": 1761550818176
       }
     },
     {
