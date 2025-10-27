@@ -105,16 +105,17 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                 
-             case 'openMenuOverlay': { // ← ブロック {} で囲む
+           case 'openMenuOverlay': {
     const activeScene = EngineAPI.activeGameSceneKey;
     if (activeScene) {
-        // ▼▼▼【ここが修正の核心です】▼▼▼
-        // イベントデータに layout があればそれを優先し、なければアクションのデフォルト値を使う
+        // イベントデータ (VSLから渡されたデータ) に layout があればそれを最優先する
         const layoutKey = eventData.layout || action.params.layout;
+        
+        console.log(`%c[GameFlowManager] openMenuOverlay実行。最終的なレイアウトキー: '${layoutKey}'`, 'color: orange; font-weight: bold;');
+
         EngineAPI.requestPauseMenu(activeScene, layoutKey, action.params);
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
-    break; // ← breakを忘れない
+    break;
 }
 
                 
