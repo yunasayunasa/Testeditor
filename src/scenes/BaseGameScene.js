@@ -562,6 +562,15 @@ applyProperties(gameObject, layout) {
 
     // --- 2. シーンに追加 ---
     this.add.existing(gameObject);
+     // --- 全てのオブジェクト構築が完了した後に実行される処理 ---
+    this.events.once('scene-ready', () => {
+        // このシーンに存在する全てのゲームオブジェクトをループ
+        this.children.each(child => {
+            // 強制的に表示状態にする
+            child.setVisible(true);
+        });
+        console.log(`[OverlayScene] All ${this.children.list.length} objects have been set to visible.`);
+    });
     
     
     // --- 3. テクスチャ設定 ---
