@@ -45,6 +45,27 @@ class EngineAPI {
         });
     }
 
+     /**
+     * EditorPluginの自動シーンリフレッシュ機能を一時的に無効にする
+     */
+    suppressEditorRefresh() {
+        const editor = this.systemScene?.plugins.get('EditorPlugin');
+        if (editor && typeof editor.suppressRefresh === 'function') {
+            editor.suppressRefresh(true);
+        }
+    }
+
+    /**
+     * EditorPluginの自動シーンリフレッシュ機能を再度有効にする
+     */
+    resumeEditorRefresh() {
+        const editor = this.systemScene?.plugins.get('EditorPlugin');
+        if (editor && typeof editor.suppressRefresh === 'function') {
+            editor.suppressRefresh(false);
+        }
+    }
+
+
 
     /**
      * 現在アクティブな最前面のゲームプレイシーンのキーを取得するゲッター。
