@@ -99,10 +99,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
  * 現在アクティブなゲームシーンをリスタートさせることで、エディタの状態を完全にリフレッシュする
  */
 refresh() {
-     if (this.isRefreshSuppressed) {
-        console.log('%c[EditorPlugin] Refresh suppressed.', 'color: #FF9800;');
-        return;
-    }
     console.log('%c[EditorPlugin] Refreshing via Scene Restart...', 'color: #FF9800; font-weight: bold;');
 
     // 1. 現在アクティブな「ゲームプレイシーン」を取得する

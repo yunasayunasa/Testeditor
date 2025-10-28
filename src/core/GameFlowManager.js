@@ -4,7 +4,7 @@ import GameScene from '../scenes/GameScene.js';
 import TitleScene from '../scenes/TitleScene.js';
 import GameOverScene from '../scenes/GameOverScene.js';
 // JumpSceneなど、JSONから呼ばれる可能性のある他のシーンもインポート
-import TestimonyScene from '../scenes/TestimonyScene.js';
+import JumpScene from '../scenes/JumpScene.js';
 
 
 
@@ -12,7 +12,7 @@ const SCENE_MAP = {
     GameScene,
     TitleScene,
     GameOverScene,
-    TestimonyScene
+    JumpScene 
 };
 export default class GameFlowManager {
     constructor(flowData) {
@@ -105,19 +105,12 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                 
-           case 'openMenuOverlay': {
-    const activeScene = EngineAPI.activeGameSceneKey;
-    if (activeScene) {
-        // イベントデータ (VSLから渡されたデータ) に layout があればそれを最優先する
-        const layoutKey = eventData.layout || action.params.layout;
-        
-        console.log(`%c[GameFlowManager] openMenuOverlay実行。最終的なレイアウトキー: '${layoutKey}'`, 'color: orange; font-weight: bold;');
-
-        EngineAPI.requestPauseMenu(activeScene, layoutKey, action.params);
-    }
-    break;
-}
-
+                case 'openMenuOverlay':
+                    const activeScene = EngineAPI.activeGameSceneKey;
+                    if (activeScene) {
+                        EngineAPI.requestPauseMenu(activeScene, action.params.layout, action.params);
+                    }
+                    break;
                 
                 case 'closeOverlay':
                     // 閉じるべきオーバーレイシーンを特定する必要があるが、一旦簡略化

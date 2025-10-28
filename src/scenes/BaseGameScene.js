@@ -507,18 +507,6 @@ initComponentsAndEvents(gameObject) {
     
     // ▼▼▼【ここが修正の核心！】▼▼▼
     // --- 5. 収集したコンポーネントのstart()を、このメソッド内で呼び出す ---
-
-    // --- 5a. (特別処理) StateMachineComponentがあれば、先にinit()を呼び出す ---
-    const stateMachine = gameObject.components?.StateMachineComponent;
-    if (stateMachine && typeof stateMachine.init === 'function') {
-        const stateMachineData = gameObject.getData('stateMachine');
-        if (stateMachineData) {
-            // console.log(`[BaseGameScene] Initializing StateMachine for '${gameObject.name}'...`);
-            stateMachine.init(stateMachineData);
-        }
-    }
-
-     // --- 5b. 収集したコンポーネントのstart()を呼び出す (既存のコード) ---
     if (componentsToStart.length > 0) {
         // console.log(`%c[initComponentsAndEvents] Starting ${componentsToStart.length} components for '${gameObject.name}'...`, 'color: orange;');
         componentsToStart.forEach(component => {
@@ -562,17 +550,6 @@ applyProperties(gameObject, layout) {
 
     // --- 2. シーンに追加 ---
     this.add.existing(gameObject);
-     // --- 全てのオブジェクト構築が完了した後に実行される処理 ---
-    this.events.once('scene-ready', () => {
-        // このシーンに存在する全てのゲームオブジェクトをループ
-        this.children.each(child => {
-            // 強制的に表示状態にする
-            child.setVisible(true);
-            child.setAlpha(1);
-        });
-        console.log(`[OverlayScene] All ${this.children.list.length} objects have been set to visible.`);
-    });
-    
     
     // --- 3. テクスチャ設定 ---
     let finalTextureKey = data.texture;
@@ -599,12 +576,8 @@ applyProperties(gameObject, layout) {
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
-    if (data.depth !== undefined) {
-    gameObject.setDepth(data.depth);
-} else if (this.scene.key === 'OverlayScene') {
-    // OverlaySceneでdepth指定がない場合は、非常に高いデフォルト値を与える
-    gameObject.setDepth(10000); 
-}
+    if (data.depth !== undefined) gameObject.setDepth(data.depth);
+
     // Yソート対象なら、原点を自動的に足元に設定
     if (gameObject.getData('isYSortable') === true) {
         gameObject.setOrigin(0.5, 1);
@@ -760,22 +733,6 @@ events.forEach(eventData => {
                 this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
             });
         }
-
-        // --- 汎用カスタムイベントの処理 ---
-    const knownTriggers = ['onClick', 'onReady', 'onStateChange', 'onDirectionChange'];
-    if (!knownTriggers.includes(eventData.trigger)) {
-         console.log(`%c[LOG 3: 受信準備] '${gameObject.name}' がカスタムトリガー '${eventData.trigger}' のリスニングを開始します。`, 'color: #00bcd4; font-weight: bold;');
-        // 上記以外の、知らない名前のトリガーが来たら、それをカスタムイベントとしてリッスンする
-        gameObject.on(eventData.trigger, (data) => {
-             console.log(`%c[LOG 4: 受信成功] '${gameObject.name}' がカスタムトリガー '${eventData.trigger}' を受信しました！VSLを実行します。`, 'color: #4caf50; font-weight: bold;');
-            // カスタムイベントには、今のところ条件判定(condition)はないシンプルなものとする
-            if (this.actionInterpreter) {
-                // eventData（ノードや接続情報）と、イベントが渡したデータ(data)をコンテキストとして渡す
-                this.actionInterpreter.run(gameObject, eventData, data);
-            }
-        });
-    }
-
     });
 
     // --- 4. 最後に、エディタ用の追加処理を行う ---
