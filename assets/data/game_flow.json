@@ -56,7 +56,7 @@
         {
           "type": "openMenuOverlay",
           "params": {
-            "layout": "pause_menu"
+            "layout":  "evidence_list"
           }
         }
       ],

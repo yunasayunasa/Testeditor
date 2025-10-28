@@ -187,39 +187,38 @@
         "lastTap": 0
       }
     },
-  {
-  "name": "button_present",
-  "type": "Button",
-  "x": 958,
-  "y": 444,
-  "depth": 0,
-  "scaleX": 1,
-  "scaleY": 1,
-  "angle": 0,
-  "alpha": 1,
-  "events": [
     {
-      "id": "event_1760948576772",
-      "trigger": "onClick",
-      "nodes": [
+      "name": "button_present",
+      "type": "Button",
+      "x": 958,
+      "y": 444,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
         {
-          "id": "node_1761550834352",
-          "type": "fire_game_flow_event",
-          "params": {
-            "event": "OPEN_PAUSE_MENU",
-            "data": "{\"layout\": \"evidence_list\"}"
-          },
-          "x": 50,
-          "y": 50
+          "id": "event_1760948576772",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1761641307694",
+              "type": "open_menu",
+              "params": {},
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
         }
       ],
-      "connections": []
-    }
-  ],
-  "registryKey": "generic_button",
-  "label": "突きつける",
-  "data": { "lastTap": 0 }
-},
+      "registryKey": "generic_button",
+      "label": "突きつける",
+      "data": {
+        "lastTap": 1761641271655
+      }
+    },
     {
       "name": "button_press",
       "type": "Button",
