@@ -733,6 +733,14 @@ events.forEach(eventData => {
                 this.evaluateConditionAndRun(gameObject, eventData, { direction: newDirection });
             });
         }
+        // --- testimony-system custom triggers ---
+    if (eventData.trigger === 'REQUEST_PRESS' || eventData.trigger === 'REQUEST_PRESENT') {
+        gameObject.on(eventData.trigger, (data) => {
+            if (this.actionInterpreter) {
+                this.actionInterpreter.run(gameObject, eventData, data);
+            }
+        });
+    }
     });
 
     // --- 4. 最後に、エディタ用の追加処理を行う ---
