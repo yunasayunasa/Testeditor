@@ -35,67 +35,93 @@
       "events": [
         {
           "id": "event_1760430133565",
-          "trigger": "REQUEST_PRESS",
-          "nodes": [
-            {
-              "id": "node_1760943107242",
-              "type": "eval",
-              "params": {
-                "exp": "f.temp_press_text = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.text"
-              },
-              "x": 50,
-              "y": 50
-            },
-            {
-              "id": "node_1760604318411",
-              "type": "if",
-              "params": {
-                "exp": "f.temp_press_text"
-              },
-              "x": 280,
-              "y": 381
-            },
-            {
-              "id": "node_1760604326715",
-              "type": "show_novel_text",
-              "params": {
-                "text": "&{f.temp_press_text}"
-              },
-              "x": 500,
-              "y": 50
-            }
-          ],
-          "connections": [
-            {
-              "fromNode": "start",
-              "fromPin": "output",
-              "toNode": "node_1760943107242",
-              "toPin": "input"
-            },
-            {
-              "fromNode": "node_1760943107242",
-              "fromPin": "output",
-              "toNode": "node_1760604318411",
-              "toPin": "input"
-            },
-            {
-              "fromNode": "node_1760604318411",
-              "fromPin": "output_true",
-              "toNode": "node_1760604326715",
-              "toPin": "input"
-            }
-          ]
-        },
-        {
-          "id": "event_1760517765136",
           "trigger": "onReady",
           "nodes": [
             {
-              "id": "node_1761814017513",
-              "type": "fire_game_flow_event",
+                    "id": "node_1760943107242",
+                    "type": "eval",
+                    "params": {
+                      "exp": "f.temp_press_text = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.text"
+                    },
+                    "x": 50,
+                    "y": 50
+                  },
+                  {
+                    "id": "node_1760604318411",
+                    "type": "if",
+                    "params": {
+                      "exp": "f.temp_press_text"
+                    },
+                    "x": 280,
+                    "y": 50
+                  },
+                  {
+                    "id": "node_1760604326715",
+                    "type": "show_novel_text",
+                    "params": {
+                      "text": "&{f.temp_press_text}"
+                    },
+                    "x": 500,
+                    "y": 50
+                  },
+                  {
+                    "id": "node_1760604329395",
+                    "type": "call_component_method",
+                    "params": {
+                      "target": "self",
+                      "params": "[\"待機\"]",
+                      "component": "StateMachineComponent",
+                      "method": "transitionTo"
+                    },
+                    "x": 750,
+                    "y": 50
+                  }
+                ],
+                "connections": [
+                  {
+                    "fromNode": "start",
+                    "fromPin": "output",
+                    "toNode": "node_1760943107242",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1760943107242",
+                    "fromPin": "output",
+                    "toNode": "node_1760604318411",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1760604318411",
+                    "fromPin": "output_true",
+                    "toNode": "node_1760604326715",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1760604326715",
+                    "fromPin": "output",
+                    "toNode": "node_1760604329395",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1760604318411",
+                    "fromPin": "output_false",
+                    "toNode": "node_1760604329395",
+                    "toPin": "input"
+                  }
+                ]},
+        
+        {
+          "id": "event_1760517765136",
+          "trigger": "REQUEST_PRESS",
+          "nodes": [
+            {
+              "id": "node_1760518310040",
+              "type": "call_component_method",
               "params": {
-                "data": "{}",
-                "event": "SCENE_CHANGED"
+                "target": "self",
+                "params": "[\"Pressing\"]",
+                "component": "StateMachineComponent",
+                "method": "transitionTo"
               },
               "x": 50,
               "y": 50
@@ -112,6 +138,10 @@
       ],
       "components": [
         {
+          "type": "StateMachineComponent",
+          "params": {}
+        },
+        {
           "type": "GlobalEventListenerComponent",
           "params": {
             "events": "REQUEST_PRESS, REQUEST_PRESENT"
@@ -120,7 +150,7 @@
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 0,
+        "lastTap": 1761641410422,
         "stateMachine": {
           "initialState": "待機",
           "states": {
