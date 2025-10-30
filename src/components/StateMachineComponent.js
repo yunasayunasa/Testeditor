@@ -6,13 +6,10 @@ export default class StateMachineComponent {
         this.currentStateName = null;
         this.currentStateLogic = null;
         this.stateMachineData = null; // 初期値は null
-        this.actionInterpreter = this.scene.actionInterpreter;
-        this.actionInterpreter = this.scene.registry.get('actionInterpreter');
 
-        // --- 念のためのガード節 ---
-        if (!this.actionInterpreter) {
-            console.error("[StateMachineComponent] CRITICAL: ActionInterpreter not found in scene registry!");
-        }
+    // ▼▼▼【この部分を、このように書き換えてください】▼▼▼
+    const systemRegistry = this.scene.scene.manager.getScene('SystemScene')?.registry;
+    this.actionInterpreter = systemRegistry ? systemRegistry.get('actionInterpreter') : null;
     }
 
      // 新しい初期化メソッド

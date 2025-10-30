@@ -505,12 +505,11 @@ initComponentsAndEvents(gameObject) {
         editor.makeEditable(gameObject, this);
     }
 
-    // --- (特別処理) StateMachineComponentがあれば、先にinit()を呼び出す ---
-   const stateMachine = gameObject.components?.StateMachineComponent;
+    // --- (特別処理) StateMachineComponentがあれば、データを渡して初期化する ---
+const stateMachine = gameObject.components?.StateMachineComponent;
 if (stateMachine && typeof stateMachine.init === 'function') {
     const stateMachineData = gameObject.getData('stateMachine');
     if (stateMachineData) {
-        // console.log(`[BaseGameScene] Initializing StateMachine for '${gameObject.name}'...`);
         stateMachine.init(stateMachineData);
     }
 }
