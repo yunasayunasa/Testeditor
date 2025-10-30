@@ -35,7 +35,11 @@ export default class ActionInterpreter {
      */
 async run(source, eventData, collidedTarget = null) {
     // ▼▼▼【ここから下を、新しいコードに置き換えてください】▼▼▼
-
+console.groupCollapsed(`%c[LOG BOMB] ActionInterpreter.run() Called`, 'background: #222; color: #bada55;');
+    console.log("BOMB INFO: Received source:", source);
+    console.log("BOMB INFO: Received eventData:", eventData);
+    console.log("BOMB INFO: Received collidedTarget:", collidedTarget);
+    console.groupEnd();
     if (!source || !source.scene) return;
     
     // --- シーンがアクティブになるまで待機する、新しいガード節 ---

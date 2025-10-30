@@ -46,24 +46,57 @@ startListening() {
             
             // 2. 新しいコールバック関数を定義する
             const listenerCallback = (data) => {
-                if (!this.gameObject || !this.gameObject.scene) return;
-                
-                console.log(`%c[GlobalListener] '${this.gameObject.name}' が '${trimmedEvent}' を受信しました！`, 'color: #3f51b5; font-weight: bold;');
+    // ▼▼▼【ここから下を、完全に置き換えてください】▼▼▼
+    
+    console.groupCollapsed(`%c[LOG BOMB] GlobalListener Event Received: '${trimmedEvent}'`, 'background: #222; color: #ffeb3b;');
+    
+    if (!this.gameObject || !this.gameObject.scene) {
+        console.error("BOMB INFO: this.gameObject または this.gameObject.scene が存在しません！");
+        console.log("this.gameObject:", this.gameObject);
+        console.groupEnd();
+        return;
+    }
+    
+    console.log("BOMB INFO: Event received by:", this.gameObject.name);
+    console.log("BOMB INFO: gameObject.scene:", this.gameObject.scene.scene.key);
 
-                const allEvents = this.gameObject.getData('events') || [];
-                const eventData = allEvents.find(e => e.trigger === trimmedEvent);
+    const allEvents = this.gameObject.getData('events') || [];
+    const eventData = allEvents.find(e => e.trigger === trimmedEvent);
 
-                if (eventData) {
-                    const actionInterpreter = this.scene.registry.get('actionInterpreter');
-                    if (actionInterpreter) {
-                        console.log(`%c[GlobalListener] ActionInterpreter を直接呼び出して、トリガー '${trimmedEvent}' のVSLを実行します。`, 'color: #4caf50; font-weight: bold;');
-                        actionInterpreter.run(this.gameObject, eventData, data);
-                    }
-                } else {
-                    console.warn(`[GlobalListener] '${this.gameObject.name}' に、トリガー '${trimmedEvent}' のイベント定義が見つかりませんでした。`);
-                }
-            };
+    if (!eventData) {
+        console.warn(`BOMB INFO: トリガー '${trimmedEvent}' に対応するVSLイベント定義が見つかりませんでした。`);
+        console.groupEnd();
+        return;
+    }
 
+    console.log("BOMB INFO: Found VSL eventData:", eventData);
+    
+    const systemRegistry = this.scene.scene.manager.getScene('SystemScene')?.registry;
+    if (!systemRegistry) {
+        console.error("BOMB INFO: SystemScene registry が見つかりません！");
+        console.groupEnd();
+        return;
+    }
+    
+    const actionInterpreter = systemRegistry.get('actionInterpreter');
+    if (!actionInterpreter) {
+        console.error("BOMB INFO: ActionInterpreter が見つかりません！");
+        console.groupEnd();
+        return;
+    }
+
+    console.log("BOMB INFO: ActionInterpreterが見つかりました。これから run() を呼び出します。");
+    console.log("BOMB INFO: run()に渡す引数 (source):", this.gameObject);
+    console.log("BOMB INFO: run()に渡す引数 (eventData):", eventData);
+    console.log("BOMB INFO: run()に渡す引数 (collidedTarget):", data);
+    
+    console.groupEnd();
+
+    // 実行
+    actionInterpreter.run(this.gameObject, eventData, data);
+    
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+};
             // ▼▼▼【これが欠けていた一行です】▼▼▼
             this.systemEvents.on(trimmedEvent, listenerCallback, this);
             // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
