@@ -40,10 +40,17 @@ export default class BaseGameScene extends Phaser.Scene {
             // console.log(`[${this.scene.key}] Initialized without specific layout data key.`);
         }
          this.loadData = data.loadData || null; // ★ ロードデータを受け取る
-         
+         // --- SystemSceneからグローバルなActionInterpreterを取得して保持 ---
+    const systemScene = this.scene.get('SystemScene');
+    if (systemScene) {
+        this.actionInterpreter = systemScene.registry.get('actionInterpreter');
+    }
+    if (!this.actionInterpreter) {
+        console.error(`[${this.scene.key}] CRITICAL: ActionInterpreter not found in SystemScene registry!`);
+    }
     }
  create() {
-    this.actionInterpreter = this.registry.get('actionInterpreter');
+    this.actionInterpreter = this.actionInterpreter;
     if (!this.actionInterpreter) {
         console.error(`[${this.scene.key}] CRITICAL: ActionInterpreter not found in registry!`);
     }
@@ -892,7 +899,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
     }
 
     if (conditionMet) {
-        const actionInterpreter = this.registry.get('actionInterpreter');
+        const actionInterpreter = this.actionInterpreter;
         if (actionInterpreter) {
             actionInterpreter.run(gameObject, eventData, gameObject);
         }
@@ -908,7 +915,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
             if (events) {
                 for (const eventData of events) {
                         if (eventData.trigger === 'onReady') {
-        const actionInterpreter = this.registry.get('actionInterpreter');
+        const actionInterpreter = this.actionInterpreter;
         if (actionInterpreter) {
             actionInterpreter.run(gameObject, eventData, gameObject);
         }
@@ -973,7 +980,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      * @param {string} phase - 'active' (重なり中) or 'end' (重なり終了)
      */
     handleOverlap(sourceObject, targetObject, phase) {
-        const actionInterpreter = this.registry.get('actionInterpreter');
+        const actionInterpreter = this.actionInterpreter;
         if (!actionInterpreter || !sourceObject.getData) return;
         
         const events = sourceObject.getData('events');
@@ -1012,7 +1019,7 @@ evaluateConditionAndRun(gameObject, eventData, context) {
      */
     
 handleCollision(sourceObject, targetObject, pair) {
-        const actionInterpreter = this.registry.get('actionInterpreter');
+        const actionInterpreter = this.actionInterpreter;
         if (!actionInterpreter || !sourceObject.getData) return;
         
         const events = sourceObject.getData('events');
@@ -1130,7 +1137,7 @@ _addObjectFromEditorCore(createLayout, newName, layerName) {
     
 
     handleKeyPressEvents() {
-       const actionInterpreter = this.registry.get('actionInterpreter');
+       const actionInterpreter = this.actionInterpreter;
         if (!actionInterpreter || !sourceObject.getData) return;
         
         const events = sourceObject.getData('events');
