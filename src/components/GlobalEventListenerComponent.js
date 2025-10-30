@@ -54,12 +54,25 @@ startListening() {
                 const eventData = allEvents.find(e => e.trigger === trimmedEvent);
 
                 if (eventData) {
-                    const actionInterpreter = this.scene.registry.get('actionInterpreter');
-                    if (actionInterpreter) {
-                        console.log(`%c[GlobalListener] ActionInterpreter を直接呼び出して、トリガー '${trimmedEvent}' のVSLを実行します。`, 'color: #4caf50; font-weight: bold;');
-                        actionInterpreter.run(this.gameObject, eventData, data);
-                    }
-                } else {
+    // ▼▼▼【ここを、このように書き換えてください】▼▼▼
+    
+    // 2. SystemSceneのレジストリから ActionInterpreter を取得
+    const systemRegistry = this.scene.scene.manager.getScene('SystemScene')?.registry;
+    if (!systemRegistry) {
+        console.error('[GlobalListener] CRITICAL: SystemScene registry not found.');
+        return;
+    }
+    const actionInterpreter = systemRegistry.get('actionInterpreter');
+
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    if (actionInterpreter) {
+        console.log(`%c[GlobalListener] ActionInterpreter を直接呼び出して、トリガー '${trimmedEvent}' のVSLを実行します。`, 'color: #4caf50; font-weight: bold;');
+        actionInterpreter.run(this.gameObject, eventData, data);
+    } else {
+         console.error('[GlobalListener] ActionInterpreter not found in SystemScene registry.');
+    }
+} else {
                     console.warn(`[GlobalListener] '${this.gameObject.name}' に、トリガー '${trimmedEvent}' のイベント定義が見つかりませんでした。`);
                 }
             };
