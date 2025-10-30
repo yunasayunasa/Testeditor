@@ -34,44 +34,41 @@ export default class GlobalEventListenerComponent {
     
    // in GlobalEventListenerComponent.js
 
+// in GlobalEventListenerComponent.js
 startListening() {
     if (!this.systemEvents || !this.eventsToListen) return;
 
     this.eventsToListen.split(',').forEach(eventName => {
         const trimmedEvent = eventName.trim();
         if (trimmedEvent) {
-            // ▼▼▼【ここからが重要な修正です】▼▼▼
-            
             // 1. まず、このコンポーネントが過去に登録した可能性のあるリスナーをすべて削除する
             this.systemEvents.off(trimmedEvent, null, this);
             
-            // 2. 新しいリスナーを登録する
+            // 2. 新しいコールバック関数を定義する
             const listenerCallback = (data) => {
-        if (!this.gameObject || !this.gameObject.scene) return;
-        
-        console.log(`%c[GlobalListener] '${this.gameObject.name}' が '${trimmedEvent}' を受信しました！`, 'color: #3f51b5; font-weight: bold;');
-
-        // ▼▼▼【ここから下を、このように書き換えてください】▼▼▼
-        
-        // 1. このイベントをトリガーとするVSLデータを gameObject から探す
-        const allEvents = this.gameObject.getData('events') || [];
-        const eventData = allEvents.find(e => e.trigger === trimmedEvent);
-
-        if (eventData) {
-            // 2. ActionInterpreter を取得
-            const actionInterpreter = this.scene.registry.get('actionInterpreter');
-            if (actionInterpreter) {
-                console.log(`%c[GlobalListener] ActionInterpreter を直接呼び出して、トリガー '${trimmedEvent}' のVSLを実行します。`, 'color: #4caf50; font-weight: bold;');
+                if (!this.gameObject || !this.gameObject.scene) return;
                 
-                // 3. ActionInterpreter を直接実行！
-                actionInterpreter.run(this.gameObject, eventData, data);
-            }
-        } else {
-            console.warn(`[GlobalListener] '${this.gameObject.name}' に、トリガー '${trimmedEvent}' のイベント定義が見つかりませんでした。`);
-        }
-        
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-    };
+                console.log(`%c[GlobalListener] '${this.gameObject.name}' が '${trimmedEvent}' を受信しました！`, 'color: #3f51b5; font-weight: bold;');
+
+                const allEvents = this.gameObject.getData('events') || [];
+                const eventData = allEvents.find(e => e.trigger === trimmedEvent);
+
+                if (eventData) {
+                    const actionInterpreter = this.scene.registry.get('actionInterpreter');
+                    if (actionInterpreter) {
+                        console.log(`%c[GlobalListener] ActionInterpreter を直接呼び出して、トリガー '${trimmedEvent}' のVSLを実行します。`, 'color: #4caf50; font-weight: bold;');
+                        actionInterpreter.run(this.gameObject, eventData, data);
+                    }
+                } else {
+                    console.warn(`[GlobalListener] '${this.gameObject.name}' に、トリガー '${trimmedEvent}' のイベント定義が見つかりませんでした。`);
+                }
+            };
+
+            // ▼▼▼【これが欠けていた一行です】▼▼▼
+            this.systemEvents.on(trimmedEvent, listenerCallback, this);
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+            console.log(`%c[GlobalListener] '${this.gameObject.name}' がグローバルイベント '${trimmedEvent}' のリスニングを（再）開始しました。`, 'color: #3f51b5;');
         }
     });
 }
