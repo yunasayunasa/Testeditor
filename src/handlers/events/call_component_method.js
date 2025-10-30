@@ -44,8 +44,7 @@ export default async function call_component_method(interpreter, params, target)
     }
     
     // 4. メソッドを実行
-    //    .call(componentInstance, ...) を使い、メソッド内の`this`がコンポーネント自身を指すようにする
-    method.apply(componentInstance, methodArgs);
+await method.apply(componentInstance, methodArgs); // ← await を追加
 }
 
 call_component_method.define = {
