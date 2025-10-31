@@ -112,16 +112,34 @@
               "onEnter": {
                 "nodes": [
                   {
-                    "id": "node_1761895053099",
-                    "type": "show_novel_text",
+                    "id": "node_1761896331619",
+                    "type": "eval",
                     "params": {
-                      "text": "ｙう"
+                      "exp": "f.temp_press_text = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.text"
                     },
                     "x": 50,
                     "y": 50
                   },
                   {
-                    "id": "node_1761895069571",
+                    "id": "node_1761896333571",
+                    "type": "if",
+                    "params": {
+                      "exp": "f.temp_press_text"
+                    },
+                    "x": 50,
+                    "y": 220
+                  },
+                  {
+                    "id": "node_1761896341491",
+                    "type": "show_novel_text",
+                    "params": {
+                      "text": "text: &{f.temp_press_text}"
+                    },
+                    "x": 50,
+                    "y": 390
+                  },
+                  {
+                    "id": "node_1761896343371",
                     "type": "call_component_method",
                     "params": {
                       "target": "self",
@@ -130,14 +148,32 @@
                       "method": "transitionTo"
                     },
                     "x": 50,
-                    "y": 220
+                    "y": 560
                   }
                 ],
                 "connections": [
                   {
-                    "fromNode": "node_1761895053099",
+                    "fromNode": "node_1761896331619",
                     "fromPin": "output",
-                    "toNode": "node_1761895069571",
+                    "toNode": "node_1761896333571",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1761896333571",
+                    "fromPin": "output_true",
+                    "toNode": "node_1761896341491",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1761896333571",
+                    "fromPin": "output_false",
+                    "toNode": "node_1761896343371",
+                    "toPin": "input"
+                  },
+                  {
+                    "fromNode": "node_1761896341491",
+                    "fromPin": "output",
+                    "toNode": "node_1761896343371",
                     "toPin": "input"
                   }
                 ]
