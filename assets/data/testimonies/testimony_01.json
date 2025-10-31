@@ -4,8 +4,9 @@
     {
       "text": "事件が起きたあの晩、私は現場の部屋で\\n大きな物音を聞きました。",
       "press_action": {
-        "text": "（物音…？もう少し詳しく聞いてみるか…）"
-      },
+    "type": "scenario", 
+    "target": "testimony_01_press_01" 
+  },
       "correct_evidence": null
     },
     {

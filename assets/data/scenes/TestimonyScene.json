@@ -53,20 +53,7 @@
         {
           "id": "event_request_press",
           "trigger": "REQUEST_PRESS",
-          "nodes": [
-            {
-              "id": "node_request_press_call_method",
-              "type": "call_component_method",
-              "params": {
-                "target": "self",
-                "params": "[\"Pressing\"]",
-                "component": "StateMachineComponent",
-                "method": "transitionTo"
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
+          "nodes": [],
           "connections": []
         },
         {
@@ -80,17 +67,11 @@
         {
           "type": "StateMachineComponent",
           "params": {}
-        },
-        {
-          "type": "GlobalEventListenerComponent",
-          "params": {
-            "events": "REQUEST_PRESS, REQUEST_PRESENT"
-          }
         }
       ],
       "texture": "yuna_angry",
       "data": {
-        "lastTap": 1761894956595,
+        "lastTap": 1761900669463,
         "stateMachine": {
           "initialState": "待機",
           "states": {
@@ -112,38 +93,39 @@
               "onEnter": {
                 "nodes": [
                   {
-                    "id": "node_1761896331619",
+                    "id": "node_1761899898813",
                     "type": "eval",
                     "params": {
-                      "exp": "f.temp_press_text = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.text"
+                      "exp": "f.temp_press_action = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action"
                     },
                     "x": 50,
                     "y": 50
                   },
                   {
-                    "id": "node_1761896333571",
+                    "id": "node_1761899900237",
                     "type": "if",
                     "params": {
-                      "exp": "f.temp_press_text"
+                      "exp": "f.temp_press_action && f.temp_press_action.type === 'scenario'"
                     },
                     "x": 50,
                     "y": 220
                   },
                   {
-                    "id": "node_1761896341491",
-                    "type": "show_novel_text",
+                    "id": "node_1761899902316",
+                    "type": "fire_game_flow_event",
                     "params": {
-                      "text": "text: &{f.temp_press_text}"
+                      "data": "{\"scenario\": f.temp_press_action.target}",
+                      "event": "RUN_NOVEL_OVERLAY"
                     },
                     "x": 50,
                     "y": 390
                   },
                   {
-                    "id": "node_1761896343371",
+                    "id": "node_1761899994637",
                     "type": "call_component_method",
                     "params": {
                       "target": "self",
-                      "params": "[\"待機\"]",
+                      "params": " [\"待機\"]",
                       "component": "StateMachineComponent",
                       "method": "transitionTo"
                     },
@@ -153,27 +135,21 @@
                 ],
                 "connections": [
                   {
-                    "fromNode": "node_1761896331619",
+                    "fromNode": "node_1761899898813",
                     "fromPin": "output",
-                    "toNode": "node_1761896333571",
+                    "toNode": "node_1761899900237",
                     "toPin": "input"
                   },
                   {
-                    "fromNode": "node_1761896333571",
+                    "fromNode": "node_1761899900237",
                     "fromPin": "output_true",
-                    "toNode": "node_1761896341491",
+                    "toNode": "node_1761899902316",
                     "toPin": "input"
                   },
                   {
-                    "fromNode": "node_1761896333571",
+                    "fromNode": "node_1761899900237",
                     "fromPin": "output_false",
-                    "toNode": "node_1761896343371",
-                    "toPin": "input"
-                  },
-                  {
-                    "fromNode": "node_1761896341491",
-                    "fromPin": "output",
-                    "toNode": "node_1761896343371",
+                    "toNode": "node_1761899994637",
                     "toPin": "input"
                   }
                 ]

@@ -216,7 +216,7 @@
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1761641271655
+        "lastTap": 1761900348342
       }
     },
     {
@@ -235,23 +235,39 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1760517363560",
-              "type": "fire_event",
+              "id": "node_1761900618669",
+              "type": "eval",
               "params": {
-                "name": "REQUEST_PRESS",
-                "params": "null"
+                "exp": "f.temp_scenario_target = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.target"
               },
               "x": 50,
               "y": 50
+            },
+            {
+              "id": "node_1761900624461",
+              "type": "fire_game_flow_event",
+              "params": {
+                "data": "{\"scenario\": f.temp_scenario_target}",
+                "event": "RUN_NOVEL_OVERLAY"
+              },
+              "x": 50,
+              "y": 220
             }
           ],
-          "connections": []
+          "connections": [
+            {
+              "fromNode": "node_1761900618669",
+              "fromPin": "output",
+              "toNode": "node_1761900624461",
+              "toPin": "input"
+            }
+          ]
         }
       ],
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 0
+        "lastTap": 1761900604157
       }
     },
     {
