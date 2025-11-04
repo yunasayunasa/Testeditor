@@ -1,61 +1,42 @@
 // in src/handlers/events/fire_game_flow_event.js
-
 import EngineAPI from '../../core/EngineAPI.js';
 
-/**
- * [fire_game_flow_event]
- * GameFlowManagerにイベントを発行し、ゲーム全体の状態遷移をトリガーする。
- */
 export default async function fire_game_flow_event(interpreter, params) {
     const eventName = params.event;
-
-    // --- パラメータのバリデーション ---
     if (!eventName) {
-        console.error('[fire_game_flow_event] "event" parameter is required.');
+        console.warn('[fire_game_flow_event] "event" parameter is missing.');
         return;
     }
     
-    // --- イベントに付随するデータ (data) の準備 ---
+    const stateManager = interpreter.scene.registry.get('stateManager');
+    let dataString = params.data || '{}';
     let eventData = {};
-    if (params.data) {
-        try {
-            // VSLエディタから渡される文字列 '{ "key": "value" }' を
-            // JavaScriptが扱えるオブジェクト { key: "value" } に変換する。
-            // シングルクォートをダブルクォートに置換して、JSONとしてパース可能にする。
-            const jsonString = params.data.replace(/'/g, '"');
-            eventData = JSON.parse(jsonString);
-        } catch (e) {
-            console.error(`[fire_game_flow_event] Invalid format for "data" parameter. Must be a valid JSON string. Received: ${params.data}`, e);
-            return;
-        }
+
+    if (stateManager) {
+        // &{...} という形式の変数埋め込みを正規表現で探す
+        const variableRegex = /&\{([^}]+)\}/g;
+        dataString = dataString.replace(variableRegex, (match, variablePath) => {
+            const value = stateManager.getValue(variablePath.trim());
+            // 値をJSON文字列の一部として安全に埋め込むために、JSON.stringifyする
+            return value !== undefined ? JSON.stringify(value) : 'null';
+        });
     }
     
-    // --- EngineAPIを通じてイベントを発行 ---
-    console.log(`[VSL] Firing Game Flow Event: ${eventName}`, eventData);
+    try {
+        // 変数埋め込み後の文字列をJSONとしてパース
+        eventData = JSON.parse(dataString);
+    } catch (e) {
+        console.error(`[fire_game_flow_event] Invalid format for "data" parameter after variable substitution. Must be a valid JSON string. Received: ${dataString}`, e);
+        return;
+    }
+
     EngineAPI.fireGameFlowEvent(eventName, eventData);
 }
 
-
-// VSLエディタのための定義情報
 fire_game_flow_event.define = {
-    description: 'ゲーム全体の流れ（ゲームフロー）を制御するイベントを発行します。',
-    
-    // このタグはオブジェクトをターゲットにしないので、targetパラメータは不要
-    isTargeted: false,
-
+    description: 'ゲームフローイベントを発行します。dataパラメータ内で &{f.variable} 形式の変数埋め込みが可能です。',
     params: [
-        { 
-            key: 'event', 
-            type: 'game_flow_event_select', // ★ 新しいtype: ゲームフローイベントのドロップダウン
-            label: 'イベント名', 
-            required: true 
-        },
-        { 
-            key: 'data', 
-            type: 'string', 
-            label: '追加データ (JSON形式)', 
-            defaultValue: '{}',
-            description: 'イベントに追加情報を渡します。例: {\'scenario\':\'event_01.ks\'}'
-        }
+        { key: 'event', type: 'game_flow_event_select', label: 'イベント名', required: true },
+        { key: 'data', type: 'string', label: 'パラメータ (JSON形式)', defaultValue: '{}' }
     ]
 };
