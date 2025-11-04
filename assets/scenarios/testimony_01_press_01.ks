@@ -2,3 +2,5 @@
 
 tartman:「うぅ...トイレトイレ...」
 [p]
+[cm]
+[overlay_end]
