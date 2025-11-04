@@ -17,8 +17,11 @@ export default async function fire_game_flow_event(interpreter, params) {
         const variableRegex = /&\{([^}]+)\}/g;
         dataString = dataString.replace(variableRegex, (match, variablePath) => {
             const value = stateManager.getValue(variablePath.trim());
-            // 値をJSON文字列の一部として安全に埋め込むために、JSON.stringifyする
-            return value !== undefined ? JSON.stringify(value) : 'null';
+             // JSON.stringify は不要。ただし、文字列の場合はクォートで囲む必要がある。
+    if (typeof value === 'string') {
+        return `"${value}"`; // ダブルクォートで囲んで返す
+    }
+    return value !== undefined ? value : 'null'; // 文字列以外はそのまま返す
         });
     }
     
