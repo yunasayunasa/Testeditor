@@ -25,30 +25,74 @@ export default class OverlayScene extends Phaser.Scene {
     create() {
         // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
         this.scene.bringToTop();
-
-        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
-        const layoutData = this.cache.json.get(this.layoutDataKey);
-        
-        if (layoutData) {
-            this.buildUiFromLayout(layoutData);
-
-            // (オプション) このオーバーレイシーン自体をクリックしたら閉じる、という機能
-            // this.input.on('pointerdown', () => this.close());
-            
-        } else {
-            console.error(`[OverlayScene] Layout data for key '${this.layoutDataKey}' not found!`);
-            const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, `Layout not found:\n${this.layoutDataKey}`, { color: 'red', align: 'center' }).setOrigin(0.5);
-            // エラー表示をクリックしたらシーンを閉じる
-            errorText.setInteractive();
-            errorText.on('pointerdown', () => this.close());
+ if (!this.layoutDataKey) {
+            console.error('[OverlayScene] create called, but layoutDataKey is missing.');
+            return;
         }
+
+        // --- 1. 必要なデータを取得 ---
+        const layoutData = this.cache.json.get(this.layoutDataKey);
+        const evidenceMaster = this.cache.json.get('evidence_master');
+        const stateManager = this.scene.manager.getScene('SystemScene')?.registry.get('stateManager');
+        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
+        
+        
+       // --- 2. プレイヤーの所持証拠品から、動的にボタン定義を生成 ---
+        const playerEvidence = stateManager.getValue('f.player_evidence') || [];
+        const dynamicObjects = [];
+        playerEvidence.forEach((evidenceId, index) => {
+            const evidenceData = evidenceMaster[evidenceId];
+            if (evidenceData) {
+                dynamicObjects.push({
+                    "name": `evidence_${evidenceId}`,
+                    "type": "Button",
+                    "x": 640,
+                    "y": 200 + (index * 80),
+                    "label": evidenceData.name,
+                    "data": { "registryKey": "generic_button" },
+                    "events": [
+                      {
+                        "trigger": "onClick", "id": `event_${evidenceId}`,
+                        "nodes": [
+                          { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
+                          { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                        ],
+                        "connections": [
+                          { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
+                          { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
+                        ]
+                      }
+                    ]
+                });
+            }
+        });
+
+        // --- 3. 元のレイアウトデータと動的データを結合 ---
+        const finalLayoutData = {
+            ...layoutData,
+            objects: (layoutData.objects || []).concat(dynamicObjects)
+        };
+        
+        // --- 4. 結合したデータを、あたかも最初からあったかのようにキャッシュに上書き ---
+        this.cache.json.add(this.layoutDataKey, finalLayoutData);
+
+        // --- 5. BaseGameSceneの魔法を呼び出す ---
+        this.initSceneWithData();
+
+        // --- 6. 表示と編集のための最後の仕上げ ---
+        this.events.once('scene-ready', () => {
+            this.children.each(child => {
+                child.setVisible(true).setAlpha(1);
+            });
+            const editor = this.plugins.get('EditorPlugin');
+            if (editor && editor.isEnabled) {
+                this.registry.set('editor_mode', 'select');
+            }
+        });
     }
 
-    /**
-     * このオーバーレイシーンを閉じるようSystemSceneに依頼する
-     */
     close() {
-       EngineAPI.requestCloseMenu(this.scene.key);
+       EngineAPI.fireGameFlowEvent('CLOSE_PAUSE_MENU');
     }
 
    
