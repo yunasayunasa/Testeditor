@@ -203,20 +203,56 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1761641307694",
-              "type": "open_menu",
-              "params": {},
+              "id": "node_1762323589810",
+              "type": "get_testimony_data",
+              "params": {
+                "key": "\"correct_evidence\"",
+                "var": "\"f.temp_correct_evidence\""
+              },
               "x": 50,
-              "y": 50
+              "y": 220
+            },
+            {
+              "id": "node_1762323630210",
+              "type": "compare_and_branch",
+              "params": {
+                "var1": "f.selected_evidence",
+                "var2": "\"f.temp_correct_evidence\""
+              },
+              "x": 50,
+              "y": 390
+            },
+            {
+              "id": "node_1762323674106",
+              "type": "run_scenario",
+              "params": {
+                "file": "overlay_test",
+                "block_input": true
+              },
+              "x": 50,
+              "y": 560
             }
           ],
-          "connections": []
+          "connections": [
+            {
+              "fromNode": "node_1762323589810",
+              "fromPin": "output",
+              "toNode": "node_1762323630210",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_1762323630210",
+              "fromPin": "output_true",
+              "toNode": "node_1762323674106",
+              "toPin": "input"
+            }
+          ]
         }
       ],
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 0
+        "lastTap": 1762323578946
       }
     },
     {
@@ -267,7 +303,7 @@
       "registryKey": "generic_button",
       "label": "ゆさぶる",
       "data": {
-        "lastTap": 1762241877802
+        "lastTap": 1762323545514
       }
     },
     {
