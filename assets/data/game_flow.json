@@ -45,7 +45,23 @@
          {
     "event": "SCENE_CHANGED",  
     "to": "InGame"        
+  },
+  {
+  "event": "CORRECT_ANSWER",
+  "to": "NovelOverlay", 
+  "action": {
+    "type": "runNovelOverlay",
+    "params": { "scenario": "scene1" } 
   }
+},
+{
+  "event": "WRONG_ANSWER",
+  "to": "NovelOverlay", 
+  "action": {
+    "type": "runNovelOverlay",
+    "params": { "scenario": "test" } 
+  }
+}
       ]
     },
     "Paused": {
@@ -62,13 +78,14 @@
       ],
       "onExit": [],
       "transitions": [
-        {
-          "event": "CLOSE_PAUSE_MENU",
-          "to": "InGame",
-          "action": {
-            "type": "closeOverlay"
-          }
-        }
+       {
+  "event": "CLOSE_PAUSE_MENU",
+  "to": "InGame",
+  "action": [ 
+    { "type": "closeOverlay" },
+    { "type": "check_evidence_action" } 
+  ]
+}
       ]
     },
     "NovelOverlay": {
