@@ -50,10 +50,10 @@ import close_menu from './close_menu.js';
 import open_menu from './open_menu.js'; 
 import run_scene from './run_scene.js'; 
 import fire_game_flow_event from './fire_game_flow_event.js';
-import show_novel_text from './show_novel_text.js';
+
 import update_statement_index from './update_statement_index.js';
-import get_testimony_data from './get_testimony_data.js';
-import compare_and_branch from './compare_and_branch.js';
+import check_evidence from './check_evidence.js';
+
 
 
 
@@ -108,10 +108,10 @@ export const eventTagHandlers = {
 'load_game':load_game,
 'run_scene':run_scene,
  'fire_game_flow_event': fire_game_flow_event,
- 'show_novel_text': show_novel_text,
+ 
 
- 'get_testimony_data': get_testimony_data,
- 'compare_and_branch': compare_and_branch,
+ 'check_evidence': check_evidence,
+
 'update_statement_index': update_statement_index
 
 };
