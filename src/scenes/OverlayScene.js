@@ -2,68 +2,62 @@
 //メニューやステータス、アイテム画面やショップなどサブシーンを作るための汎用オーバーレイシーンです
 // uiRegistry は外部で定義されているので、インポートは不要な場合があります。
 // もしエラーが出る場合は、適宜 import { uiRegistry } from '../ui/index.js'; などを追加してください。
-// src/scenes/OverlayScene.js (最終完成形)
-import BaseGameScene from './BaseGameScene.js';
 import EngineAPI from '../core/EngineAPI.js'; 
-
-export default class OverlayScene extends BaseGameScene {
+export default class OverlayScene extends Phaser.Scene {
     
     constructor() {
-        // BaseGameSceneのコンストラクタを、自身のキーで呼び出す
-        super({ key: 'OverlayScene' });
+        // ★★★ ポイント1: クラス名とキーを変更 ★★★
+        super({ key: 'OverlayScene' }); 
+        
+        // UISceneと同じプロパティを持つ
+        this.uiElements = new Map();
+        this.componentsToUpdate = [];
+        this.layoutDataKey = null; // どのレイアウトJSONを読み込むかを保持
     }
 
-    /**
-     * OverlayManagerから launch される際に、どのレイアウトを開くかデータを受け取る
-     */
+    // ★★★ ポイント2: init()でレイアウトキーを受け取る ★★★
     init(data) {
-        // BaseGameSceneが持つオリジナルのinitメソッドを呼び出すのが作法
-        super.init(data); 
-
-        // layoutKeyが渡された場合、それをこのシーンが読み込むべきデータキーとして設定
-        // BaseGameSceneは layoutDataKey を参照するため、そちらにセットする
-        if (data && data.layoutKey) {
-            this.layoutDataKey = data.layoutKey;
-        }
+        this.layoutDataKey = data.layoutKey || null;
+        // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
     }
 
-    /**
-     * シーンが起動する際のメインロジック
-     */
+    // createメソッドは非同期である必要はない
     create() {
-        // 他のシーンの最前面に表示されるようにする
-        this.scene.bringToTop(this.scene.key);
-
-        if (!this.layoutDataKey) {
-            console.error('[OverlayScene] create called, but layoutDataKey is missing. Aborting.');
+        // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
+        this.scene.bringToTop();
+ if (!this.layoutDataKey) {
+            console.error('[OverlayScene] create called, but layoutDataKey is missing.');
             return;
         }
 
-        // BaseGameSceneが持つ、JSONからシーンを構築する魔法のメソッドを呼び出す
-        this.initSceneWithData();
+        // --- 1. 必要なデータを取得 ---
+        const layoutData = this.cache.json.get(this.layoutDataKey);
+        const evidenceMaster = this.cache.json.get('evidence_master');
+        const stateManager = this.scene.manager.getScene('SystemScene')?.registry.get('stateManager');
+        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
+        
+        
+        if (layoutData) {
+            this.buildUiFromLayout(layoutData);
 
-        // 全てのオブジェクト構築が完了した後に、表示状態を強制する
-        this.events.once('scene-ready', () => {
-            this.children.each(child => {
-                child.setVisible(true).setAlpha(1).setDepth(10000 + child.depth); // 非常に高いdepthを与える
-            });
-            console.log(`[OverlayScene] All ${this.children.list.length} objects are now visible.`);
-        });
-
-        // IDEモード連携
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            this.registry.set('editor_mode', 'select');
+            // (オプション) このオーバーレイシーン自体をクリックしたら閉じる、という機能
+            // this.input.on('pointerdown', () => this.close());
+            
+        } else {
+            console.error(`[OverlayScene] Layout data for key '${this.layoutDataKey}' not found!`);
+            const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, `Layout not found:\n${this.layoutDataKey}`, { color: 'red', align: 'center' }).setOrigin(0.5);
+            // エラー表示をクリックしたらシーンを閉じる
+            errorText.setInteractive();
+            errorText.on('pointerdown', () => this.close());
         }
     }
 
     /**
-     * このオーバーレイシーンを閉じるよう依頼する
+     * このオーバーレイシーンを閉じるようSystemSceneに依頼する
      */
     close() {
-       EngineAPI.fireGameFlowEvent('CLOSE_PAUSE_MENU');
+       EngineAPI.requestCloseMenu(this.scene.key);
     }
-
 
    
  /***
@@ -116,7 +110,7 @@ export default class OverlayScene extends BaseGameScene {
      * 毎フレーム呼び出され、コンポーネントの更新処理を実行する
      */
     
-    /*    update(time, delta) {
+        update(time, delta) {
   
         // 更新リストに入っているすべてのコンポーネントのupdateを呼び出す
         for (const component of this.componentsToUpdate) {
@@ -127,7 +121,7 @@ export default class OverlayScene extends BaseGameScene {
                 component.update(time, delta);
             }
         }
-    }*/
+    }
 /***
  * 
  * 
