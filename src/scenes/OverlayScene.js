@@ -192,7 +192,7 @@ async buildUiFromLayout(layoutData) {
 
     for (const layout of layoutData.objects) {
         try {
-            const registryKey = layout.registryKey || layout.name;
+            const registryKey = layout.registryKey || (layout.data && layout.data.registryKey) || layout.name;
             if (!registryKey) continue;
 
             let uiElement = null;
