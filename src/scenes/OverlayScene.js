@@ -2,98 +2,68 @@
 //メニューやステータス、アイテム画面やショップなどサブシーンを作るための汎用オーバーレイシーンです
 // uiRegistry は外部で定義されているので、インポートは不要な場合があります。
 // もしエラーが出る場合は、適宜 import { uiRegistry } from '../ui/index.js'; などを追加してください。
+// src/scenes/OverlayScene.js (最終完成形)
+import BaseGameScene from './BaseGameScene.js';
 import EngineAPI from '../core/EngineAPI.js'; 
-export default class OverlayScene extends Phaser.Scene {
+
+export default class OverlayScene extends BaseGameScene {
     
     constructor() {
-        // ★★★ ポイント1: クラス名とキーを変更 ★★★
-        super({ key: 'OverlayScene' }); 
-        
-        // UISceneと同じプロパティを持つ
-        this.uiElements = new Map();
-        this.componentsToUpdate = [];
-        this.layoutDataKey = null; // どのレイアウトJSONを読み込むかを保持
+        // BaseGameSceneのコンストラクタを、自身のキーで呼び出す
+        super({ key: 'OverlayScene' });
     }
 
-    // ★★★ ポイント2: init()でレイアウトキーを受け取る ★★★
+    /**
+     * OverlayManagerから launch される際に、どのレイアウトを開くかデータを受け取る
+     */
     init(data) {
-        this.layoutDataKey = data.layoutKey || null;
-        // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
+        // BaseGameSceneが持つオリジナルのinitメソッドを呼び出すのが作法
+        super.init(data); 
+
+        // layoutKeyが渡された場合、それをこのシーンが読み込むべきデータキーとして設定
+        // BaseGameSceneは layoutDataKey を参照するため、そちらにセットする
+        if (data && data.layoutKey) {
+            this.layoutDataKey = data.layoutKey;
+        }
     }
 
-    // createメソッドは非同期である必要はない
+    /**
+     * シーンが起動する際のメインロジック
+     */
     create() {
-        // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
-        this.scene.bringToTop();
- if (!this.layoutDataKey) {
-            console.error('[OverlayScene] create called, but layoutDataKey is missing.');
+        // 他のシーンの最前面に表示されるようにする
+        this.scene.bringToTop(this.scene.key);
+
+        if (!this.layoutDataKey) {
+            console.error('[OverlayScene] create called, but layoutDataKey is missing. Aborting.');
             return;
         }
 
-        // --- 1. 必要なデータを取得 ---
-        const layoutData = this.cache.json.get(this.layoutDataKey);
-        const evidenceMaster = this.cache.json.get('evidence_master');
-        const stateManager = this.scene.manager.getScene('SystemScene')?.registry.get('stateManager');
-        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
-        
-        
-       // --- 2. プレイヤーの所持証拠品から、動的にボタン定義を生成 ---
-        const playerEvidence = stateManager.getValue('f.player_evidence') || [];
-        const dynamicObjects = [];
-        playerEvidence.forEach((evidenceId, index) => {
-            const evidenceData = evidenceMaster[evidenceId];
-            if (evidenceData) {
-                dynamicObjects.push({
-                    "name": `evidence_${evidenceId}`,
-                    "type": "Button",
-                    "x": 640,
-                    "y": 200 + (index * 80),
-                    "label": evidenceData.name,
-                    "data": { "registryKey": "generic_button" },
-                    "events": [
-                      {
-                        "trigger": "onClick", "id": `event_${evidenceId}`,
-                        "nodes": [
-                          { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
-                          { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
-                        ],
-                        "connections": [
-                          { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
-                          { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
-                        ]
-                      }
-                    ]
-                });
-            }
-        });
-
-        // --- 3. 元のレイアウトデータと動的データを結合 ---
-        const finalLayoutData = {
-            ...layoutData,
-            objects: (layoutData.objects || []).concat(dynamicObjects)
-        };
-        
-        // --- 4. 結合したデータを、あたかも最初からあったかのようにキャッシュに上書き ---
-        this.cache.json.add(this.layoutDataKey, finalLayoutData);
-
-        // --- 5. BaseGameSceneの魔法を呼び出す ---
+        // BaseGameSceneが持つ、JSONからシーンを構築する魔法のメソッドを呼び出す
         this.initSceneWithData();
 
-        // --- 6. 表示と編集のための最後の仕上げ ---
+        // 全てのオブジェクト構築が完了した後に、表示状態を強制する
         this.events.once('scene-ready', () => {
             this.children.each(child => {
-                child.setVisible(true).setAlpha(1);
+                child.setVisible(true).setAlpha(1).setDepth(10000 + child.depth); // 非常に高いdepthを与える
             });
-            const editor = this.plugins.get('EditorPlugin');
-            if (editor && editor.isEnabled) {
-                this.registry.set('editor_mode', 'select');
-            }
+            console.log(`[OverlayScene] All ${this.children.list.length} objects are now visible.`);
         });
+
+        // IDEモード連携
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            this.registry.set('editor_mode', 'select');
+        }
     }
 
+    /**
+     * このオーバーレイシーンを閉じるよう依頼する
+     */
     close() {
        EngineAPI.fireGameFlowEvent('CLOSE_PAUSE_MENU');
     }
+
 
    
  /***
