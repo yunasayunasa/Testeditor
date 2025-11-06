@@ -116,7 +116,7 @@ export default class OverlayScene extends BaseGameScene {
      * 毎フレーム呼び出され、コンポーネントの更新処理を実行する
      */
     
-        update(time, delta) {
+    /*    update(time, delta) {
   
         // 更新リストに入っているすべてのコンポーネントのupdateを呼び出す
         for (const component of this.componentsToUpdate) {
@@ -127,7 +127,7 @@ export default class OverlayScene extends BaseGameScene {
                 component.update(time, delta);
             }
         }
-    }
+    }*/
 /***
  * 
  * 
