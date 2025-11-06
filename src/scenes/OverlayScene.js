@@ -22,35 +22,84 @@ export default class OverlayScene extends Phaser.Scene {
     }
 
     // createメソッドは非同期である必要はない
-    create() {
-        // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
-        this.scene.bringToTop();
- if (!this.layoutDataKey) {
-            console.error('[OverlayScene] create called, but layoutDataKey is missing.');
-            return;
-        }
+   create() {
+    this.scene.bringToTop();
 
-        // --- 1. 必要なデータを取得 ---
-        const layoutData = this.cache.json.get(this.layoutDataKey);
-        const evidenceMaster = this.cache.json.get('evidence_master');
-        const stateManager = this.scene.manager.getScene('SystemScene')?.registry.get('stateManager');
-        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
-        
-        
-        if (layoutData) {
-            this.buildUiFromLayout(layoutData);
-
-            // (オプション) このオーバーレイシーン自体をクリックしたら閉じる、という機能
-            // this.input.on('pointerdown', () => this.close());
-            
-        } else {
-            console.error(`[OverlayScene] Layout data for key '${this.layoutDataKey}' not found!`);
-            const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, `Layout not found:\n${this.layoutDataKey}`, { color: 'red', align: 'center' }).setOrigin(0.5);
-            // エラー表示をクリックしたらシーンを閉じる
-            errorText.setInteractive();
-            errorText.on('pointerdown', () => this.close());
-        }
+    if (!this.layoutDataKey) {
+        console.error('[OverlayScene] create called, but layoutDataKey is missing. Aborting.');
+        return;
     }
+
+    // --- 1. 起動時に必要なデータを全て取得する ---
+    const layoutData = this.cache.json.get(this.layoutDataKey);
+    const evidenceMaster = this.cache.json.get('evidence_master');
+    const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+
+    if (!layoutData || !systemRegistry) {
+        console.error(`[OverlayScene] Create failed. layoutData or systemRegistry is missing.`);
+        // ... (エラー表示)
+        return;
+    }
+    
+    // --- 2. StateManagerからプレイヤーの所持証拠品リストを取得 ---
+    const stateManager = systemRegistry.get('stateManager');
+    const playerEvidence = stateManager ? stateManager.getValue('f.player_evidence') : [];
+
+    // --- 3. プレイヤーの所持品に基づいて、新しいボタンの"レイアウト定義"を動的に生成 ---
+    const dynamicObjects = [];
+    if (playerEvidence && evidenceMaster) {
+        playerEvidence.forEach((evidenceId, index) => {
+            const evidenceData = evidenceMaster[evidenceId];
+            if (evidenceData) {
+                dynamicObjects.push({
+                    "name": `evidence_${evidenceId}`,
+                    "type": "Button", // IDEが生成する形式
+                    "x": 640,
+                    "y": 200 + (index * 80),
+                    "label": evidenceData.name,
+                    "data": { "registryKey": "generic_button" }, // IDEが生成する形式
+                    "events": [
+                      {
+                        "trigger": "onClick", "id": `event_${evidenceId}`,
+                        "nodes": [
+                          { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
+                          { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                        ],
+                        "connections": [
+                          { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
+                          { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
+                        ]
+                      }
+                    ]
+                });
+            }
+        });
+    }
+
+    // --- 4. 元のレイアウトデータと動的データを結合 ---
+    const finalLayoutData = {
+        ...layoutData,
+        objects: (layoutData.objects || []).concat(dynamicObjects)
+    };
+    
+    // --- 5. 最終的なレイアウトデータでUIを構築する ---
+    // (このシーンが持つ、実績のある buildUiFromLayout を呼び出す)
+    this.buildUiFromLayout(finalLayoutData);
+
+    // --- 6. (重要！) IDEモードなら、編集可能にする ---
+    // このシーンは BaseGameScene ではないため、手動で EditorPlugin と連携する必要がある
+    const editor = this.plugins.get('EditorPlugin');
+    if (editor && editor.isEnabled) {
+        // 少し遅延させて、オブジェクトが完全に生成されるのを待つ
+        this.time.delayedCall(100, () => {
+            this.registry.set('editor_mode', 'select');
+            // uiElements に登録された全てのオブジェクトを編集可能にする
+            for (const uiElement of this.uiElements.values()) {
+                editor.makeEditable(uiElement, this);
+            }
+        });
+    }
+}
 
     /**
      * このオーバーレイシーンを閉じるようSystemSceneに依頼する
