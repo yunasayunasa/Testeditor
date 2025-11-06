@@ -1,25 +1,40 @@
 {
-  "objects": [
+  "scene_settings": {},
+  "hasJoystick": false,
+  "layers": [
     {
-      "name": "evidence_background",
-      "registryKey": "panel",
-      "x": 640,
-      "y": 360,
-      "width": 600,
-      "height": 500
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
     },
     {
-      "name": "button_close_overlay",
-      "registryKey": "generic_button",
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
+  "objects": [
+    
+    {
+      "name": "generic_button_1761294906720",
+      "type": "Button",
       "x": 640,
-      "y": 550,
-      "label": "やめる",
-      "events": [
-        {
-          "trigger": "onClick",
-          "nodes": [ { "id": "node_close", "type": "close_menu" } ]
-        }
-      ]
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "registryKey": "generic_button",
+      "label": "Button",
+      "data": {
+        "lastTap": 0
+      }
     }
   ]
 }
