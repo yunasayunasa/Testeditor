@@ -4,4 +4,5 @@ import EngineAPI from '../../core/EngineAPI.js';
 export default async function close_menu(interpreter) {
     // ★「ゲームを再開してくれ」と、CEOにお願いする
     EngineAPI.fireGameFlowEvent('CLOSE_PAUSE_MENU');
+    return '__interrupt__';
 }

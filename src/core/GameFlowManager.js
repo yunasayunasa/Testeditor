@@ -112,10 +112,16 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     }
                     break;
                 
-                case 'closeOverlay':
-                    // 閉じるべきオーバーレイシーンを特定する必要があるが、一旦簡略化
-                    EngineAPI.requestCloseOverlay('OverlayScene');
-                    break;
+                 case 'closeOverlay': {
+                // EditorPluginのリフレッシュ抑制を解除
+                const editor = EngineAPI.systemScene?.plugins.get('EditorPlugin');
+                if (editor?.isEnabled) editor.suppressRefresh(false);
+                
+                // EngineAPIにオーバーレイを閉じるよう依頼
+                // 閉じるべきシーンのキーは、OverlayManagerが管理しているはず
+                EngineAPI.requestCloseOverlay(this.currentState); // 現在のステート名をヒントとして渡す
+                break;
+            }
                 
                 // ▼▼▼ 新しいアクションを追加 ▼▼▼
               case 'pauseScene': {
