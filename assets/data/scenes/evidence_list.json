@@ -19,22 +19,38 @@
     }
   ],
   "objects": [
-    
     {
       "name": "generic_button_1761294906720",
       "type": "Button",
-      "x": 640,
-      "y": 360,
+      "x": 964,
+      "y": 124,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "registryKey": "generic_button",
-      "label": "Button",
+      "events": [
+        {
+          "id": "event_1762415422661",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1762415426557",
+              "type": "close_menu",
+              "params": {},
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
+      "label": "閉じる",
       "data": {
-        "lastTap": 0
+        "registryKey": "generic_button",
+        "lastTap": 1762415411158
       }
     }
-  ]
+  ],
+  "animations": []
 }
