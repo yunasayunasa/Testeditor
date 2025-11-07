@@ -40,13 +40,23 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
 
     const transition = currentStateDefinition.transitions.find(t => t.event === eventName);
     if (transition) {
-        // console.log(`%c[GameFlowManager] Event '${eventName}' triggered transition to '${transition.to}'.`, 'color: #795548; font-weight: bold;');
-        
-        // ★ 遷移時アクションを実行する際に、イベントデータを渡す
-        if (transition.action) {
-            this.executeActions([transition.action], data); 
+        if (eventName === 'CLOSE_PAUSE_MENU' && data.closedBy) {
+            const stateManager = EngineAPI.systemScene.registry.get('stateManager');
+            if (stateManager) {
+                // [close_menu] から渡されたIDを、f.selected_evidence に保存
+                stateManager.setF('selected_evidence', data.closedBy);
+
+                // そして、即座に判定アクションを実行
+                this.executeActions([{ type: 'check_evidence_action' }]);
+            }
         }
-        this.transitionTo(transition.to, data); // ★ transitionToにも渡す
+        
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        if (transition.action) {
+            this.executeActions(Array.isArray(transition.action) ? transition.action : [transition.action], data);
+        }
+        this.transitionTo(transition.to, data);
     }
 }
 
