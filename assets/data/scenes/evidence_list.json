@@ -37,7 +37,9 @@
             {
               "id": "node_1762415426557",
               "type": "close_menu",
-              "params": {},
+              "params": {
+                "id": "\"null\""
+              },
               "x": 50,
               "y": 50
             }
@@ -48,7 +50,106 @@
       "label": "閉じる",
       "data": {
         "registryKey": "generic_button",
-        "lastTap": 1762415411158
+        "lastTap": 1762504134834
+      }
+    },
+    {
+      "name": "evidence_site_report",
+      "type": "Button",
+      "x": 640,
+      "y": 200,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_site_report",
+          "nodes": [
+            {
+              "id": "close_site_report",
+              "type": "close_menu",
+              "params": {
+                "id": "\"site_report\""
+              },
+              "y": 197
+            }
+          ],
+          "connections": []
+        }
+      ],
+      "label": "現場の調査報告書",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1762504058937
+      }
+    },
+    {
+      "name": "evidence_knife",
+      "type": "Button",
+      "x": 640,
+      "y": 280,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_knife",
+          "nodes": [
+            {
+              "id": "close_knife",
+              "type": "close_menu",
+              "params": {
+                "id": "\"knife\""
+              },
+              "y": 232
+            }
+          ],
+          "connections": []
+        }
+      ],
+      "label": "凶器のナイフ",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1762504083113
+      }
+    },
+    {
+      "name": "evidence_witness_testimony_01",
+      "type": "Button",
+      "x": 640,
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_witness_testimony_01",
+          "nodes": [
+            {
+              "id": "close_witness_testimony_01",
+              "type": "close_menu",
+              "params": {
+                "id": "\"null\""
+              },
+              "y": 445
+            }
+          ],
+          "connections": []
+        }
+      ],
+      "label": "証人自身の最初の証言",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1762504106833
       }
     }
   ],
