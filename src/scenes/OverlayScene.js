@@ -425,4 +425,21 @@ applyUiEvents(uiElement) {
     });
 }
 
+  
+    /**
+     * このシーンが停止する際にPhaserによって自動的に呼び出される
+     */
+    shutdown() {
+        console.log(`[OverlayScene] Shutdown called. Destroying ${this.children.list.length} objects.`);
+
+        // このシーンが持つ全てのゲームオブジェクトをループして破棄する
+        // this.children.list をコピーするのが安全
+        [...this.children.list].forEach(child => {
+            child.destroy();
+        });
+
+        // 親クラスのshutdownも呼び出すのが作法
+        super.shutdown();
+    }
+
 }
