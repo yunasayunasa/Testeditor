@@ -59,7 +59,7 @@
   "to": "NovelOverlay", 
   "action": {
     "type": "runNovelOverlay",
-    "params": { "scenario": "test" } 
+    "params": { "scenario": "scene2" } 
   }
 }
       ]
