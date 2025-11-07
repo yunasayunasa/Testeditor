@@ -21,79 +21,76 @@ export default class OverlayScene extends Phaser.Scene {
         // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
     }
 
-    // createメソッドは非同期である必要はない
-   create() {
+   // in OverlayScene.js
+create() {
     this.scene.bringToTop();
 
     if (!this.layoutDataKey) {
-        console.error('[OverlayScene] create called, but layoutDataKey is missing. Aborting.');
+        console.error('[OverlayScene] create called, but layoutDataKey is missing.');
         return;
     }
 
-    // --- 1. 起動時に必要なデータを全て取得する ---
+    // --- 1. 必要なデータを取得 ---
     const layoutData = this.cache.json.get(this.layoutDataKey);
     const evidenceMaster = this.cache.json.get('evidence_master');
     const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+    const stateManager = systemRegistry ? systemRegistry.get('stateManager') : null;
 
-    if (!layoutData || !systemRegistry) {
-        console.error(`[OverlayScene] Create failed. layoutData or systemRegistry is missing.`);
-        // ... (エラー表示)
+    if (!layoutData || !evidenceMaster || !stateManager) {
+        // ... (エラー処理)
         return;
     }
     
-    // --- 2. StateManagerからプレイヤーの所持証拠品リストを取得 ---
-    const stateManager = systemRegistry.get('stateManager');
-    const playerEvidence = stateManager ? stateManager.getValue('f.player_evidence') : [];
-
-    // --- 3. プレイヤーの所持品に基づいて、新しいボタンの"レイアウト定義"を動的に生成 ---
+    // --- 2. プレイヤーの所持証拠品から、動的にボタン定義を生成 ---
+    const playerEvidence = stateManager.getValue('f.player_evidence') || [];
     const dynamicObjects = [];
-    if (playerEvidence && evidenceMaster) {
-        playerEvidence.forEach((evidenceId, index) => {
-            const evidenceData = evidenceMaster[evidenceId];
-            if (evidenceData) {
-                dynamicObjects.push({
-                    "name": `evidence_${evidenceId}`,
-                    "type": "Button", // IDEが生成する形式
-                    "x": 640,
-                    "y": 200 + (index * 80),
-                    "label": evidenceData.name,
-                    "data": { "registryKey": "generic_button" }, // IDEが生成する形式
-                    "events": [
-                      {
-                        "trigger": "onClick", "id": `event_${evidenceId}`,
-                        "nodes": [
-                          { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
-                          { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
-                        ],
-                        "connections": [
-                          { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
-                          { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
-                        ]
-                      }
+    playerEvidence.forEach((evidenceId, index) => {
+        const evidenceData = evidenceMaster[evidenceId];
+        if (evidenceData) {
+            // ボタンのレイアウト定義をその場で作成
+            dynamicObjects.push({
+                "name": `evidence_${evidenceId}`,
+                "type": "Button",
+                "x": 640,
+                "y": 200 + (index * 80),
+                "label": evidenceData.name,
+                "data": { "registryKey": "generic_button" },
+                
+                // ▼▼▼【ここが修正の核心です】▼▼▼
+                // VSLの"部品"だけを定義する
+                "events": [
+                  {
+                    "trigger": "onClick",
+                    "id": `event_${evidenceId}`,
+                    "nodes": [
+                      { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
+                      { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                    ],
+                    "connections": [
+                       { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
+                       { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
                     ]
-                });
-            }
-        });
-    }
+                  }
+                ]
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+            });
+        }
+    });
 
-    // --- 4. 元のレイアウトデータと動的データを結合 ---
+    // --- 3. 元のレイアウトデータと動的データを結合 ---
     const finalLayoutData = {
         ...layoutData,
         objects: (layoutData.objects || []).concat(dynamicObjects)
     };
     
-    // --- 5. 最終的なレイアウトデータでUIを構築する ---
-    // (このシーンが持つ、実績のある buildUiFromLayout を呼び出す)
+    // --- 4. 最終的なレイアウトデータでUIを構築する ---
     this.buildUiFromLayout(finalLayoutData);
 
-    // --- 6. (重要！) IDEモードなら、編集可能にする ---
-    // このシーンは BaseGameScene ではないため、手動で EditorPlugin と連携する必要がある
+    // --- 5. IDEモード連携 ---
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled) {
-        // 少し遅延させて、オブジェクトが完全に生成されるのを待つ
         this.time.delayedCall(100, () => {
             this.registry.set('editor_mode', 'select');
-            // uiElements に登録された全てのオブジェクトを編集可能にする
             for (const uiElement of this.uiElements.values()) {
                 editor.makeEditable(uiElement, this);
             }
