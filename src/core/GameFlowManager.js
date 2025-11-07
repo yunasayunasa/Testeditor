@@ -113,28 +113,15 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                  case 'closeOverlay': {
-    // 1. EngineAPI経由で、現在アクティブなシーン(OverlaySceneのはず)のインスタンスを取得
-    const sceneToClose = EngineAPI.systemScene.scene.get(EngineAPI.activeGameSceneKey);
-
-    if (sceneToClose) {
-        console.log(`[GameFlowManager] closeOverlay: Destroying all objects in '${sceneToClose.scene.key}'...`);
-        
-        // 2. シーンが持つ全てのゲームオブジェクトをループして破棄する
-        //    安全のため、リストのコピーに対してループ処理を行う
-        [...sceneToClose.children.list].forEach(child => {
-            child.destroy();
-        });
-    }
-
-    // 3. (これまでの処理) EngineAPIにオーバーレイを閉じるよう依頼
-    EngineAPI.requestCloseOverlay('OverlayScene'); // 閉じるシーンのキーを渡すのはこのままでOK
-
-    // 4. (念のため) EditorPluginのリフレッシュ抑制を解除
-    const editor = EngineAPI.systemScene?.plugins.get('EditorPlugin');
-    if (editor?.isEnabled) editor.suppressRefresh(false);
-    
-    break;
-}
+                // EditorPluginのリフレッシュ抑制を解除
+                const editor = EngineAPI.systemScene?.plugins.get('EditorPlugin');
+                if (editor?.isEnabled) editor.suppressRefresh(false);
+                
+                // EngineAPIにオーバーレイを閉じるよう依頼
+                // 閉じるべきシーンのキーは、OverlayManagerが管理しているはず
+                EngineAPI.requestCloseOverlay(this.currentState); // 現在のステート名をヒントとして渡す
+                break;
+            }
                 
                 // ▼▼▼ 新しいアクションを追加 ▼▼▼
               case 'pauseScene': {
