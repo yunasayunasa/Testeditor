@@ -21,37 +21,28 @@ export default class OverlayScene extends Phaser.Scene {
         // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
     }
 
-   // in OverlayScene.js
-create() {
-    this.scene.bringToTop();
+    // createメソッドは非同期である必要はない
+    create() {
+        // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
+        this.scene.bringToTop();
 
-    if (!this.layoutDataKey) {
-        console.error('[OverlayScene] create called, but layoutDataKey is missing.');
-        return;
-    }
+        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
+        const layoutData = this.cache.json.get(this.layoutDataKey);
+        
+        if (layoutData) {
+            this.buildUiFromLayout(layoutData);
 
-    // --- 1. 必要なデータを取得 ---
-    const layoutData = this.cache.json.get(this.layoutDataKey);
-    const evidenceMaster = this.cache.json.get('evidence_master');
-    const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
-    const stateManager = systemRegistry ? systemRegistry.get('stateManager') : null;
-
-    if (!layoutData || !evidenceMaster || !stateManager) {
-        // ... (エラー処理)
-        return;
+            // (オプション) このオーバーレイシーン自体をクリックしたら閉じる、という機能
+            // this.input.on('pointerdown', () => this.close());
+            
+        } else {
+            console.error(`[OverlayScene] Layout data for key '${this.layoutDataKey}' not found!`);
+            const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, `Layout not found:\n${this.layoutDataKey}`, { color: 'red', align: 'center' }).setOrigin(0.5);
+            // エラー表示をクリックしたらシーンを閉じる
+            errorText.setInteractive();
+            errorText.on('pointerdown', () => this.close());
+        }
     }
-    
-    // --- 5. IDEモード連携 ---
-    const editor = this.plugins.get('EditorPlugin');
-    if (editor && editor.isEnabled) {
-        this.time.delayedCall(100, () => {
-            this.registry.set('editor_mode', 'select');
-            for (const uiElement of this.uiElements.values()) {
-                editor.makeEditable(uiElement, this);
-            }
-        });
-    }
-}
 
     /**
      * このオーバーレイシーンを閉じるようSystemSceneに依頼する
@@ -135,35 +126,55 @@ create() {
 
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
-// in OverlayScene.js
 async buildUiFromLayout(layoutData) {
+    // console.log("[UIScene] Starting UI build with FINAL routine.");
     if (!layoutData || !layoutData.objects) return;
+
+    const uiRegistry = this.registry.get('uiRegistry');
+    const stateManager = this.registry.get('stateManager');
 
     for (const layout of layoutData.objects) {
         try {
+            const registryKey = layout.registryKey || layout.name;
+            if (!registryKey) continue;
+
             let uiElement = null;
 
-            // ▼▼▼【ここが、動いていた頃のロジックです】▼▼▼
-            // typeプロパティだけを見て、オブジェクトを生成する
-            if (layout.type === 'Text') {
-                uiElement = this.add.text(layout.x, layout.y, layout.text || '', layout.style || {});
-            } else if (layout.type === 'Image' || layout.type === 'Panel' || layout.type === 'Button') {
-                // PanelやButtonも、実体はImageかContainerなので、ひとまずImageで作る
-                // (本当は各クラスをnewすべきだが、まずは表示を優先)
-                uiElement = this.add.image(layout.x, layout.y, layout.texture || '__DEFAULT');
+            // --- Step 1: オブジェクトのインスタンスを生成 ---
+            if (registryKey === 'Text') {
+                uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
+            } else {
+                const definition = uiRegistry[registryKey];
+                if (definition && definition.component) {
+                    const UiComponentClass = definition.component;
+                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
+                    layout.stateManager = stateManager;
+                    uiElement = new UiComponentClass(this, layout);
+                }
             }
-            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
             if (!uiElement) {
-                console.warn(`Could not create UI element for '${layout.name}' of type '${layout.type}'`);
+                console.warn(`Could not create UI element for '${layout.name}'`);
                 continue;
             }
-            
-            // 共通の登録処理（registerUiElement）は、EditorPlugin連携など重要な役割があるのでそのまま使う
+
+            // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
+            uiElement.setData('registryKey', registryKey);
+
+            // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
+            if (layout.components) {
+                uiElement.setData('components', layout.components); // まず永続化データを保存
+                layout.components.forEach(compDef => {
+                    this.addComponent(uiElement, compDef.type, compDef.params);
+                });
+            }
+
+            // --- Step 3: 共通の登録・設定処理を呼び出す ---
+            // ★ paramsではなく、JSONから読み込んだ生の`layout`を渡すのが最も確実
             this.registerUiElement(layout.name, uiElement, layout);
 
         } catch (e) {
-            console.error(`[OverlayScene] FAILED to create UI element '${layout.name}'.`, e);
+            console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
         }
     }
 }
@@ -356,22 +367,5 @@ applyUiEvents(uiElement) {
         }
     });
 }
-
-  
-    /**
-     * このシーンが停止する際にPhaserによって自動的に呼び出される
-     */
-    shutdown() {
-        console.log(`[OverlayScene] Shutdown called. Destroying ${this.children.list.length} objects.`);
-
-        // このシーンが持つ全てのゲームオブジェクトをループして破棄する
-        // this.children.list をコピーするのが安全
-        [...this.children.list].forEach(child => {
-            child.destroy();
-        });
-
-        // 親クラスのshutdownも呼び出すのが作法
-        super.shutdown();
-    }
 
 }
