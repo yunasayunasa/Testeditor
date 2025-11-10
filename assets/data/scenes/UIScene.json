@@ -203,9 +203,12 @@
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1762413059420",
-              "type": "open_menu",
-              "params": {},
+              "id": "node_1762757669162",
+              "type": "fire_game_flow_event",
+              "params": {
+                "data": "{\"layout\": \"evidence_list\", \"dynamic_type\": \"evidence_list\"}",
+                "event": "OPEN_PAUSE_MENU"
+              },
               "x": 50,
               "y": 50
             }
@@ -216,7 +219,7 @@
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1762413048744
+        "lastTap": 1762757528522
       }
     },
     {
