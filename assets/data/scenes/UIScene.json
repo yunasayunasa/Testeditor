@@ -206,7 +206,8 @@
               "id": "node_1762759136178",
               "type": "open_menu",
               "params": {
-      "layout": "pause_menu"
+                "layout": "pause_menu",
+                "data": "{\"layout\": \"pause_menu\"}"
               },
               "x": 50,
               "y": 50
@@ -218,7 +219,7 @@
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1762761678494
+        "lastTap": 1762762264852
       }
     },
     {
