@@ -135,55 +135,35 @@ create() {
 
    // src/scenes/UIScene.js -> buildUiFromLayout()
 
+// in OverlayScene.js
 async buildUiFromLayout(layoutData) {
-    // console.log("[UIScene] Starting UI build with FINAL routine.");
     if (!layoutData || !layoutData.objects) return;
-
-    const uiRegistry = this.registry.get('uiRegistry');
-    const stateManager = this.registry.get('stateManager');
 
     for (const layout of layoutData.objects) {
         try {
-            const registryKey = layout.registryKey || (layout.data && layout.data.registryKey) || layout.name;
-            if (!registryKey) continue;
-
             let uiElement = null;
 
-            // --- Step 1: オブジェクトのインスタンスを生成 ---
-            if (registryKey === 'Text') {
-                uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
-            } else {
-                const definition = uiRegistry[registryKey];
-                if (definition && definition.component) {
-                    const UiComponentClass = definition.component;
-                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
-                    layout.stateManager = stateManager;
-                    uiElement = new UiComponentClass(this, layout);
-                }
+            // ▼▼▼【ここが、動いていた頃のロジックです】▼▼▼
+            // typeプロパティだけを見て、オブジェクトを生成する
+            if (layout.type === 'Text') {
+                uiElement = this.add.text(layout.x, layout.y, layout.text || '', layout.style || {});
+            } else if (layout.type === 'Image' || layout.type === 'Panel' || layout.type === 'Button') {
+                // PanelやButtonも、実体はImageかContainerなので、ひとまずImageで作る
+                // (本当は各クラスをnewすべきだが、まずは表示を優先)
+                uiElement = this.add.image(layout.x, layout.y, layout.texture || '__DEFAULT');
             }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
             if (!uiElement) {
-                console.warn(`Could not create UI element for '${layout.name}'`);
+                console.warn(`Could not create UI element for '${layout.name}' of type '${layout.type}'`);
                 continue;
             }
-
-            // --- Step 2: 重要なデータをオブジェクト自身に保存 ---
-            uiElement.setData('registryKey', registryKey);
-
-            // ★★★ ここで、JSONから読み込んだコンポーネント定義を、オブジェクトにアタッチする ★★★
-            if (layout.components) {
-                uiElement.setData('components', layout.components); // まず永続化データを保存
-                layout.components.forEach(compDef => {
-                    this.addComponent(uiElement, compDef.type, compDef.params);
-                });
-            }
-
-            // --- Step 3: 共通の登録・設定処理を呼び出す ---
-            // ★ paramsではなく、JSONから読み込んだ生の`layout`を渡すのが最も確実
+            
+            // 共通の登録処理（registerUiElement）は、EditorPlugin連携など重要な役割があるのでそのまま使う
             this.registerUiElement(layout.name, uiElement, layout);
 
         } catch (e) {
-            console.error(`[UIScene] FAILED to create UI element '${layout.name}'.`, e);
+            console.error(`[OverlayScene] FAILED to create UI element '${layout.name}'.`, e);
         }
     }
 }
