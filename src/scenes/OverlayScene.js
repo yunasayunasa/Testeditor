@@ -43,8 +43,11 @@ export default class OverlayScene extends Phaser.Scene {
             errorText.on('pointerdown', () => this.close());
         }
 
-         // 1. 読み込んだレイアウトデータを、変更可能なコピーとして保持
-    let finalLayoutData = JSON.parse(JSON.stringify(layoutDataFromCache));
+        // --- 最終ロジック：ここから ---
+    
+    // ▼▼▼【この行の変数名が間違っていました】▼▼▼
+    let finalLayoutData = JSON.parse(JSON.stringify(layoutData));
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     // 2. もし "evidence_list" なら、動的生成ロジックを実行
     if (this.layoutDataKey === 'evidence_list') {
@@ -59,19 +62,18 @@ export default class OverlayScene extends Phaser.Scene {
                 if (evidenceData) {
                     dynamicObjects.push({
                         "name": `evidence_${evidenceId}`,
-                        "type": "Image", // or "Button"
-                        "texture": "button_texture", // ボタンのテクスチャ
+                        "type": "Image",
+                        "texture": "button_texture",
                         "x": 640,
                         "y": 200 + (index * 80),
-                        // "label": evidenceData.name, // Textオブジェクトを別で追加する必要がある
                         "events": [
-                          {
-                            "trigger": "onClick",
-                            "nodes": [
-                              { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
-                              { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
-                            ]
-                          }
+                            {
+                                "trigger": "onClick",
+                                "nodes": [
+                                    { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
+                                    { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                                ]
+                            }
                         ]
                     });
                     dynamicObjects.push({
@@ -80,23 +82,19 @@ export default class OverlayScene extends Phaser.Scene {
                         "x": 640,
                         "y": 200 + (index * 80),
                         "text": evidenceData.name,
-                        "style": { "fontSize": "24px", "fill": "#000" } // スタイルは適宜調整
+                        "style": { "fontSize": "24px", "fill": "#000", "align": "center" },
+                        "originX": 0.5, // 中央揃え
+                        "originY": 0.5
                     });
                 }
             });
         }
-        // 生成したオブジェクトを、元のレイアウトデータに結合
         finalLayoutData.objects = (finalLayoutData.objects || []).concat(dynamicObjects);
     }
     
     // 3. 最終的なレイアウトデータでUIを構築する
     this.buildUiFromLayout(finalLayoutData);
-
-    // --- 最終ロジック：ここまで ---
-
-    // IDE連携（編集機能）はこのままでは動かないが、まずは表示と動作を優先
 }
-    
 
     /**
      * このオーバーレイシーンを閉じるようSystemSceneに依頼する
