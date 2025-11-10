@@ -42,7 +42,54 @@ export default class OverlayScene extends Phaser.Scene {
             errorText.setInteractive();
             errorText.on('pointerdown', () => this.close());
         }
+
+         // 1. 読み込んだレイアウトデータを、変更可能なコピーとして保持
+    let finalLayoutData = JSON.parse(JSON.stringify(layoutDataFromCache));
+
+    // 2. もし "evidence_list" なら、動的生成ロジックを実行
+    if (this.layoutDataKey === 'evidence_list') {
+        const evidenceMaster = this.cache.json.get('evidence_master');
+        const stateManager = this.scene.manager.getScene('SystemScene')?.registry.get('stateManager');
+        const playerEvidence = stateManager ? stateManager.getValue('f.player_evidence') : [];
+        const dynamicObjects = [];
+
+        if (playerEvidence && evidenceMaster) {
+            playerEvidence.forEach((evidenceId, index) => {
+                const evidenceData = evidenceMaster[evidenceId];
+                if (evidenceData) {
+                    dynamicObjects.push({
+                        "name": `evidence_${evidenceId}`,
+                        "type": "Image", // or "Button"
+                        "texture": "button_texture", // ボタンのテクスチャ
+                        "x": 640,
+                        "y": 200 + (index * 80),
+                        // "label": evidenceData.name, // Textオブジェクトを別で追加する必要がある
+                        "events": [
+                          {
+                            "trigger": "onClick",
+                            "nodes": [
+                              { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
+                              { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                            ]
+                          }
+                        ]
+                    });
+                    // (発展) ボタンの上にTextオブジェクトを重ねてラベルを表示するロジックもここに追加できる
+                }
+            });
+        }
+        // 生成したオブジェクトを、元のレイアウトデータに結合
+        finalLayoutData.objects = (finalLayoutData.objects || []).concat(dynamicObjects);
     }
+    
+    // 3. 最終的なレイアウトデータでUIを構築する
+    this.buildUiFromLayout(finalLayoutData);
+
+    // --- 最終ロジック：ここまで ---
+
+    // IDE連携（編集機能）はこのままでは動かないが、まずは表示と動作を優先
+}
+    
 
     /**
      * このオーバーレイシーンを閉じるようSystemSceneに依頼する

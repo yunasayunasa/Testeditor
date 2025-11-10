@@ -1,189 +1,33 @@
 {
-  "scene_settings": {},
-  "hasJoystick": false,
-  "layers": [
-    {
-      "name": "Foreground",
-      "visible": true,
-      "locked": false
-    },
-    {
-      "name": "Gameplay",
-      "visible": true,
-      "locked": false
-    },
-    {
-      "name": "Background",
-      "visible": true,
-      "locked": false
-    }
-  ],
   "objects": [
     {
-      "name": "generic_button_1761294906720",
-      "type": "Button",
-      "x": 964,
-      "y": 124,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "id": "event_1762415422661",
-          "trigger": "onClick",
-          "nodes": [
-            {
-              "id": "node_1762415426557",
-              "type": "close_menu",
-              "params": {
-                "id": "\"null\""
-              },
-              "x": 50,
-              "y": 50
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "label": "閉じる",
-      "data": {
-        "registryKey": "generic_button",
-        "lastTap": 1762504134834
-      }
-    },
-    {
-      "name": "evidence_site_report",
-      "type": "Button",
-      "x": 640,
-      "y": 200,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_site_report",
-          "nodes": [
-            {
-              "id": "close_site_report",
-              "type": "close_menu",
-              "params": {
-                "id": "\"site_report\""
-              },
-              "y": 197
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "label": "現場の調査報告書",
-      "data": {
-        "registryKey": "generic_button",
-        "lastTap": 1762504058937
-      }
-    },
-    {
-      "name": "evidence_knife",
-      "type": "Button",
-      "x": 640,
-      "y": 280,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_knife",
-          "nodes": [
-            {
-              "id": "close_knife",
-              "type": "close_menu",
-              "params": {
-                "id": "\"knife\""
-              },
-              "y": 232
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "label": "凶器のナイフ",
-      "data": {
-        "registryKey": "generic_button",
-        "lastTap": 1762504083113
-      }
-    },
-    {
-      "name": "evidence_witness_testimony_01",
-      "type": "Button",
+      "name": "menu_background",
+      "registryKey": "panel", 
       "x": 640,
       "y": 360,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_witness_testimony_01",
-          "nodes": [
-            {
-              "id": "close_witness_testimony_01",
-              "type": "close_menu",
-              "params": {
-                "id": "\"null\""
-              },
-              "y": 445
-            }
-          ],
-          "connections": []
-        }
-      ],
-      "label": "証人自身の最初の証言",
-      "data": {
-        "registryKey": "generic_button",
-        "lastTap": 1762504106833
-      }
+      "width": 500,
+      "height": 400,
+      "alpha": 0.8
     },
- 
-   {
-      "name": "generic_button_1762759253538",
-      "type": "Button",
-      "x": 660,
-      "y": 93,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
+    {
+      "name": "resume_button",
+      "registryKey": "generic_button",
+      "x": 640,
+      "y": 360,
+      "label": "ゲームに戻る",
       "events": [
         {
-          "id": "event_1762759264442",
           "trigger": "onClick",
+          "id": "event_close_menu",
           "nodes": [
             {
-              "id": "node_1762759267722",
+              "id": "node_close_menu",
               "type": "close_menu",
-              "params": {},
-              "x": 50,
-              "y": 50
+              "params": {}
             }
-          ],
-          "connections": []
+          ]
         }
-      ],
-      "registryKey": "generic_button",
-      "label": "Button",
-      "data": {
-        "lastTap": 1762759254763
-      }
+      ]
     }
   ]
 }
