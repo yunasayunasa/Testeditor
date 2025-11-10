@@ -20,178 +20,10 @@
   ],
   "objects": [
     {
-      "name": "jump_button",
-      "type": "JumpButton",
-      "x": 1100,
-      "y": 540,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "group": [
-        "controls",
-        "action"
-      ],
-      "registryKey": "jump_button",
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "message_window",
-      "type": "MessageWindow",
-      "x": 646,
-      "y": 577,
-      "depth": 5000,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "group": "game",
-      "registryKey": "message_window",
-      "label": "",
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "menu_button",
-      "type": "Text",
-      "x": 117,
-      "y": 46,
-      "depth": 10,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "registryKey": "menu_button",
-      "text": "MENU",
-      "style": {
-        "fontFamily": "Courier",
-        "fontSize": "36px",
-        "fontStyle": "",
-        "backgroundColor": null,
-        "color": "#fff",
-        "stroke": "#fff",
-        "strokeThickness": 0,
-        "shadowOffsetX": 0,
-        "shadowOffsetY": 0,
-        "shadowColor": "#000",
-        "shadowBlur": 0,
-        "shadowStroke": false,
-        "shadowFill": false,
-        "align": "left",
-        "maxLines": 0,
-        "fixedWidth": 0,
-        "fixedHeight": 0,
-        "resolution": 1,
-        "rtl": false,
-        "testString": "|MÃ‰qgy",
-        "baselineX": 1.2,
-        "baselineY": 1.4,
-        "wordWrapWidth": null,
-        "wordWrapCallback": null,
-        "wordWrapCallbackScope": null,
-        "wordWrapUseAdvanced": false,
-        "metrics": {
-          "ascent": 26,
-          "descent": 7,
-          "fontSize": 33
-        }
-      },
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "bottom_panel",
-      "type": "BottomPanel",
-      "x": 0,
-      "y": 800,
-      "depth": 9999,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "registryKey": "bottom_panel",
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "testimony_text",
-      "type": "Text",
-      "x": 121,
-      "y": 499,
-      "depth": 5001,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "components": [
-        {
-          "type": "WatchVariableComponent",
-          "params": {
-            "variable": "f.current_statement_index"
-          }
-        },
-        {
-          "type": "TestimonyDisplayComponent",
-          "params": {}
-        },
-        {
-          "type": "VisibilityComponent",
-          "params": {
-            "condition": "false",
-            "variable": "f.is_novel_mode"
-          }
-        }
-      ],
-      "registryKey": "Text",
-      "text": "事件が起きたあの晩、私は現場の部屋で\n大きな物音を聞きました。",
-      "style": {
-        "fontFamily": "Courier",
-        "fontSize": "32px",
-        "fontStyle": "",
-        "backgroundColor": null,
-        "color": "#ffffff",
-        "stroke": "#fff",
-        "strokeThickness": 0,
-        "shadowOffsetX": 0,
-        "shadowOffsetY": 0,
-        "shadowColor": "#000",
-        "shadowBlur": 0,
-        "shadowStroke": false,
-        "shadowFill": false,
-        "align": "left",
-        "maxLines": 0,
-        "fixedWidth": 0,
-        "fixedHeight": 0,
-        "resolution": 1,
-        "rtl": false,
-        "testString": "|MÃ‰qgy",
-        "baselineX": 1.2,
-        "baselineY": 1.4,
-        "wordWrapWidth": null,
-        "wordWrapCallback": null,
-        "wordWrapCallbackScope": null,
-        "wordWrapUseAdvanced": false,
-        "metrics": {
-          "ascent": 24,
-          "descent": 6,
-          "fontSize": 30
-        }
-      },
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "button_present",
+      "name": "generic_button_1761294906720",
       "type": "Button",
-      "x": 958,
-      "y": 444,
+      "x": 964,
+      "y": 124,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -199,14 +31,14 @@
       "alpha": 1,
       "events": [
         {
-          "id": "event_1760948576772",
+          "id": "event_1762415422661",
           "trigger": "onClick",
           "nodes": [
             {
-              "id": "node_1762759136178",
-              "type": "open_menu",
+              "id": "node_1762415426557",
+              "type": "close_menu",
               "params": {
-                "data": "{\"layout\": \"evidence_list\", \"dynamic_type\": \"evidence_list\"}"
+                "id": "\"null\""
               },
               "x": 50,
               "y": 50
@@ -215,17 +47,17 @@
           "connections": []
         }
       ],
-      "registryKey": "generic_button",
-      "label": "突きつける",
+      "label": "閉じる",
       "data": {
-        "lastTap": 1762759126476
+        "registryKey": "generic_button",
+        "lastTap": 1762504134834
       }
     },
     {
-      "name": "button_press",
+      "name": "evidence_site_report",
       "type": "Button",
-      "x": 335,
-      "y": 444,
+      "x": 640,
+      "y": 200,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -233,85 +65,32 @@
       "alpha": 1,
       "events": [
         {
-          "id": "event_1760429970941",
           "trigger": "onClick",
+          "id": "event_site_report",
           "nodes": [
             {
-              "id": "node_1761900618669",
-              "type": "eval",
+              "id": "close_site_report",
+              "type": "close_menu",
               "params": {
-                "exp": "f.temp_scenario_target = self.scene.cache.json.get(f.current_testimony_id).statements[f.current_statement_index].press_action.target"
+                "id": "\"site_report\""
               },
-              "x": 50,
-              "y": 50
-            },
-            {
-              "id": "node_1761900624461",
-              "type": "fire_game_flow_event",
-              "params": {
-                "data": "{\"scenario\": &{f.temp_scenario_target}}",
-                "event": "RUN_NOVEL_OVERLAY"
-              },
-              "x": 50,
-              "y": 220
-            }
-          ],
-          "connections": [
-            {
-              "fromNode": "node_1761900618669",
-              "fromPin": "output",
-              "toNode": "node_1761900624461",
-              "toPin": "input"
-            }
-          ]
-        }
-      ],
-      "registryKey": "generic_button",
-      "label": "ゆさぶる",
-      "data": {
-        "lastTap": 0
-      }
-    },
-    {
-      "name": "button_next_statement",
-      "type": "Button",
-      "x": 1179,
-      "y": 444,
-      "depth": 0,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 1,
-      "events": [
-        {
-          "id": "event_1760430021013",
-          "trigger": "onClick",
-          "nodes": [
-            {
-              "id": "node_1760430039925",
-              "type": "update_statement_index",
-              "params": {
-                "direction": "next",
-                "to": ""
-              },
-              "x": 50,
-              "y": 50
+              "y": 197
             }
           ],
           "connections": []
         }
       ],
-      "registryKey": "generic_button",
-      "label": "→",
+      "label": "現場の調査報告書",
       "data": {
-        "lastTap": 0
+        "registryKey": "generic_button",
+        "lastTap": 1762504058937
       }
     },
     {
-      "name": "button_prev_statement",
+      "name": "evidence_knife",
       "type": "Button",
-      "x": 114,
-      "y": 444,
+      "x": 640,
+      "y": 280,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -319,30 +98,62 @@
       "alpha": 1,
       "events": [
         {
-          "id": "event_1760430083229",
           "trigger": "onClick",
+          "id": "event_knife",
           "nodes": [
             {
-              "id": "node_1760430086325",
-              "type": "update_statement_index",
+              "id": "close_knife",
+              "type": "close_menu",
               "params": {
-                "direction": "prev",
-                "to": ""
+                "id": "\"knife\""
               },
-              "x": 50,
-              "y": 50
+              "y": 232
             }
           ],
           "connections": []
         }
       ],
-      "registryKey": "generic_button",
-      "label": "←",
+      "label": "凶器のナイフ",
       "data": {
-        "lastTap": 0
+        "registryKey": "generic_button",
+        "lastTap": 1762504083113
       }
     },
     {
+      "name": "evidence_witness_testimony_01",
+      "type": "Button",
+      "x": 640,
+      "y": 360,
+      "depth": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_witness_testimony_01",
+          "nodes": [
+            {
+              "id": "close_witness_testimony_01",
+              "type": "close_menu",
+              "params": {
+                "id": "\"null\""
+              },
+              "y": 445
+            }
+          ],
+          "connections": []
+        }
+      ],
+      "label": "証人自身の最初の証言",
+      "data": {
+        "registryKey": "generic_button",
+        "lastTap": 1762504106833
+      }
+    },
+ 
+   {
       "name": "generic_button_1762759253538",
       "type": "Button",
       "x": 660,
