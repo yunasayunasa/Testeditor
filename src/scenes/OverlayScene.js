@@ -46,7 +46,7 @@ export default class OverlayScene extends Phaser.Scene {
         // --- 最終ロジック：ここから ---
     
     // ▼▼▼【この行の変数名が間違っていました】▼▼▼
-    let finalLayoutData = JSON.parse(JSON.stringify(layoutData));
+    let finalLayoutData = JSON.parse(JSON.stringify(originalLayoutData));
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     // 2. もし "evidence_list" なら、動的生成ロジックを実行
@@ -93,7 +93,7 @@ export default class OverlayScene extends Phaser.Scene {
     }
     
     // 3. 最終的なレイアウトデータでUIを構築する
-    this.buildUiFromLayout(finalLayoutData);
+     this.buildUiFromLayout(finalLayoutData);
 }
 
     /**
@@ -197,12 +197,16 @@ async buildUiFromLayout(layoutData) {
                 uiElement = this.add.text(0, 0, layout.text || '', layout.style || {});
             } else {
                 const definition = uiRegistry[registryKey];
-                if (definition && definition.component) {
-                    const UiComponentClass = definition.component;
-                    // ★ layoutにstateManagerを追加してコンストラクタに渡す
-                    layout.stateManager = stateManager;
-                    uiElement = new UiComponentClass(this, layout);
-                }
+            if (definition && definition.component) {
+                const UiComponentClass = definition.component;
+                
+                // ★ layout を直接変更するのではなく、新しいparamsオブジェクトを作る
+                const paramsForConstructor = {
+                    ...layout,
+                    stateManager: stateManager
+                };
+                uiElement = new UiComponentClass(this, paramsForConstructor);
+            }
             }
 
             if (!uiElement) {
