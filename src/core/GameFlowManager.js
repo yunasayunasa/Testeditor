@@ -115,12 +115,66 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                     break;
                 
                 
-                case 'openMenuOverlay':
-                    const activeScene = EngineAPI.activeGameSceneKey;
-                    if (activeScene) {
-                        EngineAPI.requestPauseMenu(activeScene, action.params.layout, action.params);
-                    }
-                    break;
+                case 'openMenuOverlay': {
+    const activeScene = EngineAPI.activeGameSceneKey;
+    if (!activeScene) break;
+    
+    const layoutKey = eventData.layout || action.params.layout;
+    const layoutData = JSON.parse(JSON.stringify(EngineAPI.systemScene.cache.json.get(layoutKey))); // ★ ディープコピーする
+
+    // ▼▼▼【ここからが、最後の、そして真実の修正です】▼▼▼
+    
+    // もし "dynamic_type" パラメータがあれば、動的生成ロジックを実行
+    const dynamicType = eventData.dynamic_type || action.params.dynamic_type;
+    if (dynamicType === 'evidence_list') {
+        const stateManager = EngineAPI.systemScene.registry.get('stateManager');
+        const evidenceMaster = EngineAPI.systemScene.cache.json.get('evidence_master');
+        const playerEvidence = stateManager ? stateManager.getValue('f.player_evidence') : [];
+        const dynamicObjects = [];
+
+        if (playerEvidence && evidenceMaster) {
+            playerEvidence.forEach((evidenceId, index) => {
+                const evidenceData = evidenceMaster[evidenceId];
+                if (evidenceData) {
+                    dynamicObjects.push({
+                        "name": `evidence_${evidenceId}`,
+                        "type": "Button",
+                        "x": 640,
+                        "y": 200 + (index * 80),
+                        "label": evidenceData.name,
+                        "data": { "registryKey": "generic_button" },
+                        "events": [
+                          {
+                            "trigger": "onClick", "id": `event_${evidenceId}`,
+                            "nodes": [
+                              { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
+                              { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                            ],
+                            "connections": [
+                              { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
+                              { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
+                            ]
+                          }
+                        ]
+                    });
+                }
+            });
+        }
+        // 生成したオブジェクトを、元のレイアウトデータに結合
+        layoutData.objects = (layoutData.objects || []).concat(dynamicObjects);
+    }
+
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // ★★★ 改造した layoutData を、新しいユニークなキーでキャッシュに保存 ★★★
+    const dynamicLayoutKey = `${layoutKey}_${Date.now()}`;
+    EngineAPI.systemScene.cache.json.add(dynamicLayoutKey, layoutData);
+    
+    // ★★★ OverlaySceneには、その新しいキーを渡す ★★★
+    EngineAPI.requestPauseMenu(activeScene, dynamicLayoutKey);
+
+    break;
+}
                 
                  case 'closeOverlay': {
     // 1. これから閉じるべきシーンのキーを取得 (この時点ではまだアクティブ)

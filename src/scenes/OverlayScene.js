@@ -41,51 +41,6 @@ create() {
         return;
     }
     
-    // --- 2. プレイヤーの所持証拠品から、動的にボタン定義を生成 ---
-    const playerEvidence = stateManager.getValue('f.player_evidence') || [];
-    const dynamicObjects = [];
-    playerEvidence.forEach((evidenceId, index) => {
-        const evidenceData = evidenceMaster[evidenceId];
-        if (evidenceData) {
-            // ボタンのレイアウト定義をその場で作成
-            dynamicObjects.push({
-                "name": `evidence_${evidenceId}`,
-                "type": "Button",
-                "x": 640,
-                "y": 200 + (index * 80),
-                "label": evidenceData.name,
-                "data": { "registryKey": "generic_button" },
-                
-                // ▼▼▼【ここが修正の核心です】▼▼▼
-                // VSLの"部品"だけを定義する
-                "events": [
-                  {
-                    "trigger": "onClick",
-                    "id": `event_${evidenceId}`,
-                    "nodes": [
-                      { "id": `eval_${evidenceId}`, "type": "eval", "params": { "exp": `f.selected_evidence = "${evidenceId}"` } },
-                      { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
-                    ],
-                    "connections": [
-                       { "fromNode": "start", "fromPin": "output", "toNode": `eval_${evidenceId}`, "toPin": "input" },
-                       { "fromNode": `eval_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
-                    ]
-                  }
-                ]
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-            });
-        }
-    });
-
-    // --- 3. 元のレイアウトデータと動的データを結合 ---
-    const finalLayoutData = {
-        ...layoutData,
-        objects: (layoutData.objects || []).concat(dynamicObjects)
-    };
-    
-    // --- 4. 最終的なレイアウトデータでUIを構築する ---
-    this.buildUiFromLayout(finalLayoutData);
-
     // --- 5. IDEモード連携 ---
     const editor = this.plugins.get('EditorPlugin');
     if (editor && editor.isEnabled) {
