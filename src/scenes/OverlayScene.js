@@ -27,7 +27,7 @@ export default class OverlayScene extends Phaser.Scene {
         this.scene.bringToTop();
 
         // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
-        const layoutData = this.cache.json.get(this.layoutDataKey);
+         const layoutData = this.cache.json.get(this.layoutDataKey);
         
         if (layoutData) {
             this.buildUiFromLayout(layoutData);
@@ -74,7 +74,14 @@ export default class OverlayScene extends Phaser.Scene {
                           }
                         ]
                     });
-                    // (発展) ボタンの上にTextオブジェクトを重ねてラベルを表示するロジックもここに追加できる
+                    dynamicObjects.push({
+                        "name": `label_${evidenceId}`,
+                        "type": "Text",
+                        "x": 640,
+                        "y": 200 + (index * 80),
+                        "text": evidenceData.name,
+                        "style": { "fontSize": "24px", "fill": "#000" } // スタイルは適宜調整
+                    });
                 }
             });
         }
