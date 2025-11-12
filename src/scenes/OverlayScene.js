@@ -26,26 +26,10 @@ export default class OverlayScene extends Phaser.Scene {
         // console.log(`[OverlayScene] Creating overlay with layout '${this.layoutDataKey}'`);
         this.scene.bringToTop();
 
-        // ★★★ ポイント3: onSceneTransition連携を削除し、ロジックを簡素化 ★★★
-         const layoutData = this.cache.json.get(this.layoutDataKey);
-        
-        if (layoutData) {
-            this.buildUiFromLayout(layoutData);
+       const originalLayoutData = this.cache.json.get(this.layoutDataKey);
+    if (!originalLayoutData) { return; }
 
-            // (オプション) このオーバーレイシーン自体をクリックしたら閉じる、という機能
-            // this.input.on('pointerdown', () => this.close());
-            
-        } else {
-            console.error(`[OverlayScene] Layout data for key '${this.layoutDataKey}' not found!`);
-            const errorText = this.add.text(this.scale.width / 2, this.scale.height / 2, `Layout not found:\n${this.layoutDataKey}`, { color: 'red', align: 'center' }).setOrigin(0.5);
-            // エラー表示をクリックしたらシーンを閉じる
-            errorText.setInteractive();
-            errorText.on('pointerdown', () => this.close());
-        }
-
-        // --- 最終ロジック：ここから ---
-    
-    // ▼▼▼【この行の変数名が間違っていました】▼▼▼
+    // ★★★ 1. 最初に、安全なディープコピーを作成する ★★★
     let finalLayoutData = JSON.parse(JSON.stringify(originalLayoutData));
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
