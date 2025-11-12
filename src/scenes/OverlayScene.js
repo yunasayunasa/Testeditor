@@ -17,10 +17,18 @@ export default class OverlayScene extends BaseGameScene {
     /**
      * OverlayManagerから launch される際にデータを受け取る
      */
-    init(data) {
-        // BaseGameSceneのinitを呼び出し、isUiSceneフラグを渡す
-        super.init({ ...data, isUiScene: true });
+    // in OverlayScene.js
+init(data) {
+    // 1. まず、親である BaseGameScene の init を呼び出す
+    //    isUiScene フラグを必ず渡す
+    super.init({ ...data, isUiScene: true }); 
+
+    // 2. 次に、この OverlayScene 自身が必要なデータを取得する
+    //    BaseGameScene は layoutDataKey を参照するため、そちらにセットする
+    if (data && data.layoutKey) {
+        this.layoutDataKey = data.layoutKey;
     }
+}
 
     /**
      * シーンが起動する際のメインロジック
