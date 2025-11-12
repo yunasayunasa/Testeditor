@@ -1,0 +1,37 @@
+{
+  "type": "Container",
+  "name": "template_root",
+  "width": 500,
+  "height": 60,
+  "objects": [
+    {
+      "name": "background",
+      "type": "Image",
+      "texture": "button_texture"
+    },
+    {
+      "name": "item_name",
+      "type": "Text",
+      "x": 0,
+      "y": 0,
+      "text": "Item Name",
+      "style": { "fontSize": "24px", "fill": "#000" },
+      "originX": 0.5,
+      "originY": 0.5
+    }
+  ],
+  "events": [
+    {
+      "trigger": "onClick",
+      "id": "event_select_item",
+      "nodes": [
+        { "id": "node_eval", "type": "eval", "params": { "exp": "f.selected_evidence = '&{data.id}'" } },
+        { "id": "node_close", "type": "close_menu", "params": {} }
+      ],
+      "connections": [
+        {"fromNode": "start", "fromPin": "output", "toNode": "node_eval", "toPin": "input"},
+        {"fromNode": "node_eval", "fromPin": "output", "toNode": "node_close", "toPin": "input"}
+      ]
+    }
+  ]
+}
