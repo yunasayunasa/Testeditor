@@ -31,7 +31,7 @@ export default class BaseGameScene extends Phaser.Scene {
      * @param {object} data - SystemScene.launch()から渡されたデータ
      */
    init(data) {
-    super.init(data); // 継承元のinitも忘れずに
+    
     if (data && data.isUiScene) {
         this.isUiScene = true;
     }
