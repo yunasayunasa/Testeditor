@@ -63,7 +63,7 @@
   },
 "//": "--- ここからが新しいカテゴリです ---",
  "prefabs": [
-        { "key": "coin", "path": "data/prefabs/coin.json" },
+        { "key": "evidence_item", "path": "data/prefabs/evidence_item.json" },
          { "key": "taimatsu", "path": "data/prefabs/taimatsu.json" },
         { "key": "my_unit_01", "path": "data/prefabs/my_unit_01.json" }
     ],

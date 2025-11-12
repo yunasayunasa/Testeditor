@@ -2,23 +2,30 @@
 //メニューやステータス、アイテム画面やショップなどサブシーンを作るための汎用オーバーレイシーンです
 // uiRegistry は外部で定義されているので、インポートは不要な場合があります。
 // もしエラーが出る場合は、適宜 import { uiRegistry } from '../ui/index.js'; などを追加してください。
+// src/scenes/OverlayScene.js (最終完成形)
+import BaseGameScene from './BaseGameScene.js';
 import EngineAPI from '../core/EngineAPI.js'; 
-export default class OverlayScene extends Phaser.Scene {
+
+export default class OverlayScene extends BaseGameScene {
     
     constructor() {
-        // ★★★ ポイント1: クラス名とキーを変更 ★★★
-        super({ key: 'OverlayScene' }); 
+        // BaseGameSceneのコンストラクタを、自身のキーで呼び出す
+        super({ key: 'OverlayScene' });
         
-        // UISceneと同じプロパティを持つ
-        this.uiElements = new Map();
-        this.componentsToUpdate = [];
-        this.layoutDataKey = null; // どのレイアウトJSONを読み込むかを保持
     }
 
-    // ★★★ ポイント2: init()でレイアウトキーを受け取る ★★★
+    /**
+     * OverlayManagerから launch される際に、どのレイアウトを開くかデータを受け取る
+     */
     init(data) {
-        this.layoutDataKey = data.layoutKey || null;
-        // console.log(`[OverlayScene] Initialized with layout key: '${this.layoutDataKey}'`);
+        // BaseGameSceneが持つオリジナルのinitメソッドを呼び出すのが作法
+        super.init(data); 
+
+        // layoutKeyが渡された場合、それをこのシーンが読み込むべきデータキーとして設定
+        // BaseGameSceneは layoutDataKey を参照するため、そちらにセットする
+        if (data && data.layoutKey) {
+            this.layoutDataKey = data.layoutKey;
+        }
     }
 
     // createメソッドは非同期である必要はない

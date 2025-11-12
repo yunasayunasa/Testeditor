@@ -10,7 +10,7 @@ export default class OverlayManager {
 
     openMenuOverlay(data) {
         // console.log(`%c[OverlayManager] Launching Menu Overlay (Layout: ${data.layoutKey})`, "color: #00BCD4; font-weight: bold;");
-        this.systemScene.scene.launch('OverlayScene', { layoutKey: data.layoutKey, ...data.params });
+        this.systemScene.scene.launch('OverlayScene', { layoutKey: data.layoutKey, isUiScene: true, ...data.params });
     }
 
     openNovelOverlay(data) {

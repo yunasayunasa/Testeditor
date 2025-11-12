@@ -16,6 +16,8 @@ export default class BaseGameScene extends Phaser.Scene {
         this.updatableComponents = new Set(); 
         this._deferredActions = []; 
         this.joystick = null; 
+
+        this.isUiScene = false; 
        
         this._sceneSettingsApplied = false;
         this.ySortEnabled = false; // ★ シーンのYソートが有効かどうかのフラグ
@@ -28,7 +30,11 @@ export default class BaseGameScene extends Phaser.Scene {
      * SystemSceneから渡されたデータを受け取る
      * @param {object} data - SystemScene.launch()から渡されたデータ
      */
-    init(data) {
+   init(data) {
+    super.init(data); // 継承元のinitも忘れずに
+    if (data && data.isUiScene) {
+        this.isUiScene = true;
+    }
         // dataオブジェクトが存在し、その中にlayoutDataKeyプロパティがあれば、
         // それをこのシーンのプロパティとして保存する
         if (data && data.layoutDataKey) {
@@ -593,6 +599,7 @@ applyProperties(gameObject, layout) {
     gameObject.setPosition(data.x || 0, data.y || 0);
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
+    
     if (data.depth !== undefined) gameObject.setDepth(data.depth);
 
     // Yソート対象なら、原点を自動的に足元に設定
@@ -648,6 +655,17 @@ applyProperties(gameObject, layout) {
     } else {
         // 物理ボディがない場合は、ここでスケールを設定
         gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
+    }
+
+    // --- 6. (最後の仕上げ) UIシーンモードの特別処理 ---
+    if (this.isUiScene) {
+        gameObject.setVisible(true); // 問答無用で表示
+        
+        // depthが未設定の場合、安全なデフォルト値を与える
+        if (data.depth === undefined) {
+            // 他のUIと重ならないよう、十分大きな値から始める
+            gameObject.setDepth(10000 + this.children.list.length);
+        }
     }
     
     return gameObject;
