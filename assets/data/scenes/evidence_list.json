@@ -19,44 +19,24 @@
     }
   ],
   "objects": [
+    
     {
-      "name": "menu_background",
-      "type": "Image",
-      "x": 640,
-      "y": 360,
-      "depth": 10002,
-      "scaleX": 1,
-      "scaleY": 1,
-      "angle": 0,
-      "alpha": 0.8,
-      "events": [],
-      "data": {}
-    },
-    {
-      "name": "resume_button",
-      "type": "Image",
-      "x": 640,
-      "y": 360,
-      "depth": 10003,
-      "scaleX": 1,
-      "scaleY": 1,
+      "name": "panel_1763017603309",
+      "type": "Panel",
+      "x": 637,
+      "y": 363,
+      "depth": 0,
+      "scaleX": 4.31,
+      "scaleY": 4.31,
       "angle": 0,
       "alpha": 1,
-      "events": [
-        {
-          "trigger": "onClick",
-          "id": "event_close_menu",
-          "nodes": [
-            {
-              "id": "node_close_menu",
-              "type": "close_menu",
-              "params": {}
-            }
-          ]
-        }
-      ],
-      "data": {}
+      "registryKey": "panel",
+      "data": {
+        "lastTap": 1763017611390
+      }
     },
+  
+
     {
       "name": "yuna_angry_1763016076542",
       "type": "Image",
