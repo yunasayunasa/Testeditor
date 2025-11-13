@@ -25,7 +25,7 @@
       "trigger": "onClick",
       "id": "event_select_item",
       "nodes": [
-        { "id": "node_eval", "type": "eval", "params": { "exp": "f.selected_evidence = '&{data.id}'" } },
+        { "id": "node_eval", "type": "eval", "params": { "exp": "" } },
         { "id": "node_close", "type": "close_menu", "params": {} }
       ],
       "connections": [
