@@ -292,27 +292,7 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
     return chunkImage;
 }
 
-// in src/scenes/BaseGameScene.js
-// ★★★ 既存の createObjectFromLayout を、このシンプルな内容で「完全に」置き換える ★★★
 
-createObjectFromLayout(layout) {
-    // このメソッドは、どのテクスチャを使うかの決定はせず、
-    // とにかくオブジェクトの「器」を作ることに専念する。
-    
-    const textureKey = layout.texture || '__DEFAULT';
-    
-    if (layout.type === 'Text') {
-        const style = layout.style || { fontSize: '32px', fill: '#fff' };
-        const textObject = new Phaser.GameObjects.Text(this, 0, 0, layout.text || '', style);
-        if (style.shadow && style.shadow.color) { textObject.setShadow(style.shadow.offsetX, style.shadow.offsetY, style.shadow.color, style.shadow.blur); }
-        return textObject;
-    }
-    if (layout.type === 'Sprite') {
-        return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
-    }
-    // デフォルトはImage
-    return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
-}
     /**
      * ★★★ 修正版 ★★★
      * エディタからの要求に応じて、新しいテキストオブジェクトを生成する。
@@ -394,73 +374,67 @@ buildSceneFromLayout(layoutData) {
     this.finalizeSetup(allGameObjects);
 }
    
-    /**
-     * レイアウト定義に基づいてゲームオブジェクトを生成する (テキストオブジェクト対応版)
-     * @param {object} layout - 単一オブジェクトのレイアウト定義。
-     * @returns {Phaser.GameObjects.GameObject} 生成されたゲームオブジェクト。
-     */
-   createObjectFromLayout(layout) {
-    // ★★★ ここからが永続化のための修正 ★★★
+  // in src/scenes/BaseGameScene.js
+createObjectFromLayout(layout) {
+    // --- 1. 最初に、必要なグローバルサービスを取得 ---
+    const systemRegistry = this.scene.get('SystemScene')?.registry;
+    const uiRegistry = systemRegistry ? systemRegistry.get('uiRegistry') : null;
+    const stateManager = systemRegistry ? systemRegistry.get('stateManager') : null;
 
-    // 1. テクスチャキーを決定する
-    let textureKey = layout.texture || '__DEFAULT';
+    // --- 2. registryKeyを、全ての可能性から正しく解決 ---
+    const registryKey = layout.registryKey || (layout.data && layout.data.registryKey) || layout.name;
 
-    // 1a. もしBase64データ(textureData)があれば、それを使ってテクスチャを動的に復元
-    if (layout.textureData) {
-        // ユニークなキーを生成
-        const newTextureKey = `chunk_restored_${Date.now()}_${Math.random()}`;
-        
-        // 既に同じBase64からテクスチャが生成されていないかチェック（超最適化）
-        const existingTexture = this.textures.get(newTextureKey);
-        if (!existingTexture) {
-             try {
+    // --- 3. 生成ロジックの開始 ---
+    let gameObject = null;
+
+    // --- ケースA: uiRegistry に定義があるカスタムUIの場合 ---
+    if (uiRegistry && uiRegistry[registryKey]) {
+        const definition = uiRegistry[registryKey];
+        if (definition.component) {
+            const UiComponentClass = definition.component;
+            // コンストラクタに渡すパラメータを準備
+            const paramsForConstructor = { ...layout, stateManager: stateManager };
+            gameObject = new UiComponentClass(this, paramsForConstructor);
+        }
+    }
+    // --- ケースB: uiRegistryにない、Phaserの基本オブジェクトの場合 ---
+    else {
+        // --- (既存のロジック) Base64データなどからテクスチャキーを決定 ---
+        let textureKey = layout.texture || '__DEFAULT';
+        if (layout.textureData) {
+            const newTextureKey = `chunk_restored_${Date.now()}_${Math.random()}`;
+            try {
                 this.textures.addBase64(newTextureKey, layout.textureData);
                 textureKey = newTextureKey;
-                // console.log(`[Import] Restored texture from Base64 data with key '${newTextureKey}'.`);
-             } catch (e) {
+            } catch (e) {
                 console.error(`[Import] Failed to restore texture from Base64 data.`, e);
-                textureKey = '__DEFAULT';
-             }
-        } else {
-            textureKey = newTextureKey;
-        }
-    }
-        
-        // --- ケース1: タイプが 'Text' の場合 ---
-           if (layout.type === 'Text') {
-            const text = layout.text || '';
-            
-            // ★★★ スタイルオブジェクトをそのまま渡せる ★★★
-            const style = layout.style || { fontSize: '32px', fill: '#fff' };
-            
-            const textObject = new Phaser.GameObjects.Text(this, 0, 0, text, style);
-
-            // ★★★ 影のスタイルは、個別のメソッドで設定する必要がある ★★★
-            if (style.shadow && style.shadow.color) {
-                textObject.setShadow(
-                    style.shadow.offsetX,
-                    style.shadow.offsetY,
-                    style.shadow.color,
-                    style.shadow.blur || 0,
-                    style.shadow.stroke,
-                    style.shadow.fill
-                );
             }
-            return textObject;
         }
-
-        // --- ケース2: タイプが 'Sprite' の場合 (変更なし) ---
-        if (layout.type === 'Sprite') {
-            const textureKey = layout.texture || '__DEFAULT';
-            return new Phaser.GameObjects.Sprite(this, 0, 0, textureKey);
+        
+        // --- (既存のロジック) layout.type に基づいてオブジェクトを生成 ---
+        if (layout.type === 'Text') {
+            const style = layout.style || { fontSize: '32px', fill: '#fff' };
+            const textObject = this.add.text(0, 0, layout.text || '', style); // ★ add.text を使う
+            if (style.shadow && style.shadow.color) {
+                textObject.setShadow(style.shadow.offsetX, style.shadow.offsetY, style.shadow.color, style.shadow.blur);
+            }
+            gameObject = textObject;
         }
-
-        // --- ケース3: デフォルト (Image) の場合 (変更なし) ---
-        
-        return new Phaser.GameObjects.Image(this, 0, 0, textureKey);
-        
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        else if (layout.type === 'Sprite') {
+            gameObject = this.add.sprite(0, 0, textureKey); // ★ add.sprite を使う
+        }
+        else { // デフォルトは Image
+            gameObject = this.add.image(0, 0, textureKey); // ★ add.image を使う
+        }
     }
+
+    if (gameObject) {
+        // registryKeyをデータとして保存しておく
+        gameObject.setData('registryKey', registryKey);
+    }
+
+    return gameObject;
+}
         
 // in src/scenes/BaseGameScene.js
 
