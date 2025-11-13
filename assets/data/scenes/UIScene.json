@@ -43,7 +43,7 @@
       "type": "MessageWindow",
       "x": 646,
       "y": 577,
-      "depth": 5000,
+      "depth": 5020,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
@@ -149,7 +149,7 @@
         }
       ],
       "registryKey": "Text",
-      "text": "事件が起きたあの晩、私は現場の部屋で\n大きな物音を聞きました。",
+      "text": "そうですね…確か、窓ガラスが\n割れるような音だったと思います。",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -191,7 +191,7 @@
       "name": "button_present",
       "type": "Button",
       "x": 963,
-      "y": 444,
+      "y": 447,
       "depth": 0,
       "scaleX": 1,
       "scaleY": 1,
@@ -207,7 +207,7 @@
               "type": "open_menu",
               "params": {
                 "layout": "pause_menu",
-                "data": "{\"layout\": \"pause_menu\"}"
+                "data": "{\"layout\": \"evidence_list\"}"
               },
               "x": 50,
               "y": 50
@@ -219,7 +219,7 @@
       "registryKey": "generic_button",
       "label": "突きつける",
       "data": {
-        "lastTap": 1762762264852
+        "lastTap": 1763015437401
       }
     },
     {
