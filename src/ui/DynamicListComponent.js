@@ -13,8 +13,10 @@ export default class DynamicListComponent {
         // ★ 自分自身で、リストの本体となるContainerを作成する
         this.listContainer = this.scene.add.container(this.placeholder.x, this.placeholder.y);
 
-        // シーンの準備ができた後にリストを構築
-        this.scene.events.once('scene-ready', this.buildList, this);
+        
+        this.buildList();
+
+
     }
 
     static define = {
@@ -66,7 +68,7 @@ export default class DynamicListComponent {
     }
 
     destroy() {
-        this.scene.events.off('scene-ready', this.buildList, this);
+       
         // ★ 自分が作ったContainerも、責任を持って破棄する
         if (this.listContainer) {
             this.listContainer.destroy();
