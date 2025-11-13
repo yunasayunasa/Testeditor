@@ -1,20 +1,47 @@
 {
+  "scene_settings": {},
+  "hasJoystick": false,
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
       "name": "menu_background",
-      "registryKey": "panel", 
+      "type": "Image",
       "x": 640,
       "y": 360,
-      "width": 500,
-      "height": 400,
-      "alpha": 0.8
+      "depth": 10002,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 0.8,
+      "events": [],
+      "data": {}
     },
     {
       "name": "resume_button",
-      "registryKey": "generic_button",
+      "type": "Image",
       "x": 640,
       "y": 360,
-      "label": "ゲームに戻る",
+      "depth": 10003,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
       "events": [
         {
           "trigger": "onClick",
@@ -27,7 +54,24 @@
             }
           ]
         }
-      ]
+      ],
+      "data": {}
+    },
+    {
+      "name": "yuna_angry_1763016076542",
+      "type": "Image",
+      "x": 640,
+      "y": 360,
+      "depth": 10004,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "yuna_angry",
+      "data": {}
     }
-  ]
+  ],
+  "animations": []
 }
