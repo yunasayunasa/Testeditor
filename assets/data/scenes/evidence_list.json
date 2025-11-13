@@ -37,6 +37,7 @@
     },
   
 
+   
     {
       "name": "yuna_angry_1763016076542",
       "type": "Image",
@@ -49,9 +50,23 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "components": [
+        {
+          "type": "DynamicListComponent",
+          "params": {
+            "dataSource": "f.player_evidence",
+            "template": "evidence_item",
+            "masterData": "evidence_master"
+          }
+        }
+      ],
       "texture": "yuna_angry",
-      "data": {}
+      "data": {
+        "registryKey": "yuna_angry_1763016076542",
+        "lastTap": 0
+      }
     }
+ 
   ],
   "animations": []
 }
