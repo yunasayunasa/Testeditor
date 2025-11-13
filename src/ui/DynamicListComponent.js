@@ -13,13 +13,18 @@ export default class DynamicListComponent {
         this.scene.events.once('scene-ready', this.buildList, this);
     }
 
-    static define = {
-        params: [
-            { key: 'dataSource', type: 'text', label: 'Data Source (f.)' },
-            { key: 'template', type: 'asset_key', assetType: 'prefab', label: 'Template Prefab' },
-            { key: 'masterData', type: 'text', label: 'Master Data Key' }
-        ]
-    };
+   static define = {
+    params: [
+        { key: 'dataSource', type: 'text', label: 'Data Source (f.)' },
+        { 
+            key: 'template', 
+            type: 'select', // ← 'asset_key' ではなく 'select'
+            label: 'Template Prefab',
+            options: 'asset:prefab' // ← assetType ではなく、options に 'asset:prefab' を指定
+        },
+        { key: 'masterData', type: 'text', label: 'Master Data Key' }
+    ]
+};
     
     buildList() {
         if (!this.dataSourceVariable || !this.templatePrefabKey || !this.stateManager) return;
@@ -28,41 +33,52 @@ export default class DynamicListComponent {
         const templateData = this.scene.cache.json.get(this.templatePrefabKey);
         const masterData = this.masterDataKey ? this.scene.cache.json.get(this.masterDataKey) : null;
         
-        let yPos = 0; // 開始Y座標
+        let yPos = 0;
 
         itemIds.forEach(itemId => {
             const itemData = masterData ? masterData[itemId] : { id: itemId };
             
-            // 1. テンプレートからインスタンスを生成
-            // BaseGameSceneのaddPrefabFromEditorを流用するのが賢い
-            if (typeof this.scene.addPrefabFromEditor !== 'function') return;
-            const newRow = this.scene.addPrefabFromEditor(this.templatePrefabKey, `row_${itemId}`);
+            // 1. テンプレートからインスタンスを生成 (BaseGameSceneの機能を利用)
+            const newRow = this.scene.add.container(0, yPos);
             
-            if (!newRow) return;
+            // 2. テンプレートの各オブジェクトをコンテナに追加
+            templateData.objects.forEach(objLayout => {
+                let newChild;
+                if (objLayout.type === 'Text') {
+                    newChild = this.scene.add.text(objLayout.x, objLayout.y, objLayout.text, objLayout.style);
+                } else { // Image, Buttonなど
+                    newChild = this.scene.add.image(objLayout.x, objLayout.y, objLayout.texture);
+                }
+                newChild.name = objLayout.name;
+                newChild.setOrigin(objLayout.originX || 0, objLayout.originY || 0);
 
-            newRow.setPosition(0, yPos); // コンテナ内の相対座標
-            
-            // 2. データを流し込む
-            const nameText = newRow.list.find(child => child.name === 'item_name');
-            if (nameText) nameText.setText(itemData.name || 'Unknown');
-            
-            const itemIcon = newRow.list.find(child => child.name === 'item_icon');
-            if (itemIcon) itemIcon.setTexture(itemData.icon || '__DEFAULT');
+                // データを流し込む
+                if (newChild.name === 'item_name') {
+                    newChild.setText(itemData.name || 'Unknown');
+                }
+                if (newChild.name === 'item_icon') {
+                    newChild.setTexture(itemData.icon || '__DEFAULT');
+                }
+                newRow.add(newChild);
+            });
 
             // 3. VSLの変数を置き換え
-            const events = JSON.parse(JSON.stringify(newRow.getData('events') || []));
+            const events = JSON.parse(JSON.stringify(templateData.events || [])); // ディープコピー
             events.forEach(event => {
                 event.nodes.forEach(node => {
-                    if (node.params && node.params.exp) {
-                        node.params.exp = node.params.exp.replace(/&\{data\.id\}/g, `"${itemId}"`);
+                    if (node.params.exp) {
+                        node.params.exp = node.params.exp.replace(/&\{data\.id\}/g, itemId);
                     }
                 });
             });
             newRow.setData('events', events);
-            this.scene.onEditorEventChanged(newRow); // イベントリスナーを再適用
             
-            this.listContainer.add(newRow); // 親コンテナに追加
-            yPos += newRow.height || 60; // 次の行の位置
+            // 4. コンテナ全体をクリック可能にする
+            newRow.setSize(templateData.width, templateData.height);
+            this.scene.applyUiEvents(newRow); // UIScene/OverlaySceneが持つイベント設定メソッドを呼び出す
+            
+            this.listContainer.add(newRow);
+            yPos += templateData.height; // 次の行の位置をずらす
         });
     }
 
