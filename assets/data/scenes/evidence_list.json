@@ -38,16 +38,33 @@
   
 
    
+   
+    {
+      "name": "panel_1763017603309",
+      "type": "Panel",
+      "x": 902,
+      "y": 323,
+      "depth": 0,
+      "scaleX": 4.31,
+      "scaleY": 4.31,
+      "angle": 0,
+      "alpha": 1,
+      "events": [],
+      "data": {
+        "registryKey": "panel",
+        "lastTap": 1763022649576
+      }
+    },
     {
       "name": "yuna_angry_1763016076542",
       "type": "Image",
-      "x": 640,
-      "y": 360,
+      "x": 422,
+      "y": 232,
       "depth": 10004,
       "scaleX": 1,
       "scaleY": 1,
       "angle": 0,
-      "alpha": 1,
+      "alpha": 0.12,
       "layer": "Gameplay",
       "events": [],
       "components": [
@@ -63,10 +80,156 @@
       "texture": "yuna_angry",
       "data": {
         "registryKey": "yuna_angry_1763016076542",
+        "lastTap": 1763022654574
+      }
+    },
+    {
+      "name": "row_site_report",
+      "type": "Image",
+      "x": 0,
+      "y": 0,
+      "depth": 10005,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_item",
+          "nodes": [
+            {
+              "id": "node_eval",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"site_report\""
+              }
+            },
+            {
+              "id": "node_close",
+              "type": "close_menu",
+              "params": {}
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "start",
+              "fromPin": "output",
+              "toNode": "node_eval",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_eval",
+              "fromPin": "output",
+              "toNode": "node_close",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
+      "data": {
+        "registryKey": "row_site_report",
+        "lastTap": 0
+      }
+    },
+    {
+      "name": "row_knife",
+      "type": "Image",
+      "x": 0,
+      "y": 60,
+      "depth": 10005,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_item",
+          "nodes": [
+            {
+              "id": "node_eval",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"knife\""
+              }
+            },
+            {
+              "id": "node_close",
+              "type": "close_menu",
+              "params": {}
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "start",
+              "fromPin": "output",
+              "toNode": "node_eval",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_eval",
+              "fromPin": "output",
+              "toNode": "node_close",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
+      "data": {
+        "registryKey": "row_knife",
+        "lastTap": 0
+      }
+    },
+    {
+      "name": "row_witness_testimony_01",
+      "type": "Image",
+      "x": 0,
+      "y": 120,
+      "depth": 10005,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_item",
+          "nodes": [
+            {
+              "id": "node_eval",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = \"witness_testimony_01\""
+              }
+            },
+            {
+              "id": "node_close",
+              "type": "close_menu",
+              "params": {}
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "start",
+              "fromPin": "output",
+              "toNode": "node_eval",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_eval",
+              "fromPin": "output",
+              "toNode": "node_close",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
+      "data": {
+        "registryKey": "row_witness_testimony_01",
         "lastTap": 0
       }
     }
- 
   ],
   "animations": []
 }
