@@ -1,21 +1,20 @@
 export default class DynamicListComponent {
-    constructor(scene, gameObject, params) {
-        this.scene = scene;
-        // ★ gameObject は、リストを配置する「位置」を示すための目印としてのみ使う
-        this.placeholder = gameObject; 
-        
-        this.dataSourceVariable = params.dataSource;
-        this.templatePrefabKey = params.template;
-        this.masterDataKey = params.masterData;
 
-        this.stateManager = this.scene.registry.get('stateManager');
+constructor(scene, gameObject, params) {
+    this.scene = scene;
+    this.placeholder = gameObject; 
+    
+    this.dataSourceVariable = params.dataSource;
+    this.templatePrefabKey = params.template;
+    this.masterDataKey = params.masterData;
 
-       
-         this.listContainer = null;
-        this.buildList();
+    this.stateManager = this.scene.registry.get('stateManager');
 
-
-    }
+    // ▼▼▼【この2行を、このように修正してください】▼▼▼
+    this.listContainer = null; // コンテナは start() で作る
+    // this.buildList(); // ← この行を削除！
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 
     static define = {
         params: [
@@ -73,11 +72,11 @@ if (setVarNode) {
         }
     });
 }
-    destroy() {
-       
-        // ★ 自分が作ったContainerも、責任を持って破棄する
-        if (this.listContainer) {
-            this.listContainer.destroy();
-        }
+  destroy() {
+    // ★ 自分が作ったContainerも、責任を持って破棄する
+    if (this.listContainer) {
+        this.listContainer.destroy();
     }
+}
+
 }
