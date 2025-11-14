@@ -1,14 +1,39 @@
 {
   "type": "Container",
   "name": "template_root",
-  "width": 500, "height": 60,
+  "width": 500,
+  "height": 60,
   "objects": [
+    {
+      "name": "background",
+      "type": "Image",
+      "texture": "button_texture",
+      "originX": 0.5, "originY": 0.5,
+      "x": 250, "y": 30
+    },
     {
       "name": "item_name",
       "type": "Text",
-      "x": 0, "y": 0,
-      "text": "ここに名前が表示されるはず",
-      "style": { "fontSize": "32px", "fill": "#ffffff" }
+      "x": 250,
+      "y": 30,
+      "text": "Item Name",
+      "style": { "fontSize": "24px", "fill": "#000000" },
+      "originX": 0.5,
+      "originY": 0.5
+    }
+  ],
+  "events": [
+    {
+      "trigger": "onClick",
+      "id": "event_select_item",
+      "nodes": [
+        { "id": "node_eval", "type": "eval", "params": { "exp": "" } },
+        { "id": "node_close", "type": "close_menu", "params": {} }
+      ],
+      "connections": [
+        { "fromNode": "start", "fromPin": "output", "toNode": "node_eval", "toPin": "input" },
+        { "fromNode": "node_eval", "fromPin": "output", "toNode": "node_close", "toPin": "input" }
+      ]
     }
   ]
 }
