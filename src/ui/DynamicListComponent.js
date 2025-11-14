@@ -10,10 +10,8 @@ export default class DynamicListComponent {
 
         this.stateManager = this.scene.registry.get('stateManager');
 
-        // ★ 自分自身で、リストの本体となるContainerを作成する
-        this.listContainer = this.scene.add.container(this.placeholder.x, this.placeholder.y);
-
-        
+       
+         this.listContainer = null;
         this.buildList();
 
 
@@ -26,6 +24,16 @@ export default class DynamicListComponent {
             { key: 'masterData', type: 'text', label: 'Master Data Key' }
         ]
     };
+
+    // ★★★ start() メソッドを追加 ★★★
+start() {
+    // start()が呼ばれる時点では、placeholderのx,yは確定している
+    this.listContainer = this.scene.add.container(this.placeholder.x, this.placeholder.y);
+    
+    // buildListは、コンテナができた後で実行する
+    this.buildList();
+}
+
   // in DynamicListComponent.js
 buildList() {
     if (!this.dataSourceVariable || !this.templatePrefabKey || !this.stateManager) return;
