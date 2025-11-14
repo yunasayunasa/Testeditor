@@ -587,6 +587,11 @@ applyProperties(gameObject, layout) {
     
     // --- 4. Transformプロパティ設定 ---
     gameObject.setPosition(data.x || 0, data.y || 0);
+    if (gameObject instanceof Phaser.GameObjects.Container) {
+    if (data.width && data.height) {
+        gameObject.setSize(data.width, data.height);
+    }
+}
     gameObject.setAngle(data.angle || 0);
     gameObject.setAlpha(data.alpha ?? 1);
     
