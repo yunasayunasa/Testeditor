@@ -2,21 +2,23 @@
 
 export default class DynamicListComponent {
 
-    constructor(scene, gameObject, params) {
-        this.scene = scene;
-        this.placeholder = gameObject; // リストの表示位置を決めるための「目印」
-        
-        this.dataSourceVariable = params.dataSource;
-        this.templatePrefabKey = params.template;
-        this.masterDataKey = params.masterData;
+constructor(scene, gameObject, params) {
+    this.scene = scene;
+    this.placeholder = gameObject; 
+    
+    this.dataSourceVariable = params.dataSource;
+    this.templatePrefabKey = params.template;
+    this.masterDataKey = params.masterData;
 
-        this.stateManager = this.scene.registry.get('stateManager');
-        this.listContainer = null; // コンテナは buildList の中で一度だけ作る
+    this.stateManager = this.scene.registry.get('stateManager');
 
-        // 全てのオブジェクトの初期化が終わった、次のフレームで buildList を実行する
-        // これが最も安全で確実なタイミング
-        this.scene.time.delayedCall(0, this.buildList, [], this);
-    }
+    this.listContainer = this.scene.add.container(this.placeholder.x, this.placeholder.y);
+
+    // ▼▼▼【ここが最後の修正です】▼▼▼
+    // イベントを待たずに、即座に実行する！
+    this.buildList();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+}
 
     static define = {
         params: [
@@ -67,10 +69,10 @@ export default class DynamicListComponent {
         });
     }
 
-    destroy() {
-        // 自分が作ったContainerも、責任を持って破棄する
-        if (this.listContainer) {
-            this.listContainer.destroy();
-        }
+   destroy() {
+    // this.scene.events.off('scene-ready', this.buildList, this); // ← この行を削除
+    if (this.listContainer) {
+        this.listContainer.destroy();
     }
+}
 }
