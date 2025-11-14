@@ -45,10 +45,12 @@ buildList() {
         newRowLayout.y = yPos;
 
         // ▼▼▼【このVSL書き換えロジックを復活させる】▼▼▼
-        const evalNode = newRowLayout.events?.[0]?.nodes?.find(n => n.type === 'eval');
-        if (evalNode) {
-            evalNode.params.exp = `f.selected_evidence = "${itemId}"`;
-        }
+        const setVarNode = newRowLayout.events?.[0]?.nodes?.find(n => n.type === 'set_variable');
+if (setVarNode) {
+    // valueプロパティの '&{data.id}' を、実際のID文字列に置き換える
+    // (値は文字列なので、ダブルクォートで囲む)
+    setVarNode.params.value = `"${itemId}"`;
+}
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         const nameTextLayout = newRowLayout.objects?.find(child => child.name === 'item_name');

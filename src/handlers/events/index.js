@@ -50,7 +50,7 @@ import close_menu from './close_menu.js';
 import open_menu from './open_menu.js'; 
 import run_scene from './run_scene.js'; 
 import fire_game_flow_event from './fire_game_flow_event.js';
-
+import set_variable from './set_variable.js';
 import update_statement_index from './update_statement_index.js';
 import check_evidence from './check_evidence.js';
 
@@ -111,7 +111,7 @@ export const eventTagHandlers = {
  
 
  'check_evidence': check_evidence,
-
+'set_variable': set_variable,
 'update_statement_index': update_statement_index
 
 };
