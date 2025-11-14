@@ -1,49 +1,200 @@
 {
-  "type": "Container",
-  "name": "template_root",
-  "width": 500,
-  "height": 60,
+  "scene_settings": {},
+  "hasJoystick": false,
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
       "name": "background",
       "type": "Image",
-      "texture": "button_texture",
-      "originX": 0.5, "originY": 0.5,
-      "x": 250, "y": 30
+      "x": 250,
+      "y": 30,
+      "depth": 10005,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [],
+      "texture": "__MISSING",
+      "data": {
+        "registryKey": "background",
+        "lastTap": 0
+      }
     },
     {
       "name": "item_name",
       "type": "Text",
       "x": 250,
       "y": 30,
-      "text": "Item Name",
-      "style": { "fontSize": "24px", "fill": "#000000" },
-      "originX": 0.5,
-      "originY": 0.5
-    }
-  ],
- "events": [
-  {
-    "trigger": "onClick",
-    "id": "event_select_item",
-    "nodes": [
-      {
-        "id": "node_set_var",
-        "type": "set_variable",
-        "params": {
-          "var": "f.selected_evidence",
-          "value": "&{data.id}" 
+      "depth": 10005,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "id": "event_1763104553308",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1763104567955",
+              "type": "set_variable",
+              "params": {
+                "var": "f.selected_evidence",
+                "value": "&{data.id}"
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1763104627492",
+              "type": "close_menu",
+              "params": {},
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1763104567955",
+              "fromPin": "output",
+              "toNode": "node_1763104627492",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
+      "text": "現場の調査報告書",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "24px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#fffafa",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 18,
+          "descent": 5,
+          "fontSize": 23
         }
       },
-      {
-        "id": "node_close",
-        "type": "close_menu",
-        "params": {}
+      "data": {
+        "registryKey": "item_name",
+        "lastTap": 1763104537884
       }
-    ],
-    "connections": [
-      { "fromNode": "start", "fromPin": "output", "toNode": "node_set_var", "toPin": "input" },
-      { "fromNode": "node_set_var", "fromPin": "output", "toNode": "node_close", "toPin": "input" }
-    ]
-  }
-]}
+    },
+    {
+      "name": "row_site_report",
+      "type": "initialize",
+      "x": 0,
+      "y": 0,
+      "depth": 10004,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [
+        {
+          "trigger": "onClick",
+          "id": "event_select_item",
+          "nodes": [
+            {
+              "id": "node_set_var",
+              "type": "set_variable",
+              "params": {
+                "var": "f.selected_evidence",
+                "value": "\"site_report\""
+              }
+            },
+            {
+              "id": "node_close",
+              "type": "close_menu",
+              "params": {}
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "start",
+              "fromPin": "output",
+              "toNode": "node_set_var",
+              "toPin": "input"
+            },
+            {
+              "fromNode": "node_set_var",
+              "fromPin": "output",
+              "toNode": "node_close",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
+      "data": {
+        "registryKey": "row_site_report",
+        "lastTap": 0
+      }
+    },
+    {
+      "name": "evidence_list_placeholder",
+      "type": "Image",
+      "x": 400,
+      "y": 200,
+      "depth": 10002,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 0.5,
+      "events": [],
+      "components": [
+        {
+          "type": "DynamicListComponent",
+          "params": {
+            "dataSource": "f.player_evidence",
+            "template": "evidence_item",
+            "masterData": "evidence_master"
+          }
+        }
+      ],
+      "texture": "__MISSING",
+      "data": {
+        "registryKey": "evidence_list_placeholder",
+        "lastTap": 0
+      }
+    }
+  ],
+  "animations": []
+}
