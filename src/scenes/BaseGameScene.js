@@ -412,7 +412,23 @@ createObjectFromLayout(layout) {
         }
         
         // --- (既存のロジック) layout.type に基づいてオブジェクトを生成 ---
-        if (layout.type === 'Text') {
+        if (layout.type === 'Container') {
+        // ★ "Container" タイプを正しく解釈して、空のContainerを生成
+        gameObject = this.add.container(0, 0);
+
+        // Containerが子オブジェクトを持つ場合、再帰的に生成して追加
+        if (Array.isArray(layout.objects)) {
+            layout.objects.forEach(childLayout => {
+                const childObject = this.createObjectFromLayout(childLayout);
+                if (childObject) {
+                    this.applyProperties(childObject, childLayout);
+                    this.initComponentsAndEvents(childObject);
+                    gameObject.add(childObject);
+                }
+            });
+        }
+    }
+    else if (layout.type === 'Text') {
             const style = layout.style || { fontSize: '32px', fill: '#fff' };
             const textObject = this.add.text(0, 0, layout.text || '', style); // ★ add.text を使う
             if (style.shadow && style.shadow.color) {
