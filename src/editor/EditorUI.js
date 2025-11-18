@@ -622,8 +622,38 @@ onCropAndPlace = () => {
         // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
     }
 
-    // startRangeFillMode, endRangeFillMode は不要になるので削除してOKです。
+    onAddTextClicked = () => {
+    // 1. アクティブなゲームシーンを取得 (これは BaseGameScene を継承しているはず)
+    const activeScene = this.plugin.getActiveGameScene();
 
+    // 2. 新しいオブジェクトの名前を生成
+    const newName = `text_${Date.now()}`;
+
+    // 3. アクティブなシーンに、テキストオブジェクトを追加する専門メソッドがあるかチェック
+    if (activeScene && typeof activeScene.addTextObjectFromEditor === 'function') {
+        
+        // ★ BaseGameScene (またはOverlayScene) のメソッドを呼び出す
+        const newTextObject = activeScene.addTextObjectFromEditor(newName, this.activeLayerName);
+        
+        // 4. 生成されたオブジェクトを即座に選択状態にする
+        if (newTextObject) {
+            this.plugin.selectSingleObject(newTextObject);
+        }
+
+    } else {
+        // 5. (フォールバック) もしメソッドがなければ、従来通り UIScene に追加する
+        console.warn("Active scene does not support 'addTextObjectFromEditor'. Falling back to UIScene.");
+        const uiScene = this.game.scene.getScene('UIScene');
+        if (uiScene && typeof uiScene.addTextUiFromEditor === 'function') {
+            const newTextObject = uiScene.addTextUiFromEditor(newName);
+            if (newTextObject) {
+                this.plugin.selectSingleObject(newTextObject);
+            }
+        } else {
+            alert('テキストオブジェクトを追加できるシーンが見つかりません。');
+        }
+    }
+}
   
     
 

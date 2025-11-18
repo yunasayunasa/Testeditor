@@ -666,19 +666,26 @@ applyProperties(gameObject, layout) {
     return gameObject;
 }
     
-    /**
-     * オブジェクトにイベントリスナーとエディタ機能を設定する (構文修正・最終完成版)
-     * ★★★ 以下のメソッドで、既存のものを完全に置き換えてください ★★★
-     */
-   // in src/scenes/BaseGameScene.js
+   addTextObjectFromEditor(newName, layerName) {
+    const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+    const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+    
+    const layout = {
+        name: newName,
+        type: 'Text',
+        text: 'New Text',
+        x: Math.round(centerX),
+        y: Math.round(centerY),
+        style: { fontSize: '32px', fill: '#ffffff' },
+        layer: layerName
+    };
 
-/**
- * ★★★ イベントリスナー登録を復活させた、真の最終完成版 ★★★
- * オブジェクトにイベントリスナーとエディタ機能を設定する。
- */
-// in src/scenes/BaseGameScene.js
-
-// in src/scenes/BaseGameScene.js
+    const newGameObject = this.createObjectFromLayout(layout);
+    this.applyProperties(newGameObject, layout);
+    this.initComponentsAndEvents(newGameObject); // これで編集可能になる
+    
+    return newGameObject;
+}
 
 /**
  * GameObjectにVSLイベントとエディタ機能を適用する (onClick, onReady対応の最終FIX版)
