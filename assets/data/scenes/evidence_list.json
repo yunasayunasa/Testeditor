@@ -39,7 +39,7 @@
       "name": "evidence_background",
       "type": "Image",
       "x": 808,
-      "y": 353,
+      "y": 363,
       "depth": 10004,
       "scaleX": 2.47,
       "scaleY": 2.47,
@@ -50,17 +50,17 @@
       "texture": "message_window",
       "data": {
         "registryKey": "message_window_1763449296437",
-        "lastTap": 1763449453646
+        "lastTap": 1763453242806
       }
     },
     {
       "name": "evidence_name_1",
       "type": "Text",
-      "x": 126,
-      "y": 518,
+      "x": 39,
+      "y": 253,
       "depth": 10005,
-      "scaleX": 1.48,
-      "scaleY": 1.48,
+      "scaleX": 0.7,
+      "scaleY": 0.7,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -101,17 +101,17 @@
       },
       "data": {
         "registryKey": "text_1763449313221",
-        "lastTap": 1763449508590
+        "lastTap": 1763453044373
       }
     },
     {
       "name": "evidence_icon_1",
       "type": "Image",
-      "x": 220,
-      "y": 293,
+      "x": 86,
+      "y": 185,
       "depth": 10006,
-      "scaleX": 1,
-      "scaleY": 1,
+      "scaleX": 0.28,
+      "scaleY": 0.28,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -119,7 +119,7 @@
       "texture": "yuna_angry",
       "data": {
         "registryKey": "yuna_angry_1763449407677",
-        "lastTap": 1763449408334
+        "lastTap": 1763453124462
       }
     },
     {
@@ -185,17 +185,17 @@
       },
       "data": {
         "registryKey": "text_1763449452357",
-        "lastTap": 1763449457182
+        "lastTap": 0
       }
     },
     {
-      "name": "text_1763449526342",
+      "name": "evidence_name_2",
       "type": "Text",
-      "x": 593,
-      "y": 521,
+      "x": 193,
+      "y": 252,
       "depth": 10008,
-      "scaleX": 1.54,
-      "scaleY": 1.54,
+      "scaleX": 0.85,
+      "scaleY": 0.85,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -236,17 +236,17 @@
       },
       "data": {
         "registryKey": "text_1763449526342",
-        "lastTap": 1763449527887
+        "lastTap": 1763453054229
       }
     },
     {
-      "name": "anila_normal_1763449551301",
+      "name": "evidence_icon_2",
       "type": "Image",
-      "x": 664,
-      "y": 320,
+      "x": 244,
+      "y": 182,
       "depth": 10009,
-      "scaleX": 0.4,
-      "scaleY": 0.4,
+      "scaleX": 0.16,
+      "scaleY": 0.16,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -254,17 +254,17 @@
       "texture": "anila_normal",
       "data": {
         "registryKey": "anila_normal_1763449551301",
-        "lastTap": 1763449557270
+        "lastTap": 1763453128237
       }
     },
     {
-      "name": "text_1763449561397",
+      "name": "evidence_name_3",
       "type": "Text",
-      "x": 963,
-      "y": 518,
+      "x": 32,
+      "y": 410,
       "depth": 10010,
-      "scaleX": 1.45,
-      "scaleY": 1.45,
+      "scaleX": 0.73,
+      "scaleY": 0.73,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -305,17 +305,17 @@
       },
       "data": {
         "registryKey": "text_1763449561397",
-        "lastTap": 1763449563255
+        "lastTap": 1763453188149
       }
     },
     {
-      "name": "tileset_terrain_1763449581229",
+      "name": "evidence_icon_3",
       "type": "Image",
-      "x": 1040,
-      "y": 323,
+      "x": 83,
+      "y": 347,
       "depth": 10011,
-      "scaleX": 0.37,
-      "scaleY": 0.37,
+      "scaleX": 0.16,
+      "scaleY": 0.16,
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
@@ -323,7 +323,334 @@
       "texture": "tileset_terrain",
       "data": {
         "registryKey": "tileset_terrain_1763449581229",
-        "lastTap": 1763449586662
+        "lastTap": 1763453134397
+      }
+    },
+    {
+      "name": "evidence_name_4",
+      "type": "Text",
+      "x": 203,
+      "y": 410,
+      "depth": 10011,
+      "scaleX": 0.79,
+      "scaleY": 0.79,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "証拠品4",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763453034189",
+        "lastTap": 1763453106133
+      }
+    },
+    {
+      "name": "evidence_icon_4",
+      "type": "Image",
+      "x": 250,
+      "y": 347,
+      "depth": 10012,
+      "scaleX": 0.28,
+      "scaleY": 0.28,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "yuna_angry",
+      "data": {
+        "registryKey": "yuna_angry_1763453115333",
+        "lastTap": 1763453140981
+      }
+    },
+    {
+      "name": "evidence_icon_5",
+      "type": "Image",
+      "x": 79,
+      "y": 531,
+      "depth": 10013,
+      "scaleX": 0.31,
+      "scaleY": 0.31,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "yuna_angry",
+      "data": {
+        "registryKey": "yuna_angry_1763453149349",
+        "lastTap": 1763453161757
+      }
+    },
+    {
+      "name": "evidence_icon_6",
+      "type": "Image",
+      "x": 254,
+      "y": 525,
+      "depth": 10014,
+      "scaleX": 0.28,
+      "scaleY": 0.28,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "yuna_angry",
+      "data": {
+        "registryKey": "yuna_angry_1763453167773",
+        "lastTap": 1763453175230
+      }
+    },
+    {
+      "name": "evidence_name_5",
+      "type": "Text",
+      "x": 32,
+      "y": 615,
+      "depth": 10015,
+      "scaleX": 0.82,
+      "scaleY": 0.82,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "証拠品5",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763453184221",
+        "lastTap": 1763453216085
+      }
+    },
+    {
+      "name": "evidence_name_6",
+      "type": "Text",
+      "x": 203,
+      "y": 615,
+      "depth": 10016,
+      "scaleX": 0.85,
+      "scaleY": 0.85,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "証拠品6",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763453217965",
+        "lastTap": 1763453219062
+      }
+    },
+    {
+      "name": "evidence_detail_icon",
+      "type": "Image",
+      "x": 768,
+      "y": 263,
+      "depth": 10017,
+      "scaleX": 0.55,
+      "scaleY": 0.55,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "tileset_terrain",
+      "data": {
+        "registryKey": "tileset_terrain_1763453279525",
+        "lastTap": 1763453347589
+      }
+    },
+    {
+      "name": "evidence_description",
+      "type": "Text",
+      "x": 633,
+      "y": 494,
+      "depth": 10018,
+      "scaleX": 1.63,
+      "scaleY": 1.63,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "New Text",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763453289245",
+        "lastTap": 1763453323246
+      }
+    },
+    {
+      "name": "button_present_final",
+      "type": "Text",
+      "x": 1090,
+      "y": 189,
+      "depth": 10019,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "つきつける",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763453346293",
+        "lastTap": 1763453349078
       }
     }
   ],
