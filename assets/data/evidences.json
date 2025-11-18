@@ -1,17 +1,17 @@
 {
   "site_report": {
     "name": "現場の調査報告書",
-    "description": "被害者の死亡時刻や、現場の状況が記録されている。",
-    "icon": "icon_report" 
+    "description": "被害者の死亡時刻や、\\n現場の状況が記録されている。",
+    "icon": "taru" 
   },
   "knife": {
     "name": "凶器のナイフ",
     "description": "指紋は拭き取られている。",
-    "icon": "icon_knife"
+    "icon": "chest"
   },
   "witness_testimony_01": {
     "name": "証人自身の最初の証言",
-    "description": "「大きな物音を聞いた」という内容。",
-    "icon": "icon_testimony"
+    "description": "「大きな物音を聞いた」\\nという内容。",
+    "icon": "taimatsu_on"
   }
 }
