@@ -806,6 +806,23 @@ if (activeScene && typeof activeScene.addTextUiFromEditor === 'function') {
                 itemDiv.appendChild(badge);
             }
 
+            // --- もし "Images" タブなら、特別なボタンを追加 ---
+    if (this.currentAssetTab === 'image') {
+        const textItemDiv = document.createElement('div');
+        textItemDiv.className = 'asset-item';
+        // ★ registryKey ではなく、特別な assetKey を設定
+        textItemDiv.dataset.assetKey = '__TEXT_OBJECT__'; 
+        textItemDiv.innerHTML = `<span class="asset-preview" style="font-size: 24px; ...">T</span><span>テキスト (シーンに追加)</span>`;
+        
+        textItemDiv.addEventListener('click', () => {
+            this.assetListContainer.querySelectorAll('.asset-item.selected').forEach(el => el.classList.remove('selected'));
+            textItemDiv.classList.add('selected');
+            this.selectedAssetKey = '__TEXT_OBJECT__';
+            this.selectedAssetType = 'special'; // 特別なタイプ
+        });
+        this.assetListContainer.appendChild(textItemDiv);
+    }
+
             this.assetListContainer.appendChild(itemDiv);
         }
     }}
@@ -824,6 +841,21 @@ if (activeScene && typeof activeScene.addTextUiFromEditor === 'function') {
  * ★★★ ジョイスティックを「特殊なゲーム要素」として扱う最終FIX版 ★★★
  */
 onAddButtonClicked = () => {
+ if (this.selectedAssetKey === '__TEXT_OBJECT__') {
+        const activeScene = this.plugin.getActiveGameScene();
+        const newName = `text_${Date.now()}`;
+
+        if (activeScene && typeof activeScene.addTextUiFromEditor === 'function') {
+            const newTextObject = activeScene.addTextUiFromEditor(newName, this.activeLayerName);
+            if (newTextObject) {
+                this.plugin.selectSingleObject(newTextObject);
+            }
+        } else {
+            alert('テキストオブジェクトを追加できるアクティブなゲームシーンが見つかりません。');
+        }
+        return; // ★ここで処理を終了させる
+    }
+
     if (!this.selectedAssetKey) {
         alert('アセットを選択してください。');
         return;
