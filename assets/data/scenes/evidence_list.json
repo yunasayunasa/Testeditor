@@ -1,20 +1,331 @@
 {
+  "scene_settings": {},
+  "hasJoystick": false,
+  "layers": [
+    {
+      "name": "Foreground",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Gameplay",
+      "visible": true,
+      "locked": false
+    },
+    {
+      "name": "Background",
+      "visible": true,
+      "locked": false
+    }
+  ],
   "objects": [
     {
-      "name": "evidence_list_placeholder",
+      "name": "row_site_report",
       "type": "Image",
-      "x": 400, "y": 200,
-      "alpha": 0.5, "texture": "button_texture",
-      "components": [
-        {
-          "type": "DynamicListComponent",
-          "params": {
-            "dataSource": "f.player_evidence",
-            "template": "evidence_item",
-            "masterData": "evidence_master"
-          }
+      "x": 0,
+      "y": 0,
+      "depth": 10005,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "events": [],
+      "data": {
+        "registryKey": "row_site_report",
+        "lastTap": 0
+      }
+    },
+    {
+      "name": "evidence_background",
+      "type": "Image",
+      "x": 808,
+      "y": 353,
+      "depth": 10004,
+      "scaleX": 2.47,
+      "scaleY": 2.47,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "message_window",
+      "data": {
+        "registryKey": "message_window_1763449296437",
+        "lastTap": 1763449453646
+      }
+    },
+    {
+      "name": "evidence_name_1",
+      "type": "Text",
+      "x": 126,
+      "y": 518,
+      "depth": 10005,
+      "scaleX": 1.48,
+      "scaleY": 1.48,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "証拠品１",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
         }
-      ]
+      },
+      "data": {
+        "registryKey": "text_1763449313221",
+        "lastTap": 1763449508590
+      }
+    },
+    {
+      "name": "evidence_icon_1",
+      "type": "Image",
+      "x": 220,
+      "y": 293,
+      "depth": 10006,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "yuna_angry",
+      "data": {
+        "registryKey": "yuna_angry_1763449407677",
+        "lastTap": 1763449408334
+      }
+    },
+    {
+      "name": "close",
+      "type": "Text",
+      "x": 1107,
+      "y": 111,
+      "depth": 10007,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [
+        {
+          "id": "event_1763449485309",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1763449488661",
+              "type": "close_menu",
+              "params": {},
+              "x": 50,
+              "y": 50
+            }
+          ],
+          "connections": []
+        }
+      ],
+      "text": "閉じる",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763449452357",
+        "lastTap": 1763449457182
+      }
+    },
+    {
+      "name": "text_1763449526342",
+      "type": "Text",
+      "x": 593,
+      "y": 521,
+      "depth": 10008,
+      "scaleX": 1.54,
+      "scaleY": 1.54,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "証拠品２",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763449526342",
+        "lastTap": 1763449527887
+      }
+    },
+    {
+      "name": "anila_normal_1763449551301",
+      "type": "Image",
+      "x": 664,
+      "y": 320,
+      "depth": 10009,
+      "scaleX": 0.4,
+      "scaleY": 0.4,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "anila_normal",
+      "data": {
+        "registryKey": "anila_normal_1763449551301",
+        "lastTap": 1763449557270
+      }
+    },
+    {
+      "name": "text_1763449561397",
+      "type": "Text",
+      "x": 963,
+      "y": 518,
+      "depth": 10010,
+      "scaleX": 1.45,
+      "scaleY": 1.45,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "text": "証拠品３",
+      "style": {
+        "fontFamily": "Courier",
+        "fontSize": "32px",
+        "fontStyle": "",
+        "backgroundColor": null,
+        "color": "#ffffff",
+        "stroke": "#fff",
+        "strokeThickness": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "shadowColor": "#000",
+        "shadowBlur": 0,
+        "shadowStroke": false,
+        "shadowFill": false,
+        "align": "left",
+        "maxLines": 0,
+        "fixedWidth": 0,
+        "fixedHeight": 0,
+        "resolution": 1,
+        "rtl": false,
+        "testString": "|MÃ‰qgy",
+        "baselineX": 1.2,
+        "baselineY": 1.4,
+        "wordWrapWidth": null,
+        "wordWrapCallback": null,
+        "wordWrapCallbackScope": null,
+        "wordWrapUseAdvanced": false,
+        "metrics": {
+          "ascent": 24,
+          "descent": 6,
+          "fontSize": 30
+        }
+      },
+      "data": {
+        "registryKey": "text_1763449561397",
+        "lastTap": 1763449563255
+      }
+    },
+    {
+      "name": "tileset_terrain_1763449581229",
+      "type": "Image",
+      "x": 1040,
+      "y": 323,
+      "depth": 10011,
+      "scaleX": 0.37,
+      "scaleY": 0.37,
+      "angle": 0,
+      "alpha": 1,
+      "layer": "Gameplay",
+      "events": [],
+      "texture": "tileset_terrain",
+      "data": {
+        "registryKey": "tileset_terrain_1763449581229",
+        "lastTap": 1763449586662
+      }
     }
-  ]
+  ],
+  "animations": []
 }
