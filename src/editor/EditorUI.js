@@ -630,10 +630,8 @@ onCropAndPlace = () => {
     const newName = `text_${Date.now()}`;
 
     // 3. アクティブなシーンに、テキストオブジェクトを追加する専門メソッドがあるかチェック
-    if (activeScene && typeof activeScene.addTextObjectFromEditor === 'function') {
-        
-        // ★ BaseGameScene (またはOverlayScene) のメソッドを呼び出す
-        const newTextObject = activeScene.addTextObjectFromEditor(newName, this.activeLayerName);
+if (activeScene && typeof activeScene.addTextUiFromEditor === 'function') {
+    const newTextObject = activeScene.addTextUiFromEditor(newName, this.activeLayerName);
         
         // 4. 生成されたオブジェクトを即座に選択状態にする
         if (newTextObject) {

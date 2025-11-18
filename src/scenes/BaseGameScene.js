@@ -300,28 +300,27 @@ addCroppedTilemapChunk(tilemapKey, cropRect) {
      * @param {string} layerName - オブジェクトが所属するレイヤー名
      * @returns {Phaser.GameObjects.Text} 生成されたテキストオブジェクト
      */
-    addTextObjectFromEditor(newName, layerName) { // ← ★ 引数を追加
-        const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-        const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-        
-        const layout = {
-            name: newName,
-            type: 'Text',
-            text: 'New Text',
-            x: Math.round(centerX),
-            y: Math.round(centerY),
-            style: {
-                fontSize: '32px',
-                fill: '#ffffff',
-            },
-            layer: layerName // ★ 受け取ったlayerNameをlayoutオブジェクトに設定
-        };
+    addTextUiFromEditor(newName, layerName) {
+    const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
+    const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
+    
+    const layout = {
+        name: newName,
+        type: 'Text',
+        text: 'New Text',
+        x: Math.round(centerX),
+        y: Math.round(centerY),
+        style: { fontSize: '32px', fill: '#ffffff' },
+        layer: layerName
+    };
 
-        const newGameObject = this.createObjectFromLayout(layout);
-        this.applyProperties(newGameObject, layout);
-        
-        return newGameObject;
-    }
+    const newGameObject = this.createObjectFromLayout(layout);
+    this.applyProperties(newGameObject, layout);
+    this.initComponentsAndEvents(newGameObject); // これで編集可能になる
+    
+    return newGameObject;
+}
+
     
     /**
      * レイアウトデータからシーンのオブジェクトを構築する。
@@ -666,27 +665,7 @@ applyProperties(gameObject, layout) {
     return gameObject;
 }
     
-   addTextObjectFromEditor(newName, layerName) {
-    const centerX = this.cameras.main.scrollX + this.cameras.main.width / 2;
-    const centerY = this.cameras.main.scrollY + this.cameras.main.height / 2;
-    
-    const layout = {
-        name: newName,
-        type: 'Text',
-        text: 'New Text',
-        x: Math.round(centerX),
-        y: Math.round(centerY),
-        style: { fontSize: '32px', fill: '#ffffff' },
-        layer: layerName
-    };
-
-    const newGameObject = this.createObjectFromLayout(layout);
-    this.applyProperties(newGameObject, layout);
-    this.initComponentsAndEvents(newGameObject); // これで編集可能になる
-    
-    return newGameObject;
-}
-
+  
 /**
  * GameObjectにVSLイベントとエディタ機能を適用する (onClick, onReady対応の最終FIX版)
  * @param {Phaser.GameObjects.GameObject} gameObject - 対象のゲームオブジェクト
