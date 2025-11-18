@@ -1,7 +1,7 @@
 [eval exp="f.current_testimony_id = 'testimony_01'"]
 [eval exp="f.current_statement_index = 0"]
 ; 証拠品データを初期化
-[eval exp="f.player_evidence = ['site_report']"]
+[eval exp="f.player_evidence = ['site_report', 'knife', 'witness_testimony_01']"]
 [jump storage="TestimonyScene" params="{player_level:f.love_meter, player_name:'&f.player_name;', start_area:'bridge', current_coin:f.coin, player_max_hp:f.player_max_hp, player_hp:f.player_hp}"]
 
 [chara_show name="tartman" pos="center" time=1000]

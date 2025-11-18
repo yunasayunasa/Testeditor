@@ -47,10 +47,16 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
+      "components": [
+        {
+          "type": "EvidenceBinderComponent",
+          "params": {}
+        }
+      ],
       "texture": "message_window",
       "data": {
         "registryKey": "message_window_1763449296437",
-        "lastTap": 1763453242806
+        "lastTap": 1763454234515
       }
     },
     {
@@ -65,7 +71,7 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "text": "証拠品１",
+      "text": "現場の調査報告書",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -101,7 +107,7 @@
       },
       "data": {
         "registryKey": "text_1763449313221",
-        "lastTap": 1763453044373
+        "lastTap": 0
       }
     },
     {
@@ -116,10 +122,10 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "texture": "yuna_angry",
+      "texture": "__MISSING",
       "data": {
         "registryKey": "yuna_angry_1763449407677",
-        "lastTap": 1763453124462
+        "lastTap": 0
       }
     },
     {
@@ -144,9 +150,25 @@
               "params": {},
               "x": 50,
               "y": 50
+            },
+            {
+              "id": "node_1763454416189",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = null"
+              },
+              "x": 50,
+              "y": 220
             }
           ],
-          "connections": []
+          "connections": [
+            {
+              "fromNode": "node_1763454416189",
+              "fromPin": "output",
+              "toNode": "node_1763449488661",
+              "toPin": "input"
+            }
+          ]
         }
       ],
       "text": "閉じる",
@@ -185,7 +207,7 @@
       },
       "data": {
         "registryKey": "text_1763449452357",
-        "lastTap": 0
+        "lastTap": 1763454408918
       }
     },
     {
@@ -236,7 +258,7 @@
       },
       "data": {
         "registryKey": "text_1763449526342",
-        "lastTap": 1763453054229
+        "lastTap": 0
       }
     },
     {
@@ -254,7 +276,7 @@
       "texture": "anila_normal",
       "data": {
         "registryKey": "anila_normal_1763449551301",
-        "lastTap": 1763453128237
+        "lastTap": 0
       }
     },
     {
@@ -305,7 +327,7 @@
       },
       "data": {
         "registryKey": "text_1763449561397",
-        "lastTap": 1763453188149
+        "lastTap": 0
       }
     },
     {
@@ -323,7 +345,7 @@
       "texture": "tileset_terrain",
       "data": {
         "registryKey": "tileset_terrain_1763449581229",
-        "lastTap": 1763453134397
+        "lastTap": 0
       }
     },
     {
@@ -374,7 +396,7 @@
       },
       "data": {
         "registryKey": "text_1763453034189",
-        "lastTap": 1763453106133
+        "lastTap": 0
       }
     },
     {
@@ -392,7 +414,7 @@
       "texture": "yuna_angry",
       "data": {
         "registryKey": "yuna_angry_1763453115333",
-        "lastTap": 1763453140981
+        "lastTap": 0
       }
     },
     {
@@ -410,7 +432,7 @@
       "texture": "yuna_angry",
       "data": {
         "registryKey": "yuna_angry_1763453149349",
-        "lastTap": 1763453161757
+        "lastTap": 0
       }
     },
     {
@@ -428,7 +450,7 @@
       "texture": "yuna_angry",
       "data": {
         "registryKey": "yuna_angry_1763453167773",
-        "lastTap": 1763453175230
+        "lastTap": 0
       }
     },
     {
@@ -479,7 +501,7 @@
       },
       "data": {
         "registryKey": "text_1763453184221",
-        "lastTap": 1763453216085
+        "lastTap": 0
       }
     },
     {
@@ -530,14 +552,14 @@
       },
       "data": {
         "registryKey": "text_1763453217965",
-        "lastTap": 1763453219062
+        "lastTap": 0
       }
     },
     {
       "name": "evidence_detail_icon",
       "type": "Image",
-      "x": 768,
-      "y": 263,
+      "x": 761,
+      "y": 260,
       "depth": 10017,
       "scaleX": 0.55,
       "scaleY": 0.55,
@@ -545,16 +567,22 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "texture": "tileset_terrain",
+      "components": [
+        {
+          "type": "EvidenceDetailViewerComponent",
+          "params": {}
+        }
+      ],
+      "texture": "__MISSING",
       "data": {
         "registryKey": "tileset_terrain_1763453279525",
-        "lastTap": 1763453347589
+        "lastTap": 0
       }
     },
     {
       "name": "evidence_description",
       "type": "Text",
-      "x": 633,
+      "x": 532,
       "y": 494,
       "depth": 10018,
       "scaleX": 1.63,
@@ -563,7 +591,7 @@
       "alpha": 1,
       "layer": "Gameplay",
       "events": [],
-      "text": "New Text",
+      "text": "被害者の死亡時刻や、現場の状況が記録されている。",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -599,7 +627,7 @@
       },
       "data": {
         "registryKey": "text_1763453289245",
-        "lastTap": 1763453323246
+        "lastTap": 1763454222776
       }
     },
     {
@@ -613,7 +641,38 @@
       "angle": 0,
       "alpha": 1,
       "layer": "Gameplay",
-      "events": [],
+      "events": [
+        {
+          "id": "event_1763454366621",
+          "trigger": "onClick",
+          "nodes": [
+            {
+              "id": "node_1763454369221",
+              "type": "eval",
+              "params": {
+                "exp": "f.selected_evidence = f.ui_selected_evidence"
+              },
+              "x": 50,
+              "y": 50
+            },
+            {
+              "id": "node_1763454387709",
+              "type": "close_menu",
+              "params": {},
+              "x": 50,
+              "y": 220
+            }
+          ],
+          "connections": [
+            {
+              "fromNode": "node_1763454369221",
+              "fromPin": "output",
+              "toNode": "node_1763454387709",
+              "toPin": "input"
+            }
+          ]
+        }
+      ],
       "text": "つきつける",
       "style": {
         "fontFamily": "Courier",
@@ -650,7 +709,7 @@
       },
       "data": {
         "registryKey": "text_1763453346293",
-        "lastTap": 1763453349078
+        "lastTap": 1763454361008
       }
     }
   ],
