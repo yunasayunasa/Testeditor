@@ -25,20 +25,29 @@ export default class EvidenceBinderComponent {
             if (name) name.setVisible(false);
         }
 
-        // --- 2. 所持している証拠品の分だけ、「器」にデータを設定していく ---
-        playerEvidence.forEach((evidenceId, index) => {
-            const slotIndex = index + 1;
-            if (slotIndex > 8) return; // 器の最大数を超えたら何もしない
+       
+// --- 2. 所持している証拠品の分だけ、「器」にデータを設定 ---
+playerEvidence.forEach((evidenceId, index) => {
+    const slotIndex = index + 1;
+    if (slotIndex > 8) return;
 
-            const evidenceData = this.evidenceMaster[evidenceId];
-            if (evidenceData) {
-                const icon = this.scene.children.getByName(`evidence_icon_${slotIndex}`);
-                const name = this.scene.children.getByName(`evidence_name_${slotIndex}`);
+    const evidenceData = this.evidenceMaster[evidenceId];
+    console.log(`[Binder] Slot ${slotIndex}: ID='${evidenceId}', DataFound=${!!evidenceData}`);
 
-                if (icon) {
-                    icon.setTexture(evidenceData.icon || '__DEFAULT');
-                    icon.setVisible(true);
-                }
+    if (evidenceData) {
+        const iconName = `evidence_icon_${slotIndex}`;
+        const icon = this.scene.children.getByName(iconName);
+        
+        console.log(`[Binder] Search for '${iconName}': Found=${!!icon}`);
+
+        if (icon) {
+            const textureKey = evidenceData.icon;
+            console.log(`[Binder] Setting texture to: '${textureKey}'`);
+            
+            // ★ここでセットしている！
+            icon.setTexture(textureKey || '__DEFAULT');
+            icon.setVisible(true);
+        }
                 if (name) {
                     name.setText(evidenceData.name);
                     name.setInteractive({ useHandCursor: true }); // クリック可能にする
