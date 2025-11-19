@@ -3,67 +3,68 @@ export default class EvidenceBinderComponent {
         this.scene = scene;
         this.stateManager = this.scene.registry.get('stateManager');
         this.evidenceMaster = this.scene.cache.json.get('evidence_master');
-
-        // start()が呼ばれるのを待つ
     }
 
-    static define = { params: [] }; // このコンポーネントに設定項目はない
+    static define = { params: [] };
 
-    /**
-     * BaseGameSceneのライフサイクルによって、コンポーネントの準備ができた後に呼ばれる
-     */
     start() {
         if (!this.stateManager || !this.evidenceMaster) return;
 
         const playerEvidence = this.stateManager.getValue('f.player_evidence') || [];
+        
+        // ★デバッグ用: シーン内の全オブジェクト名をコンソールに出力
+        console.groupCollapsed('[Binder] Debug: Existing Objects in Scene');
+        this.scene.children.list.forEach(child => {
+            console.log(`- Name: '${child.name}', Type: ${child.type}`);
+            if (child.type === 'Container' && child.list) {
+                child.list.forEach(grandChild => {
+                     console.log(`  L Child Name: '${grandChild.name}', Type: ${grandChild.type}`);
+                });
+            }
+        });
+        console.groupEnd();
+        // -------------------------------------------------------
 
         // --- 1. まず、全ての「器」を隠す ---
-        for (let i = 1; i <= 8; i++) { // 8はIDEで配置した最大数
-            const icon = this.scene.children.getByName(`evidence_icon_${i}`);
-            const name = this.scene.children.getByName(`evidence_name_${i}`);
+        for (let i = 1; i <= 8; i++) {
+            const icon = this.findObjectByName(`evidence_icon_${i}`);
+            const name = this.findObjectByName(`evidence_name_${i}`);
             if (icon) icon.setVisible(false);
             if (name) name.setVisible(false);
         }
 
-       
-// --- 2. 所持している証拠品の分だけ、「器」にデータを設定 ---
-playerEvidence.forEach((evidenceId, index) => {
-    const slotIndex = index + 1;
-    if (slotIndex > 8) return;
+        // --- 2. 所持している証拠品の分だけ、「器」にデータを設定 ---
+        playerEvidence.forEach((evidenceId, index) => {
+            const slotIndex = index + 1;
+            if (slotIndex > 8) return;
 
-    const evidenceData = this.evidenceMaster[evidenceId];
-    console.log(`[Binder] Slot ${slotIndex}: ID='${evidenceId}', DataFound=${!!evidenceData}`);
+            const evidenceData = this.evidenceMaster[evidenceId];
+            if (evidenceData) {
+                // ★ 再帰検索メソッドを使用
+                const icon = this.findObjectByName(`evidence_icon_${slotIndex}`);
+                const name = this.findObjectByName(`evidence_name_${slotIndex}`);
+                
+                console.log(`[Binder] Slot ${slotIndex}: ID=${evidenceId}, IconFound=${!!icon}, NameFound=${!!name}`);
 
-    if (evidenceData) {
-        const iconName = `evidence_icon_${slotIndex}`;
-        const icon = this.scene.children.getByName(iconName);
-        
-        console.log(`[Binder] Search for '${iconName}': Found=${!!icon}`);
-
-        if (icon) {
-            const textureKey = evidenceData.icon;
-            console.log(`[Binder] Setting texture to: '${textureKey}'`);
-            
-            // ★ここでセットしている！
-            icon.setTexture(textureKey || '__DEFAULT');
-            icon.setVisible(true);
-        }
+                if (icon) {
+                    icon.setTexture(evidenceData.icon || '__DEFAULT');
+                    icon.setVisible(true);
+                }
                 if (name) {
                     name.setText(evidenceData.name);
-                    name.setInteractive({ useHandCursor: true }); // クリック可能にする
+                    name.setInteractive({ useHandCursor: true });
                     name.setVisible(true);
                     
-                    // --- 3. クリックイベントを動的に設定 ---
-                    name.off('pointerdown'); // 既存のリスナーをクリア
+                    name.off('pointerdown');
                     name.on('pointerdown', () => {
-                        // f.ui_selected_evidence に、このアイテムのIDをセットする
-                        this.stateManager.setF('ui_selected_evidence', evidenceId);
+                        const myId = name.getData('evidenceId');
+                        this.stateManager.setF('ui_selected_evidence', myId);
                     });
+                    name.setData('evidenceId', evidenceId);
                 }
             }
         });
         
-        // --- 4. 最初のアイテムを選択状態にしておく ---
         if (playerEvidence.length > 0) {
              this.stateManager.setF('ui_selected_evidence', playerEvidence[0]);
         } else {
@@ -71,8 +72,23 @@ playerEvidence.forEach((evidenceId, index) => {
         }
     }
 
-    destroy() {
-        // start()で動的に追加したリスナーは、オブジェクトが破棄されれば自動で消えるので
-        // ここで明示的にoffする必要は必ずしもない
+    /**
+     * ★ シーン内を深く探索してオブジェクトを見つけるヘルパーメソッド
+     */
+    findObjectByName(name) {
+        // 1. シーン直下を探す
+        let obj = this.scene.children.getByName(name);
+        if (obj) return obj;
+
+        // 2. コンテナの中を探す (1階層だけ深く)
+        this.scene.children.list.forEach(child => {
+            if (child.type === 'Container' && child.list) {
+                const found = child.list.find(c => c.name === name);
+                if (found) obj = found;
+            }
+        });
+        return obj;
     }
+
+    destroy() {}
 }
