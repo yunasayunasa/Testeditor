@@ -30,7 +30,7 @@
       "angle": 0,
       "alpha": 1,
       "events": [],
-      "texture": "__MISSING",
+      "texture": "",
       "data": {
         "registryKey": "background",
         "lastTap": 0
@@ -189,7 +189,7 @@
           }
         }
       ],
-      "texture": "__MISSING",
+      "texture": "",
       "data": {
         "registryKey": "evidence_list_placeholder",
         "lastTap": 0
