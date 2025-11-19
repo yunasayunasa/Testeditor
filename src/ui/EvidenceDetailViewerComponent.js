@@ -48,7 +48,8 @@ export default class EvidenceDetailViewerComponent {
                 this.detailIcon.setVisible(true);
             }
             if (this.descriptionText) {
-                this.descriptionText.setText(evidenceData.description || '');
+                const formattedDesc = (evidenceData.description || '').replace(/\\n/g, '\n');
+    this.descriptionText.setText(formattedDesc);
             }
         }
     }
