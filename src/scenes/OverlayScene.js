@@ -215,15 +215,25 @@ export default class OverlayScene extends Phaser.Scene {
         const ComponentClass = ComponentRegistry[type];
         if (ComponentClass) {
             const instance = new ComponentClass(this, target, params);
-            if (instance.start) instance.start();
+            
+            // コンポーネントをオブジェクトに保持
+            if (!target.components) target.components = {};
+            target.components[type] = instance;
+
+            // ★★★ 修正: start() の実行を、全てのUI構築が終わるまで(0秒)遅らせる ★★★
+            if (typeof instance.start === 'function') {
+                this.time.delayedCall(0, () => {
+                    instance.start();
+                });
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
             if (instance.update) {
-                // 簡易的なUpdate管理
                 if (!this.updateList) this.updateList = [];
                 this.updateList.push(instance);
             }
         }
     }
-
     update(time, delta) {
         if (this.updateList) {
             this.updateList.forEach(c => c.update(time, delta));
