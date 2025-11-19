@@ -1,60 +1,111 @@
-// src/scenes/OverlayScene.js (最終完成形 Ver.2)
-import BaseGameScene from './BaseGameScene.js';
+// src/scenes/OverlayScene.js (デバッグ強化・要塞化版)
 import EngineAPI from '../core/EngineAPI.js'; 
 
-export default class OverlayScene extends BaseGameScene {
+export default class OverlayScene extends Phaser.Scene {
     
     constructor() {
-        // BaseGameSceneのコンストラクタを、自身のキーで呼び出す
-        super({ key: 'OverlayScene' });
-        
-        // BaseGameSceneを継承したので、以下のプロパティは
-        // 親クラスが管理してくれます。ここでは不要です。
-        // this.uiElements = new Map();
-        // this.componentsToUpdate = [];
+        super({ key: 'OverlayScene' }); 
+        this.layoutDataKey = null;
     }
 
-    /**
-     * OverlayManagerから launch される際にデータを受け取る
-     */
-    // in OverlayScene.js
-init(data) {
-    // 1. まず、親である BaseGameScene の init を呼び出す
-    //    isUiScene フラグを必ず渡す
-    super.init({ ...data, isUiScene: true }); 
-
-    // 2. 次に、この OverlayScene 自身が必要なデータを取得する
-    //    BaseGameScene は layoutDataKey を参照するため、そちらにセットする
-    if (data && data.layoutKey) {
-        this.layoutDataKey = data.layoutKey;
+    init(data) {
+        this.layoutDataKey = data.layoutKey || null;
     }
-}
 
-    /**
-     * シーンが起動する際のメインロジック
-     */
     create() {
-        this.scene.bringToTop(this.scene.key);
+        this.scene.bringToTop();
+        console.log(`[OverlayScene] create started. LayoutKey: ${this.layoutDataKey}`);
 
-        if (!this.layoutDataKey) {
-            console.error('[OverlayScene] create called, but layoutDataKey is missing. Aborting.');
-            return;
+        const layoutData = this.cache.json.get(this.layoutDataKey);
+        
+        if (layoutData && layoutData.objects) {
+            this.buildUiFromLayout(layoutData);
+        } else {
+            console.error(`[OverlayScene] Layout data missing or empty for '${this.layoutDataKey}'`);
         }
 
-        // BaseGameSceneが持つ、JSONからシーンを構築する魔法のメソッドを呼び出す
-        this.initSceneWithData();
+        // EditorPlugin連携
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            this.time.delayedCall(100, () => {
+                this.registry.set('editor_mode', 'select');
+                this.children.each(child => editor.makeEditable(child, this));
+            });
+        }
     }
 
     /**
-     * このオーバーレイシーンを閉じるよう依頼する
+     * UI構築メソッド（エラーガード付き）
      */
+    buildUiFromLayout(layoutData) {
+        console.group('[OverlayScene] buildUiFromLayout');
+        
+        layoutData.objects.forEach((layout, index) => {
+            try {
+                console.log(`Processing object ${index}: '${layout.name}' (Type: ${layout.type})`);
+                
+                let element = null;
+
+                // --- Textの生成 ---
+                if (layout.type === 'Text') {
+                    // ★スタイルからnullのプロパティを除去する安全策
+                    const safeStyle = { ...layout.style };
+                    for (const key in safeStyle) {
+                        if (safeStyle[key] === null) delete safeStyle[key];
+                    }
+                    // フォールバック
+                    if (!safeStyle.fontSize) safeStyle.fontSize = '24px';
+                    if (!safeStyle.fill) safeStyle.fill = '#ffffff';
+
+                    element = this.add.text(layout.x, layout.y, layout.text || 'Text', safeStyle);
+                    
+                    if (layout.originX !== undefined) element.setOrigin(layout.originX, layout.originY);
+                } 
+                // --- Image / Panel / Button の生成 ---
+                else {
+                    // テクスチャがなければデフォルトを使用
+                    const textureKey = this.textures.exists(layout.texture) ? layout.texture : '__DEFAULT';
+                    element = this.add.image(layout.x, layout.y, textureKey);
+                }
+
+                if (element) {
+                    element.name = layout.name;
+                    if (layout.alpha !== undefined) element.setAlpha(layout.alpha);
+                    if (layout.depth !== undefined) element.setDepth(layout.depth);
+                    if (layout.scaleX !== undefined) element.setScale(layout.scaleX, layout.scaleY);
+                    
+                    // インタラクティブ設定
+                    element.setInteractive();
+                    
+                    // イベント設定 (簡易版: 汎用性は一旦置いて、確実に動くようにする)
+                    if (layout.events) {
+                        element.setData('events', layout.events);
+                        const onClickEvent = layout.events.find(e => e.trigger === 'onClick');
+                        if (onClickEvent) {
+                            element.on('pointerdown', (pointer) => {
+                                pointer.event.stopPropagation();
+                                const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+                                const actionInterpreter = systemRegistry?.get('actionInterpreter');
+                                if (actionInterpreter) {
+                                    actionInterpreter.run(element, onClickEvent);
+                                }
+                            });
+                        }
+                    }
+                    
+                    console.log(` -> SUCCESS: Created '${element.name}'`);
+                }
+
+            } catch (e) {
+                // ★エラーが出ても止まらずに次のオブジェクトへ！
+                console.error(` -> ERROR creating '${layout.name}':`, e);
+            }
+        });
+        
+        console.groupEnd();
+    }
+
     close() {
        EngineAPI.fireGameFlowEvent('CLOSE_PAUSE_MENU');
     }
-
-    //
-    // buildUiFromLayout, registerUiElement, addComponent, update, applyUiEvents といった
-    // メソッドは、すべて継承元の BaseGameScene が持っているため、
-    // このファイルからは「完全に削除」します。
-    //
 }
