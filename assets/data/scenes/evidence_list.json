@@ -19,18 +19,16 @@
     }
   ],
   "objects": [
-   
     {
       "name": "evidence_background",
       "type": "Image",
-      "x": 808,
+      "x": 811,
       "y": 363,
       "depth": 10004,
-      "scaleX": 2.47,
-      "scaleY": 2.47,
+      "scaleX": 2.81,
+      "scaleY": 2.81,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "components": [
         {
@@ -40,21 +38,19 @@
       ],
       "texture": "message_window",
       "data": {
-        "registryKey": "message_window_1763449296437",
-        "lastTap": 1763454234515
+        "lastTap": 1763541108298
       }
     },
     {
       "name": "evidence_name_1",
       "type": "Text",
-      "x": 39,
-      "y": 253,
+      "x": 20,
+      "y": 252,
       "depth": 10005,
       "scaleX": 0.7,
       "scaleY": 0.7,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "text": "現場の調査報告書",
       "style": {
@@ -91,8 +87,8 @@
         }
       },
       "data": {
-        "registryKey": "text_1763449313221",
-        "lastTap": 0
+        "lastTap": 0,
+        "evidenceId": "site_report"
       }
     },
     {
@@ -101,16 +97,14 @@
       "x": 86,
       "y": 185,
       "depth": 10006,
-      "scaleX": 0.28,
-      "scaleY": 0.28,
+      "scaleX": 0.19,
+      "scaleY": 0.19,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
-      "texture": "",
+      "texture": "taru",
       "data": {
-        "registryKey": "yuna_angry_1763449407677",
-        "lastTap": 0
+        "lastTap": 1763541107698
       }
     },
     {
@@ -123,7 +117,6 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [
         {
           "id": "event_1763449485309",
@@ -191,23 +184,21 @@
         }
       },
       "data": {
-        "registryKey": "text_1763449452357",
-        "lastTap": 1763454408918
+        "lastTap": 0
       }
     },
     {
       "name": "evidence_name_2",
       "type": "Text",
-      "x": 193,
+      "x": 216,
       "y": 252,
       "depth": 10008,
       "scaleX": 0.85,
       "scaleY": 0.85,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
-      "text": "証拠品２",
+      "text": "凶器のナイフ",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -242,41 +233,38 @@
         }
       },
       "data": {
-        "registryKey": "text_1763449526342",
-        "lastTap": 0
+        "lastTap": 0,
+        "evidenceId": "knife"
       }
     },
     {
       "name": "evidence_icon_2",
       "type": "Image",
-      "x": 244,
-      "y": 182,
+      "x": 297,
+      "y": 184,
       "depth": 10009,
       "scaleX": 0.16,
       "scaleY": 0.16,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
-      "texture": "anila_normal",
+      "texture": "chest",
       "data": {
-        "registryKey": "anila_normal_1763449551301",
-        "lastTap": 0
+        "lastTap": 1763541105794
       }
     },
     {
       "name": "evidence_name_3",
       "type": "Text",
-      "x": 32,
+      "x": 17,
       "y": 410,
       "depth": 10010,
       "scaleX": 0.73,
       "scaleY": 0.73,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
-      "text": "証拠品３",
+      "text": "証人自身の最初の証言",
       "style": {
         "fontFamily": "Courier",
         "fontSize": "32px",
@@ -311,8 +299,8 @@
         }
       },
       "data": {
-        "registryKey": "text_1763449561397",
-        "lastTap": 0
+        "lastTap": 0,
+        "evidenceId": "witness_testimony_01"
       }
     },
     {
@@ -321,16 +309,14 @@
       "x": 83,
       "y": 347,
       "depth": 10011,
-      "scaleX": 0.16,
-      "scaleY": 0.16,
+      "scaleX": 0.1,
+      "scaleY": 0.1,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
-      "texture": "tileset_terrain",
+      "texture": "taimatsu_on",
       "data": {
-        "registryKey": "tileset_terrain_1763449581229",
-        "lastTap": 0
+        "lastTap": 1763541059746
       }
     },
     {
@@ -343,7 +329,6 @@
       "scaleY": 0.79,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "text": "証拠品4",
       "style": {
@@ -380,7 +365,6 @@
         }
       },
       "data": {
-        "registryKey": "text_1763453034189",
         "lastTap": 0
       }
     },
@@ -394,11 +378,9 @@
       "scaleY": 0.28,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "texture": "yuna_angry",
       "data": {
-        "registryKey": "yuna_angry_1763453115333",
         "lastTap": 0
       }
     },
@@ -412,11 +394,9 @@
       "scaleY": 0.31,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "texture": "yuna_angry",
       "data": {
-        "registryKey": "yuna_angry_1763453149349",
         "lastTap": 0
       }
     },
@@ -430,11 +410,9 @@
       "scaleY": 0.28,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "texture": "yuna_angry",
       "data": {
-        "registryKey": "yuna_angry_1763453167773",
         "lastTap": 0
       }
     },
@@ -448,7 +426,6 @@
       "scaleY": 0.82,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "text": "証拠品5",
       "style": {
@@ -485,7 +462,6 @@
         }
       },
       "data": {
-        "registryKey": "text_1763453184221",
         "lastTap": 0
       }
     },
@@ -499,7 +475,6 @@
       "scaleY": 0.85,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "text": "証拠品6",
       "style": {
@@ -536,7 +511,6 @@
         }
       },
       "data": {
-        "registryKey": "text_1763453217965",
         "lastTap": 0
       }
     },
@@ -550,7 +524,6 @@
       "scaleY": 0.55,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "components": [
         {
@@ -558,9 +531,8 @@
           "params": {}
         }
       ],
-      "texture": "",
+      "texture": "taimatsu_on",
       "data": {
-        "registryKey": "tileset_terrain_1763453279525",
         "lastTap": 0
       }
     },
@@ -574,7 +546,6 @@
       "scaleY": 1.63,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [],
       "text": "被害者の死亡時刻や、現場の状況が記録されている。",
       "style": {
@@ -611,8 +582,7 @@
         }
       },
       "data": {
-        "registryKey": "text_1763453289245",
-        "lastTap": 1763454222776
+        "lastTap": 1763541067563
       }
     },
     {
@@ -625,7 +595,6 @@
       "scaleY": 1,
       "angle": 0,
       "alpha": 1,
-      "layer": "Gameplay",
       "events": [
         {
           "id": "event_1763454366621",
@@ -693,8 +662,7 @@
         }
       },
       "data": {
-        "registryKey": "text_1763453346293",
-        "lastTap": 1763454361008
+        "lastTap": 0
       }
     }
   ],
