@@ -1,5 +1,6 @@
-// src/scenes/OverlayScene.js (デバッグ強化・要塞化版)
 import EngineAPI from '../core/EngineAPI.js'; 
+// ★コンポーネントの登録簿を直接インポートして確実に使えるようにする
+import { ComponentRegistry } from '../components/index.js';
 
 export default class OverlayScene extends Phaser.Scene {
     
@@ -35,7 +36,7 @@ export default class OverlayScene extends Phaser.Scene {
     }
 
     /**
-     * UI構築メソッド（エラーガード付き）
+     * UI構築メソッド
      */
     buildUiFromLayout(layoutData) {
         console.group('[OverlayScene] buildUiFromLayout');
@@ -48,22 +49,18 @@ export default class OverlayScene extends Phaser.Scene {
 
                 // --- Textの生成 ---
                 if (layout.type === 'Text') {
-                    // ★スタイルからnullのプロパティを除去する安全策
                     const safeStyle = { ...layout.style };
                     for (const key in safeStyle) {
                         if (safeStyle[key] === null) delete safeStyle[key];
                     }
-                    // フォールバック
                     if (!safeStyle.fontSize) safeStyle.fontSize = '24px';
                     if (!safeStyle.fill) safeStyle.fill = '#ffffff';
 
                     element = this.add.text(layout.x, layout.y, layout.text || 'Text', safeStyle);
-                    
                     if (layout.originX !== undefined) element.setOrigin(layout.originX, layout.originY);
                 } 
                 // --- Image / Panel / Button の生成 ---
                 else {
-                    // テクスチャがなければデフォルトを使用
                     const textureKey = this.textures.exists(layout.texture) ? layout.texture : '__DEFAULT';
                     element = this.add.image(layout.x, layout.y, textureKey);
                 }
@@ -74,10 +71,9 @@ export default class OverlayScene extends Phaser.Scene {
                     if (layout.depth !== undefined) element.setDepth(layout.depth);
                     if (layout.scaleX !== undefined) element.setScale(layout.scaleX, layout.scaleY);
                     
-                    // インタラクティブ設定
                     element.setInteractive();
                     
-                    // イベント設定 (簡易版: 汎用性は一旦置いて、確実に動くようにする)
+                    // イベント設定
                     if (layout.events) {
                         element.setData('events', layout.events);
                         const onClickEvent = layout.events.find(e => e.trigger === 'onClick');
@@ -93,16 +89,49 @@ export default class OverlayScene extends Phaser.Scene {
                         }
                     }
                     
+                    // ▼▼▼【ここが復活させた重要機能です：コンポーネントのアタッチ】▼▼▼
+                    if (layout.components) {
+                        element.setData('components', layout.components);
+                        layout.components.forEach(compDef => {
+                            this.addComponent(element, compDef.type, compDef.params);
+                        });
+                    }
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
                     console.log(` -> SUCCESS: Created '${element.name}'`);
                 }
 
             } catch (e) {
-                // ★エラーが出ても止まらずに次のオブジェクトへ！
                 console.error(` -> ERROR creating '${layout.name}':`, e);
             }
         });
         
         console.groupEnd();
+    }
+
+    /**
+     * コンポーネントを追加して起動するヘルパー
+     */
+    addComponent(target, componentType, params = {}) {
+        const ComponentClass = ComponentRegistry[componentType];
+        if (ComponentClass) {
+            console.log(`   -> Attaching component: ${componentType}`);
+            const componentInstance = new ComponentClass(this, target, params);
+            
+            // コンポーネントをオブジェクトに保持させる
+            if (!target.components) target.components = {};
+            target.components[componentType] = componentInstance;
+
+            // 即座に start() を呼び出して初期化処理を実行させる
+            if (typeof componentInstance.start === 'function') {
+                // 少し遅延させて、全てのUI構築が終わってから実行するのが安全
+                this.time.delayedCall(0, () => {
+                    componentInstance.start();
+                });
+            }
+        } else {
+            console.warn(`   -> Unknown component type: ${componentType}`);
+        }
     }
 
     close() {
