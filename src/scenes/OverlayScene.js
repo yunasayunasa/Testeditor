@@ -1,5 +1,4 @@
 import EngineAPI from '../core/EngineAPI.js'; 
-// ★コンポーネントの登録簿を直接インポートして確実に使えるようにする
 import { ComponentRegistry } from '../components/index.js';
 
 export default class OverlayScene extends Phaser.Scene {
@@ -7,6 +6,7 @@ export default class OverlayScene extends Phaser.Scene {
     constructor() {
         super({ key: 'OverlayScene' }); 
         this.layoutDataKey = null;
+        this.uiElements = new Map(); // 編集用に保持
     }
 
     init(data) {
@@ -15,171 +15,219 @@ export default class OverlayScene extends Phaser.Scene {
 
     create() {
         this.scene.bringToTop();
-        console.log(`[OverlayScene] create started. LayoutKey: ${this.layoutDataKey}`);
+        
+        // --- IDE連携: 編集モードを強制 ---
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            this.registry.set('editor_mode', 'select');
+        }
+
+        if (!this.layoutDataKey) {
+            console.warn('[OverlayScene] No layout key provided.');
+            return;
+        }
 
         const layoutData = this.cache.json.get(this.layoutDataKey);
         
-        if (layoutData && layoutData.objects) {
-            this.buildUiFromLayout(layoutData);
-        } else {
-            console.error(`[OverlayScene] Layout data missing or empty for '${this.layoutDataKey}'`);
+        // --- 動的リスト生成ロジック ---
+        // (evidence_listの場合のみ、ボタン定義を動的に追加)
+        let finalLayoutData = layoutData;
+        if (layoutData && this.layoutDataKey === 'evidence_list') {
+            // コピーを作成
+            finalLayoutData = JSON.parse(JSON.stringify(layoutData));
+            
+            const evidenceMaster = this.cache.json.get('evidence_master');
+            const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
+            const stateManager = systemRegistry ? systemRegistry.get('stateManager') : null;
+            const playerEvidence = stateManager ? stateManager.getValue('f.player_evidence') : [];
+            
+            const dynamicObjects = [];
+            if (playerEvidence && evidenceMaster) {
+                playerEvidence.forEach((evidenceId, index) => {
+                    const evidenceData = evidenceMaster[evidenceId];
+                    if (evidenceData) {
+                        dynamicObjects.push({
+                            "name": `evidence_${evidenceId}`,
+                            "type": "Image", // ボタン用テクスチャを持つImage
+                            "texture": "button_texture", // 適宜変更してください
+                            "x": 640,
+                            "y": 200 + (index * 80),
+                            "events": [
+                                {
+                                    "trigger": "onClick",
+                                    "nodes": [
+                                        { "id": `set_${evidenceId}`, "type": "set_variable", "params": { "var": "f.selected_evidence", "value": `"${evidenceId}"` } },
+                                        { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+                                    ]
+                                }
+                            ]
+                        });
+                        // ラベルテキスト
+                        dynamicObjects.push({
+                            "name": `label_${evidenceId}`,
+                            "type": "Text",
+                            "x": 640,
+                            "y": 200 + (index * 80),
+                            "text": evidenceData.name,
+                            "style": { "fontSize": "24px", "fill": "#ffffff" },
+                            "originX": 0.5, "originY": 0.5
+                        });
+                    }
+                });
+            }
+            finalLayoutData.objects = (finalLayoutData.objects || []).concat(dynamicObjects);
         }
 
-        // EditorPlugin連携
-        const editor = this.plugins.get('EditorPlugin');
-        if (editor && editor.isEnabled) {
-            this.time.delayedCall(100, () => {
-                this.registry.set('editor_mode', 'select');
-                this.children.each(child => editor.makeEditable(child, this));
-            });
+        // --- UI構築 ---
+        if (finalLayoutData && finalLayoutData.objects) {
+            this.buildUiFromLayout(finalLayoutData);
         }
     }
 
     /**
-     * UI構築メソッド
+     * JSONデータからUIを一括生成する
      */
     buildUiFromLayout(layoutData) {
-        console.group('[OverlayScene] buildUiFromLayout');
-        
-        layoutData.objects.forEach((layout, index) => {
+        layoutData.objects.forEach((layout) => {
             try {
-                console.log(`Processing object ${index}: '${layout.name}' (Type: ${layout.type})`);
-                
                 let element = null;
 
-                // --- Textの生成 ---
                 if (layout.type === 'Text') {
-                    const safeStyle = { ...layout.style };
-                    for (const key in safeStyle) {
-                        if (safeStyle[key] === null) delete safeStyle[key];
-                    }
-                    if (!safeStyle.fontSize) safeStyle.fontSize = '24px';
-                    if (!safeStyle.fill) safeStyle.fill = '#ffffff';
-
-                    element = this.add.text(layout.x, layout.y, layout.text || 'Text', safeStyle);
+                    const style = layout.style || { fontSize: '24px', fill: '#ffffff' };
+                    element = this.add.text(layout.x, layout.y, layout.text || 'Text', style);
                     if (layout.originX !== undefined) element.setOrigin(layout.originX, layout.originY);
-                } 
-                // --- Image / Panel / Button の生成 ---
-                else {
-                    const textureKey = this.textures.exists(layout.texture) ? layout.texture : '__DEFAULT';
-                    element = this.add.image(layout.x, layout.y, textureKey);
+                } else {
+                    // Image, Button, Panel などはすべてImageとして生成
+                    const texture = layout.texture || '__DEFAULT';
+                    element = this.add.image(layout.x, layout.y, texture);
                 }
 
                 if (element) {
-                    element.name = layout.name;
-                    if (layout.alpha !== undefined) element.setAlpha(layout.alpha);
-                    if (layout.depth !== undefined) element.setDepth(layout.depth);
-                    if (layout.scaleX !== undefined) element.setScale(layout.scaleX, layout.scaleY);
-                    
-                    element.setInteractive();
-                    
-                    // イベント設定
-                    if (layout.events) {
-                        element.setData('events', layout.events);
-                        const onClickEvent = layout.events.find(e => e.trigger === 'onClick');
-                        if (onClickEvent) {
-                            element.on('pointerdown', (pointer) => {
-                                pointer.event.stopPropagation();
-                                const systemRegistry = this.scene.manager.getScene('SystemScene')?.registry;
-                                const actionInterpreter = systemRegistry?.get('actionInterpreter');
-                                if (actionInterpreter) {
-                                    actionInterpreter.run(element, onClickEvent);
-                                }
-                            });
-                        }
-                    }
-                    
-                    // ▼▼▼【ここが復活させた重要機能です：コンポーネントのアタッチ】▼▼▼
-                    if (layout.components) {
-                        element.setData('components', layout.components);
-                        layout.components.forEach(compDef => {
-                            this.addComponent(element, compDef.type, compDef.params);
-                        });
-                    }
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-                    console.log(` -> SUCCESS: Created '${element.name}'`);
+                    // 共通設定メソッドを呼び出す（ここが重要！）
+                    this.registerUiElement(layout.name, element, layout);
                 }
 
             } catch (e) {
-                console.error(` -> ERROR creating '${layout.name}':`, e);
+                console.error(`[OverlayScene] Error creating ${layout.name}:`, e);
             }
         });
-        
-        console.groupEnd();
     }
 
     /**
-     * コンポーネントを追加して起動するヘルパー
+     * ★★★ 重要：全てのオブジェクト設定をここで行う ★★★
+     * 名前設定、プロパティ適用、インタラクティブ化、IDE登録、イベント設定
      */
-    addComponent(target, componentType, params = {}) {
-        const ComponentClass = ComponentRegistry[componentType];
-        if (ComponentClass) {
-            console.log(`   -> Attaching component: ${componentType}`);
-            const componentInstance = new ComponentClass(this, target, params);
-            
-            // コンポーネントをオブジェクトに保持させる
-            if (!target.components) target.components = {};
-            target.components[componentType] = componentInstance;
+    registerUiElement(name, element, layout) {
+        element.name = name;
+        this.uiElements.set(name, element); // 管理用に保持
 
-            // 即座に start() を呼び出して初期化処理を実行させる
-            if (typeof componentInstance.start === 'function') {
-                // 少し遅延させて、全てのUI構築が終わってから実行するのが安全
-                this.time.delayedCall(0, () => {
-                    componentInstance.start();
-                });
-            }
-        } else {
-            console.warn(`   -> Unknown component type: ${componentType}`);
+        // プロパティ適用
+        if (layout.alpha !== undefined) element.setAlpha(layout.alpha);
+        if (layout.depth !== undefined) element.setDepth(layout.depth);
+        if (layout.scaleX !== undefined) element.setScale(layout.scaleX, layout.scaleY);
+        if (layout.angle !== undefined) element.setAngle(layout.angle);
+
+        // コンポーネントアタッチ
+        if (layout.components) {
+            element.setData('components', layout.components);
+            layout.components.forEach(compDef => {
+                this.addComponent(element, compDef.type, compDef.params);
+            });
+        }
+
+        // --- インタラクティブ化 (IDE編集とクリック動作に必須) ---
+        element.setInteractive();
+        this.input.setDraggable(element); // ★これがないとドラッグできません
+
+        // --- イベント設定 ---
+        if (layout.events) {
+            element.setData('events', layout.events);
+            this.applyUiEvents(element);
+        }
+
+        // --- IDE登録 ---
+        const editor = this.plugins.get('EditorPlugin');
+        if (editor && editor.isEnabled) {
+            editor.makeEditable(element, this);
         }
     }
 
-      /**
-     * ★ IDE連携用: 画像オブジェクトを追加する窓口
+    /**
+     * IDEから画像を追加するための窓口
      */
     addObjectFromEditor(assetKey, newName, layerName) {
-        const centerX = this.scale.width / 2;
-        const centerY = this.scale.height / 2;
+        const cx = this.cameras.main.width / 2;
+        const cy = this.cameras.main.height / 2;
+        const image = this.add.image(cx, cy, assetKey);
         
-        // 画像を生成
-        const image = this.add.image(centerX, centerY, assetKey);
-        
-        // 共通の登録処理（名前設定、インタラクティブ化、IDE登録）
-        // type: 'Image' を明示的に渡すことで、JSON保存時に正しく記録されるようにする
-        this.registerUiElement(newName, image, { name: newName, type: 'Image', x: centerX, y: centerY });
-        
+        // 共通設定メソッドを通す
+        this.registerUiElement(newName, image, { 
+            name: newName, type: 'Image', x: cx, y: cy, texture: assetKey 
+        });
         return image;
     }
 
     /**
-     * ★ IDE連携用: テキストオブジェクトを追加する窓口
+     * IDEからテキストを追加するための窓口
      */
     addTextUiFromEditor(newName) {
-        const centerX = this.scale.width / 2;
-        const centerY = this.scale.height / 2;
-        
-        // テキストを生成
-        const text = this.add.text(centerX, centerY, 'New Text', { 
-            fontSize: '32px', 
-            fill: '#ffffff',
-            fontFamily: 'Courier'
-        }).setOrigin(0.5);
-        
-        // 共通の登録処理
-        this.registerUiElement(newName, text, { name: newName, type: 'Text', x: centerX, y: centerY });
-        
+        const cx = this.cameras.main.width / 2;
+        const cy = this.cameras.main.height / 2;
+        const text = this.add.text(cx, cy, 'New Text', { fontSize: '32px', fill: '#fff' });
+        text.setOrigin(0.5);
+
+        // 共通設定メソッドを通す
+        this.registerUiElement(newName, text, { 
+            name: newName, type: 'Text', x: cx, y: cy 
+        });
         return text;
     }
 
     /**
-     * ★ IDE連携用: プレハブを追加する窓口
+     * イベントリスナーの設定（pointerdownを使用）
      */
-    addPrefabFromEditor(prefabKey, newName, layerName) {
-        // 今回はプレハブを使わない方針になりましたが、
-        // エラーを防ぐために空のメソッドか、簡易的な実装を置いておくと安全です。
-        // ここでは簡易的に画像として追加するフォールバックを実装します。
-        console.warn('[OverlayScene] Prefab not fully supported in this mode. Adding as Image.');
-        return this.addObjectFromEditor('__DEFAULT', newName, layerName);
+    applyUiEvents(uiElement) {
+        const events = uiElement.getData('events') || [];
+        uiElement.off('pointerdown'); // 重複防止
+
+        events.forEach(eventData => {
+            if (eventData.trigger === 'onClick') {
+                uiElement.on('pointerdown', (pointer) => {
+                    // プレイモードの時のみ実行したい場合はここで判定を入れる
+                    // const mode = this.registry.get('editor_mode');
+                    // if (mode !== 'play') return; 
+
+                    pointer.event.stopPropagation();
+                    const sysReg = this.scene.manager.getScene('SystemScene')?.registry;
+                    const interpreter = sysReg?.get('actionInterpreter');
+                    if (interpreter) {
+                        interpreter.run(uiElement, eventData);
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * コンポーネントアタッチ用ヘルパー
+     */
+    addComponent(target, type, params) {
+        const ComponentClass = ComponentRegistry[type];
+        if (ComponentClass) {
+            const instance = new ComponentClass(this, target, params);
+            if (instance.start) instance.start();
+            if (instance.update) {
+                // 簡易的なUpdate管理
+                if (!this.updateList) this.updateList = [];
+                this.updateList.push(instance);
+            }
+        }
+    }
+
+    update(time, delta) {
+        if (this.updateList) {
+            this.updateList.forEach(c => c.update(time, delta));
+        }
     }
 
     close() {
