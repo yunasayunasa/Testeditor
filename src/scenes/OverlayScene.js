@@ -134,6 +134,54 @@ export default class OverlayScene extends Phaser.Scene {
         }
     }
 
+      /**
+     * ★ IDE連携用: 画像オブジェクトを追加する窓口
+     */
+    addObjectFromEditor(assetKey, newName, layerName) {
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+        
+        // 画像を生成
+        const image = this.add.image(centerX, centerY, assetKey);
+        
+        // 共通の登録処理（名前設定、インタラクティブ化、IDE登録）
+        // type: 'Image' を明示的に渡すことで、JSON保存時に正しく記録されるようにする
+        this.registerUiElement(newName, image, { name: newName, type: 'Image', x: centerX, y: centerY });
+        
+        return image;
+    }
+
+    /**
+     * ★ IDE連携用: テキストオブジェクトを追加する窓口
+     */
+    addTextUiFromEditor(newName) {
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+        
+        // テキストを生成
+        const text = this.add.text(centerX, centerY, 'New Text', { 
+            fontSize: '32px', 
+            fill: '#ffffff',
+            fontFamily: 'Courier'
+        }).setOrigin(0.5);
+        
+        // 共通の登録処理
+        this.registerUiElement(newName, text, { name: newName, type: 'Text', x: centerX, y: centerY });
+        
+        return text;
+    }
+
+    /**
+     * ★ IDE連携用: プレハブを追加する窓口
+     */
+    addPrefabFromEditor(prefabKey, newName, layerName) {
+        // 今回はプレハブを使わない方針になりましたが、
+        // エラーを防ぐために空のメソッドか、簡易的な実装を置いておくと安全です。
+        // ここでは簡易的に画像として追加するフォールバックを実装します。
+        console.warn('[OverlayScene] Prefab not fully supported in this mode. Adding as Image.');
+        return this.addObjectFromEditor('__DEFAULT', newName, layerName);
+    }
+
     close() {
        EngineAPI.fireGameFlowEvent('CLOSE_PAUSE_MENU');
     }
