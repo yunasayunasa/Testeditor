@@ -222,35 +222,60 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
                 break;
             }
 
-            case 'check_evidence_action': {
+           case 'check_evidence_action': {
+    console.log("[GameFlowManager] Starting check_evidence_action...");
+
     const stateManager = EngineAPI.systemScene.registry.get('stateManager');
-    const activeScene = EngineAPI.systemScene.scene.get(EngineAPI.activeGameSceneKey);
-
-    if (stateManager && activeScene) {
-        const selectedEvidence = stateManager.getValue('f.selected_evidence');
-        
-        // ▼▼▼【修正箇所】▼▼▼
-        if (selectedEvidence === "null" || selectedEvidence === null) {
-            // 何も選ばずに閉じた場合
-            EngineAPI.fireGameFlowEvent('NO_SELECTION');
-        } else {
-            // ... (判定ロジックはそのまま)
-            const testimonyId = stateManager.getValue('f.current_testimony_id');
-            const statementIndex = stateManager.getValue('f.current_statement_index');
-            const testimonyData = activeScene.cache.json.get(testimonyId);
-            const statement = testimonyData?.statements?.[statementIndex];
-            const correctEvidence = statement ? statement['correct_evidence'] : undefined;
-
-            if (selectedEvidence === correctEvidence) {
-                EngineAPI.fireGameFlowEvent('CORRECT_ANSWER');
-            } else {
-                EngineAPI.fireGameFlowEvent('WRONG_ANSWER');
-            }
-        }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲
-        
-        stateManager.setF('selected_evidence', null);
+    
+    // ★重要: アクティブなシーンが見つからなくても、TestimonySceneを決め打ちで探すフォールバックを追加
+    let activeScene = EngineAPI.systemScene.scene.get(EngineAPI.activeGameSceneKey);
+    if (!activeScene) {
+        console.warn("[GameFlowManager] Active scene not found via key. Trying 'TestimonyScene'...");
+        activeScene = EngineAPI.systemScene.scene.get('TestimonyScene');
     }
+
+    if (!stateManager || !activeScene) {
+        console.error("[GameFlowManager] CRITICAL: StateManager or Scene not found. Forcing return to InGame.");
+        // 復帰できないと困るので、強制的に NO_SELECTION (ゲーム再開) を発行
+        EngineAPI.fireGameFlowEvent('NO_SELECTION');
+        break;
+    }
+
+    const selectedEvidence = stateManager.getValue('f.selected_evidence');
+    console.log(`[GameFlowManager] Selected Evidence ID: ${selectedEvidence}`);
+
+    // 「やめる」が押された場合 (null または "null" 文字列)
+    if (!selectedEvidence || selectedEvidence === "null") {
+        console.log("[GameFlowManager] No evidence selected. Returning to game.");
+        EngineAPI.fireGameFlowEvent('NO_SELECTION');
+    } else {
+        const testimonyId = stateManager.getValue('f.current_testimony_id');
+        const statementIndex = stateManager.getValue('f.current_statement_index');
+        
+        const testimonyData = activeScene.cache.json.get(testimonyId);
+        // データ取得の安全性チェック
+        if (!testimonyData || !testimonyData.statements) {
+            console.error(`[GameFlowManager] Testimony data not found for ID: ${testimonyId}`);
+            EngineAPI.fireGameFlowEvent('NO_SELECTION'); // 安全策
+            break;
+        }
+
+        const statement = testimonyData.statements[statementIndex];
+        const correctEvidence = statement ? statement['correct_evidence'] : undefined;
+        
+        console.log(`[GameFlowManager] Judging... Selected: ${selectedEvidence}, Correct: ${correctEvidence}`);
+
+        if (selectedEvidence === correctEvidence) {
+            console.log("[GameFlowManager] Result: CORRECT");
+            EngineAPI.fireGameFlowEvent('CORRECT_ANSWER');
+        } else {
+            console.log("[GameFlowManager] Result: WRONG");
+            EngineAPI.fireGameFlowEvent('WRONG_ANSWER');
+        }
+    }
+    
+    // 判定後は選択済み証拠品をリセット
+    stateManager.setF('selected_evidence', null);
     break;
 }
 
