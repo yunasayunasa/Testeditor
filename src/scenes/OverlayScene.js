@@ -47,21 +47,35 @@ export default class OverlayScene extends Phaser.Scene {
                     const evidenceData = evidenceMaster[evidenceId];
                     if (evidenceData) {
                         dynamicObjects.push({
-                            "name": `evidence_${evidenceId}`,
-                            "type": "Image", // ボタン用テクスチャを持つImage
-                            "texture": "button_texture", // 適宜変更してください
-                            "x": 640,
-                            "y": 200 + (index * 80),
-                            "events": [
-                                {
-                                    "trigger": "onClick",
-                                    "nodes": [
-                                        { "id": `set_${evidenceId}`, "type": "set_variable", "params": { "var": "f.selected_evidence", "value": `"${evidenceId}"` } },
-                                        { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
-                                    ]
-                                }
-                            ]
-                        });
+    "name": `evidence_${evidenceId}`,
+    "type": "Button",
+    "x": 640,
+    "y": 200 + (index * 80),
+    "label": evidenceData.name,
+    "data": { "registryKey": "generic_button" },
+    "events": [
+        {
+            "trigger": "onClick",
+            "id": `event_${evidenceId}`,
+            "nodes": [
+                // ★★★ 修正: [eval] の代わりに [set_variable] を使う ★★★
+                { 
+                    "id": `set_${evidenceId}`, 
+                    "type": "set_variable", 
+                    "params": { 
+                        "var": "f.selected_evidence", 
+                        "value": `"${evidenceId}"` // 値をダブルクォートで囲む
+                    } 
+                },
+                { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
+            ],
+            "connections": [
+                { "fromNode": "start", "fromPin": "output", "toNode": `set_${evidenceId}`, "toPin": "input" },
+                { "fromNode": `set_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
+            ]
+        }
+    ]
+});
                         // ラベルテキスト
                         dynamicObjects.push({
                             "name": `label_${evidenceId}`,
