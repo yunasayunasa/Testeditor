@@ -220,29 +220,36 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
             }
 
             case 'check_evidence_action': {
-        // StateManager と現在のシーンを取得
-        const stateManager = EngineAPI.systemScene.registry.get('stateManager');
-        const activeScene = EngineAPI.systemScene.scene.get(EngineAPI.activeGameSceneKey);
+    const stateManager = EngineAPI.systemScene.registry.get('stateManager');
+    const activeScene = EngineAPI.systemScene.scene.get(EngineAPI.activeGameSceneKey);
 
-        if (stateManager && activeScene) {
-            // [check_evidence]タグと全く同じロジック
-            const selectedEvidence = stateManager.getValue('f.selected_evidence');
+    if (stateManager && activeScene) {
+        const selectedEvidence = stateManager.getValue('f.selected_evidence');
+        
+        // ▼▼▼【修正箇所】▼▼▼
+        if (selectedEvidence === "null" || selectedEvidence === null) {
+            // 何も選ばずに閉じた場合
+            EngineAPI.fireGameFlowEvent('NO_SELECTION');
+        } else {
+            // ... (判定ロジックはそのまま)
             const testimonyId = stateManager.getValue('f.current_testimony_id');
             const statementIndex = stateManager.getValue('f.current_statement_index');
             const testimonyData = activeScene.cache.json.get(testimonyId);
             const statement = testimonyData?.statements?.[statementIndex];
             const correctEvidence = statement ? statement['correct_evidence'] : undefined;
 
-            if (selectedEvidence && selectedEvidence === correctEvidence) {
-                // 正解した場合
+            if (selectedEvidence === correctEvidence) {
                 EngineAPI.fireGameFlowEvent('CORRECT_ANSWER');
             } else {
-                // 不正解の場合（選択しなかった場合も含む）
                 EngineAPI.fireGameFlowEvent('WRONG_ANSWER');
             }
         }
-        break;
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+        stateManager.setF('selected_evidence', null);
     }
+    break;
+}
 
             case 'resumeScene': {
                     // EngineAPIから現在アクティブなシーンを取得するのは安全

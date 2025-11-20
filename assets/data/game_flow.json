@@ -80,7 +80,7 @@
       "transitions": [
        {
   "event": "CLOSE_PAUSE_MENU",
-  "to": "InGame",
+    "to": "Judging" ,
   "action": [ 
     { "type": "closeOverlay" },
     { "type": "check_evidence_action" } 
@@ -128,5 +128,27 @@
         }
       ]
     }
-  }
+  },
+  "Judging": {
+  "onEnter": [
+    { "type": "closeOverlay" },
+    { "type": "check_evidence_action" }
+  ],
+  "transitions": [
+    {
+      "event": "CORRECT_ANSWER",
+      "to": "NovelOverlay",
+      "action": { "type": "runNovelOverlay", "params": { "scenario": "correct_answer_01" } }
+    },
+    {
+      "event": "WRONG_ANSWER",
+      "to": "NovelOverlay",
+      "action": { "type": "runNovelOverlay", "params": { "scenario": "wrong_answer_01" } }
+    },
+    {
+      "event": "NO_SELECTION",
+      "to": "InGame" 
+    }
+  ]
+}
 }
