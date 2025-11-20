@@ -176,26 +176,29 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
     break;
 }
                 
-                 case 'closeOverlay': {
-    // 1. これから閉じるべきシーンのキーを取得 (この時点ではまだアクティブ)
-    const sceneKeyToClose = EngineAPI.activeGameSceneKey;
-    if (sceneKeyToClose) {
-        // 2. シーンキーを使って、シーンのインスタンスを取得
-        const sceneToClose = EngineAPI.systemScene.scene.get(sceneKeyToClose);
-        if (sceneToClose) {
-            // 3. stopする「前」に、そのシーンのオブジェクトを全て破棄
+                case 'closeOverlay': {
+    // 1. 閉じるべきシーンは OverlayScene で固定
+    const sceneToClose = EngineAPI.systemScene.scene.get('OverlayScene');
+
+    if (sceneToClose && sceneToClose.scene.isActive()) {
+        console.log(`[GameFlowManager] closeOverlay: Destroying all objects in 'OverlayScene'...`);
+        
+        // 2. シーンが持つ全てのゲームオブジェクトを明示的に破棄
+        if (sceneToClose.children && sceneToClose.children.list) {
             [...sceneToClose.children.list].forEach(child => {
-                child.destroy();
+                if (child && typeof child.destroy === 'function') {
+                    child.destroy();
+                }
             });
         }
+        // 3. シーンを停止
+        EngineAPI.requestCloseOverlay('OverlayScene');
+    } else {
+        console.warn("[GameFlowManager] 'OverlayScene' not found or not active.");
     }
     
-    // 4. (これまでの処理) EngineAPIにオーバーレイを閉じるよう依頼
-    EngineAPI.requestCloseOverlay(sceneKeyToClose);
-
-    // 5. EditorPluginのリフレッシュ抑制を解除
-    const editor = EngineAPI.systemScene?.plugins.get('EditorPlugin');
-    if (editor?.isEnabled) editor.suppressRefresh(false);
+    // 4. suppressRefresh 関連のコードは削除！
+    // const editor = ...; if (editor) editor.suppressRefresh(false);  ← 削除
     
     break;
 }
