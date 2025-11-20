@@ -280,24 +280,22 @@ handleEvent(eventName, data = {}) { // ★ data引数を追加
 }
 
             case 'resumeScene': {
-                    // EngineAPIから現在アクティブなシーンを取得するのは安全
-                    const sceneToResume = EngineAPI.activeGameSceneKey;
-
-                    if (sceneToResume) {
-                        // console.log(`[GameFlowManager] -> Requesting safe resume for scene: ${sceneToResume} via EngineAPI.`);
-                        
-                        // ▼▼▼【ここを、EngineAPIの呼び出しに書き換えます】▼▼▼
-                        // await を使うことで、resumeが完了するまでここで待機する
-                        await EngineAPI.requestSafeResume(sceneToResume);
-                        // console.log(`[GameFlowManager] Safe resume for '${sceneToResume}' has been confirmed by EngineAPI.`);
-                        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                    } else {
-                        // sceneStackからpopするロジックはEngineAPI側に任せるべきかもしれないが、
-                        // activeGameSceneKeyがnullを返す場合はこちらでハンドリングする
-                         console.warn('[GameFlowManager] resumeScene: No active scene to resume.');
-                    }
-                    break;
-                }
+    const sceneToResume = EngineAPI.activeGameSceneKey;
+    if (sceneToResume) {
+        console.log(`[GameFlowManager] Resuming scene: ${sceneToResume}`);
+        
+        // ★★★ 修正: await を削除し、直接 SystemScene のメソッドを呼ぶ ★★★
+        // EngineAPI.requestSafeResume は待機しすぎてしまう可能性があるため回避
+        const systemScene = EngineAPI.systemScene;
+        if (systemScene) {
+            systemScene.scene.resume(sceneToResume);
+        }
+        
+    } else {
+        console.warn('[GameFlowManager] resumeScene: No active scene to resume.');
+    }
+    break;
+}
                 
             case 'stopTime':
                 EngineAPI.stopTime();
