@@ -70,7 +70,7 @@ export default class OverlayScene extends Phaser.Scene {
                 { "id": `close_${evidenceId}`, "type": "close_menu", "params": {} }
             ],
             "connections": [
-                { "fromNode": "start", "fromPin": "output", "toNode": `set_${evidenceId}`, "toPin": "input" },
+             //   { "fromNode": "start", "fromPin": "output", "toNode": `set_${evidenceId}`, "toPin": "input" },
                 { "fromNode": `set_${evidenceId}`, "fromPin": "output", "toNode": `close_${evidenceId}`, "toPin": "input" }
             ]
         }
