@@ -488,3 +488,51 @@ body:not(.debug-mode) #game-container {
   height: 100%;
   z-index: 9999;
 }
+
+/* --- Console Panel Styles --- */
+#console-logs {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  padding: 8px;
+  overflow-y: auto;
+  height: 100%;
+  background: var(--bg-dark);
+}
+
+.console-log {
+  display: flex;
+  align-items: flex-start;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.console-timestamp {
+  color: var(--text-muted);
+  margin-right: 8px;
+  min-width: 70px;
+  font-size: 10px;
+}
+
+.console-icon {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.console-message {
+  flex: 1;
+  color: var(--text-main);
+  word-break: break-all;
+}
+
+.console-log-warn .console-message {
+  color: #ffb74d;
+}
+
+.console-log-error .console-message {
+  color: #f44336;
+}
+
+.console-log-log .console-message {
+  color: var(--text-main);
+}
+

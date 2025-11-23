@@ -8,21 +8,6 @@ import FlashEffect from './FlashEffect.js';
 import StateMachineComponent from './StateMachineComponent.js'; 
 import NpcController from './NpcController.js';
 import WanderComponent from './WanderComponent.js'; 
-import AnimationController from './AnimationController.js';
-import ChaseComponent from './ChaseComponent.js'; 
-import ReturnHomeComponent from './ReturnHomeComponent.js';
-import LightComponent from './LightComponent.js';
-import VignetteComponent from './VignetteComponent.js'; 
-import FogComponent from './FogComponent.js';
-import DetectionAreaComponent from './DetectionAreaComponent.js';
-import PatrolComponent from './PatrolComponent.js';
-import GlobalEventListenerComponent from './GlobalEventListenerComponent.js';
-
-
-
-//UI系
-import WatchVariableComponent from '../ui/WatchVariableComponent.js';
-import BarDisplayComponent from '../ui/BarDisplayComponent.js';
 import TextDisplayComponent from '../ui/TextDisplayComponent.js';
 import EvidenceBinderComponent from '../ui/EvidenceBinderComponent.js';
 import EvidenceDetailViewerComponent from '../ui/EvidenceDetailViewerComponent.js';
@@ -41,21 +26,6 @@ FlashEffect,
 StateMachineComponent,
 NpcController,
 WanderComponent,
-AnimationController,
-ChaseComponent,
-ReturnHomeComponent,
-LightComponent,
-VignetteComponent,    
-FogComponent, 
-DetectionAreaComponent,
-PatrolComponent,
-GlobalEventListenerComponent,
-
-
-    //UI系
-    WatchVariableComponent,
-    BarDisplayComponent,
-    TextDisplayComponent,
     EvidenceBinderComponent,
     EvidenceDetailViewerComponent,
     VisibilityComponent,

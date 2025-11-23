@@ -54,8 +54,13 @@ import set_variable from './set_variable.js';
 import update_statement_index from './update_statement_index.js';
 import check_evidence from './check_evidence.js';
 
-
-
+// Extended VSL Nodes
+import math_add from './math_add.js';
+import math_multiply from './math_multiply.js';
+import math_random from './math_random.js';
+import input_check from './input_check.js';
+import on_start from './on_start.js';
+import on_update from './on_update.js';
 
 // ActionInterpreterが使う、イベントタグのカタログ
 export const eventTagHandlers = {
@@ -96,22 +101,27 @@ export const eventTagHandlers = {
     'else': _else,
     'endif': endif,
     'state_transition': state_transition,
-'distance_check': distance_check,
-   'move_to_target': move_to_target,
-   'timer_check': timer_check,
-   'fire_scene_event':fire_scene_event,
-'toggle_hiding':toggle_hiding,
-'call_component_method': call_component_method,
-'close_menu':close_menu,
-'open_menu':open_menu,
-'save_game':save_game,
-'load_game':load_game,
-'run_scene':run_scene,
- 'fire_game_flow_event': fire_game_flow_event,
- 
-
- 'check_evidence': check_evidence,
-'set_variable': set_variable,
-'update_statement_index': update_statement_index
-
+    'distance_check': distance_check,
+    'move_to_target': move_to_target,
+    'timer_check': timer_check,
+    'fire_scene_event':fire_scene_event,
+    'toggle_hiding':toggle_hiding,
+    'call_component_method': call_component_method,
+    'close_menu':close_menu,
+    'open_menu':open_menu,
+    'save_game':save_game,
+    'load_game':load_game,
+    'run_scene':run_scene,
+    'fire_game_flow_event': fire_game_flow_event,
+    'check_evidence': check_evidence,
+    'set_variable': set_variable,
+    'update_statement_index': update_statement_index,
+    
+    // Extended VSL Nodes
+    'math_add': math_add,
+    'math_multiply': math_multiply,
+    'math_random': math_random,
+    'input_check': input_check,
+    'on_start': on_start,
+    'on_update': on_update
 };

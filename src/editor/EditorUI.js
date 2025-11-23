@@ -97,6 +97,55 @@ export default class EditorUI {
         document.getElementById('event-editor-close-btn')?.addEventListener('click', this.closeEventEditor);
         document.getElementById('sm-editor-close-btn')?.addEventListener('click', this.closeStateMachineEditor);
         
+        // Hierarchy
+        this.hierarchyTree = document.getElementById('hierarchy-tree');
+        this.createObjectBtn = document.getElementById('create-object-btn');
+
+        // Scene View
+        this.gameContainer = document.getElementById('game-container');
+        this.sceneOverlay = document.getElementById('scene-overlay');
+        this.cameraControls = document.getElementById('camera-controls');
+        
+        // Inspector
+        this.editorPropsContainer = document.getElementById('editor-props');
+        this.addComponentBtn = document.getElementById('add-component-btn');
+
+        // Bottom Panel (Project/Console)
+        this.assetBrowserPanel = document.getElementById('asset-browser');
+        this.assetListContainer = document.getElementById('asset-list');
+        this.assetTabContainer = document.getElementById('asset-tabs');
+        this.consoleLogsContainer = document.getElementById('console-logs');
+        this.clearConsoleBtn = document.getElementById('clear-console-btn');
+
+        // Tools & Modes
+        this.selectModeBtn = document.getElementById('select-mode-btn');
+        this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
+        this.modeToggle = document.getElementById('mode-toggle-checkbox');
+        this.modeLabel = document.getElementById('mode-label');
+
+        // Overlays
+        this.helpModal = document.getElementById('help-modal-overlay');
+        this.helpModalContent = document.getElementById('help-modal-content');
+        this.layerListContainer = document.getElementById('layer-list');
+        
+        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
+        this.eventEditorTitle = document.getElementById('event-editor-title');
+        this.vslNodeList = document.getElementById('vsl-node-list');
+        this.vslCanvas = document.getElementById('vsl-canvas');
+        this.vslTabs = document.getElementById('vsl-tabs');
+        
+        this.smEditorOverlay = document.getElementById('sm-editor-overlay');
+        
+        this.tilemapEditorOverlay = document.getElementById('tilemap-editor-overlay');
+        this.tilemapListContainer = document.getElementById('tilemap-list-container');
+        this.selectedTilemapName = document.getElementById('selected-tilemap-name');
+        this.tilemapPreviewContent = document.getElementById('tilemap-preview-content');
+        
+        // Console Clear Button Event
+        if (this.clearConsoleBtn) {
+            this.clearConsoleBtn.addEventListener('click', () => this.clearConsole());
+        }
+        
         document.getElementById('vsl-select-mode-btn')?.addEventListener('click', () => this.setVslMode('select'));
         document.getElementById('vsl-pan-mode-btn')?.addEventListener('click', () => this.setVslMode('pan'));
         
@@ -2009,6 +2058,95 @@ export default class EditorUI {
             }
         }
         this.populateVslCanvas();
+    }
+
+    // =================================================================
+    // Console Panel
+    // =================================================================
+    switchBottomTab(tabName) {
+        // すべてのタブとコンテンツを非アクティブに
+        document.querySelectorAll('.bottom-tabs .tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+        
+        // 選択されたタブをアクティブに
+        const selectedTab = document.getElementById(`tab-${tabName}`);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
+        
+        // 対応するコンテンツを表示
+        const contentMap = {
+            'project': 'project-view',
+            'console': 'console-view',
+            'animation': 'animation-view'
+        };
+        
+        const contentId = contentMap[tabName];
+        const content = document.getElementById(contentId);
+        if (content) {
+            content.style.display = 'block';
+        }
+        
+        // Consoleタブが選択されたときはClearボタンを表示
+        if (this.clearConsoleBtn) {
+            this.clearConsoleBtn.style.display = tabName === 'console' ? 'block' : 'none';
+        }
+    }
+
+    initConsoleCapture() {
+        // オリジナルのconsoleメソッドを保存
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        // console.logをオーバーライド
+        console.log = (...args) => {
+            originalLog.apply(console, args);
+            this.addConsoleLog('log', args.join(' '));
+        };
+        
+        // console.warnをオーバーライド
+        console.warn = (...args) => {
+            originalWarn.apply(console, args);
+            this.addConsoleLog('warn', args.join(' '));
+        };
+        
+        // console.errorをオーバーライド
+        console.error = (...args) => {
+            originalError.apply(console, args);
+            this.addConsoleLog('error', args.join(' '));
+        };
+    }
+
+    addConsoleLog(level, message) {
+        if (!this.consoleLogsContainer) return;
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = `console-log console-log-${level}`;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        const icon = {
+            'log': 'ℹ️',
+            'warn': '⚠️',
+            'error': '❌'
+        }[level] || 'ℹ️';
+        
+        logEntry.innerHTML = `
+            <span class="console-timestamp">${timestamp}</span>
+            <span class="console-icon">${icon}</span>
+            <span class="console-message">${message}</span>
+        `;
+        
+        this.consoleLogsContainer.appendChild(logEntry);
+        
+        // 自動スクロール
+        this.consoleLogsContainer.scrollTop = this.consoleLogsContainer.scrollHeight;
+    }
+
+    clearConsole() {
+        if (this.consoleLogsContainer) {
+            this.consoleLogsContainer.innerHTML = '';
+        }
     }
 
     createNodeSliderInput(container, label, initialValue, min, max, step, changeCallback) {
