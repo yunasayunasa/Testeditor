@@ -1,4 +1,5 @@
 import { ComponentRegistry } from '../components/index.js';
+import GizmoManager from './GizmoManager.js';
 /**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
  * オブジェクトの選択、プロパティ編集、レイアウトのエクスポート機能などを管理する。
@@ -25,7 +26,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
 
         this.layerStates = []; // ★ レイヤーの状態を保持
         this.selectedLayer = null;
-       
+       this.gizmoManager = new GizmoManager();
     }
    
 
@@ -64,7 +65,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // ★ UIの準備ができたことを通知し、レイヤーパネルを初期構築させる
             this.editorUI.onPluginReady(); 
             this.editorUI.startListeningToGameInput();
-            
+            this.gizmoManager.setScene(this.getActiveGameScene()); 
         }
     }
     getActiveGameScene() { // ★ EditorUIから移動・統合
@@ -2044,7 +2045,7 @@ const currentMode = this.game.registry.get('editor_mode');
     selectSingleObject(gameObject) {
         // もし複数選択中だったら、それを解除する
         this.deselectMultipleObjects();
-
+        this.gizmoManager.attach(gameObject);
         this.selectedObject = gameObject;
         setTimeout(() => this.updatePropertyPanel(), 0);
         // ★ オブジェクトに選択中であることを示す視覚的なフィードバックを追加すると、より良くなる
@@ -2059,7 +2060,7 @@ const currentMode = this.game.registry.get('editor_mode');
             this.selectedObject.clearTint();
         }
         this.selectedObject = null;
-        
+        this.gizmoManager.detach();
         if (this.selectedObjects && this.selectedObjects.length > 0) {
             this.selectedObjects.forEach(obj => {
                 if (typeof obj.clearTint === 'function') obj.clearTint();

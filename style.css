@@ -236,6 +236,65 @@ select:focus {
   color: white;
 }
 
+/* New Hierarchy Item Styles */
+.hierarchy-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 3px;
+  min-height: 20px;
+}
+
+.hierarchy-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.hierarchy-item.selected {
+  background-color: var(--bg-selected);
+  color: white;
+}
+
+.hierarchy-item.dragging {
+  opacity: 0.5;
+}
+
+.hierarchy-item.drag-over {
+  border: 2px dashed #4a9eff;
+  background-color: rgba(74, 158, 255, 0.2);
+}
+
+.hierarchy-toggle {
+  width: 16px;
+  height: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  padding: 0;
+  margin-right: 4px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}\n\n.hierarchy-toggle:hover {
+  color: white;
+}
+
+.hierarchy-icon {
+  margin: 0 4px;
+  font-size: 14px;
+}
+
+.hierarchy-name {
+  flex: 1;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* --- Inspector Properties --- */
 #editor-props {
   display: flex;

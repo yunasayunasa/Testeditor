@@ -39,6 +39,7 @@ export default class EditorUI {
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
+        this.initConsoleCapture(); // Console機能の初期化
         
         const refreshBtn = document.getElementById('editor-refresh-btn');
         if (refreshBtn) {
@@ -53,60 +54,6 @@ export default class EditorUI {
         this.sceneViewPanel = document.getElementById('scene-view-panel');
         this.inspectorPanel = document.getElementById('inspector-panel');
         this.bottomPanel = document.getElementById('bottom-panel');
-
-        // Hierarchy
-        this.hierarchyTree = document.getElementById('hierarchy-tree');
-        this.createObjectBtn = document.getElementById('create-object-btn');
-
-        // Scene View
-        this.gameContainer = document.getElementById('game-container');
-        this.sceneOverlay = document.getElementById('scene-overlay');
-        this.cameraControls = document.getElementById('camera-controls');
-        
-        // Inspector
-        this.editorPropsContainer = document.getElementById('editor-props');
-        this.addComponentBtn = document.getElementById('add-component-btn');
-
-        // Bottom Panel (Project/Console)
-        this.assetBrowserPanel = document.getElementById('asset-browser');
-        this.assetListContainer = document.getElementById('asset-list');
-        this.assetTabContainer = document.getElementById('asset-tabs');
-
-        // Tools & Modes
-        this.selectModeBtn = document.getElementById('select-mode-btn');
-        this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
-        this.modeToggle = document.getElementById('mode-toggle-checkbox');
-        this.modeLabel = document.getElementById('mode-label');
-
-        // Overlays
-        this.helpModal = document.getElementById('help-modal-overlay');
-        this.helpModalContent = document.getElementById('help-modal-content');
-        this.layerListContainer = document.getElementById('layer-list');
-        
-        this.eventEditorOverlay = document.getElementById('event-editor-overlay');
-        this.eventEditorTitle = document.getElementById('event-editor-title');
-        this.vslNodeList = document.getElementById('vsl-node-list');
-        this.vslCanvas = document.getElementById('vsl-canvas');
-        this.vslTabs = document.getElementById('vsl-tabs');
-        
-        this.smEditorOverlay = document.getElementById('sm-editor-overlay');
-        
-        this.tilemapEditorOverlay = document.getElementById('tilemap-editor-overlay');
-        this.tilemapListContainer = document.getElementById('tilemap-list-container');
-        this.selectedTilemapName = document.getElementById('selected-tilemap-name');
-        this.tilemapPreviewContent = document.getElementById('tilemap-preview-content');
-    }
-
-    initializeEventListeners() {
-        // --- Toolbar Tools ---
-        document.getElementById('tool-move')?.addEventListener('click', () => this.setTool('move'));
-        document.getElementById('tool-rotate')?.addEventListener('click', () => this.setTool('rotate'));
-        document.getElementById('tool-scale')?.addEventListener('click', () => this.setTool('scale'));
-        document.getElementById('tool-rect')?.addEventListener('click', () => this.setTool('rect'));
-
-        // --- Play Controls ---
-        document.getElementById('play-btn')?.addEventListener('click', () => this.togglePlayMode());
-        document.getElementById('pause-btn')?.addEventListener('click', () => this.togglePause());
 
         // --- Bottom Panel Tabs ---
         document.getElementById('tab-project')?.addEventListener('click', () => this.switchBottomTab('project'));
@@ -185,6 +132,12 @@ export default class EditorUI {
 
         // --- Help ---
         document.getElementById('help-modal-close-btn')?.addEventListener('click', () => this.closeHelpModal());
+
+        // --- Hierarchy Search ---
+        const hierarchySearch = document.getElementById('hierarchy-search');
+        if (hierarchySearch) {
+            hierarchySearch.addEventListener('input', (e) => this.filterHierarchy(e.target.value));
+        }
     }
 
     onPluginReady() {
@@ -212,57 +165,160 @@ export default class EditorUI {
         const scene = this.getActiveGameScene();
         if (!scene) return;
 
-        const list = document.createElement('ul');
-        this.hierarchyTree.appendChild(list);
-
         const rootObjects = scene.children.list.filter(obj => !obj.parentContainer);
 
         rootObjects.forEach(obj => {
             if (obj.getData('hiddenFromEditor')) return;
-            this.createHierarchyItem(obj, list);
+            this.createHierarchyItem(obj, this.hierarchyTree, 0);
         });
     }
 
-    createHierarchyItem(gameObject, parentElement) {
-        const li = document.createElement('li');
-        const div = document.createElement('div');
-        div.className = 'tree-item';
-        div.dataset.objectId = gameObject.name;
+    createHierarchyItem(gameObject, parentElement, depth = 0) {
+        const item = document.createElement('div');
+        item.className = 'hierarchy-item';
+        item.dataset.objectId = gameObject.name;
+        item.style.paddingLeft = `${depth * 20 + 8}px`;
         
-        let icon = '📦';
-        if (gameObject.type === 'Sprite') icon = '🖼️';
-        if (gameObject.type === 'Image') icon = '🖼️';
-        if (gameObject.type === 'Text') icon = 'T';
-        if (gameObject.type === 'Container') icon = '📁';
-        if (gameObject.type === 'TilemapLayer') icon = '🗺️';
-
-        const iconSpan = document.createElement('span');
-        iconSpan.innerText = icon;
-        iconSpan.style.marginRight = '5px';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.innerText = gameObject.name || `[${gameObject.type}]`;
-
-        div.appendChild(iconSpan);
-        div.appendChild(nameSpan);
-
-        div.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.hierarchyTree.querySelectorAll('.tree-item.selected').forEach(el => el.classList.remove('selected'));
-            div.classList.add('selected');
-            this.plugin.selectSingleObject(gameObject);
-        });
-
-        li.appendChild(div);
-        parentElement.appendChild(li);
-
-        if (gameObject.type === 'Container' && gameObject.list && gameObject.list.length > 0) {
-            const subList = document.createElement('ul');
-            li.appendChild(subList);
-            gameObject.list.forEach(child => {
-                this.createHierarchyItem(child, subList);
+        // 折りたたみボタン
+        const hasChildren = gameObject.type === 'Container' && gameObject.list && gameObject.list.length > 0;
+        const toggle = document.createElement('button');
+        toggle.className = 'hierarchy-toggle';
+        toggle.innerHTML = hasChildren ? '▼' : '⋅';
+        toggle.style.visibility = hasChildren ? 'visible' : 'hidden';
+        
+        if (hasChildren) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const childContainer = item.nextElementSibling;
+                if (childContainer && childContainer.classList.contains('hierarchy-children')) {
+                    const isCollapsed = childContainer.style.display === 'none';
+                    childContainer.style.display = isCollapsed ? 'block' : 'none';
+                    toggle.innerHTML = isCollapsed ? '▼' : '▶';
+                }
             });
         }
+        
+        // アイコン
+        const icon = document.createElement('span');
+        icon.className = 'hierarchy-icon';
+        icon.innerHTML = this.getObjectIcon(gameObject);
+        
+        // 名前
+        const name = document.createElement('span');
+        name.className = 'hierarchy-name';
+        name.textContent = gameObject.name || `[${gameObject.type}]`;
+        
+        // クリックイベント
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.hierarchyTree.querySelectorAll('.hierarchy-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+            this.plugin.selectSingleObject(gameObject);
+        });
+        
+        // ドラッグ&ドロップ
+        item.draggable = true;
+        this.setupHierarchyDrag(item, gameObject);
+        
+        item.append(toggle, icon, name);
+        parentElement.appendChild(item);
+        
+        // 子要素を再帰的に追加
+        if (hasChildren) {
+            const childContainer = document.createElement('div');
+            childContainer.className = 'hierarchy-children';
+            gameObject.list.forEach(child => {
+                this.createHierarchyItem(child, childContainer, depth + 1);
+            });
+            parentElement.appendChild(childContainer);
+        }
+    }
+
+    getObjectIcon(gameObject) {
+        const iconMap = {
+            'Sprite': '🖼️',
+            'Image': '🖼️',
+            'Text': 'T',
+            'Container': '📁',
+            'TilemapLayer': '🗺️'
+        };
+        return iconMap[gameObject.type] || '📦';
+    }
+
+    setupHierarchyDrag(item, gameObject) {
+        item.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('gameObjectName', gameObject.name);
+            item.classList.add('dragging');
+        });
+        
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+        });
+        
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            item.classList.add('drag-over');
+        });
+        
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+        
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            
+            const draggedName = e.dataTransfer.getData('gameObjectName');
+            if (draggedName && draggedName !== gameObject.name) {
+                this.reparentObject(draggedName, gameObject.name);
+            }
+        });
+    }
+
+    reparentObject(childName, newParentName) {
+        const scene = this.getActiveGameScene();
+        if (!scene) return;
+        
+        const childObj = this.findObjectByName(scene, childName);
+        const parentObj = newParentName ? this.findObjectByName(scene, newParentName) : null;
+        
+        if (!childObj) return;
+        
+        // Phaserのコンテナシステムを使用
+        if (parentObj && parentObj instanceof Phaser.GameObjects.Container) {
+            parentObj.add(childObj);
+        } else {
+            // 親から削除して、シーンのルートに移動
+            if (childObj.parentContainer) {
+                childObj.parentContainer.remove(childObj);
+            }
+        }
+        
+        this.buildHierarchyPanel(); // 更新
+    }
+
+    findObjectByName(scene, objectName) {
+        return scene.children.list.find(obj => obj.name === objectName);
+    }
+
+    filterHierarchy(searchTerm) {
+        const items = this.hierarchyTree.querySelectorAll('.hierarchy-item');
+        const term = searchTerm.toLowerCase();
+        
+        items.forEach(item => {
+            const nameEl = item.querySelector('.hierarchy-name');
+            if (!nameEl) return;
+            
+            const name = nameEl.textContent.toLowerCase();
+            const matches = name.includes(term);
+            item.style.display = matches || term === '' ? 'flex' : 'none';
+            
+            // 子要素のコンテナも表示/非表示
+            const childContainer = item.nextElementSibling;
+            if (childContainer && childContainer.classList.contains('hierarchy-children')) {
+                childContainer.style.display = matches || term === '' ? 'block' : 'none';
+            }
+        });
     }
 
     // =================================================================
