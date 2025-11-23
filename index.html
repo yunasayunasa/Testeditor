@@ -31,6 +31,11 @@
       <!-- 1. Top Toolbar -->
       <div id="top-toolbar">
         <div class="toolbar-left">
+          <div class="file-controls" style="margin-right: 10px; display: flex; gap: 5px;">
+            <button id="editor-save-scene-btn" title="Save Scene">💾 Save</button>
+            <button id="editor-load-scene-btn" title="Load Scene">📂 Load</button>
+            <input type="file" id="scene-file-input" accept=".json" style="display: none;" />
+          </div>
           <div class="tool-group">
             <button id="tool-hand" title="Hand Tool (Q)">✋</button>
             <button id="tool-move" title="Move Tool (W)" class="active">

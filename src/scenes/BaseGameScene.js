@@ -646,28 +646,6 @@ applyProperties(gameObject, layout) {
             gameObject.setData('ignoreGravity', phys.ignoreGravity === true);
             gameObject.setData('shape', phys.shape || 'rectangle');
         }
-    } else {
-        // 物理ボディがない場合は、ここでスケールを設定
-        gameObject.setScale(data.scaleX ?? 1, data.scaleY ?? 1);
-    }
-
-    // --- 6. (最後の仕上げ) UIシーンモードの特別処理 ---
-    if (this.isUiScene) {
-        gameObject.setVisible(true); // 問答無用で表示
-        
-        // depthが未設定の場合、安全なデフォルト値を与える
-        if (data.depth === undefined) {
-            // 他のUIと重ならないよう、十分大きな値から始める
-            gameObject.setDepth(10000 + this.children.list.length);
-        }
-    }
-    
-    return gameObject;
-}
-    
-  
-/**
- * GameObjectにVSLイベントとエディタ機能を適用する (onClick, onReady対応の最終FIX版)
  * @param {Phaser.GameObjects.GameObject} gameObject - 対象のゲームオブジェクト
  * @param {Array<object>} eventsData - JSONから読み込んだイベント定義の配列
  */
@@ -1401,4 +1379,382 @@ createSceneSnapshot() {
     shutdown() {
         super.shutdown();
     }
+
+    /**
+     * ★★★ 新設 ★★★
+     * ゲームオブジェクトをJSONデータ（レイアウト形式）に変換する。
+     * applyPropertiesの逆変換を行う。
+     * @param {Phaser.GameObjects.GameObject} gameObject - エクスポート対象のオブジェクト
+     * @returns {object} レイアウトデータ
+     */
+    exportGameObject(gameObject) {
+        if (!gameObject) return null;
+
+        const layout = {
+            name: gameObject.name,
+            type: gameObject.type,
+            x: Math.round(gameObject.x),
+            y: Math.round(gameObject.y),
+            angle: gameObject.angle,
+            alpha: gameObject.alpha,
+            depth: gameObject.depth,
+            layer: gameObject.getData('layer') || 'Default',
+            registryKey: gameObject.getData('registryKey')
+        };
+
+        // --- テクスチャ ---
+        if (gameObject.texture) {
+            layout.texture = gameObject.texture.key;
+        }
+
+        // --- サイズ (ContainerやSprite) ---
+        if (gameObject.width && gameObject.height) {
+            layout.width = gameObject.width;
+            layout.height = gameObject.height;
+        }
+
+        // --- スケール ---
+        if (gameObject.scaleX !== 1 || gameObject.scaleY !== 1) {
+            layout.scaleX = gameObject.scaleX;
+            layout.scaleY = gameObject.scaleY;
+        }
+
+        // --- Origin ---
+        if (gameObject.originX !== 0.5 || gameObject.originY !== 0.5) {
+            layout.originX = gameObject.originX;
+            layout.originY = gameObject.originY;
+        }
+
+        // --- テキスト固有 ---
+        if (gameObject.type === 'Text') {
+            layout.text = gameObject.text;
+            layout.style = {
+                fontSize: gameObject.style.fontSize,
+                fill: gameObject.style.color,
+                // 必要に応じて他のスタイルも追加
+            };
+        }
+
+        // --- コンポーネント ---
+        const components = gameObject.getData('components');
+        if (components && components.length > 0) {
+            layout.components = components;
+        }
+
+        // --- イベント ---
+        const events = gameObject.getData('events');
+        if (events && events.length > 0) {
+            layout.events = events;
+        }
+
+        // --- 物理設定 ---
+        if (gameObject.body) {
+            layout.physics = {
+                isStatic: gameObject.body.isStatic,
+                isSensor: gameObject.body.isSensor,
+                friction: gameObject.body.friction,
+                frictionAir: gameObject.body.frictionAir,
+                restitution: gameObject.body.restitution,
+                fixedRotation: gameObject.getData('fixedRotation'),
+                ignoreGravity: gameObject.getData('ignoreGravity'),
+                shape: gameObject.getData('shape'),
+                collisionFilter: {
+                    category: gameObject.getData('collision_category') || gameObject.body.collisionFilter.category,
+                    mask: gameObject.getData('collision_mask') || gameObject.body.collisionFilter.mask
+                }
+            };
+        }
+
+        // --- カスタムデータ ---
+        const customData = {};
+        const excludeKeys = ['components', 'events', 'layer', 'registryKey', 'fixedRotation', 'ignoreGravity', 'shape', 'collision_category', 'collision_mask', 'cropSource', 'isYSortable'];
+        
+        // Phaserのデータマネージャから全データを取得し、除外キー以外を保存
+        if (gameObject.data && gameObject.data.list) {
+            for (const key in gameObject.data.list) {
+                if (!excludeKeys.includes(key)) {
+                    customData[key] = gameObject.data.list[key];
+                }
+            }
+        }
+        if (Object.keys(customData).length > 0) {
+            layout.data = customData;
+        }
+
+        // --- Crop Source (Tilemap Chunk) ---
+        const cropSource = gameObject.getData('cropSource');
+        if (cropSource) {
+            layout.cropSource = cropSource;
+        }
+        
+        // --- Y-Sort ---
+        if (gameObject.getData('isYSortable')) {
+            layout.isYSortable = true;
+        }
+
+        // --- Containerの子要素 ---
+        if (gameObject instanceof Phaser.GameObjects.Container && gameObject.list.length > 0) {
+            layout.objects = gameObject.list.map(child => this.exportGameObject(child)).filter(l => l !== null);
+        }
+
+        return layout;
+    }
+
+    /**
+     * ★★★ 新設 ★★★
+     * 現在のシーン全体をJSONデータとしてエクスポートする。
+     * @returns {object} シーン全体のレイアウトデータ
+     */
+    exportScene() {
+        const sceneLayout = {
+            scene_settings: {
+                backgroundColor: this.cameras.main.backgroundColor.rgba, // 文字列化が必要かも
+                gravity: {
+                    enabled: this.matter.world.engine.gravity.scale !== 0,
+                    x: this.matter.world.engine.gravity.x,
+                    y: this.matter.world.engine.gravity.y,
+                    scale: this.matter.world.engine.gravity.scale
+                },
+                ySortEnabled: this.ySortEnabled
+            },
+            layers: this.editorUI ? this.editorUI.layers : [], // レイヤー情報
+            objects: []
+        };
+
+        // ルートオブジェクトのみを対象（Containerの子はexportGameObject内で再帰処理）
+```
+        
+        return layout;
+    }
+
+  /**
+ * ★★★ 最終確定版：シーンの状態スナップショットを作成する ★★★
+ * 全てのオブジェクトのTransform情報と、シリアライズ可能な全コンポーネントの状態を保存する。
+ * @returns {object} シーンの永続化可能な状態
+ */
+createSceneSnapshot() {
+    const snapshot = {
+        sceneKey: this.scene.key,
+        objects: []
+    };
+
+    for (const gameObject of this.children.list) {
+        // 保存すべきではない一時的なオブジェクトは除外
+        if (!gameObject.active || !gameObject.name || gameObject.name.startsWith('__')) {
+            continue;
+        }
+
+        const objectState = {
+            name: gameObject.name,
+            x: Math.round(gameObject.x),
+            y: Math.round(gameObject.y),
+            scaleX: gameObject.scaleX,
+            scaleY: gameObject.scaleY,
+            angle: gameObject.angle,
+            alpha: gameObject.alpha,
+            components: {} // コンポーネントデータを保存する器
+        };
+
+        // ▼▼▼【ここがシリアライズ処理の核心】▼▼▼
+        if (gameObject.components) {
+            for (const compName in gameObject.components) {
+                const component = gameObject.components[compName];
+                // serializeメソッドを持つコンポーネントだけを対象にする
+                if (component && typeof component.serialize === 'function') {
+                    objectState.components[compName] = component.serialize();
+                }
+            }
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        snapshot.objects.push(objectState);
+    }
+    
+    return snapshot;
+}
+    shutdown() {
+        super.shutdown();
+    }
+
+    /**
+     * ★★★ 新設 ★★★
+     * ゲームオブジェクトをJSONデータ（レイアウト形式）に変換する。
+     * applyPropertiesの逆変換を行う。
+     * @param {Phaser.GameObjects.GameObject} gameObject - エクスポート対象のオブジェクト
+     * @returns {object} レイアウトデータ
+     */
+    exportGameObject(gameObject) {
+        if (!gameObject) return null;
+
+        const layout = {
+            name: gameObject.name,
+            type: gameObject.type,
+            x: Math.round(gameObject.x),
+            y: Math.round(gameObject.y),
+            angle: gameObject.angle,
+            alpha: gameObject.alpha,
+            depth: gameObject.depth,
+            layer: gameObject.getData('layer') || 'Default',
+            registryKey: gameObject.getData('registryKey')
+        };
+
+        // --- テクスチャ ---
+        if (gameObject.texture) {
+            layout.texture = gameObject.texture.key;
+        }
+
+        // --- サイズ (ContainerやSprite) ---
+        if (gameObject.width && gameObject.height) {
+            layout.width = gameObject.width;
+            layout.height = gameObject.height;
+        }
+
+        // --- スケール ---
+        if (gameObject.scaleX !== 1 || gameObject.scaleY !== 1) {
+            layout.scaleX = gameObject.scaleX;
+            layout.scaleY = gameObject.scaleY;
+        }
+
+        // --- Origin ---
+        if (gameObject.originX !== 0.5 || gameObject.originY !== 0.5) {
+            layout.originX = gameObject.originX;
+            layout.originY = gameObject.originY;
+        }
+
+        // --- テキスト固有 ---
+        if (gameObject.type === 'Text') {
+            layout.text = gameObject.text;
+            layout.style = {
+                fontSize: gameObject.style.fontSize,
+                fill: gameObject.style.color,
+                // 必要に応じて他のスタイルも追加
+            };
+        }
+
+        // --- コンポーネント ---
+        const components = gameObject.getData('components');
+        if (components && components.length > 0) {
+            layout.components = components;
+        }
+
+        // --- イベント ---
+        const events = gameObject.getData('events');
+        if (events && events.length > 0) {
+            layout.events = events;
+        }
+
+        // --- 物理設定 ---
+        if (gameObject.body) {
+            layout.physics = {
+                isStatic: gameObject.body.isStatic,
+                isSensor: gameObject.body.isSensor,
+                friction: gameObject.body.friction,
+                frictionAir: gameObject.body.frictionAir,
+                restitution: gameObject.body.restitution,
+                fixedRotation: gameObject.getData('fixedRotation'),
+                ignoreGravity: gameObject.getData('ignoreGravity'),
+                shape: gameObject.getData('shape'),
+                collisionFilter: {
+                    category: gameObject.getData('collision_category') || gameObject.body.collisionFilter.category,
+                    mask: gameObject.getData('collision_mask') || gameObject.body.collisionFilter.mask
+                }
+            };
+        }
+
+        // --- カスタムデータ ---
+        const customData = {};
+        const excludeKeys = ['components', 'events', 'layer', 'registryKey', 'fixedRotation', 'ignoreGravity', 'shape', 'collision_category', 'collision_mask', 'cropSource', 'isYSortable'];
+        
+        // Phaserのデータマネージャから全データを取得し、除外キー以外を保存
+        if (gameObject.data && gameObject.data.list) {
+            for (const key in gameObject.data.list) {
+                if (!excludeKeys.includes(key)) {
+                    customData[key] = gameObject.data.list[key];
+                }
+            }
+        }
+        if (Object.keys(customData).length > 0) {
+            layout.data = customData;
+        }
+
+        // --- Crop Source (Tilemap Chunk) ---
+        const cropSource = gameObject.getData('cropSource');
+        if (cropSource) {
+            layout.cropSource = cropSource;
+        }
+        
+        // --- Y-Sort ---
+        if (gameObject.getData('isYSortable')) {
+            layout.isYSortable = true;
+        }
+
+        // --- Containerの子要素 ---
+        if (gameObject instanceof Phaser.GameObjects.Container && gameObject.list.length > 0) {
+            layout.objects = gameObject.list.map(child => this.exportGameObject(child)).filter(l => l !== null);
+        }
+
+        return layout;
+    }
+
+    /**
+     * ★★★ 新設 ★★★
+     * 現在のシーン全体をJSONデータとしてエクスポートする。
+     * @returns {object} シーン全体のレイアウトデータ
+     */
+    exportScene() {
+        const sceneLayout = {
+            scene_settings: {
+                backgroundColor: this.cameras.main.backgroundColor.rgba, // 文字列化が必要かも
+                gravity: {
+                    enabled: this.matter.world.engine.gravity.scale !== 0,
+                    x: this.matter.world.engine.gravity.x,
+                    y: this.matter.world.engine.gravity.y,
+                    scale: this.matter.world.engine.gravity.scale
+                },
+                ySortEnabled: this.ySortEnabled
+            },
+            layers: this.editorUI ? this.editorUI.layers : [], // レイヤー情報
+            objects: []
+        };
+
+        // ルートオブジェクトのみを対象（Containerの子はexportGameObject内で再帰処理）
+        const rootObjects = this.children.list.filter(obj => !obj.parentContainer);
+
+        rootObjects.forEach(obj => {
+            // エディタ用UIやシステムオブジェクトは除外
+            if (obj.getData('hiddenFromEditor')) return;
+            if (obj.type === 'Graphics' && obj.name.startsWith('Gizmo')) return; // ギズモ除外
+
+            const objLayout = this.exportGameObject(obj);
+            if (objLayout) {
+                sceneLayout.objects.push(objLayout);
+            }
+        });
+
+        return sceneLayout;
+    }
+
+    /**
+     * ★★★ 新設 ★★★
+     * シーン内の（エディタで編集可能な）オブジェクトを全て削除する。
+     * ロード前のクリーンアップに使用。
+     */
+    clearScene() {
+        // 削除対象をリストアップ（ループ中の削除によるインデックスずれを防ぐため）
+        const objectsToDestroy = this.children.list.filter(obj => {
+            // エディタ用UIやシステムオブジェクトは除外
+            if (obj.getData('hiddenFromEditor')) return false;
+            if (obj.type === 'Graphics' && obj.name.startsWith('Gizmo')) return false;
+            if (obj === this.cameras.main) return false; // カメラ自体は消さない
+            return true;
+        });
+
+        objectsToDestroy.forEach(obj => obj.destroy());
+        
+        // Yソートリストもクリア
+        this.ySortableObjects = [];
+        
+        console.log(`[BaseGameScene] Cleared ${objectsToDestroy.length} objects from scene.`);
+    }
+}
 }

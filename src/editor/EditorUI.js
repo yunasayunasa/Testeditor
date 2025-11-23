@@ -46,7 +46,6 @@ export default class EditorUI {
             refreshBtn.addEventListener('click', () => this.plugin.refresh());
         }
     }
-
     getDomElements() {
         // Main Panels
         this.editorPanel = document.getElementById('editor-panel'); // Wrapper
@@ -55,19 +54,41 @@ export default class EditorUI {
         this.inspectorPanel = document.getElementById('inspector-panel');
         this.bottomPanel = document.getElementById('bottom-panel');
 
+        // --- File Controls ---
+        this.saveSceneBtn = document.getElementById('editor-save-scene-btn');
+        this.loadSceneBtn = document.getElementById('editor-load-scene-btn');
+        this.sceneFileInput = document.getElementById('scene-file-input');
+
         // --- Bottom Panel Tabs ---
         document.getElementById('tab-project')?.addEventListener('click', () => this.switchBottomTab('project'));
         document.getElementById('tab-console')?.addEventListener('click', () => this.switchBottomTab('console'));
 
         // --- Asset Browser ---
+        this.assetBrowserPanel = document.getElementById('asset-browser-panel');
+        this.assetListContainer = document.getElementById('asset-list');
+        this.assetBreadcrumb = document.getElementById('asset-breadcrumb');
         document.getElementById('add-asset-button')?.addEventListener('click', this.onAddButtonClicked);
         document.getElementById('add-text-button')?.addEventListener('click', this.onAddTextClicked);
 
-        // --- Modes ---
-        this.selectModeBtn?.addEventListener('click', () => this.setEditorMode('select'));
-        this.tilemapModeBtn?.addEventListener('click', this.openTilemapEditor);
+        // --- Console ---
+        this.consolePanel = document.getElementById('console-panel');
+        this.consoleOutput = document.getElementById('console-output');
+        this.consoleInput = document.getElementById('console-input');
+        this.clearConsoleBtn = document.getElementById('clear-console-btn');
+        if (this.clearConsoleBtn) {
+            this.clearConsoleBtn.addEventListener('click', () => this.clearConsole());
+        }
         
+        // --- Hierarchy ---
+        this.hierarchyTree = document.getElementById('hierarchy-tree');
+        this.hierarchySearch = document.getElementById('hierarchy-search');
+        this.createObjectBtn = document.getElementById('create-object-btn');
+        if (this.hierarchySearch) {
+            this.hierarchySearch.addEventListener('input', (e) => this.filterHierarchy(e.target.value));
+        }
+
         // --- Layers ---
+        this.layerListContainer = document.getElementById('layer-list');
         document.getElementById('add-layer-btn')?.addEventListener('click', this.addNewLayer);
         if (this.layerListContainer) {
             this.layerListContainer.addEventListener('click', (event) => {
@@ -90,61 +111,24 @@ export default class EditorUI {
         }
 
         // --- Tilemap ---
+        this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
+        this.tilemapModeBtn?.addEventListener('click', this.openTilemapEditor);
         document.getElementById('tilemap-editor-close-btn')?.addEventListener('click', this.closeTilemapEditor);
         document.getElementById('crop-and-place-btn')?.addEventListener('click', this.onCropAndPlace);
+        this.tilemapEditorOverlay = document.getElementById('tilemap-editor-overlay');
+        this.tilemapListContainer = document.getElementById('tilemap-list-container');
+        this.selectedTilemapName = document.getElementById('selected-tilemap-name');
+        this.tilemapPreviewContent = document.getElementById('tilemap-preview-content');
 
         // --- VSL & State Machine ---
         document.getElementById('event-editor-close-btn')?.addEventListener('click', this.closeEventEditor);
         document.getElementById('sm-editor-close-btn')?.addEventListener('click', this.closeStateMachineEditor);
-        
-        // Hierarchy
-        this.hierarchyTree = document.getElementById('hierarchy-tree');
-        this.createObjectBtn = document.getElementById('create-object-btn');
-
-        // Scene View
-        this.gameContainer = document.getElementById('game-container');
-        this.sceneOverlay = document.getElementById('scene-overlay');
-        this.cameraControls = document.getElementById('camera-controls');
-        
-        // Inspector
-        this.editorPropsContainer = document.getElementById('editor-props');
-        this.addComponentBtn = document.getElementById('add-component-btn');
-
-        // Bottom Panel (Project/Console)
-        this.assetBrowserPanel = document.getElementById('asset-browser');
-        this.assetListContainer = document.getElementById('asset-list');
-        this.assetTabContainer = document.getElementById('asset-tabs');
-        this.consoleLogsContainer = document.getElementById('console-logs');
-        this.clearConsoleBtn = document.getElementById('clear-console-btn');
-
-        // Tools & Modes
-        this.selectModeBtn = document.getElementById('select-mode-btn');
-        this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
-        this.modeToggle = document.getElementById('mode-toggle-checkbox');
-        this.modeLabel = document.getElementById('mode-label');
-
-        // Overlays
-        this.helpModal = document.getElementById('help-modal-overlay');
-        this.helpModalContent = document.getElementById('help-modal-content');
-        this.layerListContainer = document.getElementById('layer-list');
-        
         this.eventEditorOverlay = document.getElementById('event-editor-overlay');
         this.eventEditorTitle = document.getElementById('event-editor-title');
         this.vslNodeList = document.getElementById('vsl-node-list');
         this.vslCanvas = document.getElementById('vsl-canvas');
         this.vslTabs = document.getElementById('vsl-tabs');
-        
         this.smEditorOverlay = document.getElementById('sm-editor-overlay');
-        
-        this.tilemapEditorOverlay = document.getElementById('tilemap-editor-overlay');
-        this.tilemapListContainer = document.getElementById('tilemap-list-container');
-        this.selectedTilemapName = document.getElementById('selected-tilemap-name');
-        this.tilemapPreviewContent = document.getElementById('tilemap-preview-content');
-        
-        // Console Clear Button Event
-        if (this.clearConsoleBtn) {
-            this.clearConsoleBtn.addEventListener('click', () => this.clearConsole());
-        }
         
         document.getElementById('vsl-select-mode-btn')?.addEventListener('click', () => this.setVslMode('select'));
         document.getElementById('vsl-pan-mode-btn')?.addEventListener('click', () => this.setVslMode('pan'));
@@ -162,7 +146,10 @@ export default class EditorUI {
             });
         }
 
-        // --- Camera Controls ---
+        // --- Scene View & Camera ---
+        this.gameContainer = document.getElementById('game-container');
+        this.sceneOverlay = document.getElementById('scene-overlay');
+        this.cameraControls = document.getElementById('camera-controls');
         document.getElementById('camera-zoom-in')?.addEventListener('click', () => this.plugin.zoomCamera(0.2));
         document.getElementById('camera-zoom-out')?.addEventListener('click', () => this.plugin.zoomCamera(-0.2));
         document.getElementById('camera-reset')?.addEventListener('click', () => this.plugin.resetCamera());
@@ -171,7 +158,15 @@ export default class EditorUI {
         this.setupPanButton(document.getElementById('camera-pan-left'), -10, 0);
         this.setupPanButton(document.getElementById('camera-pan-right'), 10, 0);
 
-        // --- Global Mode Toggle ---
+        // --- Inspector ---
+        this.editorPropsContainer = document.getElementById('editor-props');
+        this.addComponentBtn = document.getElementById('add-component-btn');
+
+        // --- Modes ---
+        this.selectModeBtn = document.getElementById('select-mode-btn');
+        this.selectModeBtn?.addEventListener('click', () => this.setEditorMode('select'));
+        this.modeToggle = document.getElementById('mode-toggle-checkbox');
+        this.modeLabel = document.getElementById('mode-label');
         if (this.modeToggle) {
             this.modeToggle.addEventListener('change', (event) => {
                 const newMode = event.target.checked ? 'play' : 'select';
@@ -180,12 +175,101 @@ export default class EditorUI {
         }
 
         // --- Help ---
+        this.helpModal = document.getElementById('help-modal-overlay');
+        this.helpModalContent = document.getElementById('help-modal-content');
         document.getElementById('help-modal-close-btn')?.addEventListener('click', () => this.closeHelpModal());
+    }
 
-        // --- Hierarchy Search ---
-        const hierarchySearch = document.getElementById('hierarchy-search');
-        if (hierarchySearch) {
-            hierarchySearch.addEventListener('input', (e) => this.filterHierarchy(e.target.value));
+    initializeEventListeners() {
+        // --- File Controls ---
+        if (this.saveSceneBtn) {
+            this.saveSceneBtn.addEventListener('click', this.onSaveSceneClicked);
+        }
+        if (this.loadSceneBtn) {
+            this.loadSceneBtn.addEventListener('click', () => this.sceneFileInput?.click());
+        }
+        if (this.sceneFileInput) {
+            this.sceneFileInput.addEventListener('change', this.onLoadSceneFile);
+        }
+
+        // --- Toolbar Controls ---
+        const playBtn = document.getElementById('editor-play-btn');
+        const pauseBtn = document.getElementById('editor-pause-btn');
+        const stepBtn = document.getElementById('editor-step-btn');
+
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                if (EngineAPI) EngineAPI.resumeTime();
+                playBtn.classList.add('active');
+                if (pauseBtn) pauseBtn.classList.remove('active');
+            });
+        }
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                if (EngineAPI) EngineAPI.stopTime();
+                pauseBtn.classList.add('active');
+                if (playBtn) playBtn.classList.remove('active');
+            });
+        }
+        if (stepBtn) {
+            stepBtn.addEventListener('click', () => {
+                // Step logic (optional)
+                console.log('Step button clicked');
+            });
+        }
+
+        // --- Tool Buttons ---
+        const tools = ['tool-hand', 'tool-move', 'tool-rotate', 'tool-scale', 'tool-rect'];
+        tools.forEach(toolId => {
+            const btn = document.getElementById(toolId);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    // Deactivate all
+                    tools.forEach(t => document.getElementById(t)?.classList.remove('active'));
+                    // Activate clicked
+                    btn.classList.add('active');
+                    
+                    // Set tool in plugin
+                    const toolName = toolId.replace('tool-', '');
+                    if (this.plugin && this.plugin.gizmoManager) {
+                        this.plugin.gizmoManager.setActiveTool(toolName);
+                    }
+                });
+            }
+        });
+
+        // --- Layer Dropdown ---
+        const layerDropdown = document.getElementById('layer-dropdown');
+        if (layerDropdown) {
+            layerDropdown.addEventListener('change', (e) => {
+                this.setActiveLayer(e.target.value);
+            });
+        }
+
+        // --- Layout Button ---
+        const layoutBtn = document.getElementById('editor-layout-btn');
+        if (layoutBtn) {
+            layoutBtn.addEventListener('click', () => {
+                // Toggle layout or show menu
+                console.log('Layout button clicked');
+            });
+        }
+        
+        // --- Create Object Button ---
+        if (this.createObjectBtn) {
+            this.createObjectBtn.addEventListener('click', () => {
+                // Show create menu (simplified)
+                const name = prompt('Enter object name:', 'New Object');
+                if (name) {
+                    const scene = this.plugin.getActiveGameScene();
+                    if (scene) {
+                        const newObj = scene.add.sprite(400, 300, 'logo'); // Default sprite
+                        newObj.name = name;
+                        this.plugin.makeEditable(newObj, scene);
+                        this.buildHierarchyPanel();
+                    }
+                }
+            });
         }
     }
 
@@ -2195,5 +2279,51 @@ export default class EditorUI {
             });
         }
         return clonedEvent;
+    }
+    // =================================================================
+    // Scene Save / Load
+    // =================================================================
+    onSaveSceneClicked = () => {
+        const scene = this.getActiveGameScene();
+        if (!scene || typeof scene.exportScene !== 'function') {
+            alert('シーンのエクスポートに失敗しました。');
+            return;
+        }
+        const sceneData = scene.exportScene();
+        const jsonString = JSON.stringify(sceneData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scene_${scene.scene.key}_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    onLoadSceneFile = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                const scene = this.getActiveGameScene();
+                if (scene && typeof scene.buildSceneFromLayout === 'function') {
+                    if (confirm('現在のシーンをクリアしてロードしますか？')) {
+                        if (typeof scene.clearScene === 'function') scene.clearScene();
+                        scene.buildSceneFromLayout(json);
+                        this.plugin.updateLayerStates(this.layers); // レイヤー状態更新
+                        this.buildHierarchyPanel(); // ヒエラルキー更新
+                        alert('シーンをロードしました。');
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load scene:', err);
+                alert('シーンファイルの読み込みに失敗しました。');
+            }
+            event.target.value = ''; // リセット
+        };
+        reader.readAsText(file);
     }
 }
