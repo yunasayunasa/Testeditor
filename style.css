@@ -476,8 +476,17 @@ details:not([open]) .component-header::before {
 
 /* --- Debug Mode Visibility --- */
 /* Only show editor if debug mode is active (handled by JS, but CSS can help) */
-body:not(.debug-mode) #editor-root {
+/* body:not(.debug-mode) #editor-root {
   display: none;
+} */
+
+#scene-view-panel {
+  flex: 1;
+  position: relative;
+  background-color: #101010; /* Darker for scene view */
+  display: flex;
+  flex-direction: column;
+  min-width: 300px; /* Prevent collapsing */
 }
 body:not(.debug-mode) #game-container {
   /* In play mode, game container might need to be fullscreen */

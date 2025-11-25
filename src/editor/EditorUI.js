@@ -7,8 +7,12 @@ export default class EditorUI {
         this.plugin = editorPlugin;
         this.assetList = this.game.registry.get('asset_list') || [];
         
-        const currentURL = window.location.href;
-        if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
+        // Force debug mode for development
+        // const currentURL = window.location.href;
+        // if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
+        
+        // Add debug-mode class to body to ensure editor visibility
+        document.body.classList.add('debug-mode');
 
         // --- Properties ---
         this.selectedAssetKey = null;
@@ -111,6 +115,11 @@ this.redoBtn = document.getElementById('editor-redo-btn');
                 }
             });
         }
+
+        // Check for critical elements
+        if (!this.editorPanel) console.warn('EditorUI: #editor-panel not found');
+        if (!this.sceneViewPanel) console.warn('EditorUI: #scene-view-panel not found');
+        if (!this.gameContainer) console.warn('EditorUI: #game-container not found');
 
         // --- Tilemap ---
         this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
@@ -251,6 +260,8 @@ if (this.redoBtn) {
                         this.plugin.gizmoManager.setActiveTool(toolName);
                     }
                 });
+            } else {
+                console.warn(`EditorUI: Tool button #${toolId} not found`);
             }
         });
 
@@ -286,6 +297,8 @@ if (this.redoBtn) {
                     }
                 }
             });
+        } else {
+            console.warn('EditorUI: #create-object-btn not found');
         }
     }
 
