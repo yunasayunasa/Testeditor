@@ -50,14 +50,30 @@ body {
 }
 
 #top-toolbar {
-  height: var(--toolbar-height);
+  min-height: var(--toolbar-height); /* Allow expansion */
+  height: auto;
   background-color: var(--bg-header);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 10px;
+  padding: 4px 10px; /* Add vertical padding */
+  padding-top: max(4px, env(safe-area-inset-top)); /* Safe area support */
   flex-shrink: 0;
+  overflow-x: auto; /* Allow horizontal scroll */
+  white-space: nowrap;
+  gap: 10px; /* Add gap between sections */
+  z-index: 100; /* Ensure it's above other elements */
+  position: relative; /* Establish stacking context */
+}
+
+#top-toolbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+#top-toolbar::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 2px;
 }
 
 #main-workspace {

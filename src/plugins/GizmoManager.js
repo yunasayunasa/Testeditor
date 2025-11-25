@@ -18,6 +18,18 @@ export default class GizmoManager {
         }
     }
 
+    setActiveTool(toolName) {
+        // Map tool names to modes if necessary, or just pass through
+        // 'hand' and 'rect' might need special handling or just be ignored by GizmoManager
+        if (['move', 'rotate', 'scale'].includes(toolName)) {
+            this.setMode(toolName);
+        } else {
+            // For 'hand' or 'rect', we might want to detach gizmos or switch to a different mode
+            // For now, let's just detach gizmos if it's not a transform tool
+            this.detach();
+        }
+    }
+
     attach(gameObject) {
         if (this.target === gameObject) return;
         this.detach();
