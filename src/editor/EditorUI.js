@@ -1115,6 +1115,12 @@ if (this.redoBtn) {
         this.helpModal.style.display = 'none';
     }
 
+    onSaveSceneClicked = () => {
+        if (this.plugin) {
+            this.plugin.exportScene();
+        }
+    }
+
     setupPanButton(button, dx, dy) {
         if (!button) return;
         let intervalId = null;
