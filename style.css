@@ -561,3 +561,50 @@ body:not(.debug-mode) #game-container {
   color: var(--text-main);
 }
 
+/* Toggle Switch Styles */
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--accent-color);
+}
+
+.switch input:focus + .slider {
+  box-shadow: 0 0 1px var(--accent-color);
+}
+
+.switch input:checked + .slider .slider-knob {
+  transform: translateX(14px);
+}
+
+/* Asset Tabs */
+.asset-tab {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.asset-tab:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.asset-tab.active {
+  background-color: var(--bg-selected);
+  color: white;
+}
+
+/* Hierarchy Panel Adjustments */
+#hierarchy-panel .panel-tools {
+  flex-shrink: 0;
+}
+
+#hierarchy-search {
+  min-width: 60px;
+}
+

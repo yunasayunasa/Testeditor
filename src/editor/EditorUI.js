@@ -70,8 +70,9 @@ this.redoBtn = document.getElementById('editor-redo-btn');
         document.getElementById('tab-console')?.addEventListener('click', () => this.switchBottomTab('console'));
 
         // --- Asset Browser ---
-        this.assetBrowserPanel = document.getElementById('asset-browser-panel');
+        this.assetBrowserPanel = document.getElementById('asset-browser-panel'); // Note: This ID might not exist in HTML, but logic handles null
         this.assetListContainer = document.getElementById('asset-list');
+        this.assetTabContainer = document.getElementById('asset-type-tabs'); // Added this
         this.assetBreadcrumb = document.getElementById('asset-breadcrumb');
         document.getElementById('add-asset-button')?.addEventListener('click', this.onAddButtonClicked);
         document.getElementById('add-text-button')?.addEventListener('click', this.onAddTextClicked);
