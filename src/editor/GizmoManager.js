@@ -3,6 +3,7 @@ export default class GizmoManager {
     constructor(plugin) {
         this.plugin = plugin;
         this.scene = null;
+        this.editorPlugin = null;
         this.activeTool = 'select'; // select, move, rotate, scale
         this.attachedObject = null;
         

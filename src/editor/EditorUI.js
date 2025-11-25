@@ -58,7 +58,9 @@ export default class EditorUI {
         this.saveSceneBtn = document.getElementById('editor-save-scene-btn');
         this.loadSceneBtn = document.getElementById('editor-load-scene-btn');
         this.sceneFileInput = document.getElementById('scene-file-input');
-
+// --- Edit Controls ---
+this.undoBtn = document.getElementById('editor-undo-btn');
+this.redoBtn = document.getElementById('editor-redo-btn');
         // --- Bottom Panel Tabs ---
         document.getElementById('tab-project')?.addEventListener('click', () => this.switchBottomTab('project'));
         document.getElementById('tab-console')?.addEventListener('click', () => this.switchBottomTab('console'));
@@ -217,7 +219,21 @@ export default class EditorUI {
                 console.log('Step button clicked');
             });
         }
-
+// --- Edit Controls (Undo/Redo) ---
+if (this.undoBtn) {
+    this.undoBtn.addEventListener('click', () => {
+        if (this.plugin.commandManager) {
+            this.plugin.commandManager.undo();
+        }
+    });
+}
+if (this.redoBtn) {
+    this.redoBtn.addEventListener('click', () => {
+        if (this.plugin.commandManager) {
+            this.plugin.commandManager.redo();
+        }
+});
+}
         // --- Tool Buttons ---
         const tools = ['tool-hand', 'tool-move', 'tool-rotate', 'tool-scale', 'tool-rect'];
         tools.forEach(toolId => {
@@ -2326,4 +2342,11 @@ export default class EditorUI {
         };
         reader.readAsText(file);
     }
+    /**
+ * Undo/Redoボタンの有効/無効を更新
+ */
+updateUndoRedoButtons(canUndo, canRedo) {
+    if (this.undoBtn) this.undoBtn.disabled = !canUndo;
+    if (this.redoBtn) this.redoBtn.disabled = !canRedo;
+}
 }

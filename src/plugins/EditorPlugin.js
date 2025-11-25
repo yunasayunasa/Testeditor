@@ -1,5 +1,6 @@
 import { ComponentRegistry } from '../components/index.js';
 import GizmoManager from './GizmoManager.js';
+import { EditorCommandManager } from '../editor/EditorCommandManager.js';
 /**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
  * オブジェクトの選択、プロパティ編集、レイアウトのエクスポート機能などを管理する。
@@ -27,6 +28,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.layerStates = []; // ★ レイヤーの状態を保持
         this.selectedLayer = null;
        this.gizmoManager = new GizmoManager();
+       this.commandManager = new EditorCommandManager(this);
     }
    
 
