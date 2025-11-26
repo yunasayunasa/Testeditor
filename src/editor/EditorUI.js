@@ -2013,11 +2013,135 @@ export default class EditorUI {
         }
     }
 
+    _setupNodeDrag(nodeElement, nodeWrapper, nodeData, svgLayer, targetVslData) {
+        const nodeHeader = nodeElement.querySelector('.vsl-node-header');
+        if (!nodeHeader) return;
+
+        nodeHeader.style.cursor = 'grab';
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        const onPointerDown = (e) => {
+            if (e.target.closest('.vsl-node-delete-btn') || e.target.closest('input') || e.target.closest('select')) return;
+
+            isDragging = true;
+            nodeElement.classList.add('dragging');
+            nodeHeader.style.cursor = 'grabbing';
+
+            startX = e.clientX;
+            startY = e.clientY;
+            initialLeft = parseFloat(nodeWrapper.style.left) || 0;
+            initialTop = parseFloat(nodeWrapper.style.top) || 0;
+
+            nodeHeader.setPointerCapture(e.pointerId);
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerMove = (e) => {
+            if (!isDragging) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            nodeWrapper.style.left = `${initialLeft + dx}px`;
+            nodeWrapper.style.top = `${initialTop + dy}px`;
+
+            if (targetVslData && targetVslData.connections) {
+                this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
+            }
+        };
+
+        const onPointerUp = (e) => {
+            if (!isDragging) return;
+
+            isDragging = false;
+            nodeElement.classList.remove('dragging');
+            nodeHeader.style.cursor = 'grab';
+            nodeHeader.releasePointerCapture(e.pointerId);
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            nodeData.x = Math.max(0, initialLeft + dx);
+            nodeData.y = Math.max(0, initialTop + dy);
+
+            const xInput = nodeElement.querySelector('.node-slider-row:nth-of-type(1) input[type="number"]');
+            const yInput = nodeElement.querySelector('.node-slider-row:nth-of-type(2) input[type="number"]');
+            if (xInput) xInput.value = Math.round(nodeData.x);
+            if (yInput) yInput.value = Math.round(nodeData.y);
+
+            const isSmEditor = this.smEditorOverlay.style.display === 'flex';
+            if (isSmEditor) {
+                this.editingObject.setData('stateMachine', this.stateMachineData);
+            } else {
+                const allEvents = this.editingObject.getData('events');
+                this.editingObject.setData('events', allEvents);
+            }
+
+            if (targetVslData && targetVslData.connections) {
+                this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
+            }
+        };
+
+        nodeHeader.addEventListener('pointerdown', onPointerDown);
+        nodeHeader.addEventListener('pointermove', onPointerMove);
+        nodeHeader.addEventListener('pointerup', onPointerUp);
+    }
+
     populateVslCanvas() {
         const isSmEditor = this.smEditorOverlay.style.display === 'flex';
         const canvasEl = isSmEditor ? this.smEditorOverlay.querySelector('.sm-vsl-canvas') : this.vslCanvas;
         if (!canvasEl) return;
         let targetVslData;
+        if (isSmEditor) targetVslData = this.activeVslData;
+        else {
+            const events = this.editingObject?.getData('events') || [];
+            targetVslData = events.find(e => e.id === this.activeEventId);
+        }
+        canvasEl.innerHTML = '';
+        const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgLayer.id = 'vsl-svg-layer';
+        svgLayer.setAttribute('width', '4000');
+        svgLayer.setAttribute('height', '4000');
+        canvasEl.appendChild(svgLayer);
+        if (!targetVslData) return;
+        if (targetVslData.nodes) {
+            targetVslData.nodes.forEach(nodeData => {
+                const nodeWrapper = document.createElement('div');
+                nodeWrapper.className = 'vsl-node-wrapper';
+                nodeWrapper.style.left = `${nodeData.x}px`;
+                nodeWrapper.style.top = `${nodeData.y}px`;
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'vsl-node';
+                nodeElement.dataset.isNode = 'true';
+                nodeElement.dataset.nodeId = nodeData.id;
+                this.buildNodeContent(nodeElement, nodeData);
+                nodeWrapper.appendChild(nodeElement);
+                canvasEl.appendChild(nodeWrapper);
+
+                // Pin click handlers
+                nodeElement.querySelectorAll('[data-pin-type]').forEach(pinElement => {
+                    pinElement.addEventListener('pointerdown', (event) => {
+                        event.stopPropagation();
+                        this.onPinClicked(pinElement);
+                    });
+                });
+
+                // Node drag functionality
+                this._setupNodeDrag(nodeElement, nodeWrapper, nodeData, svgLayer, targetVslData);
+            });
+        }
+        requestAnimationFrame(() => {
+            if (targetVslData && targetVslData.connections) {
+                this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
+            }
+        });
+    }
+
+    // =================================================================
+    // State Machine Editor
+    // =================================================================
+    openStateMachineEditor = (selectedObject) => {
+        if (!this.smEditorOverlay || !selectedObject) return;
         document.body.classList.add('modal-open');
         this.game.input.enabled = false;
         this.editingObject = selectedObject;
