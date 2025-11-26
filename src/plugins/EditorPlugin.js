@@ -1923,15 +1923,36 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // ドラッグ中はUIを更新しない
         });
 
-        gameObject.off('dragend');
-        gameObject.on('dragend', (pointer) => {
-            // ドラッグが終わったタイミングでUIを更新
-            if (this.selectedObjects && this.selectedObjects.length > 0) {
-                this.selectMultipleObjects(this.selectedObjects); // 複数選択UIを再表示
-            } else {
-                this.updatePropertyPanel();
-            }
-        });
+  gameObject.off('dragend');
+gameObject.on('dragend', (pointer) => {
+    // ドラッグ開始位置を取得
+    const dragStartX = gameObject.getData('dragStartX');
+    const dragStartY = gameObject.getData('dragStartY');
+    const dragEndX = gameObject.x;
+    const dragEndY = gameObject.y;
+    
+    // 位置が変わっていればコマンドを記録
+    if (dragStartX !== undefined && dragStartY !== undefined) {
+        if (Math.abs(dragEndX - dragStartX) > 0.1 || Math.abs(dragEndY - dragStartY) > 0.1) {
+            const command = new MoveObjectCommand(
+                this,
+                gameObject,
+                dragStartX, dragStartY,
+                dragEndX, dragEndY
+            );
+            this.commandManager.execute(command);
+        }
+        gameObject.setData('dragStartX', undefined);
+        gameObject.setData('dragStartY', undefined);
+    }
+    
+    // ドラッグが終わったタイミングでUIを更新
+    if (this.selectedObjects && this.selectedObjects.length > 0) {
+        this.selectMultipleObjects(this.selectedObjects);
+    } else {
+        this.updatePropertyPanel();
+    }
+});
 
 
 
