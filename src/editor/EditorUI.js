@@ -190,6 +190,17 @@ this.redoBtn = document.getElementById('editor-redo-btn');
         this.helpModal = document.getElementById('help-modal-overlay');
         this.helpModalContent = document.getElementById('help-modal-content');
         document.getElementById('help-modal-close-btn')?.addEventListener('click', () => this.closeHelpModal());
+
+        // --- Inspector Lock ---
+        this.inspectorLocked = false;
+        this.lockInspectorBtn = document.getElementById('lock-inspector-btn');
+        if (this.lockInspectorBtn) {
+            this.lockInspectorBtn.addEventListener('click', () => {
+                this.inspectorLocked = !this.inspectorLocked;
+                this.lockInspectorBtn.textContent = this.inspectorLocked ? '🔓' : '🔒';
+                console.log(`Inspector ${this.inspectorLocked ? 'locked' : 'unlocked'}`);
+            });
+        }
     }
 
     initializeEventListeners() {
