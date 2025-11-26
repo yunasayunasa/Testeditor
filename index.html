@@ -102,6 +102,24 @@
 
         <!-- Center Column: Scene View (Game Canvas) -->
         <div id="scene-view-panel" class="editor-panel">
+          <div class="panel-header">
+            <div class="scene-tabs">
+              <button class="tab active">Scene</button>
+              <button class="tab">Game</button>
+              <button class="tab">Animator</button>
+            </div>
+            <div class="scene-tools">
+              <button id="toggle-2d-3d" title="Toggle 2D/3D View">2D</button>
+              <button id="toggle-lighting" title="Toggle Lighting">☀</button>
+              <button id="toggle-audio" title="Toggle Audio">🔊</button>
+            </div>
+          </div>
+          <div class="panel-content" id="scene-view-content">
+            <!-- Phaser Canvas will be injected here or positioned over this -->
+            <div id="game-container"></div>
+
+            <!-- Overlay Controls (Gizmos, etc) -->
+            <div id="scene-overlay">
               <div id="gizmo-layer"></div>
             </div>
           </div>
