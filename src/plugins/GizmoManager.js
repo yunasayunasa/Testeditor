@@ -14,7 +14,139 @@ export default class GizmoManager {
         this.scene = scene;
     }
 
-    // ... (keep existing methods until setupHandleEvents)
+    setMode(mode) {
+        this.mode = mode;
+        if (this.target) {
+            this.refreshGizmos();
+        }
+    }
+
+    setActiveTool(toolName) {
+        // Map tool names to modes if necessary, or just pass through
+        // 'hand' and 'rect' might need special handling or just be ignored by GizmoManager
+        if (['move', 'rotate', 'scale'].includes(toolName)) {
+            this.setMode(toolName);
+        } else {
+            // For 'hand' or 'rect', we might want to detach gizmos or switch to a different mode
+            // For now, let's just detach gizmos if it's not a transform tool
+            this.detach();
+        }
+    }
+
+    attach(gameObject) {
+        if (this.target === gameObject) return;
+        this.detach();
+        this.target = gameObject;
+        this.createGizmos();
+    }
+
+    detach() {
+        if (this.gizmoContainer) {
+            this.gizmoContainer.destroy();
+            this.gizmoContainer = null;
+        }
+        this.target = null;
+        this.activeHandle = null;
+    }
+
+    refreshGizmos() {
+        if (this.gizmoContainer) {
+            this.gizmoContainer.destroy();
+        }
+        this.createGizmos();
+    }
+
+    createGizmos() {
+        if (!this.scene || !this.target) return;
+
+        this.gizmoContainer = this.scene.add.container(this.target.x, this.target.y);
+        this.gizmoContainer.setDepth(99999); // Always on top
+
+        if (this.mode === 'move') {
+            this.createMoveGizmo();
+        } else if (this.mode === 'rotate') {
+            this.createRotateGizmo();
+        } else if (this.mode === 'scale') {
+            this.createScaleGizmo();
+        }
+
+        // Update loop to follow target
+        this.scene.events.on('update', this.update, this);
+    }
+
+    createMoveGizmo() {
+        const arrowLength = 80;
+        const arrowSize = 15;
+
+        // X Axis (Red)
+        const lineX = this.scene.add.line(0, 0, 0, 0, arrowLength, 0, 0xff0000).setOrigin(0, 0);
+        const arrowX = this.scene.add.triangle(arrowLength, 0, 0, -arrowSize / 2, arrowSize, 0, 0, arrowSize / 2, 0xff0000);
+        arrowX.setInteractive({ draggable: true, useHandCursor: true });
+        arrowX.setData('axis', 'x');
+        arrowX.setData('type', 'move');
+        this.setupHandleEvents(arrowX);
+
+        // Y Axis (Green)
+        const lineY = this.scene.add.line(0, 0, 0, 0, 0, arrowLength, 0x00ff00).setOrigin(0, 0);
+        const arrowY = this.scene.add.triangle(0, arrowLength, -arrowSize / 2, 0, 0, arrowSize, arrowSize / 2, 0, 0x00ff00);
+        arrowY.setInteractive({ draggable: true, useHandCursor: true });
+        arrowY.setData('axis', 'y');
+        arrowY.setData('type', 'move');
+        this.setupHandleEvents(arrowY);
+
+        // Center (Yellow) - Free move
+        const center = this.scene.add.rectangle(0, 0, 15, 15, 0xffff00);
+        center.setInteractive({ draggable: true, useHandCursor: true });
+        center.setData('axis', 'xy');
+        center.setData('type', 'move');
+        this.setupHandleEvents(center);
+
+        this.gizmoContainer.add([lineX, arrowX, lineY, arrowY, center]);
+    }
+
+    createRotateGizmo() {
+        const radius = 60;
+        const ring = this.scene.add.circle(0, 0, radius).setStrokeStyle(4, 0x0000ff);
+        ring.setInteractive({ draggable: true, useHandCursor: true });
+        ring.setData('type', 'rotate');
+        this.setupHandleEvents(ring);
+
+        // Visual indicator for current rotation
+        const line = this.scene.add.line(0, 0, 0, 0, radius, 0, 0xffff00);
+        line.rotation = this.target.rotation;
+
+        this.gizmoContainer.add([ring, line]);
+    }
+
+    createScaleGizmo() {
+        const lineLength = 80;
+        const boxSize = 12;
+
+        // X Axis (Red)
+        const lineX = this.scene.add.line(0, 0, 0, 0, lineLength, 0, 0xff0000).setOrigin(0, 0);
+        const boxX = this.scene.add.rectangle(lineLength, 0, boxSize, boxSize, 0xff0000);
+        boxX.setInteractive({ draggable: true, useHandCursor: true });
+        boxX.setData('axis', 'x');
+        boxX.setData('type', 'scale');
+        this.setupHandleEvents(boxX);
+
+        // Y Axis (Green)
+        const lineY = this.scene.add.line(0, 0, 0, 0, 0, lineLength, 0x00ff00).setOrigin(0, 0);
+        const boxY = this.scene.add.rectangle(0, lineLength, boxSize, boxSize, 0x00ff00);
+        boxY.setInteractive({ draggable: true, useHandCursor: true });
+        boxY.setData('axis', 'y');
+        boxY.setData('type', 'scale');
+        this.setupHandleEvents(boxY);
+
+        // Uniform Scale (Center)
+        const center = this.scene.add.rectangle(0, 0, 15, 15, 0xffff00);
+        center.setInteractive({ draggable: true, useHandCursor: true });
+        center.setData('axis', 'xy');
+        center.setData('type', 'scale');
+        this.setupHandleEvents(center);
+
+        this.gizmoContainer.add([lineX, boxX, lineY, boxY, center]);
+    }
 
     setupHandleEvents(handle) {
         handle.on('dragstart', (pointer) => {
