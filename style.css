@@ -26,7 +26,8 @@
 
 * {
   box-sizing: border-box;
-  user-select: none; /* Default no select for UI */
+  user-select: none;
+  /* Default no select for UI */
 }
 
 body {
@@ -50,21 +51,28 @@ body {
 }
 
 #top-toolbar {
-  min-height: var(--toolbar-height); /* Allow expansion */
+  min-height: var(--toolbar-height);
+  /* Allow expansion */
   height: auto;
   background-color: var(--bg-header);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 10px; /* Add vertical padding */
-  padding-top: max(4px, env(safe-area-inset-top)); /* Safe area support */
+  padding: 4px 10px;
+  /* Add vertical padding */
+  padding-top: max(4px, env(safe-area-inset-top));
+  /* Safe area support */
   flex-shrink: 0;
-  overflow-x: auto; /* Allow horizontal scroll */
+  overflow-x: auto;
+  /* Allow horizontal scroll */
   white-space: nowrap;
-  gap: 10px; /* Add gap between sections */
-  z-index: 100; /* Ensure it's above other elements */
-  position: relative; /* Establish stacking context */
+  gap: 10px;
+  /* Add gap between sections */
+  z-index: 100;
+  /* Ensure it's above other elements */
+  position: relative;
+  /* Establish stacking context */
 }
 
 #top-toolbar::-webkit-scrollbar {
@@ -79,7 +87,8 @@ body {
 #main-workspace {
   display: flex;
   flex: 1;
-  overflow: hidden; /* Prevent full page scroll */
+  overflow: hidden;
+  /* Prevent full page scroll */
 }
 
 /* --- Panels --- */
@@ -99,7 +108,8 @@ body {
 #scene-view-panel {
   flex: 1;
   position: relative;
-  background-color: #101010; /* Darker for scene view */
+  background-color: #101010;
+  /* Darker for scene view */
   display: flex;
   flex-direction: column;
 }
@@ -150,7 +160,8 @@ body {
   align-items: center;
   background-image: linear-gradient(var(--bg-hover) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-hover) 1px, transparent 1px);
-  background-size: 100px 100px; /* Grid lines */
+  background-size: 100px 100px;
+  /* Grid lines */
 }
 
 #game-container {
@@ -164,7 +175,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* Let clicks pass through to canvas */
+  pointer-events: none;
+  /* Let clicks pass through to canvas */
 }
 
 /* --- Toolbar Buttons --- */
@@ -294,7 +306,9 @@ select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-}\n\n.hierarchy-toggle:hover {
+}
+
+\n\n.hierarchy-toggle:hover {
   color: white;
 }
 
@@ -341,6 +355,7 @@ select:focus {
 details[open] .component-header::before {
   transform: rotate(0deg);
 }
+
 details:not([open]) .component-header::before {
   transform: rotate(-90deg);
 }
@@ -378,7 +393,8 @@ details:not([open]) .component-header::before {
 #project-view {
   display: flex;
   height: 100%;
-  flex-direction: column; /* Ensure tabs are at top */
+  flex-direction: column;
+  /* Ensure tabs are at top */
 }
 
 .project-sidebar {
@@ -393,13 +409,16 @@ details:not([open]) .component-header::before {
   padding: 8px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  grid-auto-rows: 100px; /* Fixed height for rows */
+  grid-auto-rows: 100px;
+  /* Fixed height for rows */
   grid-gap: 8px;
   align-content: start;
   overflow-y: auto;
 }
 
-.asset-card, .asset-item { /* Unified class names */
+.asset-card,
+.asset-item {
+  /* Unified class names */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -407,15 +426,18 @@ details:not([open]) .component-header::before {
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.05); /* Slight bg for visibility */
+  background-color: rgba(255, 255, 255, 0.05);
+  /* Slight bg for visibility */
   overflow: hidden;
 }
 
-.asset-card:hover, .asset-item:hover {
+.asset-card:hover,
+.asset-item:hover {
   background-color: var(--bg-hover);
 }
 
-.asset-card.selected, .asset-item.selected {
+.asset-card.selected,
+.asset-item.selected {
   background-color: var(--bg-selected);
   color: white;
   border: 1px solid var(--accent-color);
@@ -423,13 +445,15 @@ details:not([open]) .component-header::before {
 
 .asset-preview {
   width: 100%;
-  height: 60px; /* Fixed height for preview */
+  height: 60px;
+  /* Fixed height for preview */
   object-fit: contain;
   margin-bottom: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px; /* For emoji icons */
+  font-size: 24px;
+  /* For emoji icons */
 }
 
 .asset-name {
@@ -437,7 +461,8 @@ details:not([open]) .component-header::before {
   word-break: break-all;
   max-width: 100%;
   line-height: 1.2;
-  max-height: 2.4em; /* Limit to 2 lines */
+  max-height: 2.4em;
+  /* Limit to 2 lines */
   overflow: hidden;
 }
 
@@ -447,12 +472,16 @@ button {
   border: 1px solid transparent;
   color: var(--text-main);
   border-radius: 4px;
-  padding: 8px 12px; /* Increased padding */
+  padding: 8px 12px;
+  /* Increased padding */
   cursor: pointer;
-  font-size: 14px; /* Increased font size */
+  font-size: 14px;
+  /* Increased font size */
   transition: background-color 0.1s;
-  min-width: 32px; /* Minimum width for touch */
-  min-height: 32px; /* Minimum height for touch */
+  min-width: 32px;
+  /* Minimum width for touch */
+  min-height: 32px;
+  /* Minimum height for touch */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -529,11 +558,14 @@ button {
 #scene-view-panel {
   flex: 1;
   position: relative;
-  background-color: #101010; /* Darker for scene view */
+  background-color: #101010;
+  /* Darker for scene view */
   display: flex;
   flex-direction: column;
-  min-width: 300px; /* Prevent collapsing */
+  min-width: 300px;
+  /* Prevent collapsing */
 }
+
 body:not(.debug-mode) #game-container {
   /* In play mode, game container might need to be fullscreen */
   position: fixed;
@@ -592,21 +624,21 @@ body:not(.debug-mode) #game-container {
 }
 
 /* Toggle Switch Styles */
-.switch input { 
+.switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-.switch input:checked + .slider {
+.switch input:checked+.slider {
   background-color: var(--accent-color);
 }
 
-.switch input:focus + .slider {
+.switch input:focus+.slider {
   box-shadow: 0 0 1px var(--accent-color);
 }
 
-.switch input:checked + .slider .slider-knob {
+.switch input:checked+.slider .slider-knob {
   transform: translateX(14px);
 }
 
@@ -650,7 +682,8 @@ body:not(.debug-mode) #game-container {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.8);
-  display: none; /* Hidden by default, shown via JS */
+  display: none;
+  /* Hidden by default, shown via JS */
   justify-content: center;
   align-items: center;
   z-index: 2000;
@@ -773,7 +806,7 @@ body:not(.debug-mode) #game-container {
   position: relative;
   background-color: #1a1a1a;
   overflow: auto;
-  background-image: 
+  background-image:
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -797,6 +830,12 @@ body:not(.debug-mode) #game-container {
   height: 100%;
   pointer-events: none;
   z-index: 1;
+}
+
+/* VSL Node Wrapper */
+.vsl-node-wrapper {
+  position: absolute;
+  z-index: 10;
 }
 
 /* VSL Node */
@@ -943,9 +982,12 @@ body:not(.debug-mode) #game-container {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
   }
+
   50% {
     box-shadow: 0 0 0 8px rgba(74, 222, 128, 0);
   }
@@ -1166,7 +1208,7 @@ body:not(.debug-mode) #game-container {
   position: relative;
   background-color: #1a1a1a;
   overflow: auto;
-  background-image: 
+  background-image:
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -1268,24 +1310,23 @@ body:not(.debug-mode) #game-container {
     height: 24px;
     border-width: 3px;
   }
-  
+
   .vsl-node {
     min-width: 180px;
   }
-  
+
   .vsl-node-header {
     padding: 12px 14px;
     font-size: 14px;
   }
-  
+
   .param-input {
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .vsl-node-palette-item {
     padding: 12px 14px;
     font-size: 13px;
   }
 }
-

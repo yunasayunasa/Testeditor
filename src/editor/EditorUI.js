@@ -6,11 +6,11 @@ export default class EditorUI {
         this.game = game;
         this.plugin = editorPlugin;
         this.assetList = this.game.registry.get('asset_list') || [];
-        
+
         // Force debug mode for development
         // const currentURL = window.location.href;
         // if (!currentURL.includes('?debug=true') && !currentURL.includes('&debug=true')) return;
-        
+
         // Add debug-mode class to body to ensure editor visibility
         document.body.classList.add('debug-mode');
 
@@ -24,7 +24,7 @@ export default class EditorUI {
         this.connectionState = { isActive: false, fromNodeId: null, previewLine: null };
         this.vslMode = 'select';
         this.panState = { isPanning: false, startX: 0, startY: 0 };
-        
+
         this.layers = [
             { name: 'Foreground', visible: true, locked: false },
             { name: 'Gameplay', visible: true, locked: false },
@@ -38,13 +38,13 @@ export default class EditorUI {
         // --- Initial Setup ---
         if (this.editorPanel) this.editorPanel.style.display = 'flex';
         if (this.assetBrowserPanel) this.assetBrowserPanel.style.display = 'flex';
-        
+
         this.createPauseToggle();
         this.createHelpButton();
         this.initializeEventListeners();
         this.populateAssetBrowser();
         this.initConsoleCapture(); // Console機能の初期化
-        
+
         const refreshBtn = document.getElementById('editor-refresh-btn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.plugin.refresh());
@@ -62,9 +62,9 @@ export default class EditorUI {
         this.saveSceneBtn = document.getElementById('editor-save-scene-btn');
         this.loadSceneBtn = document.getElementById('editor-load-scene-btn');
         this.sceneFileInput = document.getElementById('scene-file-input');
-// --- Edit Controls ---
-this.undoBtn = document.getElementById('editor-undo-btn');
-this.redoBtn = document.getElementById('editor-redo-btn');
+        // --- Edit Controls ---
+        this.undoBtn = document.getElementById('editor-undo-btn');
+        this.redoBtn = document.getElementById('editor-redo-btn');
         // --- Bottom Panel Tabs ---
         document.getElementById('tab-project')?.addEventListener('click', () => this.switchBottomTab('project'));
         document.getElementById('tab-console')?.addEventListener('click', () => this.switchBottomTab('console'));
@@ -85,7 +85,7 @@ this.redoBtn = document.getElementById('editor-redo-btn');
         if (this.clearConsoleBtn) {
             this.clearConsoleBtn.addEventListener('click', () => this.clearConsole());
         }
-        
+
         // --- Hierarchy ---
         this.hierarchyTree = document.getElementById('hierarchy-tree');
         this.hierarchySearch = document.getElementById('hierarchy-search');
@@ -141,10 +141,10 @@ this.redoBtn = document.getElementById('editor-redo-btn');
         this.vslCanvas = document.getElementById('vsl-canvas');
         this.vslTabs = document.getElementById('vsl-tabs');
         this.smEditorOverlay = document.getElementById('sm-editor-overlay');
-        
+
         document.getElementById('vsl-select-mode-btn')?.addEventListener('click', () => this.setVslMode('select'));
         document.getElementById('vsl-pan-mode-btn')?.addEventListener('click', () => this.setVslMode('pan'));
-        
+
         const canvasWrapper = document.getElementById('vsl-canvas-wrapper');
         if (canvasWrapper) {
             canvasWrapper.addEventListener('pointerdown', (event) => {
@@ -240,21 +240,21 @@ this.redoBtn = document.getElementById('editor-redo-btn');
                 console.log('Step button clicked');
             });
         }
-// --- Edit Controls (Undo/Redo) ---
-if (this.undoBtn) {
-    this.undoBtn.addEventListener('click', () => {
-        if (this.plugin.commandManager) {
-            this.plugin.commandManager.undo();
+        // --- Edit Controls (Undo/Redo) ---
+        if (this.undoBtn) {
+            this.undoBtn.addEventListener('click', () => {
+                if (this.plugin.commandManager) {
+                    this.plugin.commandManager.undo();
+                }
+            });
         }
-    });
-}
-if (this.redoBtn) {
-    this.redoBtn.addEventListener('click', () => {
-        if (this.plugin.commandManager) {
-            this.plugin.commandManager.redo();
+        if (this.redoBtn) {
+            this.redoBtn.addEventListener('click', () => {
+                if (this.plugin.commandManager) {
+                    this.plugin.commandManager.redo();
+                }
+            });
         }
-});
-}
         // --- Tool Buttons ---
         const tools = ['tool-hand', 'tool-move', 'tool-rotate', 'tool-scale', 'tool-rect'];
         tools.forEach(toolId => {
@@ -265,7 +265,7 @@ if (this.redoBtn) {
                     tools.forEach(t => document.getElementById(t)?.classList.remove('active'));
                     // Activate clicked
                     btn.classList.add('active');
-                    
+
                     // Set tool in plugin
                     const toolName = toolId.replace('tool-', '');
                     if (this.plugin && this.plugin.gizmoManager) {
@@ -293,7 +293,7 @@ if (this.redoBtn) {
                 console.log('Layout button clicked');
             });
         }
-        
+
         // --- Create Object Button ---
         if (this.createObjectBtn) {
             this.createObjectBtn.addEventListener('click', () => {
@@ -352,14 +352,14 @@ if (this.redoBtn) {
         item.className = 'hierarchy-item';
         item.dataset.objectId = gameObject.name;
         item.style.paddingLeft = `${depth * 20 + 8}px`;
-        
+
         // 折りたたみボタン
         const hasChildren = gameObject.type === 'Container' && gameObject.list && gameObject.list.length > 0;
         const toggle = document.createElement('button');
         toggle.className = 'hierarchy-toggle';
         toggle.innerHTML = hasChildren ? '▼' : '⋅';
         toggle.style.visibility = hasChildren ? 'visible' : 'hidden';
-        
+
         if (hasChildren) {
             toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -371,17 +371,17 @@ if (this.redoBtn) {
                 }
             });
         }
-        
+
         // アイコン
         const icon = document.createElement('span');
         icon.className = 'hierarchy-icon';
         icon.innerHTML = this.getObjectIcon(gameObject);
-        
+
         // 名前
         const name = document.createElement('span');
         name.className = 'hierarchy-name';
         name.textContent = gameObject.name || `[${gameObject.type}]`;
-        
+
         // クリックイベント
         item.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -389,14 +389,14 @@ if (this.redoBtn) {
             item.classList.add('selected');
             this.plugin.selectSingleObject(gameObject);
         });
-        
+
         // ドラッグ&ドロップ
         item.draggable = true;
         this.setupHierarchyDrag(item, gameObject);
-        
+
         item.append(toggle, icon, name);
         parentElement.appendChild(item);
-        
+
         // 子要素を再帰的に追加
         if (hasChildren) {
             const childContainer = document.createElement('div');
@@ -424,24 +424,24 @@ if (this.redoBtn) {
             e.dataTransfer.setData('gameObjectName', gameObject.name);
             item.classList.add('dragging');
         });
-        
+
         item.addEventListener('dragend', () => {
             item.classList.remove('dragging');
         });
-        
+
         item.addEventListener('dragover', (e) => {
             e.preventDefault();
             item.classList.add('drag-over');
         });
-        
+
         item.addEventListener('dragleave', () => {
             item.classList.remove('drag-over');
         });
-        
+
         item.addEventListener('drop', (e) => {
             e.preventDefault();
             item.classList.remove('drag-over');
-            
+
             const draggedName = e.dataTransfer.getData('gameObjectName');
             if (draggedName && draggedName !== gameObject.name) {
                 this.reparentObject(draggedName, gameObject.name);
@@ -452,12 +452,12 @@ if (this.redoBtn) {
     reparentObject(childName, newParentName) {
         const scene = this.getActiveGameScene();
         if (!scene) return;
-        
+
         const childObj = this.findObjectByName(scene, childName);
         const parentObj = newParentName ? this.findObjectByName(scene, newParentName) : null;
-        
+
         if (!childObj) return;
-        
+
         // Phaserのコンテナシステムを使用
         if (parentObj && parentObj instanceof Phaser.GameObjects.Container) {
             parentObj.add(childObj);
@@ -467,7 +467,7 @@ if (this.redoBtn) {
                 childObj.parentContainer.remove(childObj);
             }
         }
-        
+
         this.buildHierarchyPanel(); // 更新
     }
 
@@ -478,15 +478,15 @@ if (this.redoBtn) {
     filterHierarchy(searchTerm) {
         const items = this.hierarchyTree.querySelectorAll('.hierarchy-item');
         const term = searchTerm.toLowerCase();
-        
+
         items.forEach(item => {
             const nameEl = item.querySelector('.hierarchy-name');
             if (!nameEl) return;
-            
+
             const name = nameEl.textContent.toLowerCase();
             const matches = name.includes(term);
             item.style.display = matches || term === '' ? 'flex' : 'none';
-            
+
             // 子要素のコンテナも表示/非表示
             const childContainer = item.nextElementSibling;
             if (childContainer && childContainer.classList.contains('hierarchy-children')) {
@@ -586,7 +586,7 @@ if (this.redoBtn) {
                     this.selectedAssetKey = asset.key;
                     this.selectedAssetType = asset.type;
                 });
-                
+
                 if (asset.path) {
                     const previewImg = document.createElement('img');
                     previewImg.className = 'asset-preview';
@@ -598,11 +598,11 @@ if (this.redoBtn) {
                     iconSpan.className = 'asset-preview';
                     itemDiv.appendChild(iconSpan);
                 }
-                
+
                 const keySpan = document.createElement('span');
                 keySpan.innerText = asset.key;
                 itemDiv.appendChild(keySpan);
-                
+
                 if (asset.type === 'spritesheet') {
                     const badge = document.createElement('span');
                     badge.innerText = 'Sheet';
@@ -631,7 +631,7 @@ if (this.redoBtn) {
             alert('アセットを選択してください。');
             return;
         }
-        
+
         if (this.selectedAssetKey === 'joystick' && this.selectedAssetType === 'ui_special') {
             const gameScene = this.getActiveGameScene();
             if (gameScene && typeof gameScene.addJoystickFromEditor === 'function') {
@@ -710,12 +710,12 @@ if (this.redoBtn) {
 
             const activeIndicator = document.createElement('div');
             activeIndicator.className = 'layer-active-indicator';
-            if(layer.name === this.activeLayerName) activeIndicator.classList.add('active');
-            
+            if (layer.name === this.activeLayerName) activeIndicator.classList.add('active');
+
             const visibilityBtn = document.createElement('button');
             visibilityBtn.className = 'layer-control layer-visibility-btn';
             visibilityBtn.innerHTML = layer.visible ? '👁️' : '—';
-            
+
             const lockBtn = document.createElement('button');
             lockBtn.className = 'layer-control layer-lock-btn';
             lockBtn.innerHTML = layer.locked ? '🔒' : '🔓';
@@ -758,7 +758,7 @@ if (this.redoBtn) {
             this.plugin.updateLayerStates(this.layers);
         }
     }
-    
+
     addNewLayer = () => {
         const newLayerName = prompt("Enter new layer name:", `Layer ${this.layers.length + 1}`);
         if (newLayerName && !this.layers.some(l => l.name === newLayerName)) {
@@ -959,7 +959,7 @@ if (this.redoBtn) {
         if (this.plugin.currentMode === mode) return;
         this.plugin.currentMode = mode;
         this.game.registry.set('editor_mode', mode);
-        
+
         if (mode === 'play') {
             this.plugin.setAllObjectsDraggable(false);
         } else {
@@ -972,7 +972,7 @@ if (this.redoBtn) {
     setEditorMode(mode) {
         if (this.currentEditorMode === mode) return;
         this.currentEditorMode = mode;
-        
+
         if (mode === 'tilemap') {
             document.body.classList.add('tilemap-mode');
             this.tilemapModeBtn.classList.add('active');
@@ -1007,14 +1007,14 @@ if (this.redoBtn) {
         const snappedY = Math.floor(worldY / tileHeight) * tileHeight + tileHeight / 2;
         this.tileMarker.setPosition(snappedX, snappedY);
     }
-    
+
     onPointerDown(pointer) {
-        if (pointer.event.target.closest('#editor-sidebar') || 
-            pointer.event.target.closest('#overlay-controls') || 
+        if (pointer.event.target.closest('#editor-sidebar') ||
+            pointer.event.target.closest('#overlay-controls') ||
             pointer.event.target.closest('#bottom-panel')) return;
 
         if (this.currentEditorMode !== 'tilemap') return;
-        
+
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
 
@@ -1024,7 +1024,7 @@ if (this.redoBtn) {
         const tileHeight = this.currentTileset.tileHeight;
         const tileX = Math.floor(worldX / tileWidth);
         const tileY = Math.floor(worldY / tileHeight);
-        
+
         if (typeof scene.placeTile === 'function') {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true);
         }
@@ -1077,7 +1077,7 @@ if (this.redoBtn) {
             pauseButton.style.fontSize = '14px';
 
             pauseButton.addEventListener('click', () => {
-                const timeManager = EngineAPI.timeManager; 
+                const timeManager = EngineAPI.timeManager;
                 if (!timeManager) return;
                 const isCurrentlyStopped = timeManager.isTimeStopped;
                 if (isCurrentlyStopped) EngineAPI.resumeTime();
@@ -1165,7 +1165,7 @@ if (this.redoBtn) {
         if (this.plugin.currentMode === mode) return;
         this.plugin.currentMode = mode;
         this.game.registry.set('editor_mode', mode);
-        
+
         if (mode === 'play') {
             this.plugin.setAllObjectsDraggable(false);
         } else {
@@ -1178,7 +1178,7 @@ if (this.redoBtn) {
     setEditorMode(mode) {
         if (this.currentEditorMode === mode) return;
         this.currentEditorMode = mode;
-        
+
         if (mode === 'tilemap') {
             document.body.classList.add('tilemap-mode');
             this.tilemapModeBtn.classList.add('active');
@@ -1213,14 +1213,14 @@ if (this.redoBtn) {
         const snappedY = Math.floor(worldY / tileHeight) * tileHeight + tileHeight / 2;
         this.tileMarker.setPosition(snappedX, snappedY);
     }
-    
+
     onPointerDown(pointer) {
-        if (pointer.event.target.closest('#editor-sidebar') || 
-            pointer.event.target.closest('#overlay-controls') || 
+        if (pointer.event.target.closest('#editor-sidebar') ||
+            pointer.event.target.closest('#overlay-controls') ||
             pointer.event.target.closest('#bottom-panel')) return;
 
         if (this.currentEditorMode !== 'tilemap') return;
-        
+
         const scene = this.getActiveGameScene();
         if (!scene || !this.currentTileset) return;
 
@@ -1230,7 +1230,7 @@ if (this.redoBtn) {
         const tileHeight = this.currentTileset.tileHeight;
         const tileX = Math.floor(worldX / tileWidth);
         const tileY = Math.floor(worldY / tileHeight);
-        
+
         if (typeof scene.placeTile === 'function') {
             scene.placeTile(tileX, tileY, this.selectedTileIndex, this.currentTileset.key, true);
         }
@@ -1283,7 +1283,7 @@ if (this.redoBtn) {
             pauseButton.style.fontSize = '14px';
 
             pauseButton.addEventListener('click', () => {
-                const timeManager = EngineAPI.timeManager; 
+                const timeManager = EngineAPI.timeManager;
                 if (!timeManager) return;
                 const isCurrentlyStopped = timeManager.isTimeStopped;
                 if (isCurrentlyStopped) EngineAPI.resumeTime();
@@ -1356,7 +1356,7 @@ if (this.redoBtn) {
         button.addEventListener('touchend', stopPanning);
         button.addEventListener('touchcancel', stopPanning);
     }
-    
+
     // =================================================================
     // VSL Editor
     // =================================================================
@@ -1376,7 +1376,7 @@ if (this.redoBtn) {
         this.eventEditorOverlay.style.display = 'none';
         this.editingObject = null;
         this.game.input.enabled = true;
-        if(this.plugin) this.plugin.pluginManager.game.input.enabled = true;
+        if (this.plugin) this.plugin.pluginManager.game.input.enabled = true;
     }
 
     buildVslTabs() {
@@ -1417,7 +1417,7 @@ if (this.redoBtn) {
             });
             this.vslTabs.appendChild(copyButton);
         }
-        
+
         if (systemScene && systemScene.eventClipboard) {
             const pasteButton = document.createElement('button');
             pasteButton.className = 'vsl-tool-button';
@@ -1439,7 +1439,7 @@ if (this.redoBtn) {
         const events = this.editingObject.getData('events') || [];
         this.activeEventData = events.find(e => e.id === eventId) || null;
         this.populateVslToolbar(this.activeEventData);
-        this.populateVslCanvas(this.activeEventData); 
+        this.populateVslCanvas(this.activeEventData);
         this.populateVslTriggerEditor(this.activeEventData);
         this.buildVslTabs();
     }
@@ -1449,7 +1449,7 @@ if (this.redoBtn) {
         this.vslNodeList.innerHTML = '';
         if (!activeEvent) return;
 
-        const eventTagHandlers = this.game.registry.get('eventTagHandlers'); 
+        const eventTagHandlers = this.game.registry.get('eventTagHandlers');
         if (eventTagHandlers) {
             const tagNames = Object.keys(eventTagHandlers).sort();
             for (const tagName of tagNames) {
@@ -1484,10 +1484,10 @@ if (this.redoBtn) {
                 if (paramDef.defaultValue !== undefined) newNode.params[paramDef.key] = paramDef.defaultValue;
             });
         }
-        
+
         if (!targetVslData.nodes) targetVslData.nodes = [];
         targetVslData.nodes.push(newNode);
-        
+
         const isSmEditor = this.smEditorOverlay.style.display === 'flex';
         if (isSmEditor) {
             this.editingObject.setData('stateMachine', this.stateMachineData);
@@ -1519,14 +1519,14 @@ if (this.redoBtn) {
             if (triggerName === activeEvent.trigger) option.selected = true;
             select.appendChild(option);
         });
-        
+
         select.onchange = () => {
             activeEvent.trigger = select.value;
-            delete activeEvent.targetGroup; 
+            delete activeEvent.targetGroup;
             delete activeEvent.condition;
             const allEvents = this.editingObject.getData('events');
             this.editingObject.setData('events', allEvents);
-            this.buildVslTabs(); 
+            this.buildVslTabs();
             this.populateVslTriggerEditor(activeEvent);
         };
 
@@ -1589,7 +1589,7 @@ if (this.redoBtn) {
         title.innerText = `[${nodeData.type}]`;
         const paramsContainer = document.createElement('div');
         paramsContainer.className = 'node-params';
-        
+
         if (handler && handler.define && Array.isArray(handler.define.params)) {
             if (nodeData.type === 'call_component_method') {
                 const componentSelectRow = this.createNodeComponentSelect(paramsContainer, nodeData, 'component', 'コンポーネント名');
@@ -1600,7 +1600,7 @@ if (this.redoBtn) {
                 componentSelect.addEventListener('change', () => {
                     if (!nodeData.params) nodeData.params = {};
                     nodeData.params.component = componentSelect.value;
-                    nodeData.params.method = null; 
+                    nodeData.params.method = null;
                     this.buildNodeContent(nodeElement, nodeData);
                 });
             } else {
@@ -1616,10 +1616,10 @@ if (this.redoBtn) {
                 });
             }
         }
-        
+
         this.createNodePositionInput(paramsContainer, nodeData, 'x');
         this.createNodePositionInput(paramsContainer, nodeData, 'y');
-        
+
         const deleteButton = document.createElement('button');
         deleteButton.innerText = '削除';
         deleteButton.className = 'node-delete-button';
@@ -1729,10 +1729,34 @@ if (this.redoBtn) {
 
     createNodePositionInput(container, nodeData, key) {
         this.createNodeSliderInput(container, key.toUpperCase(), Math.round(nodeData[key]), 0, 4000, 1, (value) => {
-            if (!this.plugin) return;
+            // Update node data directly
+            nodeData[key] = value;
+
+            // Save to object data
             const isSmEditor = this.smEditorOverlay.style.display === 'flex';
-            if (isSmEditor) this.plugin.updateStateMachineNodeParam(nodeData, key, value, true);
-            else this.plugin.updateNodeParam(nodeData, key, value, true);
+            if (isSmEditor) {
+                this.editingObject.setData('stateMachine', this.stateMachineData);
+            } else {
+                const allEvents = this.editingObject.getData('events');
+                this.editingObject.setData('events', allEvents);
+            }
+
+            // Update the node wrapper position immediately
+            const canvasEl = isSmEditor ? this.smEditorOverlay.querySelector('.sm-vsl-canvas') : this.vslCanvas;
+            if (canvasEl) {
+                const nodeWrapper = canvasEl.querySelector(`.vsl-node-wrapper [data-node-id="${nodeData.id}"]`)?.parentElement;
+                if (nodeWrapper && nodeWrapper.classList.contains('vsl-node-wrapper')) {
+                    nodeWrapper.style.left = `${nodeData.x}px`;
+                    nodeWrapper.style.top = `${nodeData.y}px`;
+
+                    // Redraw connections
+                    const svgLayer = canvasEl.querySelector('#vsl-svg-layer');
+                    const targetVslData = isSmEditor ? this.activeVslData : this.editingObject.getData('events')?.find(e => e.id === this.activeEventId);
+                    if (svgLayer && targetVslData && targetVslData.connections) {
+                        this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
+                    }
+                }
+            }
         });
     }
 
@@ -1999,9 +2023,9 @@ if (this.redoBtn) {
             const events = this.editingObject?.getData('events') || [];
             targetVslData = events.find(e => e.id === this.activeEventId);
         }
-        canvasEl.innerHTML = ''; 
+        canvasEl.innerHTML = '';
         const svgLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgLayer.id = 'vsl-svg-layer'; 
+        svgLayer.id = 'vsl-svg-layer';
         svgLayer.setAttribute('width', '4000');
         svgLayer.setAttribute('height', '4000');
         canvasEl.appendChild(svgLayer);
@@ -2019,12 +2043,93 @@ if (this.redoBtn) {
                 this.buildNodeContent(nodeElement, nodeData);
                 nodeWrapper.appendChild(nodeElement);
                 canvasEl.appendChild(nodeWrapper);
+
+                // Pin click handlers
                 nodeElement.querySelectorAll('[data-pin-type]').forEach(pinElement => {
                     pinElement.addEventListener('pointerdown', (event) => {
-                        event.stopPropagation(); 
-                        this.onPinClicked(pinElement); 
+                        event.stopPropagation();
+                        this.onPinClicked(pinElement);
                     });
                 });
+
+                // Node drag functionality
+                const nodeHeader = nodeElement.querySelector('.vsl-node-header');
+                if (nodeHeader) {
+                    let isDragging = false;
+                    let startX, startY, initialLeft, initialTop;
+
+                    const onPointerDown = (e) => {
+                        // Ignore if clicking on delete button
+                        if (e.target.classList.contains('vsl-node-delete-btn')) return;
+
+                        isDragging = true;
+                        nodeElement.classList.add('dragging');
+
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        initialLeft = parseInt(nodeWrapper.style.left) || 0;
+                        initialTop = parseInt(nodeWrapper.style.top) || 0;
+
+                        e.preventDefault();
+                    };
+
+                    const onPointerMove = (e) => {
+                        if (!isDragging) return;
+
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+                        const newLeft = initialLeft + dx;
+                        const newTop = initialTop + dy;
+
+                        nodeWrapper.style.left = `${newLeft}px`;
+                        nodeWrapper.style.top = `${newTop}px`;
+
+                        // Redraw connections during drag
+                        if (targetVslData && targetVslData.connections) {
+                            this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
+                        }
+                    };
+
+                    const onPointerUp = (e) => {
+                        if (!isDragging) return;
+
+                        isDragging = false;
+                        nodeElement.classList.remove('dragging');
+
+                        const dx = e.clientX - startX;
+                        const dy = e.clientY - startY;
+                        const newX = Math.max(0, initialLeft + dx);
+                        const newY = Math.max(0, initialTop + dy);
+
+                        // Update node data
+                        nodeData.x = newX;
+                        nodeData.y = newY;
+
+                        // Save to object data
+                        if (isSmEditor) {
+                            this.editingObject.setData('stateMachine', this.stateMachineData);
+                        } else {
+                            const allEvents = this.editingObject.getData('events');
+                            this.editingObject.setData('events', allEvents);
+                        }
+
+                        // Final redraw
+                        if (targetVslData && targetVslData.connections) {
+                            this.drawConnections(svgLayer, targetVslData.nodes, targetVslData.connections);
+                        }
+                    };
+
+                    nodeHeader.addEventListener('pointerdown', onPointerDown);
+                    window.addEventListener('pointermove', onPointerMove);
+                    window.addEventListener('pointerup', onPointerUp);
+
+                    // Cleanup on node removal (store for potential cleanup later)
+                    nodeWrapper._cleanup = () => {
+                        nodeHeader.removeEventListener('pointerdown', onPointerDown);
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                    };
+                }
             });
         }
         requestAnimationFrame(() => {
@@ -2141,7 +2246,7 @@ if (this.redoBtn) {
         this._onAddNewState = () => {
             const newStateName = prompt('新しい状態の名前を入力してください:', `新しい状態${Object.keys(this.stateMachineData.states).length}`);
             if (newStateName && !this.stateMachineData.states[newStateName]) {
-                this.stateMachineData.states[newStateName] = { onEnter: { nodes: [], connections: [] }, onUpdate: { nodes: [], connections: [] }, onExit: { nodes: [], connections: [] }};
+                this.stateMachineData.states[newStateName] = { onEnter: { nodes: [], connections: [] }, onUpdate: { nodes: [], connections: [] }, onExit: { nodes: [], connections: [] } };
                 this.editingObject.setData('stateMachine', this.stateMachineData);
                 this.buildStatesPanel();
             } else if (newStateName) {
@@ -2198,26 +2303,26 @@ if (this.redoBtn) {
         // すべてのタブとコンテンツを非アクティブに
         document.querySelectorAll('.bottom-tabs .tab').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-        
+
         // 選択されたタブをアクティブに
         const selectedTab = document.getElementById(`tab-${tabName}`);
         if (selectedTab) {
             selectedTab.classList.add('active');
         }
-        
+
         // 対応するコンテンツを表示
         const contentMap = {
             'project': 'project-view',
             'console': 'console-view',
             'animation': 'animation-view'
         };
-        
+
         const contentId = contentMap[tabName];
         const content = document.getElementById(contentId);
         if (content) {
             content.style.display = 'block';
         }
-        
+
         // Consoleタブが選択されたときはClearボタンを表示
         if (this.clearConsoleBtn) {
             this.clearConsoleBtn.style.display = tabName === 'console' ? 'block' : 'none';
@@ -2229,19 +2334,19 @@ if (this.redoBtn) {
         const originalLog = console.log;
         const originalWarn = console.warn;
         const originalError = console.error;
-        
+
         // console.logをオーバーライド
         console.log = (...args) => {
             originalLog.apply(console, args);
             this.addConsoleLog('log', args.join(' '));
         };
-        
+
         // console.warnをオーバーライド
         console.warn = (...args) => {
             originalWarn.apply(console, args);
             this.addConsoleLog('warn', args.join(' '));
         };
-        
+
         // console.errorをオーバーライド
         console.error = (...args) => {
             originalError.apply(console, args);
@@ -2251,25 +2356,25 @@ if (this.redoBtn) {
 
     addConsoleLog(level, message) {
         if (!this.consoleLogsContainer) return;
-        
+
         const logEntry = document.createElement('div');
         logEntry.className = `console-log console-log-${level}`;
-        
+
         const timestamp = new Date().toLocaleTimeString();
         const icon = {
             'log': 'ℹ️',
             'warn': '⚠️',
             'error': '❌'
         }[level] || 'ℹ️';
-        
+
         logEntry.innerHTML = `
             <span class="console-timestamp">${timestamp}</span>
             <span class="console-icon">${icon}</span>
             <span class="console-message">${message}</span>
         `;
-        
+
         this.consoleLogsContainer.appendChild(logEntry);
-        
+
         // 自動スクロール
         this.consoleLogsContainer.scrollTop = this.consoleLogsContainer.scrollHeight;
     }
@@ -2376,8 +2481,8 @@ if (this.redoBtn) {
     /**
  * Undo/Redoボタンの有効/無効を更新
  */
-updateUndoRedoButtons(canUndo, canRedo) {
-    if (this.undoBtn) this.undoBtn.disabled = !canUndo;
-    if (this.redoBtn) this.redoBtn.disabled = !canRedo;
-}
+    updateUndoRedoButtons(canUndo, canRedo) {
+        if (this.undoBtn) this.undoBtn.disabled = !canUndo;
+        if (this.redoBtn) this.redoBtn.disabled = !canRedo;
+    }
 }
