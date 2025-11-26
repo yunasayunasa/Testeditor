@@ -1,7 +1,7 @@
 import { ComponentRegistry } from '../components/index.js';
 import GizmoManager from './GizmoManager.js';
 import { EditorCommandManager } from '../editor/EditorCommandManager.js';
-/**
+import { MoveObjectCommand } from '../editor/commands/MoveObjectCommand.js';/**
  * Odyssey EngineのインゲームIDE機能を提供するPhaserプラグイン。
  * オブジェクトの選択、プロパティ編集、レイアウトのエクスポート機能などを管理する。
  */
@@ -2065,16 +2065,19 @@ gameObject.on('dragend', (pointer) => {
     * 単体選択のロジック。
     * 複数選択状態を解除する処理を追加。
     */
-    selectSingleObject(gameObject) {
-        // もし複数選択中だったら、それを解除する
-        this.deselectMultipleObjects();
-        this.gizmoManager.attach(gameObject);
-        this.selectedObject = gameObject;
-        setTimeout(() => this.updatePropertyPanel(), 0);
-        // ★ オブジェクトに選択中であることを示す視覚的なフィードバックを追加すると、より良くなる
-        // 例: gameObject.setTint(0x00ff00);
-
+  selectSingleObject(gameObject) {
+    this.deselectMultipleObjects();
+    
+    // ギズモ用のシーン設定を追加
+    const activeScene = this.getActiveGameScene();
+    if (activeScene && !this.gizmoManager.scene) {
+        this.gizmoManager.setScene(activeScene);
     }
+    
+    this.gizmoManager.attach(gameObject);
+    this.selectedObject = gameObject;
+    setTimeout(() => this.updatePropertyPanel(), 0);
+}
     /**
         * すべての選択状態を解除する
         */
