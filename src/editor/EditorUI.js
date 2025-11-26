@@ -314,6 +314,17 @@ export default class EditorUI {
         }
     }
 
+    updateUndoRedoButtons(canUndo, canRedo) {
+        if (this.undoBtn) {
+            this.undoBtn.disabled = !canUndo;
+            this.undoBtn.style.opacity = canUndo ? '1' : '0.5';
+        }
+        if (this.redoBtn) {
+            this.redoBtn.disabled = !canRedo;
+            this.redoBtn.style.opacity = canRedo ? '1' : '0.5';
+        }
+    }
+
     onPluginReady() {
         this.buildHierarchyPanel();
         this.buildLayerPanel();
