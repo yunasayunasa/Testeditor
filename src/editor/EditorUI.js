@@ -312,7 +312,29 @@ export default class EditorUI {
         } else {
             console.warn('EditorUI: #create-object-btn not found');
         }
+            // --- Scene Tabs (Scene/Game/Animator) ---
+    const sceneTabsContainer = document.querySelector('.scene-tabs');
+    if (sceneTabsContainer) {
+        const tabs = sceneTabsContainer.querySelectorAll('.tab');
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                const tabName = tab.textContent;
+                console.log(`[EditorUI] Switched to ${tabName} tab`);
+                
+                // TODO: Implement tab-specific behavior
+                if (tabName === 'Animator') {
+                    console.log('[EditorUI] Animation timeline not yet implemented');
+                }
+            });
+        });
     }
+}
+    
 
     updateUndoRedoButtons(canUndo, canRedo) {
         if (this.undoBtn) {
