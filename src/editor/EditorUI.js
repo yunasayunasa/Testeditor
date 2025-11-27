@@ -75,7 +75,8 @@ export default class EditorUI {
         this.assetListContainer = document.getElementById('asset-list');
         this.assetTabContainer = document.getElementById('asset-type-tabs'); // Added this
         this.assetBreadcrumb = document.getElementById('asset-breadcrumb');
-        document.getElementById('add-asset-button')?.addEventListener('click', this.onAddButtonClicked);
+        this.assetFileInput = document.getElementById('asset-file-input'); // Added file input
+        document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
         document.getElementById('add-text-button')?.addEventListener('click', this.onAddTextClicked);
 
         // --- Console ---
@@ -214,6 +215,9 @@ export default class EditorUI {
         }
         if (this.sceneFileInput) {
             this.sceneFileInput.addEventListener('change', this.onLoadSceneFile);
+        }
+        if (this.assetFileInput) {
+            this.assetFileInput.addEventListener('change', (e) => this.onAssetFileSelected(e));
         }
 
         // --- Toolbar Controls ---
@@ -566,6 +570,72 @@ export default class EditorUI {
     // =================================================================
     // Project / Asset Browser
     // =================================================================
+
+    onAddButtonClicked() {
+        if (this.assetFileInput) {
+            this.assetFileInput.click();
+        }
+    }
+
+    onAssetFileSelected(event) {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            this.processAssetFiles(files);
+        }
+        // Reset input so same file can be selected again
+        event.target.value = '';
+    }
+
+    processAssetFiles(files) {
+        const assetList = this.game.registry.get('asset_list') || [];
+        let addedCount = 0;
+
+        Array.from(files).forEach(file => {
+            const fileType = file.type.split('/')[0]; // 'image', 'audio', etc.
+            if (fileType !== 'image' && fileType !== 'audio') {
+                console.warn(`[EditorUI] Unsupported file type: ${file.type}`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataURL = e.target.result;
+                const assetKey = file.name.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+                // Check for duplicates
+                if (assetList.some(a => a.key === assetKey)) {
+                    console.warn(`[EditorUI] Asset key '${assetKey}' already exists. Skipping.`);
+                    return;
+                }
+
+                // Add to Phaser Cache
+                if (fileType === 'image') {
+                    this.game.textures.addBase64(assetKey, dataURL);
+                } else if (fileType === 'audio') {
+                    // Audio handling might need more complex logic for base64, 
+                    // but for now we register it. Phaser audio from base64 is tricky without decoding.
+                    // For prototype, we might just store metadata.
+                }
+
+                // Add to Registry
+                assetList.push({
+                    key: assetKey,
+                    type: fileType,
+                    url: dataURL, // Store dataURL for persistence (prototype only)
+                    file: file    // Keep file reference if needed
+                });
+
+                addedCount++;
+                if (addedCount === files.length) {
+                    this.game.registry.set('asset_list', assetList);
+                    this.populateAssetBrowser();
+                    console.log(`[EditorUI] Added ${addedCount} assets.`);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     populateAssetBrowser() {
         const assetList = this.game.registry.get('asset_list');
         if (!assetList || !this.assetListContainer || !this.assetTabContainer) return;

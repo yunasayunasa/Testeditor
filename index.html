@@ -1,324 +1,299 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-    <title>Odyssey Engine</title>
 
-    <!-- 外部CSSファイルを読み込む -->
-    <link rel="stylesheet" href="style.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Odyssey Engine</title>
 
-    <!-- 外部フォントを読み込む (Google Fonts) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DotGothic16&display=swap"
-      rel="stylesheet"
-    />
+  <!-- 外部CSSファイルを読み込む -->
+  <link rel="stylesheet" href="style.css" />
 
-    <!-- 外部ライブラリを読み込む -->
-    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-  </head>
-  <body>
-    <!-- ====================================================================== -->
-    <!--  Unity-like Editor Layout                                              -->
-    <!-- ====================================================================== -->
-    <div id="editor-root">
-      <!-- 1. Top Toolbar -->
-      <div id="top-toolbar">
-        <div class="toolbar-left">
-          <div class="file-controls" style="margin-right: 10px; display: flex; gap: 5px;">
-            <button id="editor-save-scene-btn" title="Save Scene">💾 Save</button>
-            <button id="editor-load-scene-btn" title="Load Scene">📂 Load</button>
-            <input type="file" id="scene-file-input" accept=".json" style="display: none;" />
-          </div>
-          <div class="edit-controls" style="margin-right: 10px; display: flex; gap: 5px;">
-            <button id="editor-undo-btn" title="Undo" disabled>↶</button>
-            <button id="editor-redo-btn" title="Redo" disabled>↷</button>
-          </div>
-          <div class="tool-group">
-            <button id="tool-hand" title="Hand Tool (Q)">✋</button>
-            <button id="tool-move" title="Move Tool (W)" class="active">
-              Move
-            </button>
-            <button id="tool-rotate" title="Rotate Tool (E)">Rotate</button>
-            <button id="tool-scale" title="Scale Tool (R)">Scale</button>
-            <button id="tool-rect" title="Rect Tool (T)">Rect</button>
+  <!-- 外部フォントを読み込む (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DotGothic16&display=swap"
+    rel="stylesheet" />
+
+  <!-- 外部ライブラリを読み込む -->
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+</head>
+
+<body>
+  <!-- ====================================================================== -->
+  <!--  Unity-like Editor Layout                                              -->
+  <!-- ====================================================================== -->
+  <div id="editor-root">
+    <!-- 1. Top Toolbar -->
+    <div id="top-toolbar">
+      <div class="toolbar-left">
+        <div class="file-controls" style="margin-right: 10px; display: flex; gap: 5px;">
+          <button id="editor-save-scene-btn" title="Save Scene">💾 Save</button>
+          <button id="editor-load-scene-btn" title="Load Scene">📂 Load</button>
+          <input type="file" id="scene-file-input" accept=".json" style="display: none;" />
+        </div>
+        <div class="edit-controls" style="margin-right: 10px; display: flex; gap: 5px;">
+          <button id="editor-undo-btn" title="Undo" disabled>↶</button>
+          <button id="editor-redo-btn" title="Redo" disabled>↷</button>
+        </div>
+        <div class="tool-group">
+          <button id="tool-hand" title="Hand Tool (Q)">✋</button>
+          <button id="tool-move" title="Move Tool (W)" class="active">
+            Move
+          </button>
+          <button id="tool-rotate" title="Rotate Tool (E)">Rotate</button>
+          <button id="tool-scale" title="Scale Tool (R)">Scale</button>
+          <button id="tool-rect" title="Rect Tool (T)">Rect</button>
+        </div>
+      </div>
+      <div class="toolbar-center">
+        <div class="play-controls">
+          <button id="editor-play-btn" title="Play">▶</button>
+          <button id="editor-pause-btn" title="Pause">❚❚</button>
+          <button id="editor-step-btn" title="Step">⏯</button>
+        </div>
+        <!-- Mode Toggle -->
+        <div class="mode-toggle-container" style="margin-left: 15px; display: flex; align-items: center;">
+          <span id="mode-label" style="margin-right: 5px; font-size: 10px; color: #aaa;">EDIT</span>
+          <label class="switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
+            <input type="checkbox" id="mode-toggle-checkbox">
+            <span class="slider round"
+              style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 16px;"></span>
+            <span class="slider-knob"
+              style="position: absolute; content: ''; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+          </label>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <div class="layer-controls">
+          <label>Layers</label>
+          <select id="layer-dropdown">
+            <option value="Everything">Everything</option>
+            <option value="Default">Default</option>
+            <option value="UI">UI</option>
+          </select>
+        </div>
+        <button id="editor-layout-btn">Layout</button>
+      </div>
+    </div>
+
+    <!-- 2. Main Workspace (Flex Row) -->
+    <div id="main-workspace">
+      <!-- Left Column: Hierarchy -->
+      <div id="hierarchy-panel" class="editor-panel">
+        <div class="panel-header">
+          <span class="panel-title">Hierarchy</span>
+          <div class="panel-tools" style="display: flex; gap: 4px; align-items: center;">
+            <button id="create-object-btn" style="min-width: 20px;">+</button>
+            <input type="text" id="hierarchy-search" placeholder="Search..." style="width: 80px;" />
           </div>
         </div>
-        <div class="toolbar-center">
-          <div class="play-controls">
-            <button id="editor-play-btn" title="Play">▶</button>
-            <button id="editor-pause-btn" title="Pause">❚❚</button>
-            <button id="editor-step-btn" title="Step">⏯</button>
-          </div>
-          <!-- Mode Toggle -->
-          <div class="mode-toggle-container" style="margin-left: 15px; display: flex; align-items: center;">
-            <span id="mode-label" style="margin-right: 5px; font-size: 10px; color: #aaa;">EDIT</span>
-            <label class="switch" style="position: relative; display: inline-block; width: 30px; height: 16px;">
-              <input type="checkbox" id="mode-toggle-checkbox">
-              <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 16px;"></span>
-              <span class="slider-knob" style="position: absolute; content: ''; height: 12px; width: 12px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%;"></span>
-            </label>
-          </div>
-        </div>
-        <div class="toolbar-right">
-          <div class="layer-controls">
-            <label>Layers</label>
-            <select id="layer-dropdown">
-              <option value="Everything">Everything</option>
-              <option value="Default">Default</option>
-              <option value="UI">UI</option>
-            </select>
-          </div>
-          <button id="editor-layout-btn">Layout</button>
+        <div class="panel-content" id="hierarchy-tree">
+          <!-- Tree content generated by JS -->
         </div>
       </div>
 
-      <!-- 2. Main Workspace (Flex Row) -->
-      <div id="main-workspace">
-        <!-- Left Column: Hierarchy -->
-        <div id="hierarchy-panel" class="editor-panel">
-          <div class="panel-header">
-            <span class="panel-title">Hierarchy</span>
-            <div class="panel-tools" style="display: flex; gap: 4px; align-items: center;">
-              <button id="create-object-btn" style="min-width: 20px;">+</button>
-              <input
-                type="text"
-                id="hierarchy-search"
-                placeholder="Search..."
-                style="width: 80px;"
-              />
-            </div>
+      <!-- Center Column: Scene View (Game Canvas) -->
+      <div id="scene-view-panel" class="editor-panel">
+        <div class="panel-header">
+          <div class="scene-tabs">
+            <button class="tab active">Scene</button>
+            <button class="tab">Game</button>
+            <button class="tab">Animator</button>
           </div>
-          <div class="panel-content" id="hierarchy-tree">
-            <!-- Tree content generated by JS -->
+          <div class="scene-tools">
+            <button id="toggle-2d-3d" title="Toggle 2D/3D View">2D</button>
+            <button id="toggle-lighting" title="Toggle Lighting">☀</button>
+            <button id="toggle-audio" title="Toggle Audio">🔊</button>
           </div>
         </div>
+        <div class="panel-content" id="scene-view-content">
+          <!-- Phaser Canvas will be injected here or positioned over this -->
+          <div id="game-container"></div>
 
-        <!-- Center Column: Scene View (Game Canvas) -->
-        <div id="scene-view-panel" class="editor-panel">
-          <div class="panel-header">
-            <div class="scene-tabs">
-              <button class="tab active">Scene</button>
-              <button class="tab">Game</button>
-              <button class="tab">Animator</button>
-            </div>
-            <div class="scene-tools">
-              <button id="toggle-2d-3d" title="Toggle 2D/3D View">2D</button>
-              <button id="toggle-lighting" title="Toggle Lighting">☀</button>
-              <button id="toggle-audio" title="Toggle Audio">🔊</button>
-            </div>
-          </div>
-          <div class="panel-content" id="scene-view-content">
-            <!-- Phaser Canvas will be injected here or positioned over this -->
-            <div id="game-container"></div>
-
-            <!-- Overlay Controls (Gizmos, etc) -->
-            <div id="scene-overlay">
-              <div id="gizmo-layer"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Column: Inspector -->
-        <div id="inspector-panel" class="editor-panel">
-          <div class="panel-header">
-            <span class="panel-title" id="editor-title">Inspector</span>
-            <div class="panel-tools">
-              <button id="lock-inspector-btn" title="Lock Inspector: Keep current selection even when clicking other objects">🔒</button>
-              <button id="inspector-settings-btn" title="Inspector Settings">⚙</button>
-            </div>
-          </div>
-          <div class="panel-content" id="inspector-content">
-            <div id="editor-props">
-              <!-- Properties generated by JS -->
-            </div>
-            <div id="add-component-container">
-              <button id="add-component-btn">Add Component</button>
-            </div>
+          <!-- Overlay Controls (Gizmos, etc) -->
+          <div id="scene-overlay">
+            <div id="gizmo-layer"></div>
           </div>
         </div>
       </div>
 
-      <!-- 3. Bottom Panel: Project & Console -->
-      <div id="bottom-panel" class="editor-panel">
-        <div class="panel-header resizable-handle">
-          <div class="bottom-tabs">
-            <button class="tab active" id="tab-project">Project</button>
-            <button class="tab" id="tab-console">Console</button>
-            <button class="tab" id="tab-animation">Animation</button>
-          </div>
+      <!-- Right Column: Inspector -->
+      <div id="inspector-panel" class="editor-panel">
+        <div class="panel-header">
+          <span class="panel-title" id="editor-title">Inspector</span>
           <div class="panel-tools">
-            <button id="clear-console-btn" style="display: none">Clear</button>
+            <button id="lock-inspector-btn"
+              title="Lock Inspector: Keep current selection even when clicking other objects">🔒</button>
+            <button id="inspector-settings-btn" title="Inspector Settings">⚙</button>
           </div>
         </div>
-        <div class="panel-content">
-          <!-- Project View -->
-          <div id="project-view" class="tab-content active">
-            <div id="asset-type-tabs" class="asset-tabs" style="display: flex; gap: 5px; padding: 5px; background: #282828; border-bottom: 1px solid #151515;">
-                <!-- Asset tabs generated by JS -->
-            </div>
-            <div style="display: flex; flex: 1; overflow: hidden;">
-                <div class="project-sidebar">
-                  <ul id="folder-tree">
-                    <!-- Folder structure -->
-                  </ul>
-                </div>
-                <div class="project-assets" id="asset-list">
-                  <!-- Asset grid -->
-                </div>
-            </div>
-            <div class="project-footer">
-              <input
-                type="range"
-                id="icon-size-slider"
-                min="1"
-                max="3"
-                value="2"
-              />
-            </div>
+        <div class="panel-content" id="inspector-content">
+          <div id="editor-props">
+            <!-- Properties generated by JS -->
           </div>
-
-          <!-- Console View -->
-          <div id="console-view" class="tab-content" style="display: none">
-            <div id="console-logs">
-              <!-- Logs -->
-            </div>
-          </div>
-
-          <!-- Animation View -->
-          <div id="animation-view" class="tab-content" style="display: none">
-            <!-- Timeline UI -->
-            <div id="timeline-container"></div>
+          <div id="add-component-container">
+            <button id="add-component-btn">Add Component</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ====================================================================== -->
-    <!--  Modals (Hidden by default)                                            -->
-    <!-- ====================================================================== -->
-
-    <!-- Tilemap Palette Modal -->
-    <div id="tilemap-editor-overlay" class="modal-overlay">
-      <div class="modal-window wide">
-        <div class="modal-header">
-          <h3>Tile Palette</h3>
-          <button id="tilemap-editor-close-btn" class="modal-close-btn">
-            &times;
-          </button>
+    <!-- 3. Bottom Panel: Project & Console -->
+    <div id="bottom-panel" class="editor-panel">
+      <div class="panel-header resizable-handle">
+        <div class="bottom-tabs">
+          <button class="tab active" id="tab-project">Project</button>
+          <button class="tab" id="tab-console">Console</button>
+          <button class="tab" id="tab-animation">Animation</button>
         </div>
-        <div class="modal-content" id="tilemap-editor-body">
-          <div id="tilemap-list-panel">
-            <h4>Palettes</h4>
-            <div id="tilemap-list-container"></div>
+        <div class="panel-tools">
+          <div class="project-assets" id="asset-list">
+            <!-- Asset grid -->
           </div>
-          <div id="tilemap-preview-panel">
-            <div id="tilemap-preview-header">
-              <span id="selected-tilemap-name">No palette selected</span>
+        </div>
+        <div class="project-footer">
+          <input type="range" id="icon-size-slider" min="1" max="3" value="2" />
+        </div>
+      </div>
+
+      <!-- Console View -->
+      <div id="console-view" class="tab-content" style="display: none">
+        <div id="console-logs">
+          <!-- Logs -->
+        </div>
+      </div>
+
+      <!-- Animation View -->
+      <div id="animation-view" class="tab-content" style="display: none">
+        <!-- Timeline UI -->
+        <div id="timeline-container"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!--  Modals (Hidden by default)                                            -->
+  <!-- ====================================================================== -->
+
+  <!-- Tilemap Palette Modal -->
+  <div id="tilemap-editor-overlay" class="modal-overlay">
+    <div class="modal-window wide">
+      <div class="modal-header">
+        <h3>Tile Palette</h3>
+        <button id="tilemap-editor-close-btn" class="modal-close-btn">
+          &times;
+        </button>
+      </div>
+      <div class="modal-content" id="tilemap-editor-body">
+        <div id="tilemap-list-panel">
+          <h4>Palettes</h4>
+          <div id="tilemap-list-container"></div>
+        </div>
+        <div id="tilemap-preview-panel">
+          <div id="tilemap-preview-header">
+            <span id="selected-tilemap-name">No palette selected</span>
+          </div>
+          <div id="tilemap-preview-wrapper">
+            <div id="tilemap-preview-content"></div>
+          </div>
+          <div id="tilemap-action-panel">
+            <button id="crop-and-place-btn">Paint</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Editor Modal (VSL) -->
+  <div id="event-editor-overlay" class="modal-overlay">
+    <div class="modal-window wide">
+      <div class="modal-header">
+        <h3 id="event-editor-title">Visual Scripting</h3>
+        <button id="event-editor-close-btn" class="modal-close-btn">
+          &times;
+        </button>
+      </div>
+      <div id="event-editor-main-content" class="modal-content">
+        <div id="vsl-toolbar">
+          <div id="vsl-trigger-editor">
+            <h4>Trigger</h4>
+            <select id="vsl-trigger-select"></select>
+            <div id="vsl-trigger-context"></div>
+          </div>
+          <hr />
+          <div id="vsl-tabs-container">
+            <h4>Graph</h4>
+            <div id="vsl-tabs"></div>
+          </div>
+          <hr />
+          <h4>Nodes</h4>
+          <div id="vsl-node-list"></div>
+        </div>
+        <div id="vsl-canvas-wrapper">
+          <div id="vsl-canvas">
+            <svg id="vsl-svg-layer" width="2000" height="2000"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- State Machine Editor Modal -->
+  <div id="sm-editor-overlay" class="modal-overlay">
+    <div class="modal-window wide">
+      <div class="modal-header">
+        <h3 id="sm-editor-title">State Machine</h3>
+        <button id="sm-editor-close-btn" class="modal-close-btn">
+          &times;
+        </button>
+      </div>
+      <div class="modal-content" id="sm-editor-body">
+        <div id="sm-states-panel">
+          <div class="panel-header">
+            <h4>States</h4>
+            <button id="sm-add-state-btn" title="Add State">+</button>
+          </div>
+          <div id="sm-states-list"></div>
+        </div>
+        <div id="sm-vsl-panel">
+          <div id="sm-hooks-tabs"></div>
+          <div class="sm-vsl-editor-container">
+            <div class="sm-vsl-toolbar">
+              <h4>Nodes</h4>
+              <div class="sm-vsl-node-list"></div>
             </div>
-            <div id="tilemap-preview-wrapper">
-              <div id="tilemap-preview-content"></div>
-            </div>
-            <div id="tilemap-action-panel">
-              <button id="crop-and-place-btn">Paint</button>
+            <div class="sm-vsl-canvas-wrapper">
+              <div class="sm-vsl-canvas"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Event Editor Modal (VSL) -->
-    <div id="event-editor-overlay" class="modal-overlay">
-      <div class="modal-window wide">
-        <div class="modal-header">
-          <h3 id="event-editor-title">Visual Scripting</h3>
-          <button id="event-editor-close-btn" class="modal-close-btn">
-            &times;
-          </button>
-        </div>
-        <div id="event-editor-main-content" class="modal-content">
-          <div id="vsl-toolbar">
-            <div id="vsl-trigger-editor">
-              <h4>Trigger</h4>
-              <select id="vsl-trigger-select"></select>
-              <div id="vsl-trigger-context"></div>
-            </div>
-            <hr />
-            <div id="vsl-tabs-container">
-              <h4>Graph</h4>
-              <div id="vsl-tabs"></div>
-            </div>
-            <hr />
-            <h4>Nodes</h4>
-            <div id="vsl-node-list"></div>
-          </div>
-          <div id="vsl-canvas-wrapper">
-            <div id="vsl-canvas">
-              <svg id="vsl-svg-layer" width="2000" height="2000"></svg>
-            </div>
-          </div>
-        </div>
+  <!-- Help Modal -->
+  <div id="help-modal-overlay" class="modal-overlay">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="help-modal-title">Help</h3>
+        <button id="help-modal-close-btn" class="modal-close-btn">
+          &times;
+        </button>
       </div>
+      <div id="help-modal-content" class="modal-content"></div>
     </div>
+  </div>
 
-    <!-- State Machine Editor Modal -->
-    <div id="sm-editor-overlay" class="modal-overlay">
-      <div class="modal-window wide">
-        <div class="modal-header">
-          <h3 id="sm-editor-title">State Machine</h3>
-          <button id="sm-editor-close-btn" class="modal-close-btn">
-            &times;
-          </button>
-        </div>
-        <div class="modal-content" id="sm-editor-body">
-          <div id="sm-states-panel">
-            <div class="panel-header">
-              <h4>States</h4>
-              <button id="sm-add-state-btn" title="Add State">+</button>
-            </div>
-            <div id="sm-states-list"></div>
-          </div>
-          <div id="sm-vsl-panel">
-            <div id="sm-hooks-tabs"></div>
-            <div class="sm-vsl-editor-container">
-              <div class="sm-vsl-toolbar">
-                <h4>Nodes</h4>
-                <div class="sm-vsl-node-list"></div>
-              </div>
-              <div class="sm-vsl-canvas-wrapper">
-                <div class="sm-vsl-canvas"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- ====================================================================== -->
+  <!--  3. JavaScript Entry Point                                             -->
+  <!-- ====================================================================== -->
+  <!-- Debug Helper (Development only) -->
+  <script src="debug_undo_redo.js"></script>
+  <!-- Main Application -->
+  <script type="module" src="src/main.js"></script>
+</body>
 
-    <!-- Help Modal -->
-    <div id="help-modal-overlay" class="modal-overlay">
-      <div class="modal-window">
-        <div class="modal-header">
-          <h3 id="help-modal-title">Help</h3>
-          <button id="help-modal-close-btn" class="modal-close-btn">
-            &times;
-          </button>
-        </div>
-        <div id="help-modal-content" class="modal-content"></div>
-      </div>
-    </div>
-
-    <!-- ====================================================================== -->
-    <!--  3. JavaScript Entry Point                                             -->
-    <!-- ====================================================================== -->
-    <!-- Debug Helper (Development only) -->
-    <script src="debug_undo_redo.js"></script>
-    <!-- Main Application -->
-    <script type="module" src="src/main.js"></script>
-  </body>
 </html>
