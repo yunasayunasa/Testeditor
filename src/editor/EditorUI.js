@@ -43,7 +43,7 @@ export default class EditorUI {
         this.createPauseToggle();
         this.createHelpButton();
         this.initializeEventListeners();
-        this.populateAssetBrowser();
+        // this.populateAssetBrowser(); // Moved to onPluginReady
         this.initConsoleCapture(); // Console機能の初期化
 
         const refreshBtn = document.getElementById('editor-refresh-btn');
@@ -390,6 +390,7 @@ export default class EditorUI {
         this.buildHierarchyPanel();
         this.buildLayerPanel();
         this.plugin.updateLayerStates(this.layers);
+        this.populateAssetBrowser(); // Initialize asset browser when plugin is ready
     }
 
     start() {
@@ -637,8 +638,15 @@ export default class EditorUI {
     }
 
     populateAssetBrowser() {
+        console.log('[EditorUI] populateAssetBrowser called');
         const assetList = this.game.registry.get('asset_list');
-        if (!assetList || !this.assetListContainer || !this.assetTabContainer) return;
+        console.log('[EditorUI] assetList:', assetList);
+        console.log('[EditorUI] Containers:', { list: !!this.assetListContainer, tabs: !!this.assetTabContainer });
+
+        if (!assetList || !this.assetListContainer || !this.assetTabContainer) {
+            console.warn('[EditorUI] Missing dependencies for asset browser');
+            return;
+        }
 
         const assetTypes = [...new Set(assetList.map(asset => (asset.type === 'spritesheet' ? 'image' : asset.type)))];
         if (!assetTypes.includes('image')) assetTypes.unshift('image');
