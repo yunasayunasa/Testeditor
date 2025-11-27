@@ -89,8 +89,8 @@ export default class GizmoManager {
     }
 
     createMoveGizmo() {
-        const arrowLength = 80;
-        const arrowSize = 15;
+        const arrowLength = 120;  // 80 -> 120に拡大
+        const arrowSize = 24;     // 15 -> 24に拡大
 
         // X Axis (Red)
         const lineX = this.scene.add.line(0, 0, 0, 0, arrowLength, 0, 0xff0000).setOrigin(0, 0);
@@ -109,7 +109,7 @@ export default class GizmoManager {
         this.setupHandleEvents(arrowY);
 
         // Center (Yellow) - Free move
-        const center = this.scene.add.rectangle(0, 0, 15, 15, 0xffff00);
+        const center = this.scene.add.rectangle(0, 0, 20, 20, 0xffff00);  // 15 -> 20に拡大
         center.setInteractive({ draggable: true, useHandCursor: true });
         center.setData('axis', 'xy');
         center.setData('type', 'move');
