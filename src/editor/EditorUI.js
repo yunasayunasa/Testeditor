@@ -668,14 +668,7 @@ export default class EditorUI {
             this.assetTabContainer.appendChild(tabButton);
         });
 
-        // Re-add the "+" button dynamically
-        const addBtn = document.createElement('button');
-        addBtn.id = 'add-asset-button';
-        addBtn.textContent = '+';
-        addBtn.title = 'Add Asset';
-        addBtn.style.marginLeft = 'auto';
-        addBtn.addEventListener('click', () => this.onAddButtonClicked());
-        this.assetTabContainer.appendChild(addBtn);
+        // Reverted: Dynamic button addition removed to restore stability
 
         this.assetListContainer.innerHTML = '';
 
