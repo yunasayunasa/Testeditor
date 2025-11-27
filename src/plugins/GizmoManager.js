@@ -35,6 +35,20 @@ export default class GizmoManager {
 
     attach(gameObject) {
         if (this.target === gameObject) return;
+
+        // Ensure scene is set - fallback to gameObject's scene if needed
+        if (!this.scene && gameObject.scene) {
+            console.warn('[GizmoManager] Scene was not set, using target object\'s scene');
+            this.scene = gameObject.scene;
+        }
+
+        // Validate scene is available
+        if (!this.scene) {
+            console.error('[GizmoManager] Cannot attach - no scene available');
+            return;
+        }
+
+        console.log(`[GizmoManager] Attaching to: ${gameObject.name}`);
         this.detach();
         this.target = gameObject;
         this.createGizmos();

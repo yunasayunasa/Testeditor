@@ -26,14 +26,20 @@ export class MoveObjectCommand extends EditorCommand {
     execute() {
         const obj = this.getObject();
         if (obj) {
+            console.log(`[MoveObjectCommand] Execute: Moving ${this.objectName} to (${this.newX}, ${this.newY})`);
             obj.setPosition(this.newX, this.newY);
+        } else {
+            console.warn(`[MoveObjectCommand] Execute failed: Object ${this.objectName} not found`);
         }
     }
 
     undo() {
         const obj = this.getObject();
         if (obj) {
+            console.log(`[MoveObjectCommand] Undo: Moving ${this.objectName} back to (${this.oldX}, ${this.oldY})`);
             obj.setPosition(this.oldX, this.oldY);
+        } else {
+            console.warn(`[MoveObjectCommand] Undo failed: Object ${this.objectName} not found`);
         }
     }
 
