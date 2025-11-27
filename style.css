@@ -651,20 +651,6 @@ body:not(.debug-mode) #game-container {
   color: var(--text-muted);
 }
 
-.asset-tab:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-main);
-}
-
-.asset-tab.active {
-  background-color: var(--bg-selected);
-  color: white;
-}
-
-/* Hierarchy Panel Adjustments */
-#hierarchy-panel .panel-tools {
-  flex-shrink: 0;
-}
 
 #hierarchy-search {
   min-width: 60px;
@@ -1329,4 +1315,39 @@ body:not(.debug-mode) #game-container {
     padding: 12px 14px;
     font-size: 13px;
   }
+  /* --- Asset Type Tabs --- */
+.asset-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.asset-tab {
+  padding: 6px 12px;
+  background-color: var(--bg-header);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.asset-tab:hover {
+  background-color: var(--bg-hover);
+}
+
+.asset-tab.active {
+  background-color: var(--bg-selected);
+  color: white;
+}
+#editor-props {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  max-height: calc(100vh - 200px); /* 追加 */
+  overflow-y: auto;                 /* 追加 */
+}
 }
