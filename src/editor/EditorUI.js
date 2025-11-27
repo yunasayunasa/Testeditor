@@ -648,17 +648,23 @@ export default class EditorUI {
         assetTypes.forEach(type => {
             if (!type) return;
             const tabButton = document.createElement('div');
-            tabButton.className = 'asset-tab';
-            tabButton.innerText = type.charAt(0).toUpperCase() + type.slice(1) + 's';
-            if (type === this.currentAssetTab) tabButton.classList.add('active');
-            tabButton.addEventListener('click', () => {
+            tabButton.className = `asset-tab ${this.currentAssetTab === type ? 'active' : ''}`;
+            tabButton.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            tabButton.onclick = () => {
                 this.currentAssetTab = type;
-                this.selectedAssetKey = null;
-                this.selectedAssetType = null;
                 this.populateAssetBrowser();
-            });
+            };
             this.assetTabContainer.appendChild(tabButton);
         });
+
+        // Re-add the "+" button dynamically
+        const addBtn = document.createElement('button');
+        addBtn.id = 'add-asset-button';
+        addBtn.textContent = '+';
+        addBtn.title = 'Add Asset';
+        addBtn.style.marginLeft = 'auto';
+        addBtn.addEventListener('click', () => this.onAddButtonClicked());
+        this.assetTabContainer.appendChild(addBtn);
 
         this.assetListContainer.innerHTML = '';
 
@@ -2615,8 +2621,8 @@ export default class EditorUI {
         reader.readAsText(file);
     }
     /**
- * Undo/Redoボタンの有効/無効を更新
- */
+    * Undo/Redoボタンの有効/無効を更新
+    */
     updateUndoRedoButtons(canUndo, canRedo) {
         if (this.undoBtn) this.undoBtn.disabled = !canUndo;
         if (this.redoBtn) this.redoBtn.disabled = !canRedo;
