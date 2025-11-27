@@ -19,6 +19,7 @@ export default class EditorUI {
         this.selectedAssetType = null;
         this.currentEditorMode = 'select';
         this.currentAssetTab = 'image';
+        this.currentSceneTab = 'Scene';  // 'Scene', 'Game', or 'Animator'
         this.activeEventId = null;
         this.selectedNodeData = null;
         this.connectionState = { isActive: false, fromNodeId: null, previewLine: null };
@@ -312,29 +313,19 @@ export default class EditorUI {
         } else {
             console.warn('EditorUI: #create-object-btn not found');
         }
-            // --- Scene Tabs (Scene/Game/Animator) ---
-    const sceneTabsContainer = document.querySelector('.scene-tabs');
-    if (sceneTabsContainer) {
-        const tabs = sceneTabsContainer.querySelectorAll('.tab');
-        tabs.forEach((tab) => {
-            tab.addEventListener('click', () => {
-                // Remove active class from all tabs
-                tabs.forEach(t => t.classList.remove('active'));
-                // Add active class to clicked tab
-                tab.classList.add('active');
-                
-                const tabName = tab.textContent;
-                console.log(`[EditorUI] Switched to ${tabName} tab`);
-                
-                // TODO: Implement tab-specific behavior
-                if (tabName === 'Animator') {
-                    console.log('[EditorUI] Animation timeline not yet implemented');
-                }
+        // --- Scene Tabs (Scene/Game/Animator) ---
+        const sceneTabsContainer = document.querySelector('.scene-tabs');
+        if (sceneTabsContainer) {
+            const tabs = sceneTabsContainer.querySelectorAll('.tab');
+            tabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.textContent.trim();
+                    this.switchSceneTab(tabName);
+                });
             });
-        });
+        }
     }
-}
-    
+
 
     updateUndoRedoButtons(canUndo, canRedo) {
         if (this.undoBtn) {
@@ -344,6 +335,50 @@ export default class EditorUI {
         if (this.redoBtn) {
             this.redoBtn.disabled = !canRedo;
             this.redoBtn.style.opacity = canRedo ? '1' : '0.5';
+        }
+    }
+
+    switchSceneTab(tabName) {
+        if (this.currentSceneTab === tabName) return;
+
+        console.log(`[EditorUI] Switching to ${tabName} tab`);
+        this.currentSceneTab = tabName;
+
+        // Update tab active states
+        const sceneTabsContainer = document.querySelector('.scene-tabs');
+        if (sceneTabsContainer) {
+            const tabs = sceneTabsContainer.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (tab.textContent.trim() === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+
+        // Handle tab-specific behavior
+        if (tabName === 'Game') {
+            // Switch to play mode
+            if (this.game.registry.get('editor_mode') !== 'play') {
+                const playBtn = document.getElementById('editor-play-btn');
+                if (playBtn) playBtn.click();
+            }
+            // Hide gizmos
+            if (this.plugin && this.plugin.gizmoManager) {
+                this.plugin.gizmoManager.detach();
+            }
+        } else if (tabName === 'Animator') {
+            // Show placeholder message
+            alert('アニメーションタイムライン機能は現在開発中です。\n\nAnimation timeline feature is currently under development.');
+            // Switch back to Scene tab
+            setTimeout(() => this.switchSceneTab('Scene'), 100);
+        } else {
+            // Scene tab - ensure edit mode
+            if (this.game.registry.get('editor_mode') === 'play') {
+                const playBtn = document.getElementById('editor-play-btn');
+                if (playBtn) playBtn.click(); // Stop play mode
+            }
         }
     }
 
