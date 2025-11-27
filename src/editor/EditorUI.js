@@ -53,11 +53,12 @@ export default class EditorUI {
     }
     getDomElements() {
         // Main Panels
-        this.editorPanel = document.getElementById('editor-panel'); // Wrapper
+        this.editorPanel = document.getElementById('editor-root'); // Wrapper
         this.hierarchyPanel = document.getElementById('hierarchy-panel');
         this.sceneViewPanel = document.getElementById('scene-view-panel');
         this.inspectorPanel = document.getElementById('inspector-panel');
         this.bottomPanel = document.getElementById('bottom-panel');
+        this.gameContainer = document.getElementById('game-container'); // Added
 
         // --- File Controls ---
         this.saveSceneBtn = document.getElementById('editor-save-scene-btn');
@@ -120,9 +121,11 @@ export default class EditorUI {
         }
 
         // Check for critical elements
-        if (!this.editorPanel) console.warn('EditorUI: #editor-panel not found');
+        if (!this.editorPanel) console.warn('EditorUI: #editor-root not found');
         if (!this.sceneViewPanel) console.warn('EditorUI: #scene-view-panel not found');
         if (!this.gameContainer) console.warn('EditorUI: #game-container not found');
+        if (!this.assetListContainer) console.warn('EditorUI: #asset-list not found');
+        if (!this.assetTabContainer) console.warn('EditorUI: #asset-type-tabs not found');
 
         // --- Tilemap ---
         this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
