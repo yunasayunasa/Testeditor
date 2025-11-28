@@ -118,6 +118,8 @@ body {
   width: var(--sidebar-width);
   border-left: 1px solid var(--border-color);
   flex-shrink: 0;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 #bottom-panel {
@@ -142,7 +144,10 @@ body {
 .panel-title {
   flex: 1;
 }
-
+#inspector-panel .panel-content {
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
 .panel-content {
   flex: 1;
   overflow-y: auto;

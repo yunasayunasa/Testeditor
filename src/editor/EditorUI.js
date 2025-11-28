@@ -646,7 +646,7 @@ export default class EditorUI {
         console.log('[EditorUI] assetList:', assetList);
         console.log('[EditorUI] Containers:', { list: !!this.assetListContainer, tabs: !!this.assetTabContainer });
 
-        if (!assetList || !this.assetListContainer || !this.assetTabContainer) {
+      if (!assetList || !this.assetListContainer) {
             console.warn('[EditorUI] Missing dependencies for asset browser');
             return;
         }
