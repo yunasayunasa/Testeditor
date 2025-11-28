@@ -948,3 +948,15 @@ body:not(.debug-mode) #game-container {
     /* 追加 */
   }
 }
+
+/* --- Asset List Visibility Fix --- */
+#asset-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  grid-auto-rows: 100px;
+  grid-gap: 8px;
+  align-content: start;
+  overflow-y: auto;
+  height: 100%;
+  padding: 8px;
+}
