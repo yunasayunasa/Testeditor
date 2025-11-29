@@ -82,11 +82,9 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         return null;
     }
-   // 87-93行目を以下のように修正:
-    setUI(editorUI) {
+  setUI(editorUI) {
         this.editorUI = editorUI;
     }
-
     toggleMultiSelectMode() {
         this.isMultiSelectMode = !this.isMultiSelectMode;
         console.log(`[EditorPlugin] Multi-Select Mode: ${this.isMultiSelectMode ? 'ON' : 'OFF'}`);
@@ -94,7 +92,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             this.editorUI.updateMultiSelectButtonState();
         }
     }
-
     /**
      * 現在アクティブなゲームシーンをリスタートさせることで、エディタの状態を完全にリフレッシュする
      */
@@ -120,6 +117,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             alert('リスタートするアクティブなゲームシーンが見つかりません。');
         }
     }
+       /**
+     * EditorUIから渡されたレイヤー情報でlayerStatesを更新する
+     * @param {Array} layers - EditorUIから渡されるレイヤー配列
+     */
+    updateLayerStates(layers) {
+        if (!layers || !Array.isArray(layers)) {
+            console.warn('[EditorPlugin] updateLayerStates: Invalid layers provided');
+            return;
+        }
+        this.layerStates = layers;
+    }
+
     panCamera(dx, dy) {
         if (!this.isEnabled) return;
         const camera = this.getActiveGameCamera();
