@@ -168,15 +168,14 @@ export default class GizmoManager {
             this.activeHandle = handle;
             this.scene.input.setDraggable(this.target, false); // Disable target dragging
 
-            // Store initial values
+          // Store initial values for undo/redo
             handle.setData('startX', pointer.x);
             handle.setData('startY', pointer.y);
-           handle.setData('initialTargetScaleX', this.target.scaleX);
-handle.setData('initialTargetScaleY', this.target.scaleY);
-            handle.setData('initialRotation', this.target.rotation);
-            handle.setData('initialScaleX', this.target.scaleX);
-         handle.setData('initialTargetAngle', this.target.angle);
-        });
+            handle.setData('initialTargetX', this.target.x);
+            handle.setData('initialTargetY', this.target.y);
+            handle.setData('initialTargetAngle', this.target.angle);
+            handle.setData('initialTargetScaleX', this.target.scaleX);
+            handle.setData('initialTargetScaleY', this.target.scaleY);   });
 
         handle.on('drag', (pointer) => {
             this.onDrag(pointer, handle);
