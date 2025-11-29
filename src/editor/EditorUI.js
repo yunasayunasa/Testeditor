@@ -43,7 +43,7 @@ export default class EditorUI {
         this.createPauseToggle();
         this.createHelpButton();
         this.initializeEventListeners();
-        // this.populateAssetBrowser(); // Moved to onPluginReady
+        this.populateAssetBrowser();
         this.initConsoleCapture(); // Console機能の初期化
 
         const refreshBtn = document.getElementById('editor-refresh-btn');
@@ -53,12 +53,11 @@ export default class EditorUI {
     }
     getDomElements() {
         // Main Panels
-        this.editorPanel = document.getElementById('editor-root'); // Wrapper
+        this.editorPanel = document.getElementById('editor-panel'); // Wrapper
         this.hierarchyPanel = document.getElementById('hierarchy-panel');
         this.sceneViewPanel = document.getElementById('scene-view-panel');
         this.inspectorPanel = document.getElementById('inspector-panel');
         this.bottomPanel = document.getElementById('bottom-panel');
-        this.gameContainer = document.getElementById('game-container'); // Added
 
         // --- File Controls ---
         this.saveSceneBtn = document.getElementById('editor-save-scene-btn');
@@ -76,8 +75,7 @@ export default class EditorUI {
         this.assetListContainer = document.getElementById('asset-list');
         this.assetTabContainer = document.getElementById('asset-type-tabs'); // Added this
         this.assetBreadcrumb = document.getElementById('asset-breadcrumb');
-        this.assetFileInput = document.getElementById('asset-file-input'); // Added file input
-        document.getElementById('add-asset-button')?.addEventListener('click', () => this.onAddButtonClicked());
+        document.getElementById('add-asset-button')?.addEventListener('click', this.onAddButtonClicked);
         document.getElementById('add-text-button')?.addEventListener('click', this.onAddTextClicked);
 
         // --- Console ---
@@ -121,11 +119,9 @@ export default class EditorUI {
         }
 
         // Check for critical elements
-        if (!this.editorPanel) console.warn('EditorUI: #editor-root not found');
+        if (!this.editorPanel) console.warn('EditorUI: #editor-panel not found');
         if (!this.sceneViewPanel) console.warn('EditorUI: #scene-view-panel not found');
         if (!this.gameContainer) console.warn('EditorUI: #game-container not found');
-        if (!this.assetListContainer) console.warn('EditorUI: #asset-list not found');
-        if (!this.assetTabContainer) console.warn('EditorUI: #asset-type-tabs not found');
 
         // --- Tilemap ---
         this.tilemapModeBtn = document.getElementById('tilemap-mode-btn');
@@ -218,9 +214,6 @@ export default class EditorUI {
         }
         if (this.sceneFileInput) {
             this.sceneFileInput.addEventListener('change', this.onLoadSceneFile);
-        }
-        if (this.assetFileInput) {
-            this.assetFileInput.addEventListener('change', (e) => this.onAssetFileSelected(e));
         }
 
         // --- Toolbar Controls ---
@@ -393,7 +386,6 @@ export default class EditorUI {
         this.buildHierarchyPanel();
         this.buildLayerPanel();
         this.plugin.updateLayerStates(this.layers);
-        this.populateAssetBrowser(); // Initialize asset browser when plugin is ready
     }
 
     start() {
@@ -574,82 +566,9 @@ export default class EditorUI {
     // =================================================================
     // Project / Asset Browser
     // =================================================================
-
-    onAddButtonClicked() {
-        if (this.assetFileInput) {
-            this.assetFileInput.click();
-        }
-    }
-
-    onAssetFileSelected(event) {
-        const files = event.target.files;
-        if (files && files.length > 0) {
-            this.processAssetFiles(files);
-        }
-        // Reset input so same file can be selected again
-        event.target.value = '';
-    }
-
-    processAssetFiles(files) {
-        const assetList = this.game.registry.get('asset_list') || [];
-        let addedCount = 0;
-
-        Array.from(files).forEach(file => {
-            const fileType = file.type.split('/')[0]; // 'image', 'audio', etc.
-            if (fileType !== 'image' && fileType !== 'audio') {
-                console.warn(`[EditorUI] Unsupported file type: ${file.type}`);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataURL = e.target.result;
-                const assetKey = file.name.split('.')[0].toLowerCase().replace(/[^a-z0-9]/g, '_');
-
-                // Check for duplicates
-                if (assetList.some(a => a.key === assetKey)) {
-                    console.warn(`[EditorUI] Asset key '${assetKey}' already exists. Skipping.`);
-                    return;
-                }
-
-                // Add to Phaser Cache
-                if (fileType === 'image') {
-                    this.game.textures.addBase64(assetKey, dataURL);
-                } else if (fileType === 'audio') {
-                    // Audio handling might need more complex logic for base64, 
-                    // but for now we register it. Phaser audio from base64 is tricky without decoding.
-                    // For prototype, we might just store metadata.
-                }
-
-                // Add to Registry
-                assetList.push({
-                    key: assetKey,
-                    type: fileType,
-                    url: dataURL, // Store dataURL for persistence (prototype only)
-                    file: file    // Keep file reference if needed
-                });
-
-                addedCount++;
-                if (addedCount === files.length) {
-                    this.game.registry.set('asset_list', assetList);
-                    this.populateAssetBrowser();
-                    console.log(`[EditorUI] Added ${addedCount} assets.`);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
     populateAssetBrowser() {
-        console.log('[EditorUI] populateAssetBrowser called');
         const assetList = this.game.registry.get('asset_list');
-        console.log('[EditorUI] assetList:', assetList);
-        console.log('[EditorUI] Containers:', { list: !!this.assetListContainer, tabs: !!this.assetTabContainer });
-
-      if (!assetList || !this.assetListContainer) {
-            console.warn('[EditorUI] Missing dependencies for asset browser');
-            return;
-        }
+        if (!assetList || !this.assetListContainer || !this.assetTabContainer) return;
 
         const assetTypes = [...new Set(assetList.map(asset => (asset.type === 'spritesheet' ? 'image' : asset.type)))];
         if (!assetTypes.includes('image')) assetTypes.unshift('image');
@@ -659,16 +578,17 @@ export default class EditorUI {
         assetTypes.forEach(type => {
             if (!type) return;
             const tabButton = document.createElement('div');
-            tabButton.className = `asset-tab ${this.currentAssetTab === type ? 'active' : ''}`;
-            tabButton.textContent = type.charAt(0).toUpperCase() + type.slice(1);
-            tabButton.onclick = () => {
+            tabButton.className = 'asset-tab';
+            tabButton.innerText = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+            if (type === this.currentAssetTab) tabButton.classList.add('active');
+            tabButton.addEventListener('click', () => {
                 this.currentAssetTab = type;
+                this.selectedAssetKey = null;
+                this.selectedAssetType = null;
                 this.populateAssetBrowser();
-            };
+            });
             this.assetTabContainer.appendChild(tabButton);
         });
-
-        // Reverted: Dynamic button addition removed to restore stability
 
         this.assetListContainer.innerHTML = '';
 
@@ -2625,8 +2545,8 @@ export default class EditorUI {
         reader.readAsText(file);
     }
     /**
-    * Undo/Redoボタンの有効/無効を更新
-    */
+ * Undo/Redoボタンの有効/無効を更新
+ */
     updateUndoRedoButtons(canUndo, canRedo) {
         if (this.undoBtn) this.undoBtn.disabled = !canUndo;
         if (this.redoBtn) this.redoBtn.disabled = !canRedo;
