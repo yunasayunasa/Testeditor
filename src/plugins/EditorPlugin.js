@@ -1,4 +1,4 @@
-import { ComponentRegistry } from '../components/index.js';
+﻿import { ComponentRegistry } from '../components/index.js';
 import GizmoManager from './GizmoManager.js';
 import { EditorCommandManager } from '../editor/EditorCommandManager.js';
 import { MoveObjectCommand } from '../editor/commands/MoveObjectCommand.js';/**
@@ -82,15 +82,23 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         }
         return null;
     }
+   // 87-93行目を以下のように修正:
     setUI(editorUI) {
         this.editorUI = editorUI;
-        // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
-        // ★★★ イベントリスナーの登録は、ここで行わない ★★★
+    }
+
+    toggleMultiSelectMode() {
+        this.isMultiSelectMode = !this.isMultiSelectMode;
+        console.log(`[EditorPlugin] Multi-Select Mode: ${this.isMultiSelectMode ? 'ON' : 'OFF'}`);
+        if (this.editorUI && this.editorUI.updateMultiSelectButtonState) {
+            this.editorUI.updateMultiSelectButtonState();
+        }
+    }
+
+    /**
      * 現在アクティブなゲームシーンをリスタートさせることで、エディタの状態を完全にリフレッシュする
      */
     refresh() {
-        console.log('%c[EditorPlugin] Refreshing via Scene Restart...', 'color: #FF9800; font-weight: bold;');
-
         // 1. 現在アクティブな「ゲームプレイシーン」を取得する
         let activeScene = null;
         const allScenes = this.pluginManager.game.scene.getScenes(true);
