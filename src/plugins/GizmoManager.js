@@ -1,5 +1,6 @@
 import { MoveObjectCommand } from '../editor/commands/MoveObjectCommand.js';
-
+import { RotateObjectCommand } from '../editor/commands/RotateObjectCommand.js';
+import { ScaleObjectCommand } from '../editor/commands/ScaleObjectCommand.js';
 export default class GizmoManager {
     constructor(editorPlugin) {
         this.editorPlugin = editorPlugin;
@@ -170,11 +171,11 @@ export default class GizmoManager {
             // Store initial values
             handle.setData('startX', pointer.x);
             handle.setData('startY', pointer.y);
-            handle.setData('initialTargetX', this.target.x);
-            handle.setData('initialTargetY', this.target.y);
+           handle.setData('initialTargetScaleX', this.target.scaleX);
+handle.setData('initialTargetScaleY', this.target.scaleY);
             handle.setData('initialRotation', this.target.rotation);
             handle.setData('initialScaleX', this.target.scaleX);
-            handle.setData('initialScaleY', this.target.scaleY);
+         handle.setData('initialTargetAngle', this.target.angle);
         });
 
         handle.on('drag', (pointer) => {
@@ -208,8 +209,37 @@ export default class GizmoManager {
                         this.editorPlugin.commandManager.execute(command);
                     }
                 }
-                // TODO: Implement Rotate and Scale commands
+                    } else if (type === 'rotate') {
+                    const oldAngle = handle.getData('initialTargetAngle');
+                    const newAngle = this.target.angle;
+
+                    if (Math.abs(oldAngle - newAngle) > 0.1) {
+                        const command = new RotateObjectCommand(
+                            this.editorPlugin,
+                            this.target,
+                            oldAngle,
+                            newAngle
+                        );
+                        this.editorPlugin.commandManager.execute(command);
+                    
+                } else if (type === 'scale') {
+                    const oldScaleX = handle.getData('initialTargetScaleX');
+                    const oldScaleY = handle.getData('initialTargetScaleY');
+                    const newScaleX = this.target.scaleX;
+                    const newScaleY = this.target.scaleY;
+
+                    if (Math.abs(oldScaleX - newScaleX) > 0.01 || Math.abs(oldScaleY - newScaleY) > 0.01) {
+                        const command = new ScaleObjectCommand(
+                            this.editorPlugin,
+                            this.target,
+                            oldScaleX, oldScaleY,
+                            newScaleX, newScaleY
+                        );
+                        this.editorPlugin.commandManager.execute(command);
+                    }
+                }
             }
+            
         });
     }
 
