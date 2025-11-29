@@ -273,7 +273,7 @@ export default class GizmoManager {
             const currentAngle = Phaser.Math.Angle.Between(this.target.x, this.target.y, pointer.x, pointer.y);
             const diff = currentAngle - startAngle;
 
-            this.target.rotation = handle.getData('initialRotation') + diff;
+            this.target.rotation = handle.getData('initialTargetAngle') / 180 * Math.PI + diff;
 
         } else if (type === 'scale') {
             const startDistX = Math.abs(handle.getData('startX') - this.target.x);
@@ -283,11 +283,11 @@ export default class GizmoManager {
 
             if (axis === 'x' || axis === 'xy') {
                 const scaleFactor = startDistX > 0 ? currentDistX / startDistX : 1;
-                this.target.scaleX = handle.getData('initialScaleX') * scaleFactor;
+                this.target.scaleX = handle.getData('initialTargetScaleX') * scaleFactor;
             }
             if (axis === 'y' || axis === 'xy') {
                 const scaleFactor = startDistY > 0 ? currentDistY / startDistY : 1;
-                this.target.scaleY = handle.getData('initialScaleY') * scaleFactor;
+                this.target.scaleY = handle.getData('initialTargetScaleY') * scaleFactor;
             }
         }
 

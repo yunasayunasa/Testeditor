@@ -22,8 +22,8 @@ export class RotateObjectCommand extends EditorCommand {
     execute() {
         const obj = this.getObject();
         if (obj) {
-            console.log(`[RotateObjectCommand] Execute: Rotating ${this.objectName} to ${this.newAngle}°`);
-            obj.setAngle(this.newAngle);
+            console.log(`[RotateObjectCommand] Execute: Rotating ${this.objectName} to ${this.newAngle} rad`);
+            obj.rotation = this.newAngle;
         } else {
             console.warn(`[RotateObjectCommand] Execute failed: Object ${this.objectName} not found`);
         }
@@ -32,8 +32,8 @@ export class RotateObjectCommand extends EditorCommand {
     undo() {
         const obj = this.getObject();
         if (obj) {
-            console.log(`[RotateObjectCommand] Undo: Rotating ${this.objectName} back to ${this.oldAngle}°`);
-            obj.setAngle(this.oldAngle);
+            console.log(`[RotateObjectCommand] Undo: Rotating ${this.objectName} back to ${this.oldAngle} rad`);
+            obj.rotation = this.oldAngle;
         } else {
             console.warn(`[RotateObjectCommand] Undo failed: Object ${this.objectName} not found`);
         }
