@@ -207,10 +207,9 @@ export default class GizmoManager {
                         );
                         this.editorPlugin.commandManager.execute(command);
                     }
-                }
-                    } else if (type === 'rotate') {
+                } else if (type === 'rotate') {
                     const oldAngle = handle.getData('initialTargetAngle');
-                    const newAngle = this.target.angle;
+                    const newAngle = this.target.rotation;
 
                     if (Math.abs(oldAngle - newAngle) > 0.1) {
                         const command = new RotateObjectCommand(
@@ -220,7 +219,7 @@ export default class GizmoManager {
                             newAngle
                         );
                         this.editorPlugin.commandManager.execute(command);
-                    
+                    }
                 } else if (type === 'scale') {
                     const oldScaleX = handle.getData('initialTargetScaleX');
                     const oldScaleY = handle.getData('initialTargetScaleY');
