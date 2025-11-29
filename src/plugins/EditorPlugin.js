@@ -13,6 +13,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.isEnabled = false;
         this.editorUI = null;
         this.currentMode = 'select';
+        this.isMultiSelectMode = false; // Multi-Select Mode Flag
         // DOM要素の参照
         this.editorPanel = null;
         this.editorTitle = null;
@@ -85,20 +86,6 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.editorUI = editorUI;
         // ★★★ このメソッドは、UIへの参照を保持するだけにする ★★★
         // ★★★ イベントリスナーの登録は、ここで行わない ★★★
-    }
-
-    /**
-        * ★★★ 修正版 ★★★
-        * UIから渡された最新のレイヤー状態を保存し、シーンに即時反映させる
-        */
-    updateLayerStates(layers) {
-        this.layerStates = layers;
-        this.applyLayerStatesToScene(); // ★ 状態が更新されたら、すぐに適用処理を呼び出す
-    }
-    // in src/plugins/EditorPlugin.js
-
-    /**
-     * ★★★ 最終・最シンプル版 ★★★
      * 現在アクティブなゲームシーンをリスタートさせることで、エディタの状態を完全にリフレッシュする
      */
     refresh() {
@@ -1818,6 +1805,12 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             // エディットモード（'select'など）でクリックされた場合は、
             // これ以降のイベント（Buttonの'onClick'など）が発火しないように、伝播を止める
             pointer.event.stopPropagation();
+
+            // --- Multi-Select Mode Logic ---
+            if (this.isMultiSelectMode) {
+                this.toggleObjectSelection(gameObject);
+                return;
+            }
             // ▼▼▼【ロック状態をチェックするガード節を追加】▼▼▼
             const layerName = gameObject.getData('layer');
             const layer = this.layerStates.find(l => l.name === layerName);
@@ -2099,6 +2092,35 @@ gameObject.on('dragend', (pointer) => {
         this.selectedObjects = [];
         setTimeout(() => this.updatePropertyPanel(), 0);
 
+    }
+
+    /**
+     * Toggle selection of a single object in Multi-Select Mode
+     */
+    toggleObjectSelection(gameObject) {
+        if (!this.selectedObjects) {
+            this.selectedObjects = [];
+        }
+
+        // Ensure we are working with an array, even if previously single selected
+        if (this.selectedObject && !this.selectedObjects.includes(this.selectedObject)) {
+             this.selectedObjects.push(this.selectedObject);
+        }
+
+        const index = this.selectedObjects.indexOf(gameObject);
+        if (index !== -1) {
+            // Already selected, so remove it
+            this.selectedObjects.splice(index, 1);
+        } else {
+            // Not selected, so add it
+            this.selectedObjects.push(gameObject);
+        }
+
+        if (this.selectedObjects.length === 0) {
+            this.deselectAll();
+        } else {
+            this.selectMultipleObjects(this.selectedObjects);
+        }
     }
 
     selectMultipleObjects(gameObjects) {

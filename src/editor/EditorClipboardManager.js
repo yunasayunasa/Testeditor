@@ -1,10 +1,14 @@
+import { CreateObjectCommand } from './commands/CreateObjectCommand.js';
+import { DeleteObjectCommand } from './commands/DeleteObjectCommand.js';
+
 /**
  * EditorClipboardManager - Copy/Paste/Duplicate機能を管理
+ * 複数オブジェクト対応 & Undo/Redo統合版
  */
 export default class EditorClipboardManager {
     constructor(plugin) {
         this.plugin = plugin;
-        this.clipboard = null;
+        this.clipboard = null; // Array of object layouts
         this.setupKeyboardShortcuts();
     }
 
@@ -46,28 +50,28 @@ export default class EditorClipboardManager {
      * 選択中のオブジェクトをコピー
      */
     copySelectedObject() {
-        const selectedObject = this.plugin.selectedObject;
-        if (!selectedObject) {
+        const objectsToCopy = this._getTargetObjects();
+        if (objectsToCopy.length === 0) {
             console.log('[ClipboardManager] No object selected to copy');
             return;
         }
 
-        const scene = selectedObject.scene;
+        const scene = objectsToCopy[0].scene;
         if (!scene || typeof scene.exportGameObject !== 'function') {
             console.warn('[ClipboardManager] Cannot export object: scene method missing');
             return;
         }
 
         // オブジェクトのレイアウトデータをJSON化してクリップボードに保存
-        this.clipboard = scene.exportGameObject(selectedObject);
-        console.log('[ClipboardManager] Object copied:', selectedObject.name);
+        this.clipboard = objectsToCopy.map(obj => scene.exportGameObject(obj));
+        console.log(`[ClipboardManager] Copied ${this.clipboard.length} objects.`);
     }
 
     /**
      * クリップボードからオブジェクトをペースト
      */
     pasteObject() {
-        if (!this.clipboard) {
+        if (!this.clipboard || this.clipboard.length === 0) {
             console.log('[ClipboardManager] Clipboard is empty');
             return;
         }
@@ -78,49 +82,103 @@ export default class EditorClipboardManager {
             return;
         }
 
-        // 少しオフセットした位置に配置
-        const layout = JSON.parse(JSON.stringify(this.clipboard));
-        layout.x += 20;
-        layout.y += 20;
-        layout.name = layout.name + '_copy';
+        const newObjects = [];
 
-        const newObject = scene.createObjectFromLayout(layout);
-        scene.applyProperties(newObject, layout);
+        this.clipboard.forEach(layout => {
+            const newLayout = JSON.parse(JSON.stringify(layout));
+            newLayout.x += 20;
+            newLayout.y += 20;
+            newLayout.name = this._generateUniqueName(scene, newLayout.name + '_copy');
 
-        console.log('[ClipboardManager] Object pasted:', newObject.name);
-        
-        // 新しいオブジェクトを選択
-        this.plugin.selectSingleObject(newObject);
+            const command = new CreateObjectCommand(this.plugin, scene.scene.key, newLayout);
+            this.plugin.commandManager.execute(command);
+
+            // コマンド実行後に作成されたオブジェクトを取得
+            const newObj = scene.children.list.find(o => o.name === newLayout.name);
+            if (newObj) {
+                newObjects.push(newObj);
+            }
+        });
+
+        if (newObjects.length > 0) {
+            this.plugin.selectMultipleObjects(newObjects);
+            console.log(`[ClipboardManager] Pasted ${newObjects.length} objects.`);
+        }
     }
 
     /**
      * 選択中のオブジェクトを複製 (Ctrl+D)
      */
     duplicateSelectedObject() {
-        const selectedObject = this.plugin.selectedObject;
-        if (!selectedObject) {
-            console.log('[ClipboardManager] No object selected to duplicate');
-            return;
-        }
+        const objectsToDuplicate = this._getTargetObjects();
+        if (objectsToDuplicate.length === 0) return;
 
-        // Copy → Paste の組み合わせで実装
-        this.copySelectedObject();
-        this.pasteObject();
+        const scene = objectsToDuplicate[0].scene;
+        const newObjects = [];
+
+        objectsToDuplicate.forEach(obj => {
+            const layout = scene.exportGameObject(obj);
+            const newLayout = JSON.parse(JSON.stringify(layout));
+            newLayout.x += 20;
+            newLayout.y += 20;
+            newLayout.name = this._generateUniqueName(scene, newLayout.name + '_duplicate');
+
+            const command = new CreateObjectCommand(this.plugin, scene.scene.key, newLayout);
+            this.plugin.commandManager.execute(command);
+
+            const newObj = scene.children.list.find(o => o.name === newLayout.name);
+            if (newObj) {
+                newObjects.push(newObj);
+            }
+        });
+
+        if (newObjects.length > 0) {
+            this.plugin.selectMultipleObjects(newObjects);
+            console.log(`[ClipboardManager] Duplicated ${newObjects.length} objects.`);
+        }
     }
 
     /**
-     * 選択中のオブジェクトを削除
+     * 選択中のオブジェクトを削除 (Delete)
      */
     deleteSelectedObject() {
-        const selectedObject = this.plugin.selectedObject;
-        if (!selectedObject) {
-            return;
-        }
+        const objectsToDelete = this._getTargetObjects();
+        if (objectsToDelete.length === 0) return;
 
-        const objectName = selectedObject.name;
-        selectedObject.destroy();
-        this.plugin.selectedObject = null;
-        this.plugin.updatePropertyPanel();
-        console.log('[ClipboardManager] Object deleted:', objectName);
+        const scene = objectsToDelete[0].scene;
+
+        // 選択解除
+        this.plugin.deselectAll();
+
+        objectsToDelete.forEach(obj => {
+            const command = new DeleteObjectCommand(this.plugin, scene.scene.key, obj.name);
+            this.plugin.commandManager.execute(command);
+        });
+
+        console.log(`[ClipboardManager] Deleted ${objectsToDelete.length} objects.`);
+    }
+
+    /**
+     * ヘルパー: ターゲットとなるオブジェクト配列を取得
+     */
+    _getTargetObjects() {
+        if (this.plugin.selectedObjects && this.plugin.selectedObjects.length > 0) {
+            return [...this.plugin.selectedObjects];
+        } else if (this.plugin.selectedObject) {
+            return [this.plugin.selectedObject];
+        }
+        return [];
+    }
+
+    /**
+     * ヘルパー: ユニークな名前を生成
+     */
+    _generateUniqueName(scene, baseName) {
+        let name = baseName;
+        let counter = 1;
+        while (scene.children.list.some(o => o.name === name)) {
+            name = `${baseName}_${counter++}`;
+        }
+        return name;
     }
 }

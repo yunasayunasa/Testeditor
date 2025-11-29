@@ -66,6 +66,13 @@ export default class EditorUI {
         // --- Edit Controls ---
         this.undoBtn = document.getElementById('editor-undo-btn');
         this.redoBtn = document.getElementById('editor-redo-btn');
+        this.copyBtn = document.getElementById('editor-copy-btn');
+        this.pasteBtn = document.getElementById('editor-paste-btn');
+        this.duplicateBtn = document.getElementById('editor-duplicate-btn');
+        this.deleteBtn = document.getElementById('editor-delete-btn');
+        
+        // --- Tool Controls ---
+        this.multiSelectBtn = document.getElementById('tool-multiselect');
         // --- Bottom Panel Tabs ---
         document.getElementById('tab-project')?.addEventListener('click', () => this.switchBottomTab('project'));
         document.getElementById('tab-console')?.addEventListener('click', () => this.switchBottomTab('console'));
@@ -169,23 +176,7 @@ export default class EditorUI {
         this.setupPanButton(document.getElementById('camera-pan-up'), 0, -10);
         this.setupPanButton(document.getElementById('camera-pan-down'), 0, 10);
         this.setupPanButton(document.getElementById('camera-pan-left'), -10, 0);
-        this.setupPanButton(document.getElementById('camera-pan-right'), 10, 0);
 
-        // --- Inspector ---
-        this.editorPropsContainer = document.getElementById('editor-props');
-        this.addComponentBtn = document.getElementById('add-component-btn');
-
-        // --- Modes ---
-        this.selectModeBtn = document.getElementById('select-mode-btn');
-        this.selectModeBtn?.addEventListener('click', () => this.setEditorMode('select'));
-        this.modeToggle = document.getElementById('mode-toggle-checkbox');
-        this.modeLabel = document.getElementById('mode-label');
-        if (this.modeToggle) {
-            this.modeToggle.addEventListener('change', (event) => {
-                const newMode = event.target.checked ? 'play' : 'select';
-                this.setGlobalEditorMode(newMode);
-            });
-        }
 
         // --- Help ---
         this.helpModal = document.getElementById('help-modal-overlay');
@@ -256,6 +247,24 @@ export default class EditorUI {
                 }
             });
         }
+
+        // Edit Controls (Copy/Paste/etc)
+        this.copyBtn?.addEventListener('click', () => this.plugin.clipboardManager.copySelectedObject());
+        this.pasteBtn?.addEventListener('click', () => this.plugin.clipboardManager.pasteObject());
+        this.duplicateBtn?.addEventListener('click', () => this.plugin.clipboardManager.duplicateSelectedObject());
+        this.deleteBtn?.addEventListener('click', () => this.plugin.clipboardManager.deleteSelectedObject());
+
+        // Multi-Select Toggle
+        this.multiSelectBtn?.addEventListener('click', () => {
+            if (this.plugin.toggleMultiSelectMode) {
+                this.plugin.toggleMultiSelectMode();
+                this.updateMultiSelectButtonState();
+            }
+        });
+
+
+
+
         // --- Tool Buttons ---
         const tools = ['tool-hand', 'tool-move', 'tool-rotate', 'tool-scale', 'tool-rect'];
         tools.forEach(toolId => {
@@ -2550,5 +2559,17 @@ export default class EditorUI {
     updateUndoRedoButtons(canUndo, canRedo) {
         if (this.undoBtn) this.undoBtn.disabled = !canUndo;
         if (this.redoBtn) this.redoBtn.disabled = !canRedo;
+    }
+
+    updateMultiSelectButtonState() {
+        if (this.multiSelectBtn) {
+            if (this.plugin.isMultiSelectMode) {
+                this.multiSelectBtn.classList.add('active');
+                this.multiSelectBtn.style.backgroundColor = '#4caf50';
+            } else {
+                this.multiSelectBtn.classList.remove('active');
+                this.multiSelectBtn.style.backgroundColor = '';
+            }
+        }
     }
 }
