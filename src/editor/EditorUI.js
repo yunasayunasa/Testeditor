@@ -194,6 +194,20 @@ export default class EditorUI {
                 console.log(`Inspector ${this.inspectorLocked ? 'locked' : 'unlocked'}`);
             });
         }
+
+        // --- Play/Edit Mode Toggle ---
+        this.modeToggleCheckbox = document.getElementById('mode-toggle-checkbox');
+        this.modeLabel = document.getElementById('mode-label');
+        if (this.modeToggleCheckbox) {
+            this.modeToggleCheckbox.addEventListener('change', (e) => {
+                const isPlayMode = e.target.checked;
+                this.game.registry.set('editor_mode', isPlayMode ? 'play' : 'select');
+                if (this.modeLabel) {
+                    this.modeLabel.textContent = isPlayMode ? 'PLAY' : 'EDIT';
+                }
+                console.log(`[EditorUI] Mode switched to: ${isPlayMode ? 'PLAY' : 'EDIT'}`);
+            });
+        }
     }
 
     initializeEventListeners() {
