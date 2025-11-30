@@ -73,6 +73,7 @@ export default class EditorUI {
         
         // --- Tool Controls ---
         this.multiSelectBtn = document.getElementById('tool-multiselect');
+        this.inspectorLockBtn = document.getElementById('tool-inspector-lock');
         // --- Bottom Panel Tabs ---
         document.getElementById('tab-project')?.addEventListener('click', () => this.switchBottomTab('project'));
         document.getElementById('tab-console')?.addEventListener('click', () => this.switchBottomTab('console'));
@@ -262,6 +263,14 @@ export default class EditorUI {
             }
         });
 
+        // Inspector Lock Toggle
+        this.inspectorLockBtn?.addEventListener('click', () => {
+            if (this.plugin.toggleInspectorLock) {
+                this.plugin.toggleInspectorLock();
+                this.updateInspectorLockButtonState();
+            }
+        });
+
 
 
 
@@ -344,6 +353,28 @@ export default class EditorUI {
         if (this.redoBtn) {
             this.redoBtn.disabled = !canRedo;
             this.redoBtn.style.opacity = canRedo ? '1' : '0.5';
+        }
+    }
+
+    updateMultiSelectButtonState() {
+        if (this.multiSelectBtn) {
+            if (this.plugin.isMultiSelectMode) {
+                this.multiSelectBtn.classList.add('active');
+            } else {
+                this.multiSelectBtn.classList.remove('active');
+            }
+        }
+    }
+
+    updateInspectorLockButtonState() {
+        if (this.inspectorLockBtn) {
+            if (this.plugin.isInspectorLocked) {
+                this.inspectorLockBtn.classList.add('active');
+                // this.inspectorLockBtn.innerText = '🔒';
+            } else {
+                this.inspectorLockBtn.classList.remove('active');
+                // this.inspectorLockBtn.innerText = '🔓';
+            }
         }
     }
 

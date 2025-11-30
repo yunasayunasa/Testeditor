@@ -57,13 +57,13 @@ export default class EditorClipboardManager {
         }
 
         const scene = objectsToCopy[0].scene;
-        if (!scene || typeof scene.exportGameObject !== 'function') {
+        if (!scene || typeof scene.extractLayoutFromObject !== 'function') {
             console.warn('[ClipboardManager] Cannot export object: scene method missing');
             return;
         }
 
         // オブジェクトのレイアウトデータをJSON化してクリップボードに保存
-        this.clipboard = objectsToCopy.map(obj => scene.exportGameObject(obj));
+        this.clipboard = objectsToCopy.map(obj => scene.extractLayoutFromObject(obj));
         console.log(`[ClipboardManager] Copied ${this.clipboard.length} objects.`);
     }
 
@@ -117,7 +117,7 @@ export default class EditorClipboardManager {
         const newObjects = [];
 
         objectsToDuplicate.forEach(obj => {
-            const layout = scene.exportGameObject(obj);
+            const layout = scene.extractLayoutFromObject(obj);
             const newLayout = JSON.parse(JSON.stringify(layout));
             newLayout.x += 20;
             newLayout.y += 20;
@@ -151,7 +151,7 @@ export default class EditorClipboardManager {
         this.plugin.deselectAll();
 
         objectsToDelete.forEach(obj => {
-            const command = new DeleteObjectCommand(this.plugin, scene.scene.key, obj.name);
+            const command = new DeleteObjectCommand(this.plugin, obj);
             this.plugin.commandManager.execute(command);
         });
 

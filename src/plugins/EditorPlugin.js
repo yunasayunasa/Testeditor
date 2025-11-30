@@ -34,6 +34,7 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
         this.gizmoManager = new GizmoManager(this);
        this.commandManager = new EditorCommandManager(this);
         this.clipboardManager = new EditorClipboardManager(this);
+        this.isInspectorLocked = false;
     
     }
 
@@ -100,6 +101,17 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
     /**
      * 現在アクティブなゲームシーンをリスタートさせることで、エディタの状態を完全にリフレッシュする
      */
+    /**
+     * インスペクタのロック状態を切り替える
+     */
+    toggleInspectorLock() {
+        this.isInspectorLocked = !this.isInspectorLocked;
+        console.log(`[EditorPlugin] Inspector Lock: ${this.isInspectorLocked ? 'ON' : 'OFF'}`);
+        if (this.editorUI && this.editorUI.updateInspectorLockButtonState) {
+            this.editorUI.updateInspectorLockButtonState();
+        }
+    }
+
     refresh() {
         // 1. 現在アクティブな「ゲームプレイシーン」を取得する
         let activeScene = null;
@@ -1840,6 +1852,18 @@ export default class EditorPlugin extends Phaser.Plugins.BasePlugin {
             if (layer && layer.locked) {
                 // console.log(`Object '${gameObject.name}' on locked layer '${layerName}' cannot be selected.`);
                 return;
+            }
+            // ▼▼▼【インスペクタロックのチェック】▼▼▼
+            // ロック中は、現在選択中のオブジェクト以外は選択できないようにする
+            if (this.isInspectorLocked) {
+                // 既に選択されているオブジェクトなら操作（ドラッグ等）を許可する
+                const isSelected = this.selectedObject === gameObject || 
+                                 (this.selectedObjects && this.selectedObjects.includes(gameObject));
+                
+                if (!isSelected) {
+                    console.log('[EditorPlugin] Inspector is locked. Selection change prevented.');
+                    return;
+                }
             }
             const now = Date.now();
             const lastTap = gameObject.getData('lastTap');
