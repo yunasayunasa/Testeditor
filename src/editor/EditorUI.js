@@ -62,6 +62,7 @@ export default class EditorUI {
         // --- File Controls ---
         this.saveSceneBtn = document.getElementById('editor-save-scene-btn');
         this.loadSceneBtn = document.getElementById('editor-load-scene-btn');
+        this.exportGameBtn = document.getElementById('editor-export-game-btn');
         this.sceneFileInput = document.getElementById('scene-file-input');
         // --- Edit Controls ---
         this.undoBtn = document.getElementById('editor-undo-btn');
@@ -217,6 +218,9 @@ export default class EditorUI {
         }
         if (this.loadSceneBtn) {
             this.loadSceneBtn.addEventListener('click', () => this.sceneFileInput?.click());
+        }
+        if (this.exportGameBtn) {
+            this.exportGameBtn.addEventListener('click', this.onExportGameClicked);
         }
         if (this.sceneFileInput) {
             this.sceneFileInput.addEventListener('change', this.onLoadSceneFile);
@@ -2616,5 +2620,307 @@ export default class EditorUI {
                 this.multiSelectBtn.style.backgroundColor = '';
             }
         }
+    }
+
+    // =================================================================
+    // Scene Save/Load with Asset Persistence
+    // =================================================================
+    
+    /**
+     * シーンとアセットをJSON形式で保存
+     */
+    onSaveSceneClicked = () => {
+        const scene = this.getActiveGameScene();
+        if (!scene) {
+            alert('アクティブなシーンがありません');
+            return;
+        }
+
+        const assetList = this.game.registry.get('asset_list') || [];
+        const sceneData = this.exportSceneData(scene);
+
+        const projectData = {
+            version: '1.0',
+            sceneName: scene.scene.key,
+            assets: assetList,
+            scene: sceneData
+        };
+
+        const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${scene.scene.key}_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        console.log('[EditorUI] Scene saved with assets');
+    };
+
+    /**
+     * ゲームをビルドしてZIPとしてエクスポート
+     */
+    onExportGameClicked = async () => {
+        const scene = this.getActiveGameScene();
+        if (!scene) {
+            alert('アクティブなシーンがありません');
+            return;
+        }
+
+        if (!window.JSZip) {
+            alert('JSZipライブラリが読み込まれていません。インターネット接続を確認してください。');
+            return;
+        }
+
+        const zip = new JSZip();
+        const assetList = this.game.registry.get('asset_list') || [];
+        const sceneData = this.exportSceneData(scene);
+
+        // 1. アセットの処理と追加
+        const assetsFolder = zip.folder("assets");
+        const processedAssets = [];
+
+        for (const asset of assetList) {
+            if (asset.url && asset.url.startsWith('data:')) {
+                // DataURLをBlobに変換してZIPに追加
+                try {
+                    const response = await fetch(asset.url);
+                    const blob = await response.blob();
+                    
+                    // 拡張子の推定
+                    let extension = 'png';
+                    if (asset.type === 'audio') extension = 'mp3'; // 簡易判定
+                    if (asset.url.includes('image/jpeg')) extension = 'jpg';
+                    
+                    const fileName = `${asset.key}.${extension}`;
+                    assetsFolder.file(fileName, blob);
+
+                    // ランタイム用のパスに書き換え
+                    processedAssets.push({
+                        ...asset,
+                        url: `assets/${fileName}`,
+                        path: `assets/${fileName}`
+                    });
+                } catch (e) {
+                    console.error(`Failed to process asset ${asset.key}:`, e);
+                }
+            } else {
+                // 既にパスの場合はそのまま（ただしローカルファイルは取得できない可能性あり）
+                processedAssets.push(asset);
+            }
+        }
+
+        // 2. ゲーム設定データの作成
+        const gameConfig = {
+            sceneName: scene.scene.key,
+            assets: processedAssets,
+            scene: sceneData
+        };
+        zip.file("game-config.js", `window.GAME_DATA = ${JSON.stringify(gameConfig, null, 2)};`);
+
+        // 3. ランタイム用HTMLの作成
+        const indexHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${scene.scene.key} - Game Build</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+        canvas { display: block; margin: 0 auto; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script src="game-config.js"></script>
+</head>
+<body>
+    <script>
+    class GameScene extends Phaser.Scene {
+        constructor() {
+            super({ key: 'GameScene' });
+        }
+
+        preload() {
+            // アセットのロード
+            const data = window.GAME_DATA;
+            if (data && data.assets) {
+                data.assets.forEach(asset => {
+                    if (asset.type === 'image') {
+                        this.load.image(asset.key, asset.url);
+                    } else if (asset.type === 'spritesheet') {
+                        // スプライトシート対応は簡易的
+                        this.load.image(asset.key, asset.url); 
+                    } else if (asset.type === 'audio') {
+                        this.load.audio(asset.key, asset.url);
+                    }
+                });
+            }
+        }
+
+        create() {
+            const data = window.GAME_DATA;
+            if (!data || !data.scene) return;
+
+            // オブジェクトの生成
+            data.scene.objects.forEach(obj => {
+                let gameObject;
+                
+                if (obj.type === 'Sprite' || obj.type === 'Image') {
+                    if (obj.texture) {
+                        gameObject = this.add.sprite(obj.x, obj.y, obj.texture);
+                    }
+                } else if (obj.type === 'Text') {
+                    gameObject = this.add.text(obj.x, obj.y, obj.text, obj.style);
+                }
+
+                if (gameObject) {
+                    gameObject.setName(obj.name);
+                    gameObject.setRotation(obj.rotation || 0);
+                    gameObject.setScale(obj.scaleX || 1, obj.scaleY || 1);
+                    gameObject.setAlpha(obj.alpha !== undefined ? obj.alpha : 1);
+                    gameObject.setDepth(obj.depth || 0);
+                    gameObject.setVisible(obj.visible !== undefined ? obj.visible : true);
+                }
+            });
+        }
+    }
+
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        backgroundColor: '#000000',
+        scene: GameScene,
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH
+        }
+    };
+
+    new Phaser.Game(config);
+    </script>
+</body>
+</html>`;
+        zip.file("index.html", indexHtml);
+
+        // 4. READMEの作成
+        zip.file("README.txt", "To play the game, you must run it on a local web server (e.g. Live Server in VS Code) due to browser security restrictions on loading local files.");
+
+        // 5. ZIPの生成とダウンロード
+        zip.generateAsync({type:"blob"}).then(function(content) {
+            saveAs(content, `${scene.scene.key}_build.zip`);
+        });
+    };
+
+    /**
+     * JSONからシーンとアセットを読み込み
+     */
+    onLoadSceneFile = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const projectData = JSON.parse(e.target.result);
+
+                // アセットを復元
+                if (projectData.assets && projectData.assets.length > 0) {
+                    await this.restoreAssets(projectData.assets);
+                }
+
+                // シーンを復元
+                const scene = this.getActiveGameScene();
+                if (scene && typeof scene.buildSceneFromLayout === 'function') {
+                    if (confirm('現在のシーンをクリアしてロードしますか？')) {
+                        if (typeof scene.clearScene === 'function') scene.clearScene();
+                        scene.buildSceneFromLayout(projectData.scene);
+                        this.plugin.updateLayerStates(this.layers);
+                        this.buildHierarchyPanel();
+                        alert('プロジェクトをロードしました');
+                    }
+                }
+            } catch (err) {
+                console.error('Load failed:', err);
+                alert('ファイルの読み込みに失敗しました');
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    };
+
+    /**
+     * シーンデータをエクスポート
+     */
+    exportSceneData(scene) {
+        const sceneData = {
+            name: scene.scene.key,
+            objects: []
+        };
+
+        const editableObjects = this.plugin.editableObjects.get(scene.scene.key);
+        if (!editableObjects) return sceneData;
+
+        editableObjects.forEach(obj => {
+            const objData = {
+                name: obj.name,
+                type: obj.type,
+                x: obj.x,
+                y: obj.y,
+                rotation: obj.rotation,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                alpha: obj.alpha,
+                visible: obj.visible,
+                depth: obj.depth,
+                layer: obj.getData('layer'),
+                group: obj.getData('group')
+            };
+
+            if (obj.texture && obj.texture.key !== '__MISSING') {
+                objData.texture = obj.texture.key;
+                if (obj.frame) objData.frame = obj.frame.name;
+            }
+
+            if (obj.type === 'Text') {
+                objData.text = obj.text;
+                objData.style = obj.style;
+            }
+
+            const components = obj.getData('components');
+            if (components) objData.components = components;
+
+            const customData = obj.getData('customData');
+            if (customData) objData.customData = customData;
+
+            sceneData.objects.push(objData);
+        });
+
+        return sceneData;
+    }
+
+    /**
+     * 保存されたアセットデータを復元
+     */
+    async restoreAssets(assetDataArray) {
+        const assetList = this.game.registry.get('asset_list') || [];
+
+        for (const assetData of assetDataArray) {
+            if (assetList.find(a => a.key === assetData.key)) {
+                console.log(`Asset '${assetData.key}' already exists, skipping`);
+                continue;
+            }
+
+            if (assetData.type === 'image' || assetData.type === 'spritesheet') {
+                this.game.textures.addBase64(assetData.key, assetData.url);
+            } else if (assetData.type === 'audio') {
+                console.warn('Audio asset restoration not yet implemented');
+            }
+
+            assetList.push(assetData);
+        }
+
+        this.game.registry.set('asset_list', assetList);
+        this.populateAssetBrowser();
+
+        console.log(`[EditorUI] Restored ${assetDataArray.length} assets`);
     }
 }
