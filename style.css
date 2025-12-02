@@ -44,10 +44,15 @@ body {
 
 /* --- Layout Containers --- */
 #editor-root {
-  display: flex;
+  display: none; /* デフォルトは非表示 */
   flex-direction: column;
   width: 100%;
   height: 100%;
+}
+
+/* デバッグモード（エディタモード）の時のみ表示 */
+body.debug-mode #editor-root {
+  display: flex;
 }
 
 #top-toolbar {
