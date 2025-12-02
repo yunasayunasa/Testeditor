@@ -76,6 +76,13 @@ body.debug-mode #scene-overlay {
   display: flex !important;
 }
 
+/* 通常モード時（非デバッグモード）は背景を黒にしてエディタ要素を完全に隠す */
+body:not(.debug-mode) #editor-root,
+body:not(.debug-mode) #main-workspace,
+body:not(.debug-mode) #scene-view-panel {
+  background-color: #000;
+}
+
 #top-toolbar {
   min-height: var(--toolbar-height);
   /* Allow expansion */
