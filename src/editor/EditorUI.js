@@ -2761,6 +2761,8 @@ export default class EditorUI {
         const processedAssets = [];
 
         for (const asset of assetList) {
+            if (!asset.key) continue; // キーがないアセットはスキップ
+
             if (asset.url && asset.url.startsWith('data:')) {
                 // DataURLをBlobに変換してZIPに追加
                 try {
@@ -2784,9 +2786,11 @@ export default class EditorUI {
                 } catch (e) {
                     console.error(`Failed to process asset ${asset.key}:`, e);
                 }
-            } else {
+            } else if (asset.url) {
                 // 既にパスの場合はそのまま（ただしローカルファイルは取得できない可能性あり）
                 processedAssets.push(asset);
+            } else {
+                console.warn(`Skipping asset ${asset.key} due to missing URL`);
             }
         }
 
@@ -2836,6 +2840,10 @@ export default class EditorUI {
             if (data.assets) {
                 log('Loading ' + data.assets.length + ' assets');
                 data.assets.forEach(asset => {
+                    if (!asset.url) {
+                        log('WARNING: Skipping asset ' + asset.key + ' (missing URL)');
+                        return;
+                    }
                     log('Loading asset: ' + asset.key + ' (' + asset.type + ')');
                     if (asset.type === 'image') {
                         this.load.image(asset.key, asset.url);
