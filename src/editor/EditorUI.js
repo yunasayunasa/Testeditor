@@ -648,6 +648,16 @@ export default class EditorUI {
             this.assetTabContainer.appendChild(tabButton);
         });
 
+        // Add Import Button to the tabs area
+        const importBtn = document.createElement('div');
+        importBtn.className = 'asset-tab import-btn';
+        importBtn.innerHTML = '<span>📥 Import</span>';
+        importBtn.style.backgroundColor = 'var(--accent-color)';
+        importBtn.style.color = 'white';
+        importBtn.style.marginLeft = 'auto'; // Push to right
+        importBtn.addEventListener('click', this.onAddButtonClicked);
+        this.assetTabContainer.appendChild(importBtn);
+
         this.assetListContainer.innerHTML = '';
 
         if (this.currentAssetTab === 'ui') {
