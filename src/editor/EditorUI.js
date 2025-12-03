@@ -226,6 +226,9 @@ export default class EditorUI {
         if (this.sceneFileInput) {
             this.sceneFileInput.addEventListener('change', this.onLoadSceneFile);
         }
+        if (this.assetFileInput) {
+            this.assetFileInput.addEventListener('change', this.onAssetFileSelected);
+        }
 
         // --- Toolbar Controls ---
         const playBtn = document.getElementById('editor-play-btn');
@@ -619,6 +622,66 @@ export default class EditorUI {
             if (childContainer && childContainer.classList.contains('hierarchy-children')) {
                 childContainer.style.display = matches || term === '' ? 'block' : 'none';
             }
+        });
+    }
+
+    // =================================================================
+    // Asset Import Logic
+    // =================================================================
+    onAssetFileSelected = (event) => {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            this.processAssetFiles(files);
+        }
+        // Reset input so the same file can be selected again
+        event.target.value = '';
+    }
+
+    processAssetFiles(files) {
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                const assetList = this.game.registry.get('asset_list') || [];
+                
+                // Determine asset type based on MIME type
+                let type = 'image';
+                if (file.type.startsWith('audio/')) {
+                    type = 'audio';
+                }
+
+                // Create a unique key based on filename
+                const key = file.name.split('.')[0].replace(/[^a-zA-Z0-9_-]/g, '_');
+
+                // Check for duplicates
+                if (assetList.some(a => a.key === key)) {
+                    console.warn(`Asset with key ${key} already exists. Skipping.`);
+                    return;
+                }
+
+                const newAsset = {
+                    key: key,
+                    type: type,
+                    url: dataUrl, // Save DataURL for persistence
+                    path: file.name // Keep original filename for reference
+                };
+
+                assetList.push(newAsset);
+                this.game.registry.set('asset_list', assetList);
+
+                // Register to Phaser Loader
+                if (type === 'image') {
+                    this.game.textures.addBase64(key, dataUrl);
+                } else if (type === 'audio') {
+                    // Audio handling with DataURL in Phaser is tricky at runtime without proper decoding
+                    // For now, we just store it. Playback might require specific handling.
+                    console.log('Audio asset added (persistence only for now):', key);
+                }
+
+                console.log(`Asset added: ${key} (${type})`);
+                this.populateAssetBrowser();
+            };
+            reader.readAsDataURL(file);
         });
     }
 
