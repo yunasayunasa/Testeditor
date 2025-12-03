@@ -655,7 +655,13 @@ export default class EditorUI {
         importBtn.style.backgroundColor = 'var(--accent-color)';
         importBtn.style.color = 'white';
         importBtn.style.marginLeft = 'auto'; // Push to right
-        importBtn.addEventListener('click', this.onAddButtonClicked);
+        importBtn.addEventListener('click', () => {
+            if (this.assetFileInput) {
+                this.assetFileInput.click();
+            } else {
+                console.error('Asset file input element not found');
+            }
+        });
         this.assetTabContainer.appendChild(importBtn);
 
         this.assetListContainer.innerHTML = '';
