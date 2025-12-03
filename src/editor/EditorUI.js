@@ -64,6 +64,7 @@ export default class EditorUI {
         this.loadSceneBtn = document.getElementById('editor-load-scene-btn');
         this.exportGameBtn = document.getElementById('editor-export-game-btn');
         this.sceneFileInput = document.getElementById('scene-file-input');
+        this.assetFileInput = document.getElementById('asset-file-input');
         // --- Edit Controls ---
         this.undoBtn = document.getElementById('editor-undo-btn');
         this.redoBtn = document.getElementById('editor-redo-btn');
