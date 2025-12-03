@@ -2725,59 +2725,94 @@ export default class EditorUI {
     <meta charset="utf-8">
     <title>${scene.scene.key} - Game Build</title>
     <style>
-        body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+        body { margin: 0; padding: 0; background: #111; overflow: hidden; color: #ccc; font-family: sans-serif; }
         canvas { display: block; margin: 0 auto; }
+        #debug-log { position: absolute; top: 10px; left: 10px; pointer-events: none; white-space: pre-wrap; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
     <script src="game-config.js"></script>
 </head>
 <body>
+    <div id="debug-log"></div>
     <script>
+    function log(msg) {
+        console.log(msg);
+        // document.getElementById('debug-log').textContent += msg + '\\n';
+    }
+
     class GameScene extends Phaser.Scene {
         constructor() {
             super({ key: 'GameScene' });
         }
 
         preload() {
-            // アセットのロード
+            log('Preload started');
             const data = window.GAME_DATA;
-            if (data && data.assets) {
+            if (!data) {
+                log('ERROR: GAME_DATA not found');
+                return;
+            }
+
+            if (data.assets) {
+                log('Loading ' + data.assets.length + ' assets');
                 data.assets.forEach(asset => {
+                    log('Loading asset: ' + asset.key + ' (' + asset.type + ')');
                     if (asset.type === 'image') {
                         this.load.image(asset.key, asset.url);
                     } else if (asset.type === 'spritesheet') {
-                        // スプライトシート対応は簡易的
                         this.load.image(asset.key, asset.url); 
                     } else if (asset.type === 'audio') {
                         this.load.audio(asset.key, asset.url);
                     }
                 });
             }
+            
+            this.load.on('loaderror', (file) => {
+                log('ERROR loading asset: ' + file.key);
+            });
         }
 
         create() {
+            log('Create started');
             const data = window.GAME_DATA;
-            if (!data || !data.scene) return;
+            if (!data || !data.scene) {
+                log('ERROR: Scene data missing');
+                return;
+            }
+
+            log('Creating ' + data.scene.objects.length + ' objects');
 
             // オブジェクトの生成
             data.scene.objects.forEach(obj => {
                 let gameObject;
                 
-                if (obj.type === 'Sprite' || obj.type === 'Image') {
-                    if (obj.texture) {
-                        gameObject = this.add.sprite(obj.x, obj.y, obj.texture);
+                try {
+                    if (obj.type === 'Sprite' || obj.type === 'Image') {
+                        if (obj.texture) {
+                            if (this.textures.exists(obj.texture)) {
+                                gameObject = this.add.sprite(obj.x, obj.y, obj.texture);
+                            } else {
+                                log('WARNING: Texture missing: ' + obj.texture);
+                                // プレースホルダー
+                                gameObject = this.add.rectangle(obj.x, obj.y, 50, 50, 0xff0000);
+                            }
+                        }
+                    } else if (obj.type === 'Text') {
+                        gameObject = this.add.text(obj.x, obj.y, obj.text, obj.style);
                     }
-                } else if (obj.type === 'Text') {
-                    gameObject = this.add.text(obj.x, obj.y, obj.text, obj.style);
-                }
 
-                if (gameObject) {
-                    gameObject.setName(obj.name);
-                    gameObject.setRotation(obj.rotation || 0);
-                    gameObject.setScale(obj.scaleX || 1, obj.scaleY || 1);
-                    gameObject.setAlpha(obj.alpha !== undefined ? obj.alpha : 1);
-                    gameObject.setDepth(obj.depth || 0);
-                    gameObject.setVisible(obj.visible !== undefined ? obj.visible : true);
+                    if (gameObject) {
+                        gameObject.setName(obj.name);
+                        gameObject.setRotation(obj.rotation || 0);
+                        gameObject.setScale(obj.scaleX || 1, obj.scaleY || 1);
+                        gameObject.setAlpha(obj.alpha !== undefined ? obj.alpha : 1);
+                        gameObject.setDepth(obj.depth || 0);
+                        gameObject.setVisible(obj.visible !== undefined ? obj.visible : true);
+                        
+                        log('Created object: ' + obj.name);
+                    }
+                } catch (e) {
+                    log('ERROR creating object ' + obj.name + ': ' + e.message);
                 }
             });
         }
@@ -2787,7 +2822,7 @@ export default class EditorUI {
         type: Phaser.AUTO,
         width: 800,
         height: 600,
-        backgroundColor: '#000000',
+        backgroundColor: '#222222',
         scene: GameScene,
         scale: {
             mode: Phaser.Scale.FIT,
@@ -2795,7 +2830,12 @@ export default class EditorUI {
         }
     };
 
-    new Phaser.Game(config);
+    try {
+        new Phaser.Game(config);
+        log('Game initialized');
+    } catch (e) {
+        log('CRITICAL ERROR: ' + e.message);
+    }
     </script>
 </body>
 </html>`;
