@@ -196,8 +196,31 @@
 
           <!-- Animation View -->
           <div id="animation-view" class="tab-content" style="display: none">
-            <!-- Timeline UI -->
-            <div id="timeline-container"></div>
+            <!-- Animation Controls -->
+            <div class="animation-controls">
+              <div class="animation-toolbar">
+                <button id="anim-play-btn" class="anim-btn" title="Play">▶</button>
+                <button id="anim-pause-btn" class="anim-btn" title="Pause">⏸</button>
+                <button id="anim-stop-btn" class="anim-btn" title="Stop">⏹</button>
+                <div class="anim-time-display">
+                  <span id="anim-current-time">0.00</span> / <span id="anim-total-duration">0.00</span>s
+                </div>
+                <label class="anim-loop-label">
+                  <input type="checkbox" id="anim-loop-checkbox" />
+                  Loop
+                </label>
+              </div>
+              <div class="animation-type-tabs">
+                <button class="anim-type-tab active" data-type="basic">Basic</button>
+                <button class="anim-type-tab" data-type="spritesheet">Spritesheet</button>
+                <button class="anim-type-tab" data-type="path">Path</button>
+              </div>
+            </div>
+            <!-- Timeline Container -->
+            <div id="timeline-container">
+              <div id="timeline-tracks"></div>
+              <canvas id="timeline-canvas"></canvas>
+            </div>
           </div>
         </div>
       </div>

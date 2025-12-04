@@ -1,5 +1,6 @@
 import EngineAPI from '../core/EngineAPI.js';
 import { ComponentRegistry } from '../../src/components/index.js';
+import AnimationTimeline from './AnimationTimeline.js';
 
 export default class EditorUI {
     constructor(game, editorPlugin) {
@@ -448,6 +449,9 @@ export default class EditorUI {
         this.buildHierarchyPanel();
         this.buildLayerPanel();
         this.plugin.updateLayerStates(this.layers);
+        
+        // Initialize animation timeline
+        this.animationTimeline = new AnimationTimeline(this.game, this);
     }
 
     start() {
